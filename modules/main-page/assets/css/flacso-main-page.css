@@ -1841,3 +1841,242 @@
         font-size: 0.9rem;
     }
 }
+
+/* ============================================================
+   HOMEPAGE VISUAL REFRESH (MOBILE FIRST)
+   ============================================================ */
+
+:root {
+    --flacso-home-display-font: "Sora", var(--global-heading-font-family, "Trebuchet MS", sans-serif);
+    --flacso-home-body-font: "Manrope", var(--global-body-font-family, "Segoe UI", sans-serif);
+    --flacso-home-bg-start: #e9f1fb;
+    --flacso-home-bg-end: #fdfefe;
+    --flacso-home-ink: #132845;
+    --flacso-home-ink-soft: #41566f;
+    --flacso-home-border: rgba(18, 46, 90, 0.16);
+    --flacso-home-shadow: 0 18px 42px rgba(13, 30, 60, 0.08);
+    --flacso-home-radius: clamp(18px, 4vw, 32px);
+}
+
+.flacso-main-page.flacso-homepage-completa {
+    background:
+        radial-gradient(circle at 12% 8%, rgba(26, 65, 124, 0.14) 0%, transparent 40%),
+        radial-gradient(circle at 88% 92%, rgba(245, 188, 57, 0.14) 0%, transparent 42%),
+        linear-gradient(180deg, var(--flacso-home-bg-start) 0%, var(--flacso-home-bg-end) 100%);
+}
+
+.flacso-main-page,
+.flacso-main-page p,
+.flacso-main-page li,
+.flacso-main-page a,
+.flacso-main-page button,
+.flacso-main-page input,
+.flacso-main-page textarea,
+.flacso-main-page select {
+    font-family: var(--flacso-home-body-font);
+}
+
+.flacso-main-page h1,
+.flacso-main-page h2,
+.flacso-main-page h3,
+.flacso-main-page h4 {
+    font-family: var(--flacso-home-display-font);
+    letter-spacing: -0.01em;
+    color: var(--flacso-home-ink);
+}
+
+.flacso-main-page .flacso-home-layout {
+    gap: clamp(0.8rem, 3.4vw, 1.45rem);
+    padding-block: clamp(0.6rem, 2.4vw, 1.5rem) clamp(1.2rem, 3vw, 2rem);
+}
+
+.flacso-main-page .flacso-home-block {
+    padding-inline: clamp(0.55rem, 2.4vw, 1.4rem) !important;
+}
+
+.flacso-main-page .flacso-home-block__surface {
+    width: min(100%, var(--flacso-section-max-width));
+    margin-inline: auto;
+    position: relative;
+    isolation: isolate;
+}
+
+.flacso-main-page .flacso-home-block__surface--card {
+    border-radius: var(--flacso-home-radius);
+    border: 1px solid var(--flacso-home-border);
+    background: linear-gradient(170deg, rgba(255, 255, 255, 0.96), rgba(244, 249, 255, 0.95));
+    box-shadow: var(--flacso-home-shadow);
+    overflow: clip;
+}
+
+.flacso-main-page .flacso-home-block__surface--card::before,
+.flacso-main-page .flacso-home-block__surface--card::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.flacso-main-page .flacso-home-block__surface--card::before {
+    width: clamp(140px, 24vw, 230px);
+    height: clamp(140px, 24vw, 230px);
+    top: -18%;
+    left: -8%;
+    background: radial-gradient(circle, rgba(29, 58, 114, 0.14) 0%, rgba(29, 58, 114, 0) 70%);
+}
+
+.flacso-main-page .flacso-home-block__surface--card::after {
+    width: clamp(120px, 22vw, 210px);
+    height: clamp(120px, 22vw, 210px);
+    right: -10%;
+    bottom: -24%;
+    background: radial-gradient(circle, rgba(247, 183, 51, 0.18) 0%, rgba(247, 183, 51, 0) 70%);
+}
+
+.flacso-main-page .flacso-home-block__surface--card > * {
+    position: relative;
+    z-index: 1;
+}
+
+.flacso-main-page .flacso-home-block__surface--bleed {
+    width: 100%;
+    max-width: none;
+}
+
+.flacso-main-page .flacso-home-block__surface--card.flacso-home-block__surface--novedades_destacadas {
+    background: linear-gradient(160deg, #ffffff 0%, #eef6ff 100%);
+}
+
+.flacso-main-page .flacso-home-block__surface--card.flacso-home-block__surface--eventos {
+    background: linear-gradient(160deg, #f7fbff 0%, #ecf5ff 55%, #fdfefe 100%);
+}
+
+.flacso-main-page .flacso-home-block__surface--card.flacso-home-block__surface--seminarios {
+    background: linear-gradient(155deg, #ffffff 0%, #f2f8ff 100%);
+}
+
+.flacso-main-page .flacso-home-block__surface--card.flacso-home-block__surface--quienes {
+    background: linear-gradient(150deg, #ffffff 0%, #f5f9ff 100%);
+}
+
+.flacso-main-page .flacso-home-block__surface--card.flacso-home-block__surface--posgrados {
+    background: linear-gradient(155deg, #ffffff 0%, #f9fbff 100%);
+}
+
+.flacso-main-page .flacso-home-block__surface--card .flacso-content-shell {
+    padding-inline: clamp(0.95rem, 2.8vw, 2rem);
+}
+
+.flacso-main-page .flacso-home-block__surface--posgrados .nuestros-posgrados {
+    background: transparent;
+    padding: clamp(1.2rem, 3vw, 2.2rem) 0;
+}
+
+.flacso-main-page .flacso-home-block__surface--seminarios .flacso-seminarios-proximos {
+    padding-top: clamp(1.15rem, 2.6vw, 1.9rem) !important;
+    padding-bottom: clamp(1.15rem, 2.6vw, 1.9rem) !important;
+}
+
+.flacso-main-page .flacso-home-block__surface--novedades_destacadas .flacso-novedades-section {
+    background: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+.flacso-main-page .flacso-home-block__surface--novedades .novedades-grid .card,
+.flacso-main-page .flacso-home-block__surface--novedades_destacadas .novedades-grid .card {
+    border-radius: 18px;
+    border-color: rgba(19, 40, 69, 0.12);
+    box-shadow: 0 12px 24px rgba(13, 30, 60, 0.09);
+}
+
+.flacso-main-page .flacso-home-block__surface--eventos .flc-eventos-react,
+.flacso-main-page .flacso-home-block__surface--eventos .flc-eventos-grid {
+    background: transparent;
+}
+
+.flacso-main-page .flacso-home-block__surface--eventos .flc-eventos-react__featured,
+.flacso-main-page .flacso-home-block__surface--eventos .flc-eventos-react__event-btn {
+    border-radius: 18px;
+}
+
+.flacso-main-page .flacso-btn {
+    min-height: 46px;
+    border-radius: 999px;
+    font-weight: 700;
+}
+
+@media (max-width: 767.98px) {
+    .flacso-main-page .flacso-home-layout {
+        gap: 0.72rem;
+        padding-block: 0.55rem 1.2rem;
+    }
+
+    .flacso-main-page .flacso-home-block {
+        padding-inline: 0.45rem !important;
+    }
+
+    .flacso-main-page .flacso-home-block__surface--card {
+        border-radius: 20px;
+        box-shadow: 0 12px 28px rgba(10, 32, 66, 0.12);
+    }
+
+    .flacso-main-page .flacso-home-block__surface--card .flacso-content-shell {
+        padding-inline: 0.9rem;
+    }
+
+    .flacso-main-page .flacso-home-block__surface--card .flacso-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .flacso-main-page .flacso-home-block__surface--hero .hero-btn {
+        width: 100% !important;
+        max-width: 360px !important;
+    }
+
+    .flacso-main-page .flacso-home-block__surface--eventos .flc-eventos-react__featured,
+    .flacso-main-page .flacso-home-block__surface--eventos .flc-eventos-react__event-btn {
+        border-radius: 15px;
+    }
+}
+
+@media (min-width: 992px) {
+    .flacso-main-page .flacso-home-layout {
+        gap: clamp(1rem, 1.5vw, 1.6rem);
+        padding-bottom: clamp(1.4rem, 2.6vw, 2.4rem);
+    }
+
+    .flacso-main-page .flacso-home-block__surface--card {
+        border-radius: 30px;
+    }
+
+    .flacso-main-page .flacso-home-block__surface--card .flacso-btn {
+        width: auto;
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .flacso-main-page .flacso-home-block__surface--card {
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .flacso-main-page .flacso-home-block__surface--card::before {
+        animation: flacso-home-surface-drift 12s ease-in-out infinite alternate;
+    }
+
+    .flacso-main-page .flacso-home-block__surface--card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 24px 46px rgba(13, 30, 60, 0.11);
+    }
+}
+
+@keyframes flacso-home-surface-drift {
+    0% {
+        transform: translate3d(0, 0, 0);
+    }
+    100% {
+        transform: translate3d(8%, 6%, 0);
+    }
+}

@@ -81,9 +81,9 @@ if (!function_exists('flacso_section_hero_render')) {
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-container {
             background: var(--global-palette1, #1d3a72);
             color: var(--global-palette9, #ffffff);
-            min-height: 85vh;
+            min-height: clamp(520px, 82vh, 880px);
             display: flex;
-            align-items: center;
+            align-items: flex-end;
             justify-content: center;
             position: relative;
             overflow: hidden;
@@ -91,11 +91,19 @@ if (!function_exists('flacso_section_hero_render')) {
             margin: 0;
             padding: 0;
             padding-top: 0;
+            isolation: isolate;
             animation: heroFadeIn 1.2s ease-out forwards;
+        }
+
+        @supports (height: 100svh) {
+            .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-container {
+                min-height: clamp(520px, 82svh, 880px);
+            }
         }
 
         @media (min-width: 768px) {
             .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-container {
+                align-items: center;
                 min-height: 90vh;
             }
         }
@@ -118,11 +126,21 @@ if (!function_exists('flacso_section_hero_render')) {
             inset: 0;
             background:
                 linear-gradient(
-                    color-mix(in srgb, var(--global-palette1, #1d3a72) 70%, transparent),
+                    color-mix(in srgb, var(--global-palette1, #1d3a72) 62%, transparent),
                     color-mix(in srgb, var(--global-palette1, #1d3a72) 92%, transparent)
                 ),
                 url("<?php echo $background; ?>") center/cover no-repeat;
+            will-change: transform;
             animation: bgMove 20s ease-in-out infinite alternate;
+        }
+
+        .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-container::after {
+            content: "";
+            position: absolute;
+            inset: auto 0 0 0;
+            height: min(36%, 260px);
+            background: linear-gradient(180deg, rgba(10, 26, 52, 0), rgba(8, 20, 44, 0.74));
+            z-index: 0;
         }
 
         @keyframes bgMove {
@@ -132,41 +150,56 @@ if (!function_exists('flacso_section_hero_render')) {
 
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-content {
             position: relative;
-            text-align: center;
+            z-index: 1;
+            text-align: left;
             width: 100%;
-            max-width: 1200px;
+            max-width: 1120px;
             margin: 0 auto;
-            padding: 40px 1rem;
+            padding: clamp(1rem, 4vw, 2rem) 1rem clamp(1.2rem, 6vw, 2.8rem);
+            display: flex;
+            justify-content: flex-start;
         }
 
-        @media (min-width: 576px) {
-            .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-content {
-                padding: 60px 1.5rem;
-            }
+        .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-copy-panel {
+            width: min(100%, 660px);
+            background: linear-gradient(165deg, rgba(7, 22, 49, 0.66), rgba(10, 29, 63, 0.52));
+            border: 1px solid rgba(255, 255, 255, 0.26);
+            border-radius: 22px;
+            padding: clamp(1rem, 3.2vw, 1.6rem);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28);
         }
 
         @media (min-width: 768px) {
             .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-content {
+                text-align: center;
+                justify-content: center;
                 padding: 80px 2rem;
+            }
+
+            .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-copy-panel {
+                border-radius: 28px;
+                padding: clamp(1.3rem, 2.8vw, 2.1rem);
             }
         }
 
         /* ===== Título y subtítulo ===== */
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-title {
-            font-size: 1.75rem;
+            font-size: clamp(1.9rem, 8vw, 2.8rem);
             font-weight: 800;
-            margin-bottom: 1rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            font-family: var(--global-heading-font-family, "Helvetica Neue", sans-serif);
+            margin-bottom: 0.85rem;
+            text-shadow: 0 8px 24px rgba(3, 11, 24, 0.36);
+            font-family: "Sora", var(--global-heading-font-family, "Helvetica Neue", sans-serif);
             line-height: 1.1;
             opacity: 0;
             animation: slideDown 1.2s ease-out forwards;
             animation-delay: 0.4s;
+            color: #ffffff;
         }
 
         @media (min-width: 576px) {
             .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-title {
-                font-size: 2.25rem;
+                font-size: clamp(2.1rem, 6.4vw, 3rem);
             }
         }
 
@@ -189,28 +222,31 @@ if (!function_exists('flacso_section_hero_render')) {
         }
 
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-subtitle {
-            font-size: 1rem;
-            margin-bottom: 2rem;
+            font-size: clamp(0.98rem, 3.8vw, 1.2rem);
+            margin-bottom: 1.4rem;
             opacity: 0;
-            font-family: var(--global-body-font-family, "Helvetica Neue", sans-serif);
-            line-height: 1.5;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
+            font-family: "Manrope", var(--global-body-font-family, "Helvetica Neue", sans-serif);
+            line-height: 1.6;
+            max-width: 62ch;
+            margin-left: 0;
+            margin-right: 0;
             animation: fadeUp 1.3s ease-out forwards;
             animation-delay: 1s;
+            color: rgba(255, 255, 255, 0.94);
         }
 
         @media (min-width: 576px) {
             .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-subtitle {
-                font-size: 1.15rem;
+                font-size: clamp(1.06rem, 3vw, 1.25rem);
             }
         }
 
         @media (min-width: 768px) {
             .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-subtitle {
                 font-size: 1.35rem;
-                margin-bottom: 3rem;
+                margin-bottom: 2.2rem;
+                margin-left: auto;
+                margin-right: auto;
             }
         }
 
@@ -229,8 +265,8 @@ if (!function_exists('flacso_section_hero_render')) {
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-buttons {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
-            align-items: center;
+            gap: 0.72rem;
+            align-items: stretch;
             opacity: 0;
             animation: fadeInBtns 1.2s ease-out forwards;
             animation-delay: 1.5s;
@@ -245,21 +281,21 @@ if (!function_exists('flacso_section_hero_render')) {
             .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-buttons {
                 flex-direction: row;
                 justify-content: center;
+                gap: 0.85rem;
             }
         }
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .hero-btn {
-            min-width: 140px;
+            min-width: 0;
             text-transform: none;
-            padding: 0.6rem 1rem;
+            padding: 0.74rem 1.05rem;
             font-size: 0.95rem;
             width: 100%;
-            max-width: 300px;
+            max-width: 360px;
         }
 
         @media (min-width: 576px) {
             .flacso-hero-<?php echo esc_attr($unique_id); ?> .hero-btn {
-                padding: 0.7rem 1.2rem;
-                font-size: 1rem;
+                font-size: 1.02rem;
             }
         }
 
@@ -268,7 +304,7 @@ if (!function_exists('flacso_section_hero_render')) {
                 min-width: 170px;
                 width: auto;
                 max-width: none;
-                padding: 0.75rem 1.5rem;
+                padding: 0.82rem 1.55rem;
             }
         }
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .hero-btn--primary {
@@ -402,18 +438,22 @@ if (!function_exists('flacso_section_hero_render')) {
 
         @media (max-width: 768px) {
             .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-fab-stack {
-                right: 16px;
-                bottom: 16px;
+                left: 12px;
+                right: 12px;
+                bottom: 12px;
                 gap: 8px;
+                align-items: stretch;
             }
             .flacso-hero-<?php echo esc_attr($unique_id); ?> .fab-btn {
                 padding: 10px 14px;
                 font-size: .85rem;
+                min-width: 0;
             }
             .flacso-hero-<?php echo esc_attr($unique_id); ?> .fab-top {
                 width: 50px;
                 height: 50px;
                 font-size: 1.2rem;
+                margin-left: auto;
             }
         }
         </style>
@@ -421,26 +461,28 @@ if (!function_exists('flacso_section_hero_render')) {
         <div class="flacso-hero-<?php echo esc_attr($unique_id); ?>">
             <section class="flacso-hero-container" id="hero-<?php echo esc_attr($unique_id); ?>">
                 <div class="flacso-hero-content flacso-content-shell">
-                    <h1 class="flacso-hero-title"><?php echo $title; ?></h1>
-                    <p class="flacso-hero-subtitle"><?php echo $subtitle; ?></p>
-                    <?php if ($show_hero_buttons && !empty($hero_buttons)) : ?>
-                        <div class="flacso-hero-buttons">
-                            <?php
-                            $style_class_map = [
-                                'primary' => 'hero-btn--primary',
-                                'outline' => 'hero-btn--outline',
-                                'light' => 'hero-btn--light',
-                                'ghost' => 'hero-btn--ghost',
-                            ];
-                            foreach ($hero_buttons as $button_data) :
-                                $style_class = $style_class_map[$button_data['style']] ?? $style_class_map['primary'];
-                            ?>
-                                <a href="<?php echo esc_url($button_data['url']); ?>" class="flacso-btn flacso-btn-anim hero-btn <?php echo esc_attr($style_class); ?>">
-                                    <?php echo $button_data['label']; ?>
-                                </a>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
+                    <div class="flacso-hero-copy-panel">
+                        <h1 class="flacso-hero-title"><?php echo $title; ?></h1>
+                        <p class="flacso-hero-subtitle"><?php echo $subtitle; ?></p>
+                        <?php if ($show_hero_buttons && !empty($hero_buttons)) : ?>
+                            <div class="flacso-hero-buttons">
+                                <?php
+                                $style_class_map = [
+                                    'primary' => 'hero-btn--primary',
+                                    'outline' => 'hero-btn--outline',
+                                    'light' => 'hero-btn--light',
+                                    'ghost' => 'hero-btn--ghost',
+                                ];
+                                foreach ($hero_buttons as $button_data) :
+                                    $style_class = $style_class_map[$button_data['style']] ?? $style_class_map['primary'];
+                                ?>
+                                    <a href="<?php echo esc_url($button_data['url']); ?>" class="flacso-btn flacso-btn-anim hero-btn <?php echo esc_attr($style_class); ?>">
+                                        <?php echo $button_data['label']; ?>
+                                    </a>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </section>
 

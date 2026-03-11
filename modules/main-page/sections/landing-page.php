@@ -179,10 +179,17 @@ if (!function_exists('flacso_homepage_builder_render_markup')) {
         <div class="flacso-main-page flacso-homepage-completa">
             <main class="flacso-home-layout" role="main" id="<?php echo esc_attr($main_id); ?>">
                 <?php foreach ($ordered_blocks as $section) : ?>
+                    <?php
+                    $section_key = sanitize_key((string) ($section['key'] ?? ''));
+                    $is_bleed_surface = in_array($section_key, ['hero', 'congreso', 'contacto'], true);
+                    $surface_variant = $is_bleed_surface ? 'flacso-home-block__surface--bleed' : 'flacso-home-block__surface--card';
+                    ?>
                     <article class="flacso-home-block flacso-home-block--<?php echo esc_attr($section['key']); ?>"
                              data-section-key="<?php echo esc_attr($section['key']); ?>"
                              data-section-label="<?php echo esc_attr($section['label']); ?>">
-                        <?php echo $section['content']; ?>
+                        <div class="flacso-home-block__surface <?php echo esc_attr($surface_variant); ?> flacso-home-block__surface--<?php echo esc_attr($section_key); ?>">
+                            <?php echo $section['content']; ?>
+                        </div>
                     </article>
                 <?php endforeach; ?>
             </main>

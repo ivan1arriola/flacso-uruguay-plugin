@@ -18,6 +18,12 @@ class Flacso_Main_Page_Loader {
         }
 
         wp_register_style(
+            'flacso-main-page-fonts',
+            'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap',
+            [],
+            null
+        );
+        wp_register_style(
             'flacso-mobile-first',
             FLACSO_MAIN_PAGE_MODULE_URL . 'assets/css/flacso-mobile-first.css',
             [],
@@ -51,6 +57,7 @@ class Flacso_Main_Page_Loader {
         }
         wp_add_inline_style('flacso-main-page-base', implode("\n", $inline_styles));
 
+        wp_enqueue_style('flacso-main-page-fonts');
         wp_enqueue_style('flacso-mobile-first');
         self::enqueue_bootstrap_style();
         wp_enqueue_style('flacso-main-page-base');
