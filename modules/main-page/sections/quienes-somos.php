@@ -65,11 +65,11 @@ function flacso_section_quienes_somos_render() {
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #ffffff;
-        border-radius: 24px;
-        border: 1px solid rgba(29, 58, 114, 0.14);
+        background: transparent;
+        border-radius: 0;
+        border: 0;
         margin: 0;
-        box-shadow: 0 10px 24px rgba(15, 26, 45, 0.1);
+        box-shadow: none;
         overflow: hidden;
     }
 
