@@ -1,0 +1,28 @@
+{
+  "apiVersion": 2,
+  "name": "flacso-uruguay/oferta-academica-pagina",
+  "title": "Oferta academica - Pagina",
+  "category": "flacso-uruguay",
+  "icon": "welcome-learn-more",
+  "description": "Render completo de la pagina de oferta academica.",
+  "supports": {
+    "html": false,
+    "align": ["wide", "full"]
+  },
+  "attributes": {
+    "heroTitle": {
+      "type": "string"
+    },
+    "heroSubtitle": {
+      "type": "string"
+    },
+    "heroImageId": {
+      "type": "number"
+    },
+    "heroImageUrl": {
+      "type": "string"
+    }
+  },
+  "textdomain": "flacso-oferta-academica"
+}
+

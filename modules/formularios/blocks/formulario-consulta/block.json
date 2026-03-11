@@ -1,0 +1,25 @@
+{
+  "apiVersion": 2,
+  "name": "flacso-uruguay/formulario-consulta",
+  "title": "Formulario de Consulta",
+  "category": "flacso-uruguay",
+  "icon": "email",
+  "description": "Formulario de consulta con Bootstrap y variables de Kadence.",
+  "keywords": ["contacto", "consulta", "formulario"],
+  "textdomain": "formulario-consultas",
+  "attributes": {
+    "titulo": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "supports": {
+    "html": false,
+    "multiple": true,
+    "align": ["wide", "full"]
+  },
+  "editorScript": "file:./index.js",
+  "style": "fc-styles",
+  "render": "file:./render.php"
+}
+

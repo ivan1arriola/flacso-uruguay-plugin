@@ -1,0 +1,24 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "flacso-uruguay/cv-docente",
+    "title": "CV de Docente",
+    "category": "flacso-uruguay",
+    "icon": "id",
+    "description": "Muestra el CV completo de un docente",
+    "supports": {
+        "html": false
+    },
+    "attributes": {
+        "docId": {
+            "type": "integer",
+            "default": 0
+        },
+        "slug": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "editorScript": "dp-cv-docente-block"
+}
+

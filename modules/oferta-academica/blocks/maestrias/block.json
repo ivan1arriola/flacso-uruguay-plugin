@@ -1,0 +1,14 @@
+{
+  "apiVersion": 2,
+  "name": "flacso-uruguay/maestrias",
+  "title": "Maestrías",
+  "category": "flacso-uruguay",
+  "icon": "welcome-learn-more",
+  "description": "Muestra el listado de maestrías",
+  "supports": {
+    "html": false,
+    "align": ["wide", "full"]
+  },
+  "textdomain": "flacso-oferta-academica"
+}
+

@@ -1,0 +1,114 @@
+.flacso-preinscripciones-container { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen-Sans,Ubuntu,Cantarell,sans-serif; background:#f8f9fa; min-height:100vh; }
+.flacso-hero-header { background: linear-gradient(135deg,#1d3a72 0%,#0f1a2d 100%); color:#fff; padding:3.5rem 1rem; position:relative; overflow:hidden; }
+.flacso-hero-header::after { content:''; position:absolute; inset:0; background:radial-gradient(circle at 15% 20%, rgba(255,255,255,.18), transparent 45%), radial-gradient(circle at 80% 0%, rgba(255,255,255,.12), transparent 35%); opacity:.8; }
+.flacso-hero-layout { position:relative; z-index:1; display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:2.5rem; align-items:center; }
+.flacso-hero-copy { text-align:left; }
+.flacso-hero-badge { display:inline-flex; align-items:center; gap:.35rem; background:#fed222; color:#0f1a2d; padding:.5rem 1.5rem; border-radius:999px; font-weight:700; margin-bottom:1rem; font-size:.85rem; text-transform:uppercase; letter-spacing:.5px; }
+.flacso-hero-title { font-size:2.15rem; font-weight:800; margin-bottom:1rem; line-height:1.15; color:#fff; }
+.flacso-hero-description { font-size:1.05rem; opacity:.92; margin-bottom:1.25rem; line-height:1.6; max-width:560px; color:#fff; }
+.flacso-hero-checklist { list-style:none; padding:0; margin:1.5rem 0; display:grid; gap:.5rem; font-size:.95rem; color:#fff; }
+.flacso-hero-checklist li { display:flex; gap:.5rem; align-items:flex-start; }
+.flacso-hero-checklist i { color:#4ade80; font-size:1.2rem; margin-top:.15rem; flex-shrink:0; }
+.flacso-hero-actions { display:flex; flex-wrap:wrap; gap:1rem; }
+.flacso-btn-primary { display:inline-flex; align-items:center; gap:.5rem; background:#50f0c0; color:#0f1a2d; font-weight:700; text-decoration:none; padding:.85rem 1.8rem; border-radius:999px; transition:all .3s; box-shadow:0 10px 30px rgba(0,0,0,.25); }
+.flacso-btn-primary:hover { transform:translateY(-2px); color:#0f1a2d; box-shadow:0 14px 35px rgba(0,0,0,.3); }
+.flacso-btn-convenios { display:inline-flex; align-items:center; gap:.55rem; color:#fff; text-decoration:none; padding:.85rem 1.5rem; border-radius:999px; border:1px solid rgba(255,255,255,.5); background:rgba(255,255,255,.1); backdrop-filter:blur(8px); transition:all .3s; font-weight:600; }
+.flacso-btn-convenios:hover { background:rgba(255,255,255,.25); color:#fff; transform:translateY(-2px); }
+.flacso-hero-card { background:rgba(15,26,45,.65); border:1px solid rgba(255,255,255,.15); border-radius:18px; padding:1.75rem; box-shadow:0 30px 60px rgba(0,0,0,.35); position:relative; overflow:hidden; }
+.flacso-hero-card::after { content:''; position:absolute; inset:0; background:linear-gradient(160deg, rgba(22,127,185,.35), transparent); pointer-events:none; }
+.flacso-hero-card-header { position:relative; z-index:1; margin-bottom:1rem; }
+.flacso-hero-card-label { display:inline-flex; padding:.3rem .85rem; border-radius:999px; font-size:.75rem; letter-spacing:.4px; background:rgba(255,255,255,.15); text-transform:uppercase; }
+.flacso-hero-card-header h3 { margin:.5rem 0 0; font-size:1.2rem; font-weight:700; color:#fff; }
+.flacso-hero-card-list { position:relative; z-index:1; list-style:none; padding:0; margin:0 0 1.35rem 0; display:grid; gap:.55rem; font-size:.95rem; color:#fff; }
+.flacso-hero-card-list strong { display:block; font-size:.85rem; text-transform:uppercase; color:#9adfff; letter-spacing:.4px; }
+.flacso-hero-metrics { position:relative; z-index:1; display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:.75rem; }
+.flacso-hero-metric { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15); border-radius:12px; padding:.9rem; text-align:left; }
+.flacso-hero-metric span { font-size:.8rem; letter-spacing:.3px; text-transform:uppercase; color:#c6d3ff; display:block; margin-bottom:.25rem; }
+.flacso-hero-metric strong { font-size:1rem; color:#fff; }
+
+.flacso-formulario-card { background:#fff; border-radius:0; box-shadow:0 -4px 20px rgba(0,0,0,.1); margin:0; position:relative; z-index:10; }
+.flacso-formulario-body { padding:1.5rem 1rem; }
+
+.flacso-seccion { margin-bottom:2rem; padding:1.5rem; background:#fff; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.08); border:1px solid #e9ecef; }
+.flacso-seccion-header { display:flex; align-items:flex-start; gap:1rem; margin-bottom:1.5rem; padding-bottom:1rem; border-bottom:2px solid #f1f3f4; }
+.flacso-seccion-icon { background:#1d3a72; color:#fff; width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+.flacso-seccion-title { font-size:1.3rem; font-weight:700; color:#1d3a72; margin:0 0 .25rem 0; }
+.flacso-seccion-descripcion { color:#6c757d; margin:0; font-size:.9rem; line-height:1.4; }
+
+.flacso-campos-vertical { display:flex; flex-direction:column; gap:1.25rem; }
+.flacso-input-group { margin-bottom:0; }
+.flacso-input-group .form-label { font-weight:600; color:#343a40; font-size:.95rem; margin-bottom:.5rem; display:block; }
+
+.form-control-flacso,.form-select-flacso { border-radius:8px; border:2px solid #e9ecef; padding:1rem 1rem; font-size:1rem; transition:all .2s; width:100%; appearance:none; min-height:3.5rem; }
+.form-control-flacso:focus,.form-select-flacso:focus { border-color:#1d3a72; box-shadow:0 0 0 3px rgba(29,58,114,.1); outline:none; }
+
+.flacso-radio-group { margin-bottom:1rem; }
+.flacso-radio-options { display:flex; flex-direction:column; gap:.5rem; }
+.form-check-radio { margin:0; }
+.form-check-input-radio { display:none; }
+.form-check-label-radio { display:block; padding:1rem 1.25rem; border:2px solid #e9ecef; border-radius:8px; background:#f8f9fa; text-align:center; font-weight:500; color:#495057; transition:all .2s; cursor:pointer; }
+.form-check-input-radio:checked + .form-check-label-radio { background:#1d3a72; color:#fff; border-color:#1d3a72; transform:translateY(-1px); box-shadow:0 2px 8px rgba(29,58,114,.3); }
+
+.invalid-feedback-radio { display:none; width:100%; margin-top:.25rem; font-size:.875rem; color:#dc3545; }
+.was-validated .flacso-radio-group:invalid .invalid-feedback-radio { display:block; }
+
+.flacso-documentacion-subtitulo { font-size:1.1rem; font-weight:700; color:#1d3a72; margin-bottom:1rem; padding-bottom:.5rem; border-bottom:1px solid #e9ecef; }
+.flacso-cartas-recomendacion-seccion { background:#f8f9fa !important; border:1px solid #dee2e6; border-radius:8px; }
+.flacso-cartas-descripcion { font-size:.85rem; color:#6c757d; margin-bottom:1rem; line-height:1.4; }
+.flacso-doc-grid { display:grid; gap:1rem; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); }
+.flacso-doc-card { border:1px solid #e7edf5; background:#fff; border-radius:12px; padding:1rem 1.1rem; box-shadow:0 2px 6px rgba(0,0,0,.05); }
+.flacso-doc-card .flacso-input-group { margin-bottom:0; }
+.flacso-doc-card label.form-label { margin-bottom:.35rem; }
+
+.flacso-loader { position:relative; overflow:hidden; border-radius:14px; padding:1.5rem; background:linear-gradient(135deg,#fbbf24 0%,#f97316 50%,#16a34a 100%); color:#0f172a; display:flex; align-items:center; gap:1rem; box-shadow:0 8px 24px rgba(0,0,0,.12); }
+.flacso-loader::after { content:''; position:absolute; inset:0; background:radial-gradient(circle at 20% 20%, rgba(255,255,255,.15), transparent 45%), radial-gradient(circle at 80% 0%, rgba(255,255,255,.12), transparent 35%); pointer-events:none; }
+.flacso-loader-icon { display:flex; gap:.4rem; position:relative; z-index:1; }
+.flacso-loader-circle { width:12px; height:12px; border:2px solid #0f172a; background: rgba(255,255,255,.6); border-radius:50%; animation: flacso-bounce 1s infinite ease-in-out; }
+.flacso-loader-circle:nth-child(2){ animation-delay:.15s; }
+.flacso-loader-circle:nth-child(3){ animation-delay:.3s; }
+.flacso-loader-text { position:relative; z-index:1; }
+.flacso-loader-text h4 { margin:0 0 .25rem 0; font-weight:700; letter-spacing:.3px; color:#0f172a; }
+.flacso-loader-text p { margin:0; font-weight:500; color:#111827; opacity:1; }
+@keyframes flacso-bounce { 0%,80%,100%{ transform:translateY(0); opacity:.7;} 40%{ transform:translateY(-6px); opacity:1;} }
+
+.flacso-success-card { background:#e8f5e9; border:1px solid #c7e5cd; border-radius:12px; padding:1.5rem 1.25rem; box-shadow:0 4px 12px rgba(0,0,0,.06); }
+.flacso-success-header { display:flex; align-items:center; gap:1rem; margin-bottom:1rem; }
+.flacso-success-icon { width:42px; height:42px; background:#198754; color:#fff; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.4rem; }
+.flacso-success-header h3 { margin:0; font-weight:800; color:#14532d; letter-spacing:.2px; }
+.flacso-success-body h4 { font-weight:700; color:#14532d; }
+.flacso-success-body .lead { font-size:1rem; color:#255734; }
+.flacso-success-list { list-style:none; padding:0; margin:0 0 1rem 0; }
+.flacso-success-list li { margin-bottom:.35rem; font-weight:500; }
+.flacso-success-steps h5 { font-weight:700; margin-bottom:.5rem; color:#14532d; }
+.flacso-success-steps ol { padding-left:1.2rem; margin:0; display:grid; gap:.35rem; }
+
+.flacso-boton-envio { background:#f8f9fa; padding:2rem 1rem; margin:0 -1rem -1.5rem; }
+.flacso-boton-envio .btn { border-radius:12px; padding:1rem 2rem; font-size:1.1rem; font-weight:600; transition:all .3s; }
+.flacso-boton-envio .btn:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(40,167,69,.3); }
+
+.was-validated .form-control-flacso:valid,.form-control-flacso.is-valid { border-color:#198754; }
+.was-validated .form-control-flacso:invalid,.form-control-flacso.is-invalid { border-color:#dc3545; }
+
+.iti { width:100%; }
+.iti__selected-flag { padding:0 12px; }
+.iti__country-list { z-index:1000; }
+
+.country-select { width:100% !important; }
+.country-select input { width:100% !important; padding-left:3rem !important; }
+
+.text-danger{color:#dc3545 !important;} .form-text{color:#6c757d !important;} .form-label{color:#343a40 !important;}
+
+.flacso-resultado-area:focus { outline:2px solid #1d3a72; outline-offset:2px; }
+.flacso-input-group input[type="file"] { padding:.75rem; }
+
+@media (max-width:768px){
+    .flacso-formulario-body { padding:1rem .75rem; }
+    .flacso-seccion { padding:1rem; margin-bottom:1.5rem; }
+    .flacso-seccion-header { flex-direction:column; text-align:center; gap:.75rem; }
+    .flacso-seccion-icon { align-self:center; }
+    .flacso-hero-layout { grid-template-columns:1fr; }
+    .flacso-hero-title { font-size:1.65rem; }
+    .flacso-hero-header { padding:2.5rem 1rem; }
+    .flacso-hero-actions { flex-direction:column; }
+    .flacso-btn-primary, .flacso-btn-convenios { width:100%; justify-content:center; }
+}

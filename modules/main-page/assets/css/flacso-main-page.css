@@ -1,0 +1,1843 @@
+:root {
+    --flacso-section-max-width: 1200px;
+    --flacso-section-gutter: 20px;
+    --flacso-section-heading-color: var(--global-palette1, #1d3a72);
+    --flacso-section-vertical-space: clamp(2rem, 3.5vw, 3.5rem);
+}
+
+/* Admin panel - eliminar márgenes */
+.flacso-unified-wrap {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.flacso-global-header {
+    margin: 0 !important;
+    margin-bottom: 24px !important;
+    padding: 24px 20px !important;
+}
+
+.flacso-unified-panel {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding: 32px !important;
+}
+
+.flacso-unified-panel + .flacso-unified-panel {
+    margin-top: 0 !important;
+}
+
+.flacso-section-content {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Paleta agrupada según Kadence:
+   - Colores de énfasis: 1, 2, 10
+   - Contraste: 3 a 6
+   - Base: 7, 8, 9
+   - Avisos/alertas: 11 a 15 */
+
+.flacso-homepage-completa {
+    position: relative;
+    background: #f6f8fb;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+}
+
+/* Quitar márgenes heredados del tema alrededor del contenedor principal y sus hijos directos */
+.flacso-main-page,
+.flacso-main-page > * ,
+.flacso-home-layout > * {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+/* Fuerza el bloque Gutenberg a ocupar todo el ancho de la ventana y elimina márgenes/paddings del tema */
+.wp-block-flacso-uruguay-homepage-builder {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.wp-block-flacso-uruguay-homepage-builder .flacso-homepage-completa {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100%;
+    max-width: none;
+}
+
+/* Anular contenedores del tema que limitan el ancho del bloque completo */
+.entry-content > .wp-block-flacso-uruguay-homepage-builder,
+.site-main > .wp-block-flacso-uruguay-homepage-builder {
+    max-width: none !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+    transform: none;
+    padding: 0 !important;
+}
+
+/* El contenido interno del hero y siguientes secciones respeta el ancho completo */
+.wp-block-flacso-uruguay-homepage-builder .flacso-home-layout,
+.wp-block-flacso-uruguay-homepage-builder .flacso-home-block {
+    width: 100%;
+}
+
+.flacso-homepage-completa::before,
+.flacso-homepage-completa::after {
+    content: "";
+    position: absolute;
+    width: clamp(220px, 35vw, 420px);
+    height: clamp(220px, 35vw, 420px);
+    border-radius: 50%;
+    filter: blur(45px);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.flacso-homepage-completa::before {
+    background: rgba(29, 58, 114, 0.25);
+    top: -15%;
+    left: -10%;
+}
+
+.flacso-homepage-completa::after {
+    background: rgba(247, 183, 51, 0.2);
+    bottom: -12%;
+    right: -14%;
+}
+
+.flacso-homepage-completa > * {
+    position: relative;
+}
+
+.flacso-section-wrapper {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+}
+
+.flacso-section-wrapper + .flacso-section-wrapper {
+    margin-top: 0;
+}
+
+.flacso-section-wrapper > * {
+    margin: 0 auto;
+    width: 100%;
+}
+
+.flacso-section-wrapper > *:first-child {
+    margin-top: 0;
+}
+
+.flacso-content-shell {
+    width: min(100%, var(--flacso-section-max-width));
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--flacso-section-gutter);
+    padding-right: var(--flacso-section-gutter);
+    box-sizing: border-box;
+}
+
+/* SOLO .flacso-content-shell define el ancho estándar.
+    Las secciones externas mantienen fondo a ancho completo. */
+
+.flacso-home-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+}
+
+/* Forzar sin margen entre secciones principales */
+.flacso-main-page .flacso-home-block,
+.flacso-main-page .flacso-novedades-section,
+.flacso-main-page .flacso-novedades-destacadas,
+.flacso-main-page .flacso-novedades-busqueda,
+.flacso-main-page [class*="flacso-"] section,
+.flacso-main-page .flacso-section-wrapper > * {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+/* Ajustar búsqueda novedades que tenía margin-bottom */
+.flacso-main-page .flacso-novedades-busqueda {
+    margin-bottom: 0 !important;
+}
+
+.flacso-main-page .flacso-home-block {
+    width: 100%;
+    padding-block: var(--flacso-section-vertical-space);
+}
+
+.flacso-main-page .flacso-home-block--hero {
+    padding-block: 0;
+}
+
+/* Sin separación entre secciones del home */
+.flacso-main-page .flacso-home-block,
+.flacso-main-page .flacso-section-wrapper,
+.flacso-main-page .flacso-section-wrapper > * {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.flacso-main-page .flacso-home-block > section,
+.flacso-main-page .flacso-home-block > div > section {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.flacso-home-block:not(.flacso-home-block--hero) header {
+    margin-bottom: clamp(1rem, 2vw, 1.5rem);
+}
+
+.flacso-home-block:not(.flacso-home-block--hero) h2 {
+    font-family: var(--global-heading-font-family, "Helvetica Neue", sans-serif);
+    font-size: clamp(1.9rem, 2.6vw, 2.4rem);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: 0.04em;
+    margin: 0 0 0.35rem;
+    color: var(--flacso-section-heading-color, var(--global-palette1, #1d3a72));
+    padding-bottom: 0.75rem;
+    border-bottom: 3px solid var(--global-palette-btn-bg, #248138);
+    position: relative;
+}
+
+.flacso-novedades-busqueda {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(247, 247, 255, 0.95));
+    border-radius: 32px;
+    margin-bottom: clamp(1.5rem, 4vw, 3rem);
+    padding: clamp(2rem, 4vw, 3rem);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Override para que el buscador ocupe el ancho máximo disponible dentro de la sección */
+.flacso-novedades-busqueda .flacso-novedades-search--modern {
+    width: 100%;
+    max-width: 100%;
+    padding: 0; /* eliminar padding interno para que el campo se expanda */
+    background: transparent; /* sin fondo adicional */
+    box-shadow: none; /* quitar sombra extra */
+    border: 0; /* sin borde envolvente */
+    border-radius: 0; /* alinear con bordes de la sección contenedora */
+}
+
+.flacso-novedades-busqueda .flacso-novedades-search--modern .novedades-search-controls {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+}
+
+.flacso-novedades-busqueda .flacso-novedades-search--modern .novedades-search-field {
+    flex: 1 1 100%; /* campo ocupa todo el ancho disponible */
+}
+
+.flacso-novedades-busqueda .flacso-novedades-search--modern .novedades-search-actions {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: stretch;
+}
+
+@media (min-width: 992px) {
+    /* En desktop mantener acciones en línea pero campo sigue ocupando máximo ancho */
+    .flacso-novedades-busqueda .flacso-novedades-search--modern .novedades-search-field { flex: 1 1 auto; }
+    .flacso-novedades-busqueda .flacso-novedades-search--modern .novedades-search-actions { align-self: center; }
+}
+
+.flacso-novedades-search-card {
+    background: #fff;
+    border-radius: 28px;
+    padding: clamp(1.5rem, 3vw, 2rem);
+    box-shadow: 0 20px 50px rgba(15, 26, 45, 0.08);
+}
+
+.flacso-novedades-search-card__inner {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: clamp(1rem, 2vw, 1.5rem);
+    align-items: center;
+}
+
+.flacso-novedades-search-card__intro h3 {
+    margin: 0.75rem 0 0.35rem;
+    font-size: clamp(1.8rem, 2.4vw, 2.2rem);
+    color: var(--global-palette1, #1d3a72);
+}
+
+.flacso-novedades-search-card__intro p {
+    margin: 0;
+    color: var(--global-palette5, #5b6172);
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.novedades-search-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.novedades-search-field {
+    position: relative;
+}
+
+.novedades-search-icon {
+    position: absolute;
+    left: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--global-palette5, #6b7280);
+    font-size: 1.25rem;
+}
+
+.novedades-search-input {
+    padding: 0.95rem 1.25rem 0.95rem 3rem;
+    border-radius: 999px;
+    border: 2px solid rgba(15, 26, 45, 0.1);
+    box-shadow: 0 10px 30px rgba(29, 58, 114, 0.05);
+    width: 100%;
+    font-size: 1rem;
+}
+
+.novedades-search-input:focus {
+    outline: none;
+    border-color: var(--global-palette1, #1d3a72);
+}
+
+.novedades-search-clear {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    color: var(--global-palette5, #6b7280);
+    display: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0;
+}
+
+.novedades-search-form.has-value .novedades-search-clear {
+    display: inline-flex;
+}
+
+.novedades-search-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.novedades-search-results {
+    margin-top: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.novedades-search-placeholder,
+.novedades-search-loading,
+.novedades-search-empty,
+.novedades-search-error {
+    background: var(--global-palette9, #ffffff);
+    border: 1px solid rgba(15, 26, 45, 0.1);
+    border-radius: 18px;
+    padding: 1.2rem 1.5rem;
+    text-align: center;
+    color: var(--global-palette5, #6a6e83);
+}
+
+.novedades-search-empty a,
+.novedades-search-error a {
+    color: var(--global-palette1, #1d3a72);
+    text-decoration: underline;
+}
+
+.novedades-search-results .search-result-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem;
+    border-radius: 18px;
+    border: 1px solid rgba(15, 26, 45, 0.08);
+    background: #fff;
+    text-decoration: none;
+    color: inherit;
+    min-height: 120px;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.novedades-search-results .search-result-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 35px rgba(15, 26, 45, 0.1);
+    border-color: rgba(15, 26, 45, 0.2);
+}
+
+.novedades-search-results .search-result-thumb {
+    width: 88px;
+    height: 88px;
+    border-radius: 16px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.novedades-search-results .search-result-thumb + div {
+    flex: 1;
+}
+
+.novedades-search-results .search-result-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--global-palette5, #6b7280);
+    margin-bottom: 0.35rem;
+}
+
+.novedades-search-results .search-result-excerpt {
+    color: var(--global-palette4, #5b6172);
+}
+
+.novedades-search-results .search-result-item i {
+    color: var(--global-palette1, #1d3a72);
+}
+
+.flacso-main-page .flacso-home-block + .flacso-home-block {
+    margin-top: 0;
+}
+
+.flc-highlight-grid {
+    display: grid;
+    gap: clamp(1.25rem, 4vw, 2.5rem);
+}
+
+.flc-highlight-grid__item {
+    display: flex;
+    min-height: 100%;
+}
+
+.flc-highlight-grid__item > * {
+    flex: 1;
+}
+
+@media (min-width: 992px) {
+    .flc-highlight-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: stretch;
+    }
+}
+
+.flacso-btn {
+    display: inline-block;
+    padding: 12px 30px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-family: var(--global-heading-font-family, "Helvetica Neue", sans-serif);
+    text-align: center;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.flacso-btn-primary {
+    background: var(--global-palette-btn-bg, var(--global-palette1, #1d3a72));
+    border-color: var(--global-palette-btn-bg, var(--global-palette1, #1d3a72));
+    color: var(--global-palette-btn, #ffffff);
+}
+
+.flacso-btn-primary:hover {
+    background: var(--global-palette-btn-bg-hover, #102449);
+    border-color: var(--global-palette-btn-bg-hover, #102449);
+    color: var(--global-palette-btn-hover, #ffffff);
+}
+
+.flacso-btn-outline {
+    background: transparent;
+    border-color: var(--global-palette2, #f7b733);
+    color: var(--global-palette2, #f7b733);
+}
+
+.flacso-btn-outline:hover {
+    background: var(--global-palette2, #f7b733);
+    color: var(--global-palette3, #0f1a2d);
+}
+
+.flacso-btn-anim {
+    transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.flacso-btn-anim:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.flacso-sticky-buttons {
+    position: fixed;
+    top: var(--global-navbar-height, 80px);
+    left: 0;
+    right: 0;
+    background: var(--global-palette1, #1d3a72);
+    backdrop-filter: blur(10px);
+    padding: 12px 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    display: none;
+    justify-content: center;
+    gap: 1rem;
+    transform: translateY(-100%);
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--global-palette9, #ffffff);
+}
+
+.flacso-sticky-buttons.show {
+    transform: translateY(0);
+    display: flex;
+}
+
+.flacso-sticky-buttons .flacso-btn {
+    padding: 8px 20px;
+    font-size: 0.9rem;
+    background: var(--global-palette-btn-bg, var(--global-palette1, #1d3a72));
+    border-color: var(--global-palette-btn-bg, var(--global-palette1, #1d3a72));
+    color: var(--global-palette-btn, #ffffff);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.flacso-sticky-buttons .flacso-btn:hover,
+.flacso-sticky-buttons .flacso-btn:focus-visible {
+    background: var(--global-palette-btn-bg-hover, #102449);
+    border-color: var(--global-palette-btn-bg-hover, #102449);
+}
+
+.flacso-fade-in {
+    animation: flacso-main-fadeIn 0.8s ease-out forwards;
+}
+
+.flacso-slide-in-left {
+    animation: flacso-main-slideInLeft 0.8s ease-out forwards;
+}
+
+.flacso-slide-in-right {
+    animation: flacso-main-slideInRight 0.8s ease-out forwards;
+}
+
+@keyframes flacso-main-float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes flacso-main-fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes flacso-main-slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes flacso-main-slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes flacso-main-banner-move {
+    0% {
+        background-position: center;
+    }
+    100% {
+        background-position: center 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    .flacso-sticky-buttons {
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 10px 15px;
+    }
+
+    .flacso-sticky-buttons .flacso-btn {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+    }
+}
+
+/* Botón flotante Zoom (oculto por defecto) */
+.zoom-registro-floating {
+    position: fixed;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    z-index: 9999;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.9rem 1.6rem;
+    border-radius: 999px;
+    background: var(--global-palette2, #f7b733);
+    color: var(--global-palette3, #0f1a2d);
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(20px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.zoom-registro-floating.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+.zoom-registro-floating {
+        left: 1rem;
+        right: 1rem;
+        justify-content: center;
+        text-align: center;
+    }
+}
+
+.flacso-congreso-section {
+    position: relative;
+    color: var(--global-palette9, #ffffff);
+    padding: 120px 0;
+    text-align: center;
+    overflow: hidden;
+}
+.flacso-congreso-section a {
+    color: inherit;
+}
+.flacso-congreso-section .flacso-btn-outline {
+    border-color: rgba(255, 255, 255, 0.85);
+    color: #ffffff;
+}
+.flacso-congreso-section .flacso-btn-outline:hover,
+.flacso-congreso-section .flacso-btn-outline:focus-visible {
+    background: #ffffff;
+    color: var(--global-palette3, #0f1a2d);
+}
+
+.flacso-congreso-section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.05), transparent 70%);
+    animation: flacso-main-float 10s ease-in-out infinite alternate;
+}
+
+.flacso-congreso-content {
+    position: relative;
+    text-align: center;
+}
+
+.flacso-congreso-title {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    font-family: var(--global-heading-font-family, "Helvetica Neue", sans-serif);
+    letter-spacing: 1px;
+    animation: flacso-main-slideDown 1.2s ease-out forwards;
+    color: #ffffff;
+}
+
+.flacso-congreso-text {
+    font-size: 1.15rem;
+    line-height: 1.8;
+    margin-bottom: 3rem;
+    font-family: var(--global-body-font-family, "Helvetica Neue", sans-serif);
+    opacity: 0;
+    animation: flacso-main-fadeUp 1.3s ease-out forwards;
+    animation-delay: 0.4s;
+}
+
+.flacso-congreso-text strong,
+.flacso-congreso-title strong {
+    color: var(--global-palette2, #f7b733);
+    font-weight: 800;
+}
+
+.flacso-congreso-btn {
+    font-size: 1rem;
+    padding: 14px 36px;
+    letter-spacing: 0.5px;
+}
+
+.flacso-contacto {
+    margin: 0 !important;
+}
+.flacso-contacto-section {
+    position: relative;
+    background-color: var(--flacso-contacto-bg-color, var(--global-palette8, #f2f6ff));
+    background-image: var(--flacso-contacto-bg-image, none);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    color: var(--global-palette3, #0f1a2d);
+    padding: 24px 0 !important;
+    overflow: hidden;
+    border-radius: 0;
+}
+.flacso-contacto-section::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: url('https://flacso.edu.uy/wp-content/uploads/2025/10/shape-bg-1.png') center/cover no-repeat;
+    opacity: 0.25;
+    pointer-events: none;
+}
+.flacso-contacto-content {
+    position: relative;
+}
+.flacso-contacto-title {
+    font-size: clamp(2.1rem, 4vw, 2.6rem);
+    font-weight: 800;
+    font-family: var(--global-heading-font-family, "Helvetica Neue", sans-serif);
+    margin-bottom: 1rem;
+    color: var(--global-palette1, #1d3a72);
+}
+.flacso-contacto-subtitle {
+    font-size: 1.2rem;
+    color: var(--global-palette4, #1f2933);
+    font-family: var(--global-body-font-family, "Helvetica Neue", sans-serif);
+    font-weight: 500;
+    margin-bottom: 0;
+}
+.flacso-contacto .flacso-btn {
+    margin-top: 0.85rem;
+}
+@media (max-width: 992px) {
+    .flacso-contacto {
+        margin: 0 !important;
+    }
+    .flacso-contacto-section {
+        padding: 20px 0 !important;
+        border-radius: 0;
+    }
+    .flacso-contacto-content {
+        text-align: center;
+    }
+    .flacso-contacto .text-md-end {
+        text-align: center !important;
+        margin-top: 1.5rem;
+    }
+    .flacso-contacto-subtitle {
+        font-size: 1.05rem;
+    }
+}
+
+@keyframes flacso-main-slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes flacso-main-fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .flacso-congreso-section {
+        padding: 90px 20px;
+        background-attachment: scroll;
+    }
+    .flacso-congreso-title {
+        font-size: 2rem;
+    }
+    .flacso-congreso-text {
+        font-size: 1.05rem;
+    }
+}
+
+/* Estilos adicionales heredados del tema */
+.flacso-hero-title {
+    color: var(--global-palette7, #f0f0f0);
+}
+
+.display-3 {
+    color: var(--global-palette7, #f0f0f0);
+}
+
+.flacso-home-block:not(.flacso-home-block--hero) h2::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 0;
+    width: 80px;
+    height: 3px;
+    background: var(--flacso-section-heading-color, var(--global-palette1, #1d3a72));
+}
+
+.site-header,
+.navbar {
+    position: relative;
+    z-index: 9999 !important;
+}
+
+.flacso-main-page .spin-loader {
+    display: inline-block;
+    animation: flacso-main-spin 1s linear infinite;
+}
+
+@keyframes flacso-main-spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.flacso-main-page .fade-in {
+    animation: flacso-main-fadeIn 0.5s ease-in;
+}
+
+@keyframes flacso-main-fadeIn-alt {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.flacso-main-page .seminario-card {
+    background: var(--global-palette-background, #ffffff);
+    border: 1px solid var(--global-gray-300, #dee2e6);
+    border-radius: var(--global-br-sm, 0.375rem);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    height: 100%;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+}
+
+.flacso-main-page .seminario-card:hover,
+.flacso-main-page .seminario-card:focus-within {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border-color: var(--global-palette-btn-bg, #0366d6);
+    outline: 2px solid transparent;
+}
+
+.flacso-main-page .seminario-card.iniciado {
+    opacity: 0.7;
+    border-left: 4px solid var(--global-gray-400, #ced4da);
+}
+
+.flacso-main-page .seminario-card__image-container {
+    position: relative;
+    overflow: hidden;
+    height: 200px;
+    background-color: var(--global-gray-100, #f8f9fa);
+}
+
+.flacso-main-page .seminario-card__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.flacso-main-page .seminario-card:hover .seminario-card__image {
+    transform: scale(1.05);
+}
+
+.flacso-main-page .seminario-card__content {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.flacso-main-page .seminario-card__title {
+    font-family: var(--global-heading-font-family, inherit);
+    font-size: var(--global-font-size-lg, 1.25rem);
+    color: var(--global-palette-heading, #2d3748);
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+}
+
+.flacso-main-page .seminario-card__title a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.flacso-main-page .seminario-card__title a:hover,
+.flacso-main-page .seminario-card__title a:focus {
+    color: var(--global-palette-btn-bg, #0366d6);
+    text-decoration: underline;
+}
+
+.flacso-main-page .seminario-card__date {
+    color: var(--global-palette-body, #6c757d);
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.flacso-main-page .seminario-card__date::before {
+    content: "\\f469";
+    font-family: dashicons;
+    margin-right: 0.5rem;
+    color: var(--global-palette-btn-bg, #0366d6);
+}
+
+.flacso-main-page .seminario-card__excerpt {
+    color: var(--global-palette-body, #6c757d);
+    margin-bottom: 1.5rem;
+    flex-grow: 1;
+    line-height: 1.6;
+}
+
+.flacso-main-page .seminario-card__button {
+    align-self: flex-start;
+    margin-top: auto;
+}
+
+.flacso-main-page .kadence-btn {
+    background: var(--global-palette-btn-bg, #0366d6) !important;
+    border-color: var(--global-palette-btn-bg, #0366d6) !important;
+    color: var(--global-palette-btn-color, #ffffff) !important;
+    border-radius: 50px !important;
+    padding: 0.75rem 1.5rem !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center;
+    transition: all 0.3s ease !important;
+    position: relative;
+}
+
+.flacso-main-page .kadence-btn:hover,
+.flacso-main-page .kadence-btn:focus {
+    background: var(--global-palette-btn-bg-hover, #0256b9) !important;
+    border-color: var(--global-palette-btn-bg-hover, #0256b9) !important;
+    color: var(--global-palette-btn-color-hover, #ffffff) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    outline: none;
+}
+
+.flacso-main-page .kadence-btn--loading {
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.flacso-main-page .kadence-btn--disabled {
+    background: var(--global-gray-300, #dee2e6) !important;
+    border-color: var(--global-gray-300, #dee2e6) !important;
+    color: var(--global-gray-600, #6c757d) !important;
+    cursor: not-allowed;
+}
+
+.flacso-main-page .kadence-btn--disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.flacso-main-page .seminario-card__image-container img[data-src] {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.flacso-main-page .seminario-card__image-container img.loaded {
+    opacity: 1;
+}
+
+.flacso-main-page .seminario-card:focus-within {
+    outline: 2px solid var(--global-palette-btn-bg, #0366d6);
+    outline-offset: 2px;
+}
+
+.flacso-main-page .mes-separador {
+    margin: 2.5rem 0 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--global-palette-btn-bg, #0366d6);
+    color: var(--global-palette-heading, #2d3748);
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.flacso-main-page .seminarios-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.flacso-main-page .seminarios-mes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .flacso-main-page .seminario-card__content {
+        padding: 1.25rem;
+    }
+
+    .flacso-main-page .seminario-card__image-container {
+        height: 180px;
+    }
+
+    .flacso-main-page .seminarios-mes {
+        grid-template-columns: 1fr;
+    }
+
+    .flacso-main-page .mes-separador {
+        font-size: 1.3rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .flacso-main-page .seminario-card__image-container {
+        height: 160px;
+    }
+
+    .flacso-main-page .kadence-btn {
+        padding: 0.6rem 1.2rem !important;
+        font-size: 0.9rem;
+    }
+
+    .flacso-main-page .mes-separador {
+        font-size: 1.2rem;
+        margin: 2rem 0 1rem;
+    }
+}
+
+.flacso-main-page .btn.btn-primary,
+.flacso-main-page button.btn.btn-primary,
+.flacso-main-page a.btn.btn-primary {
+    background: var(--global-palette-btn-bg, #0366d6) !important;
+    border-color: var(--global-palette-btn-bg, #0366d6) !important;
+    color: var(--global-palette-btn-color, #ffffff) !important;
+    border-radius: 999px !important;
+    padding: 0.75rem 1.25rem !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    background-image: none !important;
+}
+
+.flacso-main-page .btn.btn-primary:hover,
+.flacso-main-page button.btn.btn-primary:hover,
+.flacso-main-page a.btn.btn-primary:hover {
+    background: var(--global-palette-btn-bg-hover, var(--global-palette-btn-bg, #0366d6)) !important;
+    border-color: var(--global-palette-btn-bg-hover, var(--global-palette-btn-bg, #0366d6)) !important;
+    color: var(--global-palette-btn-color-hover, var(--global-palette-btn-color, #ffffff)) !important;
+    filter: brightness(0.98);
+    transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+    .flacso-main-page .wp-block-cover.alignfull.is-light {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
+    }
+
+    .flacso-main-page .wp-block-cover__image-background {
+        object-position: center top !important;
+    }
+
+    .flacso-main-page .wp-block-group.has-theme-palette-9-background-color.has-background {
+        padding: 1rem !important;
+        margin-top: 1rem !important;
+        margin-bottom: 1rem !important;
+    }
+
+    .flacso-main-page .wp-block-columns {
+        flex-direction: column !important;
+    }
+
+    .flacso-main-page .wp-block-column {
+        width: 100% !important;
+        margin-bottom: 1.5rem !important;
+    }
+
+    .flacso-main-page .wp-block-column p.has-theme-palette-3-color {
+        font-size: 1rem !important;
+    }
+
+    .flacso-main-page .wp-block-heading.has-large-font-size {
+        font-size: 1.3rem !important;
+    }
+
+    .flacso-main-page .wp-block-group.has-theme-palette-8-background-color h2.wp-block-heading {
+        font-size: 1.3rem !important;
+    }
+
+    .flacso-main-page .wp-block-column.has-background h5.wp-block-heading {
+        font-size: 1rem !important;
+    }
+
+    .flacso-main-page .wp-block-buttons {
+        justify-content: center !important;
+    }
+
+    .flacso-main-page .wp-block-button__link {
+        font-size: 1rem !important;
+        padding: 0.7em 1.4em !important;
+    }
+}
+
+.grecaptcha-badge {
+    visibility: hidden;
+}
+
+/* Botón flotante Zoom (oculto por defecto) */
+.zoom-registro-floating {
+    position: fixed;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    z-index: 9999;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.9rem 1.6rem;
+    border-radius: 999px;
+    background: var(--global-palette2, #f7b733);
+    color: var(--global-palette3, #0f1a2d);
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(20px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.zoom-registro-floating.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+    .zoom-registro-floating {
+        left: 1rem;
+        right: 1rem;
+        justify-content: center;
+        text-align: center;
+    }
+}
+.novedades-search-card__intro .flacso-novedades-search-card__eyebrow {
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    color: var(--global-palette5, #6b7280);
+}
+
+@media (max-width: 576px) {
+    .flacso-novedades-search-card__inner {
+        grid-template-columns: 1fr;
+    }
+
+    .novedades-search-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .novedades-search-results .search-result-item {
+        flex-direction: column;
+    }
+
+    .novedades-search-results .search-result-thumb {
+        width: 100%;
+        height: 180px;
+    }
+}
+
+.flc-eventos-react {
+    --flc-event-media-max-mobile: clamp(240px, 52vh, 460px);
+    --flc-event-media-max-mobile: clamp(240px, 52dvh, 460px);
+    --flc-event-media-max-mobile-tight: clamp(200px, 44vh, 360px);
+    --flc-event-media-max-mobile-tight: clamp(200px, 44dvh, 360px);
+    padding: clamp(1.5rem, 3vw, 2.75rem) 0;
+    background: linear-gradient(160deg, rgba(240, 245, 255, 0.55) 0%, rgba(255, 255, 255, 0.95) 45%, rgba(248, 250, 255, 0.7) 100%);
+}
+
+.flc-eventos-react__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: clamp(1rem, 2vw, 1.5rem);
+}
+
+.flc-eventos-react__title {
+    margin: 0;
+    font-size: clamp(1.8rem, 3vw, 2.55rem);
+    line-height: 1.1;
+    color: var(--global-palette1, #1d3a72);
+}
+
+.flc-eventos-react__controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.flc-eventos-react__counter {
+    min-width: 4.2rem;
+    text-align: center;
+    font-weight: 700;
+    color: var(--global-palette1, #1d3a72);
+}
+
+.flc-eventos-react__arrow {
+    width: 2.2rem;
+    height: 2.2rem;
+    border: 0;
+    border-radius: 999px;
+    background: #ffffff;
+    color: var(--global-palette1, #1d3a72);
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(15, 26, 45, 0.12);
+}
+
+.flc-eventos-react__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.95fr);
+    gap: clamp(0.75rem, 1.5vw, 1.05rem);
+}
+
+.flc-eventos-react__layout.no-list {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.flc-eventos-react__featured {
+    display: grid;
+    grid-template-columns: minmax(210px, 300px) minmax(0, 1fr);
+    align-items: flex-start;
+    border-radius: 24px;
+    overflow: hidden;
+    border: 1px solid rgba(15, 26, 45, 0.1);
+    background: #fff;
+    text-decoration: none;
+    box-shadow: 0 18px 42px rgba(15, 26, 45, 0.12);
+}
+
+.flc-eventos-react__layout.no-list .flc-eventos-react__featured {
+    max-width: min(100%, 860px);
+    margin-inline: auto;
+}
+
+.flc-eventos-react__media {
+    aspect-ratio: 1 / 1;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    align-self: stretch;
+    padding: 0;
+    height: 100%;
+}
+
+.flc-eventos-react__media img {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    object-fit: cover;
+    object-position: center center;
+    display: block;
+}
+
+.flc-eventos-react__content {
+    padding: clamp(0.85rem, 1.3vw, 1.1rem);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.flc-eventos-react__date-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    align-self: flex-start;
+    padding: 0.4rem 0.7rem;
+    border-radius: 999px;
+    background: rgba(29, 58, 114, 0.1);
+    color: var(--global-palette1, #1d3a72);
+    font-weight: 700;
+    font-size: 0.82rem;
+}
+
+.flc-eventos-react__date-badge .day {
+    font-size: 1rem;
+}
+
+.flc-eventos-react__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.flc-eventos-react__chip {
+    border-radius: 999px;
+    padding: 0.34rem 0.68rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.flc-eventos-react__chip--status {
+    background: #f59e0b;
+    color: #fff;
+}
+
+.flc-eventos-react__chip--time {
+    background: #1e3a8a;
+    color: #fff;
+}
+
+.flc-eventos-react__chip--duration {
+    background: #059669;
+    color: #fff;
+}
+
+.flc-eventos-react__event-title {
+    margin: 0;
+    color: var(--global-palette3, #0f1a2d);
+    font-size: clamp(1.05rem, 1.35vw, 1.3rem);
+    line-height: 1.26;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+}
+
+.flc-eventos-react__excerpt {
+    margin: 0;
+    color: var(--global-palette4, #3f4f65);
+    font-size: 0.95rem;
+    line-height: 1.48;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+}
+
+.flc-eventos-react__list-wrap {
+    min-width: 0;
+}
+
+.flc-eventos-react__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    max-height: 100%;
+}
+
+.flc-eventos-react__list-item {
+    margin: 0;
+}
+
+.flc-eventos-react__event-btn {
+    width: 100%;
+    border: 1px solid rgba(15, 26, 45, 0.12);
+    border-radius: 14px;
+    background: #ffffff;
+    padding: 0.7rem 0.8rem;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.65rem;
+    align-items: center;
+    text-align: left;
+    cursor: pointer;
+}
+
+.flc-eventos-react__event-btn.is-active {
+    border-color: rgba(29, 58, 114, 0.6);
+    background: #eef3ff;
+    box-shadow: 0 10px 20px rgba(29, 58, 114, 0.15);
+}
+
+.flc-eventos-react__event-btn-date {
+    min-width: 3rem;
+    border-radius: 10px;
+    background: rgba(29, 58, 114, 0.12);
+    color: var(--global-palette1, #1d3a72);
+    padding: 0.28rem 0.4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.flc-eventos-react__event-btn-date strong {
+    font-size: 1.02rem;
+}
+
+.flc-eventos-react__event-btn-date small {
+    font-size: 0.64rem;
+    text-transform: uppercase;
+}
+
+.flc-eventos-react__event-btn-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.flc-eventos-react__event-btn-title {
+    font-weight: 700;
+    color: var(--global-palette3, #0f1a2d);
+    font-size: 0.93rem;
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.flc-eventos-react__event-btn-status {
+    font-size: 0.76rem;
+    color: var(--global-palette5, #6c7685);
+    font-weight: 600;
+}
+
+@media (max-width: 1023.98px) {
+    .flc-eventos-react__layout {
+        grid-template-columns: 1fr;
+    }
+
+    .flc-eventos-react__featured {
+        grid-template-columns: 1fr;
+    }
+
+    .flc-eventos-react__layout.no-list .flc-eventos-react__featured {
+        max-width: min(100%, 640px);
+        margin-inline: auto;
+    }
+
+    .flc-eventos-react__media {
+        max-width: min(100%, var(--flc-event-media-max-mobile));
+        align-self: center;
+        margin-inline: auto;
+    }
+
+    .flc-eventos-react__list {
+        display: flex;
+        flex-direction: row;
+        gap: 0.55rem;
+        overflow-x: auto;
+        padding-bottom: 0.2rem;
+    }
+
+    .flc-eventos-react__list-item {
+        flex: 0 0 min(80vw, 320px);
+    }
+}
+
+@media (min-width: 1024px) {
+    .flc-eventos-react__media {
+        aspect-ratio: auto;
+        min-height: 100%;
+    }
+}
+
+@media (max-height: 860px) and (min-width: 1024px) {
+    .flc-eventos-react__featured {
+        grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+    }
+}
+
+@media (max-height: 860px) and (max-width: 1023.98px) {
+    .flc-eventos-react__media {
+        max-width: min(100%, var(--flc-event-media-max-mobile-tight));
+    }
+}
+
+@media (max-height: 860px) {
+    .flc-eventos-react__content {
+        gap: 0.45rem;
+    }
+
+    .flc-eventos-react__event-title {
+        -webkit-line-clamp: 2;
+    }
+
+    .flc-eventos-react__excerpt {
+        -webkit-line-clamp: 2;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .flc-eventos-react {
+        padding: 1rem 0;
+    }
+
+    .flc-eventos-react__header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.65rem;
+    }
+
+    .flc-eventos-react__title {
+        font-size: clamp(1.5rem, 7vw, 2rem);
+    }
+
+    .flc-eventos-react__media {
+        aspect-ratio: 1 / 1;
+    }
+
+    .flc-eventos-react__event-title {
+        font-size: 1.08rem;
+    }
+
+    .flc-eventos-react__excerpt {
+        font-size: 0.88rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .flc-eventos-react__list-item {
+        flex: 0 0 86%;
+    }
+}
+
+.flacso-convenios-react-shortcode {
+    width: 100%;
+}
+
+.flacso-convenios-react {
+    padding: clamp(1rem, 2.4vw, 2rem) 0;
+}
+
+.flacso-convenios-react__title {
+    margin: 0 0 1rem;
+    color: var(--global-palette1, #1d3a72);
+    font-size: clamp(1.6rem, 2.8vw, 2.3rem);
+    line-height: 1.15;
+    text-align: center;
+}
+
+.flacso-convenios-react__searchWrap {
+    width: min(860px, 100%);
+    margin: 0 auto 1.15rem;
+}
+
+.flacso-convenios-react__searchLabel {
+    display: block;
+    margin-bottom: 0.45rem;
+    font-size: 0.88rem;
+    color: var(--global-palette5, #738196);
+    font-weight: 600;
+}
+
+.flacso-convenios-react__search {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.flacso-convenios-react__searchIcon {
+    position: absolute;
+    left: 0.9rem;
+    color: var(--global-palette5, #738196);
+    pointer-events: none;
+    width: 1.15rem;
+    height: 1.15rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.flacso-convenios-react__searchIcon svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.flacso-convenios-react__input {
+    width: 100%;
+    height: 3.4rem;
+    border-radius: 14px;
+    border: 2px solid rgba(29, 58, 114, 0.2);
+    background: #fff;
+    color: var(--global-palette3, #0f1a2d);
+    font-size: 1rem;
+    padding: 0.65rem 2.6rem 0.65rem 2.6rem;
+    appearance: none;
+    -webkit-appearance: none;
+    line-height: 1.2;
+}
+
+.flacso-convenios-react__input:focus {
+    outline: none;
+    border-color: rgba(29, 58, 114, 0.55);
+    box-shadow: 0 0 0 3px rgba(29, 58, 114, 0.13);
+}
+
+.flacso-convenios-react__clear {
+    position: absolute;
+    right: 0.55rem;
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(29, 58, 114, 0.09);
+    color: var(--global-palette1, #1d3a72);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.flacso-convenios-react__counter {
+    margin: 0.5rem 0 0;
+    font-size: 0.86rem;
+    color: var(--global-palette5, #738196);
+    text-align: right;
+}
+
+.flacso-convenios-react__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: clamp(0.8rem, 1.5vw, 1.1rem);
+}
+
+.flacso-convenios-react__card {
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid rgba(29, 58, 114, 0.18);
+    border-radius: 18px;
+    background: #fff;
+    min-height: 220px;
+    padding: 1.25rem 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1rem;
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.flacso-convenios-react__card:hover,
+.flacso-convenios-react__card:focus-visible {
+    border-color: rgba(29, 58, 114, 0.55);
+    box-shadow: 0 14px 30px rgba(15, 26, 45, 0.12);
+    transform: translateY(-2px);
+}
+
+.flacso-convenios-react__logoFrame {
+    width: 128px;
+    height: 128px;
+    border-radius: 16px;
+    background: #f1f4f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.65rem;
+}
+
+.flacso-convenios-react__logoSquare {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 12px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 1px solid rgba(15, 26, 45, 0.06);
+    padding: 0.45rem;
+}
+
+.flacso-convenios-react__logoSquare img {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.flacso-convenios-react__cardTitle {
+    margin: 0;
+    text-align: center;
+    color: var(--global-palette3, #0f1a2d);
+    font-size: 1.05rem;
+    line-height: 1.32;
+    font-weight: 700;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.flacso-convenios-react__empty {
+    border: 1px dashed rgba(29, 58, 114, 0.3);
+    border-radius: 14px;
+    padding: 2rem 1rem;
+    text-align: center;
+    color: var(--global-palette5, #738196);
+}
+
+.flacso-convenios-react__emptyTitle {
+    margin: 0 0 0.4rem;
+    color: var(--global-palette1, #1d3a72);
+    font-weight: 700;
+}
+
+.flacso-convenios-react__emptyHint {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.flacso-convenios-fallback {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.9rem;
+}
+
+.flacso-convenios-fallback .convenio-card {
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid rgba(29, 58, 114, 0.18);
+    border-radius: 14px;
+    background: #fff;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.flacso-convenios-fallback .convenio-logo {
+    width: 110px;
+    height: 110px;
+    background: #f1f4f9;
+    border-radius: 12px;
+    padding: 0.55rem;
+}
+
+.flacso-convenios-fallback .convenio-logo img {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.flacso-convenios-fallback .convenio-titulo {
+    margin: 0;
+    text-align: center;
+}
+
+.flacso-convenios-fallback .convenio-arrow {
+    display: none;
+}
+
+@media (max-width: 767.98px) {
+    .flacso-convenios-react__searchWrap {
+        margin-bottom: 0.9rem;
+    }
+
+    .flacso-convenios-react__input {
+        height: 3.1rem;
+        font-size: 0.95rem;
+    }
+
+    .flacso-convenios-react__counter {
+        text-align: left;
+    }
+
+    .flacso-convenios-react__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+
+.flacso-convenios-react__card {
+        min-height: 195px;
+        padding: 0.9rem 0.7rem 0.75rem;
+        gap: 0.65rem;
+        border-radius: 14px;
+    }
+
+    .flacso-convenios-react__logoFrame {
+        width: 98px;
+        height: 98px;
+        border-radius: 12px;
+        padding: 0.5rem;
+    }
+
+    .flacso-convenios-react__cardTitle {
+        font-size: 0.9rem;
+    }
+}

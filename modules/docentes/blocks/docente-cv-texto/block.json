@@ -1,0 +1,24 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "flacso-uruguay/docente-cv-texto",
+    "title": "CV de docente (texto)",
+    "category": "flacso-uruguay",
+    "icon": "editor-alignleft",
+    "description": "Inserta el CV plano de un docente para uso en metadatos o tablas.",
+    "supports": {
+        "html": false
+    },
+    "attributes": {
+        "docId": {
+            "type": "integer",
+            "default": 0
+        },
+        "slug": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "editorScript": "dp-docente-cv-texto-block"
+}
+

@@ -1,0 +1,622 @@
+/* ============================================
+   SEMINARIO TEMPLATE STYLES - MOBILE FIRST
+   ============================================ */
+
+:root {
+    --seminario-primary: var(--global-palette1, #1d3a72);
+    --seminario-secondary: var(--global-palette2, #fed222);
+    --seminario-light: var(--global-palette8, #f8f9fa);
+    --seminario-border: var(--global-palette6, #dee2e6);
+    --seminario-text: var(--global-palette3, #2e2f34);
+    --seminario-muted: var(--global-palette5, #666);
+}
+
+/* ============================================
+   CONTAINER & WRAPPER
+   ============================================ */
+
+.flacso-cpt-seminario .seminario-wrap {
+    padding: 1rem 0;
+    background-color: #fff;
+}
+
+.flacso-cpt-seminario .seminario-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* ============================================
+   HEADER & TITLE
+   ============================================ */
+
+.flacso-cpt-seminario .seminario-header {
+    margin-bottom: 2rem;
+}
+
+.flacso-cpt-seminario .seminario-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--seminario-primary);
+    line-height: 1.3;
+    margin: 0 0 1.5rem 0;
+    word-break: break-word;
+}
+
+/* ============================================
+   FEATURED IMAGE (MOBILE-FIRST)
+   ============================================ */
+
+.flacso-cpt-seminario .seminario-thumb {
+    margin: 0 -1rem 1.5rem -1rem;
+}
+
+.flacso-cpt-seminario .seminario-thumb img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 0.5rem;
+}
+
+/* ============================================
+   PILLS/BADGES (PROGRAM & POSTDEGREE)
+   ============================================ */
+
+.flacso-cpt-seminario .seminario-header .badge {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.flacso-cpt-seminario .seminario-header .bg-primary {
+    background-color: var(--seminario-primary) !important;
+}
+
+.flacso-cpt-seminario .seminario-header .bg-secondary {
+    background-color: var(--seminario-secondary) !important;
+}
+
+/* ============================================
+   DATES SECTION
+   ============================================ */
+
+.flacso-cpt-seminario .seminario-dates {
+    padding: 1rem;
+    background-color: var(--seminario-light);
+    border-radius: 0.25rem;
+    border-left: 4px solid var(--seminario-primary);
+}
+
+.flacso-cpt-seminario .seminario-dates small {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.flacso-cpt-seminario .seminario-dates strong {
+    font-size: 1.1rem;
+    color: var(--seminario-text);
+    word-break: break-word;
+}
+
+/* ============================================
+   ALERT & INFO BOXES
+   ============================================ */
+
+.flacso-cpt-seminario .alert-info {
+    border-radius: 0.25rem;
+    border-left: 4px solid var(--seminario-primary);
+}
+
+.flacso-cpt-seminario .alert-info strong {
+    color: var(--seminario-text);
+}
+
+/* ============================================
+   CARD GRID (Credits, Hours, Accreditation)
+   ============================================ */
+
+.flacso-cpt-seminario .seminario-header .card {
+    border: 1px solid var(--seminario-border);
+    border-radius: 0.25rem;
+    transition: all 0.2s ease;
+    height: 100%;
+}
+
+.flacso-cpt-seminario .seminario-header .card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    border-color: var(--seminario-primary);
+}
+
+.flacso-cpt-seminario .seminario-header .card-body {
+    padding: 1rem;
+}
+
+.flacso-cpt-seminario .seminario-header .card-body small {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--seminario-muted);
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.flacso-cpt-seminario .seminario-header .card-body strong {
+    font-size: 1.25rem;
+    color: var(--seminario-text);
+    display: block;
+    margin-top: 0.5rem;
+}
+
+/* ============================================
+   CTA BUTTON (PREINSCRIPCIÓN)
+   ============================================ */
+
+.flacso-cpt-seminario .seminario-header .btn-primary {
+    background-color: var(--seminario-primary);
+    border-color: var(--seminario-primary);
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.25rem;
+    transition: all 0.2s ease;
+}
+
+.flacso-cpt-seminario .seminario-header .btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0b5ed7;
+    box-shadow: 0 0.5rem 1rem rgba(13, 110, 253, 0.3);
+    transform: translateY(-2px);
+}
+
+/* ============================================
+   CONTENT SECTIONS
+   ============================================ */
+
+.flacso-cpt-seminario .seminario-presentacion,
+.flacso-cpt-seminario .seminario-objetivo-general,
+.flacso-cpt-seminario .seminario-modalidad,
+.flacso-cpt-seminario .seminario-aprobacion,
+.flacso-cpt-seminario .seminario-encuentros,
+.flacso-cpt-seminario .seminario-objetivos,
+.flacso-cpt-seminario .seminario-unidades,
+.flacso-cpt-seminario .seminario-docentes,
+.flacso-cpt-seminario .seminario-formulario {
+    margin: 2rem 0;
+}
+
+.flacso-cpt-seminario .seminario-presentacion h2,
+.flacso-cpt-seminario .seminario-objetivo-general h2,
+.flacso-cpt-seminario .seminario-modalidad h2,
+.flacso-cpt-seminario .seminario-aprobacion h2,
+.flacso-cpt-seminario .seminario-encuentros h2,
+.flacso-cpt-seminario .seminario-objetivos h2,
+.flacso-cpt-seminario .seminario-unidades h2,
+.flacso-cpt-seminario .seminario-docentes h2,
+.flacso-cpt-seminario .seminario-formulario h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--seminario-primary);
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--seminario-border);
+}
+
+/* ============================================
+   CONTENT TEXT
+   ============================================ */
+
+.flacso-cpt-seminario .seminario-presentacion .content,
+.flacso-cpt-seminario .seminario-objetivo-general .content,
+.flacso-cpt-seminario .seminario-modalidad .content,
+.flacso-cpt-seminario .seminario-aprobacion .content {
+    line-height: 1.6;
+    color: var(--seminario-text);
+    font-size: 1rem;
+}
+
+/* ============================================
+   TABLES (ENCUENTROS)
+   ============================================ */
+
+.flacso-cpt-seminario .seminario-encuentros {
+    margin: 2rem 0;
+    overflow-x: auto;
+}
+
+.flacso-cpt-seminario .seminario-encuentros .table {
+    margin-bottom: 0;
+    font-size: 0.95rem;
+}
+
+.flacso-cpt-seminario .seminario-encuentros table {
+    width: 100%;
+}
+
+.flacso-cpt-seminario .seminario-encuentros table th {
+    background-color: var(--seminario-light);
+    font-weight: 600;
+    color: var(--seminario-text);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid var(--seminario-border);
+}
+
+.flacso-cpt-seminario .seminario-encuentros table td {
+    padding: 0.75rem;
+    border: 1px solid var(--seminario-border);
+    color: var(--seminario-text);
+    vertical-align: middle;
+    word-break: break-word;
+}
+
+.flacso-cpt-seminario .table-responsive {
+    border-radius: 0.25rem;
+    border: 1px solid var(--seminario-border);
+}
+
+/* ============================================
+   LISTS (OBJETIVOS)
+   ============================================ */
+
+.flacso-cpt-seminario .seminario-objetivos {
+    margin: 2rem 0;
+}
+
+.flacso-cpt-seminario .seminario-objetivos .list-group {
+    border-radius: 0.25rem;
+}
+
+.flacso-cpt-seminario .seminario-objetivos .list-group-item {
+    border-left: 4px solid var(--seminario-primary);
+    padding: 1rem;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--seminario-text);
+    border-radius: 0;
+}
+
+.flacso-cpt-seminario .seminario-objetivos .list-group-item:first-child {
+    border-top-left-radius: 0.25rem;
+    border-top-right-radius: 0.25rem;
+}
+
+.flacso-cpt-seminario .seminario-objetivos .list-group-item:last-child {
+    border-bottom-left-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+}
+
+/* ============================================
+   UNITS (UNIDADES)
+   ============================================ */
+
+.flacso-cpt-seminario .seminario-unidades {
+    margin: 2rem 0;
+}
+
+.flacso-cpt-seminario .seminario-unidades .card {
+    border: 1px solid var(--seminario-border);
+    margin-bottom: 1.5rem;
+    border-radius: 0.25rem;
+    transition: all 0.2s ease;
+}
+
+.flacso-cpt-seminario .seminario-unidades .card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    border-color: var(--seminario-primary);
+}
+
+.flacso-cpt-seminario .seminario-unidades .card-title {
+    color: var(--seminario-text);
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.flacso-cpt-seminario .seminario-unidades .card-text {
+    color: var(--seminario-text);
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+/* ============================================
+   DOCENTES (Consistente)
+   ============================================ */
+
+.flacso-cpt-seminario .seminario-docentes {
+    margin: 2rem 0;
+}
+
+.flacso-cpt-seminario .docentes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.75rem;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .flacso-cpt-seminario .docentes-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+}
+
+.flacso-cpt-seminario .docente-card {
+    background: #fff;
+    border: 1px solid #e9edf2;
+    border-radius: 1rem;
+    padding: 1.35rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.flacso-cpt-seminario .docente-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: linear-gradient(90deg, rgba(254, 210, 34, 0.95), rgba(254, 210, 34, 0));
+}
+
+.flacso-cpt-seminario .docente-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 40px rgba(16, 24, 40, 0.1);
+    border-color: rgba(29, 58, 114, 0.22);
+}
+
+/* Top section: Avatar + Meta */
+.flacso-cpt-seminario .docente-top {
+    display: grid;
+    grid-template-columns: 88px 1fr;
+    gap: 14px;
+    align-items: center;
+    margin-top: 6px;
+}
+
+.flacso-cpt-seminario .docente-avatar {
+    width: 88px;
+    height: 88px;
+    border-radius: 999px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.flacso-cpt-seminario .docente-avatar-img {
+    width: 88px;
+    height: 88px;
+    border-radius: 999px;
+    object-fit: cover;
+    display: block;
+    background: #f6f8fb;
+    border: 2px solid rgba(233, 237, 242, 0.95);
+}
+
+.flacso-cpt-seminario .docente-avatar-fallback {
+    width: 88px;
+    height: 88px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: radial-gradient(120px 120px at 30% 30%, rgba(254, 210, 34, 0.3), rgba(29, 58, 114, 0.1)),
+                linear-gradient(135deg, rgba(29, 58, 114, 0.95), rgba(17, 89, 175, 0.9));
+    color: #fff;
+    font-weight: 850;
+    font-size: 1.5rem;
+    border: 2px solid rgba(233, 237, 242, 0.95);
+}
+
+.flacso-cpt-seminario .docente-meta {
+    min-width: 0;
+}
+
+.flacso-cpt-seminario .docente-name {
+    margin: 0;
+    font-weight: 820;
+    letter-spacing: -0.015em;
+    color: #1d3a72;
+    font-size: 1.15rem;
+    line-height: 1.2;
+    text-wrap: balance;
+    hyphens: auto;
+    overflow-wrap: anywhere;
+}
+
+.flacso-cpt-seminario .docente-role {
+    margin-top: 6px;
+    color: #7a8696;
+    font-weight: 650;
+    font-size: 0.96rem;
+    line-height: 1.35;
+}
+
+/* CV siempre visible */
+.flacso-cpt-seminario .docente-cv {
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 12px;
+    background: rgba(246, 248, 251, 0.7);
+    border: 1px solid #e9edf2;
+    color: #2e2f34;
+    font-size: 0.98rem;
+}
+
+.flacso-cpt-seminario .docente-cv p {
+    margin: 0 0 12px;
+}
+
+.flacso-cpt-seminario .docente-cv ul,
+.flacso-cpt-seminario .docente-cv ol {
+    margin: 0 0 12px 20px;
+    padding: 0;
+}
+
+.flacso-cpt-seminario .docente-cv li {
+    margin: 0 0 6px;
+}
+
+.flacso-cpt-seminario .docente-cv strong {
+    color: #1d3a72;
+    font-weight: 750;
+}
+
+.flacso-cpt-seminario .docente-cv a {
+    color: #1d3a72;
+    text-decoration: underline;
+}
+
+.flacso-cpt-seminario .docente-cv a:hover {
+    color: #0d6efd;
+}
+
+/* ============================================
+   INSTRUCTORS (LEGACY - hidden)
+   ============================================ */
+
+/* ============================================
+   INSCRIPTION FORM
+   ============================================ */
+
+.flacso-cpt-seminario .seminario-formulario {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background-color: var(--seminario-light);
+    border-radius: 0.25rem;
+    border-left: 4px solid var(--seminario-primary);
+}
+
+.flacso-cpt-seminario .seminario-formulario h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+}
+
+.flacso-cpt-seminario .seminario-formulario .form-label {
+    font-weight: 500;
+    color: var(--seminario-text);
+    margin-bottom: 0.5rem;
+}
+
+.flacso-cpt-seminario .seminario-formulario .form-control {
+    border-radius: 0.25rem;
+    border: 1px solid var(--seminario-border);
+    padding: 0.75rem;
+    font-size: 1rem;
+}
+
+.flacso-cpt-seminario .seminario-formulario .form-control:focus {
+    border-color: var(--seminario-primary);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.flacso-cpt-seminario .seminario-formulario .btn-primary {
+    margin-top: 1rem;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+/* Small screens (< 576px) */
+@media (max-width: 575.98px) {
+    .seminario-title {
+        font-size: 1.5rem;
+    }
+
+    .seminario-presentacion h2,
+    .seminario-objetivo-general h2,
+    .seminario-modalidad h2,
+    .seminario-aprobacion h2,
+    .seminario-encuentros h2,
+    .seminario-objetivos h2,
+    .seminario-unidades h2,
+    .seminario-docentes h2,
+    .seminario-formulario h2 {
+        font-size: 1.25rem;
+    }
+
+    .seminario-header .row {
+        row-gap: 0.75rem;
+    }
+
+    .seminario-header .card {
+        margin-bottom: 0.75rem;
+    }
+
+    .seminario-header .btn-primary {
+        width: 100%;
+    }
+
+    .seminario-dates {
+        padding: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .seminario-thumb {
+        margin-left: -1rem;
+        margin-right: -1rem;
+        margin-bottom: 1rem;
+    }
+}
+
+/* Medium screens (>= 576px) */
+@media (min-width: 576px) {
+    .seminario-title {
+        font-size: 2rem;
+    }
+
+    .seminario-header .btn-primary {
+        width: auto;
+    }
+}
+
+/* Large screens (>= 992px) */
+@media (min-width: 992px) {
+    .seminario-title {
+        font-size: 2.5rem;
+    }
+
+    .seminario-presentacion h2,
+    .seminario-objetivo-general h2,
+    .seminario-modalidad h2,
+    .seminario-aprobacion h2,
+    .seminario-encuentros h2,
+    .seminario-objetivos h2,
+    .seminario-unidades h2,
+    .seminario-docentes h2,
+    .seminario-formulario h2 {
+        font-size: 1.75rem;
+    }
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+
+a:focus,
+button:focus,
+.btn:focus {
+    outline: 2px solid var(--seminario-primary);
+    outline-offset: 2px;
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+
+@media print {
+    .seminario-header .btn-primary,
+    .seminario-formulario {
+        display: none;
+    }
+
+    .seminario-wrap {
+        padding: 0;
+    }
+
+    .seminario-container {
+        padding: 0;
+    }
+}
+
+

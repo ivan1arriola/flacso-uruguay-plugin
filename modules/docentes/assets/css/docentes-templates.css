@@ -1,0 +1,993 @@
+.dp-directory {
+    --dp-surface: var(--global-palette9, #ffffff);
+    --dp-surface-alt: var(--global-palette8, #f8f9fa);
+    --dp-border: var(--global-palette7, #e9edf2);
+    --dp-muted: var(--global-palette5, #7a8696);
+    --dp-heading: var(--global-palette3, #0f1a2d);
+    --dp-primary: var(--global-palette1, #1d3a72);
+    --dp-accent: var(--global-palette12, #1159af);
+    --dp-radius: 1.25rem;
+    color: var(--dp-heading);
+}
+
+.dp-directory .text-white-75 {
+    color: rgba(var(--global-palette9rgb, 255, 255, 255), 0.75) !important;
+}
+
+.docentes-breadcrumb {
+    --bs-breadcrumb-divider: '>';
+    background: var(--dp-surface);
+    border-radius: 999px;
+    border: 1px solid var(--dp-border);
+    padding: 0.35rem 0.85rem;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    box-shadow: 0 0.75rem 2rem rgba(15, 23, 42, 0.08);
+}
+
+.dp-directory-hero {
+    background: linear-gradient(125deg, var(--dp-primary), var(--dp-accent));
+    border-radius: calc(var(--dp-radius) * 1.1);
+    color: var(--global-palette9, #ffffff);
+    padding: clamp(1.5rem, 2vw, 2.75rem);
+    position: relative;
+    overflow: hidden;
+}
+
+.dp-directory-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba(var(--global-palette9rgb, 255, 255, 255), 0.2), transparent 60%);
+    pointer-events: none;
+}
+
+.dp-directory-hero__stat {
+    background: rgba(var(--global-palette9rgb, 255, 255, 255), 0.15);
+    border-radius: var(--dp-radius);
+    padding: 1rem 1.25rem;
+    min-height: 88px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.15rem;
+    border: 1px solid rgba(var(--global-palette9rgb, 255, 255, 255), 0.2);
+}
+
+.dp-directory-hero__stat small {
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    color: rgba(var(--global-palette9rgb, 255, 255, 255), 0.8);
+}
+
+.dp-directory-hero__stat strong {
+    font-size: 1.5rem;
+    color: var(--global-palette9, #ffffff);
+}
+
+.dp-directory-toolbar {
+    border-radius: var(--dp-radius);
+}
+
+.dp-directory-toolbar .input-group-text {
+    background: var(--dp-surface-alt);
+    border-color: var(--dp-border);
+    color: var(--dp-muted);
+}
+
+.dp-directory-toolbar .form-control,
+.dp-directory-toolbar .form-select {
+    border-color: var(--dp-border);
+}
+
+.dp-directory-toolbar__hint {
+    color: var(--dp-muted);
+}
+
+.dp-filter-pillset {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.dp-filter-pill {
+    border: 1px solid var(--dp-border);
+    border-radius: 999px;
+    padding: 0.35rem 0.95rem;
+    background: var(--dp-surface);
+    color: var(--dp-heading);
+    font-size: 0.9rem;
+    transition: all 0.15s ease-in-out;
+}
+
+.dp-filter-pill.active,
+.dp-filter-pill:focus-visible {
+    border-color: var(--dp-primary);
+    background: var(--dp-primary);
+    color: var(--global-palette9, #ffffff);
+    box-shadow: 0 0.35rem 1rem rgba(13, 59, 102, 0.25);
+}
+
+.dp-directory-card {
+    border-radius: calc(var(--dp-radius) * 0.9);
+    border: 1px solid var(--dp-border);
+    background: var(--dp-surface);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dp-directory-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 1.25rem 2.4rem rgba(15, 23, 42, 0.12);
+}
+
+.dp-directory-card__avatar {
+    width: 104px;
+    height: 104px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin: 0 auto 1rem;
+    border: 3px solid var(--dp-surface);
+    box-shadow: 0 0.75rem 1.6rem rgba(15, 23, 42, 0.18);
+}
+
+.dp-directory-card__avatar-fallback {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--global-palette9, #ffffff);
+}
+
+.dp-directory-card__meta {
+    color: var(--dp-muted);
+    font-size: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.dp-directory-card__excerpt {
+    color: var(--dp-muted);
+    font-size: 0.95rem;
+}
+
+.dp-directory-card__programs {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.dp-directory-card__program {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.75rem;
+    background: var(--dp-surface-alt);
+    font-size: 0.9rem;
+    color: var(--dp-heading);
+}
+
+.dp-directory-card__program .badge {
+    white-space: nowrap;
+}
+
+.dp-directory-card__contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.dp-social-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.15rem 0.65rem;
+    border-radius: 999px;
+    border: 1px solid var(--dp-border);
+    font-size: 0.75rem;
+    color: var(--dp-heading);
+    text-decoration: none;
+}
+
+.dp-directory-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.dp-directory-empty {
+    max-width: 520px;
+    margin: 0 auto;
+}
+
+.dp-directory-empty__icon {
+    font-size: 2.5rem;
+    color: var(--dp-muted);
+}
+
+.dp-program-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.dp-program-card {
+    border-radius: calc(var(--dp-radius) * 0.9);
+    border: 1px solid var(--dp-border);
+    background: var(--dp-surface);
+    box-shadow: 0 1rem 2rem rgba(15, 23, 42, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.5rem;
+}
+
+.dp-program-card__badge {
+    border-radius: 999px;
+    padding: 0.2rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.dp-program-card__media {
+    width: 100%;
+    border-radius: var(--dp-radius);
+    min-height: 160px;
+    background-size: cover;
+    background-position: center;
+}
+
+.dp-program-card__media--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(var(--global-palette9rgb, 255, 255, 255), 0.9);
+    font-weight: 600;
+}
+
+.dp-program-card__body {
+    display: grid;
+    grid-template-columns: minmax(140px, 1fr) 2fr;
+    gap: 1rem;
+}
+
+.dp-program-card__avatars {
+    display: flex;
+    gap: 0.75rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.dp-program-card__avatars img,
+.dp-program-avatar-placeholder {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.dp-program-avatar-placeholder {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--global-palette9, #ffffff);
+    font-weight: 600;
+}
+
+.dp-program-card__footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.dp-program-hero {
+    border-radius: calc(var(--dp-radius) * 1.1);
+    padding: clamp(1.75rem, 2vw, 3rem);
+    color: var(--global-palette9, #ffffff);
+}
+
+.dp-program-hero__media {
+    border-radius: var(--dp-radius);
+    min-height: 220px;
+    background-size: cover;
+    background-position: center;
+    background-color: rgba(var(--global-palette9rgb, 255, 255, 255), 0.1);
+}
+
+.dp-program-hero__media--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(var(--global-palette9rgb, 255, 255, 255), 0.9);
+    font-weight: 600;
+}
+
+.dp-insight-card {
+    border-radius: var(--dp-radius);
+    padding: 1.25rem;
+    border: 1px solid var(--dp-border);
+    background: var(--dp-surface);
+    box-shadow: 0 0.75rem 1.6rem rgba(15, 23, 42, 0.08);
+}
+
+.dp-color-swatch {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    border: 2px solid rgba(var(--global-palette9rgb, 255, 255, 255), 0.6);
+    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.08);
+}
+
+.dp-contact-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.dp-contact-link {
+    display: flex;
+    gap: 0.75rem;
+    text-decoration: none;
+    color: inherit;
+    padding: 0.35rem 0;
+    border-radius: 0.75rem;
+}
+
+.dp-contact-link:hover {
+    background: var(--dp-surface-alt);
+}
+
+.dp-contact-link__icon {
+    font-size: 1rem;
+    color: var(--dp-primary);
+}
+
+.dp-contact-link strong {
+    font-size: 0.95rem;
+}
+
+.dp-contact-link .text-muted {
+    font-size: 0.8rem;
+}
+
+.dp-detail-badge {
+    border-radius: 999px;
+    border: 1px solid rgba(var(--global-palette9rgb, 255, 255, 255), 0.4);
+    padding: 0.25rem 0.75rem;
+}
+
+.dp-directory .card-header {
+    border-bottom: 1px solid var(--dp-border);
+    background: var(--dp-surface-alt);
+}
+
+.contenido-cv p {
+    line-height: 1.8;
+    font-size: 1rem;
+}
+
+@media (max-width: 992px) {
+    .dp-program-card__body {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .dp-directory-hero {
+        text-align: center;
+    }
+
+    .dp-directory-hero__stat {
+        min-height: auto;
+    }
+
+    .dp-filter-pillset {
+        justify-content: flex-start;
+    }
+
+    .dp-directory-card__avatar {
+        width: 88px;
+        height: 88px;
+    }
+
+    .dp-program-card__footer {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 576px) {
+    .dp-directory-toolbar .input-group-text {
+        display: none;
+    }
+
+    .dp-directory-toolbar .input-group > * {
+        border-radius: 999px !important;
+    }
+
+    .dp-directory-card__contact {
+        flex-direction: column;
+    }
+
+    .dp-program-card {
+        padding: 1.25rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dp-directory-card,
+    .dp-filter-pill,
+    .dp-program-card {
+        transition: none;
+    }
+}
+
+.flacso-docentes-landing {
+    --docentes-surface: var(--global-palette9, #ffffff);
+    --docentes-surface-alt: var(--global-palette8, #f8f9fa);
+    --docentes-border: var(--global-palette6, #c9d2de);
+    --docentes-muted: var(--global-palette5, #7a8696);
+    --docentes-text: var(--global-palette4, #2e2f34);
+    --docentes-accent: var(--global-palette1, #1d3a72);
+    --docentes-accent-strong: var(--global-palette3, #0f1a2d);
+    --docentes-highlight: var(--global-palette2, #fed222);
+    --docentes-card-shadow: 0 28px 60px rgba(15, 23, 42, 0.12);
+    --docentes-hero-padding: clamp(1.6rem, 3vw, 3rem);
+    padding: clamp(1.25rem, 2.8vw, 2.5rem) 0 clamp(2.5rem, 4vw, 3.5rem);
+    background: var(--docentes-surface-alt);
+}
+
+.flacso-docentes-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 2rem;
+    background: linear-gradient(125deg, var(--docentes-accent-strong), var(--docentes-accent));
+    color: var(--global-palette9, #ffffff);
+    padding: var(--docentes-hero-padding);
+    margin-bottom: 1.75rem;
+    display: grid;
+    gap: clamp(1.4rem, 3vw, 2rem);
+    box-shadow: 0 30px 60px rgba(13, 59, 102, 0.25);
+}
+
+.flacso-docentes-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba(var(--global-palette9rgb, 255, 255, 255), 0.2), transparent 55%);
+    pointer-events: none;
+}
+
+.flacso-docentes-hero__content,
+.flacso-docentes-hero__panel {
+    position: relative;
+    z-index: 1;
+}
+
+.flacso-docentes-hero__eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.8rem;
+    opacity: 0.85;
+    margin-bottom: 0.75rem;
+}
+
+.flacso-docentes-hero__title {
+    font-size: clamp(2rem, 4vw, 2.9rem);
+    margin-bottom: 1rem;
+}
+
+.flacso-docentes-hero__lead {
+    font-size: 1.125rem;
+    opacity: 0.9;
+    max-width: 640px;
+}
+
+.flacso-docentes-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.flacso-docentes-hero__panel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+}
+
+.flacso-docentes-hero--stacked {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    padding-bottom: clamp(1rem, 2.4vw, 2rem);
+    overflow: visible;
+}
+
+.flacso-docentes-filters--full {
+    position: relative;
+    width: 100%;
+    margin-top: calc(-1rem + var(--docentes-hero-padding) * 0.06);
+    display: flex;
+    justify-content: center;
+}
+
+.flacso-docentes-filters--full .flacso-docentes-filters__card {
+    width: min(1140px, 100%);
+    border-radius: 1.8rem;
+    padding: clamp(1rem, 1.5vw, 1.35rem) clamp(1.1rem, 1.7vw, 1.6rem);
+    padding-bottom: clamp(1.1rem, 1.5vw, 1.35rem);
+    box-shadow: 0 26px 45px rgba(15, 23, 42, 0.13);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: rgba(255, 255, 255, 0.98);
+}
+
+.flacso-docentes-hero--stacked .flacso-docentes-filters {
+    margin-bottom: 0;
+}
+
+.flacso-docentes-stat {
+    background: rgba(var(--global-palette9rgb, 255, 255, 255), 0.15);
+    border-radius: 1.1rem;
+    padding: 1rem 1.25rem;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(var(--global-palette9rgb, 255, 255, 255), 0.25);
+}
+
+.flacso-docentes-stat__label {
+    display: block;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.8;
+}
+
+.flacso-docentes-stat__value {
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.flacso-docentes-programs {
+    margin-bottom: 2.5rem;
+}
+
+.flacso-docentes-programs__intro {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 1.25rem;
+}
+
+.flacso-docentes-programs__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.flacso-docentes-program-card {
+    background: var(--docentes-surface);
+    border-radius: 1.25rem;
+    padding: 1.25rem;
+    border: 1px solid var(--docentes-border);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+    position: relative;
+}
+
+.flacso-docentes-program-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border: 2px solid var(--program-color, var(--docentes-accent));
+    opacity: 0.15;
+    pointer-events: none;
+}
+
+.flacso-docentes-program-card__eyebrow {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--docentes-muted);
+}
+
+.flacso-docentes-program-card__title {
+    font-size: 1.15rem;
+    margin: 0.35rem 0;
+    color: var(--docentes-text);
+}
+
+.flacso-docentes-program-card__desc {
+    margin-bottom: 0.75rem;
+    color: var(--docentes-muted);
+}
+
+.flacso-docentes-program-card__link {
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--program-color, var(--docentes-accent));
+}
+
+.flacso-docentes-filters {
+    margin-bottom: 1rem;
+}
+
+.flacso-docentes-filters__card {
+    background: var(--docentes-surface);
+    border-radius: 1.4rem;
+    padding: clamp(1rem, 1.6vw, 1.5rem);
+    border: 1px solid var(--docentes-border);
+    box-shadow: 0 20px 48px rgba(15, 23, 42, 0.08);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.flacso-docentes-field label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    font-size: 0.95rem;
+    color: var(--docentes-text);
+}
+
+.flacso-docentes-field__control {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid var(--docentes-border);
+    border-radius: 999px;
+    padding: 0.5rem 0.85rem;
+    background: var(--docentes-surface-alt);
+}
+
+.flacso-docentes-field__control i {
+    color: var(--docentes-muted);
+}
+
+.flacso-docentes-field__control input,
+.flacso-docentes-field__control select {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    outline: none;
+    font-size: 0.95rem;
+}
+
+.flacso-docentes-filters__hint {
+    margin: 0;
+    color: var(--docentes-muted);
+    font-size: 0.85rem;
+    display: flex;
+    gap: 0.35rem;
+    align-items: center;
+    grid-column: 1 / -1;
+}
+
+.flacso-docentes-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.flacso-docentes-chip.dp-filter-pill {
+    border-radius: 999px;
+    border: 1px solid var(--docentes-border);
+    background: var(--docentes-surface);
+    color: var(--docentes-text);
+    padding: 0.35rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.flacso-docentes-chip.dp-filter-pill.active,
+.flacso-docentes-chip.dp-filter-pill:hover {
+    background: var(--docentes-accent);
+    border-color: var(--docentes-accent);
+    color: var(--global-palette9, #ffffff);
+}
+
+.flacso-docentes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: clamp(1.25rem, 2vw, 1.75rem);
+}
+
+.flacso-docentes-card {
+    background:
+        radial-gradient(140px 140px at 85% -10%, color-mix(in srgb, var(--docentes-accent) 18%, transparent), transparent 70%),
+        var(--docentes-surface);
+    border-radius: 1.75rem;
+    border: 1px solid color-mix(in srgb, var(--docentes-accent-strong) 12%, transparent);
+    border-top: 4px solid var(--docentes-accent);
+    padding: 1.6rem;
+    box-shadow: var(--docentes-card-shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+    min-height: 100%;
+    position: relative;
+    align-items: center;
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.flacso-docentes-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 36px 80px rgba(15, 23, 42, 0.16);
+}
+
+.flacso-docentes-card:focus-within {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--docentes-accent) 30%, transparent), 0 36px 80px rgba(15, 23, 42, 0.14);
+}
+
+.flacso-docentes-card__header {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: 1.25rem;
+    align-items: start;
+}
+
+.flacso-docentes-card__avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--docentes-surface-alt);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid var(--global-palette9, #ffffff);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+    flex-shrink: 0;
+    margin: 0 auto;
+}
+
+.flacso-docentes-card__avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.flacso-docentes-card__avatar-fallback {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: var(--global-palette9, #ffffff);
+}
+
+.flacso-docentes-card__badge {
+    display: inline-flex;
+    padding: 0.2rem 0.85rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--docentes-highlight) 35%, transparent);
+    color: var(--docentes-accent-strong);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+}
+
+.flacso-docentes-card__summary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.flacso-docentes-card__abbr {
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--docentes-muted);
+}
+
+.flacso-docentes-card__summary h3 {
+    margin: 0.35rem 0;
+    font-size: 1.35rem;
+    line-height: 1.3;
+}
+
+.flacso-docentes-card__subtitle {
+    margin: 0;
+    color: var(--docentes-muted);
+}
+
+.flacso-docentes-card__excerpt {
+    margin: 0.35rem 0 0;
+    color: var(--docentes-text);
+    font-size: 0.95rem;
+    line-height: 1.55;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    max-width: 40ch;
+}
+
+.flacso-docentes-card__meta {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    color: var(--docentes-muted);
+    font-size: 0.95rem;
+}
+
+.flacso-docentes-card__meta li {
+    display: flex;
+    align-items: center;
+}
+
+.flacso-docentes-card__meta i {
+    margin-right: 0.4rem;
+    color: var(--docentes-accent);
+}
+
+.flacso-docentes-card__contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.flacso-docentes-contact {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid var(--docentes-border);
+    text-decoration: none;
+    color: var(--docentes-text);
+    font-size: 0.9rem;
+    transition: background 0.2s ease;
+}
+
+.flacso-docentes-contact:hover {
+    background: var(--docentes-surface-alt);
+    border-color: color-mix(in srgb, var(--docentes-accent) 35%, transparent);
+}
+
+.flacso-docentes-card__programs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.flacso-docentes-program-chip {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.7rem 0.95rem;
+    border-radius: 1rem;
+    background: linear-gradient(120deg, color-mix(in srgb, var(--docentes-accent) 12%, transparent), transparent);
+    border: 1px solid color-mix(in srgb, var(--docentes-accent) 20%, transparent);
+    border-left: 4px solid var(--program-chip-color, var(--docentes-accent));
+}
+
+.flacso-docentes-program-chip span {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--docentes-muted);
+}
+
+.flacso-docentes-program-chip a,
+.flacso-docentes-program-chip strong {
+    color: var(--docentes-text);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.flacso-docentes-card__footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: auto;
+    justify-content: center;
+}
+
+.flacso-docentes-card__footer .btn {
+    border-radius: 999px;
+    font-weight: 600;
+    padding: 0.45rem 1rem;
+}
+
+.flacso-docentes-empty {
+    display: flex;
+    justify-content: center;
+    margin-top: 3rem;
+}
+
+.flacso-docentes-empty__card {
+    background: var(--docentes-surface);
+    border-radius: 2rem;
+    padding: 3rem 2rem;
+    border: 1px solid var(--docentes-border);
+    box-shadow: 0 30px 60px rgba(15, 23, 42, 0.12);
+}
+
+.flacso-docentes-empty__card i {
+    font-size: 2.5rem;
+    color: var(--docentes-accent);
+    margin-bottom: 0.75rem;
+}
+
+.flacso-docentes-grid .dp-directory-empty {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 992px) {
+    .flacso-docentes-hero {
+        grid-template-columns: 1fr;
+    }
+
+    .flacso-docentes-card__header {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .flacso-docentes-card__avatar {
+        margin: 0 auto;
+    }
+
+    .flacso-docentes-card__summary {
+        text-align: center;
+    }
+
+    .flacso-docentes-card__contact {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 640px) {
+    .flacso-docentes-hero__actions {
+        flex-direction: column;
+    }
+
+    .flacso-docentes-field__control {
+        flex-wrap: wrap;
+    }
+
+    .flacso-docentes-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .flacso-docentes-card__footer {
+        flex-direction: column;
+    }
+
+    .flacso-docentes-card {
+        padding: 1.35rem;
+    }
+
+    .flacso-docentes-card__avatar {
+        width: 80px;
+        height: 80px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .flacso-docentes-card {
+        transition: none;
+    }
+}

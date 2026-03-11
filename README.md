@@ -1,0 +1,96 @@
+# FLACSO Uruguay - Plataforma Integrada
+
+Plugin unificado para FLACSO Uruguay con modulos de:
+- oferta academica
+- seminarios
+- preinscripciones
+- formularios de consulta
+- docentes
+- eventos
+- shortcodes
+- bloques Gutenberg
+
+## Version
+
+`1.0.5`
+
+## Requisitos
+
+- WordPress `6.0+`
+- PHP `7.4+`
+
+## Cambios recientes (1.0.5)
+
+- Base React para el modulo `flacso_homepage_builder`:
+  - montaje del layout principal desde `wp.element`
+  - fallback a renderizado PHP cuando React no aplica
+  - script dedicado: `modules/main-page/assets/js/flacso-main-page-react.js`
+- Se mantiene la compatibilidad de estilos y secciones existentes.
+
+## Cambios previos (1.0.4)
+
+- Integracion de eventos Meta Pixel estandarizada en flujos clave.
+- `Lead` en paginas de gracias/confirmacion.
+- `SubmitApplication` en preinscripciones (posgrado y seminario).
+- `ViewContent` en:
+  - formulario de solicitud de informacion de oferta academica
+  - pagina individual de seminario
+  - shortcode hero de cartas
+- Nuevo bloque Gutenberg independiente:
+  - `flacso-uruguay/preinscripcion-button`
+  - renderiza solo el boton "Preinscripcion 2026"
+- Se mantiene el bloque anterior de consultas sin cambios funcionales.
+- Ajustes en listado de seminarios:
+  - grid responsivo fijo `3/2/1` (desktop/tablet/mobile)
+  - soporte de filtro por programa via relacion:
+    - `oferta-academica` -> `_oferta_seminarios_ids` -> `area_tematica`
+  - fallback legacy para datos antiguos.
+- Correccion masiva de codificacion:
+  - normalizacion a UTF-8 sin BOM
+  - limpieza de mojibake en archivos afectados
+
+## Estructura principal
+
+```text
+flacso-uruguay/
+|- flacso-uruguay.php
+|- includes/
+|  |- core/
+|  |- admin/
+|  |- blocks/
+|  |- cpt/
+|- modules/
+|  |- main-page/
+|  |- shortcodes/
+|  |- oferta-academica/
+|  |- seminarios/
+|  |- formularios/
+|  |- preinscripcion/
+|  |- posgrados/
+|  |- docentes/
+|  |- eventos/
+|- assets/
+|- CHANGELOG.md
+```
+
+## Instalacion
+
+1. Copiar la carpeta `flacso-uruguay` a `wp-content/plugins/`.
+2. Activar el plugin en WordPress.
+3. Guardar enlaces permanentes en:
+   `Ajustes -> Enlaces permanentes -> Guardar`.
+
+## Notas de tracking (Meta Pixel)
+
+Eventos usados por el plugin:
+- `ViewContent`
+- `Lead`
+- `SubmitApplication`
+
+No se usan eventos custom (`trackCustom`) en los flujos actuales.
+
+## Soporte
+
+Para diagnostico y mantenimiento, revisar:
+- `CHANGELOG.md`
+- documentacion de cada modulo en `modules/*`

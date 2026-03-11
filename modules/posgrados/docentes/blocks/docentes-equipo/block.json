@@ -1,0 +1,32 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "flacso-uruguay/docentes-equipo",
+    "title": "Docentes por Equipo",
+    "category": "flacso-uruguay",
+    "icon": "groups",
+    "description": "Muestra una grilla de docentes por equipo o por la pagina actual.",
+    "supports": {
+        "html": false
+    },
+    "attributes": {
+        "useCurrentPage": {
+            "type": "boolean",
+            "default": true
+        },
+        "termId": {
+            "type": "integer",
+            "default": 0
+        },
+        "columns": {
+            "type": "integer",
+            "default": 3
+        },
+        "pageId": {
+            "type": "integer",
+            "default": 0
+        }
+    },
+    "editorScript": "dp-docentes-equipo-block"
+}
+

@@ -1,0 +1,21 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "flacso-uruguay/consultas-form",
+    "title": "Formulario de Consultas",
+    "category": "flacso-uruguay",
+    "icon": "email",
+    "description": "Formulario de contacto para posgrados de FLACSO con envío vía AJAX y redirección a la página de agradecimiento.",
+    "supports": {
+        "html": false
+    },
+    "attributes": {
+        "showPreinscription": {
+            "type": "boolean",
+            "default": true
+        }
+    },
+    "editorScript": "flacso-consultas-form-block",
+    "style": "flacso-consultas-form-style"
+}
+

@@ -1,0 +1,28 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "flacso-uruguay/docentes-lista",
+    "title": "Equipo docente (lista completa)",
+    "category": "flacso-uruguay",
+    "icon": "groups",
+    "description": "Muestra la lista alternada de docentes con CV completo, ideal para secciones de equipos.",
+    "supports": {
+        "html": false
+    },
+    "attributes": {
+        "termId": {
+            "type": "integer",
+            "default": 0
+        },
+        "slug": {
+            "type": "string",
+            "default": ""
+        },
+        "useCurrentPage": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "editorScript": "dp-docentes-lista-block"
+}
+

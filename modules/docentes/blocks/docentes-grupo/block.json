@@ -1,0 +1,29 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "flacso/docentes-grupo",
+    "title": "Docentes (Grupo)",
+    "category": "flacso-uruguay",
+    "icon": "groups",
+    "description": "Cards consistentes de docentes con CV visible y orden manual.",
+    "supports": {
+        "html": false
+    },
+    "attributes": {
+        "title": {
+            "type": "string",
+            "default": "Docentes"
+        },
+        "level": {
+            "type": "string",
+            "default": "h2"
+        },
+        "docenteIds": {
+            "type": "array",
+            "default": []
+        }
+    },
+    "editorScript": "dp-docentes-grupo-block",
+    "style": "dp-docentes-grupo-style",
+    "editorStyle": "dp-docentes-grupo-style"
+}

@@ -1,0 +1,34 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "flacso-uruguay/docente-resumen",
+    "title": "Mostrar docente",
+    "category": "flacso-uruguay",
+    "icon": "id",
+    "description": "Renderiza la ficha completa de un docente con avatar, prefijos y CV.",
+    "supports": {
+        "html": false
+    },
+    "attributes": {
+        "docId": {
+            "type": "integer",
+            "default": 0
+        },
+        "slug": {
+            "type": "string",
+            "default": ""
+        },
+        "headingTag": {
+            "type": "string",
+            "default": "h3"
+        },
+        "showAvatar": {
+            "type": "boolean",
+            "default": true
+        }
+    },
+    "editorScript": "dp-docente-resumen-block",
+    "style": "dp-docente-resumen-style",
+    "editorStyle": "dp-docente-resumen-editor"
+}
+

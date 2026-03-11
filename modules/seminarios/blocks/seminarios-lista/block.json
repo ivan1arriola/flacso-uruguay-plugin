@@ -1,0 +1,49 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "flacso-uruguay/seminarios-lista",
+    "title": "Lista de Seminarios",
+    "category": "flacso-uruguay",
+    "icon": "book",
+    "description": "Muestra una página completa con el listado de seminarios y filtros por posgrado (oferta académica).",
+    "supports": {
+        "html": false,
+        "align": ["wide", "full"]
+    },
+    "attributes": {
+        "posgrado": {
+            "type": "string",
+            "default": ""
+        },
+        "perPage": {
+            "type": "integer",
+            "default": 12
+        },
+        "layout": {
+            "type": "string",
+            "default": "grid",
+            "enum": ["grid", "list"]
+        },
+        "showFilters": {
+            "type": "boolean",
+            "default": true
+        },
+        "showSearch": {
+            "type": "boolean",
+            "default": true
+        },
+        "orderBy": {
+            "type": "string",
+            "default": "date",
+            "enum": ["date", "title", "periodo_inicio"]
+        },
+        "order": {
+            "type": "string",
+            "default": "DESC",
+            "enum": ["ASC", "DESC"]
+        }
+    },
+    "editorScript": "flacso-seminarios-lista-editor",
+    "editorStyle": "flacso-seminarios-lista-editor",
+    "style": "flacso-seminarios-lista"
+}

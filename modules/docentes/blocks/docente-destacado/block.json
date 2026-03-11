@@ -1,0 +1,28 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "flacso-uruguay/docente-destacado",
+    "title": "Docente (Con Rol)",
+    "category": "flacso-uruguay",
+    "icon": "star-filled",
+    "description": "Resalta un docente con foto XL y rol destacado.",
+    "supports": {
+        "html": false
+    },
+    "attributes": {
+        "docId": {
+            "type": "integer",
+            "default": 0
+        },
+        "slug": {
+            "type": "string",
+            "default": ""
+        },
+        "role": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "editorScript": "dp-docente-destacado-block"
+}
+

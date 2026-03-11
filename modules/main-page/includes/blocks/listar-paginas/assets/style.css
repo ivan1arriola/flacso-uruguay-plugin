@@ -1,0 +1,146 @@
+/* ======== GRID ======== */
+.flacso-grid {
+  display: grid;
+  gap: 1.6rem;
+  padding: 1rem 0 1.5rem;
+}
+
+.flacso-grid--mosaic {
+  grid-template-columns: 1fr;
+}
+
+/* ======== CARD BASE ======== */
+.flacso-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 1rem;
+  overflow: hidden;
+  background: var(--global-palette9);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.flacso-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.2);
+}
+
+/* ======== MOSAICO ======== */
+.flacso-card--mosaic,
+.flacso-card--wide,
+.flacso-card--tall {
+  grid-column: span 1;
+}
+
+/* ======== MEDIA ======== */
+.flacso-card__media {
+  width: 100%;
+  padding-top: 70%;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+}
+
+.flacso-card__scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, 0.7) 100%);
+}
+
+.flacso-card__title-wrap {
+  position: relative;
+  padding: 1rem 1.1rem 1.2rem;
+  z-index: 2;
+}
+
+.flacso-card__title {
+  color: #fff;
+  font-family: var(--global-heading-font-family);
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0 0 0.35rem;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.flacso-card__subtitle {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+}
+
+/* ======== CONTENIDO ======== */
+.flacso-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.9rem 1.1rem 1.2rem;
+  background: var(--global-palette9);
+}
+
+/* ======== BADGES ======== */
+.flacso-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.flacso-badge {
+  background: var(--global-palette1);
+  color: #fff;
+  font-size: 0.7rem;
+  padding: 0.28rem 0.6rem;
+  border-radius: 50px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.flacso-badge i {
+  font-size: 0.85rem;
+}
+
+.flacso-badge.nuevo {
+  background: var(--global-palette2);
+  color: var(--global-palette3);
+}
+
+.flacso-card.inactivo .flacso-badge {
+  background: var(--global-palette6);
+  color: var(--global-palette4);
+}
+
+/* ======== INACTIVOS ======== */
+.flacso-card.inactivo {
+  opacity: 0.45;
+  filter: grayscale(65%);
+  pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .flacso-grid--mosaic {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .flacso-card--mosaic,
+  .flacso-card--wide {
+    grid-column: span 1;
+  }
+}
+
+@media (min-width: 1024px) {
+  .flacso-grid--mosaic {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .flacso-card--mosaic,
+  .flacso-card--wide {
+    grid-column: span 1;
+  }
+}

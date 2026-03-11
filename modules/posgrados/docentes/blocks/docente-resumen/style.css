@@ -1,0 +1,101 @@
+.flacso-docente-card {
+    background-color: var(--global-palette8, #f8f9fa);
+    color: var(--global-palette4, #2e2f34);
+    border-radius: 1.25rem;
+    box-shadow: 0 20px 55px rgba(15, 23, 42, 0.12);
+    border: 0;
+    padding: 2rem;
+    margin: 1.5rem 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.flacso-docente-card__heading {
+    color: var(--global-palette1, #1d3a72);
+    font-family: var(--global-heading-font-family, inherit);
+    margin-bottom: 1rem;
+}
+
+.flacso-docente-card__body {
+    display: grid;
+    grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
+    gap: 2rem;
+    align-items: center;
+}
+
+.flacso-docente-card__media {
+    text-align: center;
+}
+
+.flacso-docente-card__content {
+    text-align: left;
+}
+
+.flacso-docente-card__avatar {
+    width: 160px;
+    height: 160px;
+    border-radius: 999px;
+    margin: 0 auto;
+    box-shadow: 0 12px 32px rgba(13, 59, 102, 0.25);
+    overflow: hidden;
+}
+
+.flacso-docente-card__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.flacso-docente-card__initials {
+    width: 160px;
+    height: 160px;
+    border-radius: 999px;
+    font-size: 2.75rem;
+    font-weight: 600;
+    color: var(--global-palette9, #ffffff);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+}
+
+.flacso-docente-card__meta {
+    color: var(--global-palette5, #7a8696);
+    margin-bottom: 1.25rem;
+}
+
+.flacso-docente-card__cv p {
+    margin-bottom: 0.8rem;
+}
+
+.flacso-docente-card__placeholder {
+    border: 1px dashed var(--global-palette6, #c9d2de);
+    padding: 1rem;
+    border-radius: 0.75rem;
+    text-align: center;
+    background: var(--global-palette8, #f8f9fa);
+}
+
+@media (max-width: 992px) {
+    .flacso-docente-card__body {
+        grid-template-columns: minmax(0, 1fr);
+        text-align: center;
+    }
+
+    .flacso-docente-card__media {
+        margin-bottom: 1.25rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .flacso-docente-card {
+        padding: 1.5rem;
+    }
+
+    .flacso-docente-card__avatar,
+    .flacso-docente-card__initials {
+        width: 120px;
+        height: 120px;
+        font-size: 2rem;
+    }
+}
