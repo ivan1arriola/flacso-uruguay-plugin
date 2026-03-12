@@ -1,3 +1,12 @@
+## Version 1.1.5 - 12 de marzo de 2026
+
+### Resumen
+- Correcciones ortograficas y de tildes en textos de UI (frontend y bloques).
+- Ajustes de visualizacion para mostrar imagenes cuadradas en listados y tarjetas.
+- Correccion del carrusel 3D de oferta educativa para evitar solapamientos y desbordes.
+
+---
+
 ## Version 1.1.4 - 12 de marzo de 2026
 
 ### Resumen

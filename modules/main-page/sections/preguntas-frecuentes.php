@@ -16,7 +16,7 @@ if (!function_exists('flacso_preguntas_frecuentes_shortcode')) {
 
         $atts = shortcode_atts([
             'titulo'            => __('Quedamos a tu disposición para despejar cualquier duda', 'flacso-main-page'),
-            'descripcion'       => __('¿Querés saber más sobre contenidos, fechas o modalidades? Escribinos y coordinamos en seguida.', 'flacso-main-page'),
+            'descripcion'       => __('¿Querés saber más sobre contenidos, fechas o modalidades? Escribinos y coordinamos enseguida.', 'flacso-main-page'),
             'cta_url'           => 'https://flacso.edu.uy/preguntas-frecuentes/',
             'cta_label'         => __('Ver preguntas frecuentes', 'flacso-main-page'),
             'mail'              => 'inscripciones@flacso.edu.uy',

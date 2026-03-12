@@ -238,9 +238,9 @@ if (!function_exists('flacso_convenios_responsivos_sc')) {
             'placeholder' => flacso_convenios_get_placeholder_image(),
             'search_placeholder' => __('Buscar convenio...', 'flacso-main-page'),
             'search_label' => __('Buscar convenio', 'flacso-main-page'),
-            'clear_label' => __('Limpiar busqueda', 'flacso-main-page'),
+            'clear_label' => __('Limpiar búsqueda', 'flacso-main-page'),
             'no_results' => __('No se encontraron resultados', 'flacso-main-page'),
-            'no_results_hint' => __('Intenta con otros terminos de busqueda.', 'flacso-main-page'),
+            'no_results_hint' => __('Intenta con otros términos de búsqueda.', 'flacso-main-page'),
             'count_label' => __('resultados encontrados', 'flacso-main-page'),
             'items' => $items,
         ];

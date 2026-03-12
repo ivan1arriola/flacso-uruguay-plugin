@@ -893,7 +893,8 @@
 .flacso-main-page .seminario-card__image-container {
     position: relative;
     overflow: hidden;
-    height: 200px;
+    aspect-ratio: 1 / 1;
+    height: auto;
     background-color: var(--global-gray-100, #f8f9fa);
 }
 
@@ -1044,7 +1045,8 @@
     }
 
     .flacso-main-page .seminario-card__image-container {
-        height: 180px;
+        aspect-ratio: 1 / 1;
+        height: auto;
     }
 
     .flacso-main-page .seminarios-mes {
@@ -1058,7 +1060,8 @@
 
 @media (max-width: 576px) {
     .flacso-main-page .seminario-card__image-container {
-        height: 160px;
+        aspect-ratio: 1 / 1;
+        height: auto;
     }
 
     .flacso-main-page .kadence-btn {
@@ -1211,7 +1214,8 @@
 
     .novedades-search-results .search-result-thumb {
         width: 100%;
-        height: 180px;
+        aspect-ratio: 1 / 1;
+        height: auto;
     }
 }
 
@@ -1507,7 +1511,7 @@
 
 @media (min-width: 1024px) {
     .flc-eventos-react__media {
-        aspect-ratio: auto;
+        aspect-ratio: 1 / 1;
         min-height: 100%;
     }
 }

@@ -192,7 +192,7 @@ class Flacso_Main_Page_Blocks {
                     ],
                     'descripcion' => [
                         'type'    => 'string',
-                        'default' => __('¿Querés saber más sobre contenidos, fechas o modalidades? Escribinos y coordinamos en seguida.', 'flacso-main-page'),
+                        'default' => __('¿Querés saber más sobre contenidos, fechas o modalidades? Escribinos y coordinamos enseguida.', 'flacso-main-page'),
                         'label'   => __('Descripción', 'flacso-main-page'),
                     ],
                     'cta_url' => [

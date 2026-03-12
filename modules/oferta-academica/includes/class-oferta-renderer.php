@@ -67,8 +67,8 @@ class Oferta_Renderer {
     public static function render_oferta_pagina(array $attributes = []): string {
         self::enqueue_styles();
 
-        $hero_title_default = __('Oferta Academica', 'flacso-oferta-academica');
-        $hero_subtitle_default = __('Explora nuestras Maestrias, Especializaciones, Diplomados, Diplomas y Seminarios', 'flacso-oferta-academica');
+        $hero_title_default = __('Oferta Académica', 'flacso-oferta-academica');
+        $hero_subtitle_default = __('Explora nuestras Maestrías, Especializaciones, Diplomados, Diplomas y Seminarios', 'flacso-oferta-academica');
         $hero_title = !empty($attributes['heroTitle'])
             ? (string) $attributes['heroTitle']
             : apply_filters('flacso_oferta_academica_hero_title', $hero_title_default);
@@ -114,7 +114,7 @@ class Oferta_Renderer {
                 <div class="flacso-oferta-hero__content text-center">
                     <h1 class="flacso-oferta-hero__title mb-3"><?php echo esc_html($hero_title); ?></h1>
                     <p class="flacso-oferta-hero__subtitle mb-4"><?php echo esc_html($hero_subtitle); ?></p>
-                    <div class="flacso-oferta-hero__actions" role="navigation" aria-label="<?php esc_attr_e('Navegacion de la oferta academica', 'flacso-oferta-academica'); ?>">
+                    <div class="flacso-oferta-hero__actions" role="navigation" aria-label="<?php esc_attr_e('Navegación de la oferta académica', 'flacso-oferta-academica'); ?>">
                         <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url(home_url('/formacion/maestrias/')); ?>">
                             <?php esc_html_e('Maestría', 'flacso-oferta-academica'); ?>
                         </a>
@@ -184,12 +184,12 @@ class Oferta_Renderer {
                                 </div>
                             <?php else : ?>
                                 <div class="alert alert-info mb-4">
-                                    <?php esc_html_e('No hay programas disponibles en esta categoria.', 'flacso-oferta-academica'); ?>
+                                    <?php esc_html_e('No hay programas disponibles en esta categoría.', 'flacso-oferta-academica'); ?>
                                 </div>
                             <?php endif; ?>
                         <?php else : ?>
                             <div class="alert alert-info mb-4">
-                                <?php esc_html_e('No hay programas disponibles en esta categoria.', 'flacso-oferta-academica'); ?>
+                                <?php esc_html_e('No hay programas disponibles en esta categoría.', 'flacso-oferta-academica'); ?>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -239,7 +239,7 @@ class Oferta_Renderer {
                 const label = el.querySelector('.flacso-oferta-countdown__text');
                 if (!label) return;
                 if (diff > 0) {
-                    label.textContent = '<?php echo esc_js(__('Faltan', 'flacso-oferta-academica')); ?> ' + diff + ' <?php echo esc_js(__('dias', 'flacso-oferta-academica')); ?>';
+                    label.textContent = '<?php echo esc_js(__('Faltan', 'flacso-oferta-academica')); ?> ' + diff + ' <?php echo esc_js(__('días', 'flacso-oferta-academica')); ?>';
                 } else if (diff === 0) {
                     label.textContent = '<?php echo esc_js(__('Comienza hoy', 'flacso-oferta-academica')); ?>';
                 } else {
@@ -280,7 +280,7 @@ class Oferta_Renderer {
                 class="flacso-oa-card h-100 d-block text-decoration-none<?php echo $is_private ? ' flacso-oa-card--private' : ''; ?>"
                 aria-label="<?php echo esc_attr(sprintf(__('Ver detalles: %s', 'flacso-oferta-academica'), $title)); ?>"
             >
-                <div class="flacso-oa-card__media ratio ratio-16x9 mb-0">
+                <div class="flacso-oa-card__media ratio ratio-1x1 mb-0">
                     <?php if ($thumbnail) : ?>
                         <img src="<?php echo esc_url($thumbnail); ?>" alt="<?php echo esc_attr($title); ?>" class="w-100 h-100 object-fit-cover" loading="lazy" />
                     <?php else : ?>
@@ -509,7 +509,7 @@ class Oferta_Renderer {
         <div class="flacso-oferta-grid-item<?php echo esc_attr($span_class); ?>">
             <a href="<?php echo esc_url($link); ?>" class="card h-100 flacso-oferta-card text-decoration-none">
                 <?php if ($thumbnail) : ?>
-                    <div class="ratio ratio-16x9 flacso-oferta-card__media">
+                    <div class="ratio ratio-1x1 flacso-oferta-card__media">
                         <img src="<?php echo esc_url($thumbnail); ?>" alt="<?php echo esc_attr($title); ?>" class="w-100 h-100 object-fit-cover">
                     </div>
                 <?php endif; ?>
@@ -579,13 +579,13 @@ class Oferta_Renderer {
         $fecha_iso   = $ts ? date('Y-m-d', $ts) : '';
         $faltan_dias = $ts ? floor(($ts - current_time('timestamp')) / DAY_IN_SECONDS) : null;
         $faltan_txt  = is_int($faltan_dias)
-            ? ($faltan_dias >= 0 ? sprintf(__('Faltan %d dias', 'flacso-oferta-academica'), $faltan_dias) : __('Finalizado', 'flacso-oferta-academica'))
+            ? ($faltan_dias >= 0 ? sprintf(__('Faltan %d días', 'flacso-oferta-academica'), $faltan_dias) : __('Finalizado', 'flacso-oferta-academica'))
             : '';
 
         ?>
         <div class="col-md-6 col-lg-4">
             <a href="<?php echo esc_url($permalink); ?>" class="flacso-oa-card h-100 d-block text-decoration-none" aria-label="<?php echo esc_attr(sprintf(__('Ver seminario: %s', 'flacso-oferta-academica'), $title)); ?>">
-                <div class="flacso-oa-card__media ratio ratio-16x9 mb-0">
+                <div class="flacso-oa-card__media ratio ratio-1x1 mb-0">
                     <?php if ($thumb) : ?>
                         <img src="<?php echo esc_url($thumb); ?>" alt="<?php echo esc_attr($title); ?>" class="w-100 h-100 object-fit-cover" loading="lazy" />
                     <?php else : ?>
@@ -611,7 +611,7 @@ class Oferta_Renderer {
                     <?php if ($creditos !== '' && $creditos !== null) : ?>
                         <div class="flacso-oa-card__meta mb-2">
                             <i class="bi bi-award text-primary" aria-hidden="true"></i>
-                            <span><?php printf(__('Creditos: %s', 'flacso-oferta-academica'), esc_html($creditos)); ?></span>
+                            <span><?php printf(__('Créditos: %s', 'flacso-oferta-academica'), esc_html($creditos)); ?></span>
                         </div>
                     <?php endif; ?>
                     <?php if ($fecha_raw) : ?>

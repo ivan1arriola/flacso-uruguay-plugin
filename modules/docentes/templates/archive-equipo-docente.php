@@ -47,7 +47,7 @@ $equipos = get_terms([
                 $page_data  = function_exists('dp_get_equipo_page_data') ? dp_get_equipo_page_data($equipo->term_id) : null;
                 $page_title = $page_data ? $page_data['title'] : $equipo->name;
                 $relacion_nombre = function_exists('dp_get_equipo_relacion_nombre') ? dp_get_equipo_relacion_nombre($equipo->term_id, $equipo->name) : $equipo->name;
-                $page_excerpt_raw = $page_data ? $page_data['excerpt'] : ($equipo->description ?: __('Este posgrado aun no tiene descripción.', 'flacso-posgrados-docentes'));
+                $page_excerpt_raw = $page_data ? $page_data['excerpt'] : ($equipo->description ?: __('Este posgrado aún no tiene descripción.', 'flacso-posgrados-docentes'));
                 $page_excerpt = wp_trim_words(wp_strip_all_tags($page_excerpt_raw), 28, '...');
                 $term_link   = get_term_link($equipo);
                 if (is_wp_error($term_link)) {

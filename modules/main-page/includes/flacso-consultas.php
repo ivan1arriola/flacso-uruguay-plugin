@@ -484,7 +484,7 @@ function flacso_consultas_render_preinscripcion_button() {
 	$is_preview = flacso_consultas_is_block_preview();
 
 	if ( ! is_singular() && ! $is_preview ) {
-		return '<p class="text-muted">El boton de preinscripcion solo esta disponible en paginas de posgrados.</p>';
+		return '<p class="text-muted">El botón de preinscripción solo está disponible en páginas de posgrados.</p>';
 	}
 
 	$id_pagina = get_the_ID();
@@ -497,9 +497,9 @@ function flacso_consultas_render_preinscripcion_button() {
 		<a
 			href="<?php echo esc_url( $href_preinscripcion ); ?>"
 			class="btn btn-preinsc btn-lg rounded-pill py-3 fw-bold flacso-preinsc-standalone"
-			aria-label="Ir a Preinscripcion 2026">
+			aria-label="Ir a Preinscripción 2026">
 			<i class="bi bi-stars me-2" aria-hidden="true"></i>
-			Preinscripcion 2026
+			Preinscripción 2026
 		</a>
 	</div>
 	<style>

@@ -109,7 +109,7 @@ while (have_posts()) : the_post();
             </div>
 
             <div class="dp-docente-hero__content">
-                <p class="dp-docente-hero__kicker"><?php esc_html_e('Perfil academico', 'flacso-posgrados-docentes'); ?></p>
+                <p class="dp-docente-hero__kicker"><?php esc_html_e('Perfil académico', 'flacso-posgrados-docentes'); ?></p>
                 <h1><?php echo esc_html($nombre_completo); ?></h1>
 
                 <?php if ($prefijo_full) : ?>
@@ -164,7 +164,7 @@ while (have_posts()) : the_post();
                         <?php echo wp_kses_post(wpautop($cv_raw)); ?>
                     </div>
                 <?php else : ?>
-                    <p class="dp-empty"><?php esc_html_e('Este perfil aun no tiene un CV publicado.', 'flacso-posgrados-docentes'); ?></p>
+                    <p class="dp-empty"><?php esc_html_e('Este perfil aún no tiene un CV publicado.', 'flacso-posgrados-docentes'); ?></p>
                 <?php endif; ?>
             </article>
 

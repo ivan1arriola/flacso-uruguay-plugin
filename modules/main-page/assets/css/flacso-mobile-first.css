@@ -257,7 +257,7 @@ a.btn, button, input[type="button"], input[type="submit"] {
 .card-img-top {
     width: 100%;
     height: auto;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 1 / 1;
     object-fit: cover;
     display: block;
 }

@@ -298,7 +298,8 @@ if (!function_exists('flacso_oferta_academica_shortcode')) {
 
                 .<?php echo esc_html($wrapper_class); ?> .flacso-card__img {
                     width: 100%;
-                    height: 200px;
+                    aspect-ratio: 1 / 1;
+                    height: auto;
                     background-size: contain;
                     background-position: center;
                     background-repeat: no-repeat;
@@ -489,8 +490,8 @@ add_action('init', static function () {
 
     register_block_type('flacso-uruguay/oferta-academica', [
         'api_version'    => 2,
-        'title'          => __('Oferta academica', 'flacso-main-page'),
-        'description'    => __('Hero y cards unificadas de la oferta academica', 'flacso-main-page'),
+        'title'          => __('Oferta académica', 'flacso-main-page'),
+        'description'    => __('Hero y cards unificadas de la oferta académica', 'flacso-main-page'),
         'category'       => 'flacso-uruguay',
         'icon'           => 'portfolio',
         'attributes'     => [

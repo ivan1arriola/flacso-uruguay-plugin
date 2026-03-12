@@ -45,7 +45,7 @@
                     {},
                     el(
                         PanelBody,
-                        { title: __('Oferta academica', 'flacso-oferta-academica'), initialOpen: true },
+                        { title: __('Oferta académica', 'flacso-oferta-academica'), initialOpen: true },
                         el(SelectControl, {
                             label: __('Selecciona la oferta', 'flacso-oferta-academica'),
                             value: attrs.ofertaId || 0,

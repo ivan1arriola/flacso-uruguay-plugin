@@ -62,8 +62,8 @@ class Oferta_Blocks {
         // Bloque dato: próximo inicio
         register_block_type('flacso-uruguay/dato-proximo-inicio', [
             'api_version'     => 2,
-            'title'           => __('Oferta Academica: Proximo inicio', 'flacso-oferta-academica'),
-            'description'     => __('Muestra el proximo inicio de la oferta academica seleccionada.', 'flacso-oferta-academica'),
+            'title'           => __('Oferta Académica: Próximo inicio', 'flacso-oferta-academica'),
+            'description'     => __('Muestra el próximo inicio de la oferta académica seleccionada.', 'flacso-oferta-academica'),
             'category'        => 'flacso-uruguay',
             'icon'            => 'calendar',
             'supports'        => [
@@ -82,8 +82,8 @@ class Oferta_Blocks {
         // Bloque dato: calendario PDF
         register_block_type('flacso-uruguay/dato-calendario', [
             'api_version'     => 2,
-            'title'           => __('Oferta Academica: Calendario', 'flacso-oferta-academica'),
-            'description'     => __('Muestra un boton para abrir el PDF de calendario de la oferta seleccionada.', 'flacso-oferta-academica'),
+            'title'           => __('Oferta Académica: Calendario', 'flacso-oferta-academica'),
+            'description'     => __('Muestra un botón para abrir el PDF de calendario de la oferta seleccionada.', 'flacso-oferta-academica'),
             'category'        => 'flacso-uruguay',
             'icon'            => 'media-document',
             'supports'        => [
@@ -106,8 +106,8 @@ class Oferta_Blocks {
         // Bloque dato: malla curricular PDF
         register_block_type('flacso-uruguay/dato-malla-curricular', [
             'api_version'     => 2,
-            'title'           => __('Oferta Academica: Malla curricular', 'flacso-oferta-academica'),
-            'description'     => __('Muestra un boton para abrir el PDF de malla curricular de la oferta seleccionada.', 'flacso-oferta-academica'),
+            'title'           => __('Oferta Académica: Malla curricular', 'flacso-oferta-academica'),
+            'description'     => __('Muestra un botón para abrir el PDF de malla curricular de la oferta seleccionada.', 'flacso-oferta-academica'),
             'category'        => 'flacso-uruguay',
             'icon'            => 'media-document',
             'supports'        => [
@@ -193,7 +193,7 @@ class Oferta_Blocks {
 
         if (!$oferta_id) {
             return $is_editor_preview
-                ? '<p>' . esc_html__('Selecciona una oferta academica.', 'flacso-oferta-academica') . '</p>'
+                ? '<p>' . esc_html__('Selecciona una oferta académica.', 'flacso-oferta-academica') . '</p>'
                 : '';
         }
 
@@ -203,7 +203,7 @@ class Oferta_Blocks {
             $formatted = __('A definir', 'flacso-oferta-academica');
         }
 
-        $label = esc_html__('Proximo inicio:', 'flacso-oferta-academica');
+        $label = esc_html__('Próximo inicio:', 'flacso-oferta-academica');
 
         return '<div class="flacso-oferta-proximo-inicio">' .
             '<p class="has-text-align-center has-theme-palette-9-color has-theme-palette-1-background-color has-text-color has-background has-link-color" style="border-radius:20px;padding:0.6rem 1rem;">' .
@@ -228,7 +228,7 @@ class Oferta_Blocks {
 
         if (!$oferta_id) {
             return $is_editor_preview
-                ? '<p>' . esc_html__('Selecciona una oferta academica.', 'flacso-oferta-academica') . '</p>'
+                ? '<p>' . esc_html__('Selecciona una oferta académica.', 'flacso-oferta-academica') . '</p>'
                 : '';
         }
 

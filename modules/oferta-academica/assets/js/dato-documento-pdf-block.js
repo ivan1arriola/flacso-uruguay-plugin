@@ -102,7 +102,7 @@
 
         function onSaveToCpt() {
             if (!ofertaId) {
-                setSaveError(__('Selecciona una oferta academica.', 'flacso-oferta-academica'));
+                setSaveError(__('Selecciona una oferta académica.', 'flacso-oferta-academica'));
                 setSaveMessage('');
                 return;
             }
@@ -129,7 +129,7 @@
                 var saved = response && response[config.metaKey] ? String(response[config.metaKey]).trim() : value;
                 setRemoteUrl(saved);
                 setAttributes({ pdfUrlFallback: saved });
-                setSaveMessage(__('URL guardada en la oferta academica.', 'flacso-oferta-academica'));
+                setSaveMessage(__('URL guardada en la oferta académica.', 'flacso-oferta-academica'));
             }).catch(function (error) {
                 setSaveError((error && error.message) ? error.message : __('No se pudo guardar en el CPT.', 'flacso-oferta-academica'));
             }).finally(function () {
@@ -155,7 +155,7 @@
         infoLines.push(
             el(TextControl, {
                 label: __('URL del PDF', 'flacso-oferta-academica'),
-                help: __('Si el campo del CPT esta vacio, este valor se usa como fallback.', 'flacso-oferta-academica'),
+                help: __('Si el campo del CPT está vacío, este valor se usa como fallback.', 'flacso-oferta-academica'),
                 value: attrs.pdfUrlFallback || '',
                 placeholder: 'https://...',
                 onChange: function (value) {
@@ -179,7 +179,7 @@
                 el('p', { style: { marginTop: '0.25rem' } },
                     remoteUrl
                         ? __('Valor actual en CPT: ', 'flacso-oferta-academica') + remoteUrl
-                        : __('Valor actual en CPT: vacio', 'flacso-oferta-academica')
+                        : __('Valor actual en CPT: vacío', 'flacso-oferta-academica')
                 )
             );
         }
@@ -194,7 +194,7 @@
                 isBusy: isSaving,
                 disabled: isSaving || !ofertaId || !currentUrl,
                 onClick: onSaveToCpt
-            }, __('Guardar URL en Oferta Academica', 'flacso-oferta-academica'))
+            }, __('Guardar URL en Oferta Académica', 'flacso-oferta-academica'))
         );
 
         if (saveMessage) {

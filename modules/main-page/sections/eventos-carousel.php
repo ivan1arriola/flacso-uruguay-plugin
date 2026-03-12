@@ -203,7 +203,7 @@ if (!function_exists('flacso_section_eventos_get_items')) {
                 } elseif ($duration_hours >= 24) {
                     $duration_days = max(1, (int) ceil($diff_secs / 86400));
                     $duration_label = sprintf(
-                        _n('Dura %s dia', 'Dura %s dias', $duration_days, 'flacso-main-page'),
+                        _n('Dura %s día', 'Dura %s días', $duration_days, 'flacso-main-page'),
                         number_format_i18n($duration_days)
                     );
                 }
@@ -430,8 +430,8 @@ if (!function_exists('flacso_section_eventos_render')) {
                         $duration_days = max(1, (int) ceil($diff_secs / 86400));
                         $duration_label = sprintf(
                             _n(
-                                'Dura %s d?a',
-                                'Dura %s d?as',
+                                'Dura %s día',
+                                'Dura %s días',
                                 $duration_days,
                                 'flacso-main-page'
                             ),

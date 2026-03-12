@@ -12,20 +12,18 @@ Plugin unificado para FLACSO Uruguay con modulos de:
 
 ## Version
 
-`1.0.5`
+`1.1.5`
 
 ## Requisitos
 
 - WordPress `6.0+`
 - PHP `7.4+`
 
-## Cambios recientes (1.0.5)
+## Cambios recientes (1.1.5)
 
-- Base React para el modulo `flacso_homepage_builder`:
-  - montaje del layout principal desde `wp.element`
-  - fallback a renderizado PHP cuando React no aplica
-  - script dedicado: `modules/main-page/assets/js/flacso-main-page-react.js`
-- Se mantiene la compatibilidad de estilos y secciones existentes.
+- Correcciones ortograficas y tildes en textos de interfaz.
+- Ajustes de layout para imagenes cuadradas en tarjetas y listados.
+- Correccion de visualizacion en el carrusel 3D de oferta educativa.
 
 ## Cambios previos (1.0.4)
 

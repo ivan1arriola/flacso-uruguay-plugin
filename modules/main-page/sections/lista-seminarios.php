@@ -128,7 +128,7 @@ if (!function_exists('flacso_lista_seminarios_render')) {
         .seminario-card__image-container {
             overflow: hidden;
             position: relative;
-            aspect-ratio: 16 / 9;
+            aspect-ratio: 1 / 1;
         }
 
         .seminario-card__image {
@@ -766,7 +766,8 @@ if (!function_exists('flacso_section_seminarios_proximos_render')) {
             }
 
             .seminario-card > div:first-child {
-                height: clamp(160px, 40vw, 220px);
+                aspect-ratio: 1 / 1;
+                height: auto;
                 overflow: hidden;
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                 position: relative;

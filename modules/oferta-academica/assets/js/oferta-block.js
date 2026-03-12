@@ -32,12 +32,12 @@
                     PanelBody,
                     { title: __('Hero', 'flacso-oferta-academica'), initialOpen: true },
                     el(TextControl, {
-                        label: __('Titulo', 'flacso-oferta-academica'),
+                        label: __('Título', 'flacso-oferta-academica'),
                         value: heroTitle || '',
                         onChange: (value) => setAttributes({ heroTitle: value }),
                     }),
                     el(TextControl, {
-                        label: __('Subtitulo', 'flacso-oferta-academica'),
+                        label: __('Subtítulo', 'flacso-oferta-academica'),
                         value: heroSubtitle || '',
                         onChange: (value) => setAttributes({ heroSubtitle: value }),
                     }),

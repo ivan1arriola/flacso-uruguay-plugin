@@ -27,24 +27,24 @@
                     const label = page && page.title && page.title.rendered ? page.title.rendered : page.id;
                     return { label, value: page.id };
                 } );
-                return [ { label: __( 'Seleccione una pagina', 'flacso' ), value: 0 }, ...mapped ];
+                return [ { label: __( 'Seleccione una página', 'flacso' ), value: 0 }, ...mapped ];
             }
-            return [ { label: __( 'Cargando paginas…', 'flacso' ), value: 0 } ];
+            return [ { label: __( 'Cargando páginas...', 'flacso' ), value: 0 } ];
         }, [ pages ] );
 
         return (
             <SelectControl
-                label={ __( 'Pagina padre', 'flacso' ) }
+                label={ __( 'Página padre', 'flacso' ) }
                 value={ value || 0 }
                 onChange={ ( selected ) => onChange( selected ? parseInt( selected, 10 ) : 0 ) }
                 options={ options }
-                help={ __( 'Si eliges aqui, no necesitas llenar el nombre.', 'flacso' ) }
+                help={ __( 'Si eliges aquí, no necesitas completar el nombre.', 'flacso' ) }
             />
         );
     };
 
     registerBlockType( blockName, {
-        title: __( 'Listado de paginas (posgrados)', 'flacso-main-page' ),
+        title: __( 'Listado de páginas (posgrados)', 'flacso-main-page' ),
         icon: 'index-card',
         category: 'flacso-uruguay',
         attributes: {
@@ -73,15 +73,15 @@
             return (
                 <Fragment>
                     <InspectorControls>
-                        <PanelBody title={ __( 'Configuracion', 'flacso-main-page' ) } initialOpen={ true }>
+                        <PanelBody title={ __( 'Configuración', 'flacso-main-page' ) } initialOpen={ true }>
                             <TextControl
-                                label={ __( 'Nombre de la pagina padre', 'flacso-main-page' ) }
+                                label={ __( 'Nombre de la página padre', 'flacso-main-page' ) }
                                 value={ attributes.padre }
                                 onChange={ ( value ) => setAttributes( { padre: value } ) }
                                 help={ __( 'Ej: "Diplomados", "Especializaciones". Se ignora si usas ID.', 'flacso-main-page' ) }
                             />
                             <TextControl
-                                label={ __( 'ID de la pagina padre (prioridad sobre nombre)', 'flacso-main-page' ) }
+                                label={ __( 'ID de la página padre (prioridad sobre nombre)', 'flacso-main-page' ) }
                                 type="number"
                                 value={ attributes.padre_id || '' }
                                 onChange={ ( value ) => setAttributes( { padre_id: value ? parseInt( value, 10 ) : 0 } ) }
@@ -91,7 +91,7 @@
                                 onChange={ ( value ) => setAttributes( { padre_id: value } ) }
                             />
                             <TextControl
-                                label={ __( 'Cantidad de paginas a mostrar (-1 = todas)', 'flacso-main-page' ) }
+                                label={ __( 'Cantidad de páginas a mostrar (-1 = todas)', 'flacso-main-page' ) }
                                 type="number"
                                 value={ attributes.posts_per_page ?? -1 }
                                 onChange={ ( value ) => setAttributes( { posts_per_page: value === '' ? -1 : parseInt( value, 10 ) } ) }

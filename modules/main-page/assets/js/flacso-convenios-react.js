@@ -66,7 +66,7 @@
         var noResults = props && props.no_results ? String(props.no_results) : 'No se encontraron resultados';
         var noResultsHint = props && props.no_results_hint ? String(props.no_results_hint) : '';
         var countLabel = props && props.count_label ? String(props.count_label) : 'resultados encontrados';
-        var clearLabel = props && props.clear_label ? String(props.clear_label) : 'Limpiar busqueda';
+        var clearLabel = props && props.clear_label ? String(props.clear_label) : 'Limpiar búsqueda';
         var inputId = appId + '-input';
         var _useState = useState('');
         var query = _useState[0];
