@@ -12,18 +12,18 @@ Plugin unificado para FLACSO Uruguay con modulos de:
 
 ## Version
 
-`1.1.5`
+`1.1.6`
 
 ## Requisitos
 
 - WordPress `6.0+`
 - PHP `7.4+`
 
-## Cambios recientes (1.1.5)
+## Cambios recientes (1.1.6)
 
-- Correcciones ortograficas y tildes en textos de interfaz.
-- Ajustes de layout para imagenes cuadradas en tarjetas y listados.
-- Correccion de visualizacion en el carrusel 3D de oferta educativa.
+- Hotfix visual del carrusel 3D de oferta educativa para evitar superposicion.
+- Ajuste de posicion/tamano de tarjetas con imagenes cuadradas.
+- Recorte de titulo y descripcion para mantener altura estable.
 
 ## Cambios previos (1.0.4)
 

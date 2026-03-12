@@ -1,3 +1,12 @@
+## Version 1.1.6 - 12 de marzo de 2026
+
+### Resumen
+- Hotfix visual en `Nuestra oferta educativa` (carrusel 3D de posgrados).
+- Reposicion de tarjetas para evitar superposicion con titulo y descripcion.
+- Ajuste de tamanos y recorte de contenido para estabilizar la altura de tarjetas con imagenes cuadradas.
+
+---
+
 ## Version 1.1.5 - 12 de marzo de 2026
 
 ### Resumen

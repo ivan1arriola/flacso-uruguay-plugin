@@ -218,12 +218,12 @@ if (!function_exists('flacso_section_posgrados_render')) {
   .nuestros-posgrados-3d .posgrados-3d-stage {
     position: relative;
     z-index: 1;
-    margin-top: clamp(0.8rem, 2vw, 1.6rem);
+    margin-top: clamp(1.6rem, 3vw, 2.6rem);
   }
 
   .nuestros-posgrados-3d .posgrados-3d-viewport {
     position: relative;
-    min-height: clamp(700px, 72vw, 820px);
+    min-height: clamp(740px, 76vw, 860px);
     perspective: 1800px;
     perspective-origin: center center;
     overflow: visible;
@@ -246,9 +246,9 @@ if (!function_exists('flacso_section_posgrados_render')) {
   }
 
   .nuestros-posgrados-3d .posgrado-item {
-    --card-width: min(380px, 66vw);
+    --card-width: min(360px, 60vw);
     position: absolute;
-    top: 50%;
+    top: 62%;
     left: 50%;
     width: var(--card-width);
     display: flex;
@@ -314,6 +314,10 @@ if (!function_exists('flacso_section_posgrados_render')) {
     line-height: 1.15;
     font-weight: 800;
     text-wrap: balance;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
   }
 
   .nuestros-posgrados-3d .posgrado-descripcion-card {
@@ -323,7 +327,7 @@ if (!function_exists('flacso_section_posgrados_render')) {
     line-height: 1.65;
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 5;
+    -webkit-line-clamp: 4;
     overflow: hidden;
   }
 
@@ -370,22 +374,24 @@ if (!function_exists('flacso_section_posgrados_render')) {
 
   @media (max-width: 991.98px) {
     .nuestros-posgrados-3d .posgrados-3d-viewport {
-      min-height: 680px;
+      min-height: 700px;
     }
 
     .nuestros-posgrados-3d .posgrado-item {
-      --card-width: min(350px, 74vw);
+      --card-width: min(340px, 72vw);
+      top: 60%;
     }
   }
 
   @media (max-width: 767.98px) {
     .nuestros-posgrados-3d .posgrados-3d-viewport {
-      min-height: 620px;
+      min-height: 640px;
       padding-block: 0.5rem;
     }
 
     .nuestros-posgrados-3d .posgrado-item {
-      --card-width: min(310px, 82vw);
+      --card-width: min(308px, 82vw);
+      top: 58%;
       border-radius: 24px;
     }
 
@@ -397,7 +403,7 @@ if (!function_exists('flacso_section_posgrados_render')) {
     .nuestros-posgrados-3d .posgrado-descripcion-card {
       line-height: 1.55;
       font-size: 0.96rem;
-      -webkit-line-clamp: 4;
+      -webkit-line-clamp: 3;
     }
   }
 
@@ -408,11 +414,12 @@ if (!function_exists('flacso_section_posgrados_render')) {
     }
 
     .nuestros-posgrados-3d .posgrados-3d-viewport {
-      min-height: 580px;
+      min-height: 600px;
     }
 
     .nuestros-posgrados-3d .posgrado-item {
       --card-width: min(100%, 318px);
+      top: 57%;
     }
   }
 
