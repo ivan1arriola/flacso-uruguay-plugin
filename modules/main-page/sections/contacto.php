@@ -114,25 +114,23 @@ function flacso_section_contacto_render() {
 
     ob_start();
     ?>
-    <div class="flacso-contacto flacso-contacto-<?php echo esc_attr($unique_id); ?>" id="<?php echo esc_attr($unique_id); ?>" style="<?php echo esc_attr($css_variables); ?>">
-        <section class="flacso-contacto-section">
-            <div class="flacso-content-shell flacso-contacto-content">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <h2 class="flacso-contacto-title"><?php echo $title; ?></h2>
-                        <p class="flacso-contacto-subtitle"><?php echo $subtitle; ?></p>
-                    </div>
-                    <div class="col-md-6 text-md-end">
-                        <?php if ($cta_url): ?>
-                            <a href="<?php echo esc_url($cta_url); ?>" class="flacso-btn flacso-btn-primary flacso-btn-anim">
-                                <?php echo $cta_label; ?>
-                            </a>
-                        <?php endif; ?>
-                    </div>
+    <section class="flacso-contacto flacso-contacto-section flacso-contacto-<?php echo esc_attr($unique_id); ?>" id="<?php echo esc_attr($unique_id); ?>" style="<?php echo esc_attr($css_variables); ?>">
+        <div class="flacso-content-shell flacso-contacto-content">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h2 class="flacso-contacto-title"><?php echo $title; ?></h2>
+                    <p class="flacso-contacto-subtitle"><?php echo $subtitle; ?></p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <?php if ($cta_url): ?>
+                        <a href="<?php echo esc_url($cta_url); ?>" class="flacso-btn flacso-btn-primary flacso-btn-anim">
+                            <?php echo $cta_label; ?>
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
-        </section>
-    </div>
+        </div>
+    </section>
     <?php
     return ob_get_clean();
     }

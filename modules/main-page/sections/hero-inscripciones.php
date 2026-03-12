@@ -81,9 +81,9 @@ if (!function_exists('flacso_section_hero_render')) {
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-container {
             background: var(--global-palette1, #1d3a72);
             color: var(--global-palette9, #ffffff);
-            min-height: clamp(520px, 82vh, 880px);
+            min-height: clamp(460px, 72vh, 760px);
             display: flex;
-            align-items: flex-end;
+            align-items: center;
             justify-content: center;
             position: relative;
             overflow: hidden;
@@ -97,20 +97,14 @@ if (!function_exists('flacso_section_hero_render')) {
 
         @supports (height: 100svh) {
             .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-container {
-                min-height: clamp(520px, 82svh, 880px);
+                min-height: clamp(460px, 72svh, 760px);
             }
         }
 
-        @media (min-width: 768px) {
+        @media (max-width: 767.98px) {
             .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-container {
-                align-items: center;
-                min-height: 90vh;
-            }
-        }
-
-        @media (min-width: 1024px) {
-            .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-container {
-                min-height: 100vh;
+                align-items: flex-end;
+                min-height: clamp(440px, 68svh, 640px);
             }
         }
 
@@ -126,20 +120,23 @@ if (!function_exists('flacso_section_hero_render')) {
             inset: 0;
             background:
                 linear-gradient(
-                    color-mix(in srgb, var(--global-palette1, #1d3a72) 62%, transparent),
-                    color-mix(in srgb, var(--global-palette1, #1d3a72) 92%, transparent)
+                    rgba(4, 14, 34, 0.62),
+                    rgba(4, 14, 34, 0.78)
                 ),
                 url("<?php echo $background; ?>") center/cover no-repeat;
             will-change: transform;
+            filter: saturate(0.9) contrast(1.06) brightness(0.9);
             animation: bgMove 20s ease-in-out infinite alternate;
         }
 
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-container::after {
             content: "";
             position: absolute;
-            inset: auto 0 0 0;
-            height: min(36%, 260px);
-            background: linear-gradient(180deg, rgba(10, 26, 52, 0), rgba(8, 20, 44, 0.74));
+            inset: 0;
+            background:
+                radial-gradient(circle at 15% 78%, rgba(250, 198, 95, 0.2), transparent 36%),
+                radial-gradient(circle at 88% 18%, rgba(250, 198, 95, 0.16), transparent 38%),
+                linear-gradient(180deg, rgba(10, 26, 52, 0.06), rgba(8, 20, 44, 0.45));
             z-index: 0;
         }
 
@@ -150,47 +147,135 @@ if (!function_exists('flacso_section_hero_render')) {
 
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-content {
             position: relative;
-            z-index: 1;
-            text-align: left;
+            z-index: 2;
+            text-align: center;
             width: 100%;
-            max-width: 1120px;
+            max-width: 1200px;
             margin: 0 auto;
-            padding: clamp(1rem, 4vw, 2rem) 1rem clamp(1.2rem, 6vw, 2.8rem);
-            display: flex;
-            justify-content: flex-start;
+            padding: clamp(1.2rem, 4vw, 3rem) clamp(0.95rem, 2vw, 1.5rem) clamp(2.2rem, 8vw, 5rem);
         }
 
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-copy-panel {
-            width: min(100%, 660px);
-            background: linear-gradient(165deg, rgba(7, 22, 49, 0.66), rgba(10, 29, 63, 0.52));
-            border: 1px solid rgba(255, 255, 255, 0.26);
-            border-radius: 22px;
-            padding: clamp(1rem, 3.2vw, 1.6rem);
-            backdrop-filter: blur(8px);
-            box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28);
+            width: min(100%, 960px);
+            margin-inline: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.35rem;
         }
 
         @media (min-width: 768px) {
             .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-content {
-                text-align: center;
-                justify-content: center;
-                padding: 80px 2rem;
-            }
-
-            .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-copy-panel {
-                border-radius: 28px;
-                padding: clamp(1.3rem, 2.8vw, 2.1rem);
+                padding-top: clamp(1.8rem, 4vw, 3.2rem);
+                padding-bottom: clamp(3.2rem, 8vh, 5.6rem);
             }
         }
 
         /* ===== Título y subtítulo ===== */
+        .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-ornaments {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-ornaments::before {
+            content: "";
+            position: absolute;
+            top: 2.5%;
+            right: max(3%, 24px);
+            width: min(250px, 28vw);
+            height: min(250px, 26vh);
+            border-top: 2px solid rgba(247, 198, 93, 0.75);
+            border-right: 2px solid rgba(247, 198, 93, 0.75);
+            border-radius: 0 32px 0 0;
+            opacity: 0.88;
+        }
+
+        .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-ornaments::after {
+            content: "";
+            position: absolute;
+            left: max(5%, 20px);
+            bottom: 8%;
+            width: min(300px, 30vw);
+            height: min(260px, 26vh);
+            border-left: 2px solid rgba(247, 198, 93, 0.72);
+            border-bottom: 2px solid rgba(247, 198, 93, 0.72);
+            border-radius: 0 0 0 42px;
+            opacity: 0.86;
+        }
+
+        .flacso-hero-<?php echo esc_attr($unique_id); ?> .orn-line {
+            position: absolute;
+            background: rgba(247, 198, 93, 0.68);
+        }
+
+        .flacso-hero-<?php echo esc_attr($unique_id); ?> .orn-line--v-left {
+            top: 11%;
+            left: max(8%, 30px);
+            width: 2px;
+            height: min(130px, 14vh);
+        }
+
+        .flacso-hero-<?php echo esc_attr($unique_id); ?> .orn-line--diag-left {
+            left: max(7%, 24px);
+            top: 48%;
+            width: min(190px, 21vw);
+            height: 2px;
+            transform: rotate(-38deg);
+            transform-origin: left center;
+        }
+
+        .flacso-hero-<?php echo esc_attr($unique_id); ?> .orn-line--diag-bottom {
+            right: max(22%, 110px);
+            bottom: 15%;
+            width: min(260px, 24vw);
+            height: 2px;
+            transform: rotate(-30deg);
+            transform-origin: right center;
+        }
+
+        .flacso-hero-<?php echo esc_attr($unique_id); ?> .orn-line--h-bottom {
+            right: max(10%, 50px);
+            bottom: 9%;
+            width: min(430px, 40vw);
+            height: 2px;
+        }
+
+        .flacso-hero-<?php echo esc_attr($unique_id); ?> .orn-dot {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #f9f2d2;
+            box-shadow: 0 0 0 3px rgba(247, 198, 93, 0.24);
+        }
+
+        .flacso-hero-<?php echo esc_attr($unique_id); ?> .orn-dot--top-right {
+            top: 2.2%;
+            right: max(27%, 170px);
+        }
+
+        .flacso-hero-<?php echo esc_attr($unique_id); ?> .orn-dot--left-mid {
+            top: 52%;
+            left: max(15%, 84px);
+        }
+
+        .flacso-hero-<?php echo esc_attr($unique_id); ?> .orn-dot--bottom-center {
+            bottom: 8.5%;
+            right: max(50%, 240px);
+        }
+
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-title {
-            font-size: clamp(1.9rem, 8vw, 2.8rem);
+            font-size: clamp(2rem, 10vw, 5.2rem);
             font-weight: 800;
-            margin-bottom: 0.85rem;
-            text-shadow: 0 8px 24px rgba(3, 11, 24, 0.36);
+            margin: 0 auto 0.95rem;
+            text-shadow: 0 4px 20px rgba(3, 11, 24, 0.54);
             font-family: "Sora", var(--global-heading-font-family, "Helvetica Neue", sans-serif);
-            line-height: 1.1;
+            line-height: 1.03;
+            letter-spacing: -0.02em;
+            text-wrap: balance;
+            max-width: 14.5ch;
             opacity: 0;
             animation: slideDown 1.2s ease-out forwards;
             animation-delay: 0.4s;
@@ -199,20 +284,13 @@ if (!function_exists('flacso_section_hero_render')) {
 
         @media (min-width: 576px) {
             .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-title {
-                font-size: clamp(2.1rem, 6.4vw, 3rem);
+                font-size: clamp(2.4rem, 9.2vw, 5.6rem);
             }
         }
 
         @media (min-width: 768px) {
             .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-title {
-                font-size: 2.75rem;
-                margin-bottom: 1.5rem;
-            }
-        }
-
-        @media (min-width: 1024px) {
-            .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-title {
-                font-size: 3.5rem;
+                margin-bottom: 1.15rem;
             }
         }
 
@@ -222,38 +300,16 @@ if (!function_exists('flacso_section_hero_render')) {
         }
 
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-subtitle {
-            font-size: clamp(0.98rem, 3.8vw, 1.2rem);
-            margin-bottom: 1.4rem;
+            font-size: clamp(1.04rem, 3.6vw, 2rem);
+            margin: 0 auto 1.8rem;
             opacity: 0;
             font-family: "Manrope", var(--global-body-font-family, "Helvetica Neue", sans-serif);
-            line-height: 1.6;
-            max-width: 62ch;
-            margin-left: 0;
-            margin-right: 0;
+            line-height: 1.45;
+            max-width: 38ch;
             animation: fadeUp 1.3s ease-out forwards;
             animation-delay: 1s;
-            color: rgba(255, 255, 255, 0.94);
-        }
-
-        @media (min-width: 576px) {
-            .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-subtitle {
-                font-size: clamp(1.06rem, 3vw, 1.25rem);
-            }
-        }
-
-        @media (min-width: 768px) {
-            .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-subtitle {
-                font-size: 1.35rem;
-                margin-bottom: 2.2rem;
-                margin-left: auto;
-                margin-right: auto;
-            }
-        }
-
-        @media (min-width: 1024px) {
-            .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-subtitle {
-                font-size: 1.5rem;
-            }
+            color: rgba(246, 249, 255, 0.95);
+            text-shadow: 0 3px 12px rgba(6, 19, 40, 0.52);
         }
 
         @keyframes fadeUp {
@@ -264,12 +320,14 @@ if (!function_exists('flacso_section_hero_render')) {
         /* ===== Botones principales ===== */
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-buttons {
             display: flex;
-            flex-direction: column;
-            gap: 0.72rem;
-            align-items: stretch;
+            flex-wrap: wrap;
+            gap: 0.82rem;
+            align-items: center;
+            justify-content: center;
             opacity: 0;
             animation: fadeInBtns 1.2s ease-out forwards;
             animation-delay: 1.5s;
+            width: 100%;
         }
 
         @keyframes fadeInBtns {
@@ -277,59 +335,79 @@ if (!function_exists('flacso_section_hero_render')) {
             to { opacity: 1; transform: scale(1); }
         }
 
-        @media (min-width: 768px) {
-            .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-buttons {
-                flex-direction: row;
-                justify-content: center;
-                gap: 0.85rem;
-            }
-        }
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .hero-btn {
-            min-width: 0;
+            min-width: clamp(190px, 22vw, 250px);
             text-transform: none;
-            padding: 0.74rem 1.05rem;
-            font-size: 0.95rem;
-            width: 100%;
-            max-width: 360px;
-        }
-
-        @media (min-width: 576px) {
-            .flacso-hero-<?php echo esc_attr($unique_id); ?> .hero-btn {
-                font-size: 1.02rem;
-            }
-        }
-
-        @media (min-width: 768px) {
-            .flacso-hero-<?php echo esc_attr($unique_id); ?> .hero-btn {
-                min-width: 170px;
-                width: auto;
-                max-width: none;
-                padding: 0.82rem 1.55rem;
-            }
+            padding: 0.88rem 1.7rem;
+            font-size: clamp(1rem, 2.2vw, 1.1rem);
+            width: auto;
+            max-width: none;
+            border-width: 2px;
+            border-radius: 999px;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            box-shadow: 0 10px 24px rgba(5, 15, 34, 0.3);
+            backdrop-filter: blur(5px);
         }
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .hero-btn--primary {
-            background: var(--global-palette-btn-bg, var(--global-palette1, #1d3a72));
-            border-color: var(--global-palette-btn-bg, var(--global-palette1, #1d3a72));
-            color: var(--global-palette9, #ffffff);
+            background: linear-gradient(120deg, rgba(26, 106, 70, 0.95), rgba(37, 133, 86, 0.92));
+            border-color: rgba(68, 176, 120, 0.55);
+            color: #f3fbf5;
         }
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .hero-btn--outline {
             background: transparent;
-            border-color: var(--global-palette2, #f7b733);
-            color: var(--global-palette2, #f7b733);
+            border-color: rgba(247, 198, 93, 0.95);
+            color: rgba(247, 198, 93, 0.98);
         }
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .hero-btn--light {
-            background: rgba(255,255,255,0.15);
-            border-color: rgba(255,255,255,0.35);
-            color: var(--global-palette9, #ffffff);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            background: rgba(196, 225, 255, 0.2);
+            border-color: rgba(220, 238, 255, 0.58);
+            color: #f5f9ff;
+            box-shadow: 0 12px 28px rgba(3, 12, 30, 0.35);
         }
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .hero-btn--ghost {
-            background: transparent;
-            border-color: rgba(255,255,255,0.4);
-            color: var(--global-palette9, #ffffff);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.48);
+            color: rgba(255, 255, 255, 0.95);
         }
-        .flacso-hero-<?php echo esc_attr($unique_id); ?> .hero-btn--ghost:hover {
-            background: rgba(255,255,255,0.15);
+
+        .flacso-hero-<?php echo esc_attr($unique_id); ?> .hero-btn:hover,
+        .flacso-hero-<?php echo esc_attr($unique_id); ?> .hero-btn:focus-visible {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 32px rgba(4, 12, 28, 0.42);
+        }
+
+        .flacso-hero-<?php echo esc_attr($unique_id); ?> .hero-btn--outline:hover,
+        .flacso-hero-<?php echo esc_attr($unique_id); ?> .hero-btn--outline:focus-visible {
+            background: rgba(247, 198, 93, 0.13);
+            color: #ffecc5;
+        }
+
+        @media (max-width: 767.98px) {
+            .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-content {
+                padding-bottom: clamp(1.6rem, 8vh, 3rem);
+            }
+
+            .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-title {
+                max-width: 13.8ch;
+            }
+
+            .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-subtitle {
+                margin-bottom: 1.25rem;
+            }
+
+            .flacso-hero-<?php echo esc_attr($unique_id); ?> .hero-btn {
+                width: min(100%, 340px);
+                min-width: 0;
+            }
+
+            .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-ornaments::before,
+            .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-ornaments::after,
+            .flacso-hero-<?php echo esc_attr($unique_id); ?> .orn-line--diag-bottom,
+            .flacso-hero-<?php echo esc_attr($unique_id); ?> .orn-line--h-bottom,
+            .flacso-hero-<?php echo esc_attr($unique_id); ?> .orn-dot--bottom-center {
+                display: none;
+            }
         }
 
         /* ===== FAB flotantes ===== */
@@ -460,6 +538,15 @@ if (!function_exists('flacso_section_hero_render')) {
 
         <div class="flacso-hero-<?php echo esc_attr($unique_id); ?>">
             <section class="flacso-hero-container" id="hero-<?php echo esc_attr($unique_id); ?>">
+                <div class="flacso-hero-ornaments" aria-hidden="true">
+                    <span class="orn-line orn-line--v-left"></span>
+                    <span class="orn-line orn-line--diag-left"></span>
+                    <span class="orn-line orn-line--diag-bottom"></span>
+                    <span class="orn-line orn-line--h-bottom"></span>
+                    <span class="orn-dot orn-dot--top-right"></span>
+                    <span class="orn-dot orn-dot--left-mid"></span>
+                    <span class="orn-dot orn-dot--bottom-center"></span>
+                </div>
                 <div class="flacso-hero-content flacso-content-shell">
                     <div class="flacso-hero-copy-panel">
                         <h1 class="flacso-hero-title"><?php echo $title; ?></h1>

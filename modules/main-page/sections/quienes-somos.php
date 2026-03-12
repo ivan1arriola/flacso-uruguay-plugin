@@ -22,22 +22,12 @@ function flacso_section_quienes_somos_render() {
     <style>
     .flacso-quienes-<?php echo esc_attr($unique_id); ?> .flacso-quienes-section {
         position: relative;
-        background: #ffffff;
+        background: transparent;
         color: var(--global-palette3, #0f1a2d);
         padding: clamp(1.25rem, 2vw, 1.8rem) 0;
         text-align: left;
         overflow: hidden;
         width: 100%;
-    }
-
-    .flacso-quienes-<?php echo esc_attr($unique_id); ?> .flacso-quienes-inner {
-        max-width: 1060px;
-        margin: 0 auto;
-        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-        border: 1px solid rgba(29, 58, 114, 0.12);
-        border-radius: 24px;
-        padding: clamp(1.15rem, 2.2vw, 2rem);
-        box-shadow: 0 16px 36px rgba(15, 26, 45, 0.08);
     }
 
     .flacso-quienes-<?php echo esc_attr($unique_id); ?> .flacso-quienes-layout {
@@ -125,10 +115,6 @@ function flacso_section_quienes_somos_render() {
             padding: 1rem 0;
             background-attachment: scroll;
         }
-        .flacso-quienes-<?php echo esc_attr($unique_id); ?> .flacso-quienes-inner {
-            border-radius: 18px;
-            padding: 1rem;
-        }
         .flacso-quienes-<?php echo esc_attr($unique_id); ?> .flacso-quienes-layout {
             grid-template-columns: 102px minmax(0, 1fr);
             gap: 0.85rem;
@@ -151,22 +137,20 @@ function flacso_section_quienes_somos_render() {
     <div class="flacso-quienes-<?php echo esc_attr($unique_id); ?>">
         <section class="flacso-quienes-section">
             <div class="flacso-content-shell">
-                <div class="flacso-quienes-inner">
-                    <div class="flacso-quienes-layout">
-                        <div class="flacso-quienes-brand">
-                            <img src="<?php echo esc_url($logo_url); ?>" alt="FLACSO Uruguay">
+                <div class="flacso-quienes-layout">
+                    <div class="flacso-quienes-brand">
+                        <img src="<?php echo esc_url($logo_url); ?>" alt="FLACSO Uruguay">
+                    </div>
+                    <div class="flacso-quienes-copy">
+                        <h2 class="flacso-quienes-title"><?php echo $title; ?></h2>
+                        <div class="flacso-quienes-text">
+                            <?php echo $content; ?>
                         </div>
-                        <div class="flacso-quienes-copy">
-                            <h2 class="flacso-quienes-title"><?php echo $title; ?></h2>
-                            <div class="flacso-quienes-text">
-                                <?php echo $content; ?>
-                            </div>
-                            <?php if ($url_sobre_nosotros): ?>
-                                <a class="flacso-btn" href="<?php echo esc_url($url_sobre_nosotros); ?>">
-                                    <?php echo $cta_label; ?>
-                                </a>
-                            <?php endif; ?>
-                        </div>
+                        <?php if ($url_sobre_nosotros): ?>
+                            <a class="flacso-btn" href="<?php echo esc_url($url_sobre_nosotros); ?>">
+                                <?php echo $cta_label; ?>
+                            </a>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

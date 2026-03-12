@@ -120,20 +120,6 @@ class Flacso_Main_Page_Blocks {
                 'icon'        => 'layout',
                 'keywords'    => ['home', 'landing', 'flacso'],
             ],
-            'flacso-uruguay/nuestros-posgrados' => [
-                'title'       => __('Nuestros Posgrados', 'flacso-main-page'),
-                'description' => __('Sección de cards para mostrar los posgrados disponibles con imagen, descripción y enlaces.', 'flacso-main-page'),
-                'shortcode'   => 'nuestros_posgrados',
-                'icon'        => 'briefcase',
-                'keywords'    => ['posgrados', 'programa', 'flacso'],
-                'attributes'  => [
-                    'mostrar_titulo' => [
-                        'type'    => 'boolean',
-                        'default' => true,
-                        'label'   => __('Mostrar título', 'flacso-main-page'),
-                    ],
-                ],
-            ],
             'flacso-uruguay/oferta-academica' => [
                 'title'       => __('Oferta académica', 'flacso-main-page'),
                 'description' => __('Hero, navegación y cards unificadas para toda la oferta.', 'flacso-main-page'),

@@ -41,8 +41,8 @@ if (!function_exists('flacso_homepage_builder_render')) {
                 'function' => 'flacso_section_quienes_somos_render',
             ],
             [
-                'key' => 'posgrados',
-                'function' => 'flacso_section_posgrados_render',
+                'key' => 'instagram',
+                'function' => 'flacso_section_instagram_render',
             ],
             [
                 'key' => 'congreso',
@@ -181,7 +181,7 @@ if (!function_exists('flacso_homepage_builder_render_markup')) {
                 <?php foreach ($ordered_blocks as $section) : ?>
                     <?php
                     $section_key = sanitize_key((string) ($section['key'] ?? ''));
-                    $is_bleed_surface = in_array($section_key, ['hero', 'congreso', 'contacto'], true);
+                    $is_bleed_surface = $section_key === 'hero';
                     $surface_variant = $is_bleed_surface ? 'flacso-home-block__surface--bleed' : 'flacso-home-block__surface--card';
                     ?>
                     <article class="flacso-home-block flacso-home-block--<?php echo esc_attr($section['key']); ?>"

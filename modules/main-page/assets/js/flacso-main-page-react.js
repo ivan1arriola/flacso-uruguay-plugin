@@ -323,7 +323,7 @@
                     var sectionContent = section && section.content ? String(section.content) : '';
                     var component = section && section.component ? String(section.component) : '';
                     var sectionData = section && section.data && typeof section.data === 'object' ? section.data : null;
-                    var bleedKeys = ['hero', 'congreso', 'contacto'];
+                    var bleedKeys = ['hero'];
                     var isBleedSurface = bleedKeys.indexOf(key) !== -1;
                     var surfaceClass = 'flacso-home-block__surface ' + (isBleedSurface ? 'flacso-home-block__surface--bleed' : 'flacso-home-block__surface--card') + ' flacso-home-block__surface--' + key;
                     var body = null;

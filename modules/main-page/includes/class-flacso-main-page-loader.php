@@ -103,7 +103,6 @@ class Flacso_Main_Page_Loader {
             'flacso_homepage_builder',
             'lista_seminarios',
             'listar_paginas',
-            'nuestros_posgrados',
             'preguntas_frecuentes',
             'convenios_responsivos',
             'listar_categoria',
@@ -202,7 +201,7 @@ class Flacso_Main_Page_Loader {
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/convenios-responsivos.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/novedades-section.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/quienes-somos.php';
-        require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/posgrados.php';
+        require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/instagram.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/congreso.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/contacto.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/landing-page.php';

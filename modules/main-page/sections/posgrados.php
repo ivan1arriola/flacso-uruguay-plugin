@@ -1,299 +1,567 @@
 <?php
-// ==================================================
-// SECCIÓN NUESTROS POSGRADOS - SISTEMA UNIFICADO FLACSO
-// ==================================================
+/**
+ * Sección: Carrusel 3D de Posgrados
+ * Archivo: modules/main-page/sections/posgrados.php
+ */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
 
 if (!function_exists('flacso_section_posgrados_render')) {
-function flacso_section_posgrados_render($atts = []) {
-    if (!class_exists('Flacso_Main_Page_Settings')) {
-        return '<p style="color:red;">Error: Flacso_Main_Page_Settings no encontrado</p>';
-    }
-    
-    $settings = Flacso_Main_Page_Settings::get_section('posgrados');
+    function flacso_section_posgrados_render($atts = []) {
+        ob_start();
+        ?>
+<section class="nuestros-posgrados nuestros-posgrados-3d" data-posgrados-3d>
+  <div class="posgrados-container flacso-content-shell">
+    <h2 class="posgrados-titulo">NUESTROS POSGRADOS</h2>
 
-    $atts = shortcode_atts(
-        [
-            'mostrar_titulo' => null,
-        ],
-        $atts,
-        'nuestros_posgrados'
-    );
+    <div class="posgrados-descripcion">
+      <strong>FLACSO Uruguay</strong> brinda formaciones en diversos niveles: <strong>Cursos, Diplomas, Diplomados, Especializaciones y Maestrías</strong>. Todas las propuestas están pensadas desde el <strong>abordaje teórico y práctico de los problemas de las ciencias sociales</strong>. Todas las propuestas académicas poseen flexibilidad en la modalidad de enseñanza y <strong>seguimiento de profesionales especializados</strong> en los temas abordados.
+    </div>
 
-    $show_title = isset($atts['mostrar_titulo']) && $atts['mostrar_titulo'] !== null
-        ? filter_var($atts['mostrar_titulo'], FILTER_VALIDATE_BOOLEAN)
-        : !empty($settings['show_title']);
-
-    $title = esc_html($settings['title'] ?? '');
-    $intro = wp_kses_post($settings['intro'] ?? '');
-    $cards = is_array($settings['cards']) ? $settings['cards'] : [];
-    
-    // Si no hay tarjetas, mostrar mensaje de debug
-    if (empty($cards)) {
-        error_log('FLACSO DEBUG - No cards found in posgrados settings');
-    }
-
-    ob_start();
-    ?>
-    <style>
-    .nuestros-posgrados {
-        padding: 80px 0;
-        background: linear-gradient(135deg, var(--global-palette8, #f2f6ff) 0%, var(--global-palette9, #ffffff) 100%);
-        font-family: var(--global-body-font-family, "Helvetica Neue", sans-serif);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .nuestros-posgrados::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background:
-            radial-gradient(circle at 15% 25%, rgba(30,61,115,0.05) 0%, transparent 35%),
-            radial-gradient(circle at 85% 75%, rgba(254,210,34,0.05) 0%, transparent 35%);
-        animation: flacso-float 16s ease-in-out infinite alternate;
-    }
-
-    .posgrados-container {
-        position: relative;
-    }
-
-    .posgrados-titulo {
-        text-align: center;
-        color: var(--global-palette1, #1d3a72);
-        font-family: var(--global-heading-font-family, "Helvetica Neue", sans-serif);
-        font-weight: 900;
-        font-size: 2.6rem;
-        margin-bottom: 30px;
-        letter-spacing: -0.5px;
-    }
-
-    .posgrados-descripcion {
-        text-align: center;
-        color: var(--global-palette4, #1f2933);
-        font-size: 1.1rem;
-        line-height: 1.7;
-        max-width: var(--flacso-section-max-width);
-        margin: 0 auto 60px;
-    }
-
-    .posgrados-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-    }
-
-    @media (min-width: 576px) {
-        .posgrados-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
-
-    @media (min-width: 1024px) {
-        .posgrados-grid {
-            grid-template-columns: repeat(3, 1fr);
-        }
-    }
-
-    .posgrado-item {
-        background: var(--global-palette9, #ffffff);
-        border: 1px solid #f0f1f3;
-        border-radius: 12px;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        transition: all 0.3s ease;
-        text-decoration: none;
-        color: inherit;
-        touch-action: manipulation;
-    }
-
-    .posgrado-item:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-    }
-
-    .posgrado-imagen {
-        width: 100%;
-        aspect-ratio: 1/1;
-        background-size: contain;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-color: #f8f9fa;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .posgrado-badge {
-        position: absolute;
-        top: 12px;
-        right: 12px;
-        background: var(--global-palette2, #f7b733);
-        color: var(--global-palette3, #0f1a2d);
-        padding: 6px 14px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    }
-
-    .posgrado-contenido {
-        display: flex;
-        flex-direction: column;
-        flex-grow: 1;
-        padding: 24px;
-    }
-
-    .posgrado-titulo-card {
-        font-family: var(--global-heading-font-family, "Helvetica Neue", sans-serif);
-        color: var(--global-palette3, #0f1a2d);
-        font-weight: 700;
-        font-size: 1.1rem;
-        margin-bottom: 10px;
-        line-height: 1.3;
-    }
-
-    .posgrado-descripcion-card {
-        color: var(--global-palette4, #6b7280);
-        font-size: 0.95rem;
-        line-height: 1.5;
-        margin-bottom: 15px;
-        flex-grow: 1;
-    }
-
-    @media (max-width: 768px) {
-        .nuestros-posgrados { padding: 60px 0; }
-        .posgrados-titulo { font-size: 2rem; }
-        .posgrado-imagen { height: 160px; }
-        .posgrado-contenido { padding: 16px; }
-    }
-    </style>
-
-    <section class="nuestros-posgrados">
-        <div class="posgrados-container flacso-content-shell">
-            <?php if ($show_title): ?>
-                <h2 class="posgrados-titulo"><?php echo $title; ?></h2>
-            <?php endif; ?>
-
-            <div class="posgrados-descripcion">
-                <?php echo $intro; ?>
+    <div class="posgrados-3d-stage">
+      <div class="posgrados-3d-viewport" tabindex="0" aria-label="Carrusel de posgrados">
+        <div class="posgrados-3d-track">
+          <a class="posgrado-item posgrado-item--action" href="https://flacso.edu.uy/formacion/maestrias/" aria-labelledby="posgrado-card-0" aria-describedby="posgrado-card-0-description">
+            <div class="posgrado-imagen" style="background-image: url('https://flacso.edu.uy/wp-content/uploads/2023/08/IMAGE-SITIO-WEB-9.png');"></div>
+            <div class="posgrado-contenido">
+              <h3 class="posgrado-titulo-card" id="posgrado-card-0">Maestrías</h3>
+              <p class="posgrado-descripcion-card" id="posgrado-card-0-description">Una maestría es una oportunidad de crecimiento profesional y académico. Todas las maestrías tienen mínimo 18 meses de cursada y terminan en un trabajo de investigación. Una maestría es un paso necesario para cursar un doctorado.</p>
+              <span class="visually-hidden">Toca para abrir la información del posgrado.</span>
             </div>
+          </a>
 
-            <div class="posgrados-grid">
-                <?php 
-                if (empty($cards)): 
-                    echo '<p style="grid-column: 1/-1; text-align:center; color:#999;">No hay tarjetas configuradas</p>';
-                else:
-                    foreach ($cards as $index => $card):
-                    $card_title = esc_html($card['titulo'] ?? $card['title'] ?? '');
-                    $card_type = esc_html($card['tipo'] ?? $card['type'] ?? '');
-                    $card_url_raw = $card['url'] ?? '';
-                    $card_url = Flacso_Main_Page_Settings::normalize_url_output($card_url_raw);
-                    $card_image = esc_url($card['img'] ?? $card['image'] ?? '');
-                    $card_desc = wp_kses_post($card['desc'] ?? '');
-                    $card_desc_plain = trim(wp_strip_all_tags($card['desc'] ?? ''));
-                    $card_id = 'posgrado-card-' . $index;
-                    $desc_id = $card_id . '-description';
-                    $has_description = ($card_desc_plain !== '') || ($card_type !== '');
-                    $tag = $card_url ? 'a' : 'article';
-                    $card_classes = ['posgrado-item'];
-                    if ($card_url) {
-                        $card_classes[] = 'posgrado-item--action';
-                    }
-                    
-                    if (!$card_title && !$card_desc) {
-                        continue;
-                    }
-                ?>
-                    <<?php echo $tag; ?>
-                        class="<?php echo esc_attr(implode(' ', $card_classes)); ?>"
-                        <?php if ($card_url): ?>
-                            href="<?php echo esc_url($card_url); ?>"
-                        <?php endif; ?>
-                        aria-labelledby="<?php echo esc_attr($card_id); ?>"
-                        <?php if ($has_description): ?>
-                            aria-describedby="<?php echo esc_attr($desc_id); ?>"
-                        <?php endif; ?>
-                        <?php if (!$card_url): ?>
-                            role="group"
-                        <?php endif; ?>
-                    >
-                        <?php if ($card_image): ?>
-                            <div class="posgrado-imagen" style="background-image: url('<?php echo $card_image; ?>');">
-                                <?php if ($card_type): ?>
-                                    <span class="posgrado-badge"><?php echo $card_type; ?></span>
-                                <?php endif; ?>
-                            </div>
-                        <?php endif; ?>
-                        <div class="posgrado-contenido">
-                            <h3 class="posgrado-titulo-card" id="<?php echo esc_attr($card_id); ?>"><?php echo $card_title; ?></h3>
-                            <?php if ($card_desc): ?>
-                                <p class="posgrado-descripcion-card" id="<?php echo esc_attr($desc_id); ?>"><?php echo $card_desc; ?></p>
-                            <?php elseif ($card_type): ?>
-                                <p class="posgrado-descripcion-card" id="<?php echo esc_attr($desc_id); ?>"><?php echo $card_type; ?></p>
-                            <?php endif; ?>
-                            <?php if ($card_url): ?>
-                                <span class="visually-hidden"><?php esc_html_e('Toca para abrir la información del posgrado.', 'flacso-main-page'); ?></span>
-                            <?php endif; ?>
-                        </div>
-                    </<?php echo $tag; ?>>
-                <?php 
-                    endforeach;
-                endif; 
-                ?>
+          <a class="posgrado-item posgrado-item--action" href="https://flacso.edu.uy/formacion/especializaciones/" aria-labelledby="posgrado-card-1" aria-describedby="posgrado-card-1-description">
+            <div class="posgrado-imagen" style="background-image: url('https://flacso.edu.uy/wp-content/uploads/2023/08/IMAGE-SITIO-WEB-1.png');"></div>
+            <div class="posgrado-contenido">
+              <h3 class="posgrado-titulo-card" id="posgrado-card-1">Especializaciones</h3>
+              <p class="posgrado-descripcion-card" id="posgrado-card-1-description">La Especialización es el grado académico previo a la Maestría. Es una oportunidad de formación que permite la profundización y actualización de los marcos teóricos, incorporación de metodologías y herramientas en un tiempo más corto que una Maestría.</p>
+              <span class="visually-hidden">Toca para abrir la información del posgrado.</span>
             </div>
+          </a>
+
+          <a class="posgrado-item posgrado-item--action" href="https://flacso.edu.uy/formacion/diplomas/" aria-labelledby="posgrado-card-2" aria-describedby="posgrado-card-2-description">
+            <div class="posgrado-imagen" style="background-image: url('https://flacso.edu.uy/wp-content/uploads/2023/08/IMAGE-SITIO-WEB-5-1024x1024.png');"></div>
+            <div class="posgrado-contenido">
+              <h3 class="posgrado-titulo-card" id="posgrado-card-2">Diplomas</h3>
+              <p class="posgrado-descripcion-card" id="posgrado-card-2-description">Los diplomas representan propuestas de formación que sirven como salidas intermedias hacia programas académicos de mayor grado. Combinan el análisis de temáticas relevantes y la adquisición de habilidades prácticas.</p>
+              <span class="visually-hidden">Toca para abrir la información del posgrado.</span>
+            </div>
+          </a>
+
+          <a class="posgrado-item posgrado-item--action" href="https://flacso.edu.uy/formacion/diplomados/" aria-labelledby="posgrado-card-3" aria-describedby="posgrado-card-3-description">
+            <div class="posgrado-imagen" style="background-image: url('https://flacso.edu.uy/wp-content/uploads/2023/08/IMAGE-SITIO-WEB-3.png');"></div>
+            <div class="posgrado-contenido">
+              <h3 class="posgrado-titulo-card" id="posgrado-card-3">Diplomados</h3>
+              <p class="posgrado-descripcion-card" id="posgrado-card-3-description">Grado académico similar al de la Especialización, expedido por la unidad académica. A través de seminarios temáticos, metodológicos y talleres prácticos, prepara a cursantes para continuar hacia Maestrías.</p>
+              <span class="visually-hidden">Toca para abrir la información del posgrado.</span>
+            </div>
+          </a>
+
+          <a class="posgrado-item posgrado-item--action" href="https://flacso.edu.uy/formacion/seminarios/" aria-labelledby="posgrado-card-4" aria-describedby="posgrado-card-4-description">
+            <div class="posgrado-imagen" style="background-image: url('https://flacso.edu.uy/wp-content/uploads/2023/08/IMAGE-SITIO-WEB-2.png');"></div>
+            <div class="posgrado-contenido">
+              <h3 class="posgrado-titulo-card" id="posgrado-card-4">Seminarios</h3>
+              <p class="posgrado-descripcion-card" id="posgrado-card-4-description">Espacios de formación intensiva y enfoque práctico, con actualización temática y acompañamiento docente especializado.</p>
+              <span class="visually-hidden">Toca para abrir la información del posgrado.</span>
+            </div>
+          </a>
         </div>
-    </section>
-    <?php
-    $output = ob_get_clean();
-    
-    return $output;
-}
-}
+      </div>
+    </div>
 
-// Registrar el shortcode
-add_shortcode('nuestros_posgrados', 'flacso_section_posgrados_render');
+    <div class="posgrados-3d-dots" aria-label="Navegación del carrusel"></div>
+  </div>
+</section>
 
-// Hook para asegurar que la configuración de posgrados esté inicializada
-add_action('wp_loaded', function() {
-    if (!class_exists('Flacso_Main_Page_Settings')) {
-        return;
+<style>
+  .nuestros-posgrados-3d {
+    position: relative;
+    overflow: hidden;
+    padding-block: var(--flacso-section-vertical-space, clamp(2rem, 3.5vw, 3.5rem));
+    background:
+      radial-gradient(circle at top center, rgba(254, 210, 34, 0.14), transparent 30%),
+      linear-gradient(180deg, rgba(233, 237, 242, 0.55) 0%, rgba(255, 255, 255, 1) 100%);
+  }
+
+  .nuestros-posgrados-3d .posgrados-container {
+    position: relative;
+  }
+
+  .nuestros-posgrados-3d .posgrados-titulo {
+    margin: 0 0 1rem;
+    text-align: center;
+    color: var(--global-palette1, #1d3a72);
+    font-size: clamp(1.9rem, 1.45rem + 1.6vw, 3rem);
+    line-height: 1.05;
+    letter-spacing: 0.03em;
+    font-weight: 800;
+  }
+
+  .nuestros-posgrados-3d .posgrados-descripcion {
+    max-width: 980px;
+    margin: 0 auto 2rem;
+    text-align: center;
+    color: var(--global-palette4, #2e2f34);
+    font-size: clamp(1rem, 0.95rem + 0.2vw, 1.1rem);
+    line-height: 1.7;
+  }
+
+  .nuestros-posgrados-3d .posgrados-3d-stage {
+    position: relative;
+  }
+
+  .nuestros-posgrados-3d .posgrados-3d-viewport {
+    position: relative;
+    min-height: 640px;
+    perspective: 1800px;
+    perspective-origin: center center;
+    overflow: visible;
+    padding-block: 1rem;
+    touch-action: pan-y;
+    cursor: grab;
+    user-select: none;
+    outline: none;
+  }
+
+  .nuestros-posgrados-3d .posgrados-3d-viewport.is-dragging {
+    cursor: grabbing;
+  }
+
+  .nuestros-posgrados-3d .posgrados-3d-track {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+  }
+
+  .nuestros-posgrados-3d .posgrado-item {
+    --card-width: min(420px, 72vw);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: var(--card-width);
+    min-height: 560px;
+    display: flex;
+    flex-direction: column;
+    border-radius: 28px;
+    overflow: hidden;
+    text-decoration: none;
+    background: #fff;
+    border: 1px solid rgba(29, 58, 114, 0.12);
+    box-shadow:
+      0 30px 70px rgba(13, 27, 55, 0.22),
+      0 10px 30px rgba(13, 27, 55, 0.1);
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    transform-origin: center center;
+    transition:
+      transform 700ms cubic-bezier(.2, .8, .2, 1),
+      opacity 450ms ease,
+      filter 450ms ease,
+      box-shadow 450ms ease;
+    will-change: transform, opacity;
+    cursor: pointer;
+  }
+
+  .nuestros-posgrados-3d .posgrado-item:focus-visible {
+    outline: 3px solid var(--global-palette2, #fed222);
+    outline-offset: 4px;
+  }
+
+  .nuestros-posgrados-3d .posgrado-imagen {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    overflow: hidden;
+  }
+
+  .nuestros-posgrados-3d .posgrado-imagen::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg, rgba(15, 26, 45, 0.08) 0%, rgba(15, 26, 45, 0.34) 100%);
+  }
+
+  .nuestros-posgrados-3d .posgrado-contenido {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    padding: 1.4rem 1.35rem 1.5rem;
+    background:
+      linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  }
+
+  .nuestros-posgrados-3d .posgrado-titulo-card {
+    margin: 0;
+    color: var(--global-palette1, #1d3a72);
+    font-size: clamp(1.3rem, 1.1rem + 0.4vw, 1.65rem);
+    line-height: 1.15;
+    font-weight: 800;
+    text-wrap: balance;
+  }
+
+  .nuestros-posgrados-3d .posgrado-descripcion-card {
+    margin: 0;
+    color: var(--global-palette4, #2e2f34);
+    font-size: clamp(0.98rem, 0.95rem + 0.15vw, 1.05rem);
+    line-height: 1.65;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .nuestros-posgrados-3d .posgrados-3d-dots {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    margin-top: 1.4rem;
+  }
+
+  .nuestros-posgrados-3d .posgrados-3d-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    background: rgba(29, 58, 114, 0.22);
+    transition: transform 200ms ease, background-color 200ms ease;
+  }
+
+  .nuestros-posgrados-3d .posgrados-3d-dot.is-active {
+    background: var(--global-palette2, #fed222);
+    transform: scale(1.3);
+  }
+
+  .nuestros-posgrados-3d .posgrados-3d-dot:focus-visible {
+    outline: 2px solid var(--global-palette1, #1d3a72);
+    outline-offset: 2px;
+  }
+
+  .nuestros-posgrados-3d .visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    margin: -1px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    border: 0 !important;
+    white-space: nowrap !important;
+  }
+
+  @media (max-width: 991.98px) {
+    .nuestros-posgrados-3d .posgrados-3d-viewport {
+      min-height: 600px;
     }
-    
-    // Obtén configuración actual
-    $current = get_option('flacso-main-page_settings', []);
-    
-    // Si posgrados está vacío, inicialízalo con los defaults
-    if (empty($current['posgrados'])) {
-        $defaults = Flacso_Main_Page_Settings::get_defaults();
-        if (isset($defaults['posgrados'])) {
-            $current['posgrados'] = $defaults['posgrados'];
-            $sanitized = Flacso_Main_Page_Settings::sanitize($current);
-            update_option('flacso-main-page_settings', $sanitized);
-            error_log('FLACSO: Posgrados section initialized with defaults');
+
+    .nuestros-posgrados-3d .posgrado-item {
+      --card-width: min(380px, 76vw);
+      min-height: 530px;
+    }
+  }
+
+  @media (max-width: 767.98px) {
+    .nuestros-posgrados-3d .posgrados-3d-viewport {
+      min-height: 560px;
+      padding-block: 0.5rem;
+    }
+
+    .nuestros-posgrados-3d .posgrado-item {
+      --card-width: min(320px, 78vw);
+      min-height: 500px;
+      border-radius: 24px;
+    }
+
+    .nuestros-posgrados-3d .posgrado-contenido {
+      padding: 1.15rem 1rem 1.2rem;
+      gap: 0.75rem;
+    }
+
+    .nuestros-posgrados-3d .posgrado-descripcion-card {
+      line-height: 1.55;
+      font-size: 0.96rem;
+    }
+  }
+
+  @media (max-width: 575.98px) {
+    .nuestros-posgrados-3d .posgrados-descripcion {
+      text-align: left;
+      margin-bottom: 1.4rem;
+    }
+
+    .nuestros-posgrados-3d .posgrados-3d-viewport {
+      min-height: 540px;
+    }
+
+    .nuestros-posgrados-3d .posgrado-item {
+      --card-width: min(100%, 340px);
+      min-height: 490px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nuestros-posgrados-3d .posgrado-item,
+    .nuestros-posgrados-3d .posgrados-3d-dot {
+      transition: none !important;
+    }
+  }
+</style>
+
+<script>
+  (function () {
+    const roots = document.querySelectorAll('[data-posgrados-3d]');
+    if (!roots.length) return;
+
+    roots.forEach((root) => {
+      const track = root.querySelector('.posgrados-3d-track');
+      const cards = Array.from(root.querySelectorAll('.posgrado-item'));
+      const dotsWrap = root.querySelector('.posgrados-3d-dots');
+      const viewport = root.querySelector('.posgrados-3d-viewport');
+
+      if (!track || !cards.length || !viewport) return;
+
+      let current = 0;
+      let startX = 0;
+      let currentX = 0;
+      let isDragging = false;
+      let moved = false;
+
+      cards.forEach((card, index) => {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.className = 'posgrados-3d-dot';
+        dot.setAttribute('aria-label', 'Ir al posgrado ' + (index + 1));
+        dot.addEventListener('click', () => goTo(index));
+        dotsWrap.appendChild(dot);
+
+        card.dataset.index = String(index);
+      });
+
+      const dots = Array.from(dotsWrap.querySelectorAll('.posgrados-3d-dot'));
+
+      function getConfig() {
+        const w = window.innerWidth;
+
+        if (w <= 575) {
+          return {
+            translateX: 78,
+            translateZ: 70,
+            rotateY: 0,
+            scaleMain: 1,
+            scaleSide: 0.92,
+            opacityFar: 0,
+            blurFar: 4
+          };
         }
-    }
-}, 5);
 
-// Shortcode de prueba/debug
-add_shortcode('nuestros_posgrados_debug', function() {
-    if (!class_exists('Flacso_Main_Page_Settings')) {
-        return '<p>ERROR: Flacso_Main_Page_Settings no disponible</p>';
-    }
-    $settings = Flacso_Main_Page_Settings::get_section('posgrados');
-    $html = '<div style="background:#fff; border:2px solid #f00; padding:20px; margin:20px 0;">';
-    $html .= '<h3 style="color:#f00;">DEBUG - Posgrados Settings</h3>';
-    $html .= '<p><strong>Título:</strong> ' . htmlspecialchars($settings['title'] ?? 'N/A') . '</p>';
-    $html .= '<p><strong>Mostrar título:</strong> ' . ($settings['show_title'] ? 'Sí' : 'No') . '</p>';
-    $html .= '<p><strong>Tarjetas:</strong> ' . (isset($settings['cards']) ? count($settings['cards']) : '0') . '</p>';
-    if (isset($settings['cards']) && !empty($settings['cards'])) {
-        $html .= '<ul>';
-        foreach ($settings['cards'] as $card) {
-            $html .= '<li>' . htmlspecialchars($card['title'] ?? 'Sin título') . '</li>';
+        if (w <= 767) {
+          return {
+            translateX: 120,
+            translateZ: 120,
+            rotateY: 20,
+            scaleMain: 1,
+            scaleSide: 0.9,
+            opacityFar: 0,
+            blurFar: 4
+          };
         }
-        $html .= '</ul>';
+
+        if (w <= 991) {
+          return {
+            translateX: 180,
+            translateZ: 150,
+            rotateY: 26,
+            scaleMain: 1,
+            scaleSide: 0.88,
+            opacityFar: 0.1,
+            blurFar: 4
+          };
+        }
+
+        return {
+          translateX: 260,
+          translateZ: 190,
+          rotateY: 32,
+          scaleMain: 1,
+          scaleSide: 0.86,
+          opacityFar: 0.08,
+          blurFar: 5
+        };
+      }
+
+      function normalizeDistance(index, active, total) {
+        let diff = index - active;
+        const half = Math.floor(total / 2);
+
+        if (diff > half) diff -= total;
+        if (diff < -half) diff += total;
+
+        return diff;
+      }
+
+      function render() {
+        const cfg = getConfig();
+
+        cards.forEach((card, index) => {
+          const diff = normalizeDistance(index, current, cards.length);
+          const abs = Math.abs(diff);
+
+          let transform = '';
+          let opacity = '0';
+          let zIndex = 1;
+          let pointerEvents = 'none';
+          let filter = 'blur(0px)';
+
+          if (diff === 0) {
+            transform = 'translate3d(-50%, -50%, 0px) rotateY(0deg) scale(' + cfg.scaleMain + ')';
+            opacity = '1';
+            zIndex = 30;
+            pointerEvents = 'auto';
+            filter = 'blur(0px)';
+          } else if (abs === 1) {
+            const direction = diff > 0 ? 1 : -1;
+            transform =
+              'translate3d(calc(-50% + ' + (direction * cfg.translateX) + 'px), -50%, ' + (-cfg.translateZ) + 'px) ' +
+              'rotateY(' + (-direction * cfg.rotateY) + 'deg) ' +
+              'scale(' + cfg.scaleSide + ')';
+            opacity = '0.72';
+            zIndex = 20;
+            pointerEvents = 'auto';
+            filter = 'blur(0.4px)';
+          } else if (abs === 2) {
+            const direction = diff > 0 ? 1 : -1;
+            transform =
+              'translate3d(calc(-50% + ' + (direction * (cfg.translateX * 1.72)) + 'px), -50%, ' + (-cfg.translateZ * 2.1) + 'px) ' +
+              'rotateY(' + (-direction * (cfg.rotateY + 8)) + 'deg) ' +
+              'scale(0.78)';
+            opacity = String(cfg.opacityFar);
+            zIndex = 10;
+            pointerEvents = 'none';
+            filter = 'blur(' + cfg.blurFar + 'px)';
+          } else {
+            transform =
+              'translate3d(-50%, -50%, ' + (-cfg.translateZ * 3) + 'px) rotateY(0deg) scale(0.72)';
+            opacity = '0';
+            zIndex = 1;
+            pointerEvents = 'none';
+            filter = 'blur(6px)';
+          }
+
+          card.style.transform = transform;
+          card.style.opacity = opacity;
+          card.style.zIndex = zIndex;
+          card.style.pointerEvents = pointerEvents;
+          card.style.filter = filter;
+          card.setAttribute('aria-hidden', diff === 0 ? 'false' : 'true');
+          card.tabIndex = 0;
+          card.dataset.active = diff === 0 ? 'true' : 'false';
+        });
+
+        dots.forEach((dot, index) => {
+          dot.classList.toggle('is-active', index === current);
+        });
+      }
+
+      function goTo(index) {
+        current = (index + cards.length) % cards.length;
+        render();
+      }
+
+      function next() {
+        goTo(current + 1);
+      }
+
+      function prev() {
+        goTo(current - 1);
+      }
+
+      viewport.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowLeft') {
+          event.preventDefault();
+          prev();
+        }
+        if (event.key === 'ArrowRight') {
+          event.preventDefault();
+          next();
+        }
+      });
+
+      viewport.addEventListener('pointerdown', (event) => {
+        isDragging = true;
+        moved = false;
+        startX = event.clientX;
+        currentX = event.clientX;
+        viewport.classList.add('is-dragging');
+      });
+
+      viewport.addEventListener('pointermove', (event) => {
+        if (!isDragging) return;
+        currentX = event.clientX;
+        if (Math.abs(currentX - startX) > 6) moved = true;
+      });
+
+      function finishDrag() {
+        if (!isDragging) return;
+        const delta = currentX - startX;
+        isDragging = false;
+        viewport.classList.remove('is-dragging');
+
+        if (Math.abs(delta) > 45) {
+          if (delta < 0) next();
+          else prev();
+        }
+      }
+
+      viewport.addEventListener('pointerup', finishDrag);
+      viewport.addEventListener('pointercancel', finishDrag);
+      viewport.addEventListener('pointerleave', finishDrag);
+
+      cards.forEach((card, index) => {
+        card.addEventListener('click', (event) => {
+          if (moved) {
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+          }
+
+          const isActive = card.dataset.active === 'true';
+
+          if (!isActive) {
+            event.preventDefault();
+            event.stopPropagation();
+            goTo(index);
+            return;
+          }
+        });
+
+        card.addEventListener('keydown', (event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+
+          const isActive = card.dataset.active === 'true';
+
+          if (!isActive) {
+            event.preventDefault();
+            goTo(index);
+          }
+        });
+      });
+
+      window.addEventListener('resize', render);
+
+      render();
+    });
+  })();
+</script>
+        <?php
+        $output = ob_get_clean();
+        return $output;
     }
-    $html .= '</div>';
-    return $html;
-});
+}
 

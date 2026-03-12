@@ -1,6 +1,6 @@
 :root {
-    --flacso-section-max-width: 1200px;
-    --flacso-section-gutter: 20px;
+    --flacso-section-max-width: var(--global-content-width, var(--kb-content-width, 1290px));
+    --flacso-section-gutter: var(--global-content-edge-padding, 20px);
     --flacso-section-heading-color: var(--global-palette1, #1d3a72);
     --flacso-section-vertical-space: clamp(2rem, 3.5vw, 3.5rem);
 }
@@ -211,12 +211,12 @@
 }
 
 .flacso-novedades-busqueda {
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(247, 247, 255, 0.95));
-    border-radius: 32px;
-    margin-bottom: clamp(1.5rem, 4vw, 3rem);
-    padding: clamp(2rem, 4vw, 3rem);
+    background: transparent;
+    border-radius: 0;
+    margin-bottom: 0;
+    padding: 0;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
 }
 
 /* Override para que el buscador ocupe el ancho máximo disponible dentro de la sección */
@@ -1901,6 +1901,35 @@
     isolation: isolate;
 }
 
+/* El hero contiene botones flotantes fixed; no debe quedar encerrado en un stacking context aislado */
+.flacso-main-page .flacso-home-block--hero,
+.flacso-main-page .flacso-home-block--hero .flacso-home-block__surface {
+    position: relative;
+    z-index: 30;
+}
+
+.flacso-main-page .flacso-home-block--hero .flacso-home-block__surface {
+    isolation: auto;
+    overflow: visible;
+}
+
+/* Unificar ancho de todas las secciones (excepto hero) al contenedor Kadence */
+.flacso-main-page .flacso-home-block:not(.flacso-home-block--hero) .flacso-home-block__surface {
+    width: min(100%, var(--flacso-section-max-width));
+    max-width: var(--flacso-section-max-width);
+}
+
+.flacso-main-page .flacso-home-block:not(.flacso-home-block--hero) .flacso-content-shell {
+    width: 100%;
+    max-width: none;
+}
+
+.flacso-main-page .flacso-home-block:not(.flacso-home-block--hero) .flc-eventos-react__layout.no-list .flc-eventos-react__featured,
+.flacso-main-page .flacso-home-block:not(.flacso-home-block--hero) .flacso-convenios-react__searchWrap {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
 .flacso-main-page .flacso-home-block__surface--card {
     border-radius: var(--flacso-home-radius);
     border: 1px solid var(--flacso-home-border);
@@ -1964,6 +1993,10 @@
     background: linear-gradient(155deg, #ffffff 0%, #f9fbff 100%);
 }
 
+.flacso-main-page .flacso-home-block__surface--card.flacso-home-block__surface--instagram {
+    background: linear-gradient(150deg, #ffffff 0%, #f6f9ff 56%, #eef6ff 100%);
+}
+
 .flacso-main-page .flacso-home-block__surface--card .flacso-content-shell {
     padding-inline: clamp(0.95rem, 2.8vw, 2rem);
 }
@@ -2007,6 +2040,72 @@
     font-weight: 700;
 }
 
+.flacso-instagram-section {
+    padding: clamp(1.15rem, 2.5vw, 2rem) 0;
+}
+
+.flacso-instagram-grid {
+    display: grid;
+    gap: clamp(0.9rem, 2.4vw, 1.5rem);
+    align-items: stretch;
+}
+
+.flacso-instagram-copy {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.65rem;
+}
+
+.flacso-instagram-eyebrow {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #a91a7f;
+}
+
+.flacso-instagram-title {
+    margin: 0;
+    font-size: clamp(1.5rem, 5.2vw, 2.1rem);
+    line-height: 1.16;
+    color: var(--global-palette1, #1d3a72);
+}
+
+.flacso-instagram-description {
+    margin: 0;
+    color: var(--flacso-home-ink-soft);
+    font-size: clamp(0.98rem, 3.4vw, 1.06rem);
+    line-height: 1.65;
+}
+
+.flacso-instagram-actions {
+    margin-top: 0.3rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.flacso-instagram-embed {
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid rgba(27, 46, 88, 0.14);
+    background: #fff;
+    min-height: clamp(420px, 72vw, 620px);
+    box-shadow: 0 14px 28px rgba(13, 30, 60, 0.09);
+}
+
+.flacso-instagram-embed iframe {
+    width: 100%;
+    height: 100%;
+    min-height: clamp(420px, 72vw, 620px);
+    border: 0;
+    display: block;
+}
+
 @media (max-width: 767.98px) {
     .flacso-main-page .flacso-home-layout {
         gap: 0.72rem;
@@ -2040,6 +2139,15 @@
     .flacso-main-page .flacso-home-block__surface--eventos .flc-eventos-react__event-btn {
         border-radius: 15px;
     }
+
+    .flacso-instagram-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .flacso-instagram-actions .flacso-btn {
+        width: 100%;
+    }
 }
 
 @media (min-width: 992px) {
@@ -2054,6 +2162,20 @@
 
     .flacso-main-page .flacso-home-block__surface--card .flacso-btn {
         width: auto;
+    }
+
+    .flacso-instagram-grid {
+        grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    }
+
+    .flacso-instagram-actions {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .flacso-instagram-embed,
+    .flacso-instagram-embed iframe {
+        min-height: clamp(500px, 56vh, 700px);
     }
 }
 

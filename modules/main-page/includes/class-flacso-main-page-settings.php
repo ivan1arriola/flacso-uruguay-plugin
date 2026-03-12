@@ -14,6 +14,7 @@ class Flacso_Main_Page_Settings {
         'novedades',
         'seminarios',
         'quienes',
+        'instagram',
         'posgrados',
         // REMOVED: 'oferta_academica' - Movido a plugin separado flacso-formacion
         'congreso',
@@ -26,8 +27,9 @@ class Flacso_Main_Page_Settings {
         'seminarios',
         'novedades_busqueda',
         'novedades',
-        'posgrados',
         'quienes',
+        'instagram',
+        'posgrados',
         'congreso',
         'contacto',
     ];
@@ -346,6 +348,7 @@ class Flacso_Main_Page_Settings {
             'novedades' => __('Novedades', 'flacso-main-page'),
             'seminarios' => __('Seminarios', 'flacso-main-page'),
             'quienes' => __('Qui?nes somos', 'flacso-main-page'),
+            'instagram' => __('Instagram', 'flacso-main-page'),
             'posgrados' => __('Posgrados', 'flacso-main-page'),
             'congreso' => __('Congreso', 'flacso-main-page'),
             'contacto' => __('Contacto', 'flacso-main-page'),
@@ -361,9 +364,10 @@ class Flacso_Main_Page_Settings {
             'eventos',
             'novedades_busqueda',
             'novedades',
-            'posgrados',
             'seminarios',
             'quienes',
+            'instagram',
+            'posgrados',
             'contacto',
             'congreso',
         ];

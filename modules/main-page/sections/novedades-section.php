@@ -19,7 +19,7 @@ if (!function_exists('flacso_section_novedades_render')) {
 
         ob_start();
         ?>
-        <section class="flacso-novedades-section position-relative p-4 rounded-4 bg-white shadow-sm" id="<?php echo esc_attr($unique_id); ?>">
+        <section class="flacso-novedades-section position-relative" id="<?php echo esc_attr($unique_id); ?>">
             <div class="flacso-content-shell">
                 <div class="flacso-novedades-header text-center mb-4">
                     <h2 class="h3 mb-0">Novedades</h2>
@@ -34,24 +34,17 @@ if (!function_exists('flacso_section_novedades_render')) {
                ESTILOS EXTRA PARA LA SECCIÓN
             ================================================== */
             .flacso-novedades-section {
-                background: var(--global-palette8);
+                background: transparent;
                 color: var(--global-palette4);
-                border-radius: 24px;
-                padding: var(--flacso-section-vertical-space, 28px) 0;
+                border-radius: 0;
+                padding: clamp(0.8rem, 1.8vw, 1.2rem) 0;
                 margin: 0; /* secciones pegadas */
                 position: relative;
-                overflow: hidden;
+                overflow: visible;
             }
 
             .flacso-novedades-section::before {
-                content: "";
-                position: absolute;
-                inset: 0;
-                background: url('<?php echo esc_url('https://flacso.edu.uy/wp-content/uploads/2025/10/shape-bg-1.png'); ?>') center/cover no-repeat;
-                opacity: 0.08;
-                filter: brightness(180%) saturate(0.7);
-                pointer-events: none;
-                border-radius: inherit;
+                content: none;
             }
 
             .flacso-novedades-header h2 {
@@ -61,7 +54,7 @@ if (!function_exists('flacso_section_novedades_render')) {
 
             @media (max-width: 768px) {
                 .flacso-novedades-section {
-                    padding: 1.25rem 0;
+                    padding: 0.7rem 0;
                 }
             }
         </style>
@@ -158,7 +151,7 @@ if (!function_exists('flacso_section_novedades_render')) {
                 }
             };
 
-            const requestPage = (page) => {
+            const requestPage = (page, fallbackUrl = '') => {
                 const wrapper = getListWrapper();
                 if (!wrapper) {
                     return;
@@ -195,6 +188,9 @@ if (!function_exists('flacso_section_novedades_render')) {
                     })
                     .catch(() => {
                         showError();
+                        if (fallbackUrl) {
+                            window.location.assign(fallbackUrl);
+                        }
                     });
             };
 
@@ -268,7 +264,7 @@ if (!function_exists('flacso_section_novedades_render')) {
                 if (nextPage === currentPage) {
                     return;
                 }
-                requestPage(nextPage);
+                requestPage(nextPage, link.getAttribute('href') || '');
             });
         })();
         </script>
@@ -1032,11 +1028,11 @@ if (!function_exists('flacso_section_novedades_buscador_render_v2')) {
         </div>
         <style>
             .flacso-novedades-search-v2 {
-                background: linear-gradient(145deg, #ffffff 0%, #f8fbff 100%);
-                border: 1px solid rgba(29, 58, 114, 0.14);
-                border-radius: 18px;
-                padding: clamp(1rem, 2vw, 1.3rem);
-                box-shadow: 0 12px 28px rgba(15, 26, 45, 0.08);
+                background: transparent;
+                border: 0;
+                border-radius: 0;
+                padding: 0;
+                box-shadow: none;
             }
 
             .flacso-novedades-search-v2__form {
@@ -1063,21 +1059,25 @@ if (!function_exists('flacso_section_novedades_buscador_render_v2')) {
 
             .flacso-novedades-search-v2__field {
                 position: relative;
+                display: flex;
+                align-items: center;
             }
 
             .flacso-novedades-search-v2__icon {
                 position: absolute;
-                left: 0.78rem;
+                left: 1rem;
                 top: 50%;
                 transform: translateY(-50%);
                 color: #61718b;
                 pointer-events: none;
+                z-index: 2;
+                line-height: 1;
             }
 
-            .flacso-novedades-search-v2__input {
+            .flacso-novedades-search-v2 .flacso-novedades-search-v2__field .flacso-novedades-search-v2__input {
                 width: 100%;
-                min-height: 46px;
-                padding: 0.72rem 0.85rem 0.72rem 2.4rem;
+                min-height: 48px;
+                padding: 0.72rem 0.95rem 0.72rem 2.85rem !important;
                 border: 1px solid rgba(29, 58, 114, 0.2);
                 border-radius: 12px;
                 background: #ffffff;
@@ -1381,7 +1381,7 @@ if (!function_exists('flacso_section_novedades_busqueda_render')) {
             : flacso_section_novedades_buscador_render();
 
         ob_start(); ?>
-        <section id="<?php echo esc_attr($unique_id); ?>" class="flacso-novedades-busqueda py-5">
+        <section id="<?php echo esc_attr($unique_id); ?>" class="flacso-novedades-busqueda">
             <div class="flacso-content-shell">
                 <?php echo $search; ?>
             </div>
@@ -1562,6 +1562,10 @@ if (!function_exists('flacso_section_novedades_responsivas_render')) {
                 margin: 0;
             }
 
+            .novedades-pagination .page-item:not(:first-child) .page-link {
+                margin-left: 0;
+            }
+
             .novedades-pagination .page-link {
                 min-width: 2.75rem;
                 height: 2.75rem;
@@ -1579,6 +1583,8 @@ if (!function_exists('flacso_section_novedades_responsivas_render')) {
                 justify-content: center;
                 box-shadow: 0 6px 16px rgba(15, 26, 45, 0.08);
                 transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+                text-decoration: none !important;
+                background-image: none !important;
             }
 
             .novedades-pagination .page-link.is-nav {
@@ -1586,6 +1592,12 @@ if (!function_exists('flacso_section_novedades_responsivas_render')) {
                 font-size: 1rem;
                 font-weight: 700;
                 padding: 0 1.05rem;
+            }
+
+            .novedades-pagination .page-link.is-dots {
+                min-width: 2.75rem;
+                padding: 0 0.65rem;
+                letter-spacing: 0.06em;
             }
 
             .novedades-pagination .page-item:not(.active):not(.disabled) .page-link:hover,
@@ -1625,6 +1637,11 @@ if (!function_exists('flacso_section_novedades_responsivas_render')) {
                     min-width: 6.8rem;
                     font-size: 0.92rem;
                     padding: 0 0.85rem;
+                }
+
+                .novedades-pagination .page-link.is-dots {
+                    min-width: 2.45rem;
+                    padding: 0 0.55rem;
                 }
             }
 
@@ -1735,7 +1752,8 @@ if (!function_exists('flacso_section_novedades_render_list_markup')) {
 
                         foreach ($pagination as $link) {
                             $is_current = strpos($link, 'current') !== false;
-                            $is_disabled = strpos($link, 'disabled') !== false || strpos($link, 'dots') !== false;
+                            $is_dots = strpos($link, 'dots') !== false;
+                            $is_disabled = strpos($link, 'disabled') !== false || $is_dots;
                             $is_prev = strpos($link, 'prev') !== false;
                             $is_next = strpos($link, 'next') !== false;
                             $text = trim(strip_tags($link));
@@ -1757,7 +1775,7 @@ if (!function_exists('flacso_section_novedades_render_list_markup')) {
                             if ($is_next) {
                                 $classes[] = 'is-next';
                             }
-                            if (strpos($link, 'dots') !== false) {
+                            if ($is_dots) {
                                 $classes[] = 'is-dots';
                             }
                             $aria_current = $is_current ? ' aria-current="page"' : '';
@@ -1782,8 +1800,10 @@ if (!function_exists('flacso_section_novedades_render_list_markup')) {
                                 }
 
                                 $link_classes = ['page-link'];
-                                if (!preg_match('/^\d+$/', $text)) {
+                                if ($is_prev || $is_next) {
                                     $link_classes[] = 'is-nav';
+                                } elseif ($is_dots) {
+                                    $link_classes[] = 'is-dots';
                                 }
 
                                 $data_page_attr = $target_page > 0 ? ' data-page="' . esc_attr((string) $target_page) . '"' : '';
@@ -1797,7 +1817,13 @@ if (!function_exists('flacso_section_novedades_render_list_markup')) {
                                 );
                             } else {
                                 $state_class = $is_current ? 'active' : 'disabled';
-                                $extra_class = preg_match('/^\d+$/', $text) ? '' : ' is-nav';
+                                if ($is_prev || $is_next) {
+                                    $extra_class = ' is-nav';
+                                } elseif ($is_dots) {
+                                    $extra_class = ' is-dots';
+                                } else {
+                                    $extra_class = '';
+                                }
                                 $link_element = sprintf('<span class="page-link %s%s" tabindex="-1">%s</span>', esc_attr($state_class), esc_attr($extra_class), esc_html($text));
                             }
                             echo '<li class="' . esc_attr(implode(' ', $classes)) . '"' . $aria_current . '>' . $link_element . '</li>';

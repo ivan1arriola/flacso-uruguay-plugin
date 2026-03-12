@@ -20,20 +20,18 @@ function flacso_section_congreso_render() {
     ob_start();
     ?>
 
-    <div class="flacso-congreso-wrapper">
-        <section class="flacso-congreso-section" style="<?php echo esc_attr($background_style); ?>">
-            <div class="flacso-congreso-content flacso-content-shell flacso-fade-in">
-                <h2 class="flacso-congreso-title"><?php echo $title; ?></h2>
-                <p class="flacso-congreso-text"><?php echo $content; ?></p>
-                <?php if ($cta_url): ?>
-                    <a href="<?php echo esc_url($cta_url); ?>"
-                       class="flacso-btn flacso-btn-primary flacso-btn-anim flacso-congreso-btn">
-                       <?php echo $cta_label; ?>
-                    </a>
-                <?php endif; ?>
-            </div>
-        </section>
-    </div>
+    <section class="flacso-congreso-section" style="<?php echo esc_attr($background_style); ?>">
+        <div class="flacso-congreso-content flacso-content-shell flacso-fade-in">
+            <h2 class="flacso-congreso-title"><?php echo $title; ?></h2>
+            <p class="flacso-congreso-text"><?php echo $content; ?></p>
+            <?php if ($cta_url): ?>
+                <a href="<?php echo esc_url($cta_url); ?>"
+                   class="flacso-btn flacso-btn-primary flacso-btn-anim flacso-congreso-btn">
+                   <?php echo $cta_label; ?>
+                </a>
+            <?php endif; ?>
+        </div>
+    </section>
 
     <?php
     return ob_get_clean();
