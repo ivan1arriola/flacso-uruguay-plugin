@@ -125,7 +125,7 @@ class Flacso_Main_Page_Admin {
             <header class="flacso-global-header">
                 <h1><?php esc_html_e('Gestor FLACSO', 'flacso-main-page'); ?></h1>
                 <p class="description">
-                    <?php esc_html_e('Gestiona los modulos del home, las paginas institucionales y los bloques del sitio desde un unico panel.', 'flacso-main-page'); ?>
+                    <?php esc_html_e('Gestiona el home completo (hero full-width, orden de secciones, novedades con buscador y vista completa, Instagram y bloques institucionales) desde un unico panel.', 'flacso-main-page'); ?>
                 </p>
             </header>
             <div class="flacso-admin-ui-bar" data-admin-ui-bar>
@@ -303,11 +303,11 @@ class Flacso_Main_Page_Admin {
                     <?php self::number_input(
                         'Flacso_Main_Page_Settings[novedades][per_page]',
                         $settings['novedades']['per_page'] ?? 12,
-                        __('Cantidad de novedades por página', 'flacso-main-page'),
+                        __('Cantidad de novedades en portada', 'flacso-main-page'),
                         ['min' => 3, 'max' => 48]
                     ); ?>
                     <p class="description">
-                        <?php esc_html_e('Define cuántas novedades se muestran en cada página del listado principal.', 'flacso-main-page'); ?>
+                        <?php esc_html_e('Define cuantas novedades se muestran en la portada. El resto se consulta en la vista completa de novedades.', 'flacso-main-page'); ?>
                     </p>
                     <h3><?php esc_html_e('Destacados y búsquedas', 'flacso-main-page'); ?></h3>
                     <p class="description">
@@ -1498,12 +1498,12 @@ class Flacso_Main_Page_Admin {
                 $pages = [
                     [
                         'title' => __('Landing principal', 'flacso-main-page'),
-                        'text' => __('Hero, eventos, novedades y secciones modulares se coordinan desde este panel.', 'flacso-main-page'),
+                        'text' => __('Administra el takeover completo del main: hero, eventos, novedades, Instagram y secciones institucionales.', 'flacso-main-page'),
                         'link' => admin_url('admin.php?page=flacso-main-page'),
                     ],
                     [
                         'title' => __('Eventos y novedades', 'flacso-main-page'),
-                        'text' => __('Gestiona los eventos publicados y fija noticias destacadas en el home.', 'flacso-main-page'),
+                        'text' => __('Gestiona eventos y novedades con navegacion sin recarga, buscador y vista completa.', 'flacso-main-page'),
                         'link' => admin_url('admin.php?page=flacso-main-page-eventos'),
                     ],
                     [
@@ -1513,7 +1513,7 @@ class Flacso_Main_Page_Admin {
                     ],
                     [
                         'title' => __('Paginas institucionales', 'flacso-main-page'),
-                        'text' => __('Quiienes somos, congreso y contacto comparten estilos y contenidos.', 'flacso-main-page'),
+                        'text' => __('Quienes somos, congreso e Instagram comparten estilos y contenidos del home unificado.', 'flacso-main-page'),
                         'link' => admin_url('admin.php?page=flacso-main-page-quienes'),
                     ],
                     [

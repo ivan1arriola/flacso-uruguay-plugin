@@ -80,6 +80,20 @@ flacso-uruguay/
 3. Guardar enlaces permanentes en:
    `Ajustes -> Enlaces permanentes -> Guardar`.
 
+## Actualizacion automatica (sin SSH)
+
+Este repositorio incluye un workflow que publica un release de GitHub en cada `push` a `main`:
+- `.github/workflows/release-auto-update.yml`
+
+Para que el sitio se actualice solo:
+1. En WordPress, activar **Auto-actualizaciones** para este plugin.
+2. Verificar que el plugin tenga acceso al repo configurado en `FLACSO_URUGUAY_UPDATE_REPO`.
+3. Hacer `push` a `main`.
+
+Opcional:
+- Si alguna vez tienen credenciales FTP/SFTP, tambien existe deploy directo:
+  `.github/workflows/deploy-plugin.yml` (solo corre si estan definidos los secrets de deploy).
+
 ## Notas de tracking (Meta Pixel)
 
 Eventos usados por el plugin:

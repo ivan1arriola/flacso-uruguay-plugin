@@ -1,0 +1,54 @@
+name: Deploy Plugin
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-plugin-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to WordPress
+    runs-on: ubuntu-latest
+    if: ${{ secrets.WP_FTP_HOST != '' && secrets.WP_FTP_USERNAME != '' && secrets.WP_FTP_PASSWORD != '' && secrets.WP_FTP_SERVER_DIR != '' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: PHP syntax check
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            php -l "$file"
+          done < <(find . -type f -name "*.php" \
+            -not -path "./vendor/*" \
+            -not -path "./node_modules/*" \
+            -print0)
+
+      - name: Deploy plugin files via FTP/SFTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.WP_FTP_HOST }}
+          username: ${{ secrets.WP_FTP_USERNAME }}
+          password: ${{ secrets.WP_FTP_PASSWORD }}
+          protocol: ${{ secrets.WP_FTP_PROTOCOL || 'ftps' }}
+          port: ${{ secrets.WP_FTP_PORT || 21 }}
+          local-dir: ./
+          server-dir: ${{ secrets.WP_FTP_SERVER_DIR }}
+          state-name: .ftp-deploy-sync-state.json
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/.github/**
+            **/node_modules/**
+            **/vendor/**
+            **/.DS_Store
+            **/Thumbs.db
+            **/README.md
+            **/CHANGELOG.md
+            **/*.log

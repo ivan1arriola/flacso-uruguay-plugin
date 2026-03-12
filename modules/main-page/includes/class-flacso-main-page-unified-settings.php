@@ -112,7 +112,7 @@ class Flacso_Main_Page_Unified_Settings {
             <header class="flacso-global-header">
                 <h1><?php esc_html_e('Gestor FLACSO', 'flacso-main-page'); ?></h1>
                 <p class="description">
-                    <?php esc_html_e('Gestiona los módulos del home, las páginas institucionales y los bloques del sitio desde un único panel.', 'flacso-main-page'); ?>
+                    <?php esc_html_e('Gestiona el home completo (hero full-width, orden de secciones, novedades con buscador y vista completa, Instagram y bloques institucionales) desde un unico panel.', 'flacso-main-page'); ?>
                 </p>
             </header>
 
@@ -402,7 +402,7 @@ class Flacso_Main_Page_Unified_Settings {
         ?>
         <h3><?php esc_html_e('Configuración de Novedades', 'flacso-main-page'); ?></h3>
         <div class="flacso-form-group">
-            <label for="novedades_per_page"><?php esc_html_e('Novedades por página', 'flacso-main-page'); ?></label>
+            <label for="novedades_per_page"><?php esc_html_e('Novedades en portada', 'flacso-main-page'); ?></label>
             <input 
                 type="number" 
                 id="novedades_per_page" 
@@ -412,7 +412,7 @@ class Flacso_Main_Page_Unified_Settings {
                 max="48">
         </div>
         <p class="description">
-            <?php esc_html_e('Define cuántas novedades se muestran en cada página del listado principal.', 'flacso-main-page'); ?>
+            <?php esc_html_e('Define cuantas novedades se muestran en la portada. El resto se consulta en la vista completa de novedades.', 'flacso-main-page'); ?>
         </p>
 
         <h3><?php esc_html_e('Destacados y búsquedas', 'flacso-main-page'); ?></h3>

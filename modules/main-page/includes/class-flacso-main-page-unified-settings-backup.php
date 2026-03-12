@@ -97,7 +97,7 @@ class Flacso_Main_Page_Unified_Settings {
             <header class="flacso-global-header">
                 <h1><?php esc_html_e('Gestor FLACSO', 'flacso-main-page'); ?></h1>
                 <p class="description">
-                    <?php esc_html_e('Gestiona los módulos del home, las páginas institucionales y los bloques del sitio desde un único panel.', 'flacso-main-page'); ?>
+                    <?php esc_html_e('Gestiona el home completo (hero full-width, orden de secciones, novedades con buscador y paginacion AJAX, Instagram y bloques institucionales) desde un unico panel.', 'flacso-main-page'); ?>
                 </p>
             </header>
 

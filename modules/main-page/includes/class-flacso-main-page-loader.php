@@ -6,10 +6,28 @@ if (!defined('ABSPATH')) {
 
 class Flacso_Main_Page_Loader {
     public static function init(): void {
-        if (!is_admin() || (defined('REST_REQUEST') && REST_REQUEST)) {
+        $is_ajax_context = function_exists('wp_doing_ajax') && wp_doing_ajax();
+        if (!is_admin() || $is_ajax_context || (defined('REST_REQUEST') && REST_REQUEST) || self::is_flacso_admin_request()) {
             self::load_shortcodes();
         }
         add_action('wp_enqueue_scripts', [__CLASS__, 'enqueue_assets']);
+    }
+
+    private static function is_flacso_admin_request(): bool {
+        if (!is_admin()) {
+            return false;
+        }
+
+        if (!isset($_GET['page'])) {
+            return false;
+        }
+
+        $page = sanitize_key((string) wp_unslash($_GET['page']));
+        if ($page === '') {
+            return false;
+        }
+
+        return strpos($page, 'flacso-main-page') === 0;
     }
 
     public static function enqueue_assets(): void {
@@ -202,6 +220,7 @@ class Flacso_Main_Page_Loader {
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/novedades-section.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/quienes-somos.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/instagram.php';
+        require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/posgrados.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/congreso.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/contacto.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/landing-page.php';

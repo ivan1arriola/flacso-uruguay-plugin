@@ -29,12 +29,12 @@ if (!function_exists('flacso_homepage_builder_render')) {
                 'function' => 'flacso_section_seminarios_proximos_render',
             ],
             [
-                'key' => 'novedades_busqueda',
-                'function' => 'flacso_section_novedades_busqueda_render',
-            ],
-            [
                 'key' => 'novedades',
                 'function' => 'flacso_section_novedades_render',
+            ],
+            [
+                'key' => 'novedades_busqueda',
+                'function' => 'flacso_section_novedades_busqueda_render',
             ],
             [
                 'key' => 'quienes',
@@ -43,6 +43,10 @@ if (!function_exists('flacso_homepage_builder_render')) {
             [
                 'key' => 'instagram',
                 'function' => 'flacso_section_instagram_render',
+            ],
+            [
+                'key' => 'posgrados',
+                'function' => 'flacso_section_posgrados_render',
             ],
             [
                 'key' => 'congreso',
@@ -198,5 +202,66 @@ if (!function_exists('flacso_homepage_builder_render_markup')) {
         return ob_get_clean();
     }
 }
+
+if (!function_exists('flacso_homepage_builder_page_has_builder')) {
+    function flacso_homepage_builder_page_has_builder(int $post_id): bool
+    {
+        if ($post_id <= 0) {
+            return false;
+        }
+
+        $post = get_post($post_id);
+        if (!$post instanceof WP_Post) {
+            return false;
+        }
+
+        $content = (string) $post->post_content;
+        if ($content === '') {
+            return false;
+        }
+
+        if (has_shortcode($content, 'flacso_homepage_builder')) {
+            return true;
+        }
+
+        if (function_exists('has_block') && has_block('flacso-uruguay/homepage-builder', $content)) {
+            return true;
+        }
+
+        return strpos($content, 'wp:flacso-uruguay/homepage-builder') !== false;
+    }
+}
+
+if (!function_exists('flacso_homepage_builder_template_takeover')) {
+    function flacso_homepage_builder_template_takeover(string $template): string
+    {
+        if (is_admin() || wp_doing_ajax() || (defined('REST_REQUEST') && REST_REQUEST)) {
+            return $template;
+        }
+
+        if (!is_front_page()) {
+            return $template;
+        }
+
+        $enabled = apply_filters('flacso_main_page_template_takeover_enabled', true);
+        if (!$enabled) {
+            return $template;
+        }
+
+        $post_id = (int) get_queried_object_id();
+        if (!flacso_homepage_builder_page_has_builder($post_id)) {
+            return $template;
+        }
+
+        $takeover_template = FLACSO_MAIN_PAGE_MODULE_PATH . 'templates/homepage-takeover.php';
+        if (!is_readable($takeover_template)) {
+            return $template;
+        }
+
+        return $takeover_template;
+    }
+}
+
+add_filter('template_include', 'flacso_homepage_builder_template_takeover', 99);
 
 

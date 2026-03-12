@@ -68,6 +68,7 @@ if (!function_exists('flacso_section_novedades_render')) {
             const loadingText = '<?php echo esc_js(__('Actualizando novedades…', 'flacso-main-page')); ?>';
             const errorText = '<?php echo esc_js(__('No pudimos cargar las novedades. Intenta nuevamente.', 'flacso-main-page')); ?>';
             let statusEl = null;
+            let requestController = null;
 
             const getListWrapper = () => section.querySelector('[data-novedades-list]');
 
@@ -151,14 +152,33 @@ if (!function_exists('flacso_section_novedades_render')) {
                 }
             };
 
-            const requestPage = (page, fallbackUrl = '') => {
+            const updatePaginationUrl = (page, pageVar) => {
+                try {
+                    const url = new URL(window.location.href);
+                    if (page <= 1) {
+                        url.searchParams.delete(pageVar);
+                    } else {
+                        url.searchParams.set(pageVar, String(page));
+                    }
+                    window.history.replaceState(window.history.state, '', url.toString());
+                } catch (error) {
+                    // Ignorar errores de URL/state y mantener navegacion AJAX.
+                }
+            };
+
+            const requestPage = (page, options = {}) => {
                 const wrapper = getListWrapper();
                 if (!wrapper) {
                     return;
                 }
-                const ajaxUrl = wrapper.dataset.ajaxUrl || '<?php echo esc_js(admin_url('admin-ajax.php')); ?>';
+                const config = Object.assign({
+                    syncUrl: true,
+                    scroll: true,
+                }, options);
+                const ajaxUrl = wrapper.dataset.ajaxUrl || '<?php echo esc_js(admin_url('admin-ajax.php', 'relative')); ?>';
                 const nonce = wrapper.dataset.nonce || '';
                 const searchTerm = wrapper.dataset.searchTerm || '';
+                const pageVar = wrapper.dataset.pageVar || 'nres_page';
                 const params = new URLSearchParams();
                 params.append('action', 'flacso_section_novedades_paginate');
                 params.append('nonce', nonce);
@@ -167,6 +187,10 @@ if (!function_exists('flacso_section_novedades_render')) {
                     params.append('search_term', searchTerm);
                 }
 
+                if (requestController) {
+                    requestController.abort();
+                }
+                requestController = new AbortController();
                 mountStatus(loadingText);
 
                 fetch(ajaxUrl, {
@@ -175,22 +199,32 @@ if (!function_exists('flacso_section_novedades_render')) {
                         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                     },
                     body: params.toString(),
+                    signal: requestController.signal,
                 })
                     .then((response) => response.json())
                     .then((data) => {
                         if (data && data.success && data.data && data.data.html) {
                             updateMarkup(data.data.html, data.data);
                             clearStatus();
-                            scrollToListTop();
+                            const resolvedPage = parseInt((data.data.page || String(page)), 10) || page;
+                            if (config.syncUrl) {
+                                updatePaginationUrl(resolvedPage, pageVar);
+                            }
+                            if (config.scroll) {
+                                scrollToListTop();
+                            }
                         } else {
                             throw new Error('invalid_response');
                         }
                     })
-                    .catch(() => {
-                        showError();
-                        if (fallbackUrl) {
-                            window.location.assign(fallbackUrl);
+                    .catch((error) => {
+                        if (error && error.name === 'AbortError') {
+                            return;
                         }
+                        showError();
+                    })
+                    .finally(() => {
+                        requestController = null;
                     });
             };
 
@@ -227,45 +261,6 @@ if (!function_exists('flacso_section_novedades_render')) {
                 return 0;
             };
 
-            section.addEventListener('click', (event) => {
-                const link = event.target.closest('.novedades-pagination a');
-                if (!link || !section.contains(link)) {
-                    return;
-                }
-                const wrapper = getListWrapper();
-                if (!wrapper) {
-                    return;
-                }
-                const pageVar = wrapper.dataset.pageVar || 'nres_page';
-                const currentPage = parseInt(wrapper.dataset.currentPage || '1', 10) || 1;
-                const totalPages = parseInt(wrapper.dataset.totalPages || '1', 10) || 1;
-                let nextPage = parseInt(link.dataset.page || '', 10);
-                if (!nextPage) {
-                    nextPage = extractPageFromHref(link.getAttribute('href') || '', pageVar);
-                }
-
-                if (!nextPage) {
-                    const text = (link.textContent || '').toLowerCase();
-                    if (text.includes('anterior')) {
-                        nextPage = Math.max(1, currentPage - 1);
-                    } else if (text.includes('siguiente')) {
-                        nextPage = Math.min(totalPages, currentPage + 1);
-                    } else {
-                        const numericText = parseInt((link.textContent || '').trim(), 10);
-                        if (numericText > 0) {
-                            nextPage = numericText;
-                        }
-                    }
-                }
-                if (!nextPage) {
-                    return;
-                }
-                event.preventDefault();
-                if (nextPage === currentPage) {
-                    return;
-                }
-                requestPage(nextPage, link.getAttribute('href') || '');
-            });
         })();
         </script>
         <?php
@@ -352,7 +347,7 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
                 --card-height-mobile: clamp(24rem, 66dvh, 28rem);
 
                 padding-block: clamp(1rem, 2vw, 1.75rem);
-                background: var(--global-palette9, #ffffff);
+                background: transparent;
                 font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             }
 
@@ -377,13 +372,11 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
 
             .flacso-novedades-3d__stage {
                 position: relative;
-                border-radius: var(--stage-radius);
-                padding: 0.35rem;
-                background:
-                    radial-gradient(circle at top, rgba(29, 58, 114, 0.09), rgba(29, 58, 114, 0.02) 45%, transparent 70%),
-                    linear-gradient(180deg, #f8fafc 0%, #eef3f8 100%);
-                border: 1px solid rgba(29, 58, 114, 0.08);
-                box-shadow: 0 1.25rem 3rem rgba(15, 26, 45, 0.08);
+                border-radius: 0;
+                padding: 0;
+                background: transparent;
+                border: 0;
+                box-shadow: none;
             }
 
             .flacso-novedades-3d__viewport {
@@ -429,12 +422,14 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
             }
 
             .flacso-novedades-3d__image-link {
-                display: block;
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 width: 100%;
                 height: auto;
                 aspect-ratio: 1 / 1;
                 flex: 0 0 auto;
-                background: #dce4ee;
+                background: linear-gradient(160deg, #edf3fb 0%, #dfe9f6 100%);
                 overflow: hidden;
                 position: relative;
                 z-index: 1;
@@ -447,9 +442,12 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
             .flacso-novedades-3d__image {
                 width: 100%;
                 height: 100%;
-                object-fit: cover;
+                object-fit: contain;
+                object-position: center;
                 display: block;
-                transition: transform 260ms ease;
+                transition: opacity 260ms ease;
+                padding: 0.4rem;
+                background: #f8fbff;
                 -webkit-user-drag: none;
                 user-select: none;
                 pointer-events: none;
@@ -457,7 +455,7 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
 
             .flacso-novedades-3d__card:hover .flacso-novedades-3d__image,
             .flacso-novedades-3d__card:focus-within .flacso-novedades-3d__image {
-                transform: scale(1.04);
+                opacity: 0.95;
             }
 
             .flacso-novedades-3d__body {
@@ -548,10 +546,6 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
             }
 
             @media (max-width: 991.98px) {
-                .flacso-novedades-3d__stage {
-                    padding-inline: 0.35rem;
-                }
-
                 .flacso-novedades-3d__viewport {
                     min-height: calc(var(--card-height-tablet) + 0.85rem);
                 }
@@ -565,11 +559,6 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
             @media (max-width: 767.98px) {
                 .flacso-main-page .flacso-home-block--novedades_destacadas {
                     padding-block: 1rem;
-                }
-
-                .flacso-novedades-3d__stage {
-                    padding: 0.2rem;
-                    border-radius: 22px;
                 }
 
                 .flacso-novedades-3d__viewport {
@@ -923,13 +912,13 @@ if (!function_exists('flacso_section_novedades_buscador_render')) {
     function flacso_section_novedades_buscador_render($nonce = null) {
         $nonce = $nonce ?: wp_create_nonce('flacso_section_novedades_nonce');
         ob_start(); ?>
-        <div class="flacso-novedades-search" role="search" aria-label="<?php esc_attr_e('Búsqueda de contenidos', 'flacso-main-page'); ?>">
+        <div class="flacso-novedades-search" role="search" aria-label="<?php esc_attr_e('BÃºsqueda de contenidos', 'flacso-main-page'); ?>">
             <form class="row g-3 align-items-start" action="<?php echo esc_url(home_url('/')); ?>" method="get" data-novedades-search-form data-nonce="<?php echo esc_attr($nonce); ?>" novalidate>
                 <div class="col-12 col-lg-9">
                     <div class="input-group" data-field-wrapper>
                         <span class="input-group-text" id="flacso-search-icon" aria-hidden="true"><i class="bi bi-search"></i></span>
-                        <input type="search" name="s" class="form-control" placeholder="<?php esc_attr_e('Buscar…', 'flacso-main-page'); ?>" autocomplete="off" inputmode="search" aria-label="<?php esc_attr_e('Buscar en páginas y entradas', 'flacso-main-page'); ?>" aria-describedby="flacso-search-icon" />
-                        <button type="reset" class="btn btn-outline-secondary d-none" data-clear aria-label="<?php esc_attr_e('Limpiar búsqueda', 'flacso-main-page'); ?>"><i class="bi bi-x-lg"></i></button>
+                        <input type="search" name="s" class="form-control" placeholder="<?php esc_attr_e('Buscarâ€¦', 'flacso-main-page'); ?>" autocomplete="off" inputmode="search" aria-label="<?php esc_attr_e('Buscar en pÃ¡ginas y entradas', 'flacso-main-page'); ?>" aria-describedby="flacso-search-icon" />
+                        <button type="reset" class="btn btn-outline-secondary d-none" data-clear aria-label="<?php esc_attr_e('Limpiar bÃºsqueda', 'flacso-main-page'); ?>"><i class="bi bi-x-lg"></i></button>
                     </div>
                 </div>
                 <div class="col-12 col-lg-3 d-flex gap-2 justify-content-lg-end">
@@ -939,7 +928,7 @@ if (!function_exists('flacso_section_novedades_buscador_render')) {
                 <div class="col-12">
                     <div class="list-group novedades-search-results" data-novedades-search-results role="list" aria-live="polite" aria-atomic="false">
                         <div class="list-group-item text-muted py-3" data-placeholder>
-                            <i class="bi bi-search me-2" aria-hidden="true"></i><?php esc_html_e('Teclea al menos dos letras para buscar en páginas y entradas.', 'flacso-main-page'); ?>
+                            <i class="bi bi-search me-2" aria-hidden="true"></i><?php esc_html_e('Teclea al menos dos letras para buscar en pÃ¡ginas y entradas.', 'flacso-main-page'); ?>
                         </div>
                     </div>
                 </div>
@@ -953,16 +942,16 @@ if (!function_exists('flacso_section_novedades_buscador_render')) {
             const results = form.querySelector('[data-novedades-search-results]');
             const clearButton = form.querySelector('[data-clear]');
             const resetAllBtn = form.querySelector('[data-reset-all]');
-            const ajaxUrl = '<?php echo esc_url(admin_url('admin-ajax.php')); ?>';
+            const ajaxUrl = '<?php echo esc_url(admin_url('admin-ajax.php', 'relative')); ?>';
             const nonce = form.dataset.nonce || '';
             const fallbackBase = '<?php echo esc_js(home_url('/')); ?>';
             const fallbackLabel = '<?php echo esc_js(__('Ver resultados completos', 'flacso-main-page')); ?>';
             const searchEmptyText = '<?php echo esc_js(__('Sin resultados', 'flacso-main-page')); ?>';
-            const searchErrorText = '<?php echo esc_js(__('Error de conexión', 'flacso-main-page')); ?>';
+            const searchErrorText = '<?php echo esc_js(__('Error de conexiÃ³n', 'flacso-main-page')); ?>';
             let controller;let debounce;let keyboardIndex=-1;
-            const placeholderMarkup = '<div class="list-group-item text-muted py-3"><i class="bi bi-search me-2" aria-hidden="true"></i><?php echo esc_js(__('Teclea al menos dos letras para buscar en páginas y entradas.', 'flacso-main-page')); ?></div>';
+            const placeholderMarkup = '<div class="list-group-item text-muted py-3"><i class="bi bi-search me-2" aria-hidden="true"></i><?php echo esc_js(__('Teclea al menos dos letras para buscar en pÃ¡ginas y entradas.', 'flacso-main-page')); ?></div>';
             const setPlaceholder = () => {if(!results)return;results.innerHTML = placeholderMarkup;form.classList.remove('has-results');};
-            const showLoading = () => {if(!results)return;results.innerHTML='<div class="list-group-item py-3 fw-semibold"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span><?php echo esc_js(__('Buscando…', 'flacso-main-page')); ?></div>';};
+            const showLoading = () => {if(!results)return;results.innerHTML='<div class="list-group-item py-3 fw-semibold"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span><?php echo esc_js(__('Buscandoâ€¦', 'flacso-main-page')); ?></div>';};
             const buildFallbackUrl = (term) => {const params=new URLSearchParams();if(term){params.append('s',term);}const sep=fallbackBase.includes('?')?'&':'?';return fallbackBase+sep+params.toString();};
             const renderPlaceholderState=(term,message,extraClass)=>{if(!results)return;results.innerHTML='<div class="list-group-item py-3 novedades-search-'+extraClass+'"><i class="bi bi-search me-2" aria-hidden="true"></i>'+message+'<p class="mb-0"><a class="link-primary" href="'+buildFallbackUrl(term)+'">'+fallbackLabel+'</a></p></div>';form.classList.remove('has-results');};
             const getResultItems=()=>Array.from(results.querySelectorAll('.search-result-item'));
@@ -995,7 +984,7 @@ if (!function_exists('flacso_section_novedades_buscador_render_v2')) {
              role="search"
              aria-label="<?php esc_attr_e('Buscar en novedades', 'flacso-main-page'); ?>"
              data-nonce="<?php echo esc_attr($nonce); ?>"
-             data-ajax-url="<?php echo esc_url(admin_url('admin-ajax.php')); ?>">
+             data-ajax-url="<?php echo esc_url(admin_url('admin-ajax.php', 'relative')); ?>">
             <form class="flacso-novedades-search-v2__form" data-novedades-search-form-v2 novalidate>
                 <label class="flacso-novedades-search-v2__label" for="<?php echo esc_attr($search_id . '-input'); ?>">
                     <?php esc_html_e('Buscar en novedades', 'flacso-main-page'); ?>
@@ -1180,7 +1169,7 @@ if (!function_exists('flacso_section_novedades_buscador_render_v2')) {
             const clearBtn = root.querySelector('[data-search-clear]');
             const statusEl = root.querySelector('[data-search-status]');
             const minChars = 2;
-            const defaultAjaxUrl = root.dataset.ajaxUrl || '<?php echo esc_js(admin_url('admin-ajax.php')); ?>';
+            const defaultAjaxUrl = root.dataset.ajaxUrl || '<?php echo esc_js(admin_url('admin-ajax.php', 'relative')); ?>';
             const defaultNonce = root.dataset.nonce || '';
             let debounceTimer = null;
             let requestController = null;
@@ -1409,15 +1398,14 @@ if (!function_exists('flacso_section_novedades_responsivas_render')) {
         $posts_per_page = $settings['per_page'] ?? 12;
         $category = 'novedades';
         $page_var = sanitize_key($args['page_var']);
-        $current_page = isset($args['page']) && $args['page'] ? max(1, intval($args['page'])) : (isset($_GET[$page_var]) ? max(1, intval($_GET[$page_var])) : 1);
+        // Sin paginacion en home: siempre se renderiza la primera pagina del listado.
+        $current_page = 1;
         $search_term = sanitize_text_field($args['search_term']);
         $nonce = $args['nonce'] ?: wp_create_nonce('flacso_section_novedades_nonce');
-        $ajax_url = $args['ajax_url'] ?: admin_url('admin-ajax.php');
+        $ajax_url = $args['ajax_url'] ?: admin_url('admin-ajax.php', 'relative');
 
         $posts_data = flacso_section_novedades_get_posts($posts_per_page, $category, $current_page, $search_term);
         $list_markup = flacso_section_novedades_render_list_markup($posts_data, [
-            'page_var' => $page_var,
-            'current_page' => $current_page,
             'search_term' => $search_term,
         ]);
 
@@ -1434,237 +1422,416 @@ if (!function_exists('flacso_section_novedades_responsivas_render')) {
         </div>
         <?php if (!empty($args['with_styles'])) : ?>
         <style>
-            /* Grid Bootstrap - 1 columna móvil, 2 tablet, 3 desktop */
+            .novedades-responsivas {
+                --novedad-radius: 24px;
+                --novedad-radius-sm: 18px;
+                --novedad-border: rgba(17, 48, 96, 0.10);
+                --novedad-border-strong: rgba(29, 58, 114, 0.16);
+                --novedad-shadow: 0 10px 30px rgba(15, 26, 45, 0.07);
+                --novedad-shadow-hover: 0 18px 40px rgba(15, 26, 45, 0.12);
+                --novedad-bg: #ffffff;
+                --novedad-bg-soft: linear-gradient(180deg, #ffffff 0%, #f7faff 100%);
+                --novedad-text: var(--global-palette3, #0f1a2d);
+                --novedad-muted: var(--global-palette5, #7a8696);
+                --novedad-line: rgba(17, 48, 96, 0.08);
+                --novedad-accent: var(--global-palette1, #1d3a72);
+                --novedad-accent-soft: rgba(29, 58, 114, 0.08);
+                --novedad-accent-soft-2: rgba(29, 58, 114, 0.05);
+                --novedad-section-gap: clamp(0.9rem, 1.4vw, 1.25rem);
+            }
+
             .novedades-grid {
                 display: grid;
                 grid-template-columns: 1fr;
-                gap: 1.5rem;
+                gap: var(--novedad-section-gap);
+                margin: 0;
+                padding: 0;
             }
 
-            @media (min-width: 768px) {
-                .novedades-grid {
-                    grid-template-columns: repeat(2, 1fr);
-                }
-            }
-
-            @media (min-width: 1024px) {
-                .novedades-grid {
-                    grid-template-columns: repeat(3, 1fr);
-                }
-            }
-
-            .novedades-grid .col {
+            .novedades-grid > .novedad-item {
                 width: 100%;
+                max-width: 100%;
+                min-width: 0;
             }
 
             .novedades-grid .card {
-                background: var(--global-palette9, #ffffff);
-                border: 1px solid #f0f1f3;
-                border-radius: 12px;
+                position: relative;
+                display: grid;
+                grid-template-columns: 112px minmax(0, 1fr);
+                align-items: stretch;
+                background: var(--novedad-bg);
+                border: 1px solid var(--novedad-border);
+                border-radius: var(--novedad-radius-sm);
                 overflow: hidden;
-                transition: all 0.3s ease;
-                display: flex;
-                flex-direction: column;
-                height: 100%;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                box-shadow: var(--novedad-shadow);
+                transition:
+                    transform 0.22s ease,
+                    box-shadow 0.22s ease,
+                    border-color 0.22s ease,
+                    background 0.22s ease;
+                min-width: 0;
             }
 
             .novedades-grid .card:hover {
-                transform: translateY(-4px);
-                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+                transform: translateY(-3px);
+                box-shadow: var(--novedad-shadow-hover);
+                border-color: rgba(29, 58, 114, 0.20);
             }
 
             .novedades-grid .card-img-container {
                 position: relative;
-                background-color: #f8f9fa;
                 width: 100%;
-                aspect-ratio: 1/1;
+                min-height: 112px;
+                aspect-ratio: 1 / 1;
                 overflow: hidden;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .novedades-grid .card-img-container img {
-                width: 100%;
-                height: 100%;
-                object-fit: contain;
+                background: #edf3fb;
             }
 
             .novedades-grid .card-img-link {
                 position: absolute;
                 inset: 0;
+                display: block;
+            }
+
+            .novedades-grid .card-img-container img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                object-position: center;
+                display: block;
+                transition: transform 0.35s ease;
+            }
+
+            .novedades-grid .card:hover .card-img-container img {
+                transform: scale(1.03);
+            }
+
+            .novedades-grid .novedades-placeholder {
+                width: 100%;
+                height: 100%;
+                min-height: inherit;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                background: rgba(0, 0, 0, 0);
-                transition: background 0.3s ease;
+                color: #6e7f98;
+                background: linear-gradient(160deg, #edf3fb 0%, #dfe9f6 100%);
             }
 
-            .novedades-grid .card-img-link:hover {
-                background: rgba(0, 0, 0, 0.2);
-            }
-
-            .card-body {
+            .novedades-grid .card-body {
                 display: flex;
                 flex-direction: column;
-                flex-grow: 1;
-                padding: 20px;
+                gap: 0.6rem;
+                padding: 1rem;
+                min-width: 0;
             }
 
-            .novedades-grid .h5 {
-                font-size: 1.05rem;
-                font-weight: 700;
-                line-height: 1.3;
-                margin-bottom: 10px;
-                color: var(--global-palette3, #0f1a2d);
+            .novedades-grid .card h3 {
+                margin: 0;
+                font-size: 1rem;
+                line-height: 1.18;
+                font-weight: 800;
+                letter-spacing: -0.02em;
+                color: var(--novedad-text);
+                text-wrap: balance;
             }
 
-            .novedades-grid .h5 a {
+            .novedades-grid .card h3 a {
                 color: inherit;
                 text-decoration: none;
             }
 
-            .novedades-grid .h5 a:hover {
-                color: var(--global-palette1, #1d3a72);
+            .novedades-grid .card h3 a:hover {
+                color: var(--novedad-accent);
             }
 
             .novedades-grid .card-text {
-                color: var(--global-palette4, #6b7280);
-                font-size: 0.95rem;
-                line-height: 1.5;
-                margin-bottom: 15px;
-                flex-grow: 1;
+                margin: 0;
+                color: var(--global-palette4, #2e2f34);
+                font-size: 0.93rem;
+                line-height: 1.45;
+                display: -webkit-box;
+                -webkit-line-clamp: 3;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
             }
 
             .novedades-grid footer {
-                color: var(--global-palette5, #9ca3af) !important;
-                font-size: 0.85rem;
-                padding-top: 12px;
-                border-top: 1px solid #e5e7eb !important;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
                 margin-top: auto;
+                padding-top: 0.75rem;
+                border-top: 1px solid var(--novedad-line);
+                color: var(--novedad-muted);
+                font-size: 0.82rem;
+                line-height: 1;
             }
 
-            .novedades-grid footer i {
+            .novedades-grid footer::before {
+                content: "";
+                width: 0.48rem;
+                height: 0.48rem;
+                border-radius: 999px;
+                background: var(--novedad-accent);
+                opacity: 0.75;
+                flex: 0 0 auto;
+            }
+
+            /* CARD 1: protagonista */
+            .novedades-grid > .novedad-item:nth-child(1) .card {
+                grid-template-columns: 1fr;
+                border-radius: var(--novedad-radius);
+                background: var(--novedad-bg-soft);
+                border-color: var(--novedad-border-strong);
+            }
+
+            .novedades-grid > .novedad-item:nth-child(1) .card-img-container {
+                min-height: 0;
+                aspect-ratio: 1 / 1;
+            }
+
+            .novedades-grid > .novedad-item:nth-child(1) .card-body {
+                padding: 1.15rem 1.15rem 1.05rem;
+                gap: 0.75rem;
+            }
+
+            .novedades-grid > .novedad-item:nth-child(1) h3 {
+                font-size: clamp(1.25rem, 1.05rem + 0.6vw, 1.8rem);
+                line-height: 1.08;
+            }
+
+            .novedades-grid > .novedad-item:nth-child(1) .card-text {
+                font-size: 1rem;
+                line-height: 1.5;
+                -webkit-line-clamp: 4;
+            }
+
+            /* CARD 2: secundaria */
+            .novedades-grid > .novedad-item:nth-child(2) .card {
+                grid-template-columns: 1fr;
+                background: linear-gradient(180deg, #ffffff 0%, #f9fbfe 100%);
+                border-color: rgba(29, 58, 114, 0.12);
+                border-radius: var(--novedad-radius);
+            }
+
+            .novedades-grid > .novedad-item:nth-child(2) .card-img-container {
+                aspect-ratio: 1 / 1;
+                min-height: 0;
+            }
+
+            .novedades-grid > .novedad-item:nth-child(2) .card-body {
+                padding: 1rem;
+            }
+
+            .novedades-grid > .novedad-item:nth-child(2) h3 {
+                font-size: clamp(1.05rem, 0.98rem + 0.35vw, 1.3rem);
+                line-height: 1.12;
+            }
+
+            .novedades-grid > .novedad-item:nth-child(2) .card-text {
+                -webkit-line-clamp: 3;
+            }
+
+            /* RESTO */
+            .novedades-grid > .novedad-item:nth-child(n+3) .card {
+                grid-template-columns: 116px minmax(0, 1fr);
+                min-height: 116px;
+            }
+
+            .novedades-grid > .novedad-item:nth-child(n+3) .card-img-container {
+                min-height: 116px;
+                aspect-ratio: 1 / 1;
+            }
+
+            .novedades-grid > .novedad-item:nth-child(n+3) .card-body {
+                padding: 0.9rem 0.95rem;
+                gap: 0.45rem;
+            }
+
+            .novedades-grid > .novedad-item:nth-child(n+3) h3 {
+                font-size: 0.98rem;
+                line-height: 1.18;
+            }
+
+            .novedades-grid > .novedad-item:nth-child(n+3) .card-text {
+                font-size: 0.89rem;
+                line-height: 1.35;
+                -webkit-line-clamp: 2;
+            }
+
+            /* TABLET */
+            @media (min-width: 768px) {
+                .novedades-grid {
+                    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.95fr);
+                    grid-template-areas:
+                        "lead support"
+                        "lead list1"
+                        "list2 list3"
+                        "list4 list5";
+                    align-items: stretch;
+                }
+
+                .novedades-grid > .novedad-item:nth-child(1) { grid-area: lead; }
+                .novedades-grid > .novedad-item:nth-child(2) { grid-area: support; }
+                .novedades-grid > .novedad-item:nth-child(3) { grid-area: list1; }
+                .novedades-grid > .novedad-item:nth-child(4) { grid-area: list2; }
+                .novedades-grid > .novedad-item:nth-child(5) { grid-area: list3; }
+                .novedades-grid > .novedad-item:nth-child(6) { grid-area: list4; }
+                .novedades-grid > .novedad-item:nth-child(7) { grid-area: list5; }
+
+                .novedades-grid > .novedad-item:nth-child(1) .card {
+                    height: 100%;
+                }
+
+                .novedades-grid > .novedad-item:nth-child(1) .card-img-container {
+                    aspect-ratio: 1 / 1;
+                }
+
+                .novedades-grid > .novedad-item:nth-child(2) .card {
+                    height: 100%;
+                }
+
+                .novedades-grid > .novedad-item:nth-child(n+3) .card {
+                    grid-template-columns: 124px minmax(0, 1fr);
+                    min-height: 124px;
+                }
+
+                .novedades-grid > .novedad-item:nth-child(n+3) .card-img-container {
+                    min-height: 124px;
+                }
+            }
+
+            /* DESKTOP */
+            @media (min-width: 1100px) {
+                .novedades-grid {
+                    grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.95fr) minmax(0, 0.95fr);
+                    grid-template-areas:
+                        "lead support list1"
+                        "lead support list2"
+                        "lead list3 list4"
+                        "list5 list6 list7";
+                    gap: 1.25rem;
+                }
+
+                .novedades-grid > .novedad-item:nth-child(1) .card-body {
+                    padding: 1.25rem;
+                }
+
+                .novedades-grid > .novedad-item:nth-child(1) .card-text {
+                    -webkit-line-clamp: 5;
+                }
+
+                .novedades-grid > .novedad-item:nth-child(n+3) .card {
+                    grid-template-columns: 128px minmax(0, 1fr);
+                    min-height: 128px;
+                }
+
+                .novedades-grid > .novedad-item:nth-child(n+3) .card-img-container {
+                    min-height: 128px;
+                }
+            }
+
+            /* MOBILE */
+            @media (max-width: 767.98px) {
+                .novedades-grid {
+                    gap: 0.85rem;
+                }
+
+                .novedades-grid > .novedad-item:nth-child(1) .card,
+                .novedades-grid > .novedad-item:nth-child(2) .card {
+                    grid-template-columns: 1fr;
+                }
+
+                .novedades-grid > .novedad-item:nth-child(1) .card-body,
+                .novedades-grid > .novedad-item:nth-child(2) .card-body {
+                    padding: 0.95rem;
+                }
+
+                .novedades-grid > .novedad-item:nth-child(1) h3 {
+                    font-size: 1.18rem;
+                }
+
+                .novedades-grid > .novedad-item:nth-child(2) h3 {
+                    font-size: 1.03rem;
+                }
+
+                .novedades-grid > .novedad-item:nth-child(n+3) .card {
+                    grid-template-columns: 96px minmax(0, 1fr);
+                    min-height: 96px;
+                    border-radius: 16px;
+                }
+
+                .novedades-grid > .novedad-item:nth-child(n+3) .card-img-container {
+                    min-height: 96px;
+                }
+
+                .novedades-grid > .novedad-item:nth-child(n+3) .card-body {
+                    padding: 0.78rem 0.8rem;
+                }
+
+                .novedades-grid > .novedad-item:nth-child(n+3) h3 {
+                    font-size: 0.93rem;
+                }
+
+                .novedades-grid > .novedad-item:nth-child(n+3) .card-text {
+                    font-size: 0.86rem;
+                    -webkit-line-clamp: 2;
+                }
+
+                .novedades-grid footer {
+                    font-size: 0.78rem;
+                    padding-top: 0.6rem;
+                }
+            }
+
+            .novedades-view {
+                margin-top: 1.1rem;
+                display: flex;
+                justify-content: center;
+            }
+
+            .novedades-view__link {
+                min-height: 2.75rem;
+                padding: 0.64rem 1.15rem;
+                border-radius: 999px;
+                border: 1px solid rgba(29, 58, 114, 0.2);
+                background: #fff;
                 color: var(--global-palette1, #1d3a72);
-                font-size: 0.9rem;
-            }
-
-            .novedades-pagination {
-                margin-top: clamp(1.25rem, 3vw, 2rem);
-            }
-
-            .novedades-pagination .pagination {
-                gap: 0.45rem !important;
-            }
-
-            .novedades-pagination .page-item {
-                margin: 0;
-            }
-
-            .novedades-pagination .page-item:not(:first-child) .page-link {
-                margin-left: 0;
-            }
-
-            .novedades-pagination .page-link {
-                min-width: 2.75rem;
-                height: 2.75rem;
-                padding: 0 0.95rem;
-                border-radius: 12px;
-                border: 1px solid rgba(29, 58, 114, 0.16);
-                background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
-                color: var(--global-palette3, #0f1a2d);
-                font-size: 1.08rem;
-                font-weight: 600;
+                font-size: 0.92rem;
+                font-weight: 800;
                 line-height: 1;
                 text-decoration: none;
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
-                box-shadow: 0 6px 16px rgba(15, 26, 45, 0.08);
-                transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-                text-decoration: none !important;
-                background-image: none !important;
+                gap: 0.45rem;
+                transition: 0.2s ease;
             }
 
-            .novedades-pagination .page-link.is-nav {
-                min-width: 8.4rem;
-                font-size: 1rem;
-                font-weight: 700;
-                padding: 0 1.05rem;
+            .novedades-view__link::after {
+                content: "\2192";
+                font-size: 0.95em;
+                line-height: 1;
             }
 
-            .novedades-pagination .page-link.is-dots {
-                min-width: 2.75rem;
-                padding: 0 0.65rem;
-                letter-spacing: 0.06em;
-            }
-
-            .novedades-pagination .page-item:not(.active):not(.disabled) .page-link:hover,
-            .novedades-pagination .page-item:not(.active):not(.disabled) .page-link:focus-visible {
-                transform: translateY(-2px);
-                border-color: rgba(29, 58, 114, 0.34);
+            .novedades-view__link:hover,
+            .novedades-view__link:focus-visible {
+                background: #f2f6fd;
+                border-color: rgba(29, 58, 114, 0.3);
                 color: var(--global-palette1, #1d3a72);
-                box-shadow: 0 10px 24px rgba(15, 26, 45, 0.14);
                 outline: none;
             }
 
-            .novedades-pagination .page-item.active .page-link {
-                border-color: var(--global-palette12, #1d3a72);
-                background: linear-gradient(135deg, var(--global-palette12, #1d3a72) 0%, var(--global-palette1, #274f9a) 100%);
-                color: #fff;
-                box-shadow: 0 12px 28px rgba(24, 57, 118, 0.28);
-                transform: translateY(-1px);
-            }
-
-            .novedades-pagination .page-item.disabled .page-link {
-                border-color: rgba(148, 163, 184, 0.3);
-                background: #e8ecf3;
-                color: #64748b;
-                box-shadow: none;
-                cursor: default;
-            }
-
             @media (max-width: 768px) {
-                .novedades-pagination .page-link {
-                    min-width: 2.45rem;
-                    height: 2.45rem;
-                    padding: 0 0.65rem;
-                    font-size: 0.98rem;
+                .novedades-view {
+                    margin-top: 0.95rem;
                 }
 
-                .novedades-pagination .page-link.is-nav {
-                    min-width: 6.8rem;
-                    font-size: 0.92rem;
-                    padding: 0 0.85rem;
-                }
-
-                .novedades-pagination .page-link.is-dots {
-                    min-width: 2.45rem;
-                    padding: 0 0.55rem;
-                }
-            }
-
-            @media (max-width: 768px) {
-                .novedades-grid .card-body {
-                    padding: 16px;
-                }
-
-                .novedades-grid .h5 {
-                    font-size: 0.95rem;
-                }
-            }
-
-            @media (max-height: 860px) {
-                .novedades-grid .card-body {
-                    padding: 16px;
-                }
-
-                .novedades-grid .card-text {
-                    display: -webkit-box;
-                    -webkit-line-clamp: 3;
-                    -webkit-box-orient: vertical;
-                    overflow: hidden;
+                .novedades-view__link {
+                    width: 100%;
+                    max-width: 320px;
+                    min-height: 2.5rem;
+                    font-size: 0.88rem;
                 }
             }
         </style>
@@ -1673,20 +1840,30 @@ if (!function_exists('flacso_section_novedades_responsivas_render')) {
     }
 }
 
+if (!function_exists('flacso_section_novedades_get_view_url')) {
+    function flacso_section_novedades_get_view_url(): string
+    {
+        $category = get_category_by_slug('novedades');
+        if ($category instanceof WP_Term) {
+            $url = get_category_link($category->term_id);
+            if (!is_wp_error($url) && is_string($url) && $url !== '') {
+                return $url;
+            }
+        }
+
+        return add_query_arg('category_name', 'novedades', home_url('/'));
+    }
+}
+
 if (!function_exists('flacso_section_novedades_render_list_markup')) {
     function flacso_section_novedades_render_list_markup(array $posts_data, array $args = []): string
     {
         $defaults = [
-            'page_var' => 'nres_page',
-            'current_page' => 1,
             'search_term' => '',
         ];
         $args = wp_parse_args($args, $defaults);
-        $page_var = sanitize_key($args['page_var']);
-        $current_page = max(1, intval($args['current_page']));
         $search_term = sanitize_text_field($args['search_term']);
         $posts = $posts_data['posts'] ?? [];
-        $total_pages = max(1, intval($posts_data['total_pages'] ?? 1));
 
         ob_start();
 
@@ -1694,7 +1871,7 @@ if (!function_exists('flacso_section_novedades_render_list_markup')) {
             echo '<div class="alert alert-info text-center p-4 mb-4">' . esc_html__('No hay novedades para mostrar.', 'flacso-main-page') . '</div>';
         } else {
             ?>
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 novedades-grid">
+            <div class="novedades-grid">
                 <?php foreach ($posts as $index => $post) {
                     echo flacso_section_novedades_render_post_card($post, false, $index);
                 } ?>
@@ -1702,135 +1879,17 @@ if (!function_exists('flacso_section_novedades_render_list_markup')) {
             <?php
         }
 
-        if ($total_pages > 1) {
-            $pagination = paginate_links([
-                'base' => esc_url(add_query_arg($page_var, '%#%')),
-                'format' => '',
-                'current' => $current_page,
-                'total' => $total_pages,
-                'prev_text' => '&laquo; ' . esc_html__('Anterior', 'flacso-main-page'),
-                'next_text' => esc_html__('Siguiente', 'flacso-main-page') . ' &raquo;',
-                'type' => 'array',
-            ]);
-
-            if (!empty($pagination)) : ?>
-                <nav class="novedades-pagination mt-4" role="navigation" aria-label="<?php echo esc_attr__('Paginación de novedades', 'flacso-main-page'); ?>">
-                    <ul class="pagination justify-content-center flex-wrap gap-2">
-                        <?php
-                        $extract_page_from_href = static function (string $href, string $page_var): int {
-                            if ($href === '') {
-                                return 0;
-                            }
-
-                            $decoded_href = html_entity_decode($href, ENT_QUOTES, 'UTF-8');
-                            $parts = wp_parse_url($decoded_href);
-                            if (!is_array($parts)) {
-                                return 0;
-                            }
-
-                            if (!empty($parts['query'])) {
-                                parse_str((string) $parts['query'], $query_args);
-                                if (!empty($query_args[$page_var])) {
-                                    return max(1, (int) $query_args[$page_var]);
-                                }
-                            }
-
-                            $path = isset($parts['path']) ? (string) $parts['path'] : '';
-                            if ($path !== '') {
-                                if (preg_match('#/page/(\\d+)/?$#i', $path, $matches)) {
-                                    return max(1, (int) $matches[1]);
-                                }
-
-                                $named_pattern = '#/' . preg_quote($page_var, '#') . '/(\\d+)(?:/|$)#i';
-                                if (preg_match($named_pattern, $path, $matches)) {
-                                    return max(1, (int) $matches[1]);
-                                }
-                            }
-
-                            return 0;
-                        };
-
-                        foreach ($pagination as $link) {
-                            $is_current = strpos($link, 'current') !== false;
-                            $is_dots = strpos($link, 'dots') !== false;
-                            $is_disabled = strpos($link, 'disabled') !== false || $is_dots;
-                            $is_prev = strpos($link, 'prev') !== false;
-                            $is_next = strpos($link, 'next') !== false;
-                            $text = trim(strip_tags($link));
-                            $text = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
-                            $href = '';
-                            if (preg_match('/href="([^"]+)"/', $link, $matches)) {
-                                $href = $matches[1];
-                            }
-                            $classes = ['page-item'];
-                            if ($is_current) {
-                                $classes[] = 'active';
-                            }
-                            if ($is_disabled && !$is_current) {
-                                $classes[] = 'disabled';
-                            }
-                            if ($is_prev) {
-                                $classes[] = 'is-prev';
-                            }
-                            if ($is_next) {
-                                $classes[] = 'is-next';
-                            }
-                            if ($is_dots) {
-                                $classes[] = 'is-dots';
-                            }
-                            $aria_current = $is_current ? ' aria-current="page"' : '';
-                            if ($href) {
-                                $target_page = $extract_page_from_href($href, $page_var);
-                                if ($target_page <= 0 && $is_prev) {
-                                    $target_page = max(1, $current_page - 1);
-                                }
-                                if ($target_page <= 0 && $is_next) {
-                                    $target_page = min($total_pages, $current_page + 1);
-                                }
-                                if ($target_page <= 0 && preg_match('/^\d+$/', $text)) {
-                                    $target_page = (int) $text;
-                                }
-
-                                if ($is_prev) {
-                                    $aria_label = esc_attr__('Ir a la página anterior', 'flacso-main-page');
-                                } elseif ($is_next) {
-                                    $aria_label = esc_attr__('Ir a la página siguiente', 'flacso-main-page');
-                                } else {
-                                    $aria_label = esc_attr(sprintf(__('Ir a página %s', 'flacso-main-page'), $text));
-                                }
-
-                                $link_classes = ['page-link'];
-                                if ($is_prev || $is_next) {
-                                    $link_classes[] = 'is-nav';
-                                } elseif ($is_dots) {
-                                    $link_classes[] = 'is-dots';
-                                }
-
-                                $data_page_attr = $target_page > 0 ? ' data-page="' . esc_attr((string) $target_page) . '"' : '';
-                                $link_element = sprintf(
-                                    '<a class="%s" href="%s"%s aria-label="%s">%s</a>',
-                                    esc_attr(implode(' ', $link_classes)),
-                                    esc_url($href),
-                                    $data_page_attr,
-                                    $aria_label,
-                                    esc_html($text)
-                                );
-                            } else {
-                                $state_class = $is_current ? 'active' : 'disabled';
-                                if ($is_prev || $is_next) {
-                                    $extra_class = ' is-nav';
-                                } elseif ($is_dots) {
-                                    $extra_class = ' is-dots';
-                                } else {
-                                    $extra_class = '';
-                                }
-                                $link_element = sprintf('<span class="page-link %s%s" tabindex="-1">%s</span>', esc_attr($state_class), esc_attr($extra_class), esc_html($text));
-                            }
-                            echo '<li class="' . esc_attr(implode(' ', $classes)) . '"' . $aria_current . '>' . $link_element . '</li>';
-                        }
-                        ?>
-                    </ul>
-                </nav>
+        if (!empty($posts)) {
+            $view_url = flacso_section_novedades_get_view_url();
+            if ($search_term !== '') {
+                $view_url = add_query_arg('s', $search_term, $view_url);
+            }
+            if ($view_url !== '') : ?>
+                <div class="novedades-view">
+                    <a class="novedades-view__link" href="<?php echo esc_url($view_url); ?>">
+                        <?php esc_html_e('Ver todas las novedades', 'flacso-main-page'); ?>
+                    </a>
+                </div>
             <?php
             endif;
         }
@@ -1870,12 +1929,12 @@ if (!function_exists('flacso_section_novedades_admin_menu_render')) {
                            data-novedades-search-input
                            type="search"
                            class="regular-text"
-                           placeholder="<?php esc_attr_e('Buscar novedades…', 'flacso-main-page'); ?>"
+                           placeholder="<?php esc_attr_e('Buscar novedadesâ€¦', 'flacso-main-page'); ?>"
                            autocomplete="off">
-                    <span class="flacso-novedades-search-hint"><?php esc_html_e('Escribe para buscar artículos', 'flacso-main-page'); ?></span>
+                    <span class="flacso-novedades-search-hint"><?php esc_html_e('Escribe para buscar artÃ­culos', 'flacso-main-page'); ?></span>
                 </div>
                 <div class="flacso-novedades-search-results" data-novedades-search-results>
-                    <p class="text-muted small"><?php esc_html_e('Resultados aparecerán aquí y podrás fijarlos o desfijarlos.', 'flacso-main-page'); ?></p>
+                    <p class="text-muted small"><?php esc_html_e('Resultados aparecerÃ¡n aquÃ­ y podrÃ¡s fijarlos o desfijarlos.', 'flacso-main-page'); ?></p>
                 </div>
             </div>
         </div>
@@ -1940,7 +1999,7 @@ if (!function_exists('flacso_section_novedades_get_manageable_posts')) {
     }
 }
 
-// Asignación estable de color por categoría usando hash del slug
+// AsignaciÃ³n estable de color por categorÃ­a usando hash del slug
 if (!function_exists('flacso_novedades_get_category_badge_style')) {
     function flacso_novedades_get_category_badge_style(string $slug): string
     {
@@ -1954,7 +2013,7 @@ if (!function_exists('flacso_novedades_get_category_badge_style')) {
             ['var(--global-palette14)', 'var(--global-palette9)'], // naranja vivo
             ['var(--global-palette11)', 'var(--global-palette9)'], // verde
             ['var(--global-palette15)', 'var(--global-palette3)'], // amarillo suave
-            ['var(--global-palette2)', 'var(--global-palette3)'],  // énfasis secundario
+            ['var(--global-palette2)', 'var(--global-palette3)'],  // Ã©nfasis secundario
             ['var(--global-palette1)', 'var(--global-palette9)'],  // azul oscuro
         ];
         $hash = hexdec(substr(md5($slug), 0, 8));
@@ -1985,19 +2044,10 @@ if (!function_exists('flacso_section_novedades_render_post_card')) {
         $modified_date = get_the_modified_date('', $post->ID);
 
         $main_category = !empty($other_categories) ? reset($other_categories) : null;
-        // Se mantiene clase genérica; el color se aplica inline para consistencia entre renders.
+        // Se mantiene clase genÃ©rica; el color se aplica inline para consistencia entre renders.
         $category_style = '';
         if ($main_category) {
             $category_style = flacso_novedades_get_category_badge_style($main_category->slug);
-        }
-
-        $image_is_square = false;
-        if ($has_thumbnail && $image_url) {
-            $metadata = wp_get_attachment_metadata($image_id);
-            if ($metadata && isset($metadata['width'], $metadata['height'])) {
-                $ratio = $metadata['width'] / max(1, $metadata['height']);
-                $image_is_square = ($ratio >= 0.9 && $ratio <= 1.1);
-            }
         }
 
         $delay = $index * 80;
@@ -2005,14 +2055,13 @@ if (!function_exists('flacso_section_novedades_render_post_card')) {
         $excerpt_id = 'novedad-excerpt-' . $post->ID;
 
         ob_start(); ?>
-        <div class="col">
-            <article
-                class="card h-100"
-                style="transition-delay: <?php echo intval($delay); ?>ms"
-                role="article"
-                aria-labelledby="<?php echo esc_attr($heading_id); ?>"
-                aria-describedby="<?php echo esc_attr($excerpt_id); ?>"
-            >
+        <article
+            class="novedad-item"
+            role="article"
+            aria-labelledby="<?php echo esc_attr($heading_id); ?>"
+            aria-describedby="<?php echo esc_attr($excerpt_id); ?>"
+        >
+            <div class="card" style="transition-delay: <?php echo intval($delay); ?>ms">
                 <div class="card-img-container">
                     <?php if ($has_thumbnail && $image_url) : ?>
                         <a href="<?php echo esc_url($post_link); ?>" class="card-img-link" aria-label="<?php echo esc_attr(sprintf(__('Leer mas: %s', 'flacso-main-page'), $post_title)); ?>">
@@ -2020,16 +2069,15 @@ if (!function_exists('flacso_section_novedades_render_post_card')) {
                         </a>
                     <?php else : ?>
                         <a href="<?php echo esc_url($post_link); ?>" class="card-img-link" aria-label="<?php echo esc_attr(sprintf(__('Leer mas: %s', 'flacso-main-page'), $post_title)); ?>">
-                            <div class="w-100 h-100 d-flex align-items-center justify-content-center text-muted" style="background:var(--global-palette8);">
-                                <i class="bi bi-newspaper display-1" aria-hidden="true"></i>
+                            <div class="novedades-placeholder">
+                                <i class="bi bi-newspaper display-5" aria-hidden="true"></i>
                                 <span class="visually-hidden"><?php esc_html_e('Noticia sin imagen', 'flacso-main-page'); ?></span>
                             </div>
                         </a>
                     <?php endif; ?>
-
                 </div>
                 <div class="card-body">
-                    <h3 id="<?php echo esc_attr($heading_id); ?>" class="h5">
+                    <h3 id="<?php echo esc_attr($heading_id); ?>">
                         <a href="<?php echo esc_url($post_link); ?>">
                             <?php echo $post_title; ?>
                         </a>
@@ -2040,15 +2088,12 @@ if (!function_exists('flacso_section_novedades_render_post_card')) {
                         echo esc_html($excerpt);
                         ?>
                     </div>
-                    <footer class="d-flex justify-content-between align-items-center small">
-                        <span class="d-flex align-items-center gap-1">
-                            <i class="bi bi-calendar3" aria-hidden="true"></i>
-                            <time datetime="<?php echo esc_attr(get_the_date('c', $post->ID)); ?>"><?php echo esc_html($post_date); ?></time>
-                        </span>
+                    <footer>
+                        <time datetime="<?php echo esc_attr(get_the_date('c', $post->ID)); ?>"><?php echo esc_html($post_date); ?></time>
                     </footer>
                 </div>
-            </article>
-        </div>
+            </div>
+        </article>
         <?php
         return ob_get_clean();
     }
@@ -2122,16 +2167,16 @@ if (!function_exists('flacso_section_novedades_toggle_sticky_ajax')) {
 
         $post_id = isset($_POST['post_id']) ? absint($_POST['post_id']) : 0;
         if (!$post_id) {
-            wp_send_json_error(__('Noticia inválida.', 'flacso-main-page'), 400);
+            wp_send_json_error(__('Noticia invÃ¡lida.', 'flacso-main-page'), 400);
         }
 
         $post = get_post($post_id);
         if (!$post) {
-            wp_send_json_error(__('Noticia inválida.', 'flacso-main-page'), 404);
+            wp_send_json_error(__('Noticia invÃ¡lida.', 'flacso-main-page'), 404);
         }
 
         if ($post->post_type !== 'post' || !has_category('novedades', $post_id)) {
-            wp_send_json_error(__('Solo se pueden fijar publicaciones de la categoría Novedades.', 'flacso-main-page'), 400);
+            wp_send_json_error(__('Solo se pueden fijar publicaciones de la categorÃ­a Novedades.', 'flacso-main-page'), 400);
         }
 
         if (!current_user_can('edit_post', $post_id)) {
@@ -2270,12 +2315,13 @@ if (!function_exists('flacso_section_novedades_admin_search_ajax')) {
 if (!function_exists('flacso_section_novedades_search_ajax')) {
     function flacso_section_novedades_search_ajax()
     {
-        check_ajax_referer('flacso_section_novedades_nonce', 'nonce');
+        // En front pÃºblico, un nonce cacheado no debe romper la experiencia de bÃºsqueda.
+        check_ajax_referer('flacso_section_novedades_nonce', 'nonce', false);
         $search_term = isset($_POST['search_term']) ? sanitize_text_field(wp_unslash($_POST['search_term'])) : '';
         if (strlen($search_term) < 2) {
             wp_send_json_success(['html' => '']);
         }
-        // Buscar en todos los posts y páginas publicados
+        // Buscar en todos los posts y pÃ¡ginas publicados
         $args = [
             'post_type' => ['post','page'],
             'post_status' => 'publish',
@@ -2300,7 +2346,7 @@ if (!function_exists('flacso_section_novedades_search_ajax')) {
             $thumb = get_the_post_thumbnail_url($post_id, 'medium') ?: 'https://via.placeholder.com/200x200?text=FLACSO';
             $date = get_the_date('', $post_id);
             $excerpt = has_excerpt($post_id) ? get_the_excerpt($post_id) : wp_trim_words(wp_strip_all_tags(get_post_field('post_content', $post_id)), 22);
-            // Determinar ícono según tipo de contenido (post/page). $post_item no está disponible aquí, usar get_post_type($post_id)
+            // Determinar Ã­cono segÃºn tipo de contenido (post/page). $post_item no estÃ¡ disponible aquÃ­, usar get_post_type($post_id)
             $icon = (get_post_type($post_id) === 'page') ? 'bi bi-file' : 'bi bi-file-text';
             ?>
             <a class="search-result-item" href="<?php echo esc_url($permalink); ?>">
@@ -2325,7 +2371,8 @@ if (!function_exists('flacso_section_novedades_search_ajax')) {
 if (!function_exists('flacso_section_novedades_paginate_ajax')) {
     function flacso_section_novedades_paginate_ajax()
     {
-        check_ajax_referer('flacso_section_novedades_nonce', 'nonce');
+        // En front pÃºblico, un nonce cacheado no debe bloquear paginaciÃ³n AJAX.
+        check_ajax_referer('flacso_section_novedades_nonce', 'nonce', false);
 
         $page = isset($_POST['page']) ? max(1, intval($_POST['page'])) : 1;
         $search_term = isset($_POST['search_term']) ? sanitize_text_field(wp_unslash($_POST['search_term'])) : '';
@@ -2334,8 +2381,6 @@ if (!function_exists('flacso_section_novedades_paginate_ajax')) {
 
         $posts_data = flacso_section_novedades_get_posts($per_page, 'novedades', $page, $search_term);
         $html = flacso_section_novedades_render_list_markup($posts_data, [
-            'page_var' => 'nres_page',
-            'current_page' => $page,
             'search_term' => $search_term,
         ]);
 
@@ -2385,5 +2430,4 @@ if (!function_exists('flacso_section_novedades_get_posts')) {
         ];
     }
 }
-
 
