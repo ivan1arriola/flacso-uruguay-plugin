@@ -27,7 +27,7 @@ class Flacso_Main_Page_Unified_Settings {
             'icon' => 'dashicons-admin-post',
         ],
         'posgrados' => [
-            'label' => 'Posgrados',
+            'label' => 'Oferta Educativa',
             'icon' => 'dashicons-book-alt',
         ],
         'congreso' => [
@@ -435,7 +435,7 @@ class Flacso_Main_Page_Unified_Settings {
     private static function render_posgrados_section(array $settings): void {
         $cards = $settings['posgrados']['cards'] ?? [];
         ?>
-        <h3><?php esc_html_e('Sección Posgrados', 'flacso-main-page'); ?></h3>
+        <h3><?php esc_html_e('Sección Oferta Educativa', 'flacso-main-page'); ?></h3>
         <div class="flacso-form-group">
             <label for="posgrados_title"><?php esc_html_e('Título', 'flacso-main-page'); ?></label>
             <input 

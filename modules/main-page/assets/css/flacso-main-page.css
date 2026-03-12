@@ -2217,3 +2217,112 @@
         transform: translate3d(8%, 6%, 0);
     }
 }
+
+/* Sistema unificado para titulos de seccion */
+.flacso-main-page .flacso-home-block {
+    --flacso-unified-title-color: var(--global-palette1, #1d3a72);
+    --flacso-unified-title-line: rgba(36, 129, 56, 0.9);
+    --flacso-unified-title-accent: var(--global-palette1, #1d3a72);
+}
+
+.flacso-main-page .flacso-congreso-section {
+    --flacso-unified-title-color: #ffffff;
+    --flacso-unified-title-line: rgba(255, 255, 255, 0.42);
+    --flacso-unified-title-accent: var(--global-palette2, #f7b733);
+}
+
+.flacso-main-page :is(
+    .flc-eventos-grid__header,
+    .flacso-novedades-header,
+    .flacso-novedades-3d__heading
+) {
+    text-align: left !important;
+    justify-content: flex-start !important;
+}
+
+.flacso-main-page :is(
+    .flc-eventos-grid__title,
+    .flc-eventos-react__title,
+    .flacso-novedades-header h2,
+    .flacso-novedades-3d__heading h2,
+    .posgrados-titulo,
+    .flacso-quienes-title,
+    .flacso-convenios-react__title,
+    .flacso-instagram-title,
+    .flacso-contacto-title,
+    .flacso-congreso-title
+) {
+    margin: 0 0 clamp(0.85rem, 1.8vw, 1.25rem) !important;
+    padding-bottom: 0.78rem !important;
+    border-bottom: 3px solid var(--flacso-unified-title-line) !important;
+    position: relative !important;
+    display: block !important;
+    width: 100%;
+    max-width: 100%;
+    text-align: left !important;
+    color: var(--flacso-unified-title-color) !important;
+    font-family: var(--global-heading-font-family, "Helvetica Neue", sans-serif) !important;
+    font-size: clamp(1.9rem, 2.8vw, 2.55rem) !important;
+    font-weight: 800 !important;
+    line-height: 1.15 !important;
+    letter-spacing: 0.01em !important;
+    text-transform: none !important;
+    background: none !important;
+    -webkit-background-clip: border-box !important;
+    background-clip: border-box !important;
+    -webkit-text-fill-color: currentColor !important;
+}
+
+.flacso-main-page :is(
+    .flc-eventos-grid__title,
+    .flc-eventos-react__title,
+    .flacso-novedades-header h2,
+    .flacso-novedades-3d__heading h2,
+    .posgrados-titulo,
+    .flacso-quienes-title,
+    .flacso-convenios-react__title,
+    .flacso-instagram-title,
+    .flacso-contacto-title,
+    .flacso-congreso-title
+)::after {
+    content: "" !important;
+    position: absolute !important;
+    left: 0 !important;
+    bottom: -3px !important;
+    width: clamp(84px, 11vw, 130px) !important;
+    height: 3px !important;
+    background: var(--flacso-unified-title-accent) !important;
+}
+
+@media (max-width: 767.98px) {
+    .flacso-main-page :is(
+        .flc-eventos-grid__title,
+        .flc-eventos-react__title,
+        .flacso-novedades-header h2,
+        .flacso-novedades-3d__heading h2,
+        .posgrados-titulo,
+        .flacso-quienes-title,
+        .flacso-convenios-react__title,
+        .flacso-instagram-title,
+        .flacso-contacto-title,
+        .flacso-congreso-title
+    ) {
+        font-size: clamp(1.55rem, 7vw, 2rem) !important;
+        padding-bottom: 0.66rem !important;
+    }
+
+    .flacso-main-page :is(
+        .flc-eventos-grid__title,
+        .flc-eventos-react__title,
+        .flacso-novedades-header h2,
+        .flacso-novedades-3d__heading h2,
+        .posgrados-titulo,
+        .flacso-quienes-title,
+        .flacso-convenios-react__title,
+        .flacso-instagram-title,
+        .flacso-contacto-title,
+        .flacso-congreso-title
+    )::after {
+        width: 72px !important;
+    }
+}

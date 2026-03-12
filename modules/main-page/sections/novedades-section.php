@@ -912,13 +912,13 @@ if (!function_exists('flacso_section_novedades_buscador_render')) {
     function flacso_section_novedades_buscador_render($nonce = null) {
         $nonce = $nonce ?: wp_create_nonce('flacso_section_novedades_nonce');
         ob_start(); ?>
-        <div class="flacso-novedades-search" role="search" aria-label="<?php esc_attr_e('BÃºsqueda de contenidos', 'flacso-main-page'); ?>">
+        <div class="flacso-novedades-search" role="search" aria-label="<?php esc_attr_e('Búsqueda de contenidos', 'flacso-main-page'); ?>">
             <form class="row g-3 align-items-start" action="<?php echo esc_url(home_url('/')); ?>" method="get" data-novedades-search-form data-nonce="<?php echo esc_attr($nonce); ?>" novalidate>
                 <div class="col-12 col-lg-9">
                     <div class="input-group" data-field-wrapper>
                         <span class="input-group-text" id="flacso-search-icon" aria-hidden="true"><i class="bi bi-search"></i></span>
-                        <input type="search" name="s" class="form-control" placeholder="<?php esc_attr_e('Buscarâ€¦', 'flacso-main-page'); ?>" autocomplete="off" inputmode="search" aria-label="<?php esc_attr_e('Buscar en pÃ¡ginas y entradas', 'flacso-main-page'); ?>" aria-describedby="flacso-search-icon" />
-                        <button type="reset" class="btn btn-outline-secondary d-none" data-clear aria-label="<?php esc_attr_e('Limpiar bÃºsqueda', 'flacso-main-page'); ?>"><i class="bi bi-x-lg"></i></button>
+                        <input type="search" name="s" class="form-control" placeholder="<?php esc_attr_e('Buscar…', 'flacso-main-page'); ?>" autocomplete="off" inputmode="search" aria-label="<?php esc_attr_e('Buscar en páginas y entradas', 'flacso-main-page'); ?>" aria-describedby="flacso-search-icon" />
+                        <button type="reset" class="btn btn-outline-secondary d-none" data-clear aria-label="<?php esc_attr_e('Limpiar búsqueda', 'flacso-main-page'); ?>"><i class="bi bi-x-lg"></i></button>
                     </div>
                 </div>
                 <div class="col-12 col-lg-3 d-flex gap-2 justify-content-lg-end">
@@ -928,7 +928,7 @@ if (!function_exists('flacso_section_novedades_buscador_render')) {
                 <div class="col-12">
                     <div class="list-group novedades-search-results" data-novedades-search-results role="list" aria-live="polite" aria-atomic="false">
                         <div class="list-group-item text-muted py-3" data-placeholder>
-                            <i class="bi bi-search me-2" aria-hidden="true"></i><?php esc_html_e('Teclea al menos dos letras para buscar en pÃ¡ginas y entradas.', 'flacso-main-page'); ?>
+                            <i class="bi bi-search me-2" aria-hidden="true"></i><?php esc_html_e('Teclea al menos dos letras para buscar en páginas y entradas.', 'flacso-main-page'); ?>
                         </div>
                     </div>
                 </div>
@@ -947,11 +947,11 @@ if (!function_exists('flacso_section_novedades_buscador_render')) {
             const fallbackBase = '<?php echo esc_js(home_url('/')); ?>';
             const fallbackLabel = '<?php echo esc_js(__('Ver resultados completos', 'flacso-main-page')); ?>';
             const searchEmptyText = '<?php echo esc_js(__('Sin resultados', 'flacso-main-page')); ?>';
-            const searchErrorText = '<?php echo esc_js(__('Error de conexiÃ³n', 'flacso-main-page')); ?>';
+            const searchErrorText = '<?php echo esc_js(__('Error de conexión', 'flacso-main-page')); ?>';
             let controller;let debounce;let keyboardIndex=-1;
-            const placeholderMarkup = '<div class="list-group-item text-muted py-3"><i class="bi bi-search me-2" aria-hidden="true"></i><?php echo esc_js(__('Teclea al menos dos letras para buscar en pÃ¡ginas y entradas.', 'flacso-main-page')); ?></div>';
+            const placeholderMarkup = '<div class="list-group-item text-muted py-3"><i class="bi bi-search me-2" aria-hidden="true"></i><?php echo esc_js(__('Teclea al menos dos letras para buscar en páginas y entradas.', 'flacso-main-page')); ?></div>';
             const setPlaceholder = () => {if(!results)return;results.innerHTML = placeholderMarkup;form.classList.remove('has-results');};
-            const showLoading = () => {if(!results)return;results.innerHTML='<div class="list-group-item py-3 fw-semibold"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span><?php echo esc_js(__('Buscandoâ€¦', 'flacso-main-page')); ?></div>';};
+            const showLoading = () => {if(!results)return;results.innerHTML='<div class="list-group-item py-3 fw-semibold"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span><?php echo esc_js(__('Buscando…', 'flacso-main-page')); ?></div>';};
             const buildFallbackUrl = (term) => {const params=new URLSearchParams();if(term){params.append('s',term);}const sep=fallbackBase.includes('?')?'&':'?';return fallbackBase+sep+params.toString();};
             const renderPlaceholderState=(term,message,extraClass)=>{if(!results)return;results.innerHTML='<div class="list-group-item py-3 novedades-search-'+extraClass+'"><i class="bi bi-search me-2" aria-hidden="true"></i>'+message+'<p class="mb-0"><a class="link-primary" href="'+buildFallbackUrl(term)+'">'+fallbackLabel+'</a></p></div>';form.classList.remove('has-results');};
             const getResultItems=()=>Array.from(results.querySelectorAll('.search-result-item'));
@@ -1929,12 +1929,12 @@ if (!function_exists('flacso_section_novedades_admin_menu_render')) {
                            data-novedades-search-input
                            type="search"
                            class="regular-text"
-                           placeholder="<?php esc_attr_e('Buscar novedadesâ€¦', 'flacso-main-page'); ?>"
+                           placeholder="<?php esc_attr_e('Buscar novedades…', 'flacso-main-page'); ?>"
                            autocomplete="off">
-                    <span class="flacso-novedades-search-hint"><?php esc_html_e('Escribe para buscar artÃ­culos', 'flacso-main-page'); ?></span>
+                    <span class="flacso-novedades-search-hint"><?php esc_html_e('Escribe para buscar artículos', 'flacso-main-page'); ?></span>
                 </div>
                 <div class="flacso-novedades-search-results" data-novedades-search-results>
-                    <p class="text-muted small"><?php esc_html_e('Resultados aparecerÃ¡n aquÃ­ y podrÃ¡s fijarlos o desfijarlos.', 'flacso-main-page'); ?></p>
+                    <p class="text-muted small"><?php esc_html_e('Resultados aparecerán aquí y podrás fijarlos o desfijarlos.', 'flacso-main-page'); ?></p>
                 </div>
             </div>
         </div>
@@ -1999,7 +1999,7 @@ if (!function_exists('flacso_section_novedades_get_manageable_posts')) {
     }
 }
 
-// AsignaciÃ³n estable de color por categorÃ­a usando hash del slug
+// Asignación estable de color por categoría usando hash del slug
 if (!function_exists('flacso_novedades_get_category_badge_style')) {
     function flacso_novedades_get_category_badge_style(string $slug): string
     {
@@ -2013,7 +2013,7 @@ if (!function_exists('flacso_novedades_get_category_badge_style')) {
             ['var(--global-palette14)', 'var(--global-palette9)'], // naranja vivo
             ['var(--global-palette11)', 'var(--global-palette9)'], // verde
             ['var(--global-palette15)', 'var(--global-palette3)'], // amarillo suave
-            ['var(--global-palette2)', 'var(--global-palette3)'],  // Ã©nfasis secundario
+            ['var(--global-palette2)', 'var(--global-palette3)'],  // énfasis secundario
             ['var(--global-palette1)', 'var(--global-palette9)'],  // azul oscuro
         ];
         $hash = hexdec(substr(md5($slug), 0, 8));
@@ -2044,7 +2044,7 @@ if (!function_exists('flacso_section_novedades_render_post_card')) {
         $modified_date = get_the_modified_date('', $post->ID);
 
         $main_category = !empty($other_categories) ? reset($other_categories) : null;
-        // Se mantiene clase genÃ©rica; el color se aplica inline para consistencia entre renders.
+        // Se mantiene clase genérica; el color se aplica inline para consistencia entre renders.
         $category_style = '';
         if ($main_category) {
             $category_style = flacso_novedades_get_category_badge_style($main_category->slug);
@@ -2167,16 +2167,16 @@ if (!function_exists('flacso_section_novedades_toggle_sticky_ajax')) {
 
         $post_id = isset($_POST['post_id']) ? absint($_POST['post_id']) : 0;
         if (!$post_id) {
-            wp_send_json_error(__('Noticia invÃ¡lida.', 'flacso-main-page'), 400);
+            wp_send_json_error(__('Noticia inválida.', 'flacso-main-page'), 400);
         }
 
         $post = get_post($post_id);
         if (!$post) {
-            wp_send_json_error(__('Noticia invÃ¡lida.', 'flacso-main-page'), 404);
+            wp_send_json_error(__('Noticia inválida.', 'flacso-main-page'), 404);
         }
 
         if ($post->post_type !== 'post' || !has_category('novedades', $post_id)) {
-            wp_send_json_error(__('Solo se pueden fijar publicaciones de la categorÃ­a Novedades.', 'flacso-main-page'), 400);
+            wp_send_json_error(__('Solo se pueden fijar publicaciones de la categoría Novedades.', 'flacso-main-page'), 400);
         }
 
         if (!current_user_can('edit_post', $post_id)) {
@@ -2315,13 +2315,13 @@ if (!function_exists('flacso_section_novedades_admin_search_ajax')) {
 if (!function_exists('flacso_section_novedades_search_ajax')) {
     function flacso_section_novedades_search_ajax()
     {
-        // En front pÃºblico, un nonce cacheado no debe romper la experiencia de bÃºsqueda.
+        // En front público, un nonce cacheado no debe romper la experiencia de búsqueda.
         check_ajax_referer('flacso_section_novedades_nonce', 'nonce', false);
         $search_term = isset($_POST['search_term']) ? sanitize_text_field(wp_unslash($_POST['search_term'])) : '';
         if (strlen($search_term) < 2) {
             wp_send_json_success(['html' => '']);
         }
-        // Buscar en todos los posts y pÃ¡ginas publicados
+        // Buscar en todos los posts y páginas publicados
         $args = [
             'post_type' => ['post','page'],
             'post_status' => 'publish',
@@ -2346,7 +2346,7 @@ if (!function_exists('flacso_section_novedades_search_ajax')) {
             $thumb = get_the_post_thumbnail_url($post_id, 'medium') ?: 'https://via.placeholder.com/200x200?text=FLACSO';
             $date = get_the_date('', $post_id);
             $excerpt = has_excerpt($post_id) ? get_the_excerpt($post_id) : wp_trim_words(wp_strip_all_tags(get_post_field('post_content', $post_id)), 22);
-            // Determinar Ã­cono segÃºn tipo de contenido (post/page). $post_item no estÃ¡ disponible aquÃ­, usar get_post_type($post_id)
+            // Determinar ícono según tipo de contenido (post/page). $post_item no está disponible aquí, usar get_post_type($post_id)
             $icon = (get_post_type($post_id) === 'page') ? 'bi bi-file' : 'bi bi-file-text';
             ?>
             <a class="search-result-item" href="<?php echo esc_url($permalink); ?>">
@@ -2371,7 +2371,7 @@ if (!function_exists('flacso_section_novedades_search_ajax')) {
 if (!function_exists('flacso_section_novedades_paginate_ajax')) {
     function flacso_section_novedades_paginate_ajax()
     {
-        // En front pÃºblico, un nonce cacheado no debe bloquear paginaciÃ³n AJAX.
+        // En front público, un nonce cacheado no debe bloquear paginación AJAX.
         check_ajax_referer('flacso_section_novedades_nonce', 'nonce', false);
 
         $page = isset($_POST['page']) ? max(1, intval($_POST['page'])) : 1;

@@ -28,8 +28,8 @@ class Flacso_Main_Page_Admin {
         ],
         'posgrados' => [
             'slug' => 'flacso-main-page-posgrados',
-            'menu_title' => 'Posgrados',
-            'page_title' => 'Posgrados',
+            'menu_title' => 'Oferta Educativa',
+            'page_title' => 'Oferta Educativa',
         ],
         'congreso' => [
             'slug' => 'flacso-main-page-congreso',
@@ -326,7 +326,7 @@ class Flacso_Main_Page_Admin {
 
                 <?php if ($active_section === 'posgrados') : ?>
                 <div id="flacso-panel-posgrados" class="flacso-settings-panel" data-panel-section="posgrados">
-                    <h2><?php esc_html_e('Sección Posgrados', 'flacso-main-page'); ?></h2>
+                    <h2><?php esc_html_e('Sección Oferta Educativa', 'flacso-main-page'); ?></h2>
                     <p>
                         <label>
                             <input type="checkbox" name="Flacso_Main_Page_Settings[posgrados][show_title]" value="1" <?php checked(!empty($settings['posgrados']['show_title'])); ?>>
@@ -1017,10 +1017,10 @@ class Flacso_Main_Page_Admin {
             ],
             [
                 'kicker' => __('Formacion', 'flacso-main-page'),
-                'title' => __('Posgrados y seminarios', 'flacso-main-page'),
+                'title' => __('Oferta educativa y seminarios', 'flacso-main-page'),
                 'description' => __('Actualiza tarjetas, introducciones y etiquetas de los programas de FLACSO.', 'flacso-main-page'),
                 'link' => admin_url('admin.php?page=flacso-main-page-posgrados'),
-                'link_label' => __('Editar posgrados', 'flacso-main-page'),
+                'link_label' => __('Editar oferta educativa', 'flacso-main-page'),
             ],
             [
                 'kicker' => __('Institucional', 'flacso-main-page'),
@@ -1507,7 +1507,7 @@ class Flacso_Main_Page_Admin {
                         'link' => admin_url('admin.php?page=flacso-main-page-eventos'),
                     ],
                     [
-                        'title' => __('Posgrados y seminarios', 'flacso-main-page'),
+                        'title' => __('Oferta educativa y seminarios', 'flacso-main-page'),
                         'text' => __('Actualiza tarjetas, introducciones y enlaces para cursos y diplomas.', 'flacso-main-page'),
                         'link' => admin_url('admin.php?page=flacso-main-page-posgrados'),
                     ],

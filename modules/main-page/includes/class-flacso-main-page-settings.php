@@ -109,24 +109,24 @@ class Flacso_Main_Page_Settings {
             ],
             'posgrados' => [
                 'show_title' => true,
-                'title' => 'NUESTROS POSGRADOS',
-                'intro' => '<strong>FLACSO Uruguay</strong> brinda formaciones en diversos niveles: <strong>Seminarios, Diplomas, Diplomados, Especializaciones y Maestr?as</strong>. Todas las propuestas est?n pensadas desde el <strong>abordaje te?rico y pr?ctico de los problemas de las ciencias sociales</strong>. Todas las propuestas acad?micas poseen flexibilidad en la modalidad de ense?anza y <strong>seguimiento de profesionales especializados</strong> en los temas abordados.',
+                'title' => 'Nuestra Oferta Educativa',
+                'intro' => '<strong>FLACSO Uruguay</strong> brinda formaciones en diversos niveles: <strong>Seminarios, Diplomas, Diplomados, Especializaciones y Maestrías</strong>. Todas las propuestas están pensadas desde el <strong>abordaje teórico y práctico de los problemas de las ciencias sociales</strong>. Todas las propuestas académicas poseen flexibilidad en la modalidad de enseñanza y <strong>seguimiento de profesionales especializados</strong> en los temas abordados.',
                 'cards' => [
                     [
                         'key' => 'maestrias',
-                        'title' => 'Maestr?as',
-                        'type' => 'Maestr?a',
+                        'title' => 'Maestrías',
+                        'type' => 'Maestría',
                         'url' => '/formacion/maestrias/',
                         'image' => 'https://flacso.edu.uy/wp-content/uploads/2023/08/IMAGE-SITIO-WEB-9.png',
-                        'desc' => 'Una maestr?a es una oportunidad de crecimiento profesional y acad?mico. Todas las maestr?as tienen m?nimo 18 meses de cursada y terminan en un trabajo de investigaci?n. Una maestr?a es un paso necesario para cursar un doctorado.',
+                        'desc' => 'Una maestría es una oportunidad de crecimiento profesional y académico. Todas las maestrías tienen mínimo 18 meses de cursada y terminan en un trabajo de investigación. Una maestría es un paso necesario para cursar un doctorado.',
                     ],
                     [
                         'key' => 'especializaciones',
                         'title' => 'Especializaciones',
-                        'type' => 'Especializaci?n',
+                        'type' => 'Especialización',
                         'url' => '/formacion/especializaciones/',
                         'image' => 'https://flacso.edu.uy/wp-content/uploads/2023/08/IMAGE-SITIO-WEB-1.png',
-                        'desc' => 'La Especializaci?n es el grado acad?mico previo a la Maestr?a. Es una oportunidad de formaci?n que permite la profundizaci?n y actualizaci?n de los marcos te?ricos, incorporaci?n de metodolog?as y herramientas en un tiempo m?s corto que una Maestr?a.',
+                        'desc' => 'La Especialización es el grado académico previo a la Maestría. Es una oportunidad de formación que permite la profundización y actualización de los marcos teóricos, la incorporación de metodologías y herramientas en un tiempo más corto que una Maestría.',
                     ],
                     [
                         'key' => 'diplomas',
@@ -134,7 +134,7 @@ class Flacso_Main_Page_Settings {
                         'type' => 'Diploma',
                         'url' => '/formacion/diplomas/',
                         'image' => 'https://flacso.edu.uy/wp-content/uploads/2023/08/IMAGE-SITIO-WEB-5-1024x1024.png',
-                        'desc' => 'Los diplomas representan propuestas de formaci?n que sirven como salidas intermedias hacia programas acad?micos de mayor grado. Combinan el an?lisis de tem?ticas relevantes y la adquisici?n de habilidades pr?cticas.',
+                        'desc' => 'Los diplomas representan propuestas de formación que sirven como salidas intermedias hacia programas académicos de mayor grado. Combinan el análisis de temáticas relevantes y la adquisición de habilidades prácticas.',
                     ],
                     [
                         'key' => 'diplomados',
@@ -142,7 +142,7 @@ class Flacso_Main_Page_Settings {
                         'type' => 'Diplomado',
                         'url' => '/formacion/diplomados/',
                         'image' => 'https://flacso.edu.uy/wp-content/uploads/2023/08/IMAGE-SITIO-WEB-3.png',
-                        'desc' => 'Grado acad?mico similar al de la Especializaci?n, expedido por la unidad acad?mica. A trav?s de seminarios tem?ticos, metodol?gicos y talleres pr?cticos, prepara a cursantes para continuar hacia Maestr?as.',
+                        'desc' => 'Grado académico similar al de la Especialización, expedido por la unidad académica. A través de seminarios temáticos, metodológicos y talleres prácticos, prepara a cursantes para continuar hacia Maestrías.',
                     ],
                     [
                         'key' => 'seminarios',
@@ -150,7 +150,7 @@ class Flacso_Main_Page_Settings {
                         'type' => 'Seminario',
                         'url' => '/formacion/seminarios/',
                         'image' => 'https://flacso.edu.uy/wp-content/uploads/2023/08/IMAGE-SITIO-WEB-2.png',
-                        'desc' => 'Espacios de formaci?n intensiva y enfoque pr?ctico, con actualizaci?n tem?tica y acompa?amiento docente especializado.',
+                        'desc' => 'Espacios de formación intensiva y enfoque práctico, con actualización temática y acompañamiento docente especializado.',
                     ],
                 ],
             ],
@@ -349,7 +349,7 @@ class Flacso_Main_Page_Settings {
             'seminarios' => __('Seminarios', 'flacso-main-page'),
             'quienes' => __('Qui?nes somos', 'flacso-main-page'),
             'instagram' => __('Instagram', 'flacso-main-page'),
-            'posgrados' => __('Posgrados', 'flacso-main-page'),
+            'posgrados' => __('Nuestra Oferta Educativa', 'flacso-main-page'),
             'congreso' => __('Congreso', 'flacso-main-page'),
             'contacto' => __('Contacto', 'flacso-main-page'),
         ];

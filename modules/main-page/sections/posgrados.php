@@ -71,34 +71,34 @@ if (!function_exists('flacso_section_posgrados_get_cards')) {
 
         $fallback = [
             [
-                'title' => 'Maestrias',
+                'title' => 'Maestrías',
                 'url' => '/formacion/maestrias/',
                 'image' => 'https://flacso.edu.uy/wp-content/uploads/2023/08/IMAGE-SITIO-WEB-9.png',
-                'desc' => 'Una maestria es una oportunidad de crecimiento profesional y academico. Todas las maestrias tienen minimo 18 meses de cursada y terminan en un trabajo de investigacion. Una maestria es un paso necesario para cursar un doctorado.',
+                'desc' => 'Una maestría es una oportunidad de crecimiento profesional y académico. Todas las maestrías tienen un mínimo de 18 meses de cursada y terminan en un trabajo de investigación. Una maestría es un paso necesario para cursar un doctorado.',
             ],
             [
                 'title' => 'Especializaciones',
                 'url' => '/formacion/especializaciones/',
                 'image' => 'https://flacso.edu.uy/wp-content/uploads/2023/08/IMAGE-SITIO-WEB-1.png',
-                'desc' => 'La especializacion es el grado academico previo a la maestria. Es una oportunidad de formacion que permite la profundizacion y actualizacion de marcos teoricos, incorporacion de metodologias y herramientas en menor tiempo.',
+                'desc' => 'La especialización es el grado académico previo a la maestría. Es una oportunidad de formación que permite la profundización y actualización de marcos teóricos, la incorporación de metodologías y herramientas en menor tiempo.',
             ],
             [
                 'title' => 'Diplomas',
                 'url' => '/formacion/diplomas/',
                 'image' => 'https://flacso.edu.uy/wp-content/uploads/2023/08/IMAGE-SITIO-WEB-5-1024x1024.png',
-                'desc' => 'Los diplomas representan propuestas de formacion que funcionan como salidas intermedias hacia programas de mayor grado, combinando analisis tematico y habilidades practicas.',
+                'desc' => 'Los diplomas representan propuestas de formación que funcionan como salidas intermedias hacia programas de mayor grado, combinando análisis temático y habilidades prácticas.',
             ],
             [
                 'title' => 'Diplomados',
                 'url' => '/formacion/diplomados/',
                 'image' => 'https://flacso.edu.uy/wp-content/uploads/2023/08/IMAGE-SITIO-WEB-3.png',
-                'desc' => 'Grado academico similar al de la especializacion, expedido por la unidad academica. Prepara a cursantes para continuar hacia maestrias mediante seminarios y talleres.',
+                'desc' => 'Grado académico similar al de la especialización, expedido por la unidad académica. Prepara a cursantes para continuar hacia maestrías mediante seminarios y talleres.',
             ],
             [
                 'title' => 'Seminarios',
                 'url' => '/formacion/seminarios/',
                 'image' => 'https://flacso.edu.uy/wp-content/uploads/2023/08/IMAGE-SITIO-WEB-2.png',
-                'desc' => 'Espacios de formacion intensiva con enfoque practico, actualizacion tematica y acompanamiento docente especializado.',
+                'desc' => 'Espacios de formación intensiva con enfoque práctico, actualización temática y acompañamiento docente especializado.',
             ],
         ];
 
@@ -122,7 +122,10 @@ if (!function_exists('flacso_section_posgrados_render')) {
             : [];
 
         $show_title = !array_key_exists('show_title', $section) || !empty($section['show_title']);
-        $title = trim(wp_strip_all_tags((string) ($section['title'] ?? 'NUESTROS POSGRADOS')));
+        $title = trim(wp_strip_all_tags((string) ($section['title'] ?? 'Nuestra Oferta Educativa')));
+        if ($title === '' || strcasecmp($title, 'NUESTROS POSGRADOS') === 0 || strcasecmp($title, 'Nuestros Posgrados') === 0) {
+            $title = 'Nuestra Oferta Educativa';
+        }
         $intro = (string) ($section['intro'] ?? '');
         $cards = flacso_section_posgrados_get_cards();
 
@@ -147,7 +150,7 @@ if (!function_exists('flacso_section_posgrados_render')) {
     <?php endif; ?>
 
     <div class="posgrados-3d-stage">
-      <div class="posgrados-3d-viewport" tabindex="0" aria-label="Carrusel de posgrados">
+      <div class="posgrados-3d-viewport" tabindex="0" aria-label="Carrusel de oferta educativa">
         <div class="posgrados-3d-track">
           <?php foreach ($cards as $index => $card) : ?>
             <?php
@@ -162,7 +165,7 @@ if (!function_exists('flacso_section_posgrados_render')) {
               <div class="posgrado-contenido">
                 <h3 class="posgrado-titulo-card" id="<?php echo esc_attr($card_title_id); ?>"><?php echo esc_html($card['title']); ?></h3>
                 <p class="posgrado-descripcion-card" id="<?php echo esc_attr($card_desc_id); ?>"><?php echo wp_kses_post($card['desc']); ?></p>
-                <span class="visually-hidden">Toca para abrir la informacion del posgrado.</span>
+                <span class="visually-hidden">Toca para abrir la información del posgrado.</span>
               </div>
             </a>
           <?php endforeach; ?>
@@ -170,7 +173,7 @@ if (!function_exists('flacso_section_posgrados_render')) {
       </div>
     </div>
 
-    <div class="posgrados-3d-dots" aria-label="Navegacion del carrusel"></div>
+    <div class="posgrados-3d-dots" aria-label="Navegación del carrusel"></div>
   </div>
 </section>
 
@@ -186,6 +189,7 @@ if (!function_exists('flacso_section_posgrados_render')) {
 
   .nuestros-posgrados-3d .posgrados-container {
     position: relative;
+    isolation: isolate;
   }
 
   .nuestros-posgrados-3d .posgrados-titulo {
@@ -196,6 +200,8 @@ if (!function_exists('flacso_section_posgrados_render')) {
     line-height: 1.05;
     letter-spacing: 0.03em;
     font-weight: 800;
+    position: relative;
+    z-index: 4;
   }
 
   .nuestros-posgrados-3d .posgrados-descripcion {
@@ -205,10 +211,14 @@ if (!function_exists('flacso_section_posgrados_render')) {
     color: var(--global-palette4, #2e2f34);
     font-size: clamp(1rem, 0.95rem + 0.2vw, 1.1rem);
     line-height: 1.7;
+    position: relative;
+    z-index: 4;
   }
 
   .nuestros-posgrados-3d .posgrados-3d-stage {
     position: relative;
+    z-index: 1;
+    margin-top: clamp(0.8rem, 2vw, 1.6rem);
   }
 
   .nuestros-posgrados-3d .posgrados-3d-viewport {
@@ -238,7 +248,7 @@ if (!function_exists('flacso_section_posgrados_render')) {
   .nuestros-posgrados-3d .posgrado-item {
     --card-width: min(420px, 72vw);
     position: absolute;
-    top: 50%;
+    top: 56%;
     left: 50%;
     width: var(--card-width);
     min-height: 560px;

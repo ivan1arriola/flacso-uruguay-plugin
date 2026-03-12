@@ -1,3 +1,14 @@
+## Version 1.1.4 - 12 de marzo de 2026
+
+### Resumen
+- Release de produccion para homepage: se unifican estilos de titulos de seccion (alineacion, tipografia y subrayado) en un sistema visual consistente.
+- Novedades: se elimina la paginacion y se reemplaza por vista completa (`Ver todas las novedades`) manteniendo AJAX para busqueda y fijado.
+- Novedades: se corrigen textos con mojibake en front/admin y mensajes AJAX.
+- Oferta educativa: se renombra la seccion a `Nuestra Oferta Educativa`, se corrigen tildes/ortografia y se ajusta el carrusel para evitar superposicion con el texto.
+- Se ejecuta auditoria de encoding del repositorio (mojibake/BOM) y se valida codificacion UTF-8 sin BOM en los archivos modificados.
+
+---
+
 ## Version 1.0.5 - 10 de marzo de 2026
 
 ### Resumen
