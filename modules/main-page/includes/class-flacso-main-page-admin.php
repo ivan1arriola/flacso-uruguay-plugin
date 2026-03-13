@@ -301,13 +301,19 @@ class Flacso_Main_Page_Admin {
                 <div id="flacso-panel-novedades" class="flacso-settings-panel" data-panel-section="novedades">
                     <h2><?php esc_html_e('Novedades', 'flacso-main-page'); ?></h2>
                     <?php self::number_input(
-                        'Flacso_Main_Page_Settings[novedades][per_page]',
-                        $settings['novedades']['per_page'] ?? 12,
-                        __('Cantidad de novedades en portada', 'flacso-main-page'),
+                        'Flacso_Main_Page_Settings[novedades][per_page_desktop]',
+                        Flacso_Main_Page_Settings::get_novedades_per_page(false),
+                        __('Cantidad de novedades en escritorio', 'flacso-main-page'),
+                        ['min' => 3, 'max' => 48]
+                    ); ?>
+                    <?php self::number_input(
+                        'Flacso_Main_Page_Settings[novedades][per_page_mobile]',
+                        Flacso_Main_Page_Settings::get_novedades_per_page(true),
+                        __('Cantidad de novedades en móvil', 'flacso-main-page'),
                         ['min' => 3, 'max' => 48]
                     ); ?>
                     <p class="description">
-                        <?php esc_html_e('Define cuantas novedades se muestran en la portada. El resto se consulta en la vista completa de novedades.', 'flacso-main-page'); ?>
+                        <?php esc_html_e('Define cuántas novedades se muestran en portada para escritorio y para móvil. El resto se consulta en la vista completa de novedades.', 'flacso-main-page'); ?>
                     </p>
                     <h3><?php esc_html_e('Destacados y búsquedas', 'flacso-main-page'); ?></h3>
                     <p class="description">

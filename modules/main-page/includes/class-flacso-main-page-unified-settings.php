@@ -399,20 +399,32 @@ class Flacso_Main_Page_Unified_Settings {
     }
 
     private static function render_novedades_section(array $settings): void {
+        $desktop_count = Flacso_Main_Page_Settings::get_novedades_per_page(false);
+        $mobile_count = Flacso_Main_Page_Settings::get_novedades_per_page(true);
         ?>
         <h3><?php esc_html_e('Configuración de Novedades', 'flacso-main-page'); ?></h3>
         <div class="flacso-form-group">
-            <label for="novedades_per_page"><?php esc_html_e('Novedades en portada', 'flacso-main-page'); ?></label>
+            <label for="novedades_per_page_desktop"><?php esc_html_e('Novedades en escritorio', 'flacso-main-page'); ?></label>
             <input 
                 type="number" 
-                id="novedades_per_page" 
-                name="novedades[per_page]" 
-                value="<?php echo esc_attr($settings['novedades']['per_page'] ?? 12); ?>"
+                id="novedades_per_page_desktop" 
+                name="novedades[per_page_desktop]" 
+                value="<?php echo esc_attr($desktop_count); ?>"
+                min="3"
+                max="48">
+        </div>
+        <div class="flacso-form-group">
+            <label for="novedades_per_page_mobile"><?php esc_html_e('Novedades en móvil', 'flacso-main-page'); ?></label>
+            <input
+                type="number"
+                id="novedades_per_page_mobile"
+                name="novedades[per_page_mobile]"
+                value="<?php echo esc_attr($mobile_count); ?>"
                 min="3"
                 max="48">
         </div>
         <p class="description">
-            <?php esc_html_e('Define cuantas novedades se muestran en la portada. El resto se consulta en la vista completa de novedades.', 'flacso-main-page'); ?>
+            <?php esc_html_e('Define cuántas novedades se muestran en portada para escritorio y para móvil. El resto se consulta en la vista completa de novedades.', 'flacso-main-page'); ?>
         </p>
 
         <h3><?php esc_html_e('Destacados y búsquedas', 'flacso-main-page'); ?></h3>

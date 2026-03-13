@@ -233,8 +233,20 @@ class Flacso_AJAX_Settings {
     }
 
     private static function sanitize_novedades(array $data): array {
-        // Placeholder para futuras sanitizaciones de novedades
-        return $data;
+        $defaults = Flacso_Main_Page_Settings::get_defaults();
+        $default_legacy = self::sanitize_bounded_absint($defaults['novedades']['per_page'] ?? 12, 12, 3, 48);
+
+        $legacy_source = $data['per_page'] ?? ($data['per_page_desktop'] ?? $default_legacy);
+        $legacy = self::sanitize_bounded_absint($legacy_source, $default_legacy, 3, 48);
+        $desktop = self::sanitize_bounded_absint($data['per_page_desktop'] ?? $legacy, $legacy, 3, 48);
+        $mobile = self::sanitize_bounded_absint($data['per_page_mobile'] ?? $legacy, $legacy, 3, 48);
+
+        return [
+            // Compatibilidad con configuraciones anteriores.
+            'per_page' => $desktop,
+            'per_page_desktop' => $desktop,
+            'per_page_mobile' => $mobile,
+        ];
     }
 
     private static function sanitize_posgrados(array $data): array {
@@ -260,5 +272,20 @@ class Flacso_AJAX_Settings {
     private static function sanitize_contacto(array $data): array {
         // Placeholder para futuras sanitizaciones de contacto
         return $data;
+    }
+
+    private static function sanitize_bounded_absint($value, int $fallback, int $min, int $max): int {
+        $parsed = absint($value);
+        if ($parsed <= 0) {
+            $parsed = $fallback;
+        }
+        if ($parsed < $min) {
+            $parsed = $min;
+        }
+        if ($parsed > $max) {
+            $parsed = $max;
+        }
+
+        return $parsed;
     }
 }

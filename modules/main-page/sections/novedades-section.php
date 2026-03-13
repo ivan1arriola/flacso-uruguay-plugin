@@ -1394,8 +1394,7 @@ if (!function_exists('flacso_section_novedades_responsivas_render')) {
         ];
         $args = wp_parse_args($args, $defaults);
 
-        $settings = Flacso_Main_Page_Settings::get_section('novedades');
-        $posts_per_page = $settings['per_page'] ?? 12;
+        $posts_per_page = Flacso_Main_Page_Settings::get_novedades_per_page();
         $category = 'novedades';
         $page_var = sanitize_key($args['page_var']);
         // Sin paginacion en home: siempre se renderiza la primera pagina del listado.
@@ -2372,8 +2371,7 @@ if (!function_exists('flacso_section_novedades_paginate_ajax')) {
 
         $page = isset($_POST['page']) ? max(1, intval($_POST['page'])) : 1;
         $search_term = isset($_POST['search_term']) ? sanitize_text_field(wp_unslash($_POST['search_term'])) : '';
-        $settings = Flacso_Main_Page_Settings::get_section('novedades');
-        $per_page = $settings['per_page'] ?? 12;
+        $per_page = Flacso_Main_Page_Settings::get_novedades_per_page();
 
         $posts_data = flacso_section_novedades_get_posts($per_page, 'novedades', $page, $search_term);
         $html = flacso_section_novedades_render_list_markup($posts_data, [

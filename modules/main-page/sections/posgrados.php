@@ -316,10 +316,6 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
     line-height: 1.15;
     font-weight: 800;
     text-wrap: balance;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    overflow: hidden;
   }
 
   .nuestra-oferta-educativa-3d .oferta-descripcion-card {
@@ -327,10 +323,6 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
     color: var(--global-palette4, #2e2f34);
     font-size: clamp(0.98rem, 0.95rem + 0.15vw, 1.05rem);
     line-height: 1.65;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 4;
-    overflow: hidden;
   }
 
   .nuestra-oferta-educativa-3d .oferta-educativa-3d-dots {
@@ -415,7 +407,6 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
     .nuestra-oferta-educativa-3d .oferta-descripcion-card {
       line-height: 1.55;
       font-size: 0.96rem;
-      -webkit-line-clamp: 3;
     }
   }
 
@@ -461,6 +452,7 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
       let currentX = 0;
       let isDragging = false;
       let moved = false;
+      let suppressClickUntil = 0;
 
       dotsWrap.innerHTML = '';
 
@@ -476,6 +468,28 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
       });
 
       const dots = Array.from(dotsWrap.querySelectorAll('.oferta-educativa-3d-dot'));
+
+      function getBaseViewportHeight() {
+        const w = window.innerWidth;
+        if (w <= 575) return 520;
+        if (w <= 767) return 560;
+        if (w <= 991) return 620;
+        return 700;
+      }
+
+      function syncViewportHeight() {
+        const maxCardHeight = cards.reduce((maxHeight, card) => {
+          const cardHeight = card.offsetHeight || 0;
+          return cardHeight > maxHeight ? cardHeight : maxHeight;
+        }, 0);
+
+        const w = window.innerWidth;
+        const buffer = w <= 575 ? 110 : (w <= 767 ? 120 : (w <= 991 ? 140 : 170));
+        const targetHeight = Math.max(getBaseViewportHeight(), maxCardHeight + buffer);
+
+        viewport.style.minHeight = targetHeight + 'px';
+        viewport.style.height = targetHeight + 'px';
+      }
 
       function getConfig() {
         const w = window.innerWidth;
@@ -527,10 +541,6 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
         };
       }
 
-      function allowRearCardClick() {
-        return window.matchMedia('(min-width: 992px)').matches;
-      }
-
       function normalizeDistance(index, active, total) {
         let diff = index - active;
         const half = Math.floor(total / 2);
@@ -542,6 +552,8 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
       }
 
       function render() {
+        syncViewportHeight();
+
         const cfg = getConfig();
 
         cards.forEach((card, index) => {
@@ -578,7 +590,7 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
               'scale(0.78)';
             opacity = String(cfg.opacityFar);
             zIndex = 10;
-            pointerEvents = allowRearCardClick() ? 'auto' : 'none';
+            pointerEvents = 'auto';
             filter = 'blur(' + cfg.blurFar + 'px)';
           } else {
             transform =
@@ -651,6 +663,7 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
         if (Math.abs(delta) > 45) {
           if (delta < 0) next();
           else prev();
+          suppressClickUntil = Date.now() + 260;
         }
       }
 
@@ -660,7 +673,7 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
 
       cards.forEach((card, index) => {
         card.addEventListener('click', (event) => {
-          if (moved) {
+          if (Date.now() < suppressClickUntil) {
             event.preventDefault();
             event.stopPropagation();
             return;

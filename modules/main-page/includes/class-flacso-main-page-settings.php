@@ -193,6 +193,8 @@ class Flacso_Main_Page_Settings {
             ],
             'novedades' => [
                 'per_page' => 12,
+                'per_page_desktop' => 12,
+                'per_page_mobile' => 12,
             ],
             // REMOVED: 'oferta_academica' - Movido a plugin separado flacso-formacion
             'sections_order' => self::get_homepage_section_order_defaults(),
@@ -272,6 +274,35 @@ class Flacso_Main_Page_Settings {
     public static function get_value(string $section, string $key, $fallback = '') {
         $section_data = self::get_section($section);
         return $section_data[$key] ?? $fallback;
+    }
+
+    public static function get_novedades_per_page(?bool $is_mobile = null): int {
+        $defaults = self::get_defaults();
+        $default_legacy = self::sanitize_novedades_per_page_value($defaults['novedades']['per_page'] ?? 12, 12);
+
+        $section = self::get_section('novedades');
+        $legacy_per_page = self::sanitize_novedades_per_page_value($section['per_page'] ?? $default_legacy, $default_legacy);
+
+        $saved = get_option(self::OPTION_KEY, []);
+        $saved_novedades = (is_array($saved) && isset($saved['novedades']) && is_array($saved['novedades']))
+            ? $saved['novedades']
+            : [];
+
+        $desktop_source = array_key_exists('per_page_desktop', $saved_novedades)
+            ? ($section['per_page_desktop'] ?? $legacy_per_page)
+            : $legacy_per_page;
+        $mobile_source = array_key_exists('per_page_mobile', $saved_novedades)
+            ? ($section['per_page_mobile'] ?? $legacy_per_page)
+            : $legacy_per_page;
+
+        $desktop = self::sanitize_novedades_per_page_value($desktop_source, $legacy_per_page);
+        $mobile = self::sanitize_novedades_per_page_value($mobile_source, $legacy_per_page);
+
+        if ($is_mobile === null) {
+            $is_mobile = wp_is_mobile();
+        }
+
+        return $is_mobile ? $mobile : $desktop;
     }
 
     public static function get_section_visibility_defaults(): array {
@@ -565,9 +596,19 @@ class Flacso_Main_Page_Settings {
 
         if (isset($input['novedades']) && is_array($input['novedades'])) {
             $novedades = $input['novedades'];
-            $per_page = absint($novedades['per_page'] ?? $defaults['novedades']['per_page']);
-            $per_page = max(3, min(48, $per_page));
-            $output['novedades']['per_page'] = $per_page;
+            $default_legacy = self::sanitize_novedades_per_page_value($defaults['novedades']['per_page'] ?? 12, 12);
+            $legacy_per_page = self::sanitize_novedades_per_page_value($novedades['per_page'] ?? $default_legacy, $default_legacy);
+
+            $default_desktop = self::sanitize_novedades_per_page_value($defaults['novedades']['per_page_desktop'] ?? $legacy_per_page, $legacy_per_page);
+            $default_mobile = self::sanitize_novedades_per_page_value($defaults['novedades']['per_page_mobile'] ?? $legacy_per_page, $legacy_per_page);
+
+            $per_page_desktop = self::sanitize_novedades_per_page_value($novedades['per_page_desktop'] ?? $legacy_per_page, $default_desktop);
+            $per_page_mobile = self::sanitize_novedades_per_page_value($novedades['per_page_mobile'] ?? $legacy_per_page, $default_mobile);
+
+            // Compatibilidad: per_page se mantiene como referencia de escritorio.
+            $output['novedades']['per_page'] = $per_page_desktop;
+            $output['novedades']['per_page_desktop'] = $per_page_desktop;
+            $output['novedades']['per_page_mobile'] = $per_page_mobile;
         }
 
         if (isset($input['congreso']) && is_array($input['congreso'])) {
@@ -639,6 +680,15 @@ class Flacso_Main_Page_Settings {
         }
 
         return $output;
+    }
+
+    private static function sanitize_novedades_per_page_value($value, int $fallback): int {
+        $parsed = absint($value);
+        if ($parsed <= 0) {
+            $parsed = $fallback;
+        }
+
+        return max(3, min(48, $parsed));
     }
 
     private static function sanitize_opacity_value($value, float $default): float {
