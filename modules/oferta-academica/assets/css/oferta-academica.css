@@ -653,8 +653,12 @@ body.flacso-oa-consulta-open {
     }
 
     .flacso-oa-consulta__fab {
-        left: 0.9rem;
+        left: auto;
         right: 0.9rem;
+        width: auto;
+        max-width: min(88vw, 360px);
+        min-height: 62px;
+        padding: 1rem 1.25rem;
         justify-content: center;
     }
 

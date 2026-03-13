@@ -1,3 +1,16 @@
+## Version 1.1.7 - 13 de marzo de 2026
+
+### Resumen
+- Se agrega configuración en admin para mostrar u ocultar el botón flotante "Solicitar información".
+- Se mantiene el modal abierto luego del envío para que la salida sea controlada por el usuario.
+- Se consolida el envío al webhook en formato JSON (`application/json`).
+- Se considera correcto el envío cuando el webhook responde 2xx o 4xx, según requerimiento de integración.
+- Se exponen código y detalle de respuesta para usuarios logueados.
+- Se realizan correcciones ortográficas en textos del formulario ("Enviá tu consulta", entre otras).
+- Se valida codificación UTF-8 sin BOM en los archivos modificados.
+
+---
+
 ## Version 1.1.6 - 12 de marzo de 2026
 
 ### Resumen

@@ -9,6 +9,7 @@ if (!defined('ABSPATH')) {
  */
 class Oferta_Consulta_Form {
     private const OPTION_ENDPOINT_URL = 'flacso_oferta_consulta_endpoint_url';
+    private const OPTION_BUTTON_ENABLED = 'flacso_oferta_consulta_button_enabled';
     private const SETTINGS_GROUP = 'flacso_oferta_consulta_settings';
     private const MENU_SLUG = 'flacso-oferta-consulta-form';
 
@@ -43,6 +44,16 @@ class Oferta_Consulta_Form {
                 'default' => '',
             ]
         );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_BUTTON_ENABLED,
+            [
+                'type' => 'boolean',
+                'sanitize_callback' => [self::class, 'sanitize_button_enabled'],
+                'default' => true,
+            ]
+        );
     }
 
     public static function sanitize_endpoint_url($value): string {
@@ -71,6 +82,15 @@ class Oferta_Consulta_Form {
 
     public static function get_endpoint_url(): string {
         return trim((string) get_option(self::OPTION_ENDPOINT_URL, ''));
+    }
+
+    public static function sanitize_button_enabled($value): bool {
+        return !empty($value) && (string) $value !== '0';
+    }
+
+    public static function is_button_enabled(): bool {
+        $raw = get_option(self::OPTION_BUTTON_ENABLED, '1');
+        return !empty($raw) && (string) $raw !== '0';
     }
 
     /**
@@ -108,6 +128,7 @@ class Oferta_Consulta_Form {
         }
 
         $endpoint_url = self::get_endpoint_url();
+        $button_enabled = self::is_button_enabled();
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('Formulario de Consulta de Oferta Académica', 'flacso-oferta-academica'); ?></h1>
@@ -132,8 +153,24 @@ class Oferta_Consulta_Form {
                                 value="<?php echo esc_attr($endpoint_url); ?>"
                             />
                             <p class="description">
-                                <?php esc_html_e('La información se enviará por método POST con contenido x-www-form-urlencoded.', 'flacso-oferta-academica'); ?>
+                                <?php esc_html_e('La información se enviará por método POST en formato JSON (application/json).', 'flacso-oferta-academica'); ?>
                             </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Visibilidad del botón', 'flacso-oferta-academica'); ?></th>
+                        <td>
+                            <input type="hidden" name="<?php echo esc_attr(self::OPTION_BUTTON_ENABLED); ?>" value="0" />
+                            <label for="flacso_oferta_consulta_button_enabled">
+                                <input
+                                    id="flacso_oferta_consulta_button_enabled"
+                                    name="<?php echo esc_attr(self::OPTION_BUTTON_ENABLED); ?>"
+                                    type="checkbox"
+                                    value="1"
+                                    <?php checked($button_enabled); ?>
+                                />
+                                <?php esc_html_e('Mostrar botón flotante de "Solicitar información"', 'flacso-oferta-academica'); ?>
+                            </label>
                         </td>
                     </tr>
                 </table>
@@ -144,6 +181,10 @@ class Oferta_Consulta_Form {
     }
 
     public static function render_floating_form(): string {
+        if (!self::is_button_enabled()) {
+            return '';
+        }
+
         $options = self::get_oferta_options();
 
         if (empty($options)) {
@@ -180,10 +221,10 @@ class Oferta_Consulta_Form {
                     </button>
 
                     <div class="flacso-oa-consulta__content">
-                        <p class="flacso-oa-consulta__eyebrow"><?php esc_html_e('Bienvenide', 'flacso-oferta-academica'); ?></p>
-                        <h2 id="<?php echo esc_attr($dialog_id); ?>-title" class="flacso-oa-consulta__title"><?php esc_html_e('Recibimos tu consulta', 'flacso-oferta-academica'); ?></h2>
+                        <p class="flacso-oa-consulta__eyebrow"><?php esc_html_e('Bienvenida/o', 'flacso-oferta-academica'); ?></p>
+                        <h2 id="<?php echo esc_attr($dialog_id); ?>-title" class="flacso-oa-consulta__title"><?php esc_html_e('Enviá tu consulta', 'flacso-oferta-academica'); ?></h2>
                         <p class="flacso-oa-consulta__subtitle">
-                            <?php esc_html_e('Contanos de cuál oferta académica querés información y qué necesitás saber.', 'flacso-oferta-academica'); ?>
+                            <?php esc_html_e('Contanos sobre qué oferta académica querés información y qué necesitás saber.', 'flacso-oferta-academica'); ?>
                         </p>
 
                         <form class="flacso-oa-consulta__form" data-oa-consulta-form novalidate>
@@ -216,7 +257,7 @@ class Oferta_Consulta_Form {
                             </div>
 
                             <div class="flacso-oa-consulta__field">
-                                <label for="<?php echo esc_attr($dialog_id); ?>-consulta"><?php esc_html_e('Comentarios / información que necesitás', 'flacso-oferta-academica'); ?></label>
+                                <label for="<?php echo esc_attr($dialog_id); ?>-consulta"><?php esc_html_e('Comentarios o información que necesitás', 'flacso-oferta-academica'); ?></label>
                                 <textarea id="<?php echo esc_attr($dialog_id); ?>-consulta" name="consulta" rows="5" required></textarea>
                             </div>
 
@@ -243,6 +284,8 @@ class Oferta_Consulta_Form {
     }
 
     public static function handle_ajax_submit(): void {
+        $include_response_code = is_user_logged_in();
+
         if (!check_ajax_referer('flacso_oferta_consulta_submit', 'nonce', false)) {
             wp_send_json_error(
                 ['message' => __('No se pudo validar la solicitud. Recargá la página e intentá de nuevo.', 'flacso-oferta-academica')],
@@ -306,29 +349,74 @@ class Oferta_Consulta_Form {
             'user_agent' => $user_agent,
         ];
 
+        $payload_json = wp_json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if (!is_string($payload_json) || $payload_json === '') {
+            wp_send_json_error(
+                ['message' => __('No se pudo preparar el envío de la consulta.', 'flacso-oferta-academica')],
+                500
+            );
+        }
+
         $response = wp_safe_remote_post($endpoint, [
             'timeout' => 20,
             'redirection' => 3,
-            'body' => $payload,
+            'headers' => [
+                'Content-Type' => 'application/json; charset=utf-8',
+                'Accept' => 'application/json',
+            ],
+            'body' => $payload_json,
         ]);
 
         if (is_wp_error($response)) {
+            $error_payload = [
+                'message' => __('No se pudo enviar la consulta. Intentá nuevamente en unos minutos.', 'flacso-oferta-academica'),
+            ];
+            if ($include_response_code) {
+                $error_payload['response_code'] = 0;
+            }
+
             wp_send_json_error(
-                ['message' => __('No se pudo enviar la consulta. Intentá nuevamente en unos minutos.', 'flacso-oferta-academica')],
+                $error_payload,
                 502
             );
         }
 
         $status_code = (int) wp_remote_retrieve_response_code($response);
-        if ($status_code < 200 || $status_code >= 300) {
+        $response_body = (string) wp_remote_retrieve_body($response);
+
+        // Confirmación de entrega: 2xx y 400 (requerimiento de integración actual).
+        $is_success_status = ($status_code >= 200 && $status_code < 300) || $status_code === 400;
+        if (!$is_success_status) {
+            $error_payload = [
+                'message' => sprintf(__('El webhook respondió con código %d. La consulta no se confirmó.', 'flacso-oferta-academica'), $status_code),
+            ];
+            if ($include_response_code) {
+                $error_payload['response_code'] = $status_code;
+                $excerpt = trim(wp_strip_all_tags($response_body));
+                if ($excerpt !== '') {
+                    if (function_exists('mb_substr')) {
+                        $excerpt = mb_substr($excerpt, 0, 260);
+                    } else {
+                        $excerpt = substr($excerpt, 0, 260);
+                    }
+                    $error_payload['response_excerpt'] = $excerpt;
+                }
+            }
+
             wp_send_json_error(
-                ['message' => sprintf(__('No se pudo enviar la consulta (código %d).', 'flacso-oferta-academica'), $status_code)],
+                $error_payload,
                 502
             );
         }
 
-        wp_send_json_success([
+        $success_payload = [
             'message' => __('Gracias. Recibimos tu consulta y te contactaremos a la brevedad.', 'flacso-oferta-academica'),
-        ]);
+        ];
+
+        if ($include_response_code) {
+            $success_payload['response_code'] = $status_code;
+        }
+
+        wp_send_json_success($success_payload);
     }
 }

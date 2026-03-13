@@ -84,12 +84,12 @@
             setStatus(statusNode, '', null);
 
             if (!endpointConfigured) {
-                setStatus(statusNode, 'El formulario no está disponible en este momento.', 'error');
+                setStatus(statusNode, 'El formulario no est\u00e1 disponible en este momento.', 'error');
                 return;
             }
 
             if (!ajaxUrl || !nonce) {
-                setStatus(statusNode, 'No se pudo enviar la consulta. Recargá la página e intentá nuevamente.', 'error');
+                setStatus(statusNode, 'No se pudo enviar la consulta. Recarg\u00e1 la p\u00e1gina e intent\u00e1 nuevamente.', 'error');
                 return;
             }
 
@@ -124,29 +124,42 @@
                         return {
                             success: false,
                             data: {
-                                message: 'Respuesta no válida del servidor.'
+                                message: 'Respuesta no v\u00e1lida del servidor.'
                             }
                         };
                     });
                 })
                 .then(function (result) {
+                    var responseCode = (result && result.data && typeof result.data.response_code !== 'undefined')
+                        ? String(result.data.response_code).trim()
+                        : '';
+                    var responseExcerpt = (result && result.data && result.data.response_excerpt)
+                        ? String(result.data.response_excerpt).trim()
+                        : '';
                     var message = (result && result.data && result.data.message)
                         ? result.data.message
                         : 'No se pudo enviar la consulta.';
 
+                    if (responseCode) {
+                        message += ' (c\u00f3digo ' + responseCode + ')';
+                    }
+                    if (result && !result.success && responseExcerpt) {
+                        message += ' Detalle: ' + responseExcerpt;
+                    }
+
                     if (result && result.success) {
                         setStatus(statusNode, message, 'success');
                         form.reset();
-                        setTimeout(function () {
-                            closeModal();
-                        }, 900);
+                        if (closeBtn && typeof closeBtn.focus === 'function') {
+                            closeBtn.focus();
+                        }
                         return;
                     }
 
                     setStatus(statusNode, message, 'error');
                 })
                 .catch(function () {
-                    setStatus(statusNode, 'No se pudo enviar la consulta. Revisá tu conexión e intentá de nuevo.', 'error');
+                    setStatus(statusNode, 'No se pudo enviar la consulta. Revis\u00e1 tu conexi\u00f3n e intent\u00e1 de nuevo.', 'error');
                 })
                 .finally(function () {
                     submitBtn.disabled = false;

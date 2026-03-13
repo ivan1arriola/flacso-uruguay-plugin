@@ -12,18 +12,19 @@ Plugin unificado para FLACSO Uruguay con modulos de:
 
 ## Version
 
-`1.1.6`
+`1.1.7`
 
 ## Requisitos
 
 - WordPress `6.0+`
 - PHP `7.4+`
 
-## Cambios recientes (1.1.6)
+## Cambios recientes (1.1.7)
 
-- Hotfix visual del carrusel 3D de oferta educativa para evitar superposicion.
-- Ajuste de posicion/tamano de tarjetas con imagenes cuadradas.
-- Recorte de titulo y descripcion para mantener altura estable.
+- Nueva opción en admin para mostrar/ocultar el botón flotante "Solicitar información".
+- Ajustes UX del formulario flotante (mantener modal abierto tras éxito y mejor feedback).
+- Envío de consulta en JSON al webhook y aceptación de códigos 4xx según integración actual.
+- Correcciones ortográficas en textos visibles del formulario.
 
 ## Cambios previos (1.0.4)
 
