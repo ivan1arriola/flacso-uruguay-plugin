@@ -38,6 +38,18 @@ class Oferta_Renderer {
             $css_version
         );
 
+        $js_relative = 'modules/oferta-academica/assets/js/oferta-consulta-flotante.js';
+        $js_path = FLACSO_URUGUAY_PATH . $js_relative;
+        $js_version = file_exists($js_path) ? filemtime($js_path) : FLACSO_OFERTA_ACADEMICA_VERSION;
+
+        wp_enqueue_script(
+            'flacso-oferta-consulta-flotante',
+            plugins_url($js_relative, FLACSO_URUGUAY_FILE),
+            [],
+            $js_version,
+            true
+        );
+
         self::$styles_enqueued = true;
     }
 
@@ -213,6 +225,12 @@ class Oferta_Renderer {
                 </div>
             </div>
         </section>
+
+        <?php
+        if (class_exists('Oferta_Consulta_Form') && method_exists('Oferta_Consulta_Form', 'render_floating_form')) {
+            echo Oferta_Consulta_Form::render_floating_form();
+        }
+        ?>
 
         <script>
         (function() {

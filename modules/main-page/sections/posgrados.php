@@ -1,6 +1,6 @@
 <?php
 /**
- * Seccion: Carrusel 3D de Posgrados
+ * Seccion: Carrusel 3D de Oferta Educativa
  * Archivo: modules/main-page/sections/posgrados.php
  */
 
@@ -8,12 +8,12 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-if (!function_exists('flacso_section_posgrados_normalize_card')) {
+if (!function_exists('flacso_section_oferta_educativa_normalize_card')) {
     /**
      * @param array<string,mixed> $card
      * @return array<string,string>
      */
-    function flacso_section_posgrados_normalize_card(array $card): array
+    function flacso_section_oferta_educativa_normalize_card(array $card): array
     {
         $title = trim(wp_strip_all_tags((string) ($card['title'] ?? '')));
         $desc = (string) ($card['desc'] ?? '');
@@ -39,11 +39,11 @@ if (!function_exists('flacso_section_posgrados_normalize_card')) {
     }
 }
 
-if (!function_exists('flacso_section_posgrados_get_cards')) {
+if (!function_exists('flacso_section_oferta_educativa_get_cards')) {
     /**
      * @return array<int,array<string,string>>
      */
-    function flacso_section_posgrados_get_cards(): array
+    function flacso_section_oferta_educativa_get_cards(): array
     {
         $section = class_exists('Flacso_Main_Page_Settings')
             ? Flacso_Main_Page_Settings::get_section('posgrados')
@@ -56,7 +56,7 @@ if (!function_exists('flacso_section_posgrados_get_cards')) {
                     continue;
                 }
 
-                $normalized = flacso_section_posgrados_normalize_card($card);
+                $normalized = flacso_section_oferta_educativa_normalize_card($card);
                 if ($normalized['title'] === '') {
                     continue;
                 }
@@ -104,18 +104,18 @@ if (!function_exists('flacso_section_posgrados_get_cards')) {
 
         $normalized_fallback = [];
         foreach ($fallback as $card) {
-            $normalized_fallback[] = flacso_section_posgrados_normalize_card($card);
+            $normalized_fallback[] = flacso_section_oferta_educativa_normalize_card($card);
         }
 
         return $normalized_fallback;
     }
 }
 
-if (!function_exists('flacso_section_posgrados_render')) {
+if (!function_exists('flacso_section_oferta_educativa_render')) {
     /**
      * @param array<string,mixed> $atts
      */
-    function flacso_section_posgrados_render($atts = []): string
+    function flacso_section_oferta_educativa_render($atts = []): string
     {
         $section = class_exists('Flacso_Main_Page_Settings')
             ? Flacso_Main_Page_Settings::get_section('posgrados')
@@ -127,31 +127,31 @@ if (!function_exists('flacso_section_posgrados_render')) {
             $title = 'Nuestra Oferta Educativa';
         }
         $intro = (string) ($section['intro'] ?? '');
-        $cards = flacso_section_posgrados_get_cards();
+        $cards = flacso_section_oferta_educativa_get_cards();
 
         if (empty($cards)) {
             return '';
         }
 
         $instance_id = function_exists('wp_unique_id')
-            ? wp_unique_id('flacso-posgrados-')
-            : ('flacso-posgrados-' . wp_rand(1000, 9999));
+            ? wp_unique_id('flacso-oferta-educativa-')
+            : ('flacso-oferta-educativa-' . wp_rand(1000, 9999));
 
         ob_start();
         ?>
-<section class="nuestros-posgrados nuestros-posgrados-3d" data-posgrados-3d>
-  <div class="posgrados-container flacso-content-shell">
+<section class="nuestra-oferta-educativa nuestra-oferta-educativa-3d" data-oferta-educativa-3d>
+  <div class="oferta-educativa-container flacso-content-shell">
     <?php if ($show_title && $title !== '') : ?>
-      <h2 class="posgrados-titulo"><?php echo esc_html($title); ?></h2>
+      <h2 class="oferta-educativa-titulo"><?php echo esc_html($title); ?></h2>
     <?php endif; ?>
 
     <?php if ($intro !== '') : ?>
-      <div class="posgrados-descripcion"><?php echo wp_kses_post($intro); ?></div>
+      <div class="oferta-educativa-descripcion"><?php echo wp_kses_post($intro); ?></div>
     <?php endif; ?>
 
-    <div class="posgrados-3d-stage">
-      <div class="posgrados-3d-viewport" tabindex="0" aria-label="Carrusel de oferta educativa">
-        <div class="posgrados-3d-track">
+    <div class="oferta-educativa-3d-stage">
+      <div class="oferta-educativa-3d-viewport" tabindex="0" aria-label="Carrusel de oferta educativa">
+        <div class="oferta-educativa-3d-track">
           <?php foreach ($cards as $index => $card) : ?>
             <?php
             $card_title_id = $instance_id . '-card-' . $index;
@@ -160,11 +160,11 @@ if (!function_exists('flacso_section_posgrados_render')) {
                 ? sprintf("background-image: url('%s');", esc_url($card['image']))
                 : '';
             ?>
-            <a class="posgrado-item posgrado-item--action" href="<?php echo esc_url($card['url']); ?>" aria-labelledby="<?php echo esc_attr($card_title_id); ?>" aria-describedby="<?php echo esc_attr($card_desc_id); ?>">
-              <div class="posgrado-imagen"<?php echo $image_style !== '' ? ' style="' . esc_attr($image_style) . '"' : ''; ?>></div>
-              <div class="posgrado-contenido">
-                <h3 class="posgrado-titulo-card" id="<?php echo esc_attr($card_title_id); ?>"><?php echo esc_html($card['title']); ?></h3>
-                <p class="posgrado-descripcion-card" id="<?php echo esc_attr($card_desc_id); ?>"><?php echo wp_kses_post($card['desc']); ?></p>
+            <a class="oferta-item oferta-item--action" href="<?php echo esc_url($card['url']); ?>" aria-labelledby="<?php echo esc_attr($card_title_id); ?>" aria-describedby="<?php echo esc_attr($card_desc_id); ?>">
+              <div class="oferta-imagen"<?php echo $image_style !== '' ? ' style="' . esc_attr($image_style) . '"' : ''; ?>></div>
+              <div class="oferta-contenido">
+                <h3 class="oferta-titulo-card" id="<?php echo esc_attr($card_title_id); ?>"><?php echo esc_html($card['title']); ?></h3>
+                <p class="oferta-descripcion-card" id="<?php echo esc_attr($card_desc_id); ?>"><?php echo wp_kses_post($card['desc']); ?></p>
                 <span class="visually-hidden">Toca para abrir la información del posgrado.</span>
               </div>
             </a>
@@ -173,12 +173,12 @@ if (!function_exists('flacso_section_posgrados_render')) {
       </div>
     </div>
 
-    <div class="posgrados-3d-dots" aria-label="Navegación del carrusel"></div>
+    <div class="oferta-educativa-3d-dots" aria-label="Navegación del carrusel"></div>
   </div>
 </section>
 
 <style>
-  .nuestros-posgrados-3d {
+  .nuestra-oferta-educativa-3d {
     position: relative;
     overflow: hidden;
     padding-block: var(--flacso-section-vertical-space, clamp(2rem, 3.5vw, 3.5rem));
@@ -187,12 +187,12 @@ if (!function_exists('flacso_section_posgrados_render')) {
       linear-gradient(180deg, rgba(233, 237, 242, 0.55) 0%, rgba(255, 255, 255, 1) 100%);
   }
 
-  .nuestros-posgrados-3d .posgrados-container {
+  .nuestra-oferta-educativa-3d .oferta-educativa-container {
     position: relative;
     isolation: isolate;
   }
 
-  .nuestros-posgrados-3d .posgrados-titulo {
+  .nuestra-oferta-educativa-3d .oferta-educativa-titulo {
     margin: 0 0 1rem;
     text-align: center;
     color: var(--global-palette1, #1d3a72);
@@ -204,9 +204,9 @@ if (!function_exists('flacso_section_posgrados_render')) {
     z-index: 4;
   }
 
-  .nuestros-posgrados-3d .posgrados-descripcion {
+  .nuestra-oferta-educativa-3d .oferta-educativa-descripcion {
     max-width: 980px;
-    margin: 0 auto 2rem;
+    margin: 0 auto 1.15rem;
     text-align: center;
     color: var(--global-palette4, #2e2f34);
     font-size: clamp(1rem, 0.95rem + 0.2vw, 1.1rem);
@@ -215,40 +215,42 @@ if (!function_exists('flacso_section_posgrados_render')) {
     z-index: 4;
   }
 
-  .nuestros-posgrados-3d .posgrados-3d-stage {
+  .nuestra-oferta-educativa-3d .oferta-educativa-3d-stage {
     position: relative;
     z-index: 1;
-    margin-top: clamp(1.6rem, 3vw, 2.6rem);
+    margin-top: clamp(0.45rem, 1.3vw, 1rem);
   }
 
-  .nuestros-posgrados-3d .posgrados-3d-viewport {
+  .nuestra-oferta-educativa-3d .oferta-educativa-3d-viewport {
     position: relative;
-    min-height: clamp(740px, 76vw, 860px);
+    min-height: clamp(620px, 64vw, 700px);
+    height: clamp(620px, 64vw, 700px);
     perspective: 1800px;
     perspective-origin: center center;
     overflow: visible;
-    padding-block: 1.25rem;
+    padding-block: 0.6rem;
     touch-action: pan-y;
     cursor: grab;
     user-select: none;
     outline: none;
   }
 
-  .nuestros-posgrados-3d .posgrados-3d-viewport.is-dragging {
+  .nuestra-oferta-educativa-3d .oferta-educativa-3d-viewport.is-dragging {
     cursor: grabbing;
   }
 
-  .nuestros-posgrados-3d .posgrados-3d-track {
-    position: relative;
+  .nuestra-oferta-educativa-3d .oferta-educativa-3d-track {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     transform-style: preserve-3d;
   }
 
-  .nuestros-posgrados-3d .posgrado-item {
+  .nuestra-oferta-educativa-3d .oferta-item {
     --card-width: min(360px, 60vw);
     position: absolute;
-    top: 62%;
+    top: 53%;
     left: 50%;
     width: var(--card-width);
     display: flex;
@@ -273,12 +275,12 @@ if (!function_exists('flacso_section_posgrados_render')) {
     cursor: pointer;
   }
 
-  .nuestros-posgrados-3d .posgrado-item:focus-visible {
+  .nuestra-oferta-educativa-3d .oferta-item:focus-visible {
     outline: 3px solid var(--global-palette2, #fed222);
     outline-offset: 4px;
   }
 
-  .nuestros-posgrados-3d .posgrado-imagen {
+  .nuestra-oferta-educativa-3d .oferta-imagen {
     position: relative;
     flex: 0 0 auto;
     aspect-ratio: 1 / 1;
@@ -288,7 +290,7 @@ if (!function_exists('flacso_section_posgrados_render')) {
     overflow: hidden;
   }
 
-  .nuestros-posgrados-3d .posgrado-imagen::after {
+  .nuestra-oferta-educativa-3d .oferta-imagen::after {
     content: "";
     position: absolute;
     inset: 0;
@@ -296,7 +298,7 @@ if (!function_exists('flacso_section_posgrados_render')) {
       linear-gradient(180deg, rgba(15, 26, 45, 0.08) 0%, rgba(15, 26, 45, 0.34) 100%);
   }
 
-  .nuestros-posgrados-3d .posgrado-contenido {
+  .nuestra-oferta-educativa-3d .oferta-contenido {
     display: flex;
     flex: 1 1 auto;
     min-height: 0;
@@ -307,7 +309,7 @@ if (!function_exists('flacso_section_posgrados_render')) {
       linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   }
 
-  .nuestros-posgrados-3d .posgrado-titulo-card {
+  .nuestra-oferta-educativa-3d .oferta-titulo-card {
     margin: 0;
     color: var(--global-palette1, #1d3a72);
     font-size: clamp(1.3rem, 1.1rem + 0.4vw, 1.65rem);
@@ -320,7 +322,7 @@ if (!function_exists('flacso_section_posgrados_render')) {
     overflow: hidden;
   }
 
-  .nuestros-posgrados-3d .posgrado-descripcion-card {
+  .nuestra-oferta-educativa-3d .oferta-descripcion-card {
     margin: 0;
     color: var(--global-palette4, #2e2f34);
     font-size: clamp(0.98rem, 0.95rem + 0.15vw, 1.05rem);
@@ -331,7 +333,7 @@ if (!function_exists('flacso_section_posgrados_render')) {
     overflow: hidden;
   }
 
-  .nuestros-posgrados-3d .posgrados-3d-dots {
+  .nuestra-oferta-educativa-3d .oferta-educativa-3d-dots {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
@@ -339,28 +341,36 @@ if (!function_exists('flacso_section_posgrados_render')) {
     margin-top: 1.4rem;
   }
 
-  .nuestros-posgrados-3d .posgrados-3d-dot {
+  .nuestra-oferta-educativa-3d .oferta-educativa-3d-dot {
+    display: block;
+    min-width: 0;
+    min-height: 0;
     width: 11px;
     height: 11px;
     border-radius: 50%;
     border: 0;
     padding: 0;
+    line-height: 0;
+    font-size: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    box-shadow: none;
     cursor: pointer;
     background: rgba(29, 58, 114, 0.22);
     transition: transform 200ms ease, background-color 200ms ease;
   }
 
-  .nuestros-posgrados-3d .posgrados-3d-dot.is-active {
+  .nuestra-oferta-educativa-3d .oferta-educativa-3d-dot.is-active {
     background: var(--global-palette2, #fed222);
     transform: scale(1.3);
   }
 
-  .nuestros-posgrados-3d .posgrados-3d-dot:focus-visible {
+  .nuestra-oferta-educativa-3d .oferta-educativa-3d-dot:focus-visible {
     outline: 2px solid var(--global-palette1, #1d3a72);
     outline-offset: 2px;
   }
 
-  .nuestros-posgrados-3d .visually-hidden {
+  .nuestra-oferta-educativa-3d .visually-hidden {
     position: absolute !important;
     width: 1px !important;
     height: 1px !important;
@@ -373,34 +383,36 @@ if (!function_exists('flacso_section_posgrados_render')) {
   }
 
   @media (max-width: 991.98px) {
-    .nuestros-posgrados-3d .posgrados-3d-viewport {
-      min-height: 700px;
+    .nuestra-oferta-educativa-3d .oferta-educativa-3d-viewport {
+      min-height: 620px;
+      height: 620px;
     }
 
-    .nuestros-posgrados-3d .posgrado-item {
+    .nuestra-oferta-educativa-3d .oferta-item {
       --card-width: min(340px, 72vw);
-      top: 60%;
+      top: 54%;
     }
   }
 
   @media (max-width: 767.98px) {
-    .nuestros-posgrados-3d .posgrados-3d-viewport {
-      min-height: 640px;
+    .nuestra-oferta-educativa-3d .oferta-educativa-3d-viewport {
+      min-height: 560px;
+      height: 560px;
       padding-block: 0.5rem;
     }
 
-    .nuestros-posgrados-3d .posgrado-item {
+    .nuestra-oferta-educativa-3d .oferta-item {
       --card-width: min(308px, 82vw);
-      top: 58%;
+      top: 55%;
       border-radius: 24px;
     }
 
-    .nuestros-posgrados-3d .posgrado-contenido {
+    .nuestra-oferta-educativa-3d .oferta-contenido {
       padding: 1.15rem 1rem 1.2rem;
       gap: 0.75rem;
     }
 
-    .nuestros-posgrados-3d .posgrado-descripcion-card {
+    .nuestra-oferta-educativa-3d .oferta-descripcion-card {
       line-height: 1.55;
       font-size: 0.96rem;
       -webkit-line-clamp: 3;
@@ -408,24 +420,25 @@ if (!function_exists('flacso_section_posgrados_render')) {
   }
 
   @media (max-width: 575.98px) {
-    .nuestros-posgrados-3d .posgrados-descripcion {
+    .nuestra-oferta-educativa-3d .oferta-educativa-descripcion {
       text-align: left;
       margin-bottom: 1.4rem;
     }
 
-    .nuestros-posgrados-3d .posgrados-3d-viewport {
-      min-height: 600px;
+    .nuestra-oferta-educativa-3d .oferta-educativa-3d-viewport {
+      min-height: 520px;
+      height: 520px;
     }
 
-    .nuestros-posgrados-3d .posgrado-item {
+    .nuestra-oferta-educativa-3d .oferta-item {
       --card-width: min(100%, 318px);
-      top: 57%;
+      top: 55%;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .nuestros-posgrados-3d .posgrado-item,
-    .nuestros-posgrados-3d .posgrados-3d-dot {
+    .nuestra-oferta-educativa-3d .oferta-item,
+    .nuestra-oferta-educativa-3d .oferta-educativa-3d-dot {
       transition: none !important;
     }
   }
@@ -433,13 +446,13 @@ if (!function_exists('flacso_section_posgrados_render')) {
 
 <script>
   (function () {
-    const roots = document.querySelectorAll('[data-posgrados-3d]');
+    const roots = document.querySelectorAll('[data-oferta-educativa-3d]');
     if (!roots.length) return;
 
     roots.forEach((root) => {
-      const cards = Array.from(root.querySelectorAll('.posgrado-item'));
-      const dotsWrap = root.querySelector('.posgrados-3d-dots');
-      const viewport = root.querySelector('.posgrados-3d-viewport');
+      const cards = Array.from(root.querySelectorAll('.oferta-item'));
+      const dotsWrap = root.querySelector('.oferta-educativa-3d-dots');
+      const viewport = root.querySelector('.oferta-educativa-3d-viewport');
 
       if (!cards.length || !viewport || !dotsWrap) return;
 
@@ -454,15 +467,15 @@ if (!function_exists('flacso_section_posgrados_render')) {
       cards.forEach((card, index) => {
         const dot = document.createElement('button');
         dot.type = 'button';
-        dot.className = 'posgrados-3d-dot';
-        dot.setAttribute('aria-label', 'Ir al posgrado ' + (index + 1));
+        dot.className = 'oferta-educativa-3d-dot';
+        dot.setAttribute('aria-label', 'Ir a la oferta ' + (index + 1));
         dot.addEventListener('click', () => goTo(index));
         dotsWrap.appendChild(dot);
 
         card.dataset.index = String(index);
       });
 
-      const dots = Array.from(dotsWrap.querySelectorAll('.posgrados-3d-dot'));
+      const dots = Array.from(dotsWrap.querySelectorAll('.oferta-educativa-3d-dot'));
 
       function getConfig() {
         const w = window.innerWidth;
@@ -514,6 +527,10 @@ if (!function_exists('flacso_section_posgrados_render')) {
         };
       }
 
+      function allowRearCardClick() {
+        return window.matchMedia('(min-width: 992px)').matches;
+      }
+
       function normalizeDistance(index, active, total) {
         let diff = index - active;
         const half = Math.floor(total / 2);
@@ -561,7 +578,7 @@ if (!function_exists('flacso_section_posgrados_render')) {
               'scale(0.78)';
             opacity = String(cfg.opacityFar);
             zIndex = 10;
-            pointerEvents = 'none';
+            pointerEvents = allowRearCardClick() ? 'auto' : 'none';
             filter = 'blur(' + cfg.blurFar + 'px)';
           } else {
             transform =
@@ -679,5 +696,42 @@ if (!function_exists('flacso_section_posgrados_render')) {
         <?php
 
         return (string) ob_get_clean();
+    }
+}
+
+if (!function_exists('flacso_section_posgrados_normalize_card')) {
+    /**
+     * Compatibilidad hacia atras.
+     *
+     * @param array<string,mixed> $card
+     * @return array<string,string>
+     */
+    function flacso_section_posgrados_normalize_card(array $card): array
+    {
+        return flacso_section_oferta_educativa_normalize_card($card);
+    }
+}
+
+if (!function_exists('flacso_section_posgrados_get_cards')) {
+    /**
+     * Compatibilidad hacia atras.
+     *
+     * @return array<int,array<string,string>>
+     */
+    function flacso_section_posgrados_get_cards(): array
+    {
+        return flacso_section_oferta_educativa_get_cards();
+    }
+}
+
+if (!function_exists('flacso_section_posgrados_render')) {
+    /**
+     * Compatibilidad hacia atras.
+     *
+     * @param array<string,mixed> $atts
+     */
+    function flacso_section_posgrados_render($atts = []): string
+    {
+        return flacso_section_oferta_educativa_render($atts);
     }
 }

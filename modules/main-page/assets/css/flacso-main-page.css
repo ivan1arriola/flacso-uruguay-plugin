@@ -648,12 +648,33 @@
     }
 }
 
+.flacso-main-page .flacso-home-block__surface--congreso.flacso-home-block__surface--card {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    overflow: visible;
+}
+
+.flacso-main-page .flacso-home-block__surface--congreso.flacso-home-block__surface--card::before,
+.flacso-main-page .flacso-home-block__surface--congreso.flacso-home-block__surface--card::after {
+    content: none;
+}
+
 .flacso-congreso-section {
     position: relative;
+    isolation: isolate;
     color: var(--global-palette9, #ffffff);
-    padding: 120px 0;
+    padding: clamp(2.1rem, 5.4vw, 4.8rem) clamp(1rem, 2.8vw, 2.4rem);
     text-align: center;
     overflow: hidden;
+    border-radius: clamp(18px, 2.4vw, 34px);
+    background-color: var(--global-palette1, #1d3a72);
+    background-image: var(--flacso-congreso-bg-image, none);
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: scroll;
+    box-shadow: 0 18px 42px rgba(9, 24, 52, 0.24);
 }
 .flacso-congreso-section a {
     color: inherit;
@@ -668,49 +689,69 @@
     color: var(--global-palette3, #0f1a2d);
 }
 
-.flacso-congreso-section::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.05), transparent 70%);
-    animation: flacso-main-float 10s ease-in-out infinite alternate;
-}
-
 .flacso-congreso-content {
     position: relative;
+    width: min(100%, 1100px);
+    margin-inline: auto;
     text-align: center;
 }
 
-.flacso-congreso-title {
-    font-size: clamp(2rem, 5vw, 3rem);
+.flacso-main-page .flacso-congreso-section .flacso-congreso-title {
+    max-width: 24ch;
+    margin: 0 auto clamp(0.9rem, 2vw, 1.3rem) !important;
+    padding: 0 !important;
+    border: 0 !important;
+    font-size: clamp(1.9rem, 4.3vw, 3.85rem) !important;
     font-weight: 800;
-    margin-bottom: 1.5rem;
+    line-height: 1.08 !important;
     font-family: var(--global-heading-font-family, "Helvetica Neue", sans-serif);
-    letter-spacing: 1px;
-    animation: flacso-main-slideDown 1.2s ease-out forwards;
-    color: #ffffff;
+    letter-spacing: 0.01em !important;
+    text-align: center !important;
+    text-wrap: balance;
+    animation: flacso-main-slideDown 0.9s ease-out forwards;
+    color: #ffffff !important;
+    text-shadow: 0 8px 28px rgba(0, 0, 0, 0.34);
+}
+
+.flacso-main-page .flacso-congreso-section .flacso-congreso-title::after {
+    content: none !important;
 }
 
 .flacso-congreso-text {
-    font-size: 1.15rem;
-    line-height: 1.8;
-    margin-bottom: 3rem;
+    max-width: 76ch;
+    margin: 0 auto clamp(1.4rem, 2.8vw, 2.5rem);
+    font-size: clamp(1rem, 0.95rem + 0.45vw, 1.42rem);
+    line-height: 1.65;
     font-family: var(--global-body-font-family, "Helvetica Neue", sans-serif);
-    opacity: 0;
-    animation: flacso-main-fadeUp 1.3s ease-out forwards;
-    animation-delay: 0.4s;
+    font-weight: 500;
+    text-wrap: pretty;
+    color: rgba(255, 255, 255, 0.97);
+    text-shadow: 0 4px 18px rgba(0, 0, 0, 0.28);
+    opacity: 1;
+    animation: flacso-main-fadeUp 0.9s ease-out forwards;
+    animation-delay: 0.16s;
 }
 
 .flacso-congreso-text strong,
-.flacso-congreso-title strong {
+.flacso-main-page .flacso-congreso-section .flacso-congreso-title strong {
     color: var(--global-palette2, #f7b733);
     font-weight: 800;
 }
 
 .flacso-congreso-btn {
-    font-size: 1rem;
-    padding: 14px 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 54px;
+    padding: 0.9rem clamp(1.35rem, 4vw, 3rem);
+    font-size: clamp(0.98rem, 0.95rem + 0.22vw, 1.18rem);
     letter-spacing: 0.5px;
+    box-shadow: 0 14px 28px rgba(10, 48, 24, 0.35);
+}
+
+.flacso-congreso-btn:hover,
+.flacso-congreso-btn:focus-visible {
+    box-shadow: 0 16px 32px rgba(10, 48, 24, 0.4);
 }
 
 .flacso-contacto {
@@ -798,16 +839,45 @@
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 991.98px) {
     .flacso-congreso-section {
-        padding: 90px 20px;
-        background-attachment: scroll;
+        padding: clamp(1.8rem, 6vw, 3rem) clamp(1rem, 3.5vw, 1.8rem);
+        border-radius: clamp(16px, 2.2vw, 24px);
+        background-position: center top;
     }
-    .flacso-congreso-title {
-        font-size: 2rem;
-    }
+
     .flacso-congreso-text {
-        font-size: 1.05rem;
+        max-width: 68ch;
+        line-height: 1.56;
+    }
+
+    .flacso-congreso-btn {
+        width: min(100%, 460px);
+    }
+}
+
+@media (max-width: 767.98px) {
+    .flacso-congreso-section {
+        padding: 1.5rem 0.95rem 1.85rem;
+        border-radius: 16px;
+        box-shadow: 0 12px 28px rgba(9, 24, 52, 0.24);
+    }
+
+    .flacso-main-page .flacso-congreso-section .flacso-congreso-title {
+        font-size: clamp(1.6rem, 8vw, 2.25rem) !important;
+        line-height: 1.12 !important;
+    }
+
+    .flacso-congreso-text {
+        font-size: 1rem;
+        margin-bottom: 1.15rem;
+    }
+
+    .flacso-congreso-btn {
+        width: 100%;
+        max-width: 100%;
+        min-height: 50px;
+        padding-inline: 1rem;
     }
 }
 

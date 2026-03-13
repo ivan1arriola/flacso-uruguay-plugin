@@ -426,9 +426,217 @@
     align-items: center;
 }
 
+body.flacso-oa-consulta-open {
+    overflow: hidden;
+}
+
+.flacso-oa-consulta__fab {
+    position: fixed;
+    right: clamp(1rem, 3vw, 2rem);
+    bottom: clamp(1rem, 3vw, 2rem);
+    z-index: 10060;
+    min-height: 54px;
+    border: 0;
+    border-radius: 999px;
+    padding: 0.8rem 1.2rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-weight: 700;
+    font-size: 0.98rem;
+    line-height: 1.1;
+    background: var(--oa-accent);
+    color: #13294b;
+    box-shadow: 0 16px 30px rgba(12, 26, 56, 0.28);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.flacso-oa-consulta__fab:hover,
+.flacso-oa-consulta__fab:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 20px 34px rgba(12, 26, 56, 0.3);
+}
+
+.flacso-oa-consulta__fab .dashicons {
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+}
+
+.flacso-oa-consulta__overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10090;
+    background: rgba(8, 18, 38, 0.62);
+    backdrop-filter: blur(2px);
+}
+
+.flacso-oa-consulta__panel {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background:
+        radial-gradient(circle at 88% -8%, rgba(245, 208, 74, 0.24) 0%, transparent 44%),
+        radial-gradient(circle at -8% 108%, rgba(37, 93, 182, 0.2) 0%, transparent 40%),
+        linear-gradient(160deg, #f4f8ff 0%, #eef3fb 56%, #f7f9fd 100%);
+    color: #0f2345;
+    overflow-y: auto;
+    position: relative;
+}
+
+.flacso-oa-consulta__content {
+    width: min(100%, 920px);
+    margin: 0 auto;
+    padding: clamp(1.5rem, 4vw, 2.75rem) clamp(1rem, 3vw, 2rem) clamp(2.2rem, 5vw, 3.2rem);
+}
+
+.flacso-oa-consulta__close {
+    position: sticky;
+    top: 1rem;
+    margin-left: auto;
+    margin-right: 1rem;
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    border: 1px solid rgba(18, 44, 95, 0.22);
+    background: rgba(255, 255, 255, 0.9);
+    color: #143261;
+    font-size: 1.8rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.flacso-oa-consulta__eyebrow {
+    margin: 0;
+    font-size: 0.86rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #365b95;
+}
+
+.flacso-oa-consulta__title {
+    margin: 0.35rem 0 0;
+    font-size: clamp(1.8rem, 3.6vw, 2.7rem);
+    line-height: 1.08;
+    font-weight: 800;
+    color: #122c5f;
+}
+
+.flacso-oa-consulta__subtitle {
+    margin: 0.85rem 0 1.45rem;
+    font-size: clamp(1rem, 1.3vw, 1.14rem);
+    line-height: 1.6;
+    color: #314a70;
+    max-width: 70ch;
+}
+
+.flacso-oa-consulta__form {
+    background: #ffffff;
+    border: 1px solid rgba(18, 44, 95, 0.12);
+    border-radius: 18px;
+    box-shadow: 0 20px 40px rgba(10, 24, 48, 0.1);
+    padding: clamp(1rem, 3vw, 1.6rem);
+}
+
+.flacso-oa-consulta__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.95rem;
+}
+
+.flacso-oa-consulta__field {
+    margin-bottom: 0.9rem;
+}
+
+.flacso-oa-consulta__field label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #193b70;
+    margin-bottom: 0.42rem;
+}
+
+.flacso-oa-consulta__field input,
+.flacso-oa-consulta__field select,
+.flacso-oa-consulta__field textarea {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid rgba(18, 44, 95, 0.24);
+    background: #fff;
+    color: #122747;
+    font-size: 1rem;
+    line-height: 1.4;
+    padding: 0.78rem 0.86rem;
+    box-sizing: border-box;
+}
+
+.flacso-oa-consulta__field textarea {
+    resize: vertical;
+    min-height: 128px;
+}
+
+.flacso-oa-consulta__field input:focus,
+.flacso-oa-consulta__field select:focus,
+.flacso-oa-consulta__field textarea:focus {
+    outline: 2px solid rgba(18, 44, 95, 0.18);
+    border-color: rgba(18, 44, 95, 0.62);
+}
+
+.flacso-oa-consulta__actions {
+    margin-top: 0.6rem;
+}
+
+.flacso-oa-consulta__submit {
+    min-height: 50px;
+    border: 0;
+    border-radius: 999px;
+    padding: 0.78rem 1.55rem;
+    font-weight: 700;
+    color: #fff;
+    background: var(--oa-primary);
+    box-shadow: 0 12px 22px rgba(18, 44, 95, 0.28);
+}
+
+.flacso-oa-consulta__submit:hover,
+.flacso-oa-consulta__submit:focus-visible {
+    background: #0f2857;
+}
+
+.flacso-oa-consulta__submit:disabled {
+    opacity: 0.66;
+    cursor: wait;
+}
+
+.flacso-oa-consulta__status {
+    margin: 0.9rem 0 0;
+    font-size: 0.94rem;
+    line-height: 1.45;
+    font-weight: 600;
+    color: #415a80;
+}
+
+.flacso-oa-consulta__status.is-success {
+    color: #15603a;
+}
+
+.flacso-oa-consulta__status.is-error {
+    color: #8f1f1f;
+}
+
 @media (max-width: 991px) {
     .flacso-oferta-hero { padding: 3.5rem 0; }
     .flacso-oferta-nav { top: 0; }
+
+    .flacso-oa-consulta__grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 768px) {
@@ -442,5 +650,29 @@
     .flacso-oferta-section__btn {
         width: 100%;
         max-width: 320px;
+    }
+
+    .flacso-oa-consulta__fab {
+        left: 0.9rem;
+        right: 0.9rem;
+        justify-content: center;
+    }
+
+    .flacso-oa-consulta__close {
+        top: 0.75rem;
+        margin-right: 0.75rem;
+    }
+
+    .flacso-oa-consulta__content {
+        padding: 1rem 0.85rem 1.65rem;
+    }
+
+    .flacso-oa-consulta__form {
+        border-radius: 14px;
+        padding: 0.95rem;
+    }
+
+    .flacso-oa-consulta__submit {
+        width: 100%;
     }
 }
