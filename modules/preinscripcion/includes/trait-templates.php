@@ -9,6 +9,8 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
     public function registrar_templates() {
         add_filter('template_include', array($this, 'cargar_template_preinscripcion'), 99);
         add_action('wp_enqueue_scripts', array($this, 'enqueue_assets_en_templates'));
+        add_action('wp_enqueue_scripts', array($this, 'enqueue_assets_en_shortcode'));
+        add_shortcode('formulario_preinscripcion', array($this, 'render_shortcode_preinscripcion'));
     }
     
     /**
@@ -28,6 +30,24 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
         $this->enqueue_assets();
 
         $info = $this->obtener_info_posgrado();
+        $this->enqueue_assets_formulario($info);
+    }
+
+    /**
+     * Enqueue assets cuando el shortcode legacy esta presente en una pagina.
+     */
+    public function enqueue_assets_en_shortcode() {
+        if (!is_singular('page')) {
+            return;
+        }
+
+        global $post;
+        if (!$post || !has_shortcode((string) $post->post_content, 'formulario_preinscripcion')) {
+            return;
+        }
+
+        $this->enqueue_assets();
+        $info = $this->obtener_info_posgrado_para_template((int) $post->ID);
         $this->enqueue_assets_formulario($info);
     }
     
@@ -145,6 +165,57 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
             </div>
         </div>
         <?php
+    }
+
+    /**
+     * Shortcode legacy: [formulario_preinscripcion]
+     */
+    public function render_shortcode_preinscripcion($atts = array()) {
+        global $post;
+
+        if (!$post || !($post instanceof WP_Post)) {
+            return '';
+        }
+
+        $info_posgrado = $this->obtener_info_posgrado_para_template((int) $post->ID);
+
+        ob_start();
+        ?>
+        <div class="flacso-preinscripciones-container flacso-preinscripcion-shortcode">
+            <?php $this->render_hero_header($info_posgrado); ?>
+
+            <div class="container" style="margin: 40px auto;">
+                <div class="row justify-content-center">
+                    <div class="col-12 col-lg-8">
+                        <div class="flacso-formulario-card">
+                            <div class="flacso-formulario-body">
+                                <form id="flacso-formulario-preinscripcion" class="needs-validation" enctype="multipart/form-data" novalidate>
+                                    <?php
+                                    $this->render_campos_ocultos($info_posgrado);
+                                    $this->render_seccion_correo();
+                                    $this->render_seccion_info_personal();
+                                    $this->render_seccion_contacto();
+                                    $this->render_seccion_academica($info_posgrado);
+                                    $this->render_seccion_documentacion($info_posgrado);
+
+                                    if ($info_posgrado['es_maestria']) {
+                                        $this->render_seccion_cartas_recomendacion();
+                                    }
+
+                                    $this->render_seccion_adicional();
+                                    $this->render_boton_envio();
+                                    ?>
+                                </form>
+
+                                <div id="flacso-resultado-envio" class="flacso-resultado-area mt-4" aria-live="polite" role="status"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
     }
     
     /**

@@ -46,7 +46,7 @@ if (!function_exists('flacso_homepage_builder_render')) {
             ],
             [
                 'key' => 'posgrados',
-                'function' => 'flacso_section_posgrados_render',
+                'function' => 'flacso_section_oferta_educativa_render',
             ],
             [
                 'key' => 'congreso',

@@ -494,7 +494,7 @@ class Flacso_Main_Page_Admin {
                             <?php
                             $overlay_style = $contact_settings['background_overlay_style'] ?? 'solid';
                             $overlay_style_options = [
-                                'solid' => __('Filtro s?lido', 'flacso-main-page'),
+                                'solid' => __('Filtro sólido', 'flacso-main-page'),
                                 'gradient' => __('Filtro degradado', 'flacso-main-page'),
                             ];
                             ?>

@@ -47,7 +47,7 @@ class Flacso_Main_Page_Settings {
     public static function get_hero_button_defaults(): array {
         return [
             [
-                'label' => 'Ver Oferta Acad?mica',
+                'label' => 'Ver Oferta Académica',
                 'url' => '/formacion/',
                 'style' => 'primary',
                 'enabled' => true,
@@ -59,7 +59,7 @@ class Flacso_Main_Page_Settings {
                 'enabled' => true,
             ],
             [
-                'label' => 'Solicite Informaci?n',
+                'label' => 'Solicite Información',
                 'url' => '/contactos/',
                 'style' => 'light',
                 'enabled' => false,
@@ -89,10 +89,10 @@ class Flacso_Main_Page_Settings {
 
         self::$defaults_cache = [
             'hero' => [
-                'title' => 'Inscripciones 2026 Abiertas: Maestr?as, Especializaciones, Diplomados y Diplomas',
+                'title' => 'Inscripciones 2026 Abiertas: Maestrías, Especializaciones, Diplomados y Diplomas',
                 'subtitle' => 'Sumate a los posgrados de FLACSO Uruguay.',
                 'background_image' => 'https://flacso.edu.uy/wp-content/uploads/2025/11/primer-plano-de-ejecutivos-de-negocios-en-la-oficina-scaled.jpg',
-                'primary_label' => 'Ver Oferta Acad?mica',
+                'primary_label' => 'Ver Oferta Académica',
                 'primary_url' => '/formacion/',
                 'secondary_label' => 'Ver Seminarios',
                 'secondary_url' => '/formacion/seminarios/',
@@ -166,9 +166,9 @@ class Flacso_Main_Page_Settings {
                 'bubble_secondary_url' => '',
             ],
             'contacto' => [
-                'title' => 'Cont?ctanos',
+                'title' => 'Contáctanos',
                 'subtitle' => 'Con gusto responderemos todas tus consultas',
-                'cta_label' => 'Solicite Informaci?n',
+                'cta_label' => 'Solicite Información',
                 'cta_url' => '/contactos/',
                 'background_mode' => 'image_overlay',
                 'background_image' => '',
@@ -184,9 +184,9 @@ class Flacso_Main_Page_Settings {
                 'background_overlay_angle' => 180,
             ],
             'quienes' => [
-                'title' => '?Qu? es FLACSO Uruguay?',
-                'content' => '<strong>FLACSO Uruguay</strong> es la sede uruguaya de la <strong>Facultad Latinoamericana de Ciencias Sociales</strong>, una de las principales <strong>redes acad?micas</strong> de <strong>Am?rica Latina y el Caribe</strong>, con presencia en m?s de <strong>20 pa?ses</strong> de la regi?n. Su objetivo principal es <strong>contribuir al desarrollo de la regi?n</strong> mediante la <strong>formaci?n de profesionales</strong>, la <strong>investigaci?n cr?tica</strong> y la <strong>transferencia de conocimiento</strong>.<br><br><strong>FLACSO Uruguay</strong> ofrece <strong>programas de posgrado</strong> en diversas ?reas de las <strong>ciencias sociales</strong> y desarrolla <strong>proyectos de investigaci?n</strong> en temas como <strong>g?nero</strong>, <strong>pol?tica p?blica</strong>, <strong>medio ambiente</strong>, <strong>desarrollo humano</strong> y <strong>cultura</strong>, con un enfoque <strong>interdisciplinario</strong> y un compromiso con la <strong>transformaci?n social</strong>.',
-                'cta_label' => 'Conocer m?s',
+                'title' => '¿Qué es FLACSO Uruguay?',
+                'content' => '<strong>FLACSO Uruguay</strong> es la sede uruguaya de la <strong>Facultad Latinoamericana de Ciencias Sociales</strong>, una de las principales <strong>redes académicas</strong> de <strong>América Latina y el Caribe</strong>, con presencia en más de <strong>20 países</strong> de la región. Su objetivo principal es <strong>contribuir al desarrollo de la región</strong> mediante la <strong>formación de profesionales</strong>, la <strong>investigación crítica</strong> y la <strong>transferencia de conocimiento</strong>.<br><br><strong>FLACSO Uruguay</strong> ofrece <strong>programas de posgrado</strong> en diversas áreas de las <strong>ciencias sociales</strong> y desarrolla <strong>proyectos de investigación</strong> en temas como <strong>género</strong>, <strong>política pública</strong>, <strong>medio ambiente</strong>, <strong>desarrollo humano</strong> y <strong>cultura</strong>, con un enfoque <strong>interdisciplinario</strong> y un compromiso con la <strong>transformación social</strong>.',
+                'cta_label' => 'Conocer más',
                 'cta_url' => '/sobre-nosotros/',
                 'background_image' => 'https://www.flacso.org/assets/img/banner/banner-01.jpg',
                 'highlight_color' => '#fcd116',
@@ -253,7 +253,7 @@ class Flacso_Main_Page_Settings {
         $card['title'] = 'Seminarios';
         $card['type'] = 'Seminario';
         $card['url'] = '/formacion/seminarios/';
-        $card['desc'] = 'Espacios de formaci?n intensiva y enfoque pr?ctico, con actualizaci?n tem?tica y acompa?amiento docente especializado.';
+        $card['desc'] = 'Espacios de formación intensiva y enfoque práctico, con actualización temática y acompañamiento docente especializado.';
 
         return $card;
     }
@@ -347,7 +347,7 @@ class Flacso_Main_Page_Settings {
             'novedades_busqueda' => __('Buscador de novedades', 'flacso-main-page'),
             'novedades' => __('Novedades', 'flacso-main-page'),
             'seminarios' => __('Seminarios', 'flacso-main-page'),
-            'quienes' => __('Qui?nes somos', 'flacso-main-page'),
+            'quienes' => __('Quiénes somos', 'flacso-main-page'),
             'instagram' => __('Instagram', 'flacso-main-page'),
             'posgrados' => __('Nuestra Oferta Educativa', 'flacso-main-page'),
             'congreso' => __('Congreso', 'flacso-main-page'),
@@ -398,7 +398,7 @@ class Flacso_Main_Page_Settings {
     public static function sanitize_homepage_section_order(array $input): array {
         $defaults = self::get_homepage_section_order_defaults();
         $order = [];
-        // Asegurar que hero siempre est? presente y al inicio
+        // Asegurar que hero siempre está presente y al inicio
         $input = array_values(array_filter($input, static function ($value) {
             return is_scalar($value);
         }));
@@ -416,7 +416,7 @@ class Flacso_Main_Page_Settings {
             $order[] = $key;
         }
 
-        // Remover hero de donde est? y ponerlo primero
+        // Remover hero de donde está y ponerlo primero
         $order = array_values(array_diff($order, ['hero']));
         array_unshift($order, 'hero');
 
@@ -547,7 +547,7 @@ class Flacso_Main_Page_Settings {
             }
         }
 
-        // Oferta Acad?mica
+        // Oferta Académica
         if (isset($input['oferta_academica']) && is_array($input['oferta_academica'])) {
             $oa = $input['oferta_academica'];
             $output['oferta_academica']['show_filters'] = !empty($oa['show_filters']);
@@ -686,5 +686,4 @@ class Flacso_Main_Page_Settings {
         return esc_url_raw($value);
     }
 }
-
 

@@ -193,7 +193,7 @@ add_action('quick_edit_custom_box', function ($column_name, $screen, $taxonomy) 
         </div>
         <div class="inline-edit-col">
             <label>
-                <span class="title"><?php _e('P?gina de posgrado'); ?></span>
+                <span class="title"><?php _e('Página de posgrado'); ?></span>
                 <span class="input-text-wrap">
                     <?php echo dp_equipo_docente_pages_dropdown(0, 'equipo_docente_page_id', 'equipo-docente-page-quick'); ?>
                 </span>
