@@ -112,7 +112,6 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
      */
     function flacso_listar_paginas_render_catalogo_3d(array $items): string {
         $instance_id = function_exists('wp_unique_id') ? wp_unique_id('flacso-catalogo-3d-') : ('flacso-catalogo-3d-' . wp_rand(1000, 9999));
-        $track_id = $instance_id . '-track';
         $help_id = $instance_id . '-help';
         $status_id = $instance_id . '-status';
 
@@ -123,7 +122,7 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
                 <?php esc_html_e('Usa flecha izquierda y derecha para navegar. Enter abre el programa activo.', 'flacso-main-page'); ?>
             </p>
             <div class="flacso-catalogo-3d__viewport" tabindex="0" aria-label="<?php esc_attr_e('Catalogo 3D de programas', 'flacso-main-page'); ?>" aria-describedby="<?php echo esc_attr($help_id . ' ' . $status_id); ?>">
-                <div class="flacso-catalogo-3d__track" id="<?php echo esc_attr($track_id); ?>">
+                <div class="flacso-catalogo-3d__track">
                     <?php foreach ($items as $index => $item) : ?>
                         <?php $active = !empty($item['vigente']); ?>
                         <a class="flacso-catalogo-3d__card<?php echo $active ? '' : ' is-disabled'; ?>" href="<?php echo esc_url($active ? (string) $item['url'] : '#'); ?>" data-index="<?php echo esc_attr((string) $index); ?>">
@@ -141,11 +140,7 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
                     <?php endforeach; ?>
                 </div>
             </div>
-            <div class="flacso-catalogo-3d__controls" role="group" aria-label="<?php esc_attr_e('Navegacion de programas', 'flacso-main-page'); ?>">
-                <button type="button" data-catalogo-prev aria-label="<?php esc_attr_e('Programa anterior', 'flacso-main-page'); ?>" aria-controls="<?php echo esc_attr($track_id); ?>">&#8249;</button>
-                <span class="flacso-catalogo-3d__counter" data-catalogo-counter aria-live="polite"><?php echo esc_html('1 / ' . count($items)); ?></span>
-                <button type="button" data-catalogo-next aria-label="<?php esc_attr_e('Programa siguiente', 'flacso-main-page'); ?>" aria-controls="<?php echo esc_attr($track_id); ?>">&#8250;</button>
-            </div>
+            <div class="flacso-catalogo-3d__dots" data-catalogo-dots aria-label="<?php esc_attr_e('Selector de programas', 'flacso-main-page'); ?>"></div>
             <p id="<?php echo esc_attr($status_id); ?>" class="flacso-catalogo-3d__sr-only" data-catalogo-status aria-live="polite" aria-atomic="true"></p>
         </section>
         <style>
@@ -168,15 +163,13 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
             #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__meta{padding:.88rem .95rem .95rem 1.15rem;display:flex;gap:.4rem;flex-wrap:wrap;border-top:1px solid rgba(16,44,88,.1);background:linear-gradient(180deg,#f7f9fd 0%,#edf2f9 100%)}
             #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__badge{display:inline-flex;align-items:center;gap:.3rem;padding:.34rem .65rem;border-radius:999px;background:var(--flacso-cat-accent);color:#fff;font-size:.74rem;font-weight:600;line-height:1}
             #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__badge.is-new{background:#f4c700;color:#162640}
-            #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__controls{display:none;align-items:center;justify-content:center;gap:.7rem;margin-top:.85rem}
-            #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__controls>button{width:2.2rem;height:2.2rem;border:0;border-radius:999px;background:#fff;color:var(--flacso-cat-accent);font-size:1.4rem;line-height:1;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 8px 18px rgba(15,26,45,.12);cursor:pointer}
-            #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__counter{min-width:4.2rem;text-align:center;font-weight:700;color:var(--flacso-cat-accent)}
+            #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__dots{margin-top:.92rem;display:flex;flex-wrap:wrap;justify-content:center;gap:.56rem}
+            #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__dot{border:0;width:.62rem;min-width:.62rem;height:.62rem;border-radius:999px;background:rgba(16,44,88,.28);padding:0;transition:all .2s ease;cursor:pointer}
+            #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__dot.is-active{background:rgba(16,44,88,.94);width:.96rem;min-width:.96rem}
             #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__sr-only{position:absolute !important;width:1px !important;height:1px !important;padding:0 !important;margin:-1px !important;overflow:hidden !important;clip:rect(0,0,0,0) !important;white-space:nowrap !important;border:0 !important}
             #<?php echo esc_html($instance_id); ?>.is-ready .flacso-catalogo-3d__viewport{overflow:hidden;scroll-snap-type:none;cursor:default}
             #<?php echo esc_html($instance_id); ?>.is-ready .flacso-catalogo-3d__track{position:absolute;inset:0;display:block;padding:0;transform-style:preserve-3d}
             #<?php echo esc_html($instance_id); ?>.is-ready .flacso-catalogo-3d__card{position:absolute;left:50%;top:50%;flex:none;scroll-snap-align:none}
-            #<?php echo esc_html($instance_id); ?>.is-ready .flacso-catalogo-3d__controls{display:flex}
-            #<?php echo esc_html($instance_id); ?>.is-ready.is-single .flacso-catalogo-3d__controls{display:none}
         </style>
         <script>
             (function () {
@@ -186,129 +179,224 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
 
                 const viewport = root.querySelector('.flacso-catalogo-3d__viewport');
                 const cards = Array.from(root.querySelectorAll('.flacso-catalogo-3d__card'));
-                const counterEl = root.querySelector('[data-catalogo-counter]');
-                const prevBtn = root.querySelector('[data-catalogo-prev]');
-                const nextBtn = root.querySelector('[data-catalogo-next]');
+                const dotsWrap = root.querySelector('[data-catalogo-dots]');
                 const statusEl = root.querySelector('[data-catalogo-status]');
                 if (!viewport || !cards.length) return;
 
-                let current = 0;
-                let dragStart = 0;
-                let dragNow = 0;
-                let isDragging = false;
-                let suppressClickUntil = 0;
-                let tiltX = 0;
-                let tiltY = 0;
-                let rafTilt = 0;
+                let active = 0;
+                let startX = 0;
+                let currentX = 0;
+                let dragging = false;
+                let moved = false;
 
-                const mod = function (value, total) { return ((value % total) + total) % total; };
-                const nd = function (index, active, total) {
-                    let diff = index - active;
-                    const half = Math.floor(total / 2);
-                    if (diff > half) diff -= total;
-                    if (diff < -half) diff += total;
-                    return diff;
-                };
-
-                const cfg = function () {
-                    const w = window.innerWidth;
-                    if (w <= 575) return { x: 110, z: 92, r: 0, s: 0.9, fs: 0.82, so: 0.68, fo: 0, fb: 5 };
-                    if (w <= 767) return { x: 154, z: 130, r: 16, s: 0.9, fs: 0.8, so: 0.62, fo: 0, fb: 5 };
-                    if (w <= 991) return { x: 220, z: 158, r: 22, s: 0.88, fs: 0.76, so: 0.58, fo: 0.1, fb: 5 };
-                    return { x: 304, z: 205, r: 28, s: 0.86, fs: 0.72, so: 0.56, fo: 0.12, fb: 6 };
-                };
-
-                const syncHeight = function () {
-                    const base = window.innerWidth <= 575 ? 420 : (window.innerWidth <= 767 ? 470 : (window.innerWidth <= 991 ? 520 : 600));
-                    const max = cards.reduce(function (m, c) { return Math.max(m, c.offsetHeight || 0); }, 0);
-                    const h = Math.max(base, max + 100);
-                    viewport.style.height = h + 'px';
-                    viewport.style.minHeight = h + 'px';
-                };
-
-                function goTo(index) {
-                    current = mod(index, cards.length);
-                    render();
+                function mod(n, m) {
+                    return ((n % m) + m) % m;
                 }
-                function next() { goTo(current + 1); }
-                function prev() { goTo(current - 1); }
 
-                cards.forEach(function (card, i) {
-                    const titleEl = card.querySelector('.flacso-catalogo-3d__title');
-                    const title = titleEl ? titleEl.textContent.trim() : ('Programa ' + (i + 1));
-                    card.dataset.title = title;
-                    card.setAttribute('aria-label', title + '. Programa ' + (i + 1) + ' de ' + cards.length + '.');
-                });
+                function getDistance(index, activeIndex, length) {
+                    let raw = index - activeIndex;
+                    if (raw > length / 2) raw -= length;
+                    if (raw < -length / 2) raw += length;
+                    return raw;
+                }
 
-                function render(skipHeightSync) {
-                    if (!skipHeightSync) syncHeight();
-                    const c = cfg();
-                    cards.forEach(function (card, i) {
-                        const diff = nd(i, current, cards.length);
-                        const abs = Math.abs(diff);
-                        const dir = diff > 0 ? 1 : -1;
-                        let transform = '';
-                        let opacity = '0';
-                        let zIndex = 1;
-                        let filter = 'blur(0px) saturate(1)';
+                function getMode() {
+                    if (window.innerWidth < 768) return 'mobile';
+                    if (window.innerWidth < 992) return 'tablet';
+                    return 'desktop';
+                }
 
-                        if (diff === 0) {
-                            transform = 'translate3d(-50%,-50%,0px) rotateX(' + tiltX.toFixed(2) + 'deg) rotateY(' + tiltY.toFixed(2) + 'deg) scale(1.02)';
-                            opacity = '1';
-                            zIndex = 30;
-                        } else if (abs === 1) {
-                            transform = 'translate3d(calc(-50% + ' + (dir * c.x) + 'px),-50%,' + (-c.z) + 'px) rotateY(' + (-dir * c.r) + 'deg) scale(' + c.s + ')';
-                            opacity = String(c.so);
-                            zIndex = 20;
-                            filter = 'blur(.3px) saturate(.9)';
-                        } else if (abs === 2) {
-                            transform = 'translate3d(calc(-50% + ' + (dir * (c.x * 1.68)) + 'px),-50%,' + (-c.z * 2.05) + 'px) rotateY(' + (-dir * (c.r + 9)) + 'deg) scale(' + c.fs + ')';
-                            opacity = String(c.fo);
-                            zIndex = 10;
-                            filter = 'blur(' + c.fb + 'px) saturate(.75)';
-                        } else {
-                            transform = 'translate3d(-50%,-50%,' + (-c.z * 2.7) + 'px) rotateY(0deg) scale(.7)';
-                            opacity = '0';
-                            zIndex = 1;
-                            filter = 'blur(7px) saturate(.65)';
+                function getVisualState(index, activeIndex, length) {
+                    const dist = getDistance(index, activeIndex, length);
+                    const abs = Math.abs(dist);
+                    const mode = getMode();
+                    const viewportWidth = viewport.clientWidth || window.innerWidth;
+                    const sampleCard = cards[activeIndex] || cards[0];
+                    const cardWidth = sampleCard ? sampleCard.offsetWidth : 320;
+                    const sideSpace = Math.max(0, (viewportWidth - cardWidth) / 2);
+
+                    let nearX, farX, nearScale, farScale, nearRotate, farRotate, farOpacity, maxVisibleDepth;
+
+                    if (mode === 'mobile') {
+                        const minPeekX = Math.max(56, Math.min(viewportWidth * 0.22, 88));
+                        nearX = Math.max(Math.min(sideSpace * 0.9, 96), minPeekX);
+                        farX = nearX + Math.max(34, Math.min(viewportWidth * 0.16, 52));
+                        nearScale = 0.82;
+                        farScale = 0.66;
+                        nearRotate = dist > 0 ? -14 : 14;
+                        farRotate = dist > 0 ? -24 : 24;
+                        farOpacity = 0.18;
+                        maxVisibleDepth = 1;
+                    } else if (mode === 'tablet') {
+                        nearX = Math.min(sideSpace * 0.9, 185);
+                        farX = Math.min(sideSpace * 1.28, 270);
+                        nearScale = 0.8;
+                        farScale = 0.62;
+                        nearRotate = dist > 0 ? -20 : 20;
+                        farRotate = dist > 0 ? -30 : 30;
+                        farOpacity = 0.2;
+                        maxVisibleDepth = 2;
+                    } else {
+                        nearX = Math.min(sideSpace * 0.92, 280);
+                        farX = Math.min(sideSpace * 1.34, 430);
+                        nearScale = 0.78;
+                        farScale = 0.56;
+                        nearRotate = dist > 0 ? -24 : 24;
+                        farRotate = dist > 0 ? -36 : 36;
+                        farOpacity = 0.16;
+                        maxVisibleDepth = 2;
+                    }
+
+                    if (abs === 0) {
+                        return {
+                            x: 0,
+                            scale: 1,
+                            rotateY: 0,
+                            opacity: 1,
+                            blur: 0,
+                            zIndex: 30,
+                            pointerEvents: 'auto',
+                            shadow: '0 1.5rem 3.2rem rgba(15, 26, 45, 0.18)'
+                        };
+                    }
+
+                    if (abs === 1) {
+                        return {
+                            x: dist > 0 ? nearX : -nearX,
+                            scale: nearScale,
+                            rotateY: nearRotate,
+                            opacity: mode === 'mobile' ? 0.72 : 0.78,
+                            blur: mode === 'mobile' ? 0.25 : 0.1,
+                            zIndex: 20,
+                            pointerEvents: 'auto',
+                            shadow: '0 1.2rem 2.8rem rgba(15, 26, 45, 0.16)'
+                        };
+                    }
+
+                    if (abs <= maxVisibleDepth) {
+                        return {
+                            x: dist > 0 ? farX : -farX,
+                            scale: farScale,
+                            rotateY: farRotate,
+                            opacity: farOpacity,
+                            blur: 1.6,
+                            zIndex: 10,
+                            pointerEvents: 'auto',
+                            shadow: '0 1.1rem 2.6rem rgba(15, 26, 45, 0.12)'
+                        };
+                    }
+
+                    return {
+                        x: dist > 0 ? farX + 80 : -(farX + 80),
+                        scale: 0.6,
+                        rotateY: dist > 0 ? -24 : 24,
+                        opacity: 0,
+                        blur: 6,
+                        zIndex: 0,
+                        pointerEvents: 'none',
+                        shadow: '0 0.8rem 2rem rgba(15, 26, 45, 0.05)'
+                    };
+                }
+
+                function buildDots() {
+                    if (!dotsWrap) return;
+                    dotsWrap.innerHTML = '';
+                    cards.forEach(function (_, index) {
+                        const dot = document.createElement('button');
+                        dot.type = 'button';
+                        dot.className = 'flacso-catalogo-3d__dot';
+                        dot.setAttribute('aria-label', 'Ir al programa ' + (index + 1));
+                        dot.addEventListener('click', function () {
+                            active = index;
+                            update();
+                        });
+                        dotsWrap.appendChild(dot);
+                    });
+                }
+
+                function updateStatus() {
+                    if (!statusEl || !cards[active]) return;
+                    const label = cards[active].dataset.title || ('Programa ' + (active + 1));
+                    const disabled = cards[active].classList.contains('is-disabled');
+                    statusEl.textContent = 'Programa ' + (active + 1) + ' de ' + cards.length + ': ' + label + (disabled ? '. No vigente.' : '.');
+                }
+
+                function update() {
+                    window.requestAnimationFrame(function () {
+                        cards.forEach(function (card, index) {
+                            const state = getVisualState(index, active, cards.length);
+                            const isActive = index === active;
+
+                            card.style.display = 'flex';
+                            card.style.opacity = String(state.opacity);
+                            card.style.zIndex = String(state.zIndex);
+                            card.style.filter = 'blur(' + state.blur + 'px)';
+                            card.style.boxShadow = state.shadow;
+                            card.style.pointerEvents = state.pointerEvents;
+                            card.style.transform = 'translate(-50%, -50%) translateX(' + state.x + 'px) scale(' + state.scale + ') rotateY(' + state.rotateY + 'deg)';
+                            card.style.cursor = state.pointerEvents === 'auto' ? 'pointer' : 'default';
+                            card.dataset.active = isActive ? '1' : '0';
+                            card.tabIndex = isActive ? 0 : -1;
+                            card.setAttribute('aria-current', isActive ? 'true' : 'false');
+                            card.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+                        });
+
+                        if (dotsWrap) {
+                            Array.from(dotsWrap.children).forEach(function (dot, index) {
+                                dot.classList.toggle('is-active', index === active);
+                            });
                         }
 
-                        const active = diff === 0;
-                        card.style.transform = transform;
-                        card.style.opacity = opacity;
-                        card.style.zIndex = String(zIndex);
-                        card.style.filter = filter;
-                        card.dataset.active = active ? '1' : '0';
-                        card.dataset.side = (abs === 1) ? '1' : '0';
-                        card.tabIndex = active ? 0 : -1;
-                        card.setAttribute('aria-current', active ? 'true' : 'false');
-                        card.style.pointerEvents = (active || abs === 1) ? 'auto' : 'none';
-                        card.style.cursor = (active || abs === 1) ? 'pointer' : 'default';
+                        updateStatus();
                     });
-
-                    if (counterEl) {
-                        counterEl.textContent = String(current + 1) + ' / ' + String(cards.length);
-                    }
-
-                    if (statusEl && cards[current]) {
-                        const label = cards[current].dataset.title || ('Programa ' + (current + 1));
-                        const disabled = cards[current].classList.contains('is-disabled');
-                        statusEl.textContent = 'Programa ' + (current + 1) + ' de ' + cards.length + ': ' + label + (disabled ? '. No vigente.' : '.');
-                    }
                 }
 
-                if (prevBtn) prevBtn.addEventListener('click', prev);
-                if (nextBtn) nextBtn.addEventListener('click', next);
+                function next() {
+                    active = mod(active + 1, cards.length);
+                    update();
+                }
 
-                viewport.addEventListener('keydown', function (event) {
+                function prev() {
+                    active = mod(active - 1, cards.length);
+                    update();
+                }
+
+                cards.forEach(function (card, index) {
+                    const titleEl = card.querySelector('.flacso-catalogo-3d__title');
+                    const title = titleEl ? titleEl.textContent.trim() : ('Programa ' + (index + 1));
+                    card.dataset.title = title;
+                    card.setAttribute('aria-label', title + '. Programa ' + (index + 1) + ' de ' + cards.length + '.');
+
+                    card.addEventListener('click', function (event) {
+                        if (moved) {
+                            event.preventDefault();
+                            return;
+                        }
+                        if (index !== active) {
+                            event.preventDefault();
+                            active = index;
+                            update();
+                            return;
+                        }
+                        if (card.classList.contains('is-disabled')) {
+                            event.preventDefault();
+                        }
+                    });
+
+                    card.addEventListener('dragstart', function (event) {
+                        event.preventDefault();
+                    });
+                });
+
+                root.addEventListener('keydown', function (event) {
                     if (event.key === 'ArrowLeft') { event.preventDefault(); prev(); }
                     if (event.key === 'ArrowRight') { event.preventDefault(); next(); }
-                    if (event.key === 'Home') { event.preventDefault(); goTo(0); }
-                    if (event.key === 'End') { event.preventDefault(); goTo(cards.length - 1); }
+                    if (event.key === 'Home') { event.preventDefault(); active = 0; update(); }
+                    if (event.key === 'End') { event.preventDefault(); active = cards.length - 1; update(); }
                     if (event.key === 'PageUp') { event.preventDefault(); prev(); }
                     if (event.key === 'PageDown') { event.preventDefault(); next(); }
                     if ((event.key === 'Enter' || event.key === ' ') && document.activeElement === viewport) {
-                        const activeCard = cards[current];
+                        const activeCard = cards[active];
                         if (activeCard && !activeCard.classList.contains('is-disabled')) {
                             event.preventDefault();
                             activeCard.click();
@@ -316,92 +404,52 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
                     }
                 });
 
-                viewport.addEventListener('pointerdown', function (event) {
+                root.addEventListener('dragstart', function (event) {
+                    event.preventDefault();
+                });
+
+                root.addEventListener('pointerdown', function (event) {
                     if (event.pointerType === 'mouse') return;
-                    isDragging = true;
-                    dragStart = event.clientX;
-                    dragNow = event.clientX;
-                    tiltX = 0;
-                    tiltY = 0;
-                    render(true);
-                    viewport.classList.add('is-dragging');
+                    dragging = true;
+                    moved = false;
+                    startX = event.clientX;
+                    currentX = event.clientX;
                 });
-                viewport.addEventListener('pointermove', function (event) {
-                    if (!isDragging) return;
-                    dragNow = event.clientX;
+
+                window.addEventListener('pointermove', function (event) {
+                    if (!dragging) return;
+                    currentX = event.clientX;
+                    if (Math.abs(currentX - startX) > 8) moved = true;
                 });
-                const finishDrag = function () {
-                    if (!isDragging) return;
-                    isDragging = false;
-                    viewport.classList.remove('is-dragging');
-                    const delta = dragNow - dragStart;
-                    if (Math.abs(delta) > 42) {
-                        delta < 0 ? next() : prev();
-                        suppressClickUntil = Date.now() + 260;
+
+                function endDrag() {
+                    if (!dragging) return;
+                    const delta = currentX - startX;
+                    dragging = false;
+
+                    if (delta <= -50) {
+                        next();
+                    } else if (delta >= 50) {
+                        prev();
                     }
-                };
-                viewport.addEventListener('pointerup', finishDrag);
-                viewport.addEventListener('pointercancel', finishDrag);
-                viewport.addEventListener('pointerleave', finishDrag);
 
-                viewport.addEventListener('mousemove', function (event) {
-                    if (isDragging) return;
-                    const rect = viewport.getBoundingClientRect();
-                    if (!rect.width || !rect.height) return;
-                    const px = ((event.clientX - rect.left) / rect.width) - 0.5;
-                    const py = ((event.clientY - rect.top) / rect.height) - 0.5;
-                    const nextTiltX = Math.max(-6, Math.min(6, -py * 8));
-                    const nextTiltY = Math.max(-8, Math.min(8, px * 11));
-                    if (Math.abs(nextTiltX - tiltX) < 0.1 && Math.abs(nextTiltY - tiltY) < 0.1) return;
-                    tiltX = nextTiltX;
-                    tiltY = nextTiltY;
-                    if (rafTilt) return;
-                    rafTilt = window.requestAnimationFrame(function () {
-                        rafTilt = 0;
-                        render(true);
-                    });
-                });
+                    window.setTimeout(function () {
+                        moved = false;
+                    }, 50);
+                }
 
-                viewport.addEventListener('mouseleave', function () {
-                    if (isDragging) return;
-                    tiltX = 0;
-                    tiltY = 0;
-                    render(true);
-                });
-
-                cards.forEach(function (card, i) {
-                    card.addEventListener('click', function (event) {
-                        if (Date.now() < suppressClickUntil) {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            return;
-                        }
-                        const active = card.dataset.active === '1';
-                        const disabled = card.classList.contains('is-disabled');
-                        if (!active) {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            goTo(i);
-                            return;
-                        }
-                        if (disabled) {
-                            event.preventDefault();
-                            return;
-                        }
-                    });
-                });
-
-                window.addEventListener('resize', function () {
-                    tiltX = 0;
-                    tiltY = 0;
-                    render();
-                });
+                window.addEventListener('pointerup', endDrag);
+                window.addEventListener('pointercancel', endDrag);
+                window.addEventListener('resize', update);
 
                 root.classList.add('is-ready');
                 if (cards.length <= 1) {
                     root.classList.add('is-single');
+                    if (dotsWrap) dotsWrap.style.display = 'none';
                 }
-                render();
+
+                buildDots();
+                update();
             })();
         </script>
         <?php
