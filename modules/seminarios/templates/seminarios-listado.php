@@ -564,12 +564,12 @@ $modalidades_total = count($modalidades_unicas);
                 <div class="seminarios-contacto__panel">
                     <div class="seminarios-contacto__text">
                         <p class="seminarios-contacto__kicker"><?php esc_html_e('Contacto', 'flacso-uruguay'); ?></p>
-                        <h2 id="seminarios-contacto-titulo"><?php esc_html_e('Necesitas orientacion para elegir un seminario?', 'flacso-uruguay'); ?></h2>
-                        <p><?php esc_html_e('Nuestro equipo responde consultas sobre contenidos, fechas, modalidad e inscripcion.', 'flacso-uruguay'); ?></p>
+                        <h2 id="seminarios-contacto-titulo"><?php esc_html_e('¿Necesitás orientación para elegir un seminario?', 'flacso-uruguay'); ?></h2>
+                        <p><?php esc_html_e('Nuestro equipo responde consultas sobre contenidos, fechas, modalidad e inscripción.', 'flacso-uruguay'); ?></p>
                     </div>
                     <div class="seminarios-contacto__actions">
                         <a class="seminarios-btn seminarios-btn--primary" href="mailto:inscripciones@flacso.edu.uy">
-                            <?php esc_html_e('Escribinos a inscripciones@flacso.edu.uy', 'flacso-uruguay'); ?>
+                            <?php esc_html_e('Escribínos a inscripciones@flacso.edu.uy', 'flacso-uruguay'); ?>
                         </a>
                         <a class="seminarios-btn seminarios-btn--ghost" href="https://flacso.edu.uy/preguntas-frecuentes/" target="_blank" rel="noopener noreferrer">
                             <?php esc_html_e('Ver preguntas frecuentes', 'flacso-uruguay'); ?>
