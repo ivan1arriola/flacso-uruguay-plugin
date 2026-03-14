@@ -1,0 +1,32 @@
+.editor-styles-wrapper .foc-editor-preview-wrap {
+    min-height: 120px;
+}
+
+.components-panel__body .foc-editor-contact {
+    margin-bottom: 14px;
+    padding: 10px;
+    border: 1px solid #d7dce6;
+    border-radius: 10px;
+    background: #f6f8fc;
+}
+
+.components-panel__body .foc-editor-contact__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.components-panel__body .foc-editor-contact__actions {
+    display: inline-flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.components-panel__body .foc-editor-panel-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+}

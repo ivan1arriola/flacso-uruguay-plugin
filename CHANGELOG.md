@@ -1,33 +1,62 @@
-## Version 2.1.0 - 14 de marzo de 2026
+## Versión 2.1.1 - 14 de marzo de 2026
 
 ### Resumen
-- Se incorpora una herramienta de migracion administrada para pasar datos desde paginas legacy al CPT `oferta-academica`.
-- La migracion usa mapeo fijo por tabla y toma `correo` y `proximo_inicio` exclusivamente desde esa tabla (no desde contenido de pagina).
-- Se consolida soporte de documentos en modo `PDF o HTML` para `Calendario` y `Malla curricular`.
-- Se habilita imagen destacada en `oferta-academica` y sincronizacion con pagina asociada.
+- Se agrega el nuevo bloque dinámico `flacso-uruguay/otros-contactos` para Gutenberg.
+- El bloque permite edición completa en admin (título y lista de contactos), reordenamiento, alta/baja de filas y restauración de datos por defecto.
+- Se incorpora previsualización real en editor mediante `ServerSideRender`.
+- Se corrigen textos con tildes y se valida codificación UTF-8 sin BOM en archivos modificados.
+- Se incrementa la versión global del plugin a `2.1.1`.
 
 ### Cambios detallados
-- Migracion de oferta academica:
+- Nuevo bloque:
+  - `modules/main-page/includes/blocks/otros-contactos/block.php`
+  - `modules/main-page/includes/blocks/otros-contactos/includes/class-flacso-otros-contactos-block.php`
+  - `modules/main-page/includes/blocks/otros-contactos/assets/block.js`
+  - `modules/main-page/includes/blocks/otros-contactos/assets/style.css`
+  - `modules/main-page/includes/blocks/otros-contactos/assets/style-editor.css`
+- Integración del bloque en el módulo `main-page`:
+  - `modules/main-page/init.php`
+- Versionado:
+  - `flacso-uruguay.php` actualizado a `2.1.1`.
+
+### Verificaciones
+- `php -l modules/main-page/includes/blocks/otros-contactos/includes/class-flacso-otros-contactos-block.php`
+- `php -l modules/main-page/includes/blocks/otros-contactos/block.php`
+- `php -l modules/main-page/init.php`
+- `node --check modules/main-page/includes/blocks/otros-contactos/assets/block.js`
+
+---
+
+## Versión 2.1.0 - 14 de marzo de 2026
+
+### Resumen
+- Se incorpora una herramienta de migración administrada para pasar datos desde páginas legacy al CPT `oferta-academica`.
+- La migración usa mapeo fijo por tabla y toma `correo` y `proximo_inicio` exclusivamente desde esa tabla (no desde contenido de página).
+- Se consolida soporte de documentos en modo `PDF o HTML` para `Calendario` y `Malla curricular`.
+- Se habilita imagen destacada en `oferta-academica` y sincronización con página asociada.
+
+### Cambios detallados
+- Migración de oferta académica:
   - Nuevo archivo: `modules/oferta-academica/includes/class-oferta-data-migration.php`.
-  - Nuevo submenu en admin: `Oferta Academica > Migracion desde paginas`.
-  - Flujo completo: `Previsualizacion`, `Aplicar migracion`, `Deshacer ultima migracion`.
-  - Backup/restauracion de metadatos y terminos antes de aplicar cambios.
+  - Nuevo submenú en admin: `Oferta Académica > Migración desde páginas`.
+  - Flujo completo: `Previsualización`, `Aplicar migración`, `Deshacer última migración`.
+  - Backup/restauración de metadatos y términos antes de aplicar cambios.
   - Mapeo con `page_id` (origen) y `NuevoID`/`cpt_id` (destino).
   - Resolucion robusta del destino si el ID fijo no existe (page adapter, abreviacion y titulo).
   - Creacion automatica de destino cuando falta CPT y se ejecuta en modo `run`.
-  - Extraccion de secciones HTML (accordion), menciones, coordinacion y equipos.
-  - Copia de imagen destacada desde pagina origen a oferta destino.
-- Reglas de negocio de migracion:
+  - Extracción de secciones HTML (accordion), menciones, coordinación y equipos.
+  - Copia de imagen destacada desde página origen a oferta destino.
+- Reglas de negocio de migración:
   - `correo` y `proximo_inicio` se fuerzan desde la tabla de mapeo.
   - `proximo_inicio` se normaliza a formato schema (`YYYY-MM-DD`) respetando `precision`.
-- Oferta academica (datos y bloques):
+- Oferta académica (datos y bloques):
   - `Calendario` y `Malla curricular` aceptan URL PDF o contenido HTML.
-  - En bloques de documento se agrega modo de visualizacion `auto | pdf | html`.
-  - Se mantiene linea de `ultima actualizacion` en la tarjeta de documento.
+  - En bloques de documento se agrega modo de visualización `auto | pdf | html`.
+  - Se mantiene línea de `última actualización` en la tarjeta de documento.
   - Metabox aclara que PDF es opcional y que, si no existe, se usa HTML.
 - CPT `oferta-academica`:
   - Soporte `thumbnail` habilitado.
-  - `add_theme_support('post-thumbnails', ['oferta-academica'])` registrado en init del modulo.
+  - `add_theme_support('post-thumbnails', ['oferta-academica'])` registrado en init del módulo.
 
 ### Verificaciones
 - `php -l modules/oferta-academica/includes/class-oferta-data-migration.php`
@@ -38,12 +67,12 @@
 
 ---
 
-## Version 2.0.0 - 14 de marzo de 2026
+## Versión 2.0.0 - 14 de marzo de 2026
 
 ### Resumen
-- Release mayor del modulo de pagina principal con estabilizacion del catalogo 3D y del bloque de `listar_paginas`.
-- Se corrige navegacion, accesibilidad y comportamiento de click para que el catalogo sea usable en escritorio, touch y teclado.
-- Se corrige superposicion de imagen/texto en la tarjeta destacada de Proximos eventos.
+- Release mayor del módulo de página principal con estabilización del catálogo 3D y del bloque de `listar_paginas`.
+- Se corrige navegación, accesibilidad y comportamiento de click para que el catálogo sea usable en escritorio, touch y teclado.
+- Se corrige superposición de imagen/texto en la tarjeta destacada de Próximos eventos.
 
 ### Cambios detallados
 - `listar_paginas`:

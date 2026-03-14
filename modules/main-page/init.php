@@ -38,6 +38,7 @@ if ($is_admin_context) {
 
 // Cargar bloques
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/blocks/listar-paginas/block.php';
+require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/blocks/otros-contactos/block.php';
 
 // Inicializar módulo
 add_action('init', function() {
