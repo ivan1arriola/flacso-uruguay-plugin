@@ -1,0 +1,13 @@
+.flacso-contacto-seccion {
+    padding: clamp(1.2rem, 2.8vw, 2rem);
+    border-radius: 28px;
+    background: linear-gradient(180deg, #e7ecf5 0%, #edf1f8 100%);
+    border: 1px solid rgba(29, 58, 114, 0.12);
+    box-shadow: 0 20px 46px -36px rgba(16, 36, 78, 0.5);
+}
+
+.flacso-contacto-seccion__inner {
+    display: grid;
+    gap: 1.2rem;
+}
+

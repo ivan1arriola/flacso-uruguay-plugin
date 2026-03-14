@@ -1,3 +1,35 @@
+## Versión 2.1.2 - 14 de marzo de 2026
+
+### Resumen
+- Se incorpora el bloque dinámico `flacso-uruguay/mapa-contacto`.
+- Se incorpora el bloque contenedor `flacso-uruguay/contacto-seccion` para agrupar `mapa-contacto` + `otros-contactos`.
+- La sección de contacto queda lista con plantilla por defecto y edición completa desde Gutenberg.
+- Se incrementa la versión global del plugin a `2.1.2`.
+
+### Cambios detallados
+- Nuevo bloque `mapa-contacto`:
+  - `modules/main-page/includes/blocks/mapa-contacto/block.php`
+  - `modules/main-page/includes/blocks/mapa-contacto/includes/class-flacso-mapa-contacto-block.php`
+  - `modules/main-page/includes/blocks/mapa-contacto/assets/block.js`
+  - `modules/main-page/includes/blocks/mapa-contacto/assets/style.css`
+  - `modules/main-page/includes/blocks/mapa-contacto/assets/style-editor.css`
+- Nuevo bloque `contacto-seccion`:
+  - `modules/main-page/includes/blocks/contacto-seccion/block.php`
+  - `modules/main-page/includes/blocks/contacto-seccion/includes/class-flacso-contacto-seccion-block.php`
+  - `modules/main-page/includes/blocks/contacto-seccion/assets/block.js`
+  - `modules/main-page/includes/blocks/contacto-seccion/assets/style.css`
+- Integración en `main-page`:
+  - `modules/main-page/init.php`
+
+### Verificaciones
+- `php -l modules/main-page/includes/blocks/mapa-contacto/includes/class-flacso-mapa-contacto-block.php`
+- `php -l modules/main-page/includes/blocks/contacto-seccion/includes/class-flacso-contacto-seccion-block.php`
+- `php -l modules/main-page/init.php`
+- `node --check modules/main-page/includes/blocks/mapa-contacto/assets/block.js`
+- `node --check modules/main-page/includes/blocks/contacto-seccion/assets/block.js`
+
+---
+
 ## Versión 2.1.1 - 14 de marzo de 2026
 
 ### Resumen

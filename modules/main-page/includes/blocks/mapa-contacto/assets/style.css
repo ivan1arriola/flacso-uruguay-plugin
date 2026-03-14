@@ -1,0 +1,194 @@
+.flacso-mapa-contacto {
+    --fmc-primary: var(--global-palette1, #1d3a72);
+    --fmc-accent: var(--global-palette2, #fed222);
+    --fmc-ink: var(--global-palette3, #0f1a2d);
+    --fmc-muted: var(--global-palette5, #7a8696);
+    --fmc-border: rgba(29, 58, 114, 0.12);
+    --fmc-shadow: 0 18px 42px rgba(13, 30, 60, 0.08);
+    --fmc-radius-xl: clamp(18px, 4vw, 32px);
+    --fmc-radius-lg: 24px;
+}
+
+.flacso-mapa-contacto .fmc-card {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.84));
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    border-radius: var(--fmc-radius-xl);
+    box-shadow: var(--fmc-shadow);
+    overflow: hidden;
+}
+
+.flacso-mapa-contacto .fmc-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1rem;
+    align-items: start;
+    padding: clamp(1.1rem, 2vw, 1.4rem) clamp(1.1rem, 2vw, 1.5rem);
+    border-bottom: 1px solid var(--fmc-border);
+    background: radial-gradient(circle at top right, rgba(254, 210, 34, 0.18), transparent 28%),
+        linear-gradient(180deg, rgba(29, 58, 114, 0.04), rgba(29, 58, 114, 0));
+}
+
+.flacso-mapa-contacto .fmc-title {
+    margin: 0;
+    color: var(--fmc-ink);
+    font-size: clamp(1.25rem, 2vw, 1.6rem);
+    line-height: 1.15;
+    font-weight: 700;
+}
+
+.flacso-mapa-contacto .fmc-label {
+    margin: 0.3rem 0 0;
+    color: var(--fmc-muted);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.flacso-mapa-contacto .fmc-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 0.8rem;
+    border-radius: 999px;
+    background: rgba(29, 58, 114, 0.08);
+    color: var(--fmc-primary);
+    font-size: 0.76rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.flacso-mapa-contacto .fmc-body {
+    display: grid;
+    grid-template-columns: minmax(260px, 0.9fr) minmax(0, 1.1fr);
+}
+
+.flacso-mapa-contacto .fmc-panel {
+    padding: clamp(1.1rem, 2vw, 1.5rem);
+    background: linear-gradient(135deg, rgba(29, 58, 114, 0.04) 0%, rgba(255, 255, 255, 0.9) 100%);
+    border-right: 1px solid var(--fmc-border);
+}
+
+.flacso-mapa-contacto .fmc-panel-card {
+    background: rgba(255, 255, 255, 0.76);
+    border: 1px solid var(--fmc-border);
+    border-radius: var(--fmc-radius-lg);
+    padding: 1rem;
+}
+
+.flacso-mapa-contacto .fmc-panel-kicker {
+    margin: 0;
+    color: var(--fmc-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.flacso-mapa-contacto .fmc-address {
+    margin: 0.55rem 0 0;
+    color: var(--fmc-ink);
+    font-size: 1rem;
+    line-height: 1.65;
+    font-weight: 500;
+}
+
+.flacso-mapa-contacto .fmc-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.flacso-mapa-contacto .fmc-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    padding: 0.85rem 1.1rem;
+    border-radius: 999px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+
+.flacso-mapa-contacto .fmc-btn:hover {
+    transform: translateY(-2px);
+}
+
+.flacso-mapa-contacto .fmc-btn-primary {
+    background: var(--fmc-accent);
+    color: var(--fmc-ink);
+}
+
+.flacso-mapa-contacto .fmc-btn-secondary {
+    background: #fff;
+    color: var(--fmc-primary);
+    border: 1px solid rgba(29, 58, 114, 0.22);
+}
+
+.flacso-mapa-contacto .fmc-map-wrap {
+    position: relative;
+    min-height: 320px;
+    background: linear-gradient(135deg, rgba(29, 58, 114, 0.08) 0%, rgba(255, 255, 255, 0.92) 50%, rgba(254, 210, 34, 0.16) 100%);
+}
+
+.flacso-mapa-contacto .fmc-map {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.flacso-mapa-contacto .fmc-map-placeholder {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--fmc-primary);
+    font-weight: 700;
+}
+
+@media (max-width: 991px) {
+    .flacso-mapa-contacto .fmc-body {
+        grid-template-columns: 1fr;
+    }
+
+    .flacso-mapa-contacto .fmc-panel {
+        border-right: 0;
+        border-bottom: 1px solid var(--fmc-border);
+    }
+
+    .flacso-mapa-contacto .fmc-actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .flacso-mapa-contacto .fmc-actions .fmc-btn {
+        flex: 1 1 220px;
+    }
+
+    .flacso-mapa-contacto .fmc-map-wrap {
+        min-height: 380px;
+    }
+}
+
+@media (max-width: 767px) {
+    .flacso-mapa-contacto .fmc-head {
+        grid-template-columns: 1fr;
+    }
+
+    .flacso-mapa-contacto .fmc-actions {
+        flex-direction: column;
+    }
+
+    .flacso-mapa-contacto .fmc-actions .fmc-btn {
+        width: 100%;
+        flex: initial;
+    }
+
+    .flacso-mapa-contacto .fmc-map-wrap {
+        min-height: 300px;
+    }
+}
+
