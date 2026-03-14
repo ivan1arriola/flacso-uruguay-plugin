@@ -112,12 +112,18 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
      */
     function flacso_listar_paginas_render_catalogo_3d(array $items): string {
         $instance_id = function_exists('wp_unique_id') ? wp_unique_id('flacso-catalogo-3d-') : ('flacso-catalogo-3d-' . wp_rand(1000, 9999));
+        $track_id = $instance_id . '-track';
+        $help_id = $instance_id . '-help';
+        $status_id = $instance_id . '-status';
 
         ob_start();
         ?>
-        <section id="<?php echo esc_attr($instance_id); ?>" class="flacso-catalogo-3d" data-flacso-catalogo-3d>
-            <div class="flacso-catalogo-3d__viewport" tabindex="0" aria-label="<?php esc_attr_e('Catalogo 3D de programas', 'flacso-main-page'); ?>">
-                <div class="flacso-catalogo-3d__track">
+        <section id="<?php echo esc_attr($instance_id); ?>" class="flacso-catalogo-3d" data-flacso-catalogo-3d role="region" aria-label="<?php esc_attr_e('Catalogo de programas', 'flacso-main-page'); ?>">
+            <p id="<?php echo esc_attr($help_id); ?>" class="flacso-catalogo-3d__sr-only">
+                <?php esc_html_e('Usa flecha izquierda y derecha para navegar. Enter abre el programa activo.', 'flacso-main-page'); ?>
+            </p>
+            <div class="flacso-catalogo-3d__viewport" tabindex="0" aria-label="<?php esc_attr_e('Catalogo 3D de programas', 'flacso-main-page'); ?>" aria-describedby="<?php echo esc_attr($help_id . ' ' . $status_id); ?>">
+                <div class="flacso-catalogo-3d__track" id="<?php echo esc_attr($track_id); ?>">
                     <?php foreach ($items as $index => $item) : ?>
                         <?php $active = !empty($item['vigente']); ?>
                         <a class="flacso-catalogo-3d__card<?php echo $active ? '' : ' is-disabled'; ?>" href="<?php echo esc_url($active ? (string) $item['url'] : '#'); ?>" data-index="<?php echo esc_attr((string) $index); ?>">
@@ -135,20 +141,23 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
                     <?php endforeach; ?>
                 </div>
             </div>
-            <div class="flacso-catalogo-3d__controls">
-                <button type="button" data-catalogo-prev aria-label="<?php esc_attr_e('Anterior', 'flacso-main-page'); ?>"><i class="bi bi-chevron-left"></i></button>
-                <div class="flacso-catalogo-3d__dots" data-catalogo-dots></div>
-                <button type="button" data-catalogo-next aria-label="<?php esc_attr_e('Siguiente', 'flacso-main-page'); ?>"><i class="bi bi-chevron-right"></i></button>
+            <div class="flacso-catalogo-3d__controls" role="group" aria-label="<?php esc_attr_e('Navegacion de programas', 'flacso-main-page'); ?>">
+                <button type="button" data-catalogo-prev aria-label="<?php esc_attr_e('Programa anterior', 'flacso-main-page'); ?>" aria-controls="<?php echo esc_attr($track_id); ?>">&#8249;</button>
+                <span class="flacso-catalogo-3d__counter" data-catalogo-counter aria-live="polite"><?php echo esc_html('1 / ' . count($items)); ?></span>
+                <button type="button" data-catalogo-next aria-label="<?php esc_attr_e('Programa siguiente', 'flacso-main-page'); ?>" aria-controls="<?php echo esc_attr($track_id); ?>">&#8250;</button>
             </div>
+            <p id="<?php echo esc_attr($status_id); ?>" class="flacso-catalogo-3d__sr-only" data-catalogo-status aria-live="polite" aria-atomic="true"></p>
         </section>
         <style>
             #<?php echo esc_html($instance_id); ?>{padding:1rem 0 1.4rem;--flacso-cat-accent:#173f7d;--flacso-cat-deep:#102c58}
-            #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__viewport{position:relative;min-height:clamp(420px,58vw,610px);height:clamp(420px,58vw,610px);perspective:1800px;touch-action:pan-y;cursor:grab;outline:none;background:linear-gradient(180deg,#e4e9f1 0%,#d2d9e3 58%,#cbd3de 100%);border-radius:22px;border:1px solid rgba(16,44,88,.13);overflow:hidden}
+            #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__viewport{position:relative;min-height:clamp(420px,58vw,610px);height:clamp(420px,58vw,610px);perspective:1800px;touch-action:pan-y;outline:none;background:linear-gradient(180deg,#e4e9f1 0%,#d2d9e3 58%,#cbd3de 100%);border-radius:22px;border:1px solid rgba(16,44,88,.13);overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+            #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__viewport::-webkit-scrollbar{height:8px}
+            #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__viewport::-webkit-scrollbar-thumb{background:rgba(16,44,88,.24);border-radius:999px}
             #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__viewport::before{content:"";position:absolute;left:-15%;right:-15%;top:-48%;height:74%;background:radial-gradient(ellipse at center,rgba(255,255,255,.82) 0%,rgba(255,255,255,0) 68%);pointer-events:none}
             #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__viewport::after{content:"";position:absolute;left:8%;right:8%;bottom:12%;height:28px;border-radius:999px;background:radial-gradient(ellipse at center,rgba(16,44,88,.22) 0%,rgba(16,44,88,0) 70%);pointer-events:none}
             #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__viewport.is-dragging{cursor:grabbing}
-            #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__track{position:absolute;inset:0;transform-style:preserve-3d}
-            #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__card{--w:min(390px,84vw);position:absolute;left:50%;top:50%;width:var(--w);text-decoration:none;color:inherit;background:linear-gradient(180deg,#ffffff 0%,#f5f7fb 100%);border-radius:20px;overflow:hidden;border:1px solid rgba(16,44,88,.16);box-shadow:0 20px 45px rgba(12,24,45,.24);transform-origin:center center;transition:transform .56s cubic-bezier(.2,.84,.26,1),opacity .28s,filter .28s,box-shadow .28s;will-change:transform,opacity}
+            #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__track{position:relative;display:flex;gap:1rem;align-items:stretch;padding:1rem;min-height:100%}
+            #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__card{--w:min(390px,84vw);position:relative;flex:0 0 var(--w);width:var(--w);display:flex;flex-direction:column;text-decoration:none;color:inherit;background:linear-gradient(180deg,#ffffff 0%,#f5f7fb 100%);border-radius:20px;overflow:hidden;border:1px solid rgba(16,44,88,.16);box-shadow:0 20px 45px rgba(12,24,45,.24);transform-origin:center center;transition:transform .56s cubic-bezier(.2,.84,.26,1),opacity .28s,filter .28s,box-shadow .28s;will-change:transform,opacity;scroll-snap-align:start}
             #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:12px;background:linear-gradient(180deg,var(--flacso-cat-deep) 0%,var(--flacso-cat-accent) 100%);opacity:.95;z-index:3}
             #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__card::after{content:"";position:absolute;left:14px;right:14px;bottom:-16px;height:20px;background:radial-gradient(ellipse at center,rgba(16,44,88,.32) 0%,rgba(16,44,88,0) 72%);pointer-events:none}
             #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__card[data-active="1"]{box-shadow:0 26px 56px rgba(12,24,45,.28)}
@@ -159,11 +168,15 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
             #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__meta{padding:.88rem .95rem .95rem 1.15rem;display:flex;gap:.4rem;flex-wrap:wrap;border-top:1px solid rgba(16,44,88,.1);background:linear-gradient(180deg,#f7f9fd 0%,#edf2f9 100%)}
             #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__badge{display:inline-flex;align-items:center;gap:.3rem;padding:.34rem .65rem;border-radius:999px;background:var(--flacso-cat-accent);color:#fff;font-size:.74rem;font-weight:600;line-height:1}
             #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__badge.is-new{background:#f4c700;color:#162640}
-            #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__controls{display:flex;align-items:center;justify-content:center;gap:.7rem;margin-top:.85rem}
-            #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__controls>button{width:40px;height:40px;border-radius:50%;border:1px solid rgba(16,44,88,.24);background:#fff;color:var(--flacso-cat-accent);display:inline-flex;align-items:center;justify-content:center;box-shadow:0 6px 14px rgba(16,44,88,.16)}
-            #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__dots{display:inline-flex;gap:.44rem;background:rgba(255,255,255,.6);border-radius:999px;padding:.32rem .52rem;border:1px solid rgba(16,44,88,.12)}
-            #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__dot{width:8px;height:8px;border-radius:50%;border:0;background:rgba(16,44,88,.28);padding:0}
-            #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__dot.is-active{background:var(--flacso-cat-accent);transform:scale(1.25)}
+            #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__controls{display:none;align-items:center;justify-content:center;gap:.7rem;margin-top:.85rem}
+            #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__controls>button{width:2.2rem;height:2.2rem;border:0;border-radius:999px;background:#fff;color:var(--flacso-cat-accent);font-size:1.4rem;line-height:1;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 8px 18px rgba(15,26,45,.12);cursor:pointer}
+            #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__counter{min-width:4.2rem;text-align:center;font-weight:700;color:var(--flacso-cat-accent)}
+            #<?php echo esc_html($instance_id); ?> .flacso-catalogo-3d__sr-only{position:absolute !important;width:1px !important;height:1px !important;padding:0 !important;margin:-1px !important;overflow:hidden !important;clip:rect(0,0,0,0) !important;white-space:nowrap !important;border:0 !important}
+            #<?php echo esc_html($instance_id); ?>.is-ready .flacso-catalogo-3d__viewport{overflow:hidden;scroll-snap-type:none;cursor:default}
+            #<?php echo esc_html($instance_id); ?>.is-ready .flacso-catalogo-3d__track{position:absolute;inset:0;display:block;padding:0;transform-style:preserve-3d}
+            #<?php echo esc_html($instance_id); ?>.is-ready .flacso-catalogo-3d__card{position:absolute;left:50%;top:50%;flex:none;scroll-snap-align:none}
+            #<?php echo esc_html($instance_id); ?>.is-ready .flacso-catalogo-3d__controls{display:flex}
+            #<?php echo esc_html($instance_id); ?>.is-ready.is-single .flacso-catalogo-3d__controls{display:none}
         </style>
         <script>
             (function () {
@@ -173,17 +186,17 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
 
                 const viewport = root.querySelector('.flacso-catalogo-3d__viewport');
                 const cards = Array.from(root.querySelectorAll('.flacso-catalogo-3d__card'));
-                const dotsWrap = root.querySelector('[data-catalogo-dots]');
+                const counterEl = root.querySelector('[data-catalogo-counter]');
                 const prevBtn = root.querySelector('[data-catalogo-prev]');
                 const nextBtn = root.querySelector('[data-catalogo-next]');
-                if (!viewport || !cards.length || !dotsWrap) return;
+                const statusEl = root.querySelector('[data-catalogo-status]');
+                if (!viewport || !cards.length) return;
 
                 let current = 0;
                 let dragStart = 0;
                 let dragNow = 0;
                 let isDragging = false;
                 let suppressClickUntil = 0;
-                let wheelLock = false;
                 let tiltX = 0;
                 let tiltY = 0;
                 let rafTilt = 0;
@@ -199,10 +212,10 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
 
                 const cfg = function () {
                     const w = window.innerWidth;
-                    if (w <= 575) return { x: 84, z: 92, r: 0, s: 0.9, fs: 0.82, so: 0.56, fo: 0, fb: 5 };
-                    if (w <= 767) return { x: 116, z: 130, r: 18, s: 0.9, fs: 0.8, so: 0.52, fo: 0, fb: 5 };
-                    if (w <= 991) return { x: 166, z: 158, r: 24, s: 0.88, fs: 0.76, so: 0.48, fo: 0.06, fb: 5 };
-                    return { x: 242, z: 205, r: 30, s: 0.86, fs: 0.72, so: 0.45, fo: 0.04, fb: 6 };
+                    if (w <= 575) return { x: 110, z: 92, r: 0, s: 0.9, fs: 0.82, so: 0.68, fo: 0, fb: 5 };
+                    if (w <= 767) return { x: 154, z: 130, r: 16, s: 0.9, fs: 0.8, so: 0.62, fo: 0, fb: 5 };
+                    if (w <= 991) return { x: 220, z: 158, r: 22, s: 0.88, fs: 0.76, so: 0.58, fo: 0.1, fb: 5 };
+                    return { x: 304, z: 205, r: 28, s: 0.86, fs: 0.72, so: 0.56, fo: 0.12, fb: 6 };
                 };
 
                 const syncHeight = function () {
@@ -220,16 +233,12 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
                 function next() { goTo(current + 1); }
                 function prev() { goTo(current - 1); }
 
-                dotsWrap.innerHTML = '';
-                cards.forEach(function (_, i) {
-                    const dot = document.createElement('button');
-                    dot.type = 'button';
-                    dot.className = 'flacso-catalogo-3d__dot';
-                    dot.setAttribute('aria-label', 'Ir al programa ' + (i + 1));
-                    dot.addEventListener('click', function () { goTo(i); });
-                    dotsWrap.appendChild(dot);
+                cards.forEach(function (card, i) {
+                    const titleEl = card.querySelector('.flacso-catalogo-3d__title');
+                    const title = titleEl ? titleEl.textContent.trim() : ('Programa ' + (i + 1));
+                    card.dataset.title = title;
+                    card.setAttribute('aria-label', title + '. Programa ' + (i + 1) + ' de ' + cards.length + '.');
                 });
-                const dots = Array.from(dotsWrap.querySelectorAll('.flacso-catalogo-3d__dot'));
 
                 function render(skipHeightSync) {
                     if (!skipHeightSync) syncHeight();
@@ -270,12 +279,22 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
                         card.style.zIndex = String(zIndex);
                         card.style.filter = filter;
                         card.dataset.active = active ? '1' : '0';
+                        card.dataset.side = (abs === 1) ? '1' : '0';
                         card.tabIndex = active ? 0 : -1;
+                        card.setAttribute('aria-current', active ? 'true' : 'false');
+                        card.style.pointerEvents = (active || abs === 1) ? 'auto' : 'none';
+                        card.style.cursor = (active || abs === 1) ? 'pointer' : 'default';
                     });
 
-                    dots.forEach(function (dot, i) {
-                        dot.classList.toggle('is-active', i === current);
-                    });
+                    if (counterEl) {
+                        counterEl.textContent = String(current + 1) + ' / ' + String(cards.length);
+                    }
+
+                    if (statusEl && cards[current]) {
+                        const label = cards[current].dataset.title || ('Programa ' + (current + 1));
+                        const disabled = cards[current].classList.contains('is-disabled');
+                        statusEl.textContent = 'Programa ' + (current + 1) + ' de ' + cards.length + ': ' + label + (disabled ? '. No vigente.' : '.');
+                    }
                 }
 
                 if (prevBtn) prevBtn.addEventListener('click', prev);
@@ -284,9 +303,21 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
                 viewport.addEventListener('keydown', function (event) {
                     if (event.key === 'ArrowLeft') { event.preventDefault(); prev(); }
                     if (event.key === 'ArrowRight') { event.preventDefault(); next(); }
+                    if (event.key === 'Home') { event.preventDefault(); goTo(0); }
+                    if (event.key === 'End') { event.preventDefault(); goTo(cards.length - 1); }
+                    if (event.key === 'PageUp') { event.preventDefault(); prev(); }
+                    if (event.key === 'PageDown') { event.preventDefault(); next(); }
+                    if ((event.key === 'Enter' || event.key === ' ') && document.activeElement === viewport) {
+                        const activeCard = cards[current];
+                        if (activeCard && !activeCard.classList.contains('is-disabled')) {
+                            event.preventDefault();
+                            activeCard.click();
+                        }
+                    }
                 });
 
                 viewport.addEventListener('pointerdown', function (event) {
+                    if (event.pointerType === 'mouse') return;
                     isDragging = true;
                     dragStart = event.clientX;
                     dragNow = event.clientX;
@@ -338,16 +369,6 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
                     render(true);
                 });
 
-                viewport.addEventListener('wheel', function (event) {
-                    if (wheelLock) return;
-                    const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
-                    if (Math.abs(delta) < 24) return;
-                    event.preventDefault();
-                    wheelLock = true;
-                    delta > 0 ? next() : prev();
-                    window.setTimeout(function () { wheelLock = false; }, 220);
-                }, { passive: false });
-
                 cards.forEach(function (card, i) {
                     card.addEventListener('click', function (event) {
                         if (Date.now() < suppressClickUntil) {
@@ -357,14 +378,15 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
                         }
                         const active = card.dataset.active === '1';
                         const disabled = card.classList.contains('is-disabled');
-                        if (disabled) {
-                            event.preventDefault();
-                            return;
-                        }
                         if (!active) {
                             event.preventDefault();
                             event.stopPropagation();
                             goTo(i);
+                            return;
+                        }
+                        if (disabled) {
+                            event.preventDefault();
+                            return;
                         }
                     });
                 });
@@ -374,6 +396,11 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
                     tiltY = 0;
                     render();
                 });
+
+                root.classList.add('is-ready');
+                if (cards.length <= 1) {
+                    root.classList.add('is-single');
+                }
                 render();
             })();
         </script>

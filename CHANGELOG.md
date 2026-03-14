@@ -1,3 +1,31 @@
+## Version 2.0.0 - 14 de marzo de 2026
+
+### Resumen
+- Release mayor del modulo de pagina principal con estabilizacion del catalogo 3D y del bloque de `listar_paginas`.
+- Se corrige navegacion, accesibilidad y comportamiento de click para que el catalogo sea usable en escritorio, touch y teclado.
+- Se corrige superposicion de imagen/texto en la tarjeta destacada de Proximos eventos.
+
+### Cambios detallados
+- `listar_paginas`:
+  - El bloque dinamico `flacso-uruguay/listar-paginas` queda registrado con `render_callback` y compatibilidad con shortcode.
+  - Se evita doble registro del bloque en `Flacso_Main_Page_Blocks` para eliminar conflictos entre shortcode y bloque.
+  - Se normaliza el editor JS del bloque en sintaxis sin build step (plain JS + `createElement`) y se agrega atributo `vista`.
+- Catalogo 3D (frontend):
+  - El card frontal completo abre la pagina del programa.
+  - Los cards laterales visibles pasan a ser clickeables para traerlos al frente.
+  - Se elimina navegacion por rueda de mouse para evitar cambios involuntarios al hacer scroll.
+  - Se agregan controles y estados accesibles: `aria-live`, etiquetas de estado, ayuda para teclado y navegacion con flechas/Home/End/PageUp/PageDown.
+  - Se ajusta la interaccion de drag para priorizar touch y reducir interferencias en escritorio.
+- Proximos eventos:
+  - Se refuerza la separacion media/contenido en la tarjeta destacada para impedir cruce de imagen con texto.
+  - Se ajusta responsive para mantener legibilidad en mobile.
+
+### Verificaciones
+- `php -l` sobre archivos PHP modificados.
+- `node --check` sobre `modules/main-page/includes/blocks/listar-paginas/assets/block.js`.
+
+---
+
 ## Version 1.1.7 - 13 de marzo de 2026
 
 ### Resumen

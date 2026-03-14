@@ -228,6 +228,7 @@ class Flacso_Main_Page_Blocks {
                 'shortcode'   => 'listar_paginas',
                 'icon'        => 'index-card',
                 'keywords'    => ['posgrados', 'grid', 'paginas'],
+                'register'    => false,
                 'style'       => 'flacso-listar-paginas-block-style',
                 'editor_style'=> 'flacso-listar-paginas-block-editor-style',
                 'editor_script'=> 'flacso-listar-paginas-block-editor',
@@ -329,6 +330,9 @@ class Flacso_Main_Page_Blocks {
 
         $blocks = [];
         foreach (self::get_blocks_map() as $name => $config) {
+            if (isset($config['register']) && $config['register'] === false) {
+                continue;
+            }
             $blocks[] = [
                 'name'        => $name,
                 'title'       => $config['title'],
@@ -352,6 +356,7 @@ class Flacso_Main_Page_Blocks {
         $GLOBALS['flacso_shortcode_blocks_script_registered'] = true;
     }
 }
+
 
 
 
