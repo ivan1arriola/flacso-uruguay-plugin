@@ -270,6 +270,401 @@ class Oferta_Renderer {
         return ob_get_clean();
     }
 
+    /**
+     * Render completo de un programa/oferta para insertar en una pagina legacy.
+     * Incluye CTA de preinscripcion, formulario de consulta y docentes.
+     */
+    public static function render_oferta_programa(array $attributes = [], $block = null): string {
+        self::enqueue_styles();
+
+        $oferta_id = self::resolve_oferta_programa_id($attributes, $block);
+        $is_editor_preview = self::is_editor_preview_context();
+
+        if ($oferta_id <= 0) {
+            return $is_editor_preview
+                ? '<p>' . esc_html__('No se encontro una oferta academica vinculada a esta pagina. Asocia la pagina desde el CPT o define un ofertaId en el bloque.', 'flacso-oferta-academica') . '</p>'
+                : '';
+        }
+
+        $oferta = get_post($oferta_id);
+        if (!$oferta || $oferta->post_type !== 'oferta-academica') {
+            return $is_editor_preview
+                ? '<p>' . esc_html__('La oferta academica seleccionada no es valida.', 'flacso-oferta-academica') . '</p>'
+                : '';
+        }
+
+        $context_page_id = self::resolve_context_page_id($attributes, $block);
+        $associated_page_id = (int) get_post_meta($oferta_id, '_oferta_page_id', true);
+        $source_page_id = $associated_page_id > 0 ? $associated_page_id : $context_page_id;
+
+        $title = get_the_title($oferta_id);
+        $abreviacion = (string) get_post_meta($oferta_id, 'abreviacion', true);
+        $correo = (string) get_post_meta($oferta_id, 'correo', true);
+        $inscripciones_abiertas = (bool) get_post_meta($oferta_id, 'inscripciones_abiertas', true);
+
+        $tipo = '';
+        $tipos = wp_get_post_terms($oferta_id, 'tipo-oferta-academica', ['fields' => 'names']);
+        if (!is_wp_error($tipos) && !empty($tipos)) {
+            $tipo = (string) $tipos[0];
+        }
+
+        $hero_image = get_the_post_thumbnail_url($oferta_id, 'full');
+        if (!$hero_image && $source_page_id > 0) {
+            $hero_image = get_the_post_thumbnail_url($source_page_id, 'full');
+        }
+
+        $sections = self::get_programa_html_sections($oferta_id);
+        $docente_ids = self::collect_programa_docente_ids($oferta_id);
+
+        $proximo_inicio_html = class_exists('Oferta_Blocks')
+            ? Oferta_Blocks::render_dato_proximo_inicio(['ofertaId' => $oferta_id])
+            : '';
+        $calendario_html = class_exists('Oferta_Blocks')
+            ? Oferta_Blocks::render_dato_calendario(['ofertaId' => $oferta_id, 'displayMode' => 'auto'])
+            : '';
+        $malla_html = class_exists('Oferta_Blocks')
+            ? Oferta_Blocks::render_dato_malla_curricular(['ofertaId' => $oferta_id, 'displayMode' => 'auto'])
+            : '';
+
+        $mostrar_preinscripcion = !array_key_exists('mostrarPreinscripcion', $attributes) || !empty($attributes['mostrarPreinscripcion']);
+        $mostrar_formulario = !array_key_exists('mostrarFormulario', $attributes) || !empty($attributes['mostrarFormulario']);
+
+        $preinscripcion_url = self::build_preinscripcion_url($source_page_id, $oferta_id);
+
+        $has_consulta_form = $mostrar_formulario
+            && class_exists('Oferta_Consulta_Form')
+            && method_exists('Oferta_Consulta_Form', 'render_floating_form');
+
+        $root_id = function_exists('wp_unique_id')
+            ? wp_unique_id('flacso-oa-programa-')
+            : ('flacso-oa-programa-' . wp_rand(1000, 9999));
+
+        ob_start();
+        ?>
+        <section id="<?php echo esc_attr($root_id); ?>" class="flacso-oa-programa">
+            <header class="flacso-oa-programa__hero">
+                <div class="flacso-oa-programa__hero-media">
+                    <?php if ($hero_image) : ?>
+                        <img src="<?php echo esc_url($hero_image); ?>" alt="<?php echo esc_attr($title); ?>" loading="lazy" />
+                    <?php else : ?>
+                        <div class="flacso-oa-programa__hero-media-fallback" aria-hidden="true">
+                            <i class="bi bi-image"></i>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <div class="flacso-oa-programa__hero-content">
+                    <?php if ($tipo !== '') : ?>
+                        <p class="flacso-oa-programa__eyebrow"><?php echo esc_html($tipo); ?></p>
+                    <?php endif; ?>
+                    <h1 class="flacso-oa-programa__title"><?php echo esc_html($title); ?></h1>
+                    <?php if ($abreviacion !== '') : ?>
+                        <p class="flacso-oa-programa__abbr"><?php echo esc_html($abreviacion); ?></p>
+                    <?php endif; ?>
+
+                    <div class="flacso-oa-programa__meta">
+                        <?php if ($correo !== '') : ?>
+                            <a class="flacso-oa-programa__mail" href="mailto:<?php echo esc_attr(antispambot($correo)); ?>">
+                                <i class="bi bi-envelope" aria-hidden="true"></i>
+                                <span><?php echo esc_html($correo); ?></span>
+                            </a>
+                        <?php endif; ?>
+                    </div>
+
+                    <?php if ($proximo_inicio_html !== '') : ?>
+                        <div class="flacso-oa-programa__inicio">
+                            <?php echo $proximo_inicio_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="flacso-oa-programa__actions">
+                        <?php if ($mostrar_preinscripcion && $preinscripcion_url !== '' && $inscripciones_abiertas) : ?>
+                            <a class="flacso-oa-programa__btn flacso-oa-programa__btn--preinscripcion" href="<?php echo esc_url($preinscripcion_url); ?>">
+                                <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                                <span><?php esc_html_e('Preinscripcion', 'flacso-oferta-academica'); ?></span>
+                            </a>
+                        <?php elseif ($mostrar_preinscripcion) : ?>
+                            <span class="flacso-oa-programa__btn flacso-oa-programa__btn--disabled" aria-disabled="true">
+                                <i class="bi bi-lock" aria-hidden="true"></i>
+                                <span><?php esc_html_e('Preinscripcion no disponible', 'flacso-oferta-academica'); ?></span>
+                            </span>
+                        <?php endif; ?>
+
+                        <?php if ($has_consulta_form) : ?>
+                            <button type="button" class="flacso-oa-programa__btn flacso-oa-programa__btn--consulta" data-oa-programa-open-consulta>
+                                <i class="bi bi-send" aria-hidden="true"></i>
+                                <span><?php esc_html_e('Solicitar informacion', 'flacso-oferta-academica'); ?></span>
+                            </button>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </header>
+
+            <?php if ($calendario_html !== '' || $malla_html !== '') : ?>
+                <section class="flacso-oa-programa__documents" aria-label="<?php esc_attr_e('Documentos del programa', 'flacso-oferta-academica'); ?>">
+                    <div class="flacso-oa-programa__documents-grid">
+                        <?php if ($calendario_html !== '') : ?>
+                            <?php echo $calendario_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                        <?php endif; ?>
+                        <?php if ($malla_html !== '') : ?>
+                            <?php echo $malla_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                        <?php endif; ?>
+                    </div>
+                </section>
+            <?php endif; ?>
+
+            <?php if (!empty($sections)) : ?>
+                <section class="flacso-oa-programa__sections" aria-label="<?php esc_attr_e('Detalle del programa', 'flacso-oferta-academica'); ?>">
+                    <?php foreach ($sections as $section_label => $section_html) : ?>
+                        <article class="flacso-oa-programa-section">
+                            <h2 class="flacso-oa-programa-section__title"><?php echo esc_html($section_label); ?></h2>
+                            <div class="flacso-oa-programa-section__content">
+                                <?php echo wp_kses_post($section_html); ?>
+                            </div>
+                        </article>
+                    <?php endforeach; ?>
+                </section>
+            <?php endif; ?>
+
+            <section class="flacso-oa-programa__docentes" aria-label="<?php esc_attr_e('Docentes', 'flacso-oferta-academica'); ?>">
+                <h2 class="flacso-oa-programa__docentes-title"><?php esc_html_e('Docentes', 'flacso-oferta-academica'); ?></h2>
+                <?php if (!empty($docente_ids)) : ?>
+                    <div class="flacso-oa-programa-docentes-grid">
+                        <?php foreach ($docente_ids as $docente_id) : ?>
+                            <?php
+                            $docente = get_post($docente_id);
+                            if (!$docente || $docente->post_type !== 'docente') {
+                                continue;
+                            }
+
+                            $can_view = $docente->post_status === 'publish' || self::should_include_private_programs();
+                            if (!$can_view) {
+                                continue;
+                            }
+
+                            $nombre = function_exists('dp_nombre_completo') ? dp_nombre_completo($docente_id) : get_the_title($docente_id);
+                            $nombre = $nombre ?: get_the_title($docente_id);
+                            $prefijo = (string) get_post_meta($docente_id, 'prefijo_abrev', true);
+                            $titulo_docente = (string) get_post_meta($docente_id, 'titulo', true);
+                            $resumen = trim((string) get_the_excerpt($docente_id));
+                            if ($resumen === '') {
+                                $cv_text = wp_strip_all_tags((string) get_post_meta($docente_id, 'cv', true));
+                                $resumen = wp_trim_words($cv_text, 22);
+                            }
+                            ?>
+                            <article class="flacso-oa-programa-docente-card">
+                                <a href="<?php echo esc_url(get_permalink($docente_id)); ?>" class="flacso-oa-programa-docente-card__link">
+                                    <div class="flacso-oa-programa-docente-card__media">
+                                        <?php if (has_post_thumbnail($docente_id)) : ?>
+                                            <?php echo get_the_post_thumbnail($docente_id, 'medium', ['loading' => 'lazy']); ?>
+                                        <?php else : ?>
+                                            <span class="flacso-oa-programa-docente-card__placeholder" aria-hidden="true">
+                                                <?php echo esc_html(strtoupper(substr((string) $nombre, 0, 1))); ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="flacso-oa-programa-docente-card__body">
+                                        <?php if ($prefijo !== '') : ?>
+                                            <p class="flacso-oa-programa-docente-card__prefijo"><?php echo esc_html($prefijo); ?></p>
+                                        <?php endif; ?>
+                                        <h3 class="flacso-oa-programa-docente-card__name"><?php echo esc_html($nombre); ?></h3>
+                                        <?php if ($titulo_docente !== '') : ?>
+                                            <p class="flacso-oa-programa-docente-card__title"><?php echo esc_html($titulo_docente); ?></p>
+                                        <?php endif; ?>
+                                        <?php if ($resumen !== '') : ?>
+                                            <p class="flacso-oa-programa-docente-card__excerpt"><?php echo esc_html($resumen); ?></p>
+                                        <?php endif; ?>
+                                        <span class="flacso-oa-programa-docente-card__cta"><?php esc_html_e('Ver perfil', 'flacso-oferta-academica'); ?></span>
+                                    </div>
+                                </a>
+                            </article>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else : ?>
+                    <p class="flacso-oa-programa__docentes-empty"><?php esc_html_e('Docentes a confirmar.', 'flacso-oferta-academica'); ?></p>
+                <?php endif; ?>
+            </section>
+        </section>
+
+        <?php if ($has_consulta_form) : ?>
+            <?php echo Oferta_Consulta_Form::render_floating_form(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+            <script>
+            (function() {
+                var root = document.getElementById(<?php echo wp_json_encode($root_id); ?>);
+                if (!root) return;
+                root.addEventListener('click', function(event) {
+                    var trigger = event.target.closest('[data-oa-programa-open-consulta]');
+                    if (!trigger) return;
+                    event.preventDefault();
+                    var scope = document.querySelector('[data-flacso-oa-consulta]');
+                    if (!scope) return;
+                    var select = scope.querySelector('select[name="oferta_id"]');
+                    if (select) {
+                        select.value = <?php echo (int) $oferta_id; ?>;
+                    }
+                    var opener = scope.querySelector('[data-oa-consulta-open]');
+                    if (opener) opener.click();
+                });
+            })();
+            </script>
+        <?php endif; ?>
+        <?php
+
+        return (string) ob_get_clean();
+    }
+
+    private static function get_programa_html_sections(int $oferta_id): array {
+        $map = [
+            __('Modalidad', 'flacso-oferta-academica') => 'modalidad_html',
+            __('Duracion', 'flacso-oferta-academica') => 'duracion_html',
+            __('Objetivos', 'flacso-oferta-academica') => 'objetivos_html',
+            __('Perfil de ingreso', 'flacso-oferta-academica') => 'perfil_ingreso_html',
+            __('Requisitos de ingreso', 'flacso-oferta-academica') => 'requisitos_ingreso_html',
+            __('Perfil de egreso', 'flacso-oferta-academica') => 'perfil_egreso_html',
+            __('Requisitos de egreso', 'flacso-oferta-academica') => 'requisitos_egreso_html',
+            __('Titulos y certificaciones', 'flacso-oferta-academica') => 'titulos_certificaciones_html',
+        ];
+
+        $sections = [];
+        foreach ($map as $label => $meta_key) {
+            $html = trim((string) get_post_meta($oferta_id, $meta_key, true));
+            if ($html === '') {
+                continue;
+            }
+            $sections[$label] = $html;
+        }
+
+        return $sections;
+    }
+
+    private static function collect_programa_docente_ids(int $oferta_id): array {
+        $ids = [];
+
+        $direct = get_post_meta($oferta_id, '_oferta_docentes_ids', true);
+        if (is_array($direct)) {
+            $ids = array_merge($ids, $direct);
+        }
+
+        foreach (['coordinacion_academica', 'equipos'] as $meta_key) {
+            $groups = get_post_meta($oferta_id, $meta_key, true);
+            if (!is_array($groups)) {
+                continue;
+            }
+            foreach ($groups as $group) {
+                $docentes = isset($group['docentes']) && is_array($group['docentes']) ? $group['docentes'] : [];
+                $ids = array_merge($ids, $docentes);
+            }
+        }
+
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids), static function ($id) {
+            return $id > 0;
+        })));
+
+        return $ids;
+    }
+
+    private static function resolve_oferta_programa_id(array $attributes, $block = null): int {
+        $attribute_id = isset($attributes['ofertaId']) ? (int) $attributes['ofertaId'] : 0;
+        if ($attribute_id > 0) {
+            $post = get_post($attribute_id);
+            if ($post && $post->post_type === 'oferta-academica') {
+                return $attribute_id;
+            }
+        }
+
+        if ($block && isset($block->context) && is_array($block->context)) {
+            $context_post_id = isset($block->context['postId']) ? (int) $block->context['postId'] : 0;
+            $context_post_type = isset($block->context['postType']) ? (string) $block->context['postType'] : '';
+            if ($context_post_id > 0 && $context_post_type === 'oferta-academica') {
+                return $context_post_id;
+            }
+        }
+
+        if (is_singular('oferta-academica')) {
+            return (int) get_queried_object_id();
+        }
+
+        $page_id = self::resolve_context_page_id($attributes, $block);
+        if ($page_id <= 0) {
+            return 0;
+        }
+
+        $ids = get_posts([
+            'post_type' => 'oferta-academica',
+            'post_status' => self::oferta_post_statuses(),
+            'posts_per_page' => 1,
+            'fields' => 'ids',
+            'meta_key' => '_oferta_page_id',
+            'meta_value' => $page_id,
+            'orderby' => 'ID',
+            'order' => 'DESC',
+        ]);
+
+        return !empty($ids) ? (int) $ids[0] : 0;
+    }
+
+    private static function resolve_context_page_id(array $attributes, $block = null): int {
+        if (isset($attributes['postId'])) {
+            $post_id = (int) $attributes['postId'];
+            if ($post_id > 0) {
+                return $post_id;
+            }
+        }
+
+        if ($block && isset($block->context) && is_array($block->context) && !empty($block->context['postId'])) {
+            return (int) $block->context['postId'];
+        }
+
+        if (is_singular()) {
+            $queried = (int) get_queried_object_id();
+            if ($queried > 0) {
+                return $queried;
+            }
+        }
+
+        if (isset($_REQUEST['post_id'])) {
+            $request_post_id = (int) wp_unslash($_REQUEST['post_id']);
+            if ($request_post_id > 0) {
+                return $request_post_id;
+            }
+        }
+
+        return 0;
+    }
+
+    private static function build_preinscripcion_url(int $page_id, int $oferta_id): string {
+        $base_page_id = $page_id > 0 ? $page_id : (int) get_post_meta($oferta_id, '_oferta_page_id', true);
+        if ($base_page_id <= 0) {
+            return '';
+        }
+
+        $base_permalink = get_permalink($base_page_id);
+        if (!$base_permalink) {
+            return '';
+        }
+
+        return trailingslashit($base_permalink) . 'preinscripcion/';
+    }
+
+    private static function is_editor_preview_context(): bool {
+        if (is_admin()) {
+            return true;
+        }
+
+        if (defined('REST_REQUEST') && REST_REQUEST) {
+            $context = isset($_REQUEST['context']) ? sanitize_text_field(wp_unslash((string) $_REQUEST['context'])) : '';
+            if ($context === 'edit') {
+                return true;
+            }
+
+            $route = isset($_REQUEST['rest_route']) ? sanitize_text_field(wp_unslash((string) $_REQUEST['rest_route'])) : '';
+            if ($route && strpos($route, '/wp/v2/block-renderer/') !== false) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static function render_program_card(int $post_id, $term): bool {
         $title     = get_the_title($post_id);
         $excerpt   = wp_trim_words(get_the_excerpt($post_id), 22);

@@ -231,6 +231,137 @@
     margin: 1rem 0;
 }
 
+.flacso-oferta-documento-card-wrapper {
+    margin: 1rem 0;
+    width: 100%;
+}
+
+.flacso-oferta-documento-card {
+    position: relative;
+    width: 100%;
+    min-height: 100%;
+    border-radius: 18px;
+    border: 1px solid rgba(18, 44, 95, 0.12);
+    background: linear-gradient(165deg, #f4f7fc 0%, #eef3fa 100%);
+    box-shadow: 0 16px 36px -26px rgba(10, 30, 68, 0.42);
+    padding: 1.45rem 1.3rem 1.2rem 1.3rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0.72rem;
+}
+
+.flacso-oferta-documento-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    background: var(--oa-primary);
+}
+
+.flacso-oferta-documento-card__icon {
+    font-size: 2.2rem;
+    line-height: 1;
+    color: var(--oa-primary);
+}
+
+.flacso-oferta-documento-card__title {
+    margin: 0;
+    color: var(--oa-primary);
+    font-size: clamp(1.55rem, 2.1vw, 2rem);
+    font-weight: 800;
+    line-height: 1.2;
+    font-family: var(--global-heading-font-family, var(--global-body-font-family, inherit));
+}
+
+.flacso-oferta-documento-card__desc {
+    margin: 0;
+    color: var(--oa-text);
+    font-size: clamp(1.06rem, 1.5vw, 1.22rem);
+    line-height: 1.55;
+    max-width: 44ch;
+}
+
+.flacso-oferta-documento-card__html {
+    margin-top: 0.15rem;
+    color: var(--oa-text);
+    font-size: 1rem;
+    line-height: 1.65;
+}
+
+.flacso-oferta-documento-card__html > :first-child {
+    margin-top: 0;
+}
+
+.flacso-oferta-documento-card__html > :last-child {
+    margin-bottom: 0;
+}
+
+.flacso-oferta-documento-card__html ul,
+.flacso-oferta-documento-card__html ol {
+    margin: 0.45rem 0 0.45rem 1.2rem;
+}
+
+.flacso-oferta-documento-card__updated {
+    margin: 0;
+    color: #6f7f96;
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+
+.flacso-oferta-documento-card__updated time {
+    font-weight: 600;
+    color: #516887;
+}
+
+.flacso-oferta-documento-card__button {
+    margin-top: 0.2rem;
+    width: 100%;
+    min-height: 3.05rem;
+    border-radius: 14px;
+    border: 1px solid #248c3d;
+    background: #248c3d;
+    color: #ffffff !important;
+    text-decoration: none !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    font-size: clamp(1.02rem, 1.35vw, 1.22rem);
+    font-weight: 800;
+    line-height: 1;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.flacso-oferta-documento-card__button:hover {
+    background: #1f7b35;
+    border-color: #1f7b35;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 12px 22px -18px rgba(12, 44, 22, 0.72);
+}
+
+.flacso-oferta-documento-card__button--secondary {
+    margin-top: 0.75rem;
+    background: rgba(18, 44, 95, 0.08);
+    border-color: rgba(18, 44, 95, 0.28);
+    color: var(--oa-primary) !important;
+}
+
+.flacso-oferta-documento-card__button--secondary:hover {
+    background: rgba(18, 44, 95, 0.13);
+    border-color: rgba(18, 44, 95, 0.45);
+    color: var(--oa-primary) !important;
+    box-shadow: 0 12px 22px -18px rgba(10, 30, 68, 0.58);
+}
+
+.flacso-oferta-documento-card__button:focus-visible {
+    outline: 2px solid var(--oa-accent);
+    outline-offset: 2px;
+}
+
 .flacso-oferta-proximo-inicio {
     display: flex;
     justify-content: center;
@@ -734,5 +865,336 @@ body.flacso-oa-consulta-open {
 
     .flacso-oferta-proximo-inicio__value {
         font-size: clamp(1.08rem, 5vw, 1.28rem);
+    }
+
+    .flacso-oferta-documento-card {
+        border-radius: 14px;
+        padding: 1.2rem 1rem 1rem 1rem;
+    }
+
+    .flacso-oferta-documento-card__title {
+        font-size: clamp(1.25rem, 5.5vw, 1.65rem);
+    }
+
+    .flacso-oferta-documento-card__desc {
+        font-size: clamp(0.98rem, 4.5vw, 1.08rem);
+    }
+
+    .flacso-oferta-documento-card__button {
+        min-height: 2.8rem;
+        border-radius: 12px;
+        font-size: 1.05rem;
+    }
+}
+
+/* Bloque: oferta academica - programa (single) */
+.flacso-oa-programa {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: clamp(1rem, 2.4vw, 2rem);
+    border-radius: 24px;
+    background: linear-gradient(180deg, #e8edf7 0%, #eef2fa 100%);
+    border: 1px solid #cfd8ea;
+    box-shadow: 0 22px 48px -34px rgba(22, 49, 104, 0.35);
+}
+
+.flacso-oa-programa__hero {
+    display: grid;
+    grid-template-columns: minmax(260px, 34%) minmax(0, 1fr);
+    gap: 1.2rem;
+    align-items: stretch;
+    margin-bottom: 1.25rem;
+}
+
+.flacso-oa-programa__hero-media {
+    border-radius: 20px;
+    overflow: hidden;
+    background: #d8dfed;
+    min-height: 260px;
+}
+
+.flacso-oa-programa__hero-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.flacso-oa-programa__hero-media-fallback {
+    width: 100%;
+    height: 100%;
+    min-height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: #9bacc9;
+}
+
+.flacso-oa-programa__hero-content {
+    border-radius: 20px;
+    border: 1px solid #d3dbeb;
+    background: #f8f9fc;
+    padding: clamp(1rem, 2vw, 1.5rem);
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.flacso-oa-programa__eyebrow {
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    font-size: .75rem;
+    font-weight: 700;
+    color: #56709e;
+}
+
+.flacso-oa-programa__title {
+    margin: 0;
+    font-size: clamp(1.55rem, 3vw, 2.45rem);
+    line-height: 1.18;
+    color: #173a78;
+}
+
+.flacso-oa-programa__abbr {
+    margin: 0;
+    font-size: .95rem;
+    font-weight: 700;
+    color: #2f5290;
+}
+
+.flacso-oa-programa__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .8rem;
+}
+
+.flacso-oa-programa__mail {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    color: #1f4a98;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.flacso-oa-programa__mail:hover,
+.flacso-oa-programa__mail:focus-visible {
+    color: #103163;
+    text-decoration: underline;
+}
+
+.flacso-oa-programa__inicio .flacso-oferta-proximo-inicio {
+    margin: 0;
+}
+
+.flacso-oa-programa__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .7rem;
+    margin-top: .2rem;
+}
+
+.flacso-oa-programa__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    min-height: 46px;
+    border-radius: 999px;
+    border: 0;
+    padding: 0.75rem 1.25rem;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: .97rem;
+    cursor: pointer;
+}
+
+.flacso-oa-programa__btn--preinscripcion {
+    background: #15803d;
+    color: #fff;
+}
+
+.flacso-oa-programa__btn--preinscripcion:hover,
+.flacso-oa-programa__btn--preinscripcion:focus-visible {
+    background: #116532;
+    color: #fff;
+}
+
+.flacso-oa-programa__btn--consulta {
+    background: #183b7a;
+    color: #fff;
+}
+
+.flacso-oa-programa__btn--consulta:hover,
+.flacso-oa-programa__btn--consulta:focus-visible {
+    background: #112b57;
+    color: #fff;
+}
+
+.flacso-oa-programa__btn--disabled {
+    background: #d4dce9;
+    color: #4f6183;
+    cursor: not-allowed;
+}
+
+.flacso-oa-programa__documents {
+    margin-top: 1.3rem;
+}
+
+.flacso-oa-programa__documents-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.flacso-oa-programa__documents-grid .flacso-oferta-documento-card-wrapper {
+    margin: 0;
+}
+
+.flacso-oa-programa__sections {
+    margin-top: 1.35rem;
+    display: grid;
+    gap: .95rem;
+}
+
+.flacso-oa-programa-section {
+    border-radius: 14px;
+    border: 1px solid #cfdae9;
+    background: #f7f9fd;
+    overflow: hidden;
+}
+
+.flacso-oa-programa-section__title {
+    margin: 0;
+    padding: .85rem 1rem;
+    font-size: 1.1rem;
+    color: #183f81;
+    background: #e8eef8;
+    border-bottom: 1px solid #d5e0ef;
+}
+
+.flacso-oa-programa-section__content {
+    padding: .95rem 1rem 1rem;
+    color: #1f2f4a;
+}
+
+.flacso-oa-programa__docentes {
+    margin-top: 1.45rem;
+}
+
+.flacso-oa-programa__docentes-title {
+    margin: 0 0 .8rem;
+    font-size: 1.35rem;
+    color: #173d7e;
+}
+
+.flacso-oa-programa-docentes-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .95rem;
+}
+
+.flacso-oa-programa-docente-card {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #d3deef;
+    background: #fff;
+}
+
+.flacso-oa-programa-docente-card__link {
+    display: grid;
+    grid-template-columns: 148px minmax(0, 1fr);
+    text-decoration: none;
+    color: inherit;
+}
+
+.flacso-oa-programa-docente-card__media {
+    background: #d9e0ee;
+    min-height: 148px;
+}
+
+.flacso-oa-programa-docente-card__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.flacso-oa-programa-docente-card__placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #5774a8;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.flacso-oa-programa-docente-card__body {
+    padding: .82rem .95rem;
+}
+
+.flacso-oa-programa-docente-card__prefijo {
+    margin: 0 0 .2rem;
+    color: #5472a4;
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+}
+
+.flacso-oa-programa-docente-card__name {
+    margin: 0;
+    color: #17396f;
+    font-size: 1.05rem;
+}
+
+.flacso-oa-programa-docente-card__title {
+    margin: .2rem 0 0;
+    color: #5a7098;
+    font-size: .92rem;
+}
+
+.flacso-oa-programa-docente-card__excerpt {
+    margin: .48rem 0 0;
+    color: #2c3f62;
+    font-size: .9rem;
+    line-height: 1.45;
+}
+
+.flacso-oa-programa-docente-card__cta {
+    display: inline-flex;
+    margin-top: .62rem;
+    color: #1f4d9f;
+    font-size: .88rem;
+    font-weight: 700;
+}
+
+.flacso-oa-programa__docentes-empty {
+    margin: 0;
+    color: #5b6f95;
+    font-size: .96rem;
+}
+
+@media (max-width: 991px) {
+    .flacso-oa-programa__hero {
+        grid-template-columns: 1fr;
+    }
+    .flacso-oa-programa__documents-grid {
+        grid-template-columns: 1fr;
+    }
+    .flacso-oa-programa-docentes-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .flacso-oa-programa-docente-card__link {
+        grid-template-columns: 1fr;
+    }
+    .flacso-oa-programa-docente-card__media {
+        min-height: 210px;
     }
 }

@@ -1,3 +1,43 @@
+## Version 2.1.0 - 14 de marzo de 2026
+
+### Resumen
+- Se incorpora una herramienta de migracion administrada para pasar datos desde paginas legacy al CPT `oferta-academica`.
+- La migracion usa mapeo fijo por tabla y toma `correo` y `proximo_inicio` exclusivamente desde esa tabla (no desde contenido de pagina).
+- Se consolida soporte de documentos en modo `PDF o HTML` para `Calendario` y `Malla curricular`.
+- Se habilita imagen destacada en `oferta-academica` y sincronizacion con pagina asociada.
+
+### Cambios detallados
+- Migracion de oferta academica:
+  - Nuevo archivo: `modules/oferta-academica/includes/class-oferta-data-migration.php`.
+  - Nuevo submenu en admin: `Oferta Academica > Migracion desde paginas`.
+  - Flujo completo: `Previsualizacion`, `Aplicar migracion`, `Deshacer ultima migracion`.
+  - Backup/restauracion de metadatos y terminos antes de aplicar cambios.
+  - Mapeo con `page_id` (origen) y `NuevoID`/`cpt_id` (destino).
+  - Resolucion robusta del destino si el ID fijo no existe (page adapter, abreviacion y titulo).
+  - Creacion automatica de destino cuando falta CPT y se ejecuta en modo `run`.
+  - Extraccion de secciones HTML (accordion), menciones, coordinacion y equipos.
+  - Copia de imagen destacada desde pagina origen a oferta destino.
+- Reglas de negocio de migracion:
+  - `correo` y `proximo_inicio` se fuerzan desde la tabla de mapeo.
+  - `proximo_inicio` se normaliza a formato schema (`YYYY-MM-DD`) respetando `precision`.
+- Oferta academica (datos y bloques):
+  - `Calendario` y `Malla curricular` aceptan URL PDF o contenido HTML.
+  - En bloques de documento se agrega modo de visualizacion `auto | pdf | html`.
+  - Se mantiene linea de `ultima actualizacion` en la tarjeta de documento.
+  - Metabox aclara que PDF es opcional y que, si no existe, se usa HTML.
+- CPT `oferta-academica`:
+  - Soporte `thumbnail` habilitado.
+  - `add_theme_support('post-thumbnails', ['oferta-academica'])` registrado en init del modulo.
+
+### Verificaciones
+- `php -l modules/oferta-academica/includes/class-oferta-data-migration.php`
+- `php -l modules/oferta-academica/init.php`
+- `php -l modules/oferta-academica/includes/class-oferta-blocks.php`
+- `php -l modules/oferta-academica/includes/class-oferta-data-metabox.php`
+- `php -l modules/oferta-academica/includes/class-cpt-oferta-academica.php`
+
+---
+
 ## Version 2.0.0 - 14 de marzo de 2026
 
 ### Resumen

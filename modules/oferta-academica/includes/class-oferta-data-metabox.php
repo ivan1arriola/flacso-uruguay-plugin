@@ -77,14 +77,14 @@ class Oferta_Data_MetaBox {
                         <th><label for="oferta_data_calendario"><?php esc_html_e('Calendario (PDF URL)', 'flacso-oferta-academica'); ?></label></th>
                         <td>
                             <input type="url" id="oferta_data_calendario" name="oferta_data[calendario]" value="<?php echo esc_attr($values['calendario']); ?>" class="regular-text" placeholder="https://..." />
-                            <p class="description"><?php esc_html_e('Se muestra como boton en la web y abre el PDF en una nueva pestaña.', 'flacso-oferta-academica'); ?></p>
+                            <p class="description"><?php esc_html_e('Opcional. Si se completa, se mostrara como PDF. Si queda vacio, se utilizara el contenido de Calendario Html.', 'flacso-oferta-academica'); ?></p>
                         </td>
                     </tr>
                     <tr>
                         <th><label for="oferta_data_malla_curricular"><?php esc_html_e('Malla curricular (PDF URL)', 'flacso-oferta-academica'); ?></label></th>
                         <td>
                             <input type="url" id="oferta_data_malla_curricular" name="oferta_data[malla_curricular]" value="<?php echo esc_attr($values['malla_curricular']); ?>" class="regular-text" placeholder="https://..." />
-                            <p class="description"><?php esc_html_e('Se muestra como boton en la web y abre el PDF en una nueva pestaña.', 'flacso-oferta-academica'); ?></p>
+                            <p class="description"><?php esc_html_e('Opcional. Si se completa, se mostrara como PDF. Si queda vacio, se utilizara el contenido de Malla Curricular Html.', 'flacso-oferta-academica'); ?></p>
                         </td>
                     </tr>
                     <tr>

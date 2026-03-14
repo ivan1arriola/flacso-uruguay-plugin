@@ -1,0 +1,28 @@
+{
+  "apiVersion": 2,
+  "name": "flacso-uruguay/oferta-academica-programa",
+  "title": "Oferta academica - Programa",
+  "category": "flacso-uruguay",
+  "icon": "welcome-learn-more",
+  "description": "Vista completa de una oferta academica para usar dentro de la pagina original del programa.",
+  "supports": {
+    "html": false,
+    "align": ["wide", "full"]
+  },
+  "attributes": {
+    "ofertaId": {
+      "type": "number",
+      "default": 0
+    },
+    "mostrarPreinscripcion": {
+      "type": "boolean",
+      "default": true
+    },
+    "mostrarFormulario": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "usesContext": ["postId", "postType"],
+  "textdomain": "flacso-oferta-academica"
+}

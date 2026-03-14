@@ -37,6 +37,7 @@
         var setAttributes = props.setAttributes;
         var ofertaId = parseInt(attrs.ofertaId || 0, 10);
         var currentUrl = (attrs.pdfUrlFallback || '').trim();
+        var displayMode = (attrs.displayMode || 'auto').toString();
 
         var _useState = useState('');
         var remoteUrl = _useState[0];
@@ -155,13 +156,28 @@
         infoLines.push(
             el(TextControl, {
                 label: __('URL del PDF', 'flacso-oferta-academica'),
-                help: __('Si el campo del CPT está vacío, este valor se usa como fallback.', 'flacso-oferta-academica'),
+                help: __('Si no hay URL, el bloque puede usar el HTML cargado en la oferta.', 'flacso-oferta-academica'),
                 value: attrs.pdfUrlFallback || '',
                 placeholder: 'https://...',
                 onChange: function (value) {
                     setAttributes({ pdfUrlFallback: value });
                     setSaveMessage('');
                     setSaveError('');
+                }
+            })
+        );
+
+        infoLines.push(
+            el(SelectControl, {
+                label: __('Formato a mostrar', 'flacso-oferta-academica'),
+                value: displayMode,
+                options: [
+                    { label: __('Automatico (PDF y si no, HTML)', 'flacso-oferta-academica'), value: 'auto' },
+                    { label: __('Solo PDF', 'flacso-oferta-academica'), value: 'pdf' },
+                    { label: __('Solo HTML', 'flacso-oferta-academica'), value: 'html' }
+                ],
+                onChange: function (value) {
+                    setAttributes({ displayMode: value || 'auto' });
                 }
             })
         );
@@ -194,7 +210,7 @@
                 isBusy: isSaving,
                 disabled: isSaving || !ofertaId || !currentUrl,
                 onClick: onSaveToCpt
-            }, __('Guardar URL en Oferta Académica', 'flacso-oferta-academica'))
+            }, __('Guardar URL PDF en Oferta Académica', 'flacso-oferta-academica'))
         );
 
         if (saveMessage) {
@@ -224,12 +240,13 @@
     registerBlockType('flacso-uruguay/dato-calendario', {
         attributes: {
             ofertaId: { type: 'integer', default: 0 },
-            pdfUrlFallback: { type: 'string', default: '' }
+            pdfUrlFallback: { type: 'string', default: '' },
+            displayMode: { type: 'string', default: 'auto' }
         },
         edit: function (props) {
             return DocumentoPdfBlockEdit(props, {
                 metaKey: 'calendario',
-                panelTitle: __('Calendario PDF', 'flacso-oferta-academica')
+                panelTitle: __('Calendario (PDF o HTML)', 'flacso-oferta-academica')
             });
         },
         save: function () {
@@ -240,12 +257,13 @@
     registerBlockType('flacso-uruguay/dato-malla-curricular', {
         attributes: {
             ofertaId: { type: 'integer', default: 0 },
-            pdfUrlFallback: { type: 'string', default: '' }
+            pdfUrlFallback: { type: 'string', default: '' },
+            displayMode: { type: 'string', default: 'auto' }
         },
         edit: function (props) {
             return DocumentoPdfBlockEdit(props, {
                 metaKey: 'malla_curricular',
-                panelTitle: __('Malla curricular PDF', 'flacso-oferta-academica')
+                panelTitle: __('Malla curricular (PDF o HTML)', 'flacso-oferta-academica')
             });
         },
         save: function () {
