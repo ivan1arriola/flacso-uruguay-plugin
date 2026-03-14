@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Registra los bloques de Gutenberg para Oferta AcadÃ©mica.
+ * Registra los bloques de Gutenberg para Oferta Académica.
  * Incluye los bloques completos y los datos individuales.
  */
 class Oferta_Blocks {
@@ -45,7 +45,7 @@ class Oferta_Blocks {
             true
         );
 
-        // Editor JS para bloques de documentos (calendario y malla curricular)
+        // Editor JS para bloques de documentos (calendario y Malla curricular)
         $documento_script_relative = 'modules/oferta-academica/assets/js/dato-documento-pdf-block.js';
         $documento_script_path     = FLACSO_URUGUAY_PATH . $documento_script_relative;
         $documento_script_url      = FLACSO_URUGUAY_URL . $documento_script_relative;
@@ -59,11 +59,11 @@ class Oferta_Blocks {
             true
         );
 
-        // Bloque dato: prÃ³ximo inicio
+        // Bloque dato: próximo inicio
         register_block_type('flacso-uruguay/dato-proximo-inicio', [
             'api_version'     => 2,
-            'title'           => __('Oferta AcadÃ©mica: PrÃ³ximo inicio', 'flacso-oferta-academica'),
-            'description'     => __('Muestra el prÃ³ximo inicio de la oferta acadÃ©mica seleccionada.', 'flacso-oferta-academica'),
+            'title'           => __('Oferta Académica: Próximo inicio', 'flacso-oferta-academica'),
+            'description'     => __('Muestra el próximo inicio de la oferta académica seleccionada.', 'flacso-oferta-academica'),
             'category'        => 'flacso-uruguay',
             'icon'            => 'calendar',
             'supports'        => [
@@ -82,7 +82,7 @@ class Oferta_Blocks {
         // Bloque dato: calendario (PDF o HTML)
         register_block_type('flacso-uruguay/dato-calendario', [
             'api_version'     => 2,
-            'title'           => __('Oferta AcadÃ©mica: Calendario', 'flacso-oferta-academica'),
+            'title'           => __('Oferta Académica: Calendario', 'flacso-oferta-academica'),
             'description'     => __('Muestra el calendario de la oferta seleccionada usando PDF o contenido HTML.', 'flacso-oferta-academica'),
             'category'        => 'flacso-uruguay',
             'icon'            => 'media-document',
@@ -107,11 +107,11 @@ class Oferta_Blocks {
             'render_callback' => [__CLASS__, 'render_dato_calendario'],
         ]);
 
-        // Bloque dato: malla curricular (PDF o HTML)
+        // Bloque dato: Malla curricular (PDF o HTML)
         register_block_type('flacso-uruguay/dato-malla-curricular', [
             'api_version'     => 2,
-            'title'           => __('Oferta AcadÃ©mica: Malla curricular', 'flacso-oferta-academica'),
-            'description'     => __('Muestra la malla curricular de la oferta seleccionada usando PDF o contenido HTML.', 'flacso-oferta-academica'),
+            'title'           => __('Oferta Académica: Malla curricular', 'flacso-oferta-academica'),
+            'description'     => __('Muestra la Malla curricular de la oferta seleccionada usando PDF o contenido HTML.', 'flacso-oferta-academica'),
             'category'        => 'flacso-uruguay',
             'icon'            => 'media-document',
             'supports'        => [
@@ -181,12 +181,12 @@ class Oferta_Blocks {
 
     public static function render_maestrias($attributes, $content): string {
         self::ensure_styles();
-        return Oferta_Renderer::render_by_taxonomy('MaestrÃ­a');
+        return Oferta_Renderer::render_by_taxonomy('Maestría');
     }
 
     public static function render_especializaciones($attributes, $content): string {
         self::ensure_styles();
-        return Oferta_Renderer::render_by_taxonomy('EspecializaciÃ³n');
+        return Oferta_Renderer::render_by_taxonomy('Especialización');
     }
 
     public static function render_diplomados($attributes, $content): string {
@@ -213,7 +213,7 @@ class Oferta_Blocks {
 
         if (!$oferta_id) {
             return $is_editor_preview
-                ? '<p>' . esc_html__('Selecciona una oferta acadÃ©mica.', 'flacso-oferta-academica') . '</p>'
+                ? '<p>' . esc_html__('Selecciona una oferta académica.', 'flacso-oferta-academica') . '</p>'
                 : '';
         }
 
@@ -223,7 +223,7 @@ class Oferta_Blocks {
             $formatted = __('A definir', 'flacso-oferta-academica');
         }
 
-        $label = esc_html__('PrÃ³ximo inicio', 'flacso-oferta-academica');
+        $label = esc_html__('Próximo inicio', 'flacso-oferta-academica');
 
         return '<div class="flacso-oferta-proximo-inicio" role="status" aria-live="polite">' .
             '<p class="flacso-oferta-proximo-inicio__pill">' .
@@ -238,7 +238,7 @@ class Oferta_Blocks {
     }
 
     public static function render_dato_malla_curricular($attributes, $content = ''): string {
-        return self::render_dato_documento_pdf((array) $attributes, 'malla_curricular', __('Malla Curricular', 'flacso-oferta-academica'));
+        return self::render_dato_documento_pdf((array) $attributes, 'malla_curricular', __('Malla curricular', 'flacso-oferta-academica'));
     }
 
     private static function render_dato_documento_pdf(array $attributes, string $meta_key, string $label): string {
@@ -249,7 +249,7 @@ class Oferta_Blocks {
 
         if (!$oferta_id) {
             return $is_editor_preview
-                ? '<p>' . esc_html__('Selecciona una oferta academica.', 'flacso-oferta-academica') . '</p>'
+                ? '<p>' . esc_html__('Selecciona una oferta académica.', 'flacso-oferta-academica') . '</p>'
                 : '';
         }
 
@@ -358,8 +358,8 @@ class Oferta_Blocks {
         if ($meta_key === 'malla_curricular') {
             return [
                 'icon' => 'bi-journal-bookmark',
-                'title' => __('Malla Curricular', 'flacso-oferta-academica'),
-                'description' => __('Consulta la malla curricular en PDF o en formato web.', 'flacso-oferta-academica'),
+                'title' => __('Malla curricular', 'flacso-oferta-academica'),
+                'description' => __('Consulta la Malla curricular en PDF o en formato web.', 'flacso-oferta-academica'),
             ];
         }
 

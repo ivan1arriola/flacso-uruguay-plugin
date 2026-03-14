@@ -20,6 +20,7 @@ define('FLACSO_MAIN_PAGE_VERSION', FLACSO_URUGUAY_VERSION); // Usar la versión 
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-settings.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-blocks.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-loader.php';
+require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-migrations.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-telegram-manager.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/flacso-consultas.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/flacso-raw-content-api.php';
@@ -41,6 +42,7 @@ require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/blocks/listar-paginas/bloc
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/blocks/otros-contactos/block.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/blocks/mapa-contacto/block.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/blocks/contacto-seccion/block.php';
+require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/blocks/inscripciones-banner/block.php';
 
 // Inicializar módulo
 add_action('init', function() {
@@ -62,6 +64,9 @@ add_action('init', function() {
     }
     if (class_exists('Flacso_Main_Page_Seminarios')) {
         Flacso_Main_Page_Seminarios::init();
+    }
+    if (class_exists('Flacso_Main_Page_Migrations')) {
+        Flacso_Main_Page_Migrations::init();
     }
 });
 

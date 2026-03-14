@@ -1,10 +1,42 @@
-## Versión 2.1.2 - 14 de marzo de 2026
+## Versin 2.1.3 - 14 de marzo de 2026
 
 ### Resumen
-- Se incorpora el bloque dinámico `flacso-uruguay/mapa-contacto`.
+- Se incorpora el bloque dinmico `flacso-uruguay/inscripciones-banner` con previsualizacin server-side en editor.
+- Se agrega compatibilidad legacy para `flacso/inscripciones-banner` (sin inserter) para evitar roturas en contenido existente.
+- Se agrega herramienta de migracin en admin para convertir bloques legacy al namespace actual.
+- Se corrigen problemas de codificacin (mojibake) y se normaliza UTF-8 sin BOM en archivos afectados.
+- Se incrementa la versin global del plugin a `2.1.3`.
+
+### Cambios detallados
+- Nuevo bloque `inscripciones-banner`:
+  - `modules/main-page/includes/blocks/inscripciones-banner/block.php`
+  - `modules/main-page/includes/blocks/inscripciones-banner/includes/class-flacso-inscripciones-banner-block.php`
+  - `modules/main-page/includes/blocks/inscripciones-banner/assets/block.js`
+  - `modules/main-page/includes/blocks/inscripciones-banner/assets/style.css`
+- Integracin en `main-page`:
+  - `modules/main-page/init.php`
+- Nueva utilidad de migraciones para `main-page`:
+  - `modules/main-page/includes/class-flacso-main-page-migrations.php`
+  - Nuevo men: `Gestor FLACSO > Migraciones`
+  - Funcin utilitaria: `flacso_migrate_inscripciones_banner_blocks()`
+- Correcciones de codificacin:
+  - `modules/oferta-academica/includes/class-oferta-blocks.php`
+  - Normalizacin UTF-8 sin BOM en archivos modificados
+
+### Verificaciones
+- `php -l modules/main-page/includes/blocks/inscripciones-banner/includes/class-flacso-inscripciones-banner-block.php`
+- `php -l modules/main-page/includes/class-flacso-main-page-migrations.php`
+- `php -l modules/main-page/init.php`
+- `php -l modules/oferta-academica/includes/class-oferta-blocks.php`
+
+---
+## Version 2.1.2 - 14 de marzo de 2026
+
+### Resumen
+- Se incorpora el bloque dinamico `flacso-uruguay/mapa-contacto`.
 - Se incorpora el bloque contenedor `flacso-uruguay/contacto-seccion` para agrupar `mapa-contacto` + `otros-contactos`.
-- La sección de contacto queda lista con plantilla por defecto y edición completa desde Gutenberg.
-- Se incrementa la versión global del plugin a `2.1.2`.
+- La seccion de contacto queda lista con plantilla por defecto y edicion completa desde Gutenberg.
+- Se incrementa la version global del plugin a `2.1.2`.
 
 ### Cambios detallados
 - Nuevo bloque `mapa-contacto`:
@@ -18,7 +50,7 @@
   - `modules/main-page/includes/blocks/contacto-seccion/includes/class-flacso-contacto-seccion-block.php`
   - `modules/main-page/includes/blocks/contacto-seccion/assets/block.js`
   - `modules/main-page/includes/blocks/contacto-seccion/assets/style.css`
-- Integración en `main-page`:
+- Integracion en `main-page`:
   - `modules/main-page/init.php`
 
 ### Verificaciones
@@ -30,14 +62,14 @@
 
 ---
 
-## Versión 2.1.1 - 14 de marzo de 2026
+## Version 2.1.1 - 14 de marzo de 2026
 
 ### Resumen
-- Se agrega el nuevo bloque dinámico `flacso-uruguay/otros-contactos` para Gutenberg.
-- El bloque permite edición completa en admin (título y lista de contactos), reordenamiento, alta/baja de filas y restauración de datos por defecto.
-- Se incorpora previsualización real en editor mediante `ServerSideRender`.
-- Se corrigen textos con tildes y se valida codificación UTF-8 sin BOM en archivos modificados.
-- Se incrementa la versión global del plugin a `2.1.1`.
+- Se agrega el nuevo bloque dinamico `flacso-uruguay/otros-contactos` para Gutenberg.
+- El bloque permite edicion completa en admin (titulo y lista de contactos), reordenamiento, alta/baja de filas y restauracion de datos por defecto.
+- Se incorpora previsualizacion real en editor mediante `ServerSideRender`.
+- Se corrigen textos con tildes y se valida codificacion UTF-8 sin BOM en archivos modificados.
+- Se incrementa la version global del plugin a `2.1.1`.
 
 ### Cambios detallados
 - Nuevo bloque:
@@ -46,7 +78,7 @@
   - `modules/main-page/includes/blocks/otros-contactos/assets/block.js`
   - `modules/main-page/includes/blocks/otros-contactos/assets/style.css`
   - `modules/main-page/includes/blocks/otros-contactos/assets/style-editor.css`
-- Integración del bloque en el módulo `main-page`:
+- Integracion del bloque en el modulo `main-page`:
   - `modules/main-page/init.php`
 - Versionado:
   - `flacso-uruguay.php` actualizado a `2.1.1`.
@@ -59,36 +91,36 @@
 
 ---
 
-## Versión 2.1.0 - 14 de marzo de 2026
+## Version 2.1.0 - 14 de marzo de 2026
 
 ### Resumen
-- Se incorpora una herramienta de migración administrada para pasar datos desde páginas legacy al CPT `oferta-academica`.
-- La migración usa mapeo fijo por tabla y toma `correo` y `proximo_inicio` exclusivamente desde esa tabla (no desde contenido de página).
+- Se incorpora una herramienta de migracion administrada para pasar datos desde paginas legacy al CPT `oferta-academica`.
+- La migracion usa mapeo fijo por tabla y toma `correo` y `proximo_inicio` exclusivamente desde esa tabla (no desde contenido de pagina).
 - Se consolida soporte de documentos en modo `PDF o HTML` para `Calendario` y `Malla curricular`.
-- Se habilita imagen destacada en `oferta-academica` y sincronización con página asociada.
+- Se habilita imagen destacada en `oferta-academica` y sincronizacion con pagina asociada.
 
 ### Cambios detallados
-- Migración de oferta académica:
+- Migracion de oferta academica:
   - Nuevo archivo: `modules/oferta-academica/includes/class-oferta-data-migration.php`.
-  - Nuevo submenú en admin: `Oferta Académica > Migración desde páginas`.
-  - Flujo completo: `Previsualización`, `Aplicar migración`, `Deshacer última migración`.
-  - Backup/restauración de metadatos y términos antes de aplicar cambios.
+  - Nuevo submenu en admin: `Oferta Academica > Migracion desde paginas`.
+  - Flujo completo: `Previsualizacion`, `Aplicar migracion`, `Deshacer ultima migracion`.
+  - Backup/restauracion de metadatos y terminos antes de aplicar cambios.
   - Mapeo con `page_id` (origen) y `NuevoID`/`cpt_id` (destino).
   - Resolucion robusta del destino si el ID fijo no existe (page adapter, abreviacion y titulo).
   - Creacion automatica de destino cuando falta CPT y se ejecuta en modo `run`.
-  - Extracción de secciones HTML (accordion), menciones, coordinación y equipos.
-  - Copia de imagen destacada desde página origen a oferta destino.
-- Reglas de negocio de migración:
+  - Extraccion de secciones HTML (accordion), menciones, coordinacion y equipos.
+  - Copia de imagen destacada desde pagina origen a oferta destino.
+- Reglas de negocio de migracion:
   - `correo` y `proximo_inicio` se fuerzan desde la tabla de mapeo.
   - `proximo_inicio` se normaliza a formato schema (`YYYY-MM-DD`) respetando `precision`.
-- Oferta académica (datos y bloques):
+- Oferta academica (datos y bloques):
   - `Calendario` y `Malla curricular` aceptan URL PDF o contenido HTML.
-  - En bloques de documento se agrega modo de visualización `auto | pdf | html`.
-  - Se mantiene línea de `última actualización` en la tarjeta de documento.
+  - En bloques de documento se agrega modo de visualizacion `auto | pdf | html`.
+  - Se mantiene linea de `ultima actualizacion` en la tarjeta de documento.
   - Metabox aclara que PDF es opcional y que, si no existe, se usa HTML.
 - CPT `oferta-academica`:
   - Soporte `thumbnail` habilitado.
-  - `add_theme_support('post-thumbnails', ['oferta-academica'])` registrado en init del módulo.
+  - `add_theme_support('post-thumbnails', ['oferta-academica'])` registrado en init del modulo.
 
 ### Verificaciones
 - `php -l modules/oferta-academica/includes/class-oferta-data-migration.php`
@@ -99,12 +131,12 @@
 
 ---
 
-## Versión 2.0.0 - 14 de marzo de 2026
+## Version 2.0.0 - 14 de marzo de 2026
 
 ### Resumen
-- Release mayor del módulo de página principal con estabilización del catálogo 3D y del bloque de `listar_paginas`.
-- Se corrige navegación, accesibilidad y comportamiento de click para que el catálogo sea usable en escritorio, touch y teclado.
-- Se corrige superposición de imagen/texto en la tarjeta destacada de Próximos eventos.
+- Release mayor del modulo de pagina principal con estabilizacion del catalogo 3D y del bloque de `listar_paginas`.
+- Se corrige navegacion, accesibilidad y comportamiento de click para que el catalogo sea usable en escritorio, touch y teclado.
+- Se corrige superposicion de imagen/texto en la tarjeta destacada de Proximos eventos.
 
 ### Cambios detallados
 - `listar_paginas`:
@@ -130,13 +162,13 @@
 ## Version 1.1.7 - 13 de marzo de 2026
 
 ### Resumen
-- Se agrega configuración en admin para mostrar u ocultar el botón flotante "Solicitar información".
-- Se mantiene el modal abierto luego del envío para que la salida sea controlada por el usuario.
-- Se consolida el envío al webhook en formato JSON (`application/json`).
-- Se considera correcto el envío cuando el webhook responde 2xx o 4xx, según requerimiento de integración.
-- Se exponen código y detalle de respuesta para usuarios logueados.
-- Se realizan correcciones ortográficas en textos del formulario ("Enviá tu consulta", entre otras).
-- Se valida codificación UTF-8 sin BOM en los archivos modificados.
+- Se agrega configuracion en admin para mostrar u ocultar el boton flotante "Solicitar informacion".
+- Se mantiene el modal abierto luego del envio para que la salida sea controlada por el usuario.
+- Se consolida el envio al webhook en formato JSON (`application/json`).
+- Se considera correcto el envio cuando el webhook responde 2xx o 4xx, segun requerimiento de integracion.
+- Se exponen codigo y detalle de respuesta para usuarios logueados.
+- Se realizan correcciones ortograficas en textos del formulario ("Envia tu consulta", entre otras).
+- Se valida codificacion UTF-8 sin BOM en los archivos modificados.
 
 ---
 
@@ -177,59 +209,59 @@
 
 ---
 
-# 📝 CHANGELOG - Cambios Realizados
+#  CHANGELOG - Cambios Realizados
 
-## Versión 1.0.1 - 31 de enero de 2026
+## Version 1.0.1 - 31 de enero de 2026
 
 ### Resumen
-- Asegura que el bloque de consultas encola `jquery` antes de ejecutar el script inline para que el AJAX y la página `/gracias/` funcionen correctamente.
-- Actualiza los assets de preinscripción y la documentación asociada para reflejar la nueva versión.
+- Asegura que el bloque de consultas encola `jquery` antes de ejecutar el script inline para que el AJAX y la pagina `/gracias/` funcionen correctamente.
+- Actualiza los assets de preinscripcion y la documentacion asociada para reflejar la nueva version.
 
 ---
 
-## Versión 1.0.0 - 29 de enero de 2026
+## Version 1.0.0 - 29 de enero de 2026
 
 ### Resumen
-Consolidación completa de 8 plugins en 1 plugin unificado (FLACSO Uruguay) con integración del sistema de preinscripciones y documentación API.
+Consolidacion completa de 8 plugins en 1 plugin unificado (FLACSO Uruguay) con integracion del sistema de preinscripciones y documentacion API.
 
 ---
 
-## 🎯 CAMBIOS PRINCIPALES
+##  CAMBIOS PRINCIPALES
 
-### 1. Integración del Módulo Preinscripciones ⭐
+### 1. Integracion del Modulo Preinscripciones 
 
 **Archivo:** `modules/preinscripcion/init.php`
 
 ```
-Cambio: Inicialización con hook timing correcto
+Cambio: Inicializacion con hook timing correcto
 De: add_action('plugins_loaded', ...)
 A:  add_action('init', ..., priority 5)
-Razón: Asegurar que rewrite rules se registren correctamente
+Razon: Asegurar que rewrite rules se registren correctamente
 ```
 
-**Estado:** ✅ Completado
+**Estado:**  Completado
 
 ---
 
-### 2. Documentación API REST ⭐
+### 2. Documentacion API REST 
 
 **Archivo:** `modules/seminarios/API.md` (NUEVO)
 
 ```
 Contenido:
-- Descripción de 10 endpoints
-- Parámetros y respuestas JSON
+- Descripcion de 10 endpoints
+- Parametros y respuestas JSON
 - Esquemas de datos
-- Códigos HTTP
+- Codigos HTTP
 - Ejemplos cURL
-- Autenticación y permisos
+- Autenticacion y permisos
 ```
 
-**Estado:** ✅ Completado
+**Estado:**  Completado
 
 ---
 
-### 3. Documentación Preinscripciones ⭐
+### 3. Documentacion Preinscripciones 
 
 **Archivos NUEVOS:**
 - `modules/preinscripcion/INTEGRACION.md`
@@ -238,28 +270,28 @@ Contenido:
 
 ```
 INTEGRACION.md:
-- Arquitectura técnica completa
+- Arquitectura tecnica completa
 - Sistema de URLs virtuales
 - Almacenamiento de datos
-- Métodos principales
+- Metodos principales
 
 GUIA_PREINSCRIPCIONES.md:
 - Paso a paso para usuarios
-- Configuración de webhook
-- Gestión de categorías
+- Configuracion de webhook
+- Gestion de categorias
 - Troubleshooting
 
 FEATURES.md:
-- Lista de características
-- Referencia técnica rápida
-- Configuración almacenada
+- Lista de caracteristicas
+- Referencia tecnica rapida
+- Configuracion almacenada
 ```
 
-**Estado:** ✅ Completado
+**Estado:**  Completado
 
 ---
 
-### 4. Documentación de Consolidación
+### 4. Documentacion de Consolidacion
 
 **Archivos NUEVOS:**
 - `CONSOLIDACION_COMPLETA.md`
@@ -269,37 +301,37 @@ FEATURES.md:
 
 ```
 CONSOLIDACION_COMPLETA.md:
-- Documento de 200+ líneas
-- Describe todos los módulos
+- Documento de 200+ lineas
+- Describe todos los modulos
 - Problemas resueltos
-- Estadísticas finales
+- Estadisticas finales
 
 RESUMEN_EJECUTIVO.md:
 - Resumen ejecutivo (2000+ palabras)
-- Lo que se entregó
-- Cómo usar el sistema
-- Números y métricas
+- Lo que se entrego
+- Como usar el sistema
+- Numeros y metricas
 
 INDICE_DOCUMENTACION.md:
-- Navegación completa de docs
+- Navegacion completa de docs
 - Rutas de aprendizaje
-- Búsqueda por palabra clave
+- Busqueda por palabra clave
 - Checklists
 
 VALIDACION_FINAL.md:
 - Checklist de completitud
 - 60+ items validados
-- Métricas de éxito
-- Estado de producción
+- Metricas de exito
+- Estado de produccion
 ```
 
-**Estado:** ✅ Completado
+**Estado:**  Completado
 
 ---
 
-## 🔧 CAMBIOS TÉCNICOS
+##  CAMBIOS TECNICOS
 
-### Módulo Preinscripciones
+### Modulo Preinscripciones
 
 #### init.php
 ```php
@@ -314,24 +346,24 @@ add_action('init', function() {
 }, 5);
 ```
 
-**Razón:** Asegurar que rewrite rules se registren en init hook, no en plugins_loaded
+**Razon:** Asegurar que rewrite rules se registren en init hook, no en plugins_loaded
 
 ---
 
-## 📊 ESTADISTICAS DE CAMBIOS
+##  ESTADISTICAS DE CAMBIOS
 
 ### Archivos Creados
-- ✅ 4 documentos de módulos preinscripción
-- ✅ 4 documentos de consolidación
-- ✅ 1 archivo API documentation
-- **Total:** 9 archivos documentación ✅
+-  4 documentos de modulos preinscripcion
+-  4 documentos de consolidacion
+-  1 archivo API documentation
+- **Total:** 9 archivos documentacion 
 
 ### Archivos Modificados
-- ✅ 1 archivo init.php (preinscripción)
-- **Total:** 1 archivo código ✅
+-  1 archivo init.php (preinscripcion)
+- **Total:** 1 archivo codigo 
 
-### Líneas de Código Documentación
-- **Aproximado:** 3,000+ líneas ✅
+### Lineas de Codigo Documentacion
+- **Aproximado:** 3,000+ lineas 
 
 ### Ejemplos Incluidos
 - **CURL:** 10+ ejemplos
@@ -341,70 +373,70 @@ add_action('init', function() {
 
 ---
 
-## 🎯 CARACTERISTICAS NUEVAS DOCUMENTADAS
+##  CARACTERISTICAS NUEVAS DOCUMENTADAS
 
 ### Panel de Preinscripciones
 
 ```
 Paso 1: Webhook Configuration
 - Campo URL (text input)
-- Validación esc_url_raw()
+- Validacion esc_url_raw()
 - Almacenamiento en wp_options
 
-Paso 2: Categorías de Programas
-- Nombre de categoría (text)
-- Página padre (dropdown)
-- Validación de existencia (✓/✗)
-- Agregar nuevas dinámicamente
+Paso 2: Categorias de Programas
+- Nombre de categoria (text)
+- Pagina padre (dropdown)
+- Validacion de existencia (/)
+- Agregar nuevas dinamicamente
 
-Paso 3: Gestión de Programas
+Paso 3: Gestion de Programas
 - Checkbox por programa
 - Grid responsivo (4 cols)
 - Vista previa de URL
-- Botón "Ver formulario"
+- Boton "Ver formulario"
 ```
 
-✅ Todo documentado
+ Todo documentado
 
 ---
 
-## 📚 DOCUMENTACION CREADA
+##  DOCUMENTACION CREADA
 
 ### 1. API.md (Seminarios)
 
 **Secciones:**
-- Descripción general
+- Descripcion general
 - 10 endpoints completos
 - Esquemas de datos
-- Códigos HTTP
-- Autenticación
+- Codigos HTTP
+- Autenticacion
 - Ejemplos
 
-**Líneas:** 350+
+**Lineas:** 350+
 **Ejemplos:** 10+
 **Tablas:** 5+
 
 ---
 
-### 2. INTEGRACION.md (Preinscripción)
+### 2. INTEGRACION.md (Preinscripcion)
 
 **Secciones:**
-- Estado e integración
-- Ubicación y archivos
-- Activación
+- Estado e integracion
+- Ubicacion y archivos
+- Activacion
 - Panel admin explicado
 - Sistema URLs virtuales
-- Formulario validación
-- Envío de datos (AJAX)
-- Migración de datos
+- Formulario validacion
+- Envio de datos (AJAX)
+- Migracion de datos
 - Seguridad
 - Almacenamiento
-- Métodos principales
+- Metodos principales
 - Traits detallados
 
-**Líneas:** 600+
+**Lineas:** 600+
 **Archivos:** 14
-**Métodos:** 20+
+**Metodos:** 20+
 
 ---
 
@@ -413,21 +445,21 @@ Paso 3: Gestión de Programas
 **Secciones:**
 - Acceso al panel
 - Paso 1: Webhook
-- Paso 2: Categorías
+- Paso 2: Categorias
 - Paso 3: Programas
-- Migración
+- Migracion
 - Campos de formulario
 - Recibir datos en Sheets
 - Troubleshooting
 - FAQ
 
-**Líneas:** 400+
+**Lineas:** 400+
 **Pasos:** 20+
 **Soluciones:** 8+
 
 ---
 
-### 4. FEATURES.md (Preinscripción)
+### 4. FEATURES.md (Preinscripcion)
 
 **Secciones:**
 - Acceso
@@ -435,14 +467,14 @@ Paso 3: Gestión de Programas
 - URLs virtuales
 - Campos formulario
 - Flujo de datos
-- Configuración técnica
+- Configuracion tecnica
 - Acciones AJAX
 - wp_options
 - Capacidades
 - Debug
 
-**Líneas:** 300+
-**Características:** 20+
+**Lineas:** 300+
+**Caracteristicas:** 20+
 
 ---
 
@@ -450,19 +482,19 @@ Paso 3: Gestión de Programas
 
 **Secciones:**
 - Resumen ejecutivo
-- Consolidación 8→1
+- Consolidacion 8->1
 - Arquitectura final
-- Funcionalidades por módulo
-- Integración en plugin principal
-- Estadísticas
+- Funcionalidades por modulo
+- Integracion en plugin principal
+- Estadisticas
 - Problemas resueltos
 - Estructura de directorios
-- Documentación creada
+- Documentacion creada
 - Progress tracking
 - Checklist final
 
-**Líneas:** 800+
-**Módulos:** 10
+**Lineas:** 800+
+**Modulos:** 10
 **Problemas:** 6 resueltos
 
 ---
@@ -471,18 +503,18 @@ Paso 3: Gestión de Programas
 
 **Secciones:**
 - Objetivo alcanzado
-- Consolidación 8→1
+- Consolidacion 8->1
 - Menus de admin
 - Funcionalidades principales
 - Problemas solucionados
-- Números finales
-- Cómo usar
-- Antes vs Después
-- Validación
-- Próximos pasos
+- Numeros finales
+- Como usar
+- Antes vs Despues
+- Validacion
+- Proximos pasos
 
-**Líneas:** 500+
-**Antes/Después:** Comparación completa
+**Lineas:** 500+
+**Antes/Despues:** Comparacion completa
 
 ---
 
@@ -490,16 +522,16 @@ Paso 3: Gestión de Programas
 
 **Secciones:**
 - Rutas de aprendizaje
-- Documentación por módulo
-- Guías por tarea
-- Búsqueda rápida
+- Documentacion por modulo
+- Guias por tarea
+- Busqueda rapida
 - Estructura de docs
 - Rutas de aprendizaje (3 niveles)
-- Referencias rápidas
-- Checklist de revisión
-- Búsqueda por palabra clave
+- Referencias rapidas
+- Checklist de revision
+- Busqueda por palabra clave
 
-**Líneas:** 400+
+**Lineas:** 400+
 **Links:** 30+
 **Tablas:** 8+
 
@@ -509,81 +541,81 @@ Paso 3: Gestión de Programas
 
 **Secciones:**
 - Checklist completitud
-- Consolidación 8→1
-- Módulos implementados
+- Consolidacion 8->1
+- Modulos implementados
 - Menus admin
 - REST API
 - Preinscripciones
 - Shortcodes
 - Custom blocks
 - Problemas solucionados
-- Documentación
+- Documentacion
 - Seguridad
 - Responsive
 - Testing
-- Estadísticas finales
+- Estadisticas finales
 - Checklist final
 
-**Líneas:** 600+
+**Lineas:** 600+
 **Items validados:** 60+
 **Checkboxes:** 90+
 
 ---
 
-## 🔍 VALIDACIONES REALIZADAS
+##  VALIDACIONES REALIZADAS
 
 ### Completitud Funcional
-- ✅ 10 módulos operativos
-- ✅ 5 CPTs funcionales
-- ✅ 12+ custom blocks
-- ✅ 13+ shortcodes
-- ✅ 10+ endpoints REST
+-  10 modulos operativos
+-  5 CPTs funcionales
+-  12+ custom blocks
+-  13+ shortcodes
+-  10+ endpoints REST
 
-### Documentación
-- ✅ 10 documentos principales
-- ✅ 50+ páginas
-- ✅ 30+ ejemplos
-- ✅ 20+ tablas
+### Documentacion
+-  10 documentos principales
+-  50+ paginas
+-  30+ ejemplos
+-  20+ tablas
 
 ### Seguridad
-- ✅ Nonces implementados
-- ✅ Sanitización completa
-- ✅ Validación de entrada
-- ✅ Escaping de salida
+-  Nonces implementados
+-  Sanitizacion completa
+-  Validacion de entrada
+-  Escaping de salida
 
 ### Testing
-- ✅ 0 errores PHP
-- ✅ 0 warnings
-- ✅ 0 notices
-- ✅ Todas las funciones validadas
+-  0 errores PHP
+-  0 warnings
+-  0 notices
+-  Todas las funciones validadas
 
 ---
 
-## 📈 IMPACTO
+##  IMPACTO
 
 ### Antes del Cambio
 ```
-❌ 8 plugins separados
-❌ Conflictos de código
-❌ Documentación incompleta
-❌ Preinscripciones sin interfaz
-❌ API sin documentación
+ 8 plugins separados
+ Conflictos de codigo
+ Documentacion incompleta
+ Preinscripciones sin interfaz
+ API sin documentacion
 ```
 
-### Después del Cambio
+### Despues del Cambio
 ```
-✅ 1 plugin unificado
-✅ 0 conflictos
-✅ Documentación completa (3,000+ líneas)
-✅ Preinscripciones con panel 3-pasos
-✅ API completamente documentada
+ 1 plugin unificado
+ 0 conflictos
+ Documentacion completa (3,000+ lineas)
+ Preinscripciones con panel 3-pasos
+ API completamente documentada
 ```
 
 ---
 
-## 🎯 ITEMS COMPLETADOS
+##  ITEMS COMPLETADOS
 
-### Consolidación
+### Consolidacion
 - [x] Integrar flacso-main-page
 - [x] Integrar flacso_shortcodes_cartas
 - [x] Integrar formulario-preinscripcion_posgrado
@@ -595,62 +627,62 @@ Paso 3: Gestión de Programas
 - [x] Todos los menus aparecen
 - [x] Sin errores PHP
 
-**Total:** 10/10 ✅
+**Total:** 10/10 
 
-### Documentación
+### Documentacion
 - [x] API REST documentada
 - [x] Preinscripciones documentada (3 archivos)
-- [x] Consolidación documentada
-- [x] Índice de navegación creado
-- [x] Validación final creada
-- [x] Guías de usuario creadas
-- [x] Ejemplos de código incluidos
+- [x] Consolidacion documentada
+- [x] Indice de navegacion creado
+- [x] Validacion final creada
+- [x] Guias de usuario creadas
+- [x] Ejemplos de codigo incluidos
 - [x] Troubleshooting incluido
 
-**Total:** 8/8 ✅
+**Total:** 8/8 
 
-### Implementación
+### Implementacion
 - [x] Hook timing corregido
 - [x] Constantes renombradas (24 archivos)
-- [x] Inicialización consistente
+- [x] Inicializacion consistente
 - [x] URLs virtuales funcionales
-- [x] Formularios con validación
-- [x] Integración Google Sheets
-- [x] Sistema de migración
+- [x] Formularios con validacion
+- [x] Integracion Google Sheets
+- [x] Sistema de migracion
 - [x] Interfaz responsive
 
-**Total:** 8/8 ✅
+**Total:** 8/8 
 
 ---
 
-## 🚀 DEPLOYMENT
+##  DEPLOYMENT
 
-### Requisitos de Producción
-- ✅ WordPress 6.0+
-- ✅ PHP 7.4+
-- ✅ MySQL 5.7+
-- ✅ SSL/HTTPS
+### Requisitos de Produccion
+-  WordPress 6.0+
+-  PHP 7.4+
+-  MySQL 5.7+
+-  SSL/HTTPS
 
-### Pasos de Instalación
-1. ✅ Copiar carpeta flacso-uruguay/
-2. ✅ Activar plugin en WordPress
-3. ✅ Guardar enlaces permanentes
-4. ✅ Configurar preinscripciones
-5. ✅ Probar funcionalidades
+### Pasos de Instalacion
+1.  Copiar carpeta flacso-uruguay/
+2.  Activar plugin en WordPress
+3.  Guardar enlaces permanentes
+4.  Configurar preinscripciones
+5.  Probar funcionalidades
 
 ### Backup Disponible
-- ✅ Plugins originales en `backup/`
-- ✅ 8 ZIP files respaldados
-- ✅ Recuperables en cualquier momento
+-  Plugins originales en `backup/`
+-  8 ZIP files respaldados
+-  Recuperables en cualquier momento
 
 ---
 
-## 📝 REGISTRO DE CAMBIOS POR ARCHIVO
+##  REGISTRO DE CAMBIOS POR ARCHIVO
 
 ### flacso-uruguay/modules/preinscripcion/init.php
 
 ```diff
-Línea 19:
+Linea 19:
 - add_action('plugins_loaded', function() {
 + add_action('init', function() {
     FLACSO_Formulario_Preinscripcion_Final::get_instance();
@@ -658,7 +690,7 @@ Línea 19:
 + }, 5);
 ```
 
-**Razón:** Garantizar que los rewrite rules se registren en el hook correcto
+**Razon:** Garantizar que los rewrite rules se registren en el hook correcto
 
 **Impacto:** Las URLs virtuales de preinscripciones ahora funcionan correctamente
 
@@ -667,113 +699,113 @@ Línea 19:
 ### Archivos NUEVOS Creados
 
 ```
-📁 modules/seminarios/
-   📄 API.md (350+ líneas)
+ modules/seminarios/
+    API.md (350+ lineas)
 
-📁 modules/preinscripcion/
-   📄 INTEGRACION.md (600+ líneas)
-   📄 GUIA_PREINSCRIPCIONES.md (400+ líneas)
-   📄 FEATURES.md (300+ líneas)
+ modules/preinscripcion/
+    INTEGRACION.md (600+ lineas)
+    GUIA_PREINSCRIPCIONES.md (400+ lineas)
+    FEATURES.md (300+ lineas)
 
-📁 flacso-uruguay/
-   📄 CONSOLIDACION_COMPLETA.md (800+ líneas)
-   📄 RESUMEN_EJECUTIVO.md (500+ líneas)
-   📄 INDICE_DOCUMENTACION.md (400+ líneas)
-   📄 VALIDACION_FINAL.md (600+ líneas)
+ flacso-uruguay/
+    CONSOLIDACION_COMPLETA.md (800+ lineas)
+    RESUMEN_EJECUTIVO.md (500+ lineas)
+    INDICE_DOCUMENTACION.md (400+ lineas)
+    VALIDACION_FINAL.md (600+ lineas)
 ```
 
-**Total:** 9 archivos, 3,950+ líneas de documentación
+**Total:** 9 archivos, 3,950+ lineas de documentacion
 
 ---
 
-## ✨ MEJORAS IMPLEMENTADAS
+##  MEJORAS IMPLEMENTADAS
 
 ### Funcionalidades Nuevas
 - [x] Panel 3-pasos para preinscripciones
-- [x] URLs virtuales dinámicas
+- [x] URLs virtuales dinamicas
 - [x] Editor de tablas de precios
-- [x] Sistema de migración de datos
+- [x] Sistema de migracion de datos
 - [x] API REST documentada
 
-### Mejoras de Documentación
-- [x] Documentación técnica completa
-- [x] Guías de usuario paso a paso
-- [x] Índice de navegación
-- [x] Ejemplos de código
+### Mejoras de Documentacion
+- [x] Documentacion tecnica completa
+- [x] Guias de usuario paso a paso
+- [x] Indice de navegacion
+- [x] Ejemplos de codigo
 - [x] Troubleshooting
 
 ### Mejoras de Calidad
 - [x] Hook timing corregido
 - [x] Constantes renombradas
-- [x] Inicialización consistente
+- [x] Inicializacion consistente
 - [x] Seguridad validada
 - [x] Testing completado
 
 ---
 
-## 🎓 APRENDIZAJES DOCUMENTADOS
+##  APRENDIZAJES DOCUMENTADOS
 
 ### Para Usuarios
-- Cómo configurar webhook
-- Cómo activar programas
-- Cómo probar preinscripciones
-- Cómo resolver problemas comunes
+- Como configurar webhook
+- Como activar programas
+- Como probar preinscripciones
+- Como resolver problemas comunes
 
 ### Para Desarrolladores
 - Arquitectura modular
 - Sistema de carga
-- Patrones de inicialización
+- Patrones de inicializacion
 - REST API endpoints
 - Rewrite rules
 - URL virtuales
-- Validación de formularios
-- Integración Google Sheets
+- Validacion de formularios
+- Integracion Google Sheets
 
 ---
 
-## 📊 RESUMEN NUMÉRICO
+##  RESUMEN NUMERICO
 
-| Métrica | Cantidad |
+| Metrica | Cantidad |
 |---------|----------|
 | **Archivos creados** | 9 |
-| **Líneas documentación** | 3,950+ |
-| **Ejemplos código** | 30+ |
+| **Lineas documentacion** | 3,950+ |
+| **Ejemplos codigo** | 30+ |
 | **Tablas referencia** | 20+ |
 | **Endpoints API** | 10 |
 | **Shortcodes** | 13+ |
 | **Custom blocks** | 12+ |
-| **Módulos** | 10 |
+| **Modulos** | 10 |
 | **CPTs** | 5 |
-| **Taxonomías** | 8+ |
+| **Taxonomias** | 8+ |
 | **Errores corregidos** | 6 |
 | **Items validados** | 90+ |
 
 ---
 
-## 🎉 RESULTADO FINAL
+##  RESULTADO FINAL
 
 ```
 ANTES:
 8 plugins separados
-Documentación incompleta
+Documentacion incompleta
 Funcionalidades sin interfaz
 API sin documentar
 
-DESPUÉS:
-1 plugin unificado ✅
-Documentación exhaustiva ✅
-Sistema preinscripciones completo ✅
-API completamente documentada ✅
+DESPUES:
+1 plugin unificado 
+Documentacion exhaustiva 
+Sistema preinscripciones completo 
+API completamente documentada 
 
-Status: ✅ 100% COMPLETADO
-Listo para producción: ✅ SÍ
-Documentado: ✅ SÍ (3,950+ líneas)
-Validado: ✅ SÍ (90+ items)
+Status:  100% COMPLETADO
+Listo para produccion:  SI
+Documentado:  SI (3,950+ lineas)
+Validado:  SI (90+ items)
 ```
 
 ---
 
-## 📞 PROXIMOS PASOS
+##  PROXIMOS PASOS
 
 ### Inmediatos
 1. Revisar RESUMEN_EJECUTIVO.md
@@ -783,12 +815,12 @@ Validado: ✅ SÍ (90+ items)
 
 ### Opcionales
 - Crear tests unitarios
-- Agregar más integraciones
+- Agregar mas integraciones
 - Crear dashboards analytics
 - Expandir shortcodes
 
 ---
 
 **Changelog completado:** 29 de enero de 2026  
-**Versión:** 1.0.1  
-**Status:** ✅ LISTO PARA PRODUCCION
+**Version:** 1.0.1  
+**Status:**  LISTO PARA PRODUCCION
