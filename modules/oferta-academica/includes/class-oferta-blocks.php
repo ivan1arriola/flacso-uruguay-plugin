@@ -187,6 +187,8 @@ class Oferta_Blocks {
     }
 
     public static function render_dato_proximo_inicio($attributes, $content = ''): string {
+        self::ensure_styles();
+
         $oferta_id = self::resolve_oferta_id((array) $attributes);
 
         $is_editor_preview = self::is_editor_preview_context();
@@ -203,11 +205,12 @@ class Oferta_Blocks {
             $formatted = __('A definir', 'flacso-oferta-academica');
         }
 
-        $label = esc_html__('Próximo inicio:', 'flacso-oferta-academica');
+        $label = esc_html__('Próximo inicio', 'flacso-oferta-academica');
 
-        return '<div class="flacso-oferta-proximo-inicio">' .
-            '<p class="has-text-align-center has-theme-palette-9-color has-theme-palette-1-background-color has-text-color has-background has-link-color" style="border-radius:20px;padding:0.6rem 1rem;">' .
-            '<strong>' . $label . '</strong> ' . esc_html($formatted) .
+        return '<div class="flacso-oferta-proximo-inicio" role="status" aria-live="polite">' .
+            '<p class="flacso-oferta-proximo-inicio__pill">' .
+            '<span class="flacso-oferta-proximo-inicio__label">' . $label . '</span>' .
+            '<strong class="flacso-oferta-proximo-inicio__value">' . esc_html($formatted) . '</strong>' .
             '</p>' .
             '</div>';
     }
