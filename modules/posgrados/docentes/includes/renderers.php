@@ -393,10 +393,14 @@ function dp_docente_destacado($atts = []) {
         </a>';
     }
 
+    static $styles_printed = false;
+    $should_print_styles = !$styles_printed;
+    $styles_printed = true;
+
     ob_start();
     ?>
     <section class="card border-0 shadow-sm docente-destacado" aria-labelledby="dest-<?php echo esc_attr($doc_id); ?>">
-        <div class="card-body p-4 p-md-5">
+        <div class="card-body p-3 p-md-4">
             <?php if ($admin): ?>
                 <div class="docente-destacado__toolbar"><?php echo $admin; ?></div>
             <?php endif; ?>
@@ -422,99 +426,154 @@ function dp_docente_destacado($atts = []) {
             <?php endif; ?>
         </div>
     </section>
+    <?php if ($should_print_styles): ?>
     <style>
     .docente-destacado {
         --dd-primary: var(--global-palette1, #1d3a72);
-        --dd-primary-soft: rgba(29, 58, 114, 0.12);
-        --dd-border: rgba(23, 43, 79, 0.16);
+        --dd-primary-soft: rgba(29, 58, 114, 0.1);
+        --dd-border: rgba(17, 39, 74, 0.16);
         --dd-text: var(--global-palette4, #1f2937);
-        --dd-muted: var(--global-palette5, #5f6b7a);
-        transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
-        border-radius: 1.15rem;
-        border: 1px solid var(--dd-border);
-        overflow: hidden;
+        --dd-muted: var(--global-palette5, #657487);
         position: relative;
+        overflow: hidden;
+        border-radius: 1.2rem;
+        border: 1px solid var(--dd-border);
         background:
-            radial-gradient(120% 90% at 100% -10%, rgba(58, 131, 187, 0.12), transparent 56%),
-            linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+            radial-gradient(115% 80% at 100% -8%, rgba(80, 147, 198, 0.14), transparent 58%),
+            linear-gradient(170deg, #ffffff 0%, #f4f8ff 58%, #f8fbff 100%);
+        transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+        box-shadow: 0 .85rem 1.8rem rgba(15, 23, 42, .08) !important;
     }
     .docente-destacado::before {
         content: "";
         position: absolute;
         inset: 0 0 auto 0;
         height: 4px;
-        background: linear-gradient(90deg, var(--dd-primary) 0%, #2f6ca6 45%, #58a2d8 100%);
+        background: linear-gradient(90deg, var(--dd-primary) 0%, #2f6ca6 46%, #62aad9 100%);
         pointer-events: none;
     }
-    @media (prefers-reduced-motion: reduce) { .docente-destacado { transition: none; } }
-    .docente-destacado:hover { transform: translateY(-3px); box-shadow: 0 1.1rem 2.2rem rgba(15,23,42,.14)!important; border-color: rgba(29,58,114,.24); }
-    .docente-destacado__toolbar { display: flex; justify-content: flex-end; margin-bottom: .6rem; }
-    .docente-destacado__header { display: flex; flex-direction: column; align-items: center; gap: .95rem; text-align: center; }
-    .docente-destacado__avatar-wrap { line-height: 0; max-width: 100%; filter: drop-shadow(0 8px 18px rgba(15,23,42,.14)); }
+    .docente-destacado:hover {
+        transform: translateY(-2px);
+        border-color: rgba(29, 58, 114, 0.26);
+        box-shadow: 0 1.05rem 2rem rgba(15, 23, 42, .12) !important;
+    }
+    .docente-destacado .card-body {
+        padding: clamp(1rem, 2vw, 1.45rem) !important;
+    }
+    .docente-destacado__toolbar {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: .55rem;
+    }
+    .docente-destacado__header {
+        display: grid;
+        grid-template-columns: clamp(108px, 11.5vw, 148px) minmax(0, 1fr);
+        align-items: center;
+        gap: .95rem;
+        text-align: left;
+    }
+    .docente-destacado__avatar-wrap {
+        width: 100%;
+        max-width: 148px;
+        line-height: 0;
+        filter: drop-shadow(0 8px 16px rgba(15, 23, 42, .12));
+    }
     .docente-destacado__avatar-wrap .dp-docente-avatar,
     .docente-destacado__avatar-wrap .dp-docente-avatar__img {
-        width: clamp(120px, 27vw, 205px) !important;
-        height: clamp(120px, 27vw, 205px) !important;
-        border-radius: 1rem;
+        width: 100% !important;
+        height: auto !important;
+        aspect-ratio: 1 / 1;
+        border-radius: 1rem !important;
         object-fit: cover;
     }
-    .docente-destacado__title { width: min(100%, 74ch); }
+    .docente-destacado__title {
+        min-width: 0;
+    }
     .docente-destacado__title h2 {
+        margin: 0 0 .42rem !important;
         color: var(--dd-primary);
-        font-size: clamp(1.7rem, 2.6vw, 2.45rem);
+        font-size: clamp(1.4rem, 2.1vw, 2.05rem);
         line-height: 1.14;
-        letter-spacing: -0.015em;
-        margin-bottom: .55rem !important;
+        letter-spacing: -0.012em;
         overflow-wrap: anywhere;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
     }
     .docente-destacado__role {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         margin: 0;
-        padding: .38rem .9rem;
+        padding: .34rem .82rem;
         border-radius: 999px;
-        border: 1px solid rgba(29, 58, 114, 0.24);
+        border: 1px solid rgba(29, 58, 114, 0.2);
         background: var(--dd-primary-soft);
         color: var(--dd-primary);
         font-weight: 700;
-        font-size: clamp(.96rem, 1.45vw, 1.22rem);
+        font-size: clamp(.92rem, 1.25vw, 1.12rem);
         line-height: 1.2;
+        max-width: 100%;
         overflow-wrap: anywhere;
     }
     .docente-destacado__prefijo {
+        margin-top: .28rem;
         color: var(--dd-muted);
-        font-size: clamp(.99rem, 1.28vw, 1.17rem);
-        line-height: 1.45;
+        font-size: clamp(.96rem, 1.15vw, 1.08rem);
+        line-height: 1.42;
         overflow-wrap: anywhere;
     }
     .docente-destacado .cv-completo {
-        margin-top: 1rem !important;
-        padding-top: 1rem;
+        margin-top: .9rem !important;
+        padding-top: .9rem;
         border-top: 1px solid rgba(17, 24, 39, .1);
         color: var(--dd-text);
-        line-height: 1.72;
-        font-size: clamp(1.02rem, 1.16vw, 1.18rem);
+        font-size: clamp(.99rem, 1.04vw, 1.08rem);
+        line-height: 1.66;
         overflow-wrap: anywhere;
     }
-    .docente-destacado .cv-completo p { margin-bottom: .92rem; }
+    .docente-destacado .cv-completo p { margin-bottom: .82rem; }
     .docente-destacado .cv-completo ul,
-    .docente-destacado .cv-completo ol { padding-left: 1.3rem; margin-bottom: .92rem; }
+    .docente-destacado .cv-completo ol { padding-left: 1.2rem; margin-bottom: .82rem; }
     .docente-destacado .cv-completo > :last-child { margin-bottom: 0; }
     .docente-destacado__edit {
-        border-radius: 999px;
-        padding-inline: 1rem;
+        border-radius: 12px;
+        padding: .36rem .72rem;
+        min-height: 0 !important;
+        font-size: .95rem;
         font-weight: 700;
-        box-shadow: 0 .55rem 1rem rgba(29,58,114,.22);
+        border: 1px solid rgba(29, 58, 114, .16);
+        background: rgba(255, 255, 255, .92);
+        color: var(--dd-primary);
+        box-shadow: 0 .55rem 1rem rgba(15, 23, 42, .1);
     }
     .docente-destacado__edit:hover { transform: translateY(-1px); }
+    @media (prefers-reduced-motion: reduce) {
+        .docente-destacado,
+        .docente-destacado__edit {
+            transition: none !important;
+        }
+    }
     @media (max-width: 767.98px) {
-        .docente-destacado .card-body { padding-top: 1.4rem !important; }
-        .docente-destacado__toolbar { justify-content: center; margin-bottom: .75rem; }
+        .docente-destacado__toolbar { justify-content: center; margin-bottom: .7rem; }
         .docente-destacado__edit { width: 100%; max-width: 320px; justify-content: center; }
-        .docente-destacado .cv-completo { font-size: 1rem; line-height: 1.66; }
+        .docente-destacado__header {
+            grid-template-columns: 1fr;
+            justify-items: center;
+            text-align: center;
+            gap: .8rem;
+        }
+        .docente-destacado__title h2 {
+            font-size: clamp(1.32rem, 5.6vw, 1.72rem);
+        }
+        .docente-destacado .cv-completo {
+            font-size: .98rem;
+            line-height: 1.62;
+        }
     }
     </style>
+    <?php endif; ?>
     <?php
     return ob_get_clean();
 }

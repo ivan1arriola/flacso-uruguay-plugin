@@ -173,7 +173,13 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
       </div>
     </div>
 
+    <div class="oferta-educativa-3d-controls" role="group" aria-label="Navegacion del carrusel de oferta educativa">
+      <button type="button" class="oferta-educativa-3d-arrow" data-oferta-prev aria-label="Oferta anterior">&#8249;</button>
+      <span class="oferta-educativa-3d-counter" data-oferta-counter aria-live="polite"><?php echo esc_html('1 / ' . count($cards)); ?></span>
+      <button type="button" class="oferta-educativa-3d-arrow" data-oferta-next aria-label="Oferta siguiente">&#8250;</button>
+    </div>
     <div class="oferta-educativa-3d-dots" aria-label="Navegación del carrusel"></div>
+    <p class="visually-hidden" data-oferta-status aria-live="polite" aria-atomic="true"></p>
   </div>
 </section>
 
@@ -325,12 +331,54 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
     line-height: 1.65;
   }
 
+  .nuestra-oferta-educativa-3d .oferta-educativa-3d-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.62rem;
+    margin-top: 1.05rem;
+  }
+
+  .nuestra-oferta-educativa-3d .oferta-educativa-3d-arrow {
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 0;
+    border-radius: 999px;
+    background: #ffffff;
+    color: var(--global-palette1, #1d3a72);
+    font-size: 1.45rem;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(15, 26, 45, 0.12);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 200ms ease, box-shadow 200ms ease;
+  }
+
+  .nuestra-oferta-educativa-3d .oferta-educativa-3d-arrow:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(15, 26, 45, 0.15);
+  }
+
+  .nuestra-oferta-educativa-3d .oferta-educativa-3d-arrow:focus-visible {
+    outline: 2px solid var(--global-palette1, #1d3a72);
+    outline-offset: 2px;
+  }
+
+  .nuestra-oferta-educativa-3d .oferta-educativa-3d-counter {
+    min-width: 4.2rem;
+    text-align: center;
+    font-weight: 700;
+    color: var(--global-palette1, #1d3a72);
+  }
+
   .nuestra-oferta-educativa-3d .oferta-educativa-3d-dots {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
     gap: 0.65rem;
-    margin-top: 1.4rem;
+    margin-top: 0.78rem;
   }
 
   .nuestra-oferta-educativa-3d .oferta-educativa-3d-dot {
@@ -404,6 +452,16 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
       gap: 0.75rem;
     }
 
+    .nuestra-oferta-educativa-3d .oferta-educativa-3d-controls {
+      margin-top: 0.85rem;
+    }
+
+    .nuestra-oferta-educativa-3d .oferta-educativa-3d-arrow {
+      width: 2.1rem;
+      height: 2.1rem;
+      font-size: 1.3rem;
+    }
+
     .nuestra-oferta-educativa-3d .oferta-descripcion-card {
       line-height: 1.55;
       font-size: 0.96rem;
@@ -444,8 +502,13 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
       const cards = Array.from(root.querySelectorAll('.oferta-item'));
       const dotsWrap = root.querySelector('.oferta-educativa-3d-dots');
       const viewport = root.querySelector('.oferta-educativa-3d-viewport');
+      const prevBtn = root.querySelector('[data-oferta-prev]');
+      const nextBtn = root.querySelector('[data-oferta-next]');
+      const counterEl = root.querySelector('[data-oferta-counter]');
+      const statusEl = root.querySelector('[data-oferta-status]');
+      const controlsWrap = root.querySelector('.oferta-educativa-3d-controls');
 
-      if (!cards.length || !viewport || !dotsWrap) return;
+      if (!cards.length || !viewport) return;
 
       let current = 0;
       let startX = 0;
@@ -454,20 +517,24 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
       let moved = false;
       let suppressClickUntil = 0;
 
-      dotsWrap.innerHTML = '';
+      if (dotsWrap) {
+        dotsWrap.innerHTML = '';
+      }
 
       cards.forEach((card, index) => {
-        const dot = document.createElement('button');
-        dot.type = 'button';
-        dot.className = 'oferta-educativa-3d-dot';
-        dot.setAttribute('aria-label', 'Ir a la oferta ' + (index + 1));
-        dot.addEventListener('click', () => goTo(index));
-        dotsWrap.appendChild(dot);
+        if (dotsWrap) {
+          const dot = document.createElement('button');
+          dot.type = 'button';
+          dot.className = 'oferta-educativa-3d-dot';
+          dot.setAttribute('aria-label', 'Ir a la oferta ' + (index + 1));
+          dot.addEventListener('click', () => goTo(index));
+          dotsWrap.appendChild(dot);
+        }
 
         card.dataset.index = String(index);
       });
 
-      const dots = Array.from(dotsWrap.querySelectorAll('.oferta-educativa-3d-dot'));
+      const dots = dotsWrap ? Array.from(dotsWrap.querySelectorAll('.oferta-educativa-3d-dot')) : [];
 
       function getBaseViewportHeight() {
         const w = window.innerWidth;
@@ -614,6 +681,17 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
         dots.forEach((dot, index) => {
           dot.classList.toggle('is-active', index === current);
         });
+
+        if (counterEl) {
+          counterEl.textContent = String(current + 1) + ' / ' + String(cards.length);
+        }
+
+        if (statusEl) {
+          const activeCard = cards[current];
+          const titleEl = activeCard ? activeCard.querySelector('.oferta-titulo-card') : null;
+          const label = titleEl ? titleEl.textContent.trim() : ('Oferta ' + String(current + 1));
+          statusEl.textContent = 'Oferta ' + String(current + 1) + ' de ' + String(cards.length) + ': ' + label;
+        }
       }
 
       function goTo(index) {
@@ -629,12 +707,35 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
         goTo(current - 1);
       }
 
+      if (prevBtn) {
+        prevBtn.addEventListener('click', prev);
+      }
+      if (nextBtn) {
+        nextBtn.addEventListener('click', next);
+      }
+
       viewport.addEventListener('keydown', (event) => {
         if (event.key === 'ArrowLeft') {
           event.preventDefault();
           prev();
         }
         if (event.key === 'ArrowRight') {
+          event.preventDefault();
+          next();
+        }
+        if (event.key === 'Home') {
+          event.preventDefault();
+          goTo(0);
+        }
+        if (event.key === 'End') {
+          event.preventDefault();
+          goTo(cards.length - 1);
+        }
+        if (event.key === 'PageUp') {
+          event.preventDefault();
+          prev();
+        }
+        if (event.key === 'PageDown') {
           event.preventDefault();
           next();
         }
@@ -701,6 +802,15 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
       });
 
       window.addEventListener('resize', render);
+
+      if (cards.length <= 1) {
+        if (dotsWrap) {
+          dotsWrap.style.display = 'none';
+        }
+        if (controlsWrap) {
+          controlsWrap.style.display = 'none';
+        }
+      }
 
       render();
     });
