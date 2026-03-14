@@ -60,17 +60,24 @@ if (!function_exists('dp_docentes_asset_version')) {
 if (!function_exists('dp_is_docentes_view')) {
     function dp_is_docentes_view() {
         return is_post_type_archive('docente')
-            || is_singular('docente')
-            || is_tax('equipo-docente')
-            || is_page('equipo-docente');
+            || is_singular('docente');
     }
 }
 
 if (!function_exists('dp_nombre_completo')) {
-    function dp_nombre_completo(int $post_id): string {
+    function dp_nombre_completo(int $post_id, bool $with_complete_prefix = false): string {
+        $prefijo_abrev = get_post_meta($post_id, 'prefijo_abrev', true);
+        $titulo = get_post_meta($post_id, 'titulo', true);
         $nombre = get_post_meta($post_id, 'nombre', true);
         $apellido = get_post_meta($post_id, 'apellido', true);
-        return trim($nombre . ' ' . $apellido);
+
+        if (!$nombre && !$apellido) {
+            return (string) get_the_title($post_id);
+        }
+
+        $prefijo = $with_complete_prefix ? $titulo : $prefijo_abrev;
+        $partes = array_filter([$prefijo, $nombre, $apellido]);
+        return implode(' ', $partes);
     }
 }
 

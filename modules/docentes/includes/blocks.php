@@ -338,7 +338,106 @@ function dp_docente_resumen_block($attributes = []) {
 
 if (!function_exists('dp_docentes_lista_block')) {
 function dp_docentes_lista_block($attributes = [], $content = '', $block = null) {
-    return dp_docentes_lista_bloques($attributes, $block);
+    $attributes = wp_parse_args((array) $attributes, [
+        'docenteIds' => [],
+        'limit' => 0,
+    ]);
+
+    $docente_ids = array_values(array_unique(array_filter(array_map('absint', (array) $attributes['docenteIds']))));
+    $limit = (int) $attributes['limit'];
+
+    $args = [
+        'post_type' => 'docente',
+        'post_status' => 'publish',
+        'posts_per_page' => ($limit > 0) ? $limit : -1,
+        'meta_key' => 'apellido',
+        'orderby' => [
+            'meta_value' => 'ASC',
+            'title' => 'ASC',
+        ],
+        'no_found_rows' => true,
+    ];
+
+    if (!empty($docente_ids)) {
+        $args['post__in'] = $docente_ids;
+        $args['orderby'] = 'post__in';
+    }
+
+    $q = new WP_Query($args);
+    if (!$q->have_posts()) {
+        return dp_docentes_wrap_output('<p class="alert alert-info" role="status">No hay docentes disponibles.</p>');
+    }
+
+    ob_start();
+    echo '<div class="docentes-lista-completa" role="list" aria-label="' . esc_attr__('Listado de docentes', 'flacso-posgrados-docentes') . '">';
+
+    $i = 0;
+    while ($q->have_posts()) {
+        $q->the_post();
+        $i++;
+        $id = get_the_ID();
+        $titulo = function_exists('dp_nombre_completo') ? dp_nombre_completo($id) : get_the_title($id);
+        $pref_abrev = get_post_meta($id, 'prefijo_abrev', true);
+        $titulo_meta = get_post_meta($id, 'titulo', true);
+        $pref = $pref_abrev ?: $titulo_meta;
+        $nombre = get_post_meta($id, 'nombre', true);
+        $apellido = get_post_meta($id, 'apellido', true);
+        $display_name = trim(($nombre ?: '') . ' ' . ($apellido ?: ''));
+        if ($display_name === '') {
+            $display_name = $titulo;
+        }
+        $cv_raw = get_post_meta($id, 'cv', true);
+        $img_col_order = ($i % 2 === 0) ? 'order-md-2' : 'order-md-1';
+        $text_col_order = ($i % 2 === 0) ? 'order-md-1' : 'order-md-2';
+        $h_id = 'doc-list-h-' . $id;
+        $cv_id = 'doc-list-cv-' . $id;
+        ?>
+        <article class="card border-0 shadow-sm mb-5 hover-lift" role="listitem" aria-labelledby="<?php echo esc_attr($h_id); ?>" aria-describedby="<?php echo esc_attr($cv_id); ?>">
+            <div class="card-body p-4">
+                <div class="row g-4 align-items-center">
+                    <div class="col-md-3 text-center <?php echo esc_attr($img_col_order); ?>">
+                        <?php echo dp_avatar_markup($id, $display_name, 190, 'shadow-lg border border-2 border-white'); ?>
+                    </div>
+                    <div class="col-md-9 <?php echo esc_attr($text_col_order); ?>">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                            <div>
+                                <h3 id="<?php echo esc_attr($h_id); ?>" class="mb-1"><?php echo esc_html($display_name); ?></h3>
+                                <?php if ($pref): ?>
+                                    <p class="text-muted small mb-0"><?php echo esc_html($pref); ?></p>
+                                <?php endif; ?>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="<?php echo esc_url(get_permalink($id)); ?>" class="btn btn-outline-secondary btn-sm" aria-label="<?php echo esc_attr(sprintf(__('Ver perfil de %s', 'flacso-posgrados-docentes'), $display_name)); ?>">
+                                    <i class="bi bi-chevron-right" aria-hidden="true"></i><span class="visually-hidden"><?php esc_html_e('Ver perfil', 'flacso-posgrados-docentes'); ?></span>
+                                </a>
+                                <?php if (current_user_can('edit_post', $id)): ?>
+                                    <a href="<?php echo esc_url(get_edit_post_link($id, '')); ?>" target="_blank" rel="noopener" class="btn btn-sm btn-palette2 d-print-none" aria-label="<?php echo esc_attr(sprintf(__('Editar docente: %s', 'flacso-posgrados-docentes'), $display_name)); ?>">
+                                        <i class="bi bi-pencil me-1" aria-hidden="true"></i><span aria-hidden="true"><?php esc_html_e('Editar docente', 'flacso-posgrados-docentes'); ?></span>
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <?php if ($cv_raw): ?>
+                            <div id="<?php echo esc_attr($cv_id); ?>" class="cv-completo" style="line-height:1.65">
+                                <?php
+                                    $cv_html = (strpos($cv_raw, '<p>') === false) ? wpautop($cv_raw) : $cv_raw;
+                                    echo dp_safe_cv_html($cv_html);
+                                ?>
+                            </div>
+                        <?php else: ?>
+                            <p class="text-muted"><em><?php esc_html_e('No hay informacion curricular disponible.', 'flacso-posgrados-docentes'); ?></em></p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </article>
+        <?php
+    }
+
+    echo '</div>';
+    wp_reset_postdata();
+
+    return dp_docentes_wrap_output(ob_get_clean());
 }
 }
 

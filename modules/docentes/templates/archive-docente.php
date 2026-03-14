@@ -1,114 +1,161 @@
 <?php
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 get_header();
+
+$docentes_query = new WP_Query([
+    'post_type' => 'docente',
+    'post_status' => 'publish',
+    'posts_per_page' => -1,
+    'orderby' => [
+        'meta_value' => 'ASC',
+        'title' => 'ASC',
+    ],
+    'meta_key' => 'apellido',
+    'no_found_rows' => true,
+]);
+
+$total_docentes = (int) $docentes_query->post_count;
 ?>
 
-<div class="content-area">
+<div class="flacso-docentes-landing">
     <main id="main" class="site-main">
-        <div class="site-container entry-content-wrap">
-            <h1 class="entry-title">Equipo Docente</h1>
-            
-            <!-- Filtro por equipo -->
-            <?php
-            $equipos = get_terms(['taxonomy' => 'equipo-docente', 'hide_empty' => false]);
-            if (!empty($equipos) && !is_wp_error($equipos)):
-            ?>
-                <div class="kb-margin-b-md kb-padding-b-md" style="border-bottom: 1px solid var(--global-palette6);">
-                    <p class="kb-margin-b-sm"><strong>Filtrar por equipo:</strong></p>
-                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                        <a href="<?php echo esc_url(get_post_type_archive_link('docente')); ?>" 
-                           class="kb-button kb-btn-lg kb-btn-global-outline">Todos</a>
-                        <?php foreach ($equipos as $equipo): ?>
-                            <a href="<?php echo esc_url(get_term_link($equipo)); ?>" 
-                               class="kb-button kb-btn-lg kb-btn-global-secondary">
-                                <?php echo esc_html($equipo->name); ?>
-                            </a>
-                        <?php endforeach; ?>
-                    </div>
+        <div class="site-container">
+            <section class="flacso-docentes-hero flacso-docentes-hero--stacked">
+                <div class="flacso-docentes-hero__content">
+                    <p class="flacso-docentes-hero__eyebrow"><?php esc_html_e('Directorio academico', 'flacso-posgrados-docentes'); ?></p>
+                    <h1 class="flacso-docentes-hero__title"><?php esc_html_e('Docentes', 'flacso-posgrados-docentes'); ?></h1>
+                    <p class="flacso-docentes-hero__lead"><?php esc_html_e('Explora los perfiles individuales del cuerpo docente y encuentra rapidamente a cada integrante por nombre.', 'flacso-posgrados-docentes'); ?></p>
                 </div>
-            <?php endif; ?>
-            
-            <!-- Listado de docentes -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
-                <?php
-                $args = [
-                    'post_type' => 'docente',
-                    'posts_per_page' => 12,
-                    'orderby' => 'meta_value',
-                    'meta_key' => 'apellido',
-                    'order' => 'ASC'
-                ];
-                
-                $query = new WP_Query($args);
-                
-                if ($query->have_posts()):
-                    while ($query->have_posts()): $query->the_post();
-                        $nombre_completo = dp_nombre_completo(get_the_ID());
-                        $titulo = get_post_meta(get_the_ID(), 'titulo', true);
-                        $imagen_id = get_post_thumbnail_id();
-                        $equipos = get_the_terms(get_the_ID(), 'equipo-docente');
-                ?>
-                <div class="entry loop-entry">
-                    <div class="entry-content-wrap">
-                <div class="entry loop-entry">
-                    <div class="entry-content-wrap">
-                        <?php if ($imagen_id): ?>
-                            <div style="height: 280px; overflow: hidden; margin-bottom: 1rem;">
-                                <?php echo wp_get_attachment_image($imagen_id, 'medium', false, ['style' => 'width: 100%; height: 100%; object-fit: cover;']); ?>
+
+                <div class="flacso-docentes-hero__panel">
+                    <article class="flacso-docentes-stat">
+                        <span class="flacso-docentes-stat__label"><?php esc_html_e('Perfiles publicados', 'flacso-posgrados-docentes'); ?></span>
+                        <strong class="flacso-docentes-stat__value"><?php echo esc_html(number_format_i18n($total_docentes)); ?></strong>
+                    </article>
+                </div>
+            </section>
+
+            <section class="flacso-docentes-filters flacso-docentes-filters--full" aria-label="<?php esc_attr_e('Buscar docentes', 'flacso-posgrados-docentes'); ?>">
+                <div class="flacso-docentes-filters__card">
+                    <div class="flacso-docentes-field">
+                        <label for="buscador-docentes-archive"><?php esc_html_e('Buscar por nombre', 'flacso-posgrados-docentes'); ?></label>
+                        <div class="flacso-docentes-field__control">
+                            <i class="bi bi-search" aria-hidden="true"></i>
+                            <input
+                                type="search"
+                                id="buscador-docentes-archive"
+                                placeholder="<?php esc_attr_e('Ej. Ana Perez', 'flacso-posgrados-docentes'); ?>"
+                                aria-controls="grid-docentes"
+                            >
+                        </div>
+                    </div>
+
+                    <p id="docentes-live-region" class="flacso-docentes-filters__hint" aria-live="polite">
+                        <?php echo esc_html(sprintf(_n('%d perfil visible', '%d perfiles visibles', $total_docentes, 'flacso-posgrados-docentes'), $total_docentes)); ?>
+                    </p>
+                </div>
+            </section>
+
+            <section id="grid-docentes" class="flacso-docentes-grid" aria-label="<?php esc_attr_e('Listado de docentes', 'flacso-posgrados-docentes'); ?>">
+                <?php if ($docentes_query->have_posts()) : ?>
+                    <?php while ($docentes_query->have_posts()) : $docentes_query->the_post(); ?>
+                        <?php
+                        $docente_id = get_the_ID();
+                        $nombre = (string) get_post_meta($docente_id, 'nombre', true);
+                        $apellido = (string) get_post_meta($docente_id, 'apellido', true);
+
+                        $nombre_completo = function_exists('dp_nombre_completo')
+                            ? dp_nombre_completo($docente_id, true)
+                            : get_the_title($docente_id);
+                        $nombre_completo = $nombre_completo ?: get_the_title($docente_id);
+
+                        $prefijo_abrev = (string) get_post_meta($docente_id, 'prefijo_abrev', true);
+                        $titulo = (string) get_post_meta($docente_id, 'titulo', true);
+
+                        $cv_raw = (string) get_post_meta($docente_id, 'cv', true);
+                        $resumen = wp_trim_words(wp_strip_all_tags($cv_raw), 28);
+                        if ($resumen === '') {
+                            $resumen = wp_trim_words(wp_strip_all_tags(get_the_excerpt($docente_id)), 28);
+                        }
+
+                        $correo_principal = function_exists('dp_get_docente_principal_email')
+                            ? dp_get_docente_principal_email($docente_id)
+                            : null;
+                        $correo = is_array($correo_principal) ? (string) ($correo_principal['email'] ?? '') : '';
+
+                        $iniciales = function_exists('dp_iniciales')
+                            ? dp_iniciales($nombre, $apellido, 'DP')
+                            : strtoupper(substr($nombre_completo, 0, 2));
+                        $avatar_color = function_exists('dp_color_from_string') ? dp_color_from_string($nombre_completo) : '#1d3a72';
+                        ?>
+
+                        <article class="flacso-docentes-card docente-item" data-nombre="<?php echo esc_attr(strtolower($nombre_completo)); ?>">
+                            <div class="flacso-docentes-card__avatar">
+                                <?php if (has_post_thumbnail($docente_id)) : ?>
+                                    <?php
+                                    echo get_the_post_thumbnail(
+                                        $docente_id,
+                                        'medium',
+                                        [
+                                            'class' => 'flacso-docentes-card__avatar-img',
+                                            'alt' => $nombre_completo,
+                                            'loading' => 'lazy',
+                                            'decoding' => 'async',
+                                        ]
+                                    );
+                                    ?>
+                                <?php else : ?>
+                                    <span class="flacso-docentes-card__avatar-fallback" style="background-color: <?php echo esc_attr($avatar_color); ?>;">
+                                        <?php echo esc_html($iniciales); ?>
+                                    </span>
+                                <?php endif; ?>
                             </div>
-                        <?php else: ?>
-                            <div style="height: 280px; background: var(--global-palette8); display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-                                <span style="color: var(--global-palette5);">Sin imagen</span>
+
+                            <div class="flacso-docentes-card__summary">
+                                <?php if ($prefijo_abrev !== '') : ?>
+                                    <span class="flacso-docentes-card__abbr"><?php echo esc_html($prefijo_abrev); ?></span>
+                                <?php endif; ?>
+                                <h2><?php echo esc_html($nombre_completo); ?></h2>
+                                <?php if ($titulo !== '') : ?>
+                                    <p class="flacso-docentes-card__subtitle"><?php echo esc_html($titulo); ?></p>
+                                <?php endif; ?>
+                                <?php if ($resumen !== '') : ?>
+                                    <p class="flacso-docentes-card__excerpt"><?php echo esc_html($resumen); ?></p>
+                                <?php endif; ?>
                             </div>
-                        <?php endif; ?>
-                        
-                        <h3 class="entry-title" style="margin-bottom: 0.5rem;"><?php echo esc_html($nombre_completo); ?></h3>
-                        
-                        <?php if ($titulo): ?>
-                            <p style="font-size: 0.95rem; color: var(--global-palette5); margin-bottom: 1rem;"><?php echo esc_html($titulo); ?></p>
-                        <?php endif; ?>
-                        
-                        <?php if (!empty($equipos) && !is_wp_error($equipos)): ?>
-                            <div style="margin-bottom: 1rem;">
-                                <?php foreach ($equipos as $equipo): ?>
-                                    <a href="<?php echo esc_url(get_term_link($equipo)); ?>" 
-                                       style="display: inline-block; background: var(--global-palette1); color: var(--global-palette9); padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; margin-right: 0.5rem; text-decoration: none;">
-                                        <?php echo esc_html($equipo->name); ?>
+
+                            <?php if ($correo !== '') : ?>
+                                <div class="flacso-docentes-card__contact">
+                                    <a class="flacso-docentes-contact" href="mailto:<?php echo esc_attr(antispambot($correo)); ?>">
+                                        <i class="bi bi-envelope" aria-hidden="true"></i>
+                                        <span><?php echo esc_html(antispambot($correo)); ?></span>
                                     </a>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
-                        
-                        <a href="<?php the_permalink(); ?>" class="kb-button kb-btn-lg kb-btn-primary" style="margin-top: auto;">
-                            Ver Perfil
-                        </a>
+                                </div>
+                            <?php endif; ?>
+
+                            <footer class="flacso-docentes-card__footer">
+                                <a class="btn btn-primary" href="<?php echo esc_url(get_permalink($docente_id)); ?>">
+                                    <?php esc_html_e('Ver perfil', 'flacso-posgrados-docentes'); ?>
+                                </a>
+                            </footer>
+                        </article>
+                    <?php endwhile; ?>
+                    <?php wp_reset_postdata(); ?>
+                <?php else : ?>
+                    <div class="flacso-docentes-empty">
+                        <div class="flacso-docentes-empty__card">
+                            <i class="bi bi-people" aria-hidden="true"></i>
+                            <h2><?php esc_html_e('No hay docentes publicados.', 'flacso-posgrados-docentes'); ?></h2>
+                        </div>
                     </div>
-                </div>
-                <?php
-                    endwhile;
-                    wp_reset_postdata();
-                else:
-                    echo '<p style="grid-column: 1/-1;">No hay docentes disponibles.</p>';
-                endif;
-                ?>
-            </div>
-            
-            <!-- Paginación -->
-            <?php if ($query->max_num_pages > 1): ?>
-                <nav style="margin-top: 2rem; text-align: center;">
-                    <?php
-                    echo paginate_links([
-                        'total' => $query->max_num_pages,
-                        'prev_text' => '← Anterior',
-                        'next_text' => 'Siguiente →',
-                        'type' => 'plain'
-                    ]);
-                    ?>
-                </nav>
-            <?php endif; ?>
+                <?php endif; ?>
+            </section>
         </div>
     </main>
 </div>
 
 <?php
-get_footer();
 get_footer();

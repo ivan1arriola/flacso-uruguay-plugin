@@ -5,14 +5,16 @@ if (!defined('ABSPATH')) {
 
 get_header();
 
-while (have_posts()) : the_post();
+while (have_posts()) :
+    the_post();
+
     $docente_id = get_the_ID();
 
     $prefijo_abrev = (string) get_post_meta($docente_id, 'prefijo_abrev', true);
-    $prefijo_full  = (string) get_post_meta($docente_id, 'prefijo_full', true);
-    $nombre        = (string) get_post_meta($docente_id, 'nombre', true);
-    $apellido      = (string) get_post_meta($docente_id, 'apellido', true);
-    $cv_raw        = (string) get_post_meta($docente_id, 'cv', true);
+    $titulo = (string) get_post_meta($docente_id, 'titulo', true);
+    $nombre = (string) get_post_meta($docente_id, 'nombre', true);
+    $apellido = (string) get_post_meta($docente_id, 'apellido', true);
+    $cv_raw = (string) get_post_meta($docente_id, 'cv', true);
 
     $nombre_completo = function_exists('dp_nombre_completo')
         ? dp_nombre_completo($docente_id, true)
@@ -21,59 +23,22 @@ while (have_posts()) : the_post();
 
     $iniciales = function_exists('dp_iniciales')
         ? dp_iniciales($nombre, $apellido, 'DP')
-        : strtoupper(substr(($nombre ?: $nombre_completo), 0, 2));
+        : strtoupper(substr($nombre_completo, 0, 2));
 
     $docentes_url = get_post_type_archive_link('docente');
     if (!$docentes_url) {
-        $docentes_url = home_url('/docente/');
+        $docentes_url = home_url('/docentes/');
     }
 
     $slug_docente = (string) get_post_field('post_name', $docente_id);
     $ultima_actualizacion = get_the_modified_date(get_option('date_format'), $docente_id);
 
     $docente_correos = function_exists('dp_get_docente_emails') ? dp_get_docente_emails($docente_id) : [];
-    $docente_redes   = function_exists('dp_get_docente_socials') ? dp_get_docente_socials($docente_id) : [];
+    $docente_redes = function_exists('dp_get_docente_socials') ? dp_get_docente_socials($docente_id) : [];
 
-    $equipos = get_the_terms($docente_id, 'equipo-docente');
-    $equipos_data = [];
-    if ($equipos && !is_wp_error($equipos)) {
-        foreach ($equipos as $equipo) {
-            $equipo_link = get_term_link($equipo);
-            if (is_wp_error($equipo_link)) {
-                $equipo_link = '';
-            }
-
-            $equipo_color = function_exists('get_equipo_color')
-                ? get_equipo_color($equipo->term_id)
-                : '#1d3a72';
-
-            $equipo_label = function_exists('dp_get_equipo_relacion_nombre')
-                ? dp_get_equipo_relacion_nombre($equipo->term_id, $equipo->name)
-                : $equipo->name;
-
-            $programa = function_exists('dp_get_equipo_page_data')
-                ? dp_get_equipo_page_data($equipo->term_id)
-                : null;
-
-            $programa_titulo = $equipo->name;
-            $programa_link = $equipo_link;
-            if (is_array($programa)) {
-                $programa_titulo = (string) ($programa['title'] ?? $equipo->name);
-                $programa_link = (string) ($programa['permalink'] ?? $equipo_link);
-            }
-
-            $equipos_data[] = [
-                'label' => $equipo_label,
-                'title' => $programa_titulo,
-                'link'  => $programa_link,
-                'color' => $equipo_color,
-            ];
-        }
-    }
-
-    $hero_color = !empty($equipos_data) ? $equipos_data[0]['color'] : '#1d3a72';
+    $hero_color = function_exists('dp_color_from_string') ? dp_color_from_string($nombre_completo) : '#1d3a72';
     if (function_exists('ajustar_luminosidad')) {
-        $hero_gradient = 'linear-gradient(135deg, ' . $hero_color . ' 0%, ' . ajustar_luminosidad($hero_color, -20) . ' 100%)';
+        $hero_gradient = 'linear-gradient(135deg, ' . $hero_color . ' 0%, ' . ajustar_luminosidad($hero_color, -18) . ' 100%)';
     } else {
         $hero_gradient = 'linear-gradient(135deg, #1d3a72 0%, #0f254d 100%)';
     }
@@ -83,7 +48,7 @@ while (have_posts()) : the_post();
         <nav class="dp-docente-breadcrumb" aria-label="<?php echo esc_attr__('Breadcrumb', 'flacso-posgrados-docentes'); ?>">
             <a href="<?php echo esc_url(home_url('/')); ?>"><?php esc_html_e('Inicio', 'flacso-posgrados-docentes'); ?></a>
             <span aria-hidden="true">/</span>
-            <a href="<?php echo esc_url($docentes_url); ?>"><?php esc_html_e('Equipo docente', 'flacso-posgrados-docentes'); ?></a>
+            <a href="<?php echo esc_url($docentes_url); ?>"><?php esc_html_e('Docentes', 'flacso-posgrados-docentes'); ?></a>
             <span aria-hidden="true">/</span>
             <span><?php echo esc_html($nombre_completo); ?></span>
         </nav>
@@ -96,9 +61,9 @@ while (have_posts()) : the_post();
                         $docente_id,
                         'large',
                         [
-                            'class'    => 'dp-docente-hero__avatar-img',
-                            'alt'      => $nombre_completo,
-                            'loading'  => 'eager',
+                            'class' => 'dp-docente-hero__avatar-img',
+                            'alt' => $nombre_completo,
+                            'loading' => 'eager',
                             'decoding' => 'async',
                         ]
                     );
@@ -109,38 +74,18 @@ while (have_posts()) : the_post();
             </div>
 
             <div class="dp-docente-hero__content">
-                <p class="dp-docente-hero__kicker"><?php esc_html_e('Perfil académico', 'flacso-posgrados-docentes'); ?></p>
+                <p class="dp-docente-hero__kicker"><?php esc_html_e('Perfil academico', 'flacso-posgrados-docentes'); ?></p>
                 <h1><?php echo esc_html($nombre_completo); ?></h1>
 
-                <?php if ($prefijo_full) : ?>
-                    <p class="dp-docente-hero__subtitle"><?php echo esc_html($prefijo_full); ?></p>
-                <?php endif; ?>
-
-                <?php if (!empty($equipos_data)) : ?>
-                    <div class="dp-docente-hero__tags">
-                        <?php foreach ($equipos_data as $equipo_item) : ?>
-                            <?php if (!empty($equipo_item['link'])) : ?>
-                                <a
-                                    href="<?php echo esc_url($equipo_item['link']); ?>"
-                                    class="dp-docente-tag"
-                                    style="--tag-color: <?php echo esc_attr($equipo_item['color']); ?>;"
-                                >
-                                    <?php echo esc_html($equipo_item['label']); ?>
-                                </a>
-                            <?php else : ?>
-                                <span class="dp-docente-tag" style="--tag-color: <?php echo esc_attr($equipo_item['color']); ?>;">
-                                    <?php echo esc_html($equipo_item['label']); ?>
-                                </span>
-                            <?php endif; ?>
-                        <?php endforeach; ?>
-                    </div>
+                <?php if ($titulo !== '') : ?>
+                    <p class="dp-docente-hero__subtitle"><?php echo esc_html($titulo); ?></p>
                 <?php endif; ?>
 
                 <div class="dp-docente-hero__meta">
-                    <?php if ($prefijo_abrev) : ?>
+                    <?php if ($prefijo_abrev !== '') : ?>
                         <span><?php echo esc_html($prefijo_abrev); ?></span>
                     <?php endif; ?>
-                    <?php if ($slug_docente) : ?>
+                    <?php if ($slug_docente !== '') : ?>
                         <span><?php echo esc_html($slug_docente); ?></span>
                     <?php endif; ?>
                     <?php if ($ultima_actualizacion) : ?>
@@ -159,12 +104,12 @@ while (have_posts()) : the_post();
         <div class="dp-docente-layout">
             <article class="dp-card dp-docente-cv">
                 <h2><?php esc_html_e('Trayectoria y CV', 'flacso-posgrados-docentes'); ?></h2>
-                <?php if ($cv_raw) : ?>
+                <?php if ($cv_raw !== '') : ?>
                     <div class="dp-docente-cv__content">
                         <?php echo wp_kses_post(wpautop($cv_raw)); ?>
                     </div>
                 <?php else : ?>
-                    <p class="dp-empty"><?php esc_html_e('Este perfil aún no tiene un CV publicado.', 'flacso-posgrados-docentes'); ?></p>
+                    <p class="dp-empty"><?php esc_html_e('Este perfil aun no tiene un CV publicado.', 'flacso-posgrados-docentes'); ?></p>
                 <?php endif; ?>
             </article>
 
@@ -178,7 +123,9 @@ while (have_posts()) : the_post();
                                 if ($correo_email === '') {
                                     continue;
                                 }
-                                $correo_label = isset($correo['label']) && $correo['label'] !== '' ? (string) $correo['label'] : __('Correo', 'flacso-posgrados-docentes');
+                                $correo_label = isset($correo['label']) && $correo['label'] !== ''
+                                    ? (string) $correo['label']
+                                    : __('Correo', 'flacso-posgrados-docentes');
                                 ?>
                                 <li>
                                     <span class="dp-contact-label"><?php echo esc_html($correo_label); ?></span>
@@ -199,33 +146,15 @@ while (have_posts()) : the_post();
                                 if ($red_url === '') {
                                     continue;
                                 }
-                                $red_label = isset($red['label']) && $red['label'] !== '' ? (string) $red['label'] : __('Perfil', 'flacso-posgrados-docentes');
+                                $red_label = isset($red['label']) && $red['label'] !== ''
+                                    ? (string) $red['label']
+                                    : __('Perfil', 'flacso-posgrados-docentes');
                                 ?>
                                 <a href="<?php echo esc_url($red_url); ?>" target="_blank" rel="noopener">
                                     <?php echo esc_html($red_label); ?>
                                 </a>
                             <?php endforeach; ?>
                         </div>
-                    <?php endif; ?>
-                </section>
-
-                <section class="dp-card">
-                    <h3><?php esc_html_e('Programas asociados', 'flacso-posgrados-docentes'); ?></h3>
-                    <?php if (!empty($equipos_data)) : ?>
-                        <ul class="dp-program-list">
-                            <?php foreach ($equipos_data as $equipo_item) : ?>
-                                <li style="--program-color: <?php echo esc_attr($equipo_item['color']); ?>;">
-                                    <span class="dp-program-label"><?php echo esc_html($equipo_item['label']); ?></span>
-                                    <?php if (!empty($equipo_item['link'])) : ?>
-                                        <a href="<?php echo esc_url($equipo_item['link']); ?>"><?php echo esc_html($equipo_item['title']); ?></a>
-                                    <?php else : ?>
-                                        <span><?php echo esc_html($equipo_item['title']); ?></span>
-                                    <?php endif; ?>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    <?php else : ?>
-                        <p class="dp-empty"><?php esc_html_e('No hay programas asociados publicados.', 'flacso-posgrados-docentes'); ?></p>
                     <?php endif; ?>
                 </section>
             </aside>
@@ -322,30 +251,6 @@ while (have_posts()) : the_post();
             margin: 0.45rem 0 0.9rem;
             font-size: 1.05rem;
             opacity: 0.92;
-        }
-
-        .dp-docente-hero__tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.55rem;
-            margin-bottom: 0.85rem;
-        }
-
-        .dp-docente-tag {
-            display: inline-flex;
-            align-items: center;
-            border-radius: 999px;
-            border: 1px solid rgba(255, 255, 255, 0.55);
-            background: rgba(255, 255, 255, 0.14);
-            color: #ffffff;
-            padding: 0.38rem 0.8rem;
-            font-size: 0.84rem;
-            text-decoration: none;
-            backdrop-filter: blur(2px);
-        }
-
-        .dp-docente-tag:hover {
-            background: rgba(255, 255, 255, 0.24);
         }
 
         .dp-docente-hero__meta {
@@ -481,44 +386,6 @@ while (have_posts()) : the_post();
             border-color: var(--dp-primary);
         }
 
-        .dp-program-list {
-            margin: 0;
-            padding: 0;
-            list-style: none;
-            display: grid;
-            gap: 0.6rem;
-        }
-
-        .dp-program-list li {
-            border: 1px solid var(--dp-border);
-            border-left: 4px solid var(--program-color);
-            border-radius: 12px;
-            background: #ffffff;
-            padding: 0.62rem 0.72rem;
-        }
-
-        .dp-program-label {
-            display: inline-block;
-            margin-bottom: 0.2rem;
-            font-size: 0.74rem;
-            color: var(--program-color);
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-
-        .dp-program-list a,
-        .dp-program-list span {
-            display: block;
-            color: var(--dp-text);
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .dp-program-list a:hover {
-            text-decoration: underline;
-        }
-
         .dp-empty {
             margin: 0;
             color: var(--dp-muted);
@@ -547,7 +414,6 @@ while (have_posts()) : the_post();
                 height: 112px;
             }
 
-            .dp-docente-hero__tags,
             .dp-docente-hero__meta,
             .dp-docente-hero__cta {
                 justify-content: center;
