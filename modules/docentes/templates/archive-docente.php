@@ -68,7 +68,7 @@ $total_docentes = (int) $docentes_query->post_count;
                         $apellido = (string) get_post_meta($docente_id, 'apellido', true);
 
                         $nombre_completo = function_exists('dp_nombre_completo')
-                            ? dp_nombre_completo($docente_id, true)
+                            ? dp_nombre_completo($docente_id)
                             : get_the_title($docente_id);
                         $nombre_completo = $nombre_completo ?: get_the_title($docente_id);
 
@@ -118,7 +118,7 @@ $total_docentes = (int) $docentes_query->post_count;
                                 <?php if ($prefijo_abrev !== '') : ?>
                                     <span class="flacso-docentes-card__abbr"><?php echo esc_html($prefijo_abrev); ?></span>
                                 <?php endif; ?>
-                                <h2><?php echo esc_html($nombre_completo); ?></h2>
+                                <h2 class="flacso-docentes-card__title"><?php echo esc_html($nombre_completo); ?></h2>
                                 <?php if ($titulo !== '') : ?>
                                     <p class="flacso-docentes-card__subtitle"><?php echo esc_html($titulo); ?></p>
                                 <?php endif; ?>

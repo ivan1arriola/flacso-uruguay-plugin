@@ -1353,6 +1353,7 @@
     display: grid;
     grid-template-columns: minmax(210px, 300px) minmax(0, 1fr);
     align-items: flex-start;
+    min-width: 0;
     border-radius: 24px;
     overflow: hidden;
     border: 1px solid rgba(15, 26, 45, 0.1);
@@ -1393,6 +1394,8 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .flc-eventos-react__date-badge {
@@ -1441,13 +1444,21 @@
 }
 
 .flc-eventos-react__event-title {
-    margin: 0;
+    margin: 0 !important;
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
     color: var(--global-palette3, #0f1a2d);
-    font-size: clamp(1.05rem, 1.35vw, 1.3rem);
-    line-height: 1.26;
-    display: block;
-    white-space: normal;
-    overflow: visible;
+    font-size: clamp(1.05rem, 1.35vw, 1.3rem) !important;
+    line-height: 1.26 !important;
+    letter-spacing: 0 !important;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    white-space: normal !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 .flc-eventos-react__excerpt {
@@ -1455,6 +1466,9 @@
     color: var(--global-palette4, #3f4f65);
     font-size: 0.95rem;
     line-height: 1.48;
+    position: relative;
+    z-index: 1;
+    max-width: 100%;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
