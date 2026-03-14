@@ -1,469 +1,785 @@
 .flacso-seminarios-page {
-    --seminarios-primary: var(--global-palette1, #1d3a72);
-    --seminarios-accent: var(--global-palette2, #fed222);
-    --seminarios-bg: var(--global-palette8, #f6f8fb);
-    --seminarios-surface: var(--global-palette9, #ffffff);
-    --seminarios-text: var(--global-palette3, #1f2a44);
-    --seminarios-muted: var(--global-palette5, #5a6170);
-    --seminarios-border: rgba(var(--global-palette1rgb, 29, 58, 114), 0.14);
-    --seminarios-shadow: 0 22px 45px -28px rgba(13, 24, 54, 0.45);
+    --seminario-primary: var(--global-palette1, #1d3a72);
+    --seminario-primary-rgb: var(--global-palette1rgb, 29, 58, 114);
+    --seminario-dark: #061733;
+    --seminario-dark-soft: #10274d;
+    --seminario-sky: #0ea5e9;
+    --seminario-warning: #facc15;
+    --seminario-surface: var(--global-palette9, #ffffff);
+    --seminario-bg: #f4f8fe;
+    --seminario-text: var(--global-palette3, #1f2a44);
+    --seminario-muted: var(--global-palette5, #617186);
+    --seminario-border: rgba(var(--seminario-primary-rgb), 0.14);
+    --seminario-shadow: 0 30px 60px -45px rgba(8, 21, 46, 0.65);
+    color: var(--seminario-text);
 }
 
 .flacso-seminarios-page .site-main {
     display: flex;
     flex-direction: column;
-    gap: clamp(2rem, 4vw, 4rem);
-    padding-bottom: clamp(2.5rem, 5vw, 5rem);
+    gap: clamp(2.2rem, 5vw, 4.2rem);
+    padding-bottom: clamp(2.2rem, 5vw, 4rem);
+    background: linear-gradient(180deg, #f7faff 0%, #ffffff 28%, #f6f8fd 100%);
 }
 
-.flacso-seminarios-page .hero {
+.flacso-seminarios-page .seminarios-hero {
     position: relative;
     overflow: hidden;
-    min-height: clamp(11rem, 26vw, 17rem);
-    display: grid;
-    align-items: center;
-    background: linear-gradient(135deg, #1e356d 0%, #2a4c8f 100%);
+    isolation: isolate;
+    background: linear-gradient(130deg, #041022 0%, #0d2a57 52%, #0b2248 100%);
 }
 
-.flacso-seminarios-page .hero__bg {
+.flacso-seminarios-page .seminarios-hero__bg {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    opacity: 0.26;
 }
 
-.flacso-seminarios-page .hero__overlay {
+.flacso-seminarios-page .seminarios-hero__overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(145deg, rgba(14, 26, 59, 0.85) 0%, rgba(29, 58, 114, 0.78) 60%, rgba(43, 76, 143, 0.9) 100%);
+    background: linear-gradient(155deg, rgba(2, 12, 30, 0.93) 0%, rgba(8, 31, 70, 0.84) 50%, rgba(11, 34, 73, 0.9) 100%);
 }
 
-.flacso-seminarios-page .hero__inner {
+.flacso-seminarios-page .seminarios-hero__grid {
+    position: absolute;
+    inset: 0;
+    opacity: 0.12;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.45) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.4) 1px, transparent 1px);
+    background-size: 42px 42px;
+}
+
+.flacso-seminarios-page .seminarios-hero__inner {
     position: relative;
     z-index: 1;
-    text-align: center;
-    color: #ffffff !important;
-    padding: clamp(1.5rem, 3.5vw, 2.8rem) 1rem;
+    display: grid;
+    gap: clamp(1.2rem, 3vw, 2rem);
+    grid-template-columns: minmax(0, 1fr);
+    padding-top: clamp(2.2rem, 6vw, 4.5rem);
+    padding-bottom: clamp(2.2rem, 6vw, 4.5rem);
 }
 
-.flacso-seminarios-page .hero__kicker {
-    margin: 0 0 0.65rem;
-    font-size: clamp(0.78rem, 1.5vw, 0.95rem);
-    text-transform: uppercase;
-    letter-spacing: 0.13em;
-    color: #d9e6ff !important;
-    opacity: 0.92;
+.flacso-seminarios-page .seminarios-hero__content {
+    max-width: 54rem;
 }
 
-.flacso-seminarios-page .hero__title {
+.flacso-seminarios-page .seminarios-hero__kicker {
     margin: 0;
-    color: #ffffff !important;
-    font-size: clamp(2rem, 6vw, 3.5rem);
-    line-height: 1.12;
+    font-size: 0.84rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: rgba(202, 222, 255, 0.9);
+}
+
+.flacso-seminarios-page .seminarios-hero__title {
+    margin: 0.9rem 0 0;
+    color: #ffffff;
+    font-size: clamp(2rem, 5.6vw, 3.9rem);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
     text-wrap: balance;
 }
 
-.flacso-seminarios-page .hero__subtitle {
-    margin: 1rem auto 0;
-    max-width: 52rem;
-    font-size: clamp(1rem, 2vw, 1.3rem);
-    line-height: 1.65;
-    color: #e8f0ff !important;
-    opacity: 0.95;
-    text-wrap: pretty;
+.flacso-seminarios-page .seminarios-hero__subtitle {
+    margin: 1rem 0 0;
+    color: rgba(223, 234, 255, 0.93);
+    font-size: clamp(1rem, 2.1vw, 1.2rem);
+    line-height: 1.7;
+    max-width: 46rem;
 }
 
-.flacso-seminarios-page .descripcion,
-.flacso-seminarios-page .programas,
-.flacso-seminarios-page .listado,
-.flacso-seminarios-page .contacto {
-    position: relative;
-}
-
-.flacso-seminarios-page .descripcion__panel,
-.flacso-seminarios-page .contacto__panel {
-    background: var(--seminarios-surface);
-    border: 1px solid var(--seminarios-border);
-    border-radius: 1.2rem;
-    box-shadow: var(--seminarios-shadow);
-}
-
-.flacso-seminarios-page .descripcion__panel {
-    max-width: 56rem;
-    margin: 0 auto;
-    padding: clamp(1.3rem, 3vw, 2.5rem);
-}
-
-.flacso-seminarios-page .descripcion__text {
-    color: var(--seminarios-text);
-    font-size: clamp(1.01rem, 1.8vw, 1.15rem);
-    line-height: 1.86;
-}
-
-.flacso-seminarios-page .descripcion__text p {
-    margin: 0;
-}
-
-.flacso-seminarios-page .descripcion__text p + p {
-    margin-top: 1.35rem;
-}
-
-.flacso-seminarios-page .programas__header {
-    text-align: center;
-    margin-bottom: clamp(1.2rem, 2.2vw, 2rem);
-}
-
-.flacso-seminarios-page .programas__title {
-    margin: 0;
-    color: var(--seminarios-primary);
-    font-size: clamp(1.55rem, 3vw, 2.2rem);
-}
-
-.flacso-seminarios-page .programas__subtitle {
-    margin: 0.75rem auto 0;
-    max-width: 36rem;
-    color: var(--seminarios-muted);
-    font-size: clamp(0.98rem, 1.9vw, 1.1rem);
-}
-
-.flacso-seminarios-page .programas__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-    gap: 0.85rem;
-}
-
-.flacso-seminarios-page .programas__chip {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    min-height: 3.25rem;
-    padding: 0.7rem 1rem;
-    border: 1px solid rgba(var(--global-palette1rgb, 29, 58, 114), 0.2);
-    border-radius: 999px;
-    background: var(--seminarios-surface);
-    color: var(--seminarios-primary);
-    font-weight: 600;
-    text-decoration: none;
-    text-align: center;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
-}
-
-.flacso-seminarios-page .programas__chip:hover {
-    transform: translateY(-1px);
-    border-color: rgba(var(--global-palette1rgb, 29, 58, 114), 0.45);
-    box-shadow: 0 10px 20px -18px rgba(var(--global-palette3rgb, 28, 35, 55), 0.85);
-}
-
-.flacso-seminarios-page .programas__chip.is-active {
-    border-color: var(--seminarios-primary);
-    background: rgba(var(--global-palette1rgb, 29, 58, 114), 0.11);
-}
-
-.flacso-seminarios-page .programas__chip-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.35rem;
-    height: 1.35rem;
-    border-radius: 999px;
-    font-size: 0.78rem;
-    background: var(--seminarios-surface);
-    color: var(--seminarios-primary);
-}
-
-.flacso-seminarios-page .listado__wrapper {
-    border-radius: 1.25rem;
-    background: var(--seminarios-surface);
-    border: 1px solid var(--seminarios-border);
-    box-shadow: var(--seminarios-shadow);
-    overflow: hidden;
-}
-
-.flacso-seminarios-page .listado__header {
-    text-align: center;
-    padding: clamp(1.4rem, 4vw, 2.5rem) clamp(1rem, 4vw, 2.8rem);
-    background: linear-gradient(180deg, rgba(var(--global-palette1rgb, 29, 58, 114), 0.08) 0%, rgba(var(--global-palette9rgb, 255, 255, 255), 0.95) 85%);
-    border-bottom: 1px solid rgba(var(--global-palette1rgb, 29, 58, 114), 0.08);
-}
-
-.flacso-seminarios-page .listado__title {
-    margin: 0;
-    color: var(--seminarios-primary);
-    font-size: clamp(1.7rem, 3vw, 2.45rem);
-}
-
-.flacso-seminarios-page .listado__subtitle {
-    margin: 0.85rem auto 0;
-    max-width: 42rem;
-    color: var(--seminarios-muted);
-    font-size: clamp(0.98rem, 1.8vw, 1.12rem);
-}
-
-.flacso-seminarios-page .listado__content {
-    background: var(--seminarios-bg);
-    padding: clamp(1.6rem, 3.2vw, 3.2rem);
-}
-
-.flacso-seminarios-page .listado__month {
-    margin: 0;
-    padding-bottom: clamp(0.6rem, 1.4vw, 1rem);
-}
-
-.flacso-seminarios-page .listado__month + .listado__month {
-    margin-top: clamp(3rem, 5.4vw, 4.6rem);
-}
-
-.flacso-seminarios-page .listado__month-title {
-    margin: 0 0 1.6rem;
-    padding-bottom: 0.8rem;
-    border-bottom: 2px solid rgba(var(--global-palette2rgb, 254, 210, 34), 0.88);
-    color: var(--seminarios-primary);
-    font-size: clamp(1.25rem, 2.2vw, 1.7rem);
-}
-
-.flacso-seminarios-page .listado__grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: clamp(1.4rem, 2.3vw, 2.1rem);
-}
-
-@media (max-width: 1024px) {
-    .flacso-seminarios-page .listado__grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-.flacso-seminarios-page .seminario-card {
+.flacso-seminarios-page .seminarios-hero__actions {
+    margin-top: 1.45rem;
     display: flex;
-    flex-direction: column;
-    min-height: 100%;
-    background: var(--seminarios-surface);
-    border: 1px solid rgba(var(--global-palette1rgb, 29, 58, 114), 0.1);
-    border-radius: 1rem;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+}
+
+.flacso-seminarios-page .seminarios-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.9rem;
+    padding: 0.55rem 1.2rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.95rem;
+    line-height: 1;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.flacso-seminarios-page .seminarios-btn--primary {
+    background: var(--seminario-sky);
+    color: #ffffff;
+    box-shadow: 0 15px 25px -20px rgba(14, 165, 233, 0.75);
+}
+
+.flacso-seminarios-page .seminarios-btn--ghost {
+    border-color: rgba(255, 255, 255, 0.24);
+    background: rgba(255, 255, 255, 0.06);
+    color: #ffffff;
+}
+
+.flacso-seminarios-page .seminarios-btn:hover {
+    transform: translateY(-1px);
+}
+
+.flacso-seminarios-page .seminarios-btn--primary:hover {
+    background: #0b95d1;
+}
+
+.flacso-seminarios-page .seminarios-btn--ghost:hover {
+    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.flacso-seminarios-page .seminarios-hero__stats {
+    display: grid;
+    gap: 0.7rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-radius: 1.6rem;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 24px 45px -35px rgba(5, 14, 31, 0.85);
+    padding: 0.85rem;
+    backdrop-filter: blur(8px);
+    max-width: 60rem;
+}
+
+.flacso-seminarios-page .seminarios-stat {
+    border-radius: 1.2rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.06);
+    padding: 0.95rem;
+    display: grid;
+    gap: 0.2rem;
+}
+
+.flacso-seminarios-page .seminarios-stat__label {
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(216, 231, 255, 0.78);
+}
+
+.flacso-seminarios-page .seminarios-stat__value {
+    font-size: clamp(1.2rem, 2.4vw, 1.7rem);
+    line-height: 1.1;
+    color: #ffffff;
+}
+
+.flacso-seminarios-page .seminarios-stat__meta {
+    font-size: 0.86rem;
+    color: rgba(223, 234, 255, 0.82);
+}
+
+.flacso-seminarios-page .seminarios-main {
+    position: relative;
+}
+
+.flacso-seminarios-page .seminarios-featured {
+    margin: 0;
+    border-radius: 2rem;
+    border: 1px solid rgba(var(--seminario-primary-rgb), 0.1);
+    background: #ffffff;
     overflow: hidden;
-    box-shadow: 0 8px 24px -20px rgba(var(--global-palette3rgb, 28, 35, 55), 0.85);
-    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+    box-shadow: var(--seminario-shadow);
 }
 
-.flacso-seminarios-page .seminario-card:hover {
-    transform: translateY(-3px);
-    border-color: rgba(var(--global-palette1rgb, 29, 58, 114), 0.35);
-    box-shadow: 0 20px 35px -28px rgba(var(--global-palette3rgb, 28, 35, 55), 0.8);
+.flacso-seminarios-page .seminarios-featured__link {
+    display: grid;
+    grid-template-columns: minmax(0, 1.14fr) minmax(0, 0.86fr);
+    color: inherit;
+    text-decoration: none;
 }
 
-.flacso-seminarios-page .seminario-card__media-link {
-    display: block;
-    aspect-ratio: 16 / 9;
+.flacso-seminarios-page .seminarios-featured__media {
+    position: relative;
+    min-height: clamp(18rem, 40vw, 28rem);
     overflow: hidden;
-    background: rgba(var(--global-palette1rgb, 29, 58, 114), 0.18);
 }
 
+.flacso-seminarios-page .seminarios-featured__image,
 .flacso-seminarios-page .seminario-card__image {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.25s ease;
+    transition: transform 0.7s ease;
 }
 
-.flacso-seminarios-page .seminario-card:hover .seminario-card__image {
-    transform: scale(1.03);
-}
-
+.flacso-seminarios-page .seminarios-featured__fallback,
 .flacso-seminarios-page .seminario-card__fallback {
     width: 100%;
     height: 100%;
     display: grid;
-    place-content: center;
-    background: linear-gradient(140deg, rgba(var(--global-palette1rgb, 29, 58, 114), 0.95) 0%, rgba(var(--global-palette3rgb, 28, 35, 55), 0.95) 100%);
-    color: #fff;
+    place-items: center;
+    color: #ffffff;
+    font-size: clamp(2.2rem, 5vw, 4.2rem);
     font-weight: 800;
-    font-size: 2.3rem;
+    letter-spacing: -0.03em;
 }
 
-.flacso-seminarios-page .seminario-card__body {
+.flacso-seminarios-page .seminarios-featured__fallback--a,
+.flacso-seminarios-page .seminario-card__fallback--a {
+    background: linear-gradient(135deg, #0d47a1 0%, #071e46 100%);
+}
+
+.flacso-seminarios-page .seminarios-featured__fallback--b,
+.flacso-seminarios-page .seminario-card__fallback--b {
+    background: linear-gradient(140deg, #0d3a7a 0%, #051731 100%);
+}
+
+.flacso-seminarios-page .seminarios-featured__fallback--c,
+.flacso-seminarios-page .seminario-card__fallback--c {
+    background: linear-gradient(140deg, #115e59 0%, #042f2e 100%);
+}
+
+.flacso-seminarios-page .seminarios-featured__fallback--d,
+.flacso-seminarios-page .seminario-card__fallback--d {
+    background: linear-gradient(145deg, #1e3a8a 0%, #020617 100%);
+}
+
+.flacso-seminarios-page .seminarios-featured__media-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(6, 23, 52, 0.12) 0%, rgba(4, 17, 39, 0.84) 100%);
+}
+
+.flacso-seminarios-page .seminarios-featured__chips {
+    position: absolute;
+    top: 1.15rem;
+    left: 1.15rem;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+}
+
+.flacso-seminarios-page .seminarios-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.9rem;
+    padding: 0.3rem 0.72rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    border: 0;
+}
+
+.flacso-seminarios-page .seminarios-chip--light {
+    background: rgba(255, 255, 255, 0.9);
+    color: #0f284f;
+}
+
+.flacso-seminarios-page .seminarios-chip--warning {
+    background: var(--seminario-warning);
+    color: #1f2937;
+}
+
+.flacso-seminarios-page .seminarios-chip--dark {
+    background: rgba(3, 7, 18, 0.84);
+    color: #ffffff;
+}
+
+.flacso-seminarios-page .seminarios-chip--sky {
+    background: rgba(14, 165, 233, 0.95);
+    color: #ffffff;
+}
+
+.flacso-seminarios-page .seminarios-featured__heading {
+    position: absolute;
+    left: 1.15rem;
+    right: 1.15rem;
+    bottom: 1rem;
+    z-index: 2;
+    color: #ffffff;
+}
+
+.flacso-seminarios-page .seminarios-featured__kicker {
+    display: block;
+    margin-bottom: 0.45rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(229, 237, 255, 0.78);
+}
+
+.flacso-seminarios-page .seminarios-featured__heading h2 {
+    margin: 0;
+    font-size: clamp(1.65rem, 3.5vw, 2.7rem);
+    line-height: 1.13;
+    text-wrap: balance;
+}
+
+.flacso-seminarios-page .seminarios-featured__content {
     display: flex;
     flex-direction: column;
-    flex: 1;
-    padding: 1.25rem 1.2rem 1.15rem;
+    padding: clamp(1.2rem, 2.4vw, 2rem);
+}
+
+.flacso-seminarios-page .seminarios-featured__description {
+    margin: 0;
+    color: var(--seminario-muted);
+    font-size: 0.98rem;
+    line-height: 1.72;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    overflow: hidden;
+}
+
+.flacso-seminarios-page .seminarios-featured__meta {
+    margin: 1.1rem 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.55rem;
+    color: #334155;
+    font-size: 0.95rem;
+}
+
+.flacso-seminarios-page .seminarios-featured__meta li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.52rem;
+    line-height: 1.45;
+}
+
+.flacso-seminarios-page .seminarios-featured__meta i {
+    color: #1463ad;
+    margin-top: 0.08rem;
+}
+
+.flacso-seminarios-page .seminarios-featured__footer {
+    margin-top: auto;
+    border-top: 1px solid rgba(var(--seminario-primary-rgb), 0.1);
+    padding-top: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.flacso-seminarios-page .seminarios-featured__cta-text {
+    color: #1f334f;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.flacso-seminarios-page .seminarios-featured__cta-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.7rem;
+    height: 2.7rem;
+    border-radius: 999px;
+    background: #081d3f;
+    color: #ffffff;
+    transition: transform 0.25s ease;
+}
+
+.flacso-seminarios-page .seminarios-featured:hover .seminarios-featured__image,
+.flacso-seminarios-page .seminario-card:hover .seminario-card__image {
+    transform: scale(1.05);
+}
+
+.flacso-seminarios-page .seminarios-featured:hover .seminarios-featured__cta-icon {
+    transform: translateX(2px);
+}
+
+.flacso-seminarios-page .seminarios-listado {
+    margin-top: clamp(2rem, 4vw, 3.2rem);
+}
+
+.flacso-seminarios-page .seminarios-listado__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.flacso-seminarios-page .seminarios-listado__heading h2 {
+    margin: 0;
+    font-size: clamp(1.6rem, 3.2vw, 2.4rem);
+    color: #051938;
+    letter-spacing: -0.02em;
+}
+
+.flacso-seminarios-page .seminarios-listado__heading p {
+    margin: 0.55rem 0 0;
+    color: var(--seminario-muted);
+    font-size: 0.98rem;
+    max-width: 46rem;
+}
+
+.flacso-seminarios-page .seminarios-listado__counter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.35rem;
+    padding: 0.45rem 0.95rem;
+    border-radius: 999px;
+    border: 1px solid rgba(var(--seminario-primary-rgb), 0.14);
+    background: #ffffff;
+    color: #304a6f;
+    font-size: 0.86rem;
+    font-weight: 700;
+    box-shadow: 0 10px 30px -28px rgba(9, 22, 45, 0.9);
+}
+
+.flacso-seminarios-page .seminarios-listado__months {
+    margin-top: clamp(1.3rem, 2.6vw, 2.2rem);
+    display: grid;
+    gap: clamp(2rem, 3.8vw, 3rem);
+}
+
+.flacso-seminarios-page .seminarios-month {
+    position: relative;
+}
+
+.flacso-seminarios-page .seminarios-month__title-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.58rem;
+    margin-bottom: 1.1rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(var(--seminario-primary-rgb), 0.11);
+    box-shadow: 0 14px 25px -22px rgba(8, 22, 44, 0.8);
+    padding: 0.42rem 0.88rem;
+}
+
+.flacso-seminarios-page .seminarios-month__dot {
+    width: 0.62rem;
+    height: 0.62rem;
+    border-radius: 999px;
+    background: var(--seminario-sky);
+    box-shadow: 0 0 0 6px rgba(14, 165, 233, 0.17);
+}
+
+.flacso-seminarios-page .seminarios-month__title {
+    margin: 0;
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: #0f2c55;
+}
+
+.flacso-seminarios-page .seminarios-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(1rem, 2vw, 1.45rem);
+}
+
+.flacso-seminarios-page .seminario-card {
+    height: 100%;
+    border-radius: 1.45rem;
+    overflow: hidden;
+    border: 1px solid rgba(var(--seminario-primary-rgb), 0.1);
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 20px 45px -36px rgba(8, 22, 46, 0.72);
+    transition: transform 0.24s ease, box-shadow 0.24s ease;
+}
+
+.flacso-seminarios-page .seminario-card.is-recent {
+    opacity: 0.7;
+}
+
+.flacso-seminarios-page .seminario-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 24px 50px -34px rgba(6, 18, 40, 0.72);
+}
+
+.flacso-seminarios-page .seminario-card__media-link {
+    position: relative;
+    display: block;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: #dbe4f3;
+}
+
+.flacso-seminarios-page .seminario-card__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(4, 18, 40, 0.1) 0%, rgba(4, 18, 40, 0.73) 100%);
+}
+
+.flacso-seminarios-page .seminario-card__badges {
+    position: absolute;
+    top: 0.8rem;
+    left: 0.8rem;
+    right: 0.8rem;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.42rem;
+}
+
+.flacso-seminarios-page .seminario-card__content {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    min-height: 19rem;
 }
 
 .flacso-seminarios-page .seminario-card__title {
     margin: 0;
-    font-size: 1.15rem;
-    line-height: 1.4;
-    color: var(--seminarios-primary);
+    color: #0a2246;
+    font-size: 1.12rem;
+    line-height: 1.32;
 }
 
 .flacso-seminarios-page .seminario-card__title a {
     color: inherit;
     text-decoration: none;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
 }
 
 .flacso-seminarios-page .seminario-card__title a:hover {
     text-decoration: underline;
 }
 
+.flacso-seminarios-page .seminario-card__description {
+    margin: 0.65rem 0 0;
+    color: var(--seminario-muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+}
+
 .flacso-seminarios-page .seminario-card__meta {
-    margin: 1rem 0 0;
+    margin: 0.8rem 0 0;
     padding: 0;
     list-style: none;
     display: grid;
-    gap: 0.55rem;
-    color: var(--seminarios-muted);
-    font-size: 0.98rem;
+    gap: 0.45rem;
+    font-size: 0.84rem;
+    color: #44556d;
 }
 
 .flacso-seminarios-page .seminario-card__meta li {
     display: flex;
     align-items: flex-start;
-    gap: 0.5rem;
-    line-height: 1.45;
+    gap: 0.45rem;
+    line-height: 1.42;
 }
 
 .flacso-seminarios-page .seminario-card__meta i {
     margin-top: 0.08rem;
-    color: rgba(var(--global-palette1rgb, 29, 58, 114), 0.78);
+    color: rgba(var(--seminario-primary-rgb), 0.72);
 }
 
 .flacso-seminarios-page .seminario-card__footer {
     margin-top: auto;
-    padding-top: 1rem;
+    border-top: 1px solid rgba(var(--seminario-primary-rgb), 0.11);
+    padding-top: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.7rem;
+}
+
+.flacso-seminarios-page .seminario-card__credits {
+    font-size: 0.83rem;
+    color: #3c4f69;
+    font-weight: 700;
 }
 
 .flacso-seminarios-page .seminario-card__cta {
     display: inline-flex;
     align-items: center;
-    gap: 0.45rem;
-    font-weight: 600;
-    color: var(--seminarios-primary);
+    gap: 0.22rem;
+    color: #0d4e93;
+    text-decoration: none;
+    font-size: 0.84rem;
+    font-weight: 700;
 }
 
-.flacso-seminarios-page .estado-vacio {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.65rem;
-    min-height: 7.4rem;
-    border-radius: 0.95rem;
-    border: 1px dashed rgba(var(--global-palette1rgb, 29, 58, 114), 0.36);
-    background: var(--seminarios-surface);
-    color: var(--seminarios-muted);
+.flacso-seminarios-page .seminario-card__cta i {
+    transition: transform 0.2s ease;
+}
+
+.flacso-seminarios-page .seminario-card__cta:hover i {
+    transform: translateX(1px);
+}
+
+.flacso-seminarios-page .seminarios-empty {
+    margin-top: 1.2rem;
+    border-radius: 1.6rem;
+    border: 1px dashed rgba(var(--seminario-primary-rgb), 0.25);
+    background: rgba(255, 255, 255, 0.92);
     text-align: center;
-    padding: 1rem;
+    padding: clamp(1.8rem, 4vw, 2.8rem);
+    box-shadow: 0 20px 40px -35px rgba(9, 23, 47, 0.8);
 }
 
-.flacso-seminarios-page .estado-vacio p {
-    margin: 0;
-    max-width: 34rem;
-    font-weight: 500;
-}
-
-.flacso-seminarios-page .contacto__panel {
-    text-align: center;
-    max-width: 58rem;
-    margin: 0 auto;
-    padding: clamp(1.2rem, 3.5vw, 2.5rem);
-}
-
-.flacso-seminarios-page .contacto__title {
-    margin: 0;
-    color: var(--seminarios-primary);
-    font-size: clamp(1.45rem, 2.7vw, 2rem);
-}
-
-.flacso-seminarios-page .contacto__text {
-    margin: 0.9rem auto 0;
-    max-width: 37rem;
-    color: var(--seminarios-muted);
-    font-size: clamp(0.98rem, 1.8vw, 1.1rem);
-}
-
-.flacso-seminarios-page .contacto__actions {
-    margin-top: 1.3rem;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.75rem;
-}
-
-.flacso-seminarios-page .contacto__btn {
+.flacso-seminarios-page .seminarios-empty__icon {
+    width: 3rem;
+    height: 3rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.52rem;
-    min-height: 2.95rem;
     border-radius: 999px;
-    padding: 0.55rem 1rem;
-    border: 1px solid transparent;
-    text-decoration: none;
+    background: #edf3ff;
+    color: #33537f;
+    font-size: 1.2rem;
+}
+
+.flacso-seminarios-page .seminarios-empty h3 {
+    margin: 0.85rem 0 0;
+    color: #0d2950;
+    font-size: 1.2rem;
+}
+
+.flacso-seminarios-page .seminarios-empty p {
+    margin: 0.45rem auto 0;
+    max-width: 33rem;
+    color: var(--seminario-muted);
+    line-height: 1.6;
+}
+
+.flacso-seminarios-page .seminarios-contacto {
+    padding-bottom: 0.5rem;
+}
+
+.flacso-seminarios-page .seminarios-contacto__panel {
+    border-radius: 2rem;
+    background: linear-gradient(145deg, #061733 0%, #0c2a59 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 28px 55px -42px rgba(4, 13, 29, 0.95);
+    padding: clamp(1.4rem, 3.2vw, 2.3rem);
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.flacso-seminarios-page .seminarios-contacto__kicker {
+    margin: 0;
+    font-size: 0.72rem;
+    color: rgba(161, 201, 255, 0.9);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
     font-weight: 600;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
-.flacso-seminarios-page .contacto__btn--primary {
-    background: var(--seminarios-primary);
-    color: #fff;
+.flacso-seminarios-page .seminarios-contacto__text h2 {
+    margin: 0.45rem 0 0;
+    color: #ffffff;
+    font-size: clamp(1.5rem, 3vw, 2.1rem);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
 }
 
-.flacso-seminarios-page .contacto__btn--ghost {
-    border-color: var(--seminarios-primary);
-    color: var(--seminarios-primary);
-    background: rgba(var(--global-palette1rgb, 29, 58, 114), 0.03);
+.flacso-seminarios-page .seminarios-contacto__text p {
+    margin: 0.7rem 0 0;
+    color: rgba(212, 227, 255, 0.9);
+    line-height: 1.68;
 }
 
-.flacso-seminarios-page .contacto__btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 14px 30px -24px rgba(var(--global-palette3rgb, 28, 35, 55), 0.75);
+.flacso-seminarios-page .seminarios-contacto__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
 }
 
-.flacso-seminarios-page :where(a, button, input, select, textarea):focus-visible {
-    outline: 2px solid var(--seminarios-accent);
-    outline-offset: 2px;
+.flacso-seminarios-page .seminarios-contacto .seminarios-btn--primary {
+    background: var(--seminario-sky);
 }
 
-.flacso-seminarios-page .screen-reader-text {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
+.flacso-seminarios-page .seminarios-contacto .seminarios-btn--ghost {
+    border-color: rgba(255, 255, 255, 0.28);
+    background: rgba(255, 255, 255, 0.09);
+    color: #ffffff;
+}
+
+.flacso-seminarios-page :where(a, button, input, textarea, select):focus-visible {
+    outline: 2px solid var(--seminario-warning);
+    outline-offset: 3px;
+}
+
+@media (min-width: 960px) {
+    .flacso-seminarios-page .seminarios-hero__inner {
+        padding-top: clamp(2.5rem, 5vw, 4rem);
+        padding-bottom: clamp(2.5rem, 5vw, 4rem);
+    }
+
+    .flacso-seminarios-page .seminarios-contacto__panel {
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+    }
+
+    .flacso-seminarios-page .seminarios-contacto__actions {
+        flex-direction: column;
+        align-items: flex-end;
+    }
+}
+
+@media (max-width: 1120px) {
+    .flacso-seminarios-page .seminarios-featured__link {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .flacso-seminarios-page .seminarios-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 @media (max-width: 767px) {
     .flacso-seminarios-page .site-main {
-        gap: 1.65rem;
+        gap: 1.85rem;
         padding-bottom: 2rem;
     }
 
-    .flacso-seminarios-page .hero {
-        min-height: clamp(9.5rem, 36vw, 12rem);
-    }
-
-    .flacso-seminarios-page .hero__inner {
-        padding: 1.2rem 0.9rem 1.4rem;
-    }
-
-    .flacso-seminarios-page .programas__grid,
-    .flacso-seminarios-page .listado__grid {
+    .flacso-seminarios-page .seminarios-hero__stats {
         grid-template-columns: 1fr;
     }
 
-    .flacso-seminarios-page .listado__content {
-        padding: 1rem;
+    .flacso-seminarios-page .seminarios-featured {
+        border-radius: 1.4rem;
     }
 
-    .flacso-seminarios-page .contacto__actions {
+    .flacso-seminarios-page .seminarios-featured__media {
+        min-height: 17rem;
+    }
+
+    .flacso-seminarios-page .seminarios-featured__heading h2 {
+        font-size: 1.55rem;
+    }
+
+    .flacso-seminarios-page .seminarios-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .flacso-seminarios-page .seminario-card__content {
+        min-height: 0;
+    }
+
+    .flacso-seminarios-page .seminarios-listado__counter {
+        font-size: 0.82rem;
+    }
+
+    .flacso-seminarios-page .seminarios-contacto__actions {
         flex-direction: column;
     }
 
-    .flacso-seminarios-page .contacto__btn {
+    .flacso-seminarios-page .seminarios-btn {
         width: 100%;
     }
 }
@@ -472,9 +788,9 @@
     .flacso-seminarios-page *,
     .flacso-seminarios-page *::before,
     .flacso-seminarios-page *::after {
-        transition-duration: 0.01ms !important;
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
     }
 }

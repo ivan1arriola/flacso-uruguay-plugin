@@ -234,12 +234,14 @@
 .flacso-oferta-proximo-inicio {
     display: flex;
     justify-content: center;
+    width: 100%;
     margin: 1rem 0 1.35rem;
 }
 
 .flacso-oferta-proximo-inicio__pill {
     margin: 0;
-    width: min(100%, 620px);
+    width: 100%;
+    max-width: 100%;
     border-radius: 16px;
     border: 1px solid rgba(255, 255, 255, 0.18);
     padding: 0.72rem 1.15rem;
@@ -253,6 +255,7 @@
     row-gap: 0.2rem;
     flex-wrap: wrap;
     text-align: center;
+    font-family: var(--global-heading-font-family, var(--global-body-font-family, inherit));
 }
 
 .flacso-oferta-proximo-inicio__label {
