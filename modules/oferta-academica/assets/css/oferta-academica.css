@@ -639,16 +639,20 @@ body.flacso-oa-consulta-open {
     position: fixed;
     inset: 0;
     z-index: 10090;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(1rem, 3vw, 2rem);
     background: rgba(8, 18, 38, 0.62);
     backdrop-filter: blur(2px);
 }
 
 .flacso-oa-consulta__panel {
-    width: 100%;
-    height: 100%;
+    width: min(960px, 100%);
+    max-height: min(88vh, 920px);
     margin: 0;
-    border: 0;
-    border-radius: 0;
+    border: 1px solid rgba(18, 44, 95, 0.18);
+    border-radius: 20px;
     background:
         radial-gradient(circle at 88% -8%, rgba(245, 208, 74, 0.24) 0%, transparent 44%),
         radial-gradient(circle at -8% 108%, rgba(37, 93, 182, 0.2) 0%, transparent 40%),
@@ -656,6 +660,7 @@ body.flacso-oa-consulta-open {
     color: #0f2345;
     overflow-y: auto;
     position: relative;
+    box-shadow: 0 30px 60px rgba(7, 18, 40, 0.35);
 }
 
 .flacso-oa-consulta__content {
@@ -665,10 +670,9 @@ body.flacso-oa-consulta-open {
 }
 
 .flacso-oa-consulta__close {
-    position: sticky;
+    position: absolute;
     top: 1rem;
-    margin-left: auto;
-    margin-right: 1rem;
+    right: 1rem;
     width: 42px;
     height: 42px;
     border-radius: 999px;
@@ -834,8 +838,25 @@ body.flacso-oa-consulta-open {
         justify-content: center;
     }
 
+    .flacso-oa-consulta__overlay {
+        display: block;
+        padding: 0;
+    }
+
+    .flacso-oa-consulta__panel {
+        width: 100%;
+        height: 100%;
+        max-height: none;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
     .flacso-oa-consulta__close {
+        position: sticky;
         top: 0.75rem;
+        right: auto;
+        margin-left: auto;
         margin-right: 0.75rem;
     }
 

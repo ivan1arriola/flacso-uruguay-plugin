@@ -21,6 +21,9 @@
         var form = root.querySelector('[data-oa-consulta-form]');
         var submitBtn = root.querySelector('[data-oa-consulta-submit]');
         var statusNode = root.querySelector('[data-oa-consulta-status]');
+        var ofertaInput = root.querySelector('[data-oa-oferta-input]');
+        var ofertaIdInput = root.querySelector('[data-oa-oferta-id]');
+        var ofertaOptions = root.querySelectorAll('datalist option[data-oferta-id]');
 
         if (!openBtn || !overlay || !closeBtn || !form || !submitBtn) {
             return;
@@ -31,6 +34,47 @@
         var endpointConfigured = root.getAttribute('data-endpoint-configured') === '1';
         var defaultSubmitLabel = submitBtn.textContent;
         var returnFocusNode = null;
+        var ofertaMap = new Map();
+
+        ofertaOptions.forEach(function (option) {
+            var title = String(option.value || '').trim();
+            var ofertaId = String(option.getAttribute('data-oferta-id') || '').trim();
+
+            if (!title || !ofertaId) {
+                return;
+            }
+
+            ofertaMap.set(title.toLowerCase(), ofertaId);
+        });
+
+        function syncOfertaIdFromInput() {
+            if (!ofertaInput || !ofertaIdInput) {
+                return;
+            }
+
+            var inputValue = String(ofertaInput.value || '').trim();
+            if (!inputValue) {
+                ofertaIdInput.value = '';
+                ofertaInput.setCustomValidity('');
+                return;
+            }
+
+            var matchedOfertaId = ofertaMap.get(inputValue.toLowerCase()) || '';
+            ofertaIdInput.value = matchedOfertaId;
+
+            if (!matchedOfertaId) {
+                ofertaInput.setCustomValidity('Seleccioná una opción válida de la lista.');
+                return;
+            }
+
+            ofertaInput.setCustomValidity('');
+        }
+
+        if (ofertaInput && ofertaIdInput) {
+            ofertaInput.addEventListener('input', syncOfertaIdFromInput);
+            ofertaInput.addEventListener('change', syncOfertaIdFromInput);
+            ofertaInput.addEventListener('blur', syncOfertaIdFromInput);
+        }
 
         function openModal() {
             returnFocusNode = document.activeElement;
@@ -82,6 +126,8 @@
         form.addEventListener('submit', function (event) {
             event.preventDefault();
             setStatus(statusNode, '', null);
+
+            syncOfertaIdFromInput();
 
             if (!endpointConfigured) {
                 setStatus(statusNode, 'El formulario no est\u00e1 disponible en este momento.', 'error');
@@ -150,6 +196,12 @@
                     if (result && result.success) {
                         setStatus(statusNode, message, 'success');
                         form.reset();
+                        if (ofertaInput) {
+                            ofertaInput.setCustomValidity('');
+                        }
+                        if (ofertaIdInput) {
+                            ofertaIdInput.value = '';
+                        }
                         if (closeBtn && typeof closeBtn.focus === 'function') {
                             closeBtn.focus();
                         }

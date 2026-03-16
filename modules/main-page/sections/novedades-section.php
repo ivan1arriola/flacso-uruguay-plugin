@@ -1445,19 +1445,22 @@ if (!function_exists('flacso_section_novedades_responsivas_render')) {
                 gap: var(--novedad-section-gap);
                 margin: 0;
                 padding: 0;
+                align-items: stretch;
             }
 
             .novedades-grid > .novedad-item {
                 width: 100%;
                 max-width: 100%;
                 min-width: 0;
+                height: 100%;
             }
 
             .novedades-grid .card {
                 position: relative;
                 display: grid;
-                grid-template-columns: 112px minmax(0, 1fr);
-                align-items: stretch;
+                grid-template-columns: 1fr;
+                align-items: start;
+                align-content: start;
                 background: var(--novedad-bg);
                 border: 1px solid var(--novedad-border);
                 border-radius: var(--novedad-radius-sm);
@@ -1469,6 +1472,7 @@ if (!function_exists('flacso_section_novedades_responsivas_render')) {
                     border-color 0.22s ease,
                     background 0.22s ease;
                 min-width: 0;
+                height: 100%;
             }
 
             .novedades-grid .card:hover {
@@ -1480,7 +1484,7 @@ if (!function_exists('flacso_section_novedades_responsivas_render')) {
             .novedades-grid .card-img-container {
                 position: relative;
                 width: 100%;
-                min-height: 112px;
+                min-height: 0;
                 aspect-ratio: 1 / 1;
                 overflow: hidden;
                 background: #edf3fb;
@@ -1527,11 +1531,11 @@ if (!function_exists('flacso_section_novedades_responsivas_render')) {
             .novedades-grid .card h3 {
                 margin: 0;
                 font-size: 1rem;
-                line-height: 1.18;
+                line-height: 1.24;
                 font-weight: 800;
                 letter-spacing: -0.02em;
                 color: var(--novedad-text);
-                text-wrap: balance;
+                overflow-wrap: anywhere;
             }
 
             .novedades-grid .card h3 a {
@@ -1548,10 +1552,7 @@ if (!function_exists('flacso_section_novedades_responsivas_render')) {
                 color: var(--global-palette4, #2e2f34);
                 font-size: 0.93rem;
                 line-height: 1.45;
-                display: -webkit-box;
-                -webkit-line-clamp: 3;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
+                overflow-wrap: anywhere;
             }
 
             .novedades-grid footer {
@@ -1576,201 +1577,39 @@ if (!function_exists('flacso_section_novedades_responsivas_render')) {
                 flex: 0 0 auto;
             }
 
-            /* CARD 1: protagonista */
-            .novedades-grid > .novedad-item:nth-child(1) .card {
-                grid-template-columns: 1fr;
-                border-radius: var(--novedad-radius);
-                background: var(--novedad-bg-soft);
-                border-color: var(--novedad-border-strong);
-            }
-
-            .novedades-grid > .novedad-item:nth-child(1) .card-img-container {
-                min-height: 0;
-                aspect-ratio: 1 / 1;
-            }
-
-            .novedades-grid > .novedad-item:nth-child(1) .card-body {
-                padding: 1.15rem 1.15rem 1.05rem;
-                gap: 0.75rem;
-            }
-
-            .novedades-grid > .novedad-item:nth-child(1) h3 {
-                font-size: clamp(1.25rem, 1.05rem + 0.6vw, 1.8rem);
-                line-height: 1.08;
-            }
-
-            .novedades-grid > .novedad-item:nth-child(1) .card-text {
-                font-size: 1rem;
-                line-height: 1.5;
-                -webkit-line-clamp: 4;
-            }
-
-            /* CARD 2: secundaria */
-            .novedades-grid > .novedad-item:nth-child(2) .card {
-                grid-template-columns: 1fr;
-                background: linear-gradient(180deg, #ffffff 0%, #f9fbfe 100%);
-                border-color: rgba(29, 58, 114, 0.12);
-                border-radius: var(--novedad-radius);
-            }
-
-            .novedades-grid > .novedad-item:nth-child(2) .card-img-container {
-                aspect-ratio: 1 / 1;
-                min-height: 0;
-            }
-
-            .novedades-grid > .novedad-item:nth-child(2) .card-body {
-                padding: 1rem;
-            }
-
-            .novedades-grid > .novedad-item:nth-child(2) h3 {
-                font-size: clamp(1.05rem, 0.98rem + 0.35vw, 1.3rem);
-                line-height: 1.12;
-            }
-
-            .novedades-grid > .novedad-item:nth-child(2) .card-text {
-                -webkit-line-clamp: 3;
-            }
-
-            /* RESTO */
-            .novedades-grid > .novedad-item:nth-child(n+3) .card {
-                --novedad-inline-thumb: 116px;
-                grid-template-columns: var(--novedad-inline-thumb) minmax(0, 1fr);
-                min-height: var(--novedad-inline-thumb);
-                height: var(--novedad-inline-thumb);
-                max-height: var(--novedad-inline-thumb);
-            }
-
-            .novedades-grid > .novedad-item:nth-child(n+3) .card-img-container {
-                width: var(--novedad-inline-thumb);
-                min-height: var(--novedad-inline-thumb);
-                height: var(--novedad-inline-thumb);
-                max-height: var(--novedad-inline-thumb);
-                aspect-ratio: 1 / 1;
-            }
-
-            .novedades-grid > .novedad-item:nth-child(n+3) .card-body {
-                padding: 0.9rem 0.95rem;
-                gap: 0.45rem;
-                overflow: hidden;
-            }
-
-            .novedades-grid > .novedad-item:nth-child(n+3) h3 {
-                font-size: 0.98rem;
-                line-height: 1.18;
-                display: -webkit-box;
-                -webkit-line-clamp: 2;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
-            }
-
-            .novedades-grid > .novedad-item:nth-child(n+3) .card-text {
-                font-size: 0.89rem;
-                line-height: 1.35;
-                -webkit-line-clamp: 1;
-            }
-
-            /* TABLET */
-            @media (min-width: 768px) {
+            @media (min-width: 768px) and (max-width: 1099.98px) {
                 .novedades-grid {
-                    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.95fr);
-                    grid-template-areas:
-                        "lead support"
-                        "lead list1"
-                        "list2 list3"
-                        "list4 list5";
-                    align-items: stretch;
-                }
-
-                .novedades-grid > .novedad-item:nth-child(1) { grid-area: lead; }
-                .novedades-grid > .novedad-item:nth-child(2) { grid-area: support; }
-                .novedades-grid > .novedad-item:nth-child(3) { grid-area: list1; }
-                .novedades-grid > .novedad-item:nth-child(4) { grid-area: list2; }
-                .novedades-grid > .novedad-item:nth-child(5) { grid-area: list3; }
-                .novedades-grid > .novedad-item:nth-child(6) { grid-area: list4; }
-                .novedades-grid > .novedad-item:nth-child(7) { grid-area: list5; }
-
-                .novedades-grid > .novedad-item:nth-child(1) .card {
-                    height: 100%;
-                }
-
-                .novedades-grid > .novedad-item:nth-child(1) .card-img-container {
-                    aspect-ratio: 1 / 1;
-                }
-
-                .novedades-grid > .novedad-item:nth-child(2) .card {
-                    height: 100%;
-                }
-
-                .novedades-grid > .novedad-item:nth-child(n+3) .card {
-                    --novedad-inline-thumb: 124px;
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    gap: 1rem;
                 }
             }
 
-            /* DESKTOP */
             @media (min-width: 1100px) {
                 .novedades-grid {
-                    grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.95fr) minmax(0, 0.95fr);
-                    grid-template-areas:
-                        "lead support list1"
-                        "lead support list2"
-                        "lead list3 list4"
-                        "list5 list6 list7";
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
                     gap: 1.25rem;
-                }
-
-                .novedades-grid > .novedad-item:nth-child(1) .card-body {
-                    padding: 1.25rem;
-                }
-
-                .novedades-grid > .novedad-item:nth-child(1) .card-text {
-                    -webkit-line-clamp: 5;
-                }
-
-                .novedades-grid > .novedad-item:nth-child(n+3) .card {
-                    --novedad-inline-thumb: 128px;
                 }
             }
 
-            /* MOBILE */
             @media (max-width: 767.98px) {
                 .novedades-grid {
                     gap: 0.85rem;
                 }
 
-                .novedades-grid > .novedad-item:nth-child(1) .card,
-                .novedades-grid > .novedad-item:nth-child(2) .card {
-                    grid-template-columns: 1fr;
-                }
-
-                .novedades-grid > .novedad-item:nth-child(1) .card-body,
-                .novedades-grid > .novedad-item:nth-child(2) .card-body {
-                    padding: 0.95rem;
-                }
-
-                .novedades-grid > .novedad-item:nth-child(1) h3 {
-                    font-size: 1.18rem;
-                }
-
-                .novedades-grid > .novedad-item:nth-child(2) h3 {
-                    font-size: 1.03rem;
-                }
-
-                .novedades-grid > .novedad-item:nth-child(n+3) .card {
-                    --novedad-inline-thumb: 96px;
+                .novedades-grid .card {
                     border-radius: 16px;
                 }
 
-                .novedades-grid > .novedad-item:nth-child(n+3) .card-body {
-                    padding: 0.78rem 0.8rem;
+                .novedades-grid .card-body {
+                    padding: 0.9rem;
                 }
 
-                .novedades-grid > .novedad-item:nth-child(n+3) h3 {
-                    font-size: 0.93rem;
+                .novedades-grid .card h3 {
+                    font-size: 0.98rem;
                 }
 
-                .novedades-grid > .novedad-item:nth-child(n+3) .card-text {
-                    font-size: 0.86rem;
-                    -webkit-line-clamp: 2;
+                .novedades-grid .card-text {
+                    font-size: 0.88rem;
                 }
 
                 .novedades-grid footer {

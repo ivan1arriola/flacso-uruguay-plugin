@@ -1375,9 +1375,9 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    align-self: stretch;
+    align-self: flex-start;
     padding: 0;
-    height: 100%;
+    height: auto;
 }
 
 .flc-eventos-react__media img {
@@ -1596,7 +1596,7 @@
 @media (min-width: 1024px) {
     .flc-eventos-react__media {
         aspect-ratio: 1 / 1;
-        min-height: 100%;
+        min-height: 0;
     }
 }
 

@@ -246,14 +246,25 @@ class Oferta_Consulta_Form {
 
                             <div class="flacso-oa-consulta__field">
                                 <label for="<?php echo esc_attr($dialog_id); ?>-oferta"><?php esc_html_e('¿De cuál oferta académica querés información?', 'flacso-oferta-academica'); ?></label>
-                                <select id="<?php echo esc_attr($dialog_id); ?>-oferta" name="oferta_id" required>
-                                    <option value=""><?php esc_html_e('Seleccioná una opción', 'flacso-oferta-academica'); ?></option>
+                                <input
+                                    id="<?php echo esc_attr($dialog_id); ?>-oferta"
+                                    name="oferta_titulo"
+                                    type="text"
+                                    list="<?php echo esc_attr($dialog_id); ?>-oferta-list"
+                                    placeholder="<?php esc_attr_e('Seleccioná una opción', 'flacso-oferta-academica'); ?>"
+                                    required
+                                    autocomplete="off"
+                                    data-oa-oferta-input
+                                />
+                                <datalist id="<?php echo esc_attr($dialog_id); ?>-oferta-list">
                                     <?php foreach ($options as $option) : ?>
-                                        <option value="<?php echo esc_attr((string) $option['id']); ?>">
-                                            <?php echo esc_html($option['title']); ?>
-                                        </option>
+                                        <option
+                                            value="<?php echo esc_attr($option['title']); ?>"
+                                            data-oferta-id="<?php echo esc_attr((string) $option['id']); ?>"
+                                        ></option>
                                     <?php endforeach; ?>
-                                </select>
+                                </datalist>
+                                <input type="hidden" name="oferta_id" value="" data-oa-oferta-id />
                             </div>
 
                             <div class="flacso-oa-consulta__field">
@@ -321,12 +332,22 @@ class Oferta_Consulta_Form {
             );
         }
 
+        $valid_offer_ids = array_map(
+            static function (array $item): int {
+                return (int) ($item['id'] ?? 0);
+            },
+            self::get_oferta_options()
+        );
+
+        if (!in_array($oferta_id, $valid_offer_ids, true)) {
+            wp_send_json_error(
+                ['message' => __('La oferta académica seleccionada no es válida.', 'flacso-oferta-academica')],
+                400
+            );
+        }
+
         $oferta = get_post($oferta_id);
-        if (
-            !($oferta instanceof WP_Post)
-            || $oferta->post_type !== 'oferta-academica'
-            || ($oferta->post_status !== 'publish' && !current_user_can('edit_post', $oferta_id))
-        ) {
+        if (!($oferta instanceof WP_Post) || $oferta->post_type !== 'oferta-academica' || $oferta->post_status !== 'publish') {
             wp_send_json_error(
                 ['message' => __('La oferta académica seleccionada no es válida.', 'flacso-oferta-academica')],
                 400
