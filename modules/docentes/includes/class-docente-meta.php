@@ -121,6 +121,7 @@ class Docente_Meta {
             'textarea_rows' => 10,
             'teeny'         => false,
             'tinymce'       => true,
+            'quicktags'     => true,
         ]);
         echo '</p>';
 

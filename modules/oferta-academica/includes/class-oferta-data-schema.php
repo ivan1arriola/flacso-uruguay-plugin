@@ -212,7 +212,17 @@ class Oferta_Data_Schema {
     }
 
     public static function sanitize_html($value): string {
-        return wp_kses_post((string) $value);
+        $allowed = wp_kses_allowed_html('post');
+
+        if (!isset($allowed['p'])) {
+            $allowed['p'] = [];
+        }
+
+        if (!isset($allowed['br'])) {
+            $allowed['br'] = [];
+        }
+
+        return wp_kses((string) $value, $allowed);
     }
 
     public static function sanitize_duration($value): string {

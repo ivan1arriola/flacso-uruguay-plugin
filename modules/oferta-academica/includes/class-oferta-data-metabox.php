@@ -119,7 +119,7 @@ class Oferta_Data_MetaBox {
                     'textarea_rows' => 4,
                     'media_buttons' => false,
                     'tinymce' => ['toolbar1' => 'bold,italic,link', 'toolbar2' => ''],
-                    'quicktags' => ['buttons' => 'strong,em,link'],
+                    'quicktags' => true,
                 ];
                 ?>
                 <p><strong><?php echo esc_html($label); ?></strong></p>

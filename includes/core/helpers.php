@@ -106,3 +106,63 @@ if (!function_exists('flacso_posgrados_asset_version')) {
         return flacso_asset_version($relative_path);
     }
 }
+
+// ============================================
+// Helpers de admin
+// ============================================
+
+if (!function_exists('flacso_print_quicktags_paragraph_buttons')) {
+    function flacso_print_quicktags_paragraph_buttons(): void {
+        if (!is_admin()) {
+            return;
+        }
+        ?>
+        <script>
+        (function() {
+            if (typeof window.QTags === 'undefined' || !window.QTags.instances) {
+                return;
+            }
+
+            var editorIds = Object.keys(window.QTags.instances);
+            if (!editorIds.length) {
+                return;
+            }
+
+            editorIds.forEach(function(editorId) {
+                if (!editorId || !window.QTags.instances[editorId]) {
+                    return;
+                }
+
+                if (!document.getElementById('qt_' + editorId + '_flacso_p_' + editorId)) {
+                    window.QTags.addButton(
+                        'flacso_p_' + editorId,
+                        'p',
+                        '<p>',
+                        '</p>',
+                        '',
+                        '<?php echo esc_js(__('Insertar párrafo', 'flacso-uruguay')); ?>',
+                        101,
+                        editorId
+                    );
+                }
+
+                if (!document.getElementById('qt_' + editorId + '_flacso_br_' + editorId)) {
+                    window.QTags.addButton(
+                        'flacso_br_' + editorId,
+                        'br',
+                        '<br>',
+                        '',
+                        '',
+                        '<?php echo esc_js(__('Insertar salto de línea', 'flacso-uruguay')); ?>',
+                        102,
+                        editorId
+                    );
+                }
+            });
+        })();
+        </script>
+        <?php
+    }
+}
+
+add_action('admin_print_footer_scripts', 'flacso_print_quicktags_paragraph_buttons', 99);
