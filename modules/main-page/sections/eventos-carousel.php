@@ -729,7 +729,7 @@ if (!function_exists('flacso_section_eventos_render')) {
                     gap: clamp(0.6rem, 1.2vw, 1rem);
                     position: relative;
                     z-index: 2;
-                    justify-content: center;
+                    justify-content: flex-start;
                 }
 
                 .flc-eventos-hero-card__media {
@@ -914,10 +914,8 @@ if (!function_exists('flacso_section_eventos_render')) {
                     color: var(--global-palette5, #5a6170);
                     font-size: clamp(0.9rem, 1.5vw, 1rem);
                     line-height: 1.6;
-                    display: -webkit-box;
-                    -webkit-line-clamp: 3;
-                    -webkit-box-orient: vertical;
-                    overflow: hidden;
+                    display: block;
+                    overflow: visible;
                     opacity: 0.9;
                     transition: opacity 0.3s ease;
                 }
@@ -1109,10 +1107,8 @@ if (!function_exists('flacso_section_eventos_render')) {
                     color: var(--global-palette5);
                     font-size: clamp(0.8rem, 1.5vw, 0.9rem);
                     line-height: 1.4;
-                    display: -webkit-box;
-                    -webkit-line-clamp: 2;
-                    -webkit-box-orient: vertical;
-                    overflow: hidden;
+                    display: block;
+                    overflow: visible;
                 }
 
                 .evento-card__link {
@@ -1198,10 +1194,6 @@ if (!function_exists('flacso_section_eventos_render')) {
                     .flc-eventos-hero-card__media {
                         max-height: clamp(190px, 44vh, 330px);
                         max-height: clamp(190px, 44dvh, 330px);
-                    }
-
-                    .evento-description {
-                        -webkit-line-clamp: 2;
                     }
                 }
             </style>

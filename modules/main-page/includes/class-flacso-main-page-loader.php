@@ -35,6 +35,11 @@ class Flacso_Main_Page_Loader {
             return;
         }
 
+        $mobile_first_version = self::asset_version('assets/css/flacso-mobile-first.css');
+        $base_css_version = self::asset_version('assets/css/flacso-main-page.css');
+        $react_js_version = self::asset_version('assets/js/flacso-main-page-react.js');
+        $convenios_js_version = self::asset_version('assets/js/flacso-convenios-react.js');
+
         wp_register_style(
             'flacso-main-page-fonts',
             'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap',
@@ -45,13 +50,13 @@ class Flacso_Main_Page_Loader {
             'flacso-mobile-first',
             FLACSO_MAIN_PAGE_MODULE_URL . 'assets/css/flacso-mobile-first.css',
             [],
-            FLACSO_MAIN_PAGE_VERSION
+            $mobile_first_version
         );
         wp_register_style(
             'flacso-main-page-base',
             FLACSO_MAIN_PAGE_MODULE_URL . 'assets/css/flacso-main-page.css',
             ['flacso-mobile-first'],
-            FLACSO_MAIN_PAGE_VERSION
+            $base_css_version
         );
 
         $heading_color_choice = Flacso_Main_Page_Settings::get_section_heading_color_choice();
@@ -85,7 +90,7 @@ class Flacso_Main_Page_Loader {
             'flacso-main-page-react',
             FLACSO_MAIN_PAGE_MODULE_URL . 'assets/js/flacso-main-page-react.js',
             ['wp-element'],
-            FLACSO_MAIN_PAGE_VERSION,
+            $react_js_version,
             true
         );
 
@@ -93,9 +98,18 @@ class Flacso_Main_Page_Loader {
             'flacso-convenios-react',
             FLACSO_MAIN_PAGE_MODULE_URL . 'assets/js/flacso-convenios-react.js',
             ['wp-element'],
-            FLACSO_MAIN_PAGE_VERSION,
+            $convenios_js_version,
             true
         );
+    }
+
+    private static function asset_version(string $relative_path): string {
+        $absolute_path = FLACSO_MAIN_PAGE_MODULE_PATH . ltrim($relative_path, '/');
+        if (file_exists($absolute_path)) {
+            return (string) filemtime($absolute_path);
+        }
+
+        return (string) FLACSO_MAIN_PAGE_VERSION;
     }
 
     private static function should_enqueue_assets(): bool {
