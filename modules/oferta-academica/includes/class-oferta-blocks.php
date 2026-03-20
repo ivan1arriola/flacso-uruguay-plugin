@@ -218,7 +218,8 @@ class Oferta_Blocks {
         }
 
         $raw_value = get_post_meta($oferta_id, 'proximo_inicio', true);
-        $formatted = self::format_proximo_inicio($raw_value);
+        $precision = get_post_meta($oferta_id, 'proximo_inicio_precision', true);
+        $formatted = self::format_proximo_inicio($raw_value, $precision);
         if ($formatted === '') {
             $formatted = __('A definir', 'flacso-oferta-academica');
         }
@@ -227,8 +228,11 @@ class Oferta_Blocks {
 
         return '<div class="flacso-oferta-proximo-inicio" role="status" aria-live="polite">' .
             '<p class="flacso-oferta-proximo-inicio__pill">' .
+            '<span class="flacso-oferta-proximo-inicio__icon" aria-hidden="true"><i class="bi bi-calendar-event"></i></span>' .
+            '<span class="flacso-oferta-proximo-inicio__content">' .
             '<span class="flacso-oferta-proximo-inicio__label">' . $label . '</span>' .
             '<strong class="flacso-oferta-proximo-inicio__value">' . esc_html($formatted) . '</strong>' .
+            '</span>' .
             '</p>' .
             '</div>';
     }
@@ -403,26 +407,86 @@ class Oferta_Blocks {
         return false;
     }
 
-    private static function format_proximo_inicio($value): string {
+    private static function format_proximo_inicio($value, $stored_precision = ''): string {
         $value = trim((string) $value);
         if ($value === '') {
             return '';
         }
 
-        $timestamp = strtotime($value);
-        if ($timestamp) {
-            $formatted = date_i18n('j F Y', $timestamp);
-            $parts = preg_split('/\\s+/', trim($formatted));
-            if (count($parts) >= 3) {
-                $day   = $parts[0];
-                $month = self::mb_ucfirst($parts[1]);
-                $year  = $parts[2];
-                return $day . ' ' . $month . ' del ' . $year;
+        $precision = self::detect_proximo_inicio_precision($value, $stored_precision);
+
+        if ($precision === 'year' && preg_match('/^\d{4}$/', $value)) {
+            return 'en ' . $value;
+        }
+
+        if ($precision === 'month') {
+            if (preg_match('/^(\d{4})-(\d{2})$/', $value, $matches)) {
+                $year = $matches[1];
+                $month_number = (int) $matches[2];
+                if ($month_number >= 1 && $month_number <= 12) {
+                    $month_name = self::mb_ucfirst(date_i18n('F', mktime(0, 0, 0, $month_number, 1, (int) $year)));
+                    return $month_name . ' del ' . $year;
+                }
             }
-            return self::mb_ucfirst($formatted);
+
+            $timestamp = strtotime($value . '-01');
+            if ($timestamp) {
+                return self::mb_ucfirst(date_i18n('F', $timestamp)) . ' del ' . date_i18n('Y', $timestamp);
+            }
+        }
+
+        if ($precision === 'day') {
+            if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $matches)) {
+                $year = (int) $matches[1];
+                $month_number = (int) $matches[2];
+                $day_number = (int) $matches[3];
+
+                if (checkdate($month_number, $day_number, $year)) {
+                    $month_name = self::mb_ucfirst(date_i18n('F', mktime(0, 0, 0, $month_number, 1, $year)));
+                    return $day_number . ' ' . $month_name . ' del ' . $year;
+                }
+            }
+
+            $timestamp = strtotime($value);
+            if ($timestamp) {
+                $formatted = date_i18n('j F Y', $timestamp);
+                $parts = preg_split('/\\s+/', trim($formatted));
+                if (count($parts) >= 3) {
+                    $day = $parts[0];
+                    $month = self::mb_ucfirst($parts[1]);
+                    $year = $parts[2];
+                    return $day . ' ' . $month . ' del ' . $year;
+                }
+                return self::mb_ucfirst($formatted);
+            }
         }
 
         return $value;
+    }
+
+    private static function detect_proximo_inicio_precision(string $value, $stored = ''): string {
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            return 'day';
+        }
+
+        if (preg_match('/^\d{4}-\d{2}$/', $value)) {
+            return 'month';
+        }
+
+        if (preg_match('/^\d{4}$/', $value)) {
+            return 'year';
+        }
+
+        if (preg_match('/^\d{1,2}\/\d{1,2}\/\d{4}$/', $value)) {
+            return 'day';
+        }
+
+        $stored = is_string($stored) ? trim(strtolower($stored)) : '';
+        if (in_array($stored, ['day', 'month', 'year'], true)) {
+            return $stored;
+        }
+
+        return 'year';
     }
 
     private static function mb_ucfirst(string $text): string {

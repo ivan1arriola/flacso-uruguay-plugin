@@ -1,3 +1,32 @@
+## Version 2.1.4 - 20 de marzo de 2026
+
+### Resumen
+- Se mejora la legibilidad del bloque dinamico `flacso-uruguay/dato-proximo-inicio`.
+- Se normaliza el formato de `proximo_inicio` para mostrar texto natural en frontend (`YYYY-MM` -> `Mes del YYYY`, `YYYY` -> `en YYYY`).
+- Se vuelve robusta la deteccion de precision priorizando el patron del valor, aun si la precision guardada no coincide.
+- Se reemplazan los selectores multiples de `Docentes Asociados` y `Seminarios Asociados` por un selector con buscador y checkboxes.
+
+### Cambios detallados
+- Bloque `dato-proximo-inicio`:
+  - `modules/oferta-academica/includes/class-oferta-blocks.php`
+  - Se agrega icono y nueva jerarquia visual (`label` + `value`) en el render.
+  - Se ajusta formateo por precision para `day|month|year`.
+  - Se corrige deteccion de precision para inferir desde el valor antes de usar el valor guardado.
+- Estilos frontend:
+  - `modules/oferta-academica/assets/css/oferta-academica.css`
+  - Se rediseña la pastilla de `Proximo inicio` (gradiente, icono, tipografia y responsive).
+- Metaboxes de asociacion:
+  - `modules/oferta-academica/includes/class-oferta-docentes-integration.php`
+  - `modules/oferta-academica/includes/class-oferta-seminarios-integration.php`
+  - Se reemplaza `<select multiple>` por lista con checkboxes, buscador, contador, `Seleccionar visibles` y `Limpiar seleccion`.
+
+### Verificaciones
+- `php -l modules/oferta-academica/includes/class-oferta-blocks.php`
+- `php -l modules/oferta-academica/includes/class-oferta-docentes-integration.php`
+- `php -l modules/oferta-academica/includes/class-oferta-seminarios-integration.php`
+
+---
+
 ## Versin 2.1.3 - 14 de marzo de 2026
 
 ### Resumen
