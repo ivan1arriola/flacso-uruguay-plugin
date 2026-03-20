@@ -14,11 +14,35 @@ jobs:
   deploy:
     name: Deploy to WordPress
     runs-on: ubuntu-latest
-    if: ${{ secrets.WP_FTP_HOST != '' && secrets.WP_FTP_USERNAME != '' && secrets.WP_FTP_PASSWORD != '' && secrets.WP_FTP_SERVER_DIR != '' }}
+    env:
+      WP_FTP_HOST: ${{ secrets.WP_FTP_HOST }}
+      WP_FTP_USERNAME: ${{ secrets.WP_FTP_USERNAME }}
+      WP_FTP_PASSWORD: ${{ secrets.WP_FTP_PASSWORD }}
+      WP_FTP_SERVER_DIR: ${{ secrets.WP_FTP_SERVER_DIR }}
+      WP_FTP_PROTOCOL: ${{ secrets.WP_FTP_PROTOCOL }}
+      WP_FTP_PORT: ${{ secrets.WP_FTP_PORT }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Validate deploy secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=()
+          required=(WP_FTP_HOST WP_FTP_USERNAME WP_FTP_PASSWORD WP_FTP_SERVER_DIR)
+          for key in "${required[@]}"; do
+            if [[ -z "${!key:-}" ]]; then
+              missing+=("$key")
+            fi
+          done
+
+          if [[ "${#missing[@]}" -gt 0 ]]; then
+            echo "::error::Missing required repository secrets: ${missing[*]}"
+            echo "::error::Configure them in Settings > Secrets and variables > Actions"
+            exit 1
+          fi
 
       - name: PHP syntax check
         run: |
@@ -33,13 +57,13 @@ jobs:
       - name: Deploy plugin files via FTP/SFTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ secrets.WP_FTP_HOST }}
-          username: ${{ secrets.WP_FTP_USERNAME }}
-          password: ${{ secrets.WP_FTP_PASSWORD }}
-          protocol: ${{ secrets.WP_FTP_PROTOCOL || 'ftps' }}
-          port: ${{ secrets.WP_FTP_PORT || 21 }}
+          server: ${{ env.WP_FTP_HOST }}
+          username: ${{ env.WP_FTP_USERNAME }}
+          password: ${{ env.WP_FTP_PASSWORD }}
+          protocol: ${{ env.WP_FTP_PROTOCOL || 'ftps' }}
+          port: ${{ env.WP_FTP_PORT || 21 }}
           local-dir: ./
-          server-dir: ${{ secrets.WP_FTP_SERVER_DIR }}
+          server-dir: ${{ env.WP_FTP_SERVER_DIR }}
           state-name: .ftp-deploy-sync-state.json
           exclude: |
             **/.git*
