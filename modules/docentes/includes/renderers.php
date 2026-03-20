@@ -66,6 +66,57 @@ if (!function_exists('flacso_docentes_print_global_styles')) {
             aspect-ratio: 1/1;
             object-fit: cover;
         }
+        .flacso-docentes-scope .docentes-lista-completa {
+            display: grid;
+            gap: 1.35rem;
+        }
+        .flacso-docentes-scope .docentes-lista-card {
+            border: 1px solid color-mix(in srgb, var(--global-palette1, #1d3a72) 12%, transparent);
+            border-radius: 1.35rem;
+            background:
+                radial-gradient(180px 180px at 95% -5%, color-mix(in srgb, var(--global-palette2, #fed222) 24%, transparent), transparent 72%),
+                var(--global-palette9, #ffffff);
+            box-shadow: 0 20px 45px rgba(15, 23, 42, 0.11);
+            overflow: hidden;
+            margin-bottom: 0;
+        }
+        .flacso-docentes-scope .docentes-lista-card .card-body {
+            padding: clamp(1.1rem, 2vw, 1.6rem);
+        }
+        .flacso-docentes-scope .docentes-lista-card__top {
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.7rem;
+            border-bottom: 1px solid color-mix(in srgb, var(--global-palette1, #1d3a72) 10%, transparent);
+        }
+        .flacso-docentes-scope .docentes-lista-card__name {
+            margin: 0;
+            color: var(--global-palette1, #1d3a72);
+            font-size: clamp(1.5rem, 2vw, 2rem);
+            line-height: 1.15;
+            text-wrap: balance;
+        }
+        .flacso-docentes-scope .docentes-lista-card__prefix {
+            margin: 0.35rem 0 0;
+            color: var(--global-palette5, #7a8696);
+            font-size: 0.9rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .flacso-docentes-scope .docentes-lista-card__cv {
+            color: var(--global-palette4, #2e2f34);
+            font-size: 1.02rem;
+            line-height: 1.72;
+        }
+        .flacso-docentes-scope .docentes-lista-card__cv > :last-child {
+            margin-bottom: 0;
+        }
+        .flacso-docentes-scope .docentes-lista-card__view {
+            border-radius: 999px;
+            padding-inline: 0.8rem;
+        }
+        .flacso-docentes-scope .docentes-lista-card__edit {
+            border-radius: 999px;
+        }
         .flacso-docentes-scope .doc-grid .card {
             border: 0;
             background: var(--global-palette9,#fff);
@@ -113,6 +164,16 @@ if (!function_exists('flacso_docentes_print_global_styles')) {
         }
         @media (max-width: 576px) {
             .flacso-docentes-scope .docente-avatar { --doc-avatar: 120px; }
+            .flacso-docentes-scope .docentes-lista-card .row {
+                text-align: center;
+            }
+            .flacso-docentes-scope .docentes-lista-card__top {
+                flex-direction: column;
+                align-items: center !important;
+            }
+            .flacso-docentes-scope .docentes-lista-card__name {
+                font-size: 1.5rem;
+            }
         }
         </style>
         <?php
@@ -240,39 +301,46 @@ function dp_docentes_lista_bloques($atts = [], $block = null) {
             if ($display_name === '') {
                 $display_name = $titulo;
             }
+            if (function_exists('dp_strip_prefix_from_name')) {
+                $display_name = dp_strip_prefix_from_name($display_name, $pref_abrev);
+            }
+            $heading_name = trim(($pref_abrev ? $pref_abrev . ' ' : '') . $display_name);
+            if ($heading_name === '') {
+                $heading_name = $display_name;
+            }
             $cv_raw = get_post_meta($id, 'cv', true);
             $img_col_order  = ($i % 2 === 0) ? 'order-md-2' : 'order-md-1';
             $text_col_order = ($i % 2 === 0) ? 'order-md-1' : 'order-md-2';
             $h_id  = 'doc-list-h-' . $id;
             $cv_id = 'doc-list-cv-' . $id;
             ?>
-            <article class="card border-0 shadow-sm mb-5 hover-lift" role="listitem" aria-labelledby="<?php echo esc_attr($h_id); ?>" aria-describedby="<?php echo esc_attr($cv_id); ?>">
+            <article class="card border-0 shadow-sm mb-5 hover-lift docentes-lista-card" role="listitem" aria-labelledby="<?php echo esc_attr($h_id); ?>" aria-describedby="<?php echo esc_attr($cv_id); ?>">
                 <div class="card-body p-4">
                     <div class="row g-4 align-items-center">
                         <div class="col-md-3 text-center <?php echo esc_attr($img_col_order); ?>">
                             <?php echo dp_avatar_markup($id, $display_name, 190, 'shadow-lg border border-2 border-white'); ?>
                         </div>
                         <div class="col-md-9 <?php echo esc_attr($text_col_order); ?>">
-                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2 docentes-lista-card__top">
                                 <div>
-                                    <h3 id="<?php echo esc_attr($h_id); ?>" class="mb-1"><?php echo esc_html($display_name); ?></h3>
-                                    <?php if ($pref): ?>
-                                        <p class="text-muted small mb-0"><?php echo esc_html($pref); ?></p>
+                                    <h3 id="<?php echo esc_attr($h_id); ?>" class="mb-1 docentes-lista-card__name"><?php echo esc_html($heading_name); ?></h3>
+                                    <?php if ($titulo_meta): ?>
+                                        <p class="text-muted small mb-0 docentes-lista-card__prefix"><?php echo esc_html($titulo_meta); ?></p>
                                     <?php endif; ?>
                                 </div>
                                 <div class="d-flex gap-2">
-                                    <a href="<?php echo esc_url(get_permalink($id)); ?>" class="btn btn-outline-secondary btn-sm" aria-label="<?php echo esc_attr(sprintf(__('Ver perfil de %s', 'flacso-posgrados-docentes'), $display_name)); ?>">
+                                    <a href="<?php echo esc_url(get_permalink($id)); ?>" class="btn btn-outline-secondary btn-sm docentes-lista-card__view" aria-label="<?php echo esc_attr(sprintf(__('Ver perfil de %s', 'flacso-posgrados-docentes'), $display_name)); ?>">
                                         <i class="bi bi-chevron-right" aria-hidden="true"></i><span class="visually-hidden"><?php esc_html_e('Ver perfil', 'flacso-posgrados-docentes'); ?></span>
                                     </a>
                                     <?php if (current_user_can('edit_post', $id)): ?>
-                                        <a href="<?php echo esc_url(get_edit_post_link($id, '')); ?>" target="_blank" rel="noopener" class="btn btn-sm btn-palette2 d-print-none" aria-label="<?php echo esc_attr(sprintf(__('Editar docente: %s', 'flacso-posgrados-docentes'), $display_name)); ?>">
+                                        <a href="<?php echo esc_url(get_edit_post_link($id, '')); ?>" target="_blank" rel="noopener" class="btn btn-sm btn-palette2 d-print-none docentes-lista-card__edit" aria-label="<?php echo esc_attr(sprintf(__('Editar docente: %s', 'flacso-posgrados-docentes'), $display_name)); ?>">
                                             <i class="bi bi-pencil me-1" aria-hidden="true"></i><span aria-hidden="true"><?php esc_html_e('Editar docente', 'flacso-posgrados-docentes'); ?></span>
                                         </a>
                                     <?php endif; ?>
                                 </div>
                             </div>
                             <?php if ($cv_raw): ?>
-                                <div id="<?php echo esc_attr($cv_id); ?>" class="cv-completo" style="line-height:1.65">
+                                <div id="<?php echo esc_attr($cv_id); ?>" class="cv-completo docentes-lista-card__cv" style="line-height:1.65">
                                     <?php
                                         $cv_html = (strpos($cv_raw, '<p>') === false) ? wpautop($cv_raw) : $cv_raw;
                                         echo dp_safe_cv_html($cv_html);
@@ -553,13 +621,30 @@ function flacso_render_docente_profile($atts = []) {
 
     $meta = get_post_meta($doc_id);
     $prefijo_abrev = !empty($meta['prefijo_abrev'][0]) ? trim((string) $meta['prefijo_abrev'][0]) : '';
-    $prefijo_full  = !empty($meta['prefijo_full'][0])  ? trim((string) $meta['prefijo_full'][0])  : '';
-    $prefijo       = $prefijo_abrev !== '' ? $prefijo_abrev : $prefijo_full;
+    $titulo_meta   = !empty($meta['titulo'][0]) ? trim((string) $meta['titulo'][0]) : '';
+    $nombre_meta   = !empty($meta['nombre'][0]) ? trim((string) $meta['nombre'][0]) : '';
+    $apellido_meta = !empty($meta['apellido'][0]) ? trim((string) $meta['apellido'][0]) : '';
 
-    $nombre     = dp_nombre_completo($doc_id);
+    if (function_exists('dp_strip_prefix_from_name')) {
+        $nombre_meta = dp_strip_prefix_from_name($nombre_meta, $prefijo_abrev);
+    }
+
+    $nombre_base = trim($nombre_meta . ' ' . $apellido_meta);
+    if ($nombre_base === '') {
+        $nombre_base = dp_nombre_completo($doc_id);
+        if (function_exists('dp_strip_prefix_from_name')) {
+            $nombre_base = dp_strip_prefix_from_name($nombre_base, $prefijo_abrev);
+        }
+    }
+
+    $heading_name = trim(($prefijo_abrev ? $prefijo_abrev . ' ' : '') . $nombre_base);
+    if ($heading_name === '') {
+        $heading_name = get_the_title($doc_id);
+    }
+
     $cv_raw     = isset($meta['cv'][0]) ? (string) $meta['cv'][0] : '';
     $cv_html    = $cv_raw !== '' ? dp_safe_cv_html((strpos($cv_raw, '<p>') === false) ? wpautop($cv_raw) : $cv_raw) : '<em>' . esc_html__('CV no disponible', 'flacso-posgrados-docentes') . '</em>';
-    $avatar_html = !empty($atts['showAvatar']) ? dp_avatar_markup($doc_id, $nombre, 168, 'mx-sm-0 mx-auto') : '';
+    $avatar_html = dp_avatar_markup($doc_id, $heading_name, 168, 'mx-sm-0 mx-auto');
     $heading_id = 'docente-nombre-' . $doc_id;
 
     ob_start(); ?>
@@ -572,16 +657,19 @@ function flacso_render_docente_profile($atts = []) {
           </div>
           <?php endif; ?>
           <div class="col">
-            <<?php echo $heading; ?> id="<?php echo esc_attr($heading_id); ?>" class="fw-bold mb-3 docente-nombre">
-              <i class="bi bi-person-badge-fill me-2" aria-hidden="true"></i><?php echo $prefijo ? esc_html($prefijo . ' ') : ''; ?><?php echo esc_html($nombre); ?>
-            </<?php echo $heading; ?>>
+                        <<?php echo $heading; ?> id="<?php echo esc_attr($heading_id); ?>" class="fw-bold mb-3 docente-nombre">
+                                                        <?php echo esc_html($heading_name); ?>
+                        </<?php echo $heading; ?>>
+                        <?php if ($titulo_meta !== ''): ?>
+                            <p class="text-muted small mb-3"><?php echo esc_html($titulo_meta); ?></p>
+                        <?php endif; ?>
             <div class="flacso-docente-cv">
               <?php echo $cv_html; ?>
             </div>
             <?php if (current_user_can('edit_post', $doc_id)): ?>
               <div class="mt-3 d-print-none">
                 <a class="btn btn-sm btn-palette2" href="<?php echo esc_url(get_edit_post_link($doc_id, '')); ?>" target="_blank" rel="noopener"
-                   aria-label="<?php echo esc_attr(sprintf(__('Editar ficha de %s', 'flacso-posgrados-docentes'), $nombre)); ?>">
+                                     aria-label="<?php echo esc_attr(sprintf(__('Editar ficha de %s', 'flacso-posgrados-docentes'), $heading_name)); ?>">
                   <i class="bi bi-pencil me-1" aria-hidden="true"></i><span aria-hidden="true"><?php esc_html_e('Editar', 'flacso-posgrados-docentes'); ?></span>
                 </a>
               </div>

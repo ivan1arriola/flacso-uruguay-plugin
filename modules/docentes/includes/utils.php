@@ -20,8 +20,30 @@ if (!function_exists('dp_nombre_completo')) {
         if(!$nombre && !$apellido) return get_the_title($docente_id);
 
         $prefijo = $with_complete_prefix ? $titulo : $prefijo_abrev;
+        if (function_exists('dp_strip_prefix_from_name')) {
+            $nombre = dp_strip_prefix_from_name($nombre, $prefijo);
+        }
         $partes = array_filter([$prefijo, $nombre, $apellido]);
         return implode(' ', $partes);
+    }
+}
+
+if (!function_exists('dp_strip_prefix_from_name')) {
+    function dp_strip_prefix_from_name($nombre, $prefijo) {
+        $nombre = trim((string) $nombre);
+        $prefijo = trim((string) $prefijo);
+
+        if ($nombre === '' || $prefijo === '') {
+            return $nombre;
+        }
+
+        $prefijo_base = preg_replace('/[\s\.]+$/u', '', $prefijo);
+        if ($prefijo_base === '') {
+            return $nombre;
+        }
+
+        $pattern = '/^' . preg_quote($prefijo_base, '/') . '\.?\s+/iu';
+        return (string) preg_replace($pattern, '', $nombre, 1);
     }
 }
 

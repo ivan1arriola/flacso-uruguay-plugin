@@ -75,6 +75,14 @@ $total_docentes = (int) $docentes_query->post_count;
                         $prefijo_abrev = (string) get_post_meta($docente_id, 'prefijo_abrev', true);
                         $titulo = (string) get_post_meta($docente_id, 'titulo', true);
 
+                        $display_name = trim(($nombre ?: '') . ' ' . ($apellido ?: ''));
+                        if ($display_name === '') {
+                            $display_name = $nombre_completo;
+                        }
+                        if (function_exists('dp_strip_prefix_from_name')) {
+                            $display_name = dp_strip_prefix_from_name($display_name, $prefijo_abrev);
+                        }
+
                         $cv_raw = (string) get_post_meta($docente_id, 'cv', true);
                         $resumen = wp_trim_words(wp_strip_all_tags($cv_raw), 28);
                         if ($resumen === '') {
@@ -118,7 +126,7 @@ $total_docentes = (int) $docentes_query->post_count;
                                 <?php if ($prefijo_abrev !== '') : ?>
                                     <span class="flacso-docentes-card__abbr"><?php echo esc_html($prefijo_abrev); ?></span>
                                 <?php endif; ?>
-                                <h2 class="flacso-docentes-card__title"><?php echo esc_html($nombre_completo); ?></h2>
+                                <h2 class="flacso-docentes-card__title"><?php echo esc_html($display_name); ?></h2>
                                 <?php if ($titulo !== '') : ?>
                                     <p class="flacso-docentes-card__subtitle"><?php echo esc_html($titulo); ?></p>
                                 <?php endif; ?>

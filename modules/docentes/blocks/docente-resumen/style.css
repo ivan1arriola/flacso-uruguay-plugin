@@ -1,26 +1,35 @@
+.flacso-docentes-scope .flacso-docente,
 .flacso-docente-card {
-    background-color: var(--global-palette8, #f8f9fa);
+    background: var(--global-palette9, #ffffff);
     color: var(--global-palette4, #2e2f34);
-    border-radius: 1.25rem;
-    box-shadow: 0 20px 55px rgba(15, 23, 42, 0.12);
-    border: 0;
-    padding: 2rem;
-    margin: 1.5rem 0;
-    position: relative;
+    border-radius: 1rem;
+    border: 1px solid var(--global-palette7, #e9edf2);
+    box-shadow: 0 0.65rem 1.2rem rgba(15, 23, 42, 0.06);
+    margin: 1.25rem 0;
     overflow: hidden;
 }
 
+.flacso-docentes-scope .flacso-docente .card-body,
+.flacso-docente-card {
+    padding: 1.5rem;
+}
+
+.flacso-docentes-scope .flacso-docente .docente-nombre,
 .flacso-docente-card__heading {
     color: var(--global-palette1, #1d3a72);
     font-family: var(--global-heading-font-family, inherit);
+    font-size: clamp(1.4rem, 2.05vw, 1.95rem);
+    line-height: 1.25;
+    letter-spacing: -0.005em;
     margin-bottom: 1rem;
+    overflow-wrap: anywhere;
 }
 
 .flacso-docente-card__body {
     display: grid;
     grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
     gap: 2rem;
-    align-items: center;
+    align-items: flex-start;
 }
 
 .flacso-docente-card__media {
@@ -31,12 +40,19 @@
     text-align: left;
 }
 
+.flacso-docentes-scope .flacso-docente .dp-docente-avatar,
+.flacso-docentes-scope .flacso-docente .dp-docente-avatar__img,
+.flacso-docente-card__avatar,
+.flacso-docente-card__initials {
+    width: clamp(128px, 20vw, 180px) !important;
+    height: clamp(128px, 20vw, 180px) !important;
+    border-radius: 0.75rem;
+    object-fit: cover;
+    box-shadow: 0 0.45rem 1rem rgba(15, 23, 42, 0.1);
+}
+
 .flacso-docente-card__avatar {
-    width: 160px;
-    height: 160px;
-    border-radius: 999px;
     margin: 0 auto;
-    box-shadow: 0 12px 32px rgba(13, 59, 102, 0.25);
     overflow: hidden;
 }
 
@@ -47,10 +63,7 @@
 }
 
 .flacso-docente-card__initials {
-    width: 160px;
-    height: 160px;
-    border-radius: 999px;
-    font-size: 2.75rem;
+    font-size: clamp(2rem, 3.2vw, 2.7rem);
     font-weight: 600;
     color: var(--global-palette9, #ffffff);
     display: inline-flex;
@@ -59,13 +72,27 @@
     text-transform: uppercase;
 }
 
+.flacso-docentes-scope .flacso-docente .flacso-docente-cv,
+.flacso-docente-card__cv {
+    color: var(--global-palette4, #2e2f34);
+    font-size: clamp(0.99rem, 1.05vw, 1.06rem);
+    line-height: 1.62;
+}
+
+.flacso-docentes-scope .flacso-docente .flacso-docente-cv p,
+.flacso-docente-card__cv p {
+    margin-bottom: 0.85rem;
+}
+
+.flacso-docentes-scope .flacso-docente .btn,
+.flacso-docente-card .btn {
+    border-radius: 0.5rem;
+    padding-inline: 0.85rem;
+}
+
 .flacso-docente-card__meta {
     color: var(--global-palette5, #7a8696);
     margin-bottom: 1.25rem;
-}
-
-.flacso-docente-card__cv p {
-    margin-bottom: 0.8rem;
 }
 
 .flacso-docente-card__placeholder {
@@ -84,6 +111,27 @@
 
     .flacso-docente-card__media {
         margin-bottom: 1.25rem;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .flacso-docentes-scope .flacso-docente .card-body {
+        padding: 1.25rem;
+    }
+
+    .flacso-docentes-scope .flacso-docente .docente-nombre {
+        text-align: center;
+        font-size: clamp(1.25rem, 5.2vw, 1.55rem);
+    }
+
+    .flacso-docentes-scope .flacso-docente .flacso-docente-cv {
+        font-size: 1rem;
+        line-height: 1.64;
+    }
+
+    .flacso-docentes-scope .flacso-docente .btn {
+        width: 100%;
+        justify-content: center;
     }
 }
 
