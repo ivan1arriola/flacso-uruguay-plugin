@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Deploy to WordPress
+    name: Build/Deploy Plugin
     runs-on: ubuntu-latest
     env:
       WP_FTP_HOST: ${{ secrets.WP_FTP_HOST }}
@@ -27,6 +27,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Validate deploy secrets
+        id: deploy_secrets
         shell: bash
         run: |
           set -euo pipefail
@@ -39,9 +40,11 @@ jobs:
           done
 
           if [[ "${#missing[@]}" -gt 0 ]]; then
-            echo "::error::Missing required repository secrets: ${missing[*]}"
-            echo "::error::Configure them in Settings > Secrets and variables > Actions"
-            exit 1
+            echo "can_deploy=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::FTP deploy deshabilitado: faltan secretos (${missing[*]})."
+            echo "::warning::Se generara solo el ZIP del plugin como artifact."
+          else
+            echo "can_deploy=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: PHP syntax check
@@ -54,7 +57,31 @@ jobs:
             -not -path "./node_modules/*" \
             -print0)
 
+      - name: Build plugin ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          PLUGIN_SLUG="flacso-uruguay-plugin"
+          ZIP_NAME="${PLUGIN_SLUG}-${GITHUB_SHA::7}.zip"
+          zip -r "$ZIP_NAME" . \
+            -x ".git/*" \
+               ".github/*" \
+               "node_modules/*" \
+               "vendor/*" \
+               ".DS_Store" \
+               "Thumbs.db" \
+               "*.log"
+          echo "ZIP_NAME=$ZIP_NAME" >> "$GITHUB_ENV"
+
+      - name: Upload plugin ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-zip
+          path: ${{ env.ZIP_NAME }}
+          if-no-files-found: error
+
       - name: Deploy plugin files via FTP/SFTP
+        if: steps.deploy_secrets.outputs.can_deploy == 'true'
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ env.WP_FTP_HOST }}
