@@ -13,6 +13,7 @@ flacso_safe_require('modules/shortcodes/includes/pdf-proxy.php');
 flacso_safe_require('modules/shortcodes/includes/shortcodes-documentos.php');
 flacso_safe_require('modules/shortcodes/includes/shortcodes-programa.php');
 flacso_safe_require('modules/shortcodes/includes/shortcodes-precios.php');
+flacso_safe_require('modules/shortcodes/includes/shortcode-calendario-maestriagenero.php');
 
 // ============================================
 // Funciones del módulo
@@ -115,6 +116,17 @@ function flacso_shortcodes_get_catalog() {
             'desc'  => __('Tablas específicas para cada programa.', 'flacso-uruguay'),
             'attrs' => array(
                 'id' => __('ID de página para resolver la tabla automáticamente (opcional).', 'flacso-uruguay'),
+            ),
+        ),
+        array(
+            'tag'   => 'calendario_maestriagenero',
+            'desc'  => __('Acordeón con calendario de maestría en género (3 ciclos).', 'flacso-uruguay'),
+            'attrs' => array(
+                'c1'      => __('Mostrar Ciclo 1 (true/false). Default: true.', 'flacso-uruguay'),
+                'c2'      => __('Mostrar Ciclo 2 (true/false). Default: true.', 'flacso-uruguay'),
+                'c3'      => __('Mostrar Ciclo 3 (true/false). Default: true.', 'flacso-uruguay'),
+                'abierto' => __('Abrir acordeón al cargar (true/false). Default: false.', 'flacso-uruguay'),
+                'clase'   => __('Clases CSS adicionales.', 'flacso-uruguay'),
             ),
         ),
     );
