@@ -56,16 +56,29 @@ if (!function_exists('flacso_view_pdf')) {
         $expired   = !file_exists($file) || (time() - filemtime($file) > $ttl_hours * 3600);
 
         if ($expired) {
-            $res = wp_remote_get(
-                $resolved,
-                array(
-                    'timeout'     => 45,
-                    'redirection' => 5,
-                    'headers'     => array(
-                        'User-Agent' => 'FLACSO-PDF-Proxy/1.0',
-                    ),
-                )
-            );
+            $fetch_remote = static function ($url, $cookies = array()) {
+                return wp_remote_get(
+                    $url,
+                    array(
+                        'timeout'     => 45,
+                        'redirection' => 5,
+                        'cookies'     => $cookies,
+                        'headers'     => array(
+                            'User-Agent' => 'FLACSO-PDF-Proxy/1.0',
+                        ),
+                    )
+                );
+            };
+
+            $is_pdf_payload = static function ($ctype, $body) {
+                if (stripos((string) $ctype, 'pdf') !== false) {
+                    return true;
+                }
+
+                return substr((string) $body, 0, 4) === '%PDF';
+            };
+
+            $res = $fetch_remote($resolved);
 
             if (is_wp_error($res)) {
                 status_header(502);
@@ -83,11 +96,60 @@ if (!function_exists('flacso_view_pdf')) {
                 exit;
             }
 
-            $looks_like_pdf = stripos((string) $ctype, 'pdf') !== false;
+            $looks_like_pdf = $is_pdf_payload($ctype, $body);
+
+            // Google Drive a veces devuelve HTML de confirmación en lugar del PDF directo.
             if (!$looks_like_pdf) {
-                $signature = substr($body, 0, 4);
-                if ($signature === '%PDF') {
-                    $looks_like_pdf = true;
+                $resolved_parts = wp_parse_url($resolved);
+                $resolved_host  = !empty($resolved_parts['host']) ? strtolower($resolved_parts['host']) : '';
+
+                if ($resolved_host === 'drive.google.com') {
+                    $query = isset($resolved_parts['query']) ? $resolved_parts['query'] : '';
+                    parse_str($query, $q);
+                    $drive_id = !empty($q['id']) ? preg_replace('~[^a-zA-Z0-9_-]~', '', (string) $q['id']) : '';
+
+                    $retry_urls = array();
+                    $initial_cookies = wp_remote_retrieve_cookies($res);
+
+                    if (preg_match('~confirm=([0-9A-Za-z_\-]+)~', (string) $body, $m_confirm)) {
+                        $confirm = $m_confirm[1];
+                        if ($drive_id !== '') {
+                            $retry_urls[] = sprintf('https://drive.google.com/uc?export=download&id=%s&confirm=%s', $drive_id, rawurlencode($confirm));
+                            $retry_urls[] = sprintf('https://drive.usercontent.google.com/download?id=%s&export=download&confirm=%s', $drive_id, rawurlencode($confirm));
+                        }
+                    }
+
+                    if (preg_match('~href=["\']([^"\']*?/uc\?export=download[^"\']*)["\']~i', (string) $body, $m)) {
+                        $candidate = html_entity_decode($m[1], ENT_QUOTES, 'UTF-8');
+                        if (strpos($candidate, 'http') !== 0) {
+                            $candidate = 'https://drive.google.com' . $candidate;
+                        }
+                        $retry_urls[] = $candidate;
+                    }
+
+                    if ($drive_id !== '') {
+                        $retry_urls[] = sprintf('https://drive.google.com/uc?export=download&id=%s&confirm=t', $drive_id);
+                        $retry_urls[] = sprintf('https://drive.usercontent.google.com/download?id=%s&export=download&confirm=t', $drive_id);
+                    }
+
+                    $retry_urls = array_values(array_unique(array_filter($retry_urls)));
+
+                    foreach ($retry_urls as $retry_url) {
+                        $retry_res = $fetch_remote($retry_url, $initial_cookies);
+                        if (is_wp_error($retry_res)) {
+                            continue;
+                        }
+
+                        $retry_code  = wp_remote_retrieve_response_code($retry_res);
+                        $retry_body  = wp_remote_retrieve_body($retry_res);
+                        $retry_ctype = wp_remote_retrieve_header($retry_res, 'content-type');
+
+                        if ($retry_code === 200 && !empty($retry_body) && $is_pdf_payload($retry_ctype, $retry_body)) {
+                            $body = $retry_body;
+                            $looks_like_pdf = true;
+                            break;
+                        }
+                    }
                 }
             }
 

@@ -255,6 +255,43 @@ function flacso_shortcodes_sanitize_cal_maestriagenero_data($input) {
     return $output;
 }
 
+function flacso_shortcodes_cal_doc_preview_url($row) {
+    if (!is_array($row)) {
+        return '';
+    }
+
+    $source = '';
+
+    if (!empty($row['url'])) {
+        $source = esc_url_raw((string) $row['url']);
+    } elseif (!empty($row['id'])) {
+        $id = preg_replace('~[^a-zA-Z0-9_-]~', '', (string) $row['id']);
+        if ($id !== '') {
+            $source = sprintf('https://drive.google.com/file/d/%s/view', $id);
+        }
+    }
+
+    if ($source === '') {
+        return '';
+    }
+
+    if (function_exists('flacso_get_pdf_proxy_url')) {
+        $proxy = flacso_get_pdf_proxy_url($source, 'documento');
+        if (!empty($proxy)) {
+            return $proxy;
+        }
+    }
+
+    if (!empty($row['id'])) {
+        $id = preg_replace('~[^a-zA-Z0-9_-]~', '', (string) $row['id']);
+        if ($id !== '') {
+            return add_query_arg(array('flacso_pdf_proxy' => 1, 'doc_id' => $id), site_url('/'));
+        }
+    }
+
+    return $source;
+}
+
 function flacso_shortcodes_register_docs_page() {
     add_menu_page(
         __('FLACSO Shortcodes', 'flacso-uruguay'),
@@ -321,7 +358,16 @@ function flacso_shortcodes_render_cal_maestriagenero_page() {
                 <h2 style="margin:0;padding:1rem;border-bottom:1px solid #e2e2e2;"><?php esc_html_e('Links del Ciclo 2', 'flacso-uruguay'); ?></h2>
                 <div style="padding:1rem;">
                     <p class="description"><?php esc_html_e('Puedes usar ID de Drive o URL completa. Si completas ambos, se prioriza URL.', 'flacso-uruguay'); ?></p>
-                    <table class="widefat striped">
+                    <style>
+                        .flacso-cal-c2-table { table-layout: fixed; }
+                        .flacso-cal-c2-table th:nth-child(1) { width: 26%; }
+                        .flacso-cal-c2-table th:nth-child(2) { width: 16%; }
+                        .flacso-cal-c2-table th:nth-child(3) { width: 18%; }
+                        .flacso-cal-c2-table th:nth-child(4) { width: 40%; }
+                        .flacso-cal-link-row { margin-top: .4rem; display: flex; gap: .5rem; align-items: center; }
+                        .flacso-cal-doc-preview-value { width: 100%; font-family: monospace; font-size: 12px; }
+                    </style>
+                    <table class="widefat striped flacso-cal-c2-table">
                         <thead>
                             <tr>
                                 <th><?php esc_html_e('Título', 'flacso-uruguay'); ?></th>
@@ -333,16 +379,92 @@ function flacso_shortcodes_render_cal_maestriagenero_page() {
                         <tbody>
                         <?php for ($i = 0; $i < $max_rows; $i++) :
                             $row = isset($c2_docs[$i]) && is_array($c2_docs[$i]) ? $c2_docs[$i] : array();
+                            $preview_link = flacso_shortcodes_cal_doc_preview_url($row);
                             ?>
                             <tr>
                                 <td><input type="text" style="width:100%;" name="flacso_cal_maestriagenero_data[c2_docs][<?php echo esc_attr($i); ?>][titulo]" value="<?php echo esc_attr(isset($row['titulo']) ? $row['titulo'] : ''); ?>"></td>
                                 <td><input type="text" style="width:100%;" name="flacso_cal_maestriagenero_data[c2_docs][<?php echo esc_attr($i); ?>][cohorte]" value="<?php echo esc_attr(isset($row['cohorte']) ? $row['cohorte'] : ''); ?>"></td>
-                                <td><input type="text" style="width:100%;" name="flacso_cal_maestriagenero_data[c2_docs][<?php echo esc_attr($i); ?>][id]" value="<?php echo esc_attr(isset($row['id']) ? $row['id'] : ''); ?>"></td>
-                                <td><input type="url" style="width:100%;" name="flacso_cal_maestriagenero_data[c2_docs][<?php echo esc_attr($i); ?>][url]" value="<?php echo esc_attr(isset($row['url']) ? $row['url'] : ''); ?>"></td>
+                                <td>
+                                    <input class="flacso-cal-doc-id" type="text" style="width:100%;" name="flacso_cal_maestriagenero_data[c2_docs][<?php echo esc_attr($i); ?>][id]" value="<?php echo esc_attr(isset($row['id']) ? $row['id'] : ''); ?>">
+                                </td>
+                                <td>
+                                    <input class="flacso-cal-doc-url" type="url" style="width:100%;" name="flacso_cal_maestriagenero_data[c2_docs][<?php echo esc_attr($i); ?>][url]" value="<?php echo esc_attr(isset($row['url']) ? $row['url'] : ''); ?>">
+                                    <div class="flacso-cal-link-row">
+                                        <a class="button button-small flacso-cal-doc-preview" data-base-site="<?php echo esc_attr(site_url('/')); ?>" data-ajax-url="<?php echo esc_attr(admin_url('admin-ajax.php')); ?>" target="_blank" rel="noopener" href="<?php echo esc_url($preview_link); ?>">
+                                            <?php esc_html_e('Abrir link', 'flacso-uruguay'); ?>
+                                        </a>
+                                        <input type="text" readonly class="flacso-cal-doc-preview-value" value="<?php echo esc_attr($preview_link); ?>" placeholder="<?php esc_attr_e('Sin link', 'flacso-uruguay'); ?>">
+                                    </div>
+                                </td>
                             </tr>
                         <?php endfor; ?>
                         </tbody>
                     </table>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function () {
+                            var rows = document.querySelectorAll('.widefat tbody tr');
+
+                            rows.forEach(function (row) {
+                                var idInput = row.querySelector('.flacso-cal-doc-id');
+                                var urlInput = row.querySelector('.flacso-cal-doc-url');
+                                var preview = row.querySelector('.flacso-cal-doc-preview');
+                                var previewValue = row.querySelector('.flacso-cal-doc-preview-value');
+
+                                if (!idInput || !urlInput || !preview || !previewValue) {
+                                    return;
+                                }
+
+                                var ajaxUrl = preview.getAttribute('data-ajax-url') || '';
+                                var siteUrl = preview.getAttribute('data-base-site') || '';
+
+                                var sanitizeId = function (value) {
+                                    return (value || '').replace(/[^a-zA-Z0-9_-]/g, '');
+                                };
+
+                                var toBase64 = function (value) {
+                                    try {
+                                        return btoa(unescape(encodeURIComponent(value)));
+                                    } catch (e) {
+                                        return '';
+                                    }
+                                };
+
+                                var setPreview = function () {
+                                    var id = sanitizeId(idInput.value);
+                                    var rawUrl = (urlInput.value || '').trim();
+                                    var source = rawUrl !== '' ? rawUrl : (id ? ('https://drive.google.com/file/d/' + id + '/view') : '');
+
+                                    if (!source) {
+                                        preview.removeAttribute('href');
+                                        previewValue.value = '';
+                                        return;
+                                    }
+
+                                    var srcB64 = toBase64(source);
+                                    if (ajaxUrl && srcB64) {
+                                        var built = ajaxUrl + '?action=flacso_view_pdf&src=' + encodeURIComponent(srcB64) + '&fn=' + encodeURIComponent(toBase64('documento'));
+                                        preview.setAttribute('href', built);
+                                        previewValue.value = built;
+                                        return;
+                                    }
+
+                                    if (id && siteUrl) {
+                                        var fallback = siteUrl + (siteUrl.indexOf('?') === -1 ? '?' : '&') + 'flacso_pdf_proxy=1&doc_id=' + encodeURIComponent(id);
+                                        preview.setAttribute('href', fallback);
+                                        previewValue.value = fallback;
+                                        return;
+                                    }
+
+                                    preview.removeAttribute('href');
+                                    previewValue.value = source;
+                                };
+
+                                idInput.addEventListener('input', setPreview);
+                                urlInput.addEventListener('input', setPreview);
+                                setPreview();
+                            });
+                        });
+                    </script>
                 </div>
             </div>
 
