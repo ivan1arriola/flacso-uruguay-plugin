@@ -170,6 +170,19 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
             #<?php echo esc_html($instance_id); ?>.is-ready .flacso-catalogo-3d__viewport{overflow:hidden;scroll-snap-type:none;cursor:default}
             #<?php echo esc_html($instance_id); ?>.is-ready .flacso-catalogo-3d__track{position:absolute;inset:0;display:block;padding:0;transform-style:preserve-3d}
             #<?php echo esc_html($instance_id); ?>.is-ready .flacso-catalogo-3d__card{position:absolute;left:50%;top:50%;flex:none;scroll-snap-align:none}
+            #<?php echo esc_html($instance_id); ?>.is-mobile-grid{padding:.6rem 0 1rem}
+            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__viewport{min-height:auto;height:auto;perspective:none;background:transparent;border:0;border-radius:0;overflow:visible}
+            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__viewport::before,
+            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__viewport::after{display:none}
+            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__track{position:relative;display:grid;inset:auto;padding:.2rem 0;gap:.8rem;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__card{--w:auto;position:relative;left:auto;top:auto;flex:none;width:100%;min-width:0;max-width:none;scroll-snap-align:none;border-radius:16px}
+            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__card::after{display:none}
+            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__card::before{width:8px}
+            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__title{left:.88rem;right:.8rem;bottom:.78rem;font-size:clamp(.92rem,.86rem + .44vw,1.08rem)}
+            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__meta{padding:.72rem .72rem .75rem .9rem;gap:.34rem}
+            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__badge{font-size:.68rem;padding:.3rem .56rem}
+            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__dots{display:none}
+            @media (max-width:460px){#<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__track{grid-template-columns:1fr}}
         </style>
         <script>
             (function () {
@@ -198,6 +211,10 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
                     if (raw > length / 2) raw -= length;
                     if (raw < -length / 2) raw += length;
                     return raw;
+                }
+
+                function isMobileGridMode() {
+                    return window.innerWidth < 768;
                 }
 
                 function getMode() {
@@ -323,6 +340,39 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
 
                 function update() {
                     window.requestAnimationFrame(function () {
+                        if (isMobileGridMode()) {
+                            root.classList.add('is-mobile-grid');
+                            root.classList.remove('is-ready');
+                            viewport.removeAttribute('tabindex');
+
+                            cards.forEach(function (card) {
+                                const disabled = card.classList.contains('is-disabled');
+                                card.style.display = 'flex';
+                                card.style.opacity = '1';
+                                card.style.zIndex = '1';
+                                card.style.filter = 'none';
+                                card.style.boxShadow = '';
+                                card.style.pointerEvents = disabled ? 'none' : 'auto';
+                                card.style.transform = 'none';
+                                card.style.cursor = disabled ? 'default' : 'pointer';
+                                card.dataset.active = '0';
+                                card.removeAttribute('aria-current');
+                                card.setAttribute('aria-hidden', 'false');
+                                card.tabIndex = disabled ? -1 : 0;
+                            });
+
+                            if (dotsWrap) {
+                                dotsWrap.style.display = 'none';
+                            }
+
+                            updateStatus();
+                            return;
+                        }
+
+                        root.classList.remove('is-mobile-grid');
+                        root.classList.add('is-ready');
+                        viewport.setAttribute('tabindex', '0');
+
                         cards.forEach(function (card, index) {
                             const state = getVisualState(index, active, cards.length);
                             const isActive = index === active;
@@ -342,6 +392,7 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
                         });
 
                         if (dotsWrap) {
+                            dotsWrap.style.display = cards.length > 1 ? 'flex' : 'none';
                             Array.from(dotsWrap.children).forEach(function (dot, index) {
                                 dot.classList.toggle('is-active', index === active);
                             });
@@ -352,11 +403,13 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
                 }
 
                 function next() {
+                    if (isMobileGridMode()) return;
                     active = mod(active + 1, cards.length);
                     update();
                 }
 
                 function prev() {
+                    if (isMobileGridMode()) return;
                     active = mod(active - 1, cards.length);
                     update();
                 }
@@ -368,6 +421,13 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
                     card.setAttribute('aria-label', title + '. Programa ' + (index + 1) + ' de ' + cards.length + '.');
 
                     card.addEventListener('click', function (event) {
+                        if (isMobileGridMode()) {
+                            if (card.classList.contains('is-disabled')) {
+                                event.preventDefault();
+                            }
+                            return;
+                        }
+
                         if (moved) {
                             event.preventDefault();
                             return;
@@ -389,6 +449,7 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
                 });
 
                 root.addEventListener('keydown', function (event) {
+                    if (isMobileGridMode()) return;
                     if (event.key === 'ArrowLeft') { event.preventDefault(); prev(); }
                     if (event.key === 'ArrowRight') { event.preventDefault(); next(); }
                     if (event.key === 'Home') { event.preventDefault(); active = 0; update(); }
@@ -409,6 +470,7 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
                 });
 
                 root.addEventListener('pointerdown', function (event) {
+                    if (isMobileGridMode()) return;
                     if (event.pointerType === 'mouse') return;
                     dragging = true;
                     moved = false;
@@ -442,7 +504,6 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
                 window.addEventListener('pointercancel', endDrag);
                 window.addEventListener('resize', update);
 
-                root.classList.add('is-ready');
                 if (cards.length <= 1) {
                     root.classList.add('is-single');
                     if (dotsWrap) dotsWrap.style.display = 'none';

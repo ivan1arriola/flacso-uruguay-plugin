@@ -355,7 +355,7 @@ class Oferta_Blocks {
             return [
                 'icon' => 'bi-calendar2-check',
                 'title' => __('Calendario Academico', 'flacso-oferta-academica'),
-                'description' => __('Consulta el cronograma del programa en PDF o en formato web.', 'flacso-oferta-academica'),
+                'description' => '',
             ];
         }
 
@@ -363,7 +363,7 @@ class Oferta_Blocks {
             return [
                 'icon' => 'bi-journal-bookmark',
                 'title' => __('Malla curricular', 'flacso-oferta-academica'),
-                'description' => __('Consulta la Malla curricular en PDF o en formato web.', 'flacso-oferta-academica'),
+                'description' => '',
             ];
         }
 
