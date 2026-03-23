@@ -306,7 +306,7 @@ if (!function_exists('flacso_shortcode_calendario_maestriagenero')) {
                                                     </div>
                                                     <?php if (!empty($pdf)) : ?>
                                                         <a class="btn btn-cal" href="<?php echo esc_url($pdf); ?>" target="_blank" rel="noopener">
-                                                            Ver PDF
+                                                            Abrir documento
                                                         </a>
                                                     <?php else : ?>
                                                         <span class="small text-muted">Sin enlace</span>

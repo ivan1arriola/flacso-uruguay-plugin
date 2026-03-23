@@ -150,12 +150,41 @@ if (!function_exists('flacso_view_pdf')) {
                             break;
                         }
                     }
+
+                    // Intento de conversión a PDF A4 para archivos no-PDF en Drive.
+                    if (!$looks_like_pdf && $drive_id !== '') {
+                        $conversion_urls = array(
+                            sprintf('https://drive.google.com/file/d/%s/export?format=pdf', $drive_id),
+                            sprintf('https://docs.google.com/document/d/%s/export?format=pdf&size=A4', $drive_id),
+                            sprintf('https://docs.google.com/spreadsheets/d/%s/export?format=pdf&size=A4', $drive_id),
+                            sprintf('https://docs.google.com/presentation/d/%s/export/pdf', $drive_id),
+                            sprintf('https://docs.google.com/feeds/download/documents/export/Export?id=%s&exportFormat=pdf', $drive_id),
+                        );
+
+                        foreach ($conversion_urls as $conversion_url) {
+                            $conversion_res = $fetch_remote($conversion_url, $initial_cookies);
+                            if (is_wp_error($conversion_res)) {
+                                continue;
+                            }
+
+                            $conversion_code  = wp_remote_retrieve_response_code($conversion_res);
+                            $conversion_body  = wp_remote_retrieve_body($conversion_res);
+                            $conversion_ctype = wp_remote_retrieve_header($conversion_res, 'content-type');
+
+                            if ($conversion_code === 200 && !empty($conversion_body) && $is_pdf_payload($conversion_ctype, $conversion_body)) {
+                                $body = $conversion_body;
+                                $looks_like_pdf = true;
+                                break;
+                            }
+                        }
+                    }
                 }
             }
 
             if (!$looks_like_pdf) {
-                status_header(502);
-                echo 'El enlace proporcionado no devuelve un PDF.';
+                // No forzar PDF: algunos recursos en Drive son DOCX u otros formatos.
+                // En ese caso, redirigimos al recurso resuelto para que el navegador/Drive lo maneje.
+                wp_redirect($resolved, 302);
                 exit;
             }
 

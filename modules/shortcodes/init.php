@@ -151,18 +151,53 @@ function flacso_shortcodes_register_settings() {
 }
 
 function flacso_shortcodes_get_default_cal_maestriagenero_data() {
+    $default_items = flacso_shortcodes_get_default_cal_maestriagenero_items();
+
     return array(
         'c1_title' => 'Diploma en Género – Cohorte VII',
         'c2_title' => 'Ciclo de Especialización en Género',
         'c3_title' => 'Maestría en Género',
-        'c1_items' => array(),
+        'c1_items' => $default_items['c1_items'],
         'c2_docs' => array(
             array('titulo' => 'Diplomado de Especialización en Género – Políticas Públicas Integrales', 'cohorte' => 'Cohorte IV', 'id' => '1lDjCXUbXyYDD54csNS5Zg2e00olbIceX', 'url' => ''),
             array('titulo' => 'Diplomado de Especialización en Género – Violencia basada en Género', 'cohorte' => 'Cohorte IV', 'id' => '1gCf9xZsHI4VX9oiEeUOCpQRhZEqVnbP1', 'url' => ''),
             array('titulo' => 'Diplomado de Especialización en Género – Salud Integral', 'cohorte' => 'Cohorte III', 'id' => '1IngR8XqRwm9MX2JpBhNvtqMWfMxfUOwz', 'url' => ''),
             array('titulo' => 'Especialización en Género, Cambio Climático y Desastres', 'cohorte' => 'Cohorte V', 'id' => '1s39lb_-yB4lUPPEP7dlqSvsJNuPW7nrm', 'url' => ''),
         ),
-        'c3_items' => array(),
+        'c3_items' => $default_items['c3_items'],
+    );
+}
+
+function flacso_shortcodes_get_default_cal_maestriagenero_items() {
+    return array(
+        'c1_items' => array(
+            array('eje' => 'Temático Común', 'nota' => 'Lo cursa todo el grupo', 'semana' => '0', 'nombre' => 'Bienvenida y presentación', 'periodo' => '08 al 14 de abril', 'sesiones' => array(array('fecha' => 'sábado  11 de abril', 'hora' => '10:00 a 12:00 horas (Uruguay)'))),
+            array('eje' => 'Temático Común', 'nota' => 'Lo cursa todo el grupo', 'semana' => '1, 2, 3, 4', 'nombre' => 'Género, interseccionalidad, igualdad y no discriminación', 'periodo' => '15 de abril al 12 de mayo', 'sesiones' => array(array('fecha' => 'sábado 25 de abril', 'hora' => '10:00 a 12:00 horas (Uruguay)'))),
+            array('eje' => '*Temático Específico — Políticas Públicas Integrales', 'nota' => 'Lo cursa quien ha elegido este eje', 'semana' => '5,6,7,8,9', 'nombre' => 'Políticas Públicas con enfoque de Género e Interseccionalidad', 'periodo' => '13 de mayo al 16 de junio', 'sesiones' => array(array('fecha' => 'sábados  16 de mayo y  13 de junio', 'hora' => '10:00 a 12:00 horas (Uruguay)'))),
+            array('eje' => '*Temático Específico — Violencia basada en Género', 'nota' => 'Lo cursa quien ha elegido este eje', 'semana' => '5,6,7', 'nombre' => 'Aproximación a la Violencia Basada en Género', 'periodo' => '13 de mayo al 02 de junio', 'sesiones' => array(array('fecha' => 'sábado  23 de mayo', 'hora' => '10:00 a 12:00 horas (Uruguay)'))),
+            array('eje' => '*Temático Específico — Violencia basada en Género', 'nota' => '(continuación)', 'semana' => '8,9', 'nombre' => 'Violencia en las relaciones de pareja. Principios rectores para la intervención', 'periodo' => '03 de junio al 16 de junio', 'sesiones' => array(array('fecha' => 'sábado 13 de junio', 'hora' => '10:00 a 12:00 horas (Uruguay)'))),
+            array('eje' => '*Temático Específico — Cambio Climático y Desastres', 'nota' => 'Lo cursa quien ha elegido este eje', 'semana' => '5 y 6', 'nombre' => 'Género y Desarrollo', 'periodo' => '13 al 26 de mayo', 'sesiones' => array(array('fecha' => 'sábado 23 de mayo', 'hora' => '10:00 a 12:00 horas (Uruguay)'))),
+            array('eje' => '*Temático Específico — Cambio Climático y Desastres', 'nota' => '(continuación)', 'semana' => '7,8,9', 'nombre' => 'De las palabras a la acción: implementación género responsiva en la agenda climática', 'periodo' => '27 de mayo al 16 de junio', 'sesiones' => array(array('fecha' => 'sábado 06 de junio', 'hora' => '10:00 a 12:00 horas (Uruguay)'))),
+            array('eje' => '*Salud Integral', 'nota' => 'Lo cursa quien ha elegido este eje', 'semana' => '5,6', 'nombre' => 'Introducción a género, interseccionalidad y salud', 'periodo' => '13 al 26 de mayo', 'sesiones' => array(array('fecha' => 'sábado 23 de mayo', 'hora' => '10:00 a 12:00 horas (Uruguay)'))),
+            array('eje' => '*Salud Integral', 'nota' => '(continuación)', 'semana' => '7,8,9', 'nombre' => 'Género, interseccionalidad y determinación social de la salud', 'periodo' => '27 de mayo al 16 de junio', 'sesiones' => array(array('fecha' => 'sábado 06 de junio', 'hora' => '10:00 a 12:00 horas (Uruguay)'), array('fecha' => 'jueves 11 de junio', 'hora' => '18:00 a 20:00 horas (Uruguay)'))),
+            array('eje' => 'Metodológico', 'nota' => 'Lo cursa todo el grupo', 'semana' => '9,10', 'nombre' => 'Seminario de metodología', 'periodo' => '17 al 30 de junio', 'sesiones' => array(array('fecha' => 'sábado 27 de junio', 'hora' => '10:00 a 12:00 horas (Uruguay)'))),
+            array('eje' => 'Metodológico', 'nota' => 'Lo cursa todo el grupo', 'semana' => '11,12', 'nombre' => 'Talleres de Metodología', 'periodo' => '1 al 14 de julio', 'sesiones' => array(array('fecha' => 'sábado 4 y sábado 11 de julio', 'hora' => '10:00 a 12:00 horas (Uruguay)'))),
+            array('eje' => 'Entrega del Trabajo Final', 'nota' => '', 'semana' => '13', 'nombre' => '21 de julio', 'periodo' => '', 'sesiones' => array()),
+        ),
+        'c3_items' => array(
+            array('eje' => 'Común', 'nota' => 'Lo cursa todo el grupo', 'semana' => '—', 'nombre' => 'Clase de bienvenida', 'periodo' => 'Abril 2027', 'sesiones' => array(array('fecha' => 'a confirmar', 'hora' => 'a confirmar'))),
+            array('eje' => 'Metodológico', 'nota' => 'Lo cursa todo el grupo', 'semana' => '—', 'nombre' => 'Seminario Metodológico III', 'periodo' => 'Abril y Mayo 2027', 'sesiones' => array(array('fecha' => 'a confirmar', 'hora' => 'a confirmar'))),
+            array('eje' => '*Temático Específico — Políticas Públicas Integrales', 'nota' => 'Lo cursa quien ha elegido este eje', 'semana' => '—', 'nombre' => 'Construcción e interpretación de indicadores con PEG e interseccionalidad', 'periodo' => 'Junio 2027', 'sesiones' => array(array('fecha' => 'a confirmar', 'hora' => 'a confirmar'))),
+            array('eje' => '*Temático Específico — Violencia basada en Género', 'nota' => 'Lo cursa quien ha elegido este eje', 'semana' => '—', 'nombre' => 'Políticas Públicas sobre violencia basada en género I', 'periodo' => 'Junio 2027', 'sesiones' => array(array('fecha' => 'a confirmar', 'hora' => 'a confirmar'))),
+            array('eje' => '*Temático Específico — Cambio Climático y Desastres', 'nota' => 'Lo cursa quien ha elegido este eje', 'semana' => '—', 'nombre' => 'Género en el marco de los acuerdos multilaterales de cambio climático y gestión del riesgo de desastres', 'periodo' => 'Junio 2027', 'sesiones' => array(array('fecha' => 'a confirmar', 'hora' => 'a confirmar'))),
+            array('eje' => '*Salud Integral', 'nota' => 'Lo cursa quien ha elegido este eje', 'semana' => '—', 'nombre' => 'Ciencia y medicina como tecnología de género', 'periodo' => 'Junio 2027', 'sesiones' => array(array('fecha' => 'a confirmar', 'hora' => 'a confirmar'))),
+            array('eje' => 'Metodológico', 'nota' => 'Lo cursa todo el grupo', 'semana' => '—', 'nombre' => 'Seminario Metodológico IV', 'periodo' => 'Julio 2027', 'sesiones' => array(array('fecha' => 'a confirmar', 'hora' => 'a confirmar'))),
+            array('eje' => 'Metodológico', 'nota' => '', 'semana' => '—', 'nombre' => 'Taller de Tesis I', 'periodo' => 'Agosto a Noviembre 2027', 'sesiones' => array(array('fecha' => 'a confirmar', 'hora' => 'a confirmar'))),
+            array('eje' => 'Libre elección', 'nota' => 'Lo cursa todo el grupo', 'semana' => '—', 'nombre' => 'Un seminario a elección', 'periodo' => 'Septiembre 2027', 'sesiones' => array(array('fecha' => 'a confirmar', 'hora' => 'a confirmar'))),
+            array('eje' => 'Metodológico', 'nota' => '', 'semana' => '—', 'nombre' => 'Un seminario a elección', 'periodo' => 'Noviembre 2027', 'sesiones' => array(array('fecha' => 'a confirmar', 'hora' => 'a confirmar'))),
+            array('eje' => 'Metodológico', 'nota' => 'Lo cursa todo el grupo', 'semana' => '—', 'nombre' => 'Taller de Tesis II', 'periodo' => 'Febrero a abril 2028', 'sesiones' => array(array('fecha' => 'a confirmar', 'hora' => 'a confirmar'))),
+            array('eje' => 'Entrega del borrador final de tesis', 'nota' => '', 'semana' => 'ABRIL 2028', 'nombre' => 'Entrega del borrador final de tesis', 'periodo' => 'ABRIL 2028', 'sesiones' => array()),
+        ),
     );
 }
 
@@ -179,10 +214,10 @@ function flacso_shortcodes_get_cal_maestriagenero_data() {
     if (!isset($out['c2_docs']) || !is_array($out['c2_docs'])) {
         $out['c2_docs'] = $defaults['c2_docs'];
     }
-    if (!isset($out['c1_items']) || !is_array($out['c1_items'])) {
+    if (!isset($out['c1_items']) || !is_array($out['c1_items']) || empty($out['c1_items'])) {
         $out['c1_items'] = $defaults['c1_items'];
     }
-    if (!isset($out['c3_items']) || !is_array($out['c3_items'])) {
+    if (!isset($out['c3_items']) || !is_array($out['c3_items']) || empty($out['c3_items'])) {
         $out['c3_items'] = $defaults['c3_items'];
     }
 
@@ -348,6 +383,25 @@ function flacso_shortcodes_cal_doc_preview_url($row) {
     return $source;
 }
 
+function flacso_shortcodes_cal_doc_source_url($row) {
+    if (!is_array($row)) {
+        return '';
+    }
+
+    if (!empty($row['url'])) {
+        return esc_url_raw((string) $row['url']);
+    }
+
+    if (!empty($row['id'])) {
+        $id = preg_replace('~[^a-zA-Z0-9_-]~', '', (string) $row['id']);
+        if ($id !== '') {
+            return sprintf('https://drive.google.com/file/d/%s/view', $id);
+        }
+    }
+
+    return '';
+}
+
 function flacso_shortcodes_register_docs_page() {
     add_menu_page(
         __('FLACSO Shortcodes', 'flacso-uruguay'),
@@ -447,6 +501,7 @@ function flacso_shortcodes_render_cal_maestriagenero_page() {
                         <?php for ($i = 0; $i < $max_rows; $i++) :
                             $row = isset($c2_docs[$i]) && is_array($c2_docs[$i]) ? $c2_docs[$i] : array();
                             $preview_link = flacso_shortcodes_cal_doc_preview_url($row);
+                            $source_link = flacso_shortcodes_cal_doc_source_url($row);
                             ?>
                             <tr>
                                 <td><input type="text" style="width:100%;" name="flacso_cal_maestriagenero_data[c2_docs][<?php echo esc_attr($i); ?>][titulo]" value="<?php echo esc_attr(isset($row['titulo']) ? $row['titulo'] : ''); ?>"></td>
@@ -458,9 +513,15 @@ function flacso_shortcodes_render_cal_maestriagenero_page() {
                                     <input class="flacso-cal-doc-url" type="url" style="width:100%;" name="flacso_cal_maestriagenero_data[c2_docs][<?php echo esc_attr($i); ?>][url]" value="<?php echo esc_attr(isset($row['url']) ? $row['url'] : ''); ?>">
                                     <div class="flacso-cal-link-row">
                                         <a class="button button-small flacso-cal-doc-preview" data-base-site="<?php echo esc_attr(site_url('/')); ?>" data-ajax-url="<?php echo esc_attr(admin_url('admin-ajax.php')); ?>" target="_blank" rel="noopener" href="<?php echo esc_url($preview_link); ?>">
-                                            <?php esc_html_e('Abrir link', 'flacso-uruguay'); ?>
+                                            <?php esc_html_e('Abrir proxy', 'flacso-uruguay'); ?>
                                         </a>
                                         <input type="text" readonly class="flacso-cal-doc-preview-value" value="<?php echo esc_attr($preview_link); ?>" placeholder="<?php esc_attr_e('Sin link', 'flacso-uruguay'); ?>">
+                                    </div>
+                                    <div class="flacso-cal-link-row">
+                                        <a class="button button-small flacso-cal-doc-source" target="_blank" rel="noopener" href="<?php echo esc_url($source_link); ?>">
+                                            <?php esc_html_e('Abrir Drive/Docs', 'flacso-uruguay'); ?>
+                                        </a>
+                                        <input type="text" readonly class="flacso-cal-doc-source-value" value="<?php echo esc_attr($source_link); ?>" placeholder="<?php esc_attr_e('Sin link directo', 'flacso-uruguay'); ?>">
                                     </div>
                                 </td>
                             </tr>
@@ -476,8 +537,10 @@ function flacso_shortcodes_render_cal_maestriagenero_page() {
                                 var urlInput = row.querySelector('.flacso-cal-doc-url');
                                 var preview = row.querySelector('.flacso-cal-doc-preview');
                                 var previewValue = row.querySelector('.flacso-cal-doc-preview-value');
+                                var sourceLink = row.querySelector('.flacso-cal-doc-source');
+                                var sourceValue = row.querySelector('.flacso-cal-doc-source-value');
 
-                                if (!idInput || !urlInput || !preview || !previewValue) {
+                                if (!idInput || !urlInput || !preview || !previewValue || !sourceLink || !sourceValue) {
                                     return;
                                 }
 
@@ -499,15 +562,20 @@ function flacso_shortcodes_render_cal_maestriagenero_page() {
                                 var setPreview = function () {
                                     var id = sanitizeId(idInput.value);
                                     var rawUrl = (urlInput.value || '').trim();
-                                    var source = rawUrl !== '' ? rawUrl : (id ? ('https://drive.google.com/file/d/' + id + '/view') : '');
+                                    var sourceUrl = rawUrl !== '' ? rawUrl : (id ? ('https://drive.google.com/file/d/' + id + '/view') : '');
 
-                                    if (!source) {
+                                    if (!sourceUrl) {
                                         preview.removeAttribute('href');
                                         previewValue.value = '';
+                                        sourceLink.removeAttribute('href');
+                                        sourceValue.value = '';
                                         return;
                                     }
 
-                                    var srcB64 = toBase64(source);
+                                    sourceLink.setAttribute('href', sourceUrl);
+                                    sourceValue.value = sourceUrl;
+
+                                    var srcB64 = toBase64(sourceUrl);
                                     if (ajaxUrl && srcB64) {
                                         var built = ajaxUrl + '?action=flacso_view_pdf&src=' + encodeURIComponent(srcB64) + '&fn=' + encodeURIComponent(toBase64('documento'));
                                         preview.setAttribute('href', built);
@@ -523,7 +591,7 @@ function flacso_shortcodes_render_cal_maestriagenero_page() {
                                     }
 
                                     preview.removeAttribute('href');
-                                    previewValue.value = source;
+                                    previewValue.value = sourceUrl;
                                 };
 
                                 idInput.addEventListener('input', setPreview);
