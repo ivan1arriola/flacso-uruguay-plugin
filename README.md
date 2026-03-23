@@ -5,6 +5,7 @@ Plugin unificado para FLACSO Uruguay con modulos de:
 - seminarios
 - preinscripciones
 - formularios de consulta
+- charlas abiertas
 - docentes
 - eventos
 - shortcodes
@@ -64,6 +65,7 @@ flacso-uruguay/
 |  |- oferta-academica/
 |  |- seminarios/
 |  |- formularios/
+|  |- charlas-abiertas/
 |  |- preinscripcion/
 |  |- posgrados/
 |  |- docentes/
@@ -78,6 +80,28 @@ flacso-uruguay/
 2. Activar el plugin en WordPress.
 3. Guardar enlaces permanentes en:
    `Ajustes -> Enlaces permanentes -> Guardar`.
+
+## Validacion de encoding antes de commit
+
+El repositorio incluye un chequeo de:
+- BOM (UTF-8/UTF-16/UTF-32)
+- UTF-8 invalido
+- patrones tipicos de mojibake
+- incremento automatico de version del plugin en `flacso-uruguay.php` (patch `x.y.z`)
+
+Para que se ejecute automaticamente antes de cada commit local:
+
+1. Ejecutar en PowerShell:
+  `powershell -ExecutionPolicy Bypass -File scripts/setup-git-hooks.ps1`
+2. Verificar configuracion:
+  `git config --get core.hooksPath`
+
+Resultado esperado: `.githooks`
+
+Desde ese momento, cada `git commit`:
+1. incrementa la version patch del plugin (`* Version:` y `FLACSO_URUGUAY_VERSION`),
+2. corre `.github/scripts/check_encoding.py`,
+3. bloquea el commit si encuentra problemas de encoding.
 
 ## Actualizacion automatica (sin SSH)
 

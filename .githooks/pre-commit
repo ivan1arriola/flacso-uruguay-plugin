@@ -1,0 +1,34 @@
+#!/bin/sh
+
+set -eu
+
+ROOT_DIR="$(git rev-parse --show-toplevel)"
+cd "$ROOT_DIR"
+
+run_python() {
+  if command -v py >/dev/null 2>&1 && py -3 --version >/dev/null 2>&1; then
+    py -3 "$@"
+    return $?
+  fi
+
+  if command -v python3 >/dev/null 2>&1 && python3 --version >/dev/null 2>&1; then
+    python3 "$@"
+    return $?
+  fi
+
+  if command -v python >/dev/null 2>&1 && python --version >/dev/null 2>&1; then
+    python "$@"
+    return $?
+  fi
+
+  echo "[pre-commit] ERROR: Python 3 was not found in PATH."
+  echo "Install Python 3 and retry the commit."
+  return 1
+}
+
+echo "[pre-commit] Bumping plugin version..."
+run_python .github/scripts/bump_plugin_version.py
+git add flacso-uruguay.php
+
+echo "[pre-commit] Running encoding checks..."
+run_python .github/scripts/check_encoding.py
