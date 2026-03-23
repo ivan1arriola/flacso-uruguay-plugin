@@ -46,14 +46,14 @@ if (!function_exists('programa_calendario_malla_shortcode')) {
                     </div>
                     <div class="gc-documento-content">
                         <h3 class="gc-documento-title"><?php echo esc_html($atts['texto_calendario']); ?></h3>
-                        <p class="gc-documento-desc"><?php esc_html_e('Abrí el cronograma del programa como PDF en tu navegador.', 'flacso-shortcodes'); ?></p>
+                        <p class="gc-documento-desc"><?php esc_html_e('Abrí el cronograma del programa en el formato disponible (PDF o documento en Drive/Docs).', 'flacso-shortcodes'); ?></p>
                         <div class="gc-button-container">
                             <a href="<?php echo esc_url($calendar_url); ?>"
                                class="gc-action-button"
                                rel="noopener"
                                target="_blank">
-                                <i class="bi bi-filetype-pdf"></i>
-                                <?php esc_html_e('Ver PDF', 'flacso-shortcodes'); ?>
+                                <i class="bi bi-file-earmark-text"></i>
+                                <?php esc_html_e('Abrir documento', 'flacso-shortcodes'); ?>
                             </a>
                         </div>
                     </div>
@@ -67,14 +67,14 @@ if (!function_exists('programa_calendario_malla_shortcode')) {
                     </div>
                     <div class="gc-documento-content">
                         <h3 class="gc-documento-title"><?php echo esc_html($atts['texto_malla']); ?></h3>
-                        <p class="gc-documento-desc"><?php esc_html_e('Abrí la malla curricular como PDF en tu navegador.', 'flacso-shortcodes'); ?></p>
+                        <p class="gc-documento-desc"><?php esc_html_e('Abrí la malla curricular en el formato disponible (PDF o documento en Drive/Docs).', 'flacso-shortcodes'); ?></p>
                         <div class="gc-button-container">
                             <a href="<?php echo esc_url($malla_url); ?>"
                                class="gc-action-button"
                                rel="noopener"
                                target="_blank">
-                                <i class="bi bi-filetype-pdf"></i>
-                                <?php esc_html_e('Ver PDF', 'flacso-shortcodes'); ?>
+                                <i class="bi bi-file-earmark-text"></i>
+                                <?php esc_html_e('Abrir documento', 'flacso-shortcodes'); ?>
                             </a>
                         </div>
                     </div>
