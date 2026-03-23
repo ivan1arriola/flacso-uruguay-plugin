@@ -42,8 +42,6 @@ function programa_hero_shortcode_mobile($atts) {
     $menciones = !empty($atts['menciones_en']) ? array_map('trim', explode('|', $atts['menciones_en'])) : array();
     $orientaciones = !empty($atts['orientaciones']) ? array_map('trim', explode('|', $atts['orientaciones'])) : array();
 
-    $breadcrumb_items = function_exists('gc_obtener_breadcrumb_items') ? gc_obtener_breadcrumb_items(get_the_ID()) : array();
-
     // IDs de diplos de género que deben mostrar el bloque final tipo 12316
     $ids_diplos_genero = array(12278, 14444, 12282);
 
@@ -55,21 +53,6 @@ function programa_hero_shortcode_mobile($atts) {
 
     ob_start(); ?>
     <div id="<?php echo esc_attr($shortcode_id); ?>" class="gc-hero-mobile-wrapper">
-        <!-- BREADCRUMB -->
-        <div class="gc-hero-breadcrumb-container">
-            <nav aria-label="breadcrumb" class="gc-breadcrumb-nav">
-                <ol class="breadcrumb">
-                    <?php if (!empty($breadcrumb_items)) : foreach ($breadcrumb_items as $index => $item): ?>
-                        <?php if ($index === count($breadcrumb_items) - 1): ?>
-                            <li class="breadcrumb-item active" aria-current="page">Carta de Presentación</li>
-                        <?php else: ?>
-                            <li class="breadcrumb-item"><a href="<?php echo esc_url($item['url']); ?>" class="gc-breadcrumb-link"><?php echo esc_html($item['title']); ?></a></li>
-                        <?php endif; ?>
-                    <?php endforeach; endif; ?>
-                </ol>
-            </nav>
-        </div>
-
         <div class="gc-hero-mobile-section">
             <!-- INTRO UNIFICADA -->
             <div class="gc-intro-unificada" role="note" aria-label="Introducción">
