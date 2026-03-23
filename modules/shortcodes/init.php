@@ -189,6 +189,62 @@ function flacso_shortcodes_get_cal_maestriagenero_data() {
     return $out;
 }
 
+function flacso_shortcodes_sanitize_calendar_items($items) {
+    $output = array();
+
+    if (empty($items) || !is_array($items)) {
+        return $output;
+    }
+
+    foreach ($items as $item) {
+        if (!is_array($item)) {
+            continue;
+        }
+
+        $eje = isset($item['eje']) ? sanitize_text_field($item['eje']) : '';
+        $nota = isset($item['nota']) ? sanitize_text_field($item['nota']) : '';
+        $semana = isset($item['semana']) ? sanitize_text_field($item['semana']) : '';
+        $nombre = isset($item['nombre']) ? sanitize_text_field($item['nombre']) : '';
+        $periodo = isset($item['periodo']) ? sanitize_text_field($item['periodo']) : '';
+
+        $sesiones_out = array();
+        if (!empty($item['sesiones']) && is_array($item['sesiones'])) {
+            foreach ($item['sesiones'] as $sesion) {
+                if (!is_array($sesion)) {
+                    continue;
+                }
+
+                $fecha = isset($sesion['fecha']) ? sanitize_text_field($sesion['fecha']) : '';
+                $hora = isset($sesion['hora']) ? sanitize_text_field($sesion['hora']) : '';
+
+                if ($fecha === '' && $hora === '') {
+                    continue;
+                }
+
+                $sesiones_out[] = array(
+                    'fecha' => $fecha,
+                    'hora' => $hora,
+                );
+            }
+        }
+
+        if ($eje === '' && $nota === '' && $semana === '' && $nombre === '' && $periodo === '' && empty($sesiones_out)) {
+            continue;
+        }
+
+        $output[] = array(
+            'eje' => $eje,
+            'nota' => $nota,
+            'semana' => $semana,
+            'nombre' => $nombre,
+            'periodo' => $periodo,
+            'sesiones' => $sesiones_out,
+        );
+    }
+
+    return $output;
+}
+
 function flacso_shortcodes_sanitize_cal_maestriagenero_data($input) {
     $current = flacso_shortcodes_get_cal_maestriagenero_data();
     $output  = $current;
@@ -226,6 +282,15 @@ function flacso_shortcodes_sanitize_cal_maestriagenero_data($input) {
         $output['c2_docs'] = $current['c2_docs'];
     }
 
+    if (array_key_exists('c1_items', $input) && is_array($input['c1_items'])) {
+        $output['c1_items'] = flacso_shortcodes_sanitize_calendar_items($input['c1_items']);
+    }
+
+    if (array_key_exists('c3_items', $input) && is_array($input['c3_items'])) {
+        $output['c3_items'] = flacso_shortcodes_sanitize_calendar_items($input['c3_items']);
+    }
+
+    // Compatibilidad legacy: si aún llega JSON desde un formulario viejo.
     $json_fields = array('c1_items_json' => 'c1_items', 'c3_items_json' => 'c3_items');
     foreach ($json_fields as $json_key => $target_key) {
         if (!array_key_exists($json_key, $input)) {
@@ -234,21 +299,12 @@ function flacso_shortcodes_sanitize_cal_maestriagenero_data($input) {
 
         $raw = trim((string) $input[$json_key]);
         if ($raw === '') {
-            $output[$target_key] = array();
             continue;
         }
 
         $decoded = json_decode($raw, true);
         if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-            $output[$target_key] = $decoded;
-        } else {
-            add_settings_error(
-                'flacso_cal_maestriagenero_data',
-                'invalid_' . $target_key,
-                sprintf(__('JSON inválido en %s. Se conservó el valor anterior.', 'flacso-uruguay'), strtoupper(str_replace('_items', '', $target_key))),
-                'error'
-            );
-            $output[$target_key] = isset($current[$target_key]) && is_array($current[$target_key]) ? $current[$target_key] : array();
+            $output[$target_key] = flacso_shortcodes_sanitize_calendar_items($decoded);
         }
     }
 
@@ -321,13 +377,24 @@ function flacso_shortcodes_render_cal_maestriagenero_page() {
     $data = flacso_shortcodes_get_cal_maestriagenero_data();
     $c2_docs = isset($data['c2_docs']) && is_array($data['c2_docs']) ? $data['c2_docs'] : array();
     $max_rows = max(6, count($c2_docs));
+    $c1_items = isset($data['c1_items']) && is_array($data['c1_items']) ? $data['c1_items'] : array();
+    $c3_items = isset($data['c3_items']) && is_array($data['c3_items']) ? $data['c3_items'] : array();
 
-    $c1_json = wp_json_encode($data['c1_items'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    $c3_json = wp_json_encode($data['c3_items'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if (empty($c1_items)) {
+        $c1_items = array(
+            array('eje' => '', 'nota' => '', 'semana' => '', 'nombre' => '', 'periodo' => '', 'sesiones' => array()),
+        );
+    }
+
+    if (empty($c3_items)) {
+        $c3_items = array(
+            array('eje' => '', 'nota' => '', 'semana' => '', 'nombre' => '', 'periodo' => '', 'sesiones' => array()),
+        );
+    }
     ?>
     <div class="wrap">
         <h1><?php esc_html_e('Calendario: Maestría en Género', 'flacso-uruguay'); ?></h1>
-        <p><?php esc_html_e('Edita títulos, links del Ciclo 2 y contenido de calendario (Ciclo 1 y Ciclo 3 en formato JSON).', 'flacso-uruguay'); ?></p>
+        <p><?php esc_html_e('Edita títulos, links del Ciclo 2 y el contenido de Ciclo 1 y Ciclo 3 con bloques anidados.', 'flacso-uruguay'); ?></p>
         <?php settings_errors('flacso_cal_maestriagenero_data'); ?>
 
         <form method="post" action="options.php">
@@ -468,21 +535,196 @@ function flacso_shortcodes_render_cal_maestriagenero_page() {
                 </div>
             </div>
 
+            <style>
+                .flacso-cal-items { display: grid; gap: 12px; }
+                .flacso-cal-item-card { border: 1px solid #dcdcde; border-radius: 8px; background: #fff; }
+                .flacso-cal-item-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid #eee; background: #f8f9fa; }
+                .flacso-cal-item-body { padding: 12px; display: grid; gap: 10px; }
+                .flacso-cal-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+                .flacso-cal-grid-1 { display: grid; gap: 10px; }
+                .flacso-cal-sesiones { border: 1px dashed #c3c4c7; border-radius: 6px; padding: 10px; background: #fbfbfc; display: grid; gap: 8px; }
+                .flacso-cal-sesion-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: end; }
+                @media (max-width: 900px) {
+                    .flacso-cal-grid-2, .flacso-cal-sesion-row { grid-template-columns: 1fr; }
+                }
+            </style>
+
             <div class="postbox" style="margin:1rem 0;">
-                <h2 style="margin:0;padding:1rem;border-bottom:1px solid #e2e2e2;"><?php esc_html_e('Calendario Ciclo 1 (JSON)', 'flacso-uruguay'); ?></h2>
+                <h2 style="margin:0;padding:1rem;border-bottom:1px solid #e2e2e2;"><?php esc_html_e('Calendario Ciclo 1', 'flacso-uruguay'); ?></h2>
                 <div style="padding:1rem;">
-                    <p class="description"><?php esc_html_e('Array de items. Si dejas vacío, se usa el calendario interno por defecto del shortcode.', 'flacso-uruguay'); ?></p>
-                    <textarea name="flacso_cal_maestriagenero_data[c1_items_json]" style="width:100%;min-height:220px;font-family:monospace;"><?php echo esc_textarea($c1_json ? $c1_json : ''); ?></textarea>
+                    <p class="description"><?php esc_html_e('Edita ítems del ciclo y sus sesiones anidadas.', 'flacso-uruguay'); ?></p>
+                    <div id="flacso-c1-items" class="flacso-cal-items" data-cycle="c1" data-next-index="<?php echo esc_attr(count($c1_items)); ?>">
+                        <?php foreach ($c1_items as $i => $item) :
+                            $sesiones = (isset($item['sesiones']) && is_array($item['sesiones'])) ? $item['sesiones'] : array();
+                            ?>
+                            <div class="flacso-cal-item-card" data-item-index="<?php echo esc_attr($i); ?>">
+                                <div class="flacso-cal-item-head">
+                                    <strong><?php esc_html_e('Ítem', 'flacso-uruguay'); ?> #<?php echo esc_html($i + 1); ?></strong>
+                                    <button type="button" class="button button-link-delete flacso-remove-item"><?php esc_html_e('Eliminar ítem', 'flacso-uruguay'); ?></button>
+                                </div>
+                                <div class="flacso-cal-item-body">
+                                    <div class="flacso-cal-grid-2">
+                                        <input type="text" placeholder="Eje" name="flacso_cal_maestriagenero_data[c1_items][<?php echo esc_attr($i); ?>][eje]" value="<?php echo esc_attr(isset($item['eje']) ? $item['eje'] : ''); ?>">
+                                        <input type="text" placeholder="Nota" name="flacso_cal_maestriagenero_data[c1_items][<?php echo esc_attr($i); ?>][nota]" value="<?php echo esc_attr(isset($item['nota']) ? $item['nota'] : ''); ?>">
+                                    </div>
+                                    <div class="flacso-cal-grid-2">
+                                        <input type="text" placeholder="Semana" name="flacso_cal_maestriagenero_data[c1_items][<?php echo esc_attr($i); ?>][semana]" value="<?php echo esc_attr(isset($item['semana']) ? $item['semana'] : ''); ?>">
+                                        <input type="text" placeholder="Período" name="flacso_cal_maestriagenero_data[c1_items][<?php echo esc_attr($i); ?>][periodo]" value="<?php echo esc_attr(isset($item['periodo']) ? $item['periodo'] : ''); ?>">
+                                    </div>
+                                    <div class="flacso-cal-grid-1">
+                                        <input type="text" placeholder="Nombre del seminario/taller" name="flacso_cal_maestriagenero_data[c1_items][<?php echo esc_attr($i); ?>][nombre]" value="<?php echo esc_attr(isset($item['nombre']) ? $item['nombre'] : ''); ?>">
+                                    </div>
+
+                                    <div class="flacso-cal-sesiones" data-sessions-for="c1-<?php echo esc_attr($i); ?>" data-next-session-index="<?php echo esc_attr(count($sesiones)); ?>">
+                                        <strong><?php esc_html_e('Sesiones', 'flacso-uruguay'); ?></strong>
+                                        <?php foreach ($sesiones as $s => $sesion) : ?>
+                                            <div class="flacso-cal-sesion-row" data-session-index="<?php echo esc_attr($s); ?>">
+                                                <input type="text" placeholder="Fecha" name="flacso_cal_maestriagenero_data[c1_items][<?php echo esc_attr($i); ?>][sesiones][<?php echo esc_attr($s); ?>][fecha]" value="<?php echo esc_attr(isset($sesion['fecha']) ? $sesion['fecha'] : ''); ?>">
+                                                <input type="text" placeholder="Horario" name="flacso_cal_maestriagenero_data[c1_items][<?php echo esc_attr($i); ?>][sesiones][<?php echo esc_attr($s); ?>][hora]" value="<?php echo esc_attr(isset($sesion['hora']) ? $sesion['hora'] : ''); ?>">
+                                                <button type="button" class="button button-link-delete flacso-remove-session"><?php esc_html_e('Quitar', 'flacso-uruguay'); ?></button>
+                                            </div>
+                                        <?php endforeach; ?>
+                                        <button type="button" class="button flacso-add-session"><?php esc_html_e('Agregar sesión', 'flacso-uruguay'); ?></button>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <p><button type="button" class="button button-primary flacso-add-item" data-target="flacso-c1-items"><?php esc_html_e('Agregar ítem Ciclo 1', 'flacso-uruguay'); ?></button></p>
                 </div>
             </div>
 
             <div class="postbox" style="margin:1rem 0;">
-                <h2 style="margin:0;padding:1rem;border-bottom:1px solid #e2e2e2;"><?php esc_html_e('Calendario Ciclo 3 (JSON)', 'flacso-uruguay'); ?></h2>
+                <h2 style="margin:0;padding:1rem;border-bottom:1px solid #e2e2e2;"><?php esc_html_e('Calendario Ciclo 3', 'flacso-uruguay'); ?></h2>
                 <div style="padding:1rem;">
-                    <p class="description"><?php esc_html_e('Array de items. Si dejas vacío, se usa el calendario interno por defecto del shortcode.', 'flacso-uruguay'); ?></p>
-                    <textarea name="flacso_cal_maestriagenero_data[c3_items_json]" style="width:100%;min-height:220px;font-family:monospace;"><?php echo esc_textarea($c3_json ? $c3_json : ''); ?></textarea>
+                    <p class="description"><?php esc_html_e('Edita ítems del ciclo y sus sesiones anidadas.', 'flacso-uruguay'); ?></p>
+                    <div id="flacso-c3-items" class="flacso-cal-items" data-cycle="c3" data-next-index="<?php echo esc_attr(count($c3_items)); ?>">
+                        <?php foreach ($c3_items as $i => $item) :
+                            $sesiones = (isset($item['sesiones']) && is_array($item['sesiones'])) ? $item['sesiones'] : array();
+                            ?>
+                            <div class="flacso-cal-item-card" data-item-index="<?php echo esc_attr($i); ?>">
+                                <div class="flacso-cal-item-head">
+                                    <strong><?php esc_html_e('Ítem', 'flacso-uruguay'); ?> #<?php echo esc_html($i + 1); ?></strong>
+                                    <button type="button" class="button button-link-delete flacso-remove-item"><?php esc_html_e('Eliminar ítem', 'flacso-uruguay'); ?></button>
+                                </div>
+                                <div class="flacso-cal-item-body">
+                                    <div class="flacso-cal-grid-2">
+                                        <input type="text" placeholder="Eje" name="flacso_cal_maestriagenero_data[c3_items][<?php echo esc_attr($i); ?>][eje]" value="<?php echo esc_attr(isset($item['eje']) ? $item['eje'] : ''); ?>">
+                                        <input type="text" placeholder="Nota" name="flacso_cal_maestriagenero_data[c3_items][<?php echo esc_attr($i); ?>][nota]" value="<?php echo esc_attr(isset($item['nota']) ? $item['nota'] : ''); ?>">
+                                    </div>
+                                    <div class="flacso-cal-grid-2">
+                                        <input type="text" placeholder="Semana" name="flacso_cal_maestriagenero_data[c3_items][<?php echo esc_attr($i); ?>][semana]" value="<?php echo esc_attr(isset($item['semana']) ? $item['semana'] : ''); ?>">
+                                        <input type="text" placeholder="Período" name="flacso_cal_maestriagenero_data[c3_items][<?php echo esc_attr($i); ?>][periodo]" value="<?php echo esc_attr(isset($item['periodo']) ? $item['periodo'] : ''); ?>">
+                                    </div>
+                                    <div class="flacso-cal-grid-1">
+                                        <input type="text" placeholder="Nombre del seminario/taller" name="flacso_cal_maestriagenero_data[c3_items][<?php echo esc_attr($i); ?>][nombre]" value="<?php echo esc_attr(isset($item['nombre']) ? $item['nombre'] : ''); ?>">
+                                    </div>
+
+                                    <div class="flacso-cal-sesiones" data-sessions-for="c3-<?php echo esc_attr($i); ?>" data-next-session-index="<?php echo esc_attr(count($sesiones)); ?>">
+                                        <strong><?php esc_html_e('Sesiones', 'flacso-uruguay'); ?></strong>
+                                        <?php foreach ($sesiones as $s => $sesion) : ?>
+                                            <div class="flacso-cal-sesion-row" data-session-index="<?php echo esc_attr($s); ?>">
+                                                <input type="text" placeholder="Fecha" name="flacso_cal_maestriagenero_data[c3_items][<?php echo esc_attr($i); ?>][sesiones][<?php echo esc_attr($s); ?>][fecha]" value="<?php echo esc_attr(isset($sesion['fecha']) ? $sesion['fecha'] : ''); ?>">
+                                                <input type="text" placeholder="Horario" name="flacso_cal_maestriagenero_data[c3_items][<?php echo esc_attr($i); ?>][sesiones][<?php echo esc_attr($s); ?>][hora]" value="<?php echo esc_attr(isset($sesion['hora']) ? $sesion['hora'] : ''); ?>">
+                                                <button type="button" class="button button-link-delete flacso-remove-session"><?php esc_html_e('Quitar', 'flacso-uruguay'); ?></button>
+                                            </div>
+                                        <?php endforeach; ?>
+                                        <button type="button" class="button flacso-add-session"><?php esc_html_e('Agregar sesión', 'flacso-uruguay'); ?></button>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <p><button type="button" class="button button-primary flacso-add-item" data-target="flacso-c3-items"><?php esc_html_e('Agregar ítem Ciclo 3', 'flacso-uruguay'); ?></button></p>
                 </div>
             </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    var buildItem = function (cycle, itemIndex) {
+                        var wrapper = document.createElement('div');
+                        wrapper.className = 'flacso-cal-item-card';
+                        wrapper.setAttribute('data-item-index', itemIndex);
+                        wrapper.innerHTML = '' +
+                            '<div class="flacso-cal-item-head">' +
+                                '<strong>Ítem #' + (itemIndex + 1) + '</strong>' +
+                                '<button type="button" class="button button-link-delete flacso-remove-item">Eliminar ítem</button>' +
+                            '</div>' +
+                            '<div class="flacso-cal-item-body">' +
+                                '<div class="flacso-cal-grid-2">' +
+                                    '<input type="text" placeholder="Eje" name="flacso_cal_maestriagenero_data[' + cycle + '_items][' + itemIndex + '][eje]">' +
+                                    '<input type="text" placeholder="Nota" name="flacso_cal_maestriagenero_data[' + cycle + '_items][' + itemIndex + '][nota]">' +
+                                '</div>' +
+                                '<div class="flacso-cal-grid-2">' +
+                                    '<input type="text" placeholder="Semana" name="flacso_cal_maestriagenero_data[' + cycle + '_items][' + itemIndex + '][semana]">' +
+                                    '<input type="text" placeholder="Período" name="flacso_cal_maestriagenero_data[' + cycle + '_items][' + itemIndex + '][periodo]">' +
+                                '</div>' +
+                                '<div class="flacso-cal-grid-1">' +
+                                    '<input type="text" placeholder="Nombre del seminario/taller" name="flacso_cal_maestriagenero_data[' + cycle + '_items][' + itemIndex + '][nombre]">' +
+                                '</div>' +
+                                '<div class="flacso-cal-sesiones" data-sessions-for="' + cycle + '-' + itemIndex + '" data-next-session-index="0">' +
+                                    '<strong>Sesiones</strong>' +
+                                    '<button type="button" class="button flacso-add-session">Agregar sesión</button>' +
+                                '</div>' +
+                            '</div>';
+                        return wrapper;
+                    };
+
+                    var buildSession = function (cycle, itemIndex, sessionIndex) {
+                        var row = document.createElement('div');
+                        row.className = 'flacso-cal-sesion-row';
+                        row.setAttribute('data-session-index', sessionIndex);
+                        row.innerHTML = '' +
+                            '<input type="text" placeholder="Fecha" name="flacso_cal_maestriagenero_data[' + cycle + '_items][' + itemIndex + '][sesiones][' + sessionIndex + '][fecha]">' +
+                            '<input type="text" placeholder="Horario" name="flacso_cal_maestriagenero_data[' + cycle + '_items][' + itemIndex + '][sesiones][' + sessionIndex + '][hora]">' +
+                            '<button type="button" class="button button-link-delete flacso-remove-session">Quitar</button>';
+                        return row;
+                    };
+
+                    document.querySelectorAll('.flacso-add-item').forEach(function (btn) {
+                        btn.addEventListener('click', function () {
+                            var target = document.getElementById(btn.getAttribute('data-target'));
+                            if (!target) return;
+                            var cycle = target.getAttribute('data-cycle');
+                            var nextIndex = parseInt(target.getAttribute('data-next-index') || '0', 10);
+                            target.appendChild(buildItem(cycle, nextIndex));
+                            target.setAttribute('data-next-index', String(nextIndex + 1));
+                        });
+                    });
+
+                    document.addEventListener('click', function (e) {
+                        if (e.target.classList.contains('flacso-remove-item')) {
+                            e.preventDefault();
+                            var card = e.target.closest('.flacso-cal-item-card');
+                            if (card) card.remove();
+                            return;
+                        }
+
+                        if (e.target.classList.contains('flacso-add-session')) {
+                            e.preventDefault();
+                            var card = e.target.closest('.flacso-cal-item-card');
+                            var list = e.target.closest('.flacso-cal-sesiones');
+                            if (!card || !list) return;
+
+                            var itemIndex = parseInt(card.getAttribute('data-item-index') || '0', 10);
+                            var cycle = (card.closest('.flacso-cal-items') || {}).getAttribute('data-cycle');
+                            if (!cycle) return;
+
+                            var nextSession = parseInt(list.getAttribute('data-next-session-index') || '0', 10);
+                            var row = buildSession(cycle, itemIndex, nextSession);
+                            list.insertBefore(row, e.target);
+                            list.setAttribute('data-next-session-index', String(nextSession + 1));
+                            return;
+                        }
+
+                        if (e.target.classList.contains('flacso-remove-session')) {
+                            e.preventDefault();
+                            var sessionRow = e.target.closest('.flacso-cal-sesion-row');
+                            if (sessionRow) sessionRow.remove();
+                        }
+                    });
+                });
+            </script>
 
             <?php submit_button(); ?>
         </form>
