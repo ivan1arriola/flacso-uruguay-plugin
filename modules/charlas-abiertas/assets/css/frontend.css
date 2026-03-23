@@ -1,0 +1,178 @@
+.flacso-charla-form-wrapper {
+    max-width: 760px;
+    margin: 2rem auto;
+    padding: 1.2rem;
+    border: 1px solid var(--global-palette6, #c9d2de);
+    border-radius: 12px;
+    background: var(--global-palette9, #ffffff);
+    font-family: var(--global-body-font-family, Roboto, sans-serif);
+    color: var(--global-palette4, #2e2f34);
+}
+
+.flacso-charla-form-wrapper h3 {
+    margin: 0 0 1rem;
+    font-size: var(--global-kb-font-size-lg, 1.75rem);
+    line-height: 1.3;
+    color: var(--global-palette1, #1d3a72);
+}
+
+.flacso-charla-form-wrapper label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: .3rem;
+}
+
+.flacso-charla-form-wrapper .flacso-charla-form input,
+.flacso-charla-form-wrapper .flacso-charla-form select {
+    width: 100%;
+    padding: .72rem .85rem;
+    border: 1px solid var(--global-palette6, #c9d2de);
+    border-radius: 10px;
+    background: var(--global-palette9, #ffffff);
+    color: var(--global-palette3, #0f1a2d);
+    font-size: 1rem;
+}
+
+.flacso-charla-form-wrapper .flacso-charla-form button[type="submit"] {
+    padding: .75rem 1.2rem;
+    min-width: 220px;
+}
+
+.flacso-charla-form-result .ok {
+    color: #0f5132;
+    background: #d1e7dd;
+    padding: .75rem;
+    border-radius: 6px;
+}
+
+.flacso-charla-form-result .error {
+    color: #842029;
+    background: #f8d7da;
+    padding: .75rem;
+    border-radius: 6px;
+}
+
+.flacso-charla-form-wrapper .iti {
+    width: 100%;
+    display: block;
+}
+
+.flacso-charla-form-wrapper .iti input {
+    width: 100%;
+}
+
+.flacso-charla-form-wrapper .flacso-celular-feedback {
+    display: none;
+    width: 100%;
+    margin-top: .25rem;
+    font-size: .875rem;
+    color: #842029;
+}
+
+.flacso-charla-form-wrapper .flacso-correo-feedback,
+.flacso-charla-form-wrapper .flacso-modalidad-feedback {
+    display: none;
+    width: 100%;
+    margin-top: .25rem;
+    font-size: .875rem;
+    color: #842029;
+}
+
+.flacso-charla-form-wrapper .flacso-correo.is-invalid + .flacso-correo-feedback,
+.flacso-charla-form-wrapper .flacso-modalidad-asistencia.is-invalid + .flacso-modalidad-feedback {
+    display: block;
+}
+
+.flacso-charla-form-wrapper .flacso-celular-group.is-invalid + .flacso-celular-feedback {
+    display: block;
+}
+
+.flacso-charla-form-wrapper .flacso-correo.is-invalid,
+.flacso-charla-form-wrapper .flacso-modalidad-asistencia.is-invalid,
+.flacso-charla-form-wrapper .flacso-celular.is-invalid {
+    border-color: var(--global-palette13, #b82105);
+}
+
+.flacso-charla-form-wrapper .flacso-modalidad-asistencia.flacso-modalidad-readonly,
+.flacso-charla-form-wrapper .flacso-modalidad-asistencia:disabled {
+    background: var(--global-palette8, #f8f9fa);
+    color: var(--global-palette5, #7a8696);
+    cursor: not-allowed;
+    border-color: var(--global-palette6, #c9d2de);
+    opacity: 1;
+    box-shadow: inset 0 0 0 1px rgba(29, 58, 114, 0.03);
+}
+
+.flacso-charla-form-wrapper .flacso-modalidad-locknote {
+    display: block;
+    margin-top: .35rem;
+    color: var(--global-palette1, #1d3a72);
+    font-size: .86rem;
+    font-weight: 500;
+}
+
+/* Prevent theme styles from breaking intl-tel-input dropdown controls. */
+.flacso-charla-form-wrapper .iti__country-list {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.flacso-charla-form-wrapper .iti__country {
+    list-style: none !important;
+}
+
+.flacso-charla-form-wrapper .iti__selected-country,
+.flacso-charla-form-wrapper .iti__search-clear {
+    background: transparent !important;
+    border: 0 !important;
+    color: inherit !important;
+    padding: 0 !important;
+}
+
+.flacso-charla-status-screen {
+    margin-top: 1rem;
+}
+
+.flacso-charla-status-card {
+    padding: 1.2rem 1.3rem;
+    border: 1px solid var(--global-palette6, #c9d2de);
+    border-radius: 12px;
+    background: var(--global-palette9, #ffffff);
+    color: var(--global-palette3, #0f1a2d);
+}
+
+.flacso-charla-status-card.success {
+    border-color: var(--global-palette6, #c9d2de);
+    background: var(--global-palette9, #ffffff);
+    border-top: 4px solid var(--global-palette11, #13612e);
+}
+
+.flacso-charla-status-card.success h3 {
+    color: var(--global-palette1, #1d3a72);
+    font-size: var(--global-kb-font-size-lg, 1.75rem);
+    margin: 0;
+}
+
+.flacso-charla-status-message {
+    margin: .55rem 0 0;
+    line-height: 1.45;
+    font-size: var(--global-kb-font-size-md, 1.1rem);
+    color: var(--global-palette3, #0f1a2d);
+}
+
+.flacso-charla-loader {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 3px solid var(--global-palette6, #c9d2de);
+    border-top-color: var(--global-palette1, #1d3a72);
+    animation: flacso-spin .8s linear infinite;
+    margin-bottom: .8rem;
+}
+
+@keyframes flacso-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
