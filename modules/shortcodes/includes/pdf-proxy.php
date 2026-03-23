@@ -384,3 +384,43 @@ if (!function_exists('flacso_resolve_pdf_export_url')) {
         return new WP_Error('unsupported', 'Origen no soportado.');
     }
 }
+
+if (!function_exists('flacso_handle_legacy_pdf_proxy_query')) {
+    /**
+     * Compatibilidad con enlaces legacy: ?flacso_pdf_proxy=1&doc_id=...
+     * Redirige al endpoint AJAX existente para servir el PDF inline.
+     */
+    function flacso_handle_legacy_pdf_proxy_query()
+    {
+        if (is_admin() || wp_doing_ajax()) {
+            return;
+        }
+
+        if (empty($_GET['flacso_pdf_proxy'])) {
+            return;
+        }
+
+        $doc_id = isset($_GET['doc_id']) ? sanitize_text_field(wp_unslash($_GET['doc_id'])) : '';
+        $doc_id = preg_replace('~[^a-zA-Z0-9_-]~', '', (string) $doc_id);
+
+        if ($doc_id === '') {
+            status_header(400);
+            echo 'Falta doc_id en la URL.';
+            exit;
+        }
+
+        $source_url = sprintf('https://drive.google.com/file/d/%s/view', $doc_id);
+        $proxy_url  = flacso_get_pdf_proxy_url($source_url, 'documento');
+
+        if (!$proxy_url) {
+            status_header(400);
+            echo 'No se pudo construir la URL del proxy PDF.';
+            exit;
+        }
+
+        wp_safe_redirect($proxy_url, 302);
+        exit;
+    }
+}
+
+add_action('template_redirect', 'flacso_handle_legacy_pdf_proxy_query', 0);

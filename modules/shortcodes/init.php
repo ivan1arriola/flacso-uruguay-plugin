@@ -140,6 +140,119 @@ function flacso_shortcodes_register_settings() {
             'sanitize_callback' => 'flacso_shortcodes_sanitize_price_tables',
         )
     );
+
+    register_setting(
+        'flacso_shortcodes_calendar',
+        'flacso_cal_maestriagenero_data',
+        array(
+            'sanitize_callback' => 'flacso_shortcodes_sanitize_cal_maestriagenero_data',
+        )
+    );
+}
+
+function flacso_shortcodes_get_default_cal_maestriagenero_data() {
+    return array(
+        'c1_title' => 'Diploma en Género – Cohorte VII',
+        'c2_title' => 'Ciclo de Especialización en Género',
+        'c3_title' => 'Maestría en Género',
+        'c1_items' => array(),
+        'c2_docs' => array(
+            array('titulo' => 'Diplomado de Especialización en Género – Políticas Públicas Integrales', 'cohorte' => 'Cohorte IV', 'id' => '1lDjCXUbXyYDD54csNS5Zg2e00olbIceX', 'url' => ''),
+            array('titulo' => 'Diplomado de Especialización en Género – Violencia basada en Género', 'cohorte' => 'Cohorte IV', 'id' => '1gCf9xZsHI4VX9oiEeUOCpQRhZEqVnbP1', 'url' => ''),
+            array('titulo' => 'Diplomado de Especialización en Género – Salud Integral', 'cohorte' => 'Cohorte III', 'id' => '1IngR8XqRwm9MX2JpBhNvtqMWfMxfUOwz', 'url' => ''),
+            array('titulo' => 'Especialización en Género, Cambio Climático y Desastres', 'cohorte' => 'Cohorte V', 'id' => '1s39lb_-yB4lUPPEP7dlqSvsJNuPW7nrm', 'url' => ''),
+        ),
+        'c3_items' => array(),
+    );
+}
+
+function flacso_shortcodes_get_cal_maestriagenero_data() {
+    $defaults = flacso_shortcodes_get_default_cal_maestriagenero_data();
+    $saved = get_option('flacso_cal_maestriagenero_data', array());
+
+    if (!is_array($saved)) {
+        return $defaults;
+    }
+
+    $out = wp_parse_args($saved, $defaults);
+
+    if (!isset($out['c2_docs']) || !is_array($out['c2_docs'])) {
+        $out['c2_docs'] = $defaults['c2_docs'];
+    }
+    if (!isset($out['c1_items']) || !is_array($out['c1_items'])) {
+        $out['c1_items'] = $defaults['c1_items'];
+    }
+    if (!isset($out['c3_items']) || !is_array($out['c3_items'])) {
+        $out['c3_items'] = $defaults['c3_items'];
+    }
+
+    return $out;
+}
+
+function flacso_shortcodes_sanitize_cal_maestriagenero_data($input) {
+    $current = flacso_shortcodes_get_cal_maestriagenero_data();
+    $output  = $current;
+
+    $output['c1_title'] = isset($input['c1_title']) ? sanitize_text_field($input['c1_title']) : $current['c1_title'];
+    $output['c2_title'] = isset($input['c2_title']) ? sanitize_text_field($input['c2_title']) : $current['c2_title'];
+    $output['c3_title'] = isset($input['c3_title']) ? sanitize_text_field($input['c3_title']) : $current['c3_title'];
+
+    $output['c2_docs'] = array();
+    if (!empty($input['c2_docs']) && is_array($input['c2_docs'])) {
+        foreach ($input['c2_docs'] as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+
+            $titulo = isset($row['titulo']) ? sanitize_text_field($row['titulo']) : '';
+            $cohorte = isset($row['cohorte']) ? sanitize_text_field($row['cohorte']) : '';
+            $id = isset($row['id']) ? preg_replace('~[^a-zA-Z0-9_-]~', '', (string) $row['id']) : '';
+            $url = isset($row['url']) ? esc_url_raw($row['url']) : '';
+
+            if ($titulo === '' && $cohorte === '' && $id === '' && $url === '') {
+                continue;
+            }
+
+            $output['c2_docs'][] = array(
+                'titulo' => $titulo,
+                'cohorte' => $cohorte,
+                'id' => $id,
+                'url' => $url,
+            );
+        }
+    }
+
+    if (empty($output['c2_docs'])) {
+        $output['c2_docs'] = $current['c2_docs'];
+    }
+
+    $json_fields = array('c1_items_json' => 'c1_items', 'c3_items_json' => 'c3_items');
+    foreach ($json_fields as $json_key => $target_key) {
+        if (!array_key_exists($json_key, $input)) {
+            continue;
+        }
+
+        $raw = trim((string) $input[$json_key]);
+        if ($raw === '') {
+            $output[$target_key] = array();
+            continue;
+        }
+
+        $decoded = json_decode($raw, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            $output[$target_key] = $decoded;
+        } else {
+            add_settings_error(
+                'flacso_cal_maestriagenero_data',
+                'invalid_' . $target_key,
+                sprintf(__('JSON inválido en %s. Se conservó el valor anterior.', 'flacso-uruguay'), strtoupper(str_replace('_items', '', $target_key))),
+                'error'
+            );
+            $output[$target_key] = isset($current[$target_key]) && is_array($current[$target_key]) ? $current[$target_key] : array();
+        }
+    }
+
+    return $output;
 }
 
 function flacso_shortcodes_register_docs_page() {
@@ -152,6 +265,107 @@ function flacso_shortcodes_register_docs_page() {
         'dashicons-media-document',
         58
     );
+
+    add_submenu_page(
+        'flacso-shortcodes-docs',
+        __('Calendario Maestría en Género', 'flacso-uruguay'),
+        __('Calendario Maestría', 'flacso-uruguay'),
+        'manage_options',
+        'flacso-shortcodes-cal-maestria-genero',
+        'flacso_shortcodes_render_cal_maestriagenero_page'
+    );
+}
+
+function flacso_shortcodes_render_cal_maestriagenero_page() {
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+
+    $data = flacso_shortcodes_get_cal_maestriagenero_data();
+    $c2_docs = isset($data['c2_docs']) && is_array($data['c2_docs']) ? $data['c2_docs'] : array();
+    $max_rows = max(6, count($c2_docs));
+
+    $c1_json = wp_json_encode($data['c1_items'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $c3_json = wp_json_encode($data['c3_items'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    ?>
+    <div class="wrap">
+        <h1><?php esc_html_e('Calendario: Maestría en Género', 'flacso-uruguay'); ?></h1>
+        <p><?php esc_html_e('Edita títulos, links del Ciclo 2 y contenido de calendario (Ciclo 1 y Ciclo 3 en formato JSON).', 'flacso-uruguay'); ?></p>
+        <?php settings_errors('flacso_cal_maestriagenero_data'); ?>
+
+        <form method="post" action="options.php">
+            <?php settings_fields('flacso_shortcodes_calendar'); ?>
+
+            <div class="postbox" style="margin:1rem 0;">
+                <h2 style="margin:0;padding:1rem;border-bottom:1px solid #e2e2e2;"><?php esc_html_e('Títulos de cada ciclo', 'flacso-uruguay'); ?></h2>
+                <div style="padding:1rem;">
+                    <p>
+                        <label><strong><?php esc_html_e('Título Ciclo 1', 'flacso-uruguay'); ?></strong><br>
+                            <input type="text" class="regular-text" style="width:100%;max-width:700px;" name="flacso_cal_maestriagenero_data[c1_title]" value="<?php echo esc_attr($data['c1_title']); ?>">
+                        </label>
+                    </p>
+                    <p>
+                        <label><strong><?php esc_html_e('Título Ciclo 2', 'flacso-uruguay'); ?></strong><br>
+                            <input type="text" class="regular-text" style="width:100%;max-width:700px;" name="flacso_cal_maestriagenero_data[c2_title]" value="<?php echo esc_attr($data['c2_title']); ?>">
+                        </label>
+                    </p>
+                    <p>
+                        <label><strong><?php esc_html_e('Título Ciclo 3', 'flacso-uruguay'); ?></strong><br>
+                            <input type="text" class="regular-text" style="width:100%;max-width:700px;" name="flacso_cal_maestriagenero_data[c3_title]" value="<?php echo esc_attr($data['c3_title']); ?>">
+                        </label>
+                    </p>
+                </div>
+            </div>
+
+            <div class="postbox" style="margin:1rem 0;">
+                <h2 style="margin:0;padding:1rem;border-bottom:1px solid #e2e2e2;"><?php esc_html_e('Links del Ciclo 2', 'flacso-uruguay'); ?></h2>
+                <div style="padding:1rem;">
+                    <p class="description"><?php esc_html_e('Puedes usar ID de Drive o URL completa. Si completas ambos, se prioriza URL.', 'flacso-uruguay'); ?></p>
+                    <table class="widefat striped">
+                        <thead>
+                            <tr>
+                                <th><?php esc_html_e('Título', 'flacso-uruguay'); ?></th>
+                                <th><?php esc_html_e('Cohorte', 'flacso-uruguay'); ?></th>
+                                <th><?php esc_html_e('Drive ID', 'flacso-uruguay'); ?></th>
+                                <th><?php esc_html_e('URL', 'flacso-uruguay'); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <?php for ($i = 0; $i < $max_rows; $i++) :
+                            $row = isset($c2_docs[$i]) && is_array($c2_docs[$i]) ? $c2_docs[$i] : array();
+                            ?>
+                            <tr>
+                                <td><input type="text" style="width:100%;" name="flacso_cal_maestriagenero_data[c2_docs][<?php echo esc_attr($i); ?>][titulo]" value="<?php echo esc_attr(isset($row['titulo']) ? $row['titulo'] : ''); ?>"></td>
+                                <td><input type="text" style="width:100%;" name="flacso_cal_maestriagenero_data[c2_docs][<?php echo esc_attr($i); ?>][cohorte]" value="<?php echo esc_attr(isset($row['cohorte']) ? $row['cohorte'] : ''); ?>"></td>
+                                <td><input type="text" style="width:100%;" name="flacso_cal_maestriagenero_data[c2_docs][<?php echo esc_attr($i); ?>][id]" value="<?php echo esc_attr(isset($row['id']) ? $row['id'] : ''); ?>"></td>
+                                <td><input type="url" style="width:100%;" name="flacso_cal_maestriagenero_data[c2_docs][<?php echo esc_attr($i); ?>][url]" value="<?php echo esc_attr(isset($row['url']) ? $row['url'] : ''); ?>"></td>
+                            </tr>
+                        <?php endfor; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="postbox" style="margin:1rem 0;">
+                <h2 style="margin:0;padding:1rem;border-bottom:1px solid #e2e2e2;"><?php esc_html_e('Calendario Ciclo 1 (JSON)', 'flacso-uruguay'); ?></h2>
+                <div style="padding:1rem;">
+                    <p class="description"><?php esc_html_e('Array de items. Si dejas vacío, se usa el calendario interno por defecto del shortcode.', 'flacso-uruguay'); ?></p>
+                    <textarea name="flacso_cal_maestriagenero_data[c1_items_json]" style="width:100%;min-height:220px;font-family:monospace;"><?php echo esc_textarea($c1_json ? $c1_json : ''); ?></textarea>
+                </div>
+            </div>
+
+            <div class="postbox" style="margin:1rem 0;">
+                <h2 style="margin:0;padding:1rem;border-bottom:1px solid #e2e2e2;"><?php esc_html_e('Calendario Ciclo 3 (JSON)', 'flacso-uruguay'); ?></h2>
+                <div style="padding:1rem;">
+                    <p class="description"><?php esc_html_e('Array de items. Si dejas vacío, se usa el calendario interno por defecto del shortcode.', 'flacso-uruguay'); ?></p>
+                    <textarea name="flacso_cal_maestriagenero_data[c3_items_json]" style="width:100%;min-height:220px;font-family:monospace;"><?php echo esc_textarea($c3_json ? $c3_json : ''); ?></textarea>
+                </div>
+            </div>
+
+            <?php submit_button(); ?>
+        </form>
+    </div>
+    <?php
 }
 
 function flacso_shortcodes_render_docs_page() {

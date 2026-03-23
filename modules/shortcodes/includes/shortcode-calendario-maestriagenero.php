@@ -101,8 +101,42 @@ if (!function_exists('flacso_shortcode_calendario_maestriagenero')) {
             ['titulo'=>'Diplomado de Especialización en Género – Salud Integral','cohorte'=>'Cohorte III','id'=>'1IngR8XqRwm9MX2JpBhNvtqMWfMxfUOwz'],
             ['titulo'=>'Especialización en Género, Cambio Climático y Desastres','cohorte'=>'Cohorte V','id'=>'1s39lb_-yB4lUPPEP7dlqSvsJNuPW7nrm'],
         ];
-        $make_pdf_proxy = function($doc_id){
-            return esc_url(add_query_arg(['flacso_pdf_proxy'=>1,'doc_id'=>$doc_id], site_url('/')));
+        $make_pdf_proxy = function($doc){
+            if (!is_array($doc)) {
+                return '';
+            }
+
+            $source = '';
+
+            if (!empty($doc['url'])) {
+                $source = esc_url_raw((string) $doc['url']);
+            } elseif (!empty($doc['id'])) {
+                $doc_id = preg_replace('~[^a-zA-Z0-9_-]~', '', (string) $doc['id']);
+                if ($doc_id !== '') {
+                    $source = sprintf('https://drive.google.com/file/d/%s/view', $doc_id);
+                }
+            }
+
+            if ($source === '') {
+                return '';
+            }
+
+            if (function_exists('flacso_get_pdf_proxy_url')) {
+                $proxy = flacso_get_pdf_proxy_url($source, 'documento');
+                if (!empty($proxy)) {
+                    return esc_url($proxy);
+                }
+            }
+
+            if (!empty($doc['id'])) {
+                $doc_id = preg_replace('~[^a-zA-Z0-9_-]~', '', (string) $doc['id']);
+                if ($doc_id !== '') {
+                    // Fallback legacy para mantener compatibilidad.
+                    return esc_url(add_query_arg(['flacso_pdf_proxy' => 1, 'doc_id' => $doc_id], site_url('/')));
+                }
+            }
+
+            return esc_url($source);
         };
 
         // === CICLO 3 (resumen con color por eje) ===
@@ -121,6 +155,33 @@ if (!function_exists('flacso_shortcode_calendario_maestriagenero')) {
             ['eje'=>'Entrega del borrador final de tesis','nota'=>'','semana'=>'ABRIL 2028','nombre'=>'Entrega del borrador final de tesis','periodo'=>'ABRIL 2028','sesiones'=>[]],
         ];
 
+        $c1_title = 'Diploma en Género – Cohorte VII';
+        $c2_title = 'Ciclo de Especialización en Género';
+        $c3_title = 'Maestría en Género';
+
+        $calendar_config = get_option('flacso_cal_maestriagenero_data', []);
+        if (is_array($calendar_config)) {
+            if (!empty($calendar_config['c1_title'])) {
+                $c1_title = (string) $calendar_config['c1_title'];
+            }
+            if (!empty($calendar_config['c2_title'])) {
+                $c2_title = (string) $calendar_config['c2_title'];
+            }
+            if (!empty($calendar_config['c3_title'])) {
+                $c3_title = (string) $calendar_config['c3_title'];
+            }
+
+            if (!empty($calendar_config['c1_items']) && is_array($calendar_config['c1_items'])) {
+                $c1_items = $calendar_config['c1_items'];
+            }
+            if (!empty($calendar_config['c2_docs']) && is_array($calendar_config['c2_docs'])) {
+                $c2_docs = $calendar_config['c2_docs'];
+            }
+            if (!empty($calendar_config['c3_items']) && is_array($calendar_config['c3_items'])) {
+                $c3_items = $calendar_config['c3_items'];
+            }
+        }
+
         ob_start(); ?>
         <section class="cal-maestria-genero <?php echo esc_attr($a['clase']); ?>">
             <div class="container px-0">
@@ -132,7 +193,7 @@ if (!function_exists('flacso_shortcode_calendario_maestriagenero')) {
                         <h2 class="accordion-header" id="c1head">
                             <button class="accordion-button cal-acc-btn<?php echo $open ? '' : ' collapsed'; ?>" type="button" data-bs-toggle="collapse" data-bs-target="#c1" aria-expanded="<?php echo $open ? 'true':'false'; ?>" aria-controls="c1">
                                 <span class="chip chip-amber me-2">Ciclo 1</span>
-                                <strong>Diploma en Género – Cohorte VII</strong>
+                                <strong><?php echo esc_html($c1_title); ?></strong>
                             </button>
                         </h2>
                         <div id="c1" class="accordion-collapse collapse<?php echo $open; ?>" aria-labelledby="c1head" data-bs-parent="#calAccordion">
@@ -225,25 +286,31 @@ if (!function_exists('flacso_shortcode_calendario_maestriagenero')) {
                         <h2 class="accordion-header" id="c2head">
                             <button class="accordion-button cal-acc-btn<?php echo $open ? '' : ' collapsed'; ?>" type="button" data-bs-toggle="collapse" data-bs-target="#c2" aria-expanded="<?php echo $open ? 'true':'false'; ?>" aria-controls="c2">
                                 <span class="chip chip-amber me-2">Ciclo 2</span>
-                                <strong>Ciclo de Especialización en Género</strong>
+                                <strong><?php echo esc_html($c2_title); ?></strong>
                             </button>
                         </h2>
                         <div id="c2" class="accordion-collapse collapse<?php echo $open; ?>" aria-labelledby="c2head" data-bs-parent="#calAccordion">
                             <div class="accordion-body">
                                 <div class="row g-3">
                                     <?php foreach ($c2_docs as $lk):
-                                        $pdf = $make_pdf_proxy($lk['id']);
-                                        $cls = $eje_class($lk['titulo']); ?>
+                                        $titulo = isset($lk['titulo']) ? (string) $lk['titulo'] : '';
+                                        $cohorte = isset($lk['cohorte']) ? (string) $lk['cohorte'] : '';
+                                        $pdf = $make_pdf_proxy($lk);
+                                        $cls = $eje_class($titulo); ?>
                                         <div class="col-12">
                                             <div class="card cal-link-card eje-card <?php echo esc_attr($cls); ?>">
                                                 <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
                                                     <div>
-                                                        <div class="fw-semibold cal-title"><?php echo esc_html($lk['titulo']); ?></div>
-                                                        <div class="small text-muted"><?php echo esc_html($lk['cohorte']); ?></div>
+                                                        <div class="fw-semibold cal-title"><?php echo esc_html($titulo); ?></div>
+                                                        <div class="small text-muted"><?php echo esc_html($cohorte); ?></div>
                                                     </div>
-                                                    <a class="btn btn-cal" href="<?php echo $pdf; ?>" target="_blank" rel="noopener">
-                                                        Ver PDF
-                                                    </a>
+                                                    <?php if (!empty($pdf)) : ?>
+                                                        <a class="btn btn-cal" href="<?php echo esc_url($pdf); ?>" target="_blank" rel="noopener">
+                                                            Ver PDF
+                                                        </a>
+                                                    <?php else : ?>
+                                                        <span class="small text-muted">Sin enlace</span>
+                                                    <?php endif; ?>
                                                 </div>
                                             </div>
                                         </div>
@@ -260,7 +327,7 @@ if (!function_exists('flacso_shortcode_calendario_maestriagenero')) {
                         <h2 class="accordion-header" id="c3head">
                             <button class="accordion-button cal-acc-btn<?php echo $open ? '' : ' collapsed'; ?>" type="button" data-bs-toggle="collapse" data-bs-target="#c3" aria-expanded="<?php echo $open ? 'true':'false'; ?>" aria-controls="c3">
                                 <span class="chip chip-amber me-2">Ciclo 3</span>
-                                <strong>Maestría en Género</strong>
+                                <strong><?php echo esc_html($c3_title); ?></strong>
                             </button>
                         </h2>
                         <div id="c3" class="accordion-collapse collapse<?php echo $open; ?>" aria-labelledby="c3head" data-bs-parent="#calAccordion">
