@@ -40,6 +40,8 @@ Respuesta:
         "inicio_timestamp": 1773618000,
         "modalidad": "virtual",
         "zoom_join_url": "https://zoom.us/j/123456789",
+        "youtube_transmision_url": "https://www.youtube.com/watch?v=abc123",
+        "duracion_minutos": 90,
         "direccion": "",
         "descripcion": "<p>Descripción original</p>",
         "descripcion_rendered": "<p>Descripción original</p>\n",
@@ -50,6 +52,8 @@ Respuesta:
           "_charla_inicio": "2026-03-15T18:00:00-03:00",
           "_charla_modalidad": "virtual",
           "_charla_zoom_join_url": "https://zoom.us/j/123456789",
+          "_charla_youtube_transmision_url": "https://www.youtube.com/watch?v=abc123",
+          "_charla_duracion_minutos": 90,
           "_charla_direccion": "",
           "_charla_descripcion": "<p>Descripción original</p>"
         },
@@ -99,6 +103,8 @@ Respuesta:
     "inicio_timestamp": 1773618000,
     "modalidad": "virtual",
     "zoom_join_url": "https://zoom.us/j/123456789",
+    "youtube_transmision_url": "https://www.youtube.com/watch?v=abc123",
+    "duracion_minutos": 90,
     "direccion": "",
     "descripcion": "<p>Descripción original</p>",
     "descripcion_rendered": "<p>Descripción original</p>\n",
@@ -109,6 +115,8 @@ Respuesta:
       "_charla_inicio": "2026-03-15T18:00:00-03:00",
       "_charla_modalidad": "virtual",
       "_charla_zoom_join_url": "https://zoom.us/j/123456789",
+      "_charla_youtube_transmision_url": "https://www.youtube.com/watch?v=abc123",
+      "_charla_duracion_minutos": 90,
       "_charla_direccion": "",
       "_charla_descripcion": "<p>Descripción original</p>"
     },
@@ -136,6 +144,8 @@ type Payload = {
 
     // opcionales
     zoom_join_url?: string;              // URL
+    youtube_transmision_url?: string;    // URL
+    duracion_minutos?: number;           // minutos
     direccion?: string;
     descripcion?: string;                // puede incluir HTML
   };
@@ -183,6 +193,8 @@ type Payload = {
     "inicio": "string (ISO 8601 con TZ)",
     "modalidad": "string",
     "zoom_join_url": "string (url) [opcional]",
+    "youtube_transmision_url": "string (url) [opcional]",
+    "duracion_minutos": "number [opcional, en minutos]",
     "direccion": "string [opcional]",
     "descripcion": "string [opcional]"
   },

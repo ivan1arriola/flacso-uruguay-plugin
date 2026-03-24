@@ -422,12 +422,20 @@
                 setCelularError("");
             }
 
+            var duracionMinutosRaw = String(wrapper.dataset.eventoDuracionMinutos || "").trim();
+            var duracionMinutos = null;
+            if (duracionMinutosRaw !== "") {
+                duracionMinutos = Math.max(0, parseInt(duracionMinutosRaw, 10) || 0);
+            }
+
             var eventoData = {
                 id: Number(wrapper.dataset.eventoId || 0),
                 titulo: wrapper.dataset.eventoTitulo || "",
                 inicio: wrapper.dataset.eventoInicio || "",
                 modalidad: wrapper.dataset.eventoModalidad || "virtual",
                 zoom_join_url: String(wrapper.dataset.eventoZoomJoinUrl || "").trim(),
+                youtube_transmision_url: String(wrapper.dataset.eventoYoutubeTransmisionUrl || "").trim(),
+                duracion_minutos: duracionMinutos,
                 direccion: String(wrapper.dataset.eventoDireccion || "").trim(),
                 descripcion: decodeBase64Utf8(wrapper.dataset.eventoDescripcionB64 || ""),
             };

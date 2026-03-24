@@ -55,6 +55,22 @@ function flacso_charlas_abiertas_register_cpt() {
         'sanitize_callback' => 'esc_url_raw',
     ]);
 
+    register_post_meta('charla_abierta', '_charla_youtube_transmision_url', [
+        'single' => true,
+        'type' => 'string',
+        'show_in_rest' => true,
+        'auth_callback' => '__return_true',
+        'sanitize_callback' => 'esc_url_raw',
+    ]);
+
+    register_post_meta('charla_abierta', '_charla_duracion_minutos', [
+        'single' => true,
+        'type' => 'integer',
+        'show_in_rest' => true,
+        'auth_callback' => '__return_true',
+        'sanitize_callback' => 'absint',
+    ]);
+
     register_post_meta('charla_abierta', '_charla_direccion', [
         'single' => true,
         'type' => 'string',
@@ -92,12 +108,47 @@ function flacso_charlas_abiertas_add_meta_boxes() {
     );
 }
 
+function flacso_charlas_abiertas_parse_duracion_hhmm_a_minutos($value) {
+    if (!is_scalar($value)) {
+        return null;
+    }
+
+    $text = trim((string) $value);
+    if ('' === $text) {
+        return null;
+    }
+
+    if (!preg_match('/^(\d{1,3}):([0-5]\d)$/', $text, $matches)) {
+        return null;
+    }
+
+    $horas = (int) $matches[1];
+    $minutos = (int) $matches[2];
+
+    return ($horas * 60) + $minutos;
+}
+
+function flacso_charlas_abiertas_format_duracion_hhmm_desde_minutos($value) {
+    if (!is_scalar($value) || '' === trim((string) $value) || !is_numeric($value)) {
+        return '';
+    }
+
+    $total_minutos = max(0, (int) $value);
+    $horas = (int) floor($total_minutos / 60);
+    $minutos = $total_minutos % 60;
+
+    return sprintf('%02d:%02d', $horas, $minutos);
+}
+
 function flacso_charlas_abiertas_render_meta_box($post) {
     wp_nonce_field('flacso_charla_detalles_nonce', 'flacso_charla_detalles_nonce_field');
 
     $inicio = get_post_meta($post->ID, '_charla_inicio', true);
     $modalidad = get_post_meta($post->ID, '_charla_modalidad', true);
     $zoom_join_url = get_post_meta($post->ID, '_charla_zoom_join_url', true);
+    $youtube_transmision_url = get_post_meta($post->ID, '_charla_youtube_transmision_url', true);
+    $duracion_minutos = get_post_meta($post->ID, '_charla_duracion_minutos', true);
+    $duracion_hhmm = flacso_charlas_abiertas_format_duracion_hhmm_desde_minutos($duracion_minutos);
     $direccion = get_post_meta($post->ID, '_charla_direccion', true);
     $descripcion = get_post_meta($post->ID, '_charla_descripcion', true);
     $inicio_fecha = '';
@@ -179,6 +230,33 @@ function flacso_charlas_abiertas_render_meta_box($post) {
             placeholder="https://zoom.us/j/123456789"
             style="width:100%;"
         />
+    </p>
+    <p>
+        <label for="flacso_charla_youtube_transmision_url"><strong>YouTube Transmision URL</strong></label><br>
+        <input
+            type="url"
+            id="flacso_charla_youtube_transmision_url"
+            name="flacso_charla_youtube_transmision_url"
+            value="<?php echo esc_attr($youtube_transmision_url); ?>"
+            placeholder="https://www.youtube.com/watch?v=..."
+            style="width:100%;"
+        />
+    </p>
+    <p>
+        <label for="flacso_charla_duracion_hhmm"><strong>Duracion (HH:MM)</strong></label><br>
+        <input
+            type="text"
+            id="flacso_charla_duracion_hhmm"
+            name="flacso_charla_duracion_hhmm"
+            value="<?php echo esc_attr($duracion_hhmm); ?>"
+            placeholder="01:30"
+            pattern="[0-9]{1,3}:[0-5][0-9]"
+            inputmode="numeric"
+            style="width:100%;max-width:160px;"
+        />
+        <small style="display:block;margin-top:4px;color:#646970;">
+            Formato HH:MM. En la API se expone en minutos.
+        </small>
     </p>
     <p>
         <label for="flacso_charla_direccion"><strong>Dirección</strong></label><br>
@@ -278,6 +356,23 @@ function flacso_charlas_abiertas_save_meta($post_id, $post) {
 
     if (isset($_POST['flacso_charla_zoom_join_url'])) {
         update_post_meta($post_id, '_charla_zoom_join_url', esc_url_raw(wp_unslash($_POST['flacso_charla_zoom_join_url'])));
+    }
+
+    if (isset($_POST['flacso_charla_youtube_transmision_url'])) {
+        update_post_meta($post_id, '_charla_youtube_transmision_url', esc_url_raw(wp_unslash($_POST['flacso_charla_youtube_transmision_url'])));
+    }
+
+    if (isset($_POST['flacso_charla_duracion_hhmm'])) {
+        $duracion_hhmm = sanitize_text_field(wp_unslash($_POST['flacso_charla_duracion_hhmm']));
+        $duracion_minutos = flacso_charlas_abiertas_parse_duracion_hhmm_a_minutos($duracion_hhmm);
+
+        if (null === $duracion_minutos) {
+            if ('' === trim($duracion_hhmm)) {
+                delete_post_meta($post_id, '_charla_duracion_minutos');
+            }
+        } else {
+            update_post_meta($post_id, '_charla_duracion_minutos', $duracion_minutos);
+        }
     }
 
     if (isset($_POST['flacso_charla_direccion'])) {

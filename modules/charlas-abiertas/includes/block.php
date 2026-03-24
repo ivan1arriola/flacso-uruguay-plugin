@@ -47,6 +47,12 @@ function flacso_charlas_abiertas_render_block($attributes) {
     $inicio = get_post_meta($evento_id, '_charla_inicio', true);
     $modalidad = get_post_meta($evento_id, '_charla_modalidad', true);
     $zoom_join_url = get_post_meta($evento_id, '_charla_zoom_join_url', true);
+    $youtube_transmision_url = get_post_meta($evento_id, '_charla_youtube_transmision_url', true);
+    $duracion_minutos_raw = get_post_meta($evento_id, '_charla_duracion_minutos', true);
+    $duracion_minutos = null;
+    if ('' !== trim((string) $duracion_minutos_raw) && is_numeric($duracion_minutos_raw)) {
+        $duracion_minutos = max(0, (int) $duracion_minutos_raw);
+    }
     $direccion = get_post_meta($evento_id, '_charla_direccion', true);
     $descripcion = get_post_meta($evento_id, '_charla_descripcion', true);
     $descripcion_b64 = base64_encode((string) $descripcion);
@@ -83,6 +89,8 @@ function flacso_charlas_abiertas_render_block($attributes) {
         data-evento-inicio="<?php echo esc_attr((string) $inicio); ?>"
         data-evento-modalidad="<?php echo esc_attr((string) $modalidad); ?>"
         data-evento-zoom-join-url="<?php echo esc_url($zoom_join_url ?: ''); ?>"
+        data-evento-youtube-transmision-url="<?php echo esc_url($youtube_transmision_url ?: ''); ?>"
+        data-evento-duracion-minutos="<?php echo esc_attr(null === $duracion_minutos ? '' : (string) $duracion_minutos); ?>"
         data-evento-direccion="<?php echo esc_attr((string) $direccion); ?>"
         data-evento-descripcion-b64="<?php echo esc_attr($descripcion_b64); ?>"
         data-wp-user-logged-in="<?php echo esc_attr($is_logged_in); ?>"

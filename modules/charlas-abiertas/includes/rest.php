@@ -320,6 +320,12 @@ function flacso_charlas_abiertas_build_charla_data($post) {
     $inicio = (string) get_post_meta($post->ID, '_charla_inicio', true);
     $modalidad = (string) get_post_meta($post->ID, '_charla_modalidad', true);
     $zoom_join_url = (string) get_post_meta($post->ID, '_charla_zoom_join_url', true);
+    $youtube_transmision_url = (string) get_post_meta($post->ID, '_charla_youtube_transmision_url', true);
+    $duracion_minutos_raw = get_post_meta($post->ID, '_charla_duracion_minutos', true);
+    $duracion_minutos = null;
+    if ('' !== trim((string) $duracion_minutos_raw) && is_numeric($duracion_minutos_raw)) {
+        $duracion_minutos = max(0, (int) $duracion_minutos_raw);
+    }
     $direccion = (string) get_post_meta($post->ID, '_charla_direccion', true);
     $descripcion = (string) get_post_meta($post->ID, '_charla_descripcion', true);
     $post_featured_image = get_the_post_thumbnail_url($post, 'full');
@@ -328,6 +334,8 @@ function flacso_charlas_abiertas_build_charla_data($post) {
         '_charla_inicio' => $inicio,
         '_charla_modalidad' => $modalidad ?: 'virtual',
         '_charla_zoom_join_url' => $zoom_join_url,
+        '_charla_youtube_transmision_url' => $youtube_transmision_url,
+        '_charla_duracion_minutos' => $duracion_minutos,
         '_charla_direccion' => $direccion,
         '_charla_descripcion' => $descripcion,
     ];
@@ -340,6 +348,8 @@ function flacso_charlas_abiertas_build_charla_data($post) {
         'inicio_timestamp' => $inicio_timestamp,
         'modalidad' => $modalidad ?: 'virtual',
         'zoom_join_url' => $zoom_join_url,
+        'youtube_transmision_url' => $youtube_transmision_url,
+        'duracion_minutos' => $duracion_minutos,
         'direccion' => $direccion,
         'descripcion' => $descripcion,
         'descripcion_rendered' => apply_filters('the_content', $descripcion),
@@ -597,6 +607,19 @@ function flacso_charlas_abiertas_receive_inscripcion(WP_REST_Request $request) {
             );
         }
 
+        $evento_duracion_minutos = null;
+        if (array_key_exists('duracion_minutos', $evento) && is_scalar($evento['duracion_minutos'])) {
+            $duracion_value = trim((string) $evento['duracion_minutos']);
+            if ('' !== $duracion_value && is_numeric($duracion_value)) {
+                $evento_duracion_minutos = max(0, (int) $duracion_value);
+            }
+        } else {
+            $duracion_meta = get_post_meta($evento_id, '_charla_duracion_minutos', true);
+            if ('' !== trim((string) $duracion_meta) && is_numeric($duracion_meta)) {
+                $evento_duracion_minutos = max(0, (int) $duracion_meta);
+            }
+        }
+
         $clean_payload = [
             'evento' => [
                 'id' => is_numeric($evento_id_raw) ? $evento_id : sanitize_text_field((string) $evento_id_raw),
@@ -604,6 +627,8 @@ function flacso_charlas_abiertas_receive_inscripcion(WP_REST_Request $request) {
                 'inicio' => $evento_inicio,
                 'modalidad' => $evento_modalidad,
                 'zoom_join_url' => esc_url_raw($evento['zoom_join_url'] ?? get_post_meta($evento_id, '_charla_zoom_join_url', true)),
+                'youtube_transmision_url' => esc_url_raw($evento['youtube_transmision_url'] ?? get_post_meta($evento_id, '_charla_youtube_transmision_url', true)),
+                'duracion_minutos' => $evento_duracion_minutos,
                 'direccion' => sanitize_text_field($evento['direccion'] ?? get_post_meta($evento_id, '_charla_direccion', true)),
                 'descripcion' => wp_kses_post($evento['descripcion'] ?? get_post_meta($evento_id, '_charla_descripcion', true)),
             ],
