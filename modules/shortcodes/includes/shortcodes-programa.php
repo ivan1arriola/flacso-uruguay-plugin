@@ -1,13 +1,13 @@
 <?php
 
-// ==================== SHORTCODE HERO DEL PROGRAMA (con banner INN-OEA dentro del bloque azul para id=12302) ====================
+// ==================== SHORTCODE HERO DEL PROGRAMA (con banner IIN-OEA dentro del bloque azul para id=12302) ====================
 /**
  * USO: [programa_hero id="123" abreviacion="MDP" reconocido_mec="true" reconocimiento_internacional="true" anio="2026" cohorte="Cohorte 15" menciones_en="Gestión Educativa|Políticas Públicas" orientaciones="Profesional|Académica" mensaje_bienvenida=""]
  * Notas:
  *  - Bloque final de dos títulos intermedios (Maestría en Género) si id=12343.
  *  - Bloque final Diploma + Especialización (texto para MG) si id=12316.
  *  - Bloque final Diploma + Especialización también para IDs 12278, 14444, 12282 (diplomados de género).
- *  - Pastilla de convenio INN-OEA SOLO para id=12302 (adentro del div azul).
+ *  - Pastilla de convenio IIN-OEA SOLO para id=12302 (adentro del div azul).
  */
 add_shortcode('programa_hero', 'programa_hero_shortcode_mobile');
 function programa_hero_shortcode_mobile($atts) {
@@ -45,7 +45,7 @@ function programa_hero_shortcode_mobile($atts) {
     // IDs de diplos de género que deben mostrar el bloque final tipo 12316
     $ids_diplos_genero = array(12278, 14444, 12282);
 
-    // Mostrar pastilla INN-OEA solo si id=12302
+    // Mostrar pastilla IIN-OEA solo si id=12302
     $mostrar_banner_convenio = (intval($atts['id']) === 12302);
     
     // Mostra titulo intermedio DEVNNA
@@ -69,7 +69,7 @@ function programa_hero_shortcode_mobile($atts) {
             <div class="gc-convenio-inside">
                 <div class="gc-convenio-pill">
                     <i class="bi bi-handshake" aria-hidden="true"></i>
-                    <span>En convenio con el <strong>Instituto Interamericano de la Niña, el Niño y Adolescentes  (INN-OEA)</strong></span>
+                    <span>En convenio con el <strong>Instituto Interamericano de la Ni&ntilde;a, el Ni&ntilde;o y Adolescentes (IIN-OEA)</strong></span>
                 </div>
             </div>
             <?php endif; ?>
