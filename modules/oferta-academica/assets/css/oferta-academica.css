@@ -1235,6 +1235,31 @@ body.flacso-oa-consulta-open {
     font-size: .96rem;
 }
 
+.flacso-oa-coordinacion {
+    margin-top: 1.45rem;
+}
+
+.flacso-oa-coordinacion__groups {
+    display: grid;
+    gap: 1.1rem;
+}
+
+.flacso-oa-coordinacion-group {
+    display: grid;
+    gap: .7rem;
+}
+
+.flacso-oa-coordinacion-group__title {
+    margin: 0;
+    padding: .6rem .85rem;
+    border-left: 4px solid #1c4d9e;
+    background: #eef3fb;
+    color: #14396f;
+    border-radius: 8px;
+    font-size: 1.02rem;
+    font-weight: 700;
+}
+
 @media (max-width: 991px) {
     .flacso-oa-programa__hero {
         grid-template-columns: 1fr;

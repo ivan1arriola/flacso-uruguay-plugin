@@ -1,0 +1,20 @@
+{
+  "apiVersion": 2,
+  "name": "flacso-uruguay/oferta-coordinacion-academica",
+  "title": "Oferta academica - Coordinacion academica",
+  "category": "flacso-uruguay",
+  "icon": "groups",
+  "description": "Muestra la coordinación académica de la oferta educativa agrupada por rol.",
+  "supports": {
+    "html": false,
+    "align": ["wide", "full"]
+  },
+  "attributes": {
+    "ofertaId": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "usesContext": ["postId", "postType"],
+  "textdomain": "flacso-oferta-academica"
+}

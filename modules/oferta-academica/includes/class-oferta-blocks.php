@@ -145,6 +145,11 @@ class Oferta_Blocks {
             'render_callback' => [__CLASS__, 'render_oferta_programa'],
         ]);
 
+        register_block_type($blocks_base_path . 'oferta-coordinacion-academica', [
+            'editor_script'   => 'flacso-oferta-block-editor',
+            'render_callback' => [__CLASS__, 'render_oferta_coordinacion_academica'],
+        ]);
+
         // Bloques individuales por tipo (compatibilidad legacy)
         register_block_type($blocks_base_path . 'maestrias', [
             'render_callback' => [__CLASS__, 'render_maestrias'],
@@ -177,6 +182,11 @@ class Oferta_Blocks {
     public static function render_oferta_programa($attributes, $content = '', $block = null): string {
         self::ensure_styles();
         return Oferta_Renderer::render_oferta_programa((array) $attributes, $block);
+    }
+
+    public static function render_oferta_coordinacion_academica($attributes, $content = '', $block = null): string {
+        self::ensure_styles();
+        return Oferta_Renderer::render_oferta_coordinacion_academica((array) $attributes, $block);
     }
 
     public static function render_maestrias($attributes, $content): string {

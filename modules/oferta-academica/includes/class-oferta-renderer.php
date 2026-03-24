@@ -427,57 +427,12 @@ class Oferta_Renderer {
 
             <section class="flacso-oa-programa__docentes" aria-label="<?php esc_attr_e('Docentes', 'flacso-oferta-academica'); ?>">
                 <h2 class="flacso-oa-programa__docentes-title"><?php esc_html_e('Docentes', 'flacso-oferta-academica'); ?></h2>
-                <?php if (!empty($docente_ids)) : ?>
+                <?php
+                $docentes_grid = self::render_docentes_grid_markup($docente_ids);
+                if ($docentes_grid['count'] > 0) :
+                ?>
                     <div class="flacso-oa-programa-docentes-grid">
-                        <?php foreach ($docente_ids as $docente_id) : ?>
-                            <?php
-                            $docente = get_post($docente_id);
-                            if (!$docente || $docente->post_type !== 'docente') {
-                                continue;
-                            }
-
-                            $can_view = $docente->post_status === 'publish' || self::should_include_private_programs();
-                            if (!$can_view) {
-                                continue;
-                            }
-
-                            $nombre = function_exists('dp_nombre_completo') ? dp_nombre_completo($docente_id) : get_the_title($docente_id);
-                            $nombre = $nombre ?: get_the_title($docente_id);
-                            $prefijo = (string) get_post_meta($docente_id, 'prefijo_abrev', true);
-                            $titulo_docente = (string) get_post_meta($docente_id, 'titulo', true);
-                            $resumen = trim((string) get_the_excerpt($docente_id));
-                            if ($resumen === '') {
-                                $cv_text = wp_strip_all_tags((string) get_post_meta($docente_id, 'cv', true));
-                                $resumen = wp_trim_words($cv_text, 22);
-                            }
-                            ?>
-                            <article class="flacso-oa-programa-docente-card">
-                                <a href="<?php echo esc_url(get_permalink($docente_id)); ?>" class="flacso-oa-programa-docente-card__link">
-                                    <div class="flacso-oa-programa-docente-card__media">
-                                        <?php if (has_post_thumbnail($docente_id)) : ?>
-                                            <?php echo get_the_post_thumbnail($docente_id, 'medium', ['loading' => 'lazy']); ?>
-                                        <?php else : ?>
-                                            <span class="flacso-oa-programa-docente-card__placeholder" aria-hidden="true">
-                                                <?php echo esc_html(strtoupper(substr((string) $nombre, 0, 1))); ?>
-                                            </span>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="flacso-oa-programa-docente-card__body">
-                                        <?php if ($prefijo !== '') : ?>
-                                            <p class="flacso-oa-programa-docente-card__prefijo"><?php echo esc_html($prefijo); ?></p>
-                                        <?php endif; ?>
-                                        <h3 class="flacso-oa-programa-docente-card__name"><?php echo esc_html($nombre); ?></h3>
-                                        <?php if ($titulo_docente !== '') : ?>
-                                            <p class="flacso-oa-programa-docente-card__title"><?php echo esc_html($titulo_docente); ?></p>
-                                        <?php endif; ?>
-                                        <?php if ($resumen !== '') : ?>
-                                            <p class="flacso-oa-programa-docente-card__excerpt"><?php echo esc_html($resumen); ?></p>
-                                        <?php endif; ?>
-                                        <span class="flacso-oa-programa-docente-card__cta"><?php esc_html_e('Ver perfil', 'flacso-oferta-academica'); ?></span>
-                                    </div>
-                                </a>
-                            </article>
-                        <?php endforeach; ?>
+                        <?php echo $docentes_grid['html']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
                     </div>
                 <?php else : ?>
                     <p class="flacso-oa-programa__docentes-empty"><?php esc_html_e('Docentes a confirmar.', 'flacso-oferta-academica'); ?></p>
@@ -507,6 +462,66 @@ class Oferta_Renderer {
             })();
             </script>
         <?php endif; ?>
+        <?php
+
+        return (string) ob_get_clean();
+    }
+
+    /**
+     * Renderiza la coordinacion academica de una oferta educativa agrupando docentes por rol.
+     */
+    public static function render_oferta_coordinacion_academica(array $attributes = [], $block = null): string {
+        self::enqueue_styles();
+
+        $oferta_id = self::resolve_oferta_programa_id($attributes, $block);
+        $is_editor_preview = self::is_editor_preview_context();
+
+        if ($oferta_id <= 0) {
+            return $is_editor_preview
+                ? '<p>' . esc_html__('No se encontro una oferta academica vinculada. Define un ofertaId o usa este bloque en una pagina asociada.', 'flacso-oferta-academica') . '</p>'
+                : '';
+        }
+
+        $groups = self::collect_docente_groups_by_role($oferta_id, 'coordinacion_academica', 'rol');
+        if (empty($groups)) {
+            return $is_editor_preview
+                ? '<p>' . esc_html__('La oferta seleccionada no tiene coordinacion academica cargada.', 'flacso-oferta-academica') . '</p>'
+                : '';
+        }
+
+        $rendered_groups = [];
+        foreach ($groups as $group) {
+            $docentes_grid = self::render_docentes_grid_markup($group['docentes']);
+            if ($docentes_grid['count'] <= 0) {
+                continue;
+            }
+
+            ob_start();
+            ?>
+            <article class="flacso-oa-coordinacion-group">
+                <h3 class="flacso-oa-coordinacion-group__title"><?php echo esc_html($group['label']); ?></h3>
+                <div class="flacso-oa-programa-docentes-grid">
+                    <?php echo $docentes_grid['html']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                </div>
+            </article>
+            <?php
+            $rendered_groups[] = (string) ob_get_clean();
+        }
+
+        if (empty($rendered_groups)) {
+            return $is_editor_preview
+                ? '<p>' . esc_html__('No hay perfiles de coordinacion visibles con la configuracion actual.', 'flacso-oferta-academica') . '</p>'
+                : '';
+        }
+
+        ob_start();
+        ?>
+        <section class="flacso-oa-programa__docentes flacso-oa-coordinacion" aria-label="<?php esc_attr_e('Coordinacion academica de la oferta educativa', 'flacso-oferta-academica'); ?>">
+            <h2 class="flacso-oa-programa__docentes-title"><?php esc_html_e('Coordinacion Academica de la Oferta Educativa', 'flacso-oferta-academica'); ?></h2>
+            <div class="flacso-oa-coordinacion__groups">
+                <?php echo implode('', $rendered_groups); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+            </div>
+        </section>
         <?php
 
         return (string) ob_get_clean();
@@ -544,22 +559,144 @@ class Oferta_Renderer {
             $ids = array_merge($ids, $direct);
         }
 
-        foreach (['coordinacion_academica', 'equipos'] as $meta_key) {
-            $groups = get_post_meta($oferta_id, $meta_key, true);
-            if (!is_array($groups)) {
-                continue;
-            }
+        foreach ([
+            ['meta_key' => 'coordinacion_academica', 'label_key' => 'rol'],
+            ['meta_key' => 'equipos', 'label_key' => 'nombre'],
+        ] as $config) {
+            $groups = self::collect_docente_groups_by_role($oferta_id, $config['meta_key'], $config['label_key']);
             foreach ($groups as $group) {
-                $docentes = isset($group['docentes']) && is_array($group['docentes']) ? $group['docentes'] : [];
-                $ids = array_merge($ids, $docentes);
+                $ids = array_merge($ids, $group['docentes']);
             }
         }
 
-        $ids = array_values(array_unique(array_filter(array_map('intval', $ids), static function ($id) {
+        return self::normalize_docente_ids($ids);
+    }
+
+    /**
+     * Obtiene grupos de docentes para una meta de oferta, conservando la etiqueta de rol/nombre.
+     *
+     * @return array<int, array{label:string, docentes:array<int, int>}>
+     */
+    private static function collect_docente_groups_by_role(int $oferta_id, string $meta_key, string $label_key): array {
+        $groups = get_post_meta($oferta_id, $meta_key, true);
+        if (!is_array($groups)) {
+            return [];
+        }
+
+        $default_label = $label_key === 'rol'
+            ? __('Sin rol asignado', 'flacso-oferta-academica')
+            : __('Sin nombre', 'flacso-oferta-academica');
+
+        $normalized = [];
+        foreach ($groups as $group) {
+            if (!is_array($group)) {
+                continue;
+            }
+
+            $label = isset($group[$label_key]) ? trim(sanitize_text_field((string) $group[$label_key])) : '';
+            $docentes = isset($group['docentes']) && is_array($group['docentes']) ? $group['docentes'] : [];
+            $docente_ids = self::normalize_docente_ids($docentes);
+            if (empty($docente_ids)) {
+                continue;
+            }
+
+            $normalized[] = [
+                'label' => $label !== '' ? $label : $default_label,
+                'docentes' => $docente_ids,
+            ];
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * @param array<int, mixed> $ids
+     * @return array<int, int>
+     */
+    private static function normalize_docente_ids(array $ids): array {
+        return array_values(array_unique(array_filter(array_map('intval', $ids), static function ($id) {
             return $id > 0;
         })));
+    }
 
-        return $ids;
+    /**
+     * @param array<int, int> $docente_ids
+     * @return array{count:int, html:string}
+     */
+    private static function render_docentes_grid_markup(array $docente_ids): array {
+        $cards = [];
+        foreach ($docente_ids as $docente_id) {
+            $card_html = self::render_docente_card_markup((int) $docente_id);
+            if ($card_html === '') {
+                continue;
+            }
+            $cards[] = $card_html;
+        }
+
+        return [
+            'count' => count($cards),
+            'html' => implode('', $cards),
+        ];
+    }
+
+    private static function render_docente_card_markup(int $docente_id): string {
+        $docente = get_post($docente_id);
+        if (!$docente || $docente->post_type !== 'docente') {
+            return '';
+        }
+
+        $can_view = $docente->post_status === 'publish' || self::should_include_private_programs();
+        if (!$can_view) {
+            return '';
+        }
+
+        $nombre = function_exists('dp_nombre_completo') ? dp_nombre_completo($docente_id) : get_the_title($docente_id);
+        $nombre = $nombre ?: get_the_title($docente_id);
+        $prefijo = (string) get_post_meta($docente_id, 'prefijo_abrev', true);
+        $titulo_docente = (string) get_post_meta($docente_id, 'titulo', true);
+        $resumen = trim((string) get_the_excerpt($docente_id));
+        if ($resumen === '') {
+            $cv_text = wp_strip_all_tags((string) get_post_meta($docente_id, 'cv', true));
+            $resumen = wp_trim_words($cv_text, 22);
+        }
+
+        $inicial = '';
+        if ($nombre !== '') {
+            $inicial = function_exists('mb_substr') ? mb_substr($nombre, 0, 1, 'UTF-8') : substr($nombre, 0, 1);
+            $inicial = function_exists('mb_strtoupper') ? mb_strtoupper((string) $inicial, 'UTF-8') : strtoupper((string) $inicial);
+        }
+
+        ob_start();
+        ?>
+        <article class="flacso-oa-programa-docente-card">
+            <a href="<?php echo esc_url(get_permalink($docente_id)); ?>" class="flacso-oa-programa-docente-card__link">
+                <div class="flacso-oa-programa-docente-card__media">
+                    <?php if (has_post_thumbnail($docente_id)) : ?>
+                        <?php echo get_the_post_thumbnail($docente_id, 'medium', ['loading' => 'lazy']); ?>
+                    <?php else : ?>
+                        <span class="flacso-oa-programa-docente-card__placeholder" aria-hidden="true">
+                            <?php echo esc_html($inicial); ?>
+                        </span>
+                    <?php endif; ?>
+                </div>
+                <div class="flacso-oa-programa-docente-card__body">
+                    <?php if ($prefijo !== '') : ?>
+                        <p class="flacso-oa-programa-docente-card__prefijo"><?php echo esc_html($prefijo); ?></p>
+                    <?php endif; ?>
+                    <h3 class="flacso-oa-programa-docente-card__name"><?php echo esc_html($nombre); ?></h3>
+                    <?php if ($titulo_docente !== '') : ?>
+                        <p class="flacso-oa-programa-docente-card__title"><?php echo esc_html($titulo_docente); ?></p>
+                    <?php endif; ?>
+                    <?php if ($resumen !== '') : ?>
+                        <p class="flacso-oa-programa-docente-card__excerpt"><?php echo esc_html($resumen); ?></p>
+                    <?php endif; ?>
+                    <span class="flacso-oa-programa-docente-card__cta"><?php esc_html_e('Ver perfil', 'flacso-oferta-academica'); ?></span>
+                </div>
+            </a>
+        </article>
+        <?php
+
+        return (string) ob_get_clean();
     }
 
     private static function resolve_oferta_programa_id(array $attributes, $block = null): int {

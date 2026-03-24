@@ -47,6 +47,10 @@
             var setPage = pageState[1];
 
             var perPage = 20;
+            var adminBaseUrl = (typeof window.ajaxurl === "string" && window.ajaxurl.indexOf("admin-ajax.php") !== -1)
+                ? window.ajaxurl.replace("admin-ajax.php", "")
+                : "/wp-admin/";
+            var nuevoDocenteUrl = adminBaseUrl + "post-new.php?post_type=docente";
 
             useEffect(function () {
                 setPage(1);
@@ -164,6 +168,16 @@
                             onChange: function (v) { setQuery(v); },
                             placeholder: "Ej: Laura, Perez, Breilh"
                         }),
+                        el(
+                            "div",
+                            { style: { marginTop: "8px", marginBottom: "8px" } },
+                            el(Button, {
+                                variant: "primary",
+                                href: nuevoDocenteUrl,
+                                target: "_blank",
+                                rel: "noopener noreferrer"
+                            }, "Agregar nuevo docente")
+                        ),
                         isResolving ? el("div", { style: { margin: "6px 0" } }, el(Spinner, {})) : null,
                         el(SelectControl, {
                             label: "Resultados",

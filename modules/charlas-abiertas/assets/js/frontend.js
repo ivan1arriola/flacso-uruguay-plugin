@@ -224,10 +224,17 @@
             result.innerHTML = "";
             statusScreen.hidden = false;
             statusScreen.innerHTML = [
-                '<div class="flacso-charla-status-card">',
-                '<div class="flacso-charla-loader" aria-hidden="true"></div>',
+                '<div class="flacso-charla-status-card is-loading">',
+                '<div class="flacso-charla-loader-wrap" aria-hidden="true">',
+                '<div class="flacso-charla-loader"></div>',
+                '<div class="flacso-charla-loader-ping"></div>',
+                "</div>",
+                '<div class="flacso-charla-loading-copy">',
                 "<h3>Enviando tu inscripción...</h3>",
-                "<p>Estamos procesando tus datos. Esto puede demorar unos segundos.</p>",
+                "<p>Estamos validando y registrando tus datos. Esto puede demorar unos segundos.</p>",
+                "</div>",
+                '<div class="flacso-charla-loading-progress" role="progressbar" aria-label="Enviando inscripción" aria-valuemin="0" aria-valuemax="100" aria-valuetext="Procesando"></div>',
+                '<p class="flacso-charla-loading-hint">Normalmente demora menos de 30 segundos.</p>',
                 "</div>",
             ].join("");
         }

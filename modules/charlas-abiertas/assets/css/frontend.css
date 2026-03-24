@@ -142,6 +142,61 @@
     color: var(--global-palette3, #0f1a2d);
 }
 
+.flacso-charla-status-card.is-loading {
+    border-color: #b6c5d9;
+    background:
+        radial-gradient(circle at top right, rgba(29, 58, 114, 0.06), transparent 45%),
+        var(--global-palette9, #ffffff);
+    box-shadow: 0 10px 28px rgba(16, 36, 71, 0.08);
+}
+
+.flacso-charla-loader-wrap {
+    position: relative;
+    width: 54px;
+    height: 54px;
+    margin-bottom: 1rem;
+}
+
+.flacso-charla-loading-copy h3 {
+    margin: 0;
+    color: var(--global-palette1, #1d3a72);
+    font-size: clamp(1.7rem, 3.4vw, 2.1rem);
+    line-height: 1.2;
+}
+
+.flacso-charla-loading-copy p {
+    margin: .85rem 0 0;
+    line-height: 1.45;
+    font-size: var(--global-kb-font-size-md, 1.1rem);
+    color: var(--global-palette3, #0f1a2d);
+}
+
+.flacso-charla-loading-progress {
+    position: relative;
+    margin-top: 1rem;
+    width: min(420px, 100%);
+    height: 6px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #dfe7f2;
+}
+
+.flacso-charla-loading-progress::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    width: 40%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #1d3a72 0%, #3d6fc2 100%);
+    animation: flacso-progress 1.45s ease-in-out infinite;
+}
+
+.flacso-charla-loading-hint {
+    margin: .6rem 0 0;
+    font-size: .92rem;
+    color: var(--global-palette5, #6e7b8d);
+}
+
 .flacso-charla-status-card.success {
     border-color: var(--global-palette6, #c9d2de);
     background: var(--global-palette9, #ffffff);
@@ -162,17 +217,51 @@
 }
 
 .flacso-charla-loader {
-    width: 34px;
-    height: 34px;
+    width: 54px;
+    height: 54px;
     border-radius: 50%;
-    border: 3px solid var(--global-palette6, #c9d2de);
+    border: 4px solid #cad5e4;
     border-top-color: var(--global-palette1, #1d3a72);
     animation: flacso-spin .8s linear infinite;
-    margin-bottom: .8rem;
+}
+
+.flacso-charla-loader-ping {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid rgba(29, 58, 114, 0.28);
+    animation: flacso-ping 1.8s ease-out infinite;
 }
 
 @keyframes flacso-spin {
     to {
         transform: rotate(360deg);
+    }
+}
+
+@keyframes flacso-ping {
+    0% {
+        transform: scale(.86);
+        opacity: .55;
+    }
+    70% {
+        transform: scale(1.25);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1.25);
+        opacity: 0;
+    }
+}
+
+@keyframes flacso-progress {
+    0% {
+        transform: translateX(-120%);
+    }
+    50% {
+        transform: translateX(95%);
+    }
+    100% {
+        transform: translateX(250%);
     }
 }

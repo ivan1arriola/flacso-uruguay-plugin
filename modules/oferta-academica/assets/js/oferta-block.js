@@ -123,6 +123,39 @@
         );
     };
 
+    const coordinationAttributes = {
+        ofertaId: { type: 'number', default: 0 },
+    };
+
+    const editCoordinationBlock = (props) => {
+        const { attributes: attrs, setAttributes } = props;
+        const ofertaIdValue = attrs.ofertaId ? String(attrs.ofertaId) : '';
+
+        return el(
+            Fragment,
+            {},
+            el(
+                InspectorControls,
+                {},
+                el(
+                    PanelBody,
+                    { title: __('Configuracion de coordinacion academica', 'flacso-oferta-academica'), initialOpen: true },
+                    el(TextControl, {
+                        label: __('ID de oferta academica (opcional)', 'flacso-oferta-academica'),
+                        type: 'number',
+                        value: ofertaIdValue,
+                        help: __('Si queda vacio, se usa la oferta vinculada a la pagina actual (_oferta_page_id).', 'flacso-oferta-academica'),
+                        onChange: function (value) {
+                            var parsed = parseInt(value, 10);
+                            setAttributes({ ofertaId: isNaN(parsed) ? 0 : parsed });
+                        },
+                    })
+                )
+            ),
+            el(ServerSideRender, { block: props.name, attributes: attrs })
+        );
+    };
+
     registerBlockType(pageBlockName, {
         attributes: pageAttributes,
         edit: editPageBlock,
@@ -132,6 +165,12 @@
     registerBlockType('flacso-uruguay/oferta-academica-programa', {
         attributes: programAttributes,
         edit: editProgramBlock,
+        save: () => null,
+    });
+
+    registerBlockType('flacso-uruguay/oferta-coordinacion-academica', {
+        attributes: coordinationAttributes,
+        edit: editCoordinationBlock,
         save: () => null,
     });
 })(window.wp.blocks, window.wp.element, window.wp.components, window.wp.blockEditor, window.wp.serverSideRender, window.wp.i18n);
