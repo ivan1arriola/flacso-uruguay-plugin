@@ -483,6 +483,263 @@ if (!function_exists('flacso_generar_seminarios_combinados_html')) {
         return $html;
     }
 }
+if (!function_exists('flacso_fetch_public_seminarios_proximos_items')) {
+    /**
+     * Obtiene seminarios desde la API pública de FLACSO (fuente única).
+     *
+     * @param int $today_ts Timestamp de referencia (00:00 local).
+     * @return array<int, array<string, mixed>>
+     */
+    function flacso_fetch_public_seminarios_proximos_items(int $today_ts): array {
+        $cache_key = 'flacso_public_seminarios_proximos_v7';
+        $cached = get_transient($cache_key);
+        if (is_array($cached) && !empty($cached)) {
+            return $cached;
+        }
+
+        $rows = [];
+        $endpoint = 'https://flacso.edu.uy/wp-json/wp/v2/seminario?per_page=100&_embed=1';
+        $response = wp_remote_get($endpoint, [
+            'timeout' => 12,
+        ]);
+
+        if (!is_wp_error($response) && (int) wp_remote_retrieve_response_code($response) === 200) {
+            $body = wp_remote_retrieve_body($response);
+            if (is_string($body) && $body !== '') {
+                $decoded = json_decode($body, true);
+                if (is_array($decoded)) {
+                    $rows = $decoded;
+                }
+            }
+        }
+
+        // Respaldo robusto: misma API, pero resolución interna sin HTTP externo.
+        if (empty($rows) && class_exists('WP_REST_Request') && function_exists('rest_do_request')) {
+            $request = new WP_REST_Request('GET', '/wp/v2/seminario');
+            $request->set_param('per_page', 100);
+            $request->set_param('_embed', 1);
+
+            $rest_response = rest_do_request($request);
+            if (!is_wp_error($rest_response) && is_object($rest_response) && method_exists($rest_response, 'is_error') && !$rest_response->is_error()) {
+                $data = $rest_response->get_data();
+                if (is_array($data)) {
+                    $rows = $data;
+                }
+            }
+        }
+
+        if (empty($rows)) {
+            return [];
+        }
+
+        $items = [];
+        $featured_media_ids = [];
+        foreach ($rows as $row) {
+            if (is_array($row) && !empty($row['featured_media']) && is_numeric($row['featured_media'])) {
+                $id = absint($row['featured_media']);
+                if ($id > 0) {
+                    $featured_media_ids[] = $id;
+                }
+            }
+        }
+        $featured_media_ids = array_values(array_unique($featured_media_ids));
+
+        $remote_media_map = [];
+        if (!empty($featured_media_ids)) {
+            $ids_csv = implode(',', $featured_media_ids);
+            $media_endpoint = 'https://flacso.edu.uy/wp-json/wp/v2/media?include=' . rawurlencode($ids_csv) . '&per_page=100';
+            $media_response = wp_remote_get($media_endpoint, ['timeout' => 12]);
+            if (!is_wp_error($media_response) && (int) wp_remote_retrieve_response_code($media_response) === 200) {
+                $media_body = wp_remote_retrieve_body($media_response);
+                if (is_string($media_body) && $media_body !== '') {
+                    $media_rows = json_decode($media_body, true);
+                    if (is_array($media_rows)) {
+                        foreach ($media_rows as $media_row) {
+                            if (!is_array($media_row) || empty($media_row['id'])) {
+                                continue;
+                            }
+                            $media_id = absint($media_row['id']);
+                            if ($media_id <= 0) {
+                                continue;
+                            }
+                            $media_url = '';
+                            if (!empty($media_row['media_details']['sizes']['large']['source_url'])) {
+                                $media_url = (string) $media_row['media_details']['sizes']['large']['source_url'];
+                            } elseif (!empty($media_row['media_details']['sizes']['full']['source_url'])) {
+                                $media_url = (string) $media_row['media_details']['sizes']['full']['source_url'];
+                            } elseif (!empty($media_row['source_url'])) {
+                                $media_url = (string) $media_row['source_url'];
+                            }
+                            if ($media_url !== '') {
+                                $remote_media_map[$media_id] = esc_url_raw($media_url);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+
+            $meta = isset($row['meta']) && is_array($row['meta']) ? $row['meta'] : [];
+            $inicio_raw = '';
+            foreach (['_seminario_periodo_inicio', '_seminario_fecha_inicio', 'fecha_inicio', 'periodo_inicio'] as $meta_key) {
+                if (!empty($meta[$meta_key])) {
+                    $inicio_raw = (string) $meta[$meta_key];
+                    break;
+                }
+            }
+            if ($inicio_raw === '') {
+                $content_candidates = [];
+                if (isset($row['content']['rendered'])) {
+                    $content_candidates[] = (string) $row['content']['rendered'];
+                }
+                if (isset($row['excerpt']['rendered'])) {
+                    $content_candidates[] = (string) $row['excerpt']['rendered'];
+                }
+                if (isset($row['content'])) {
+                    $content_candidates[] = (string) $row['content'];
+                }
+                if (isset($row['excerpt'])) {
+                    $content_candidates[] = (string) $row['excerpt'];
+                }
+
+                foreach ($content_candidates as $candidate) {
+                    $plain = wp_strip_all_tags($candidate);
+                    if (preg_match('/\b(\d{4}-\d{2}-\d{2})\b/u', $plain, $matches)) {
+                        $inicio_raw = (string) $matches[1];
+                        break;
+                    }
+                }
+            }
+            if ($inicio_raw === '') {
+                continue;
+            }
+
+            $inicio_ts = strtotime($inicio_raw);
+            if (!$inicio_ts) {
+                continue;
+            }
+
+            $diff_days = (int) floor(($inicio_ts - $today_ts) / DAY_IN_SECONDS);
+            if ($diff_days < -7) {
+                continue;
+            }
+
+            $title = '';
+            if (isset($row['title']['rendered'])) {
+                $title = wp_strip_all_tags((string) $row['title']['rendered']);
+            } elseif (isset($row['title'])) {
+                $title = wp_strip_all_tags((string) $row['title']);
+            }
+            if ($title === '') {
+                continue;
+            }
+
+            $permalink = isset($row['link']) ? esc_url_raw((string) $row['link']) : '';
+            if ($permalink === '') {
+                continue;
+            }
+
+            $img = '';
+            if (!empty($row['_embedded']['wp:featuredmedia'][0]['source_url'])) {
+                $img = esc_url_raw((string) $row['_embedded']['wp:featuredmedia'][0]['source_url']);
+            }
+            if ($img === '' && !empty($row['post_featured_image'])) {
+                $img = esc_url_raw((string) $row['post_featured_image']);
+            }
+            if ($img === '' && !empty($row['featured_image'])) {
+                $img = esc_url_raw((string) $row['featured_image']);
+            }
+            if ($img === '' && !empty($row['featured_media']) && is_numeric($row['featured_media'])) {
+                $featured_media_id = absint($row['featured_media']);
+                if ($featured_media_id > 0) {
+                    if (isset($remote_media_map[$featured_media_id]) && is_string($remote_media_map[$featured_media_id])) {
+                        $img = $remote_media_map[$featured_media_id];
+                    }
+                }
+            }
+            if ($img === '' && !empty($row['featured_media']) && is_numeric($row['featured_media'])) {
+                $featured_media_id = absint($row['featured_media']);
+                if ($featured_media_id > 0) {
+                    $img = wp_get_attachment_image_url($featured_media_id, 'large');
+                    if (!$img) {
+                        $img = wp_get_attachment_image_url($featured_media_id, 'full');
+                    }
+                    if (is_string($img)) {
+                        $img = esc_url_raw($img);
+                    } else {
+                        $img = '';
+                    }
+                }
+            }
+            if ($img === '') {
+                continue;
+            }
+
+            $hora = '';
+            foreach (['hora_inicio', '_seminario_hora_inicio', '_hora_inicio'] as $hora_key) {
+                if (!empty($meta[$hora_key])) {
+                    $hora = sanitize_text_field((string) $meta[$hora_key]);
+                    break;
+                }
+            }
+
+            if ($diff_days > 0) {
+                $estado_badge = sprintf(__('En %d días', 'flacso-main-page'), $diff_days);
+                $badge_color = '#f59e0b';
+            } elseif (0 === $diff_days) {
+                $estado_badge = __('Inicia hoy', 'flacso-main-page');
+                $badge_color = '#10b981';
+            } else {
+                $estado_badge = sprintf(
+                    __('Inició hace %d días', 'flacso-main-page'),
+                    abs($diff_days)
+                );
+                $badge_color = '#3b82f6';
+            }
+
+            $items[] = [
+                'post_id' => isset($row['id']) ? (int) $row['id'] : 0,
+                'title' => $title,
+                'permalink' => $permalink,
+                'img' => $img,
+                'fecha' => date_i18n('j \\d\\e F', $inicio_ts),
+                'hora' => $hora,
+                'estado_badge' => $estado_badge,
+                'badge_color' => $badge_color,
+                'inicio_ts' => $inicio_ts,
+                'diff_days' => $diff_days,
+            ];
+        }
+
+        if (!empty($items)) {
+            usort($items, static function (array $a, array $b): int {
+                $a_diff = isset($a['diff_days']) ? (int) $a['diff_days'] : PHP_INT_MAX;
+                $b_diff = isset($b['diff_days']) ? (int) $b['diff_days'] : PHP_INT_MAX;
+
+                $a_group = $a_diff >= 0 ? 0 : 1;
+                $b_group = $b_diff >= 0 ? 0 : 1;
+                if ($a_group !== $b_group) {
+                    return $a_group <=> $b_group;
+                }
+
+                if (0 === $a_group) {
+                    return $a_diff <=> $b_diff;
+                }
+
+                return $b_diff <=> $a_diff;
+            });
+            set_transient($cache_key, $items, 15 * MINUTE_IN_SECONDS);
+        }
+
+        return $items;
+    }
+}
+
 if (!function_exists('flacso_section_seminarios_proximos_render')) {
     /**
      * Renderiza una sección de seminarios próximos para la página principal.
@@ -492,45 +749,78 @@ if (!function_exists('flacso_section_seminarios_proximos_render')) {
      * @return string
      */
     function flacso_section_seminarios_proximos_render($max_items = 3): string {
+        $max_items = max(1, (int) $max_items);
         $today = current_time('Y-m-d');
-        $hace_diez = date('Y-m-d', strtotime('-10 days', current_time('timestamp')));
+        $today_ts = strtotime($today);
 
-        $post_type = post_type_exists('seminario') ? 'seminario' : 'post';
-        $start_keys = class_exists('Flacso_Main_Page_Seminarios')
-            ? Flacso_Main_Page_Seminarios::get_meta_keys_for('periodo_inicio')
-            : ['fecha_inicio'];
+        // Fuente única: API pública de seminarios.
+        $seminarios_items = flacso_fetch_public_seminarios_proximos_items($today_ts);
 
-        $meta_query = ['relation' => 'OR'];
-        foreach ($start_keys as $key) {
-            $meta_query[] = [
-                'key'     => $key,
-                'value'   => $hace_diez,
-                'compare' => '>=',
-                'type'    => 'DATE',
-            ];
+        if (!empty($seminarios_items)) {
+            $normalized_items = [];
+            foreach ($seminarios_items as $item) {
+                $inicio_ts = isset($item['inicio_ts']) ? (int) $item['inicio_ts'] : 0;
+                if ($inicio_ts <= 0) {
+                    continue;
+                }
+
+                $diff_days = isset($item['diff_days'])
+                    ? (int) $item['diff_days']
+                    : (int) floor(($inicio_ts - $today_ts) / DAY_IN_SECONDS);
+
+                if ($diff_days < -7) {
+                    continue;
+                }
+
+                $item['diff_days'] = $diff_days;
+                $normalized_items[] = $item;
+            }
+            $seminarios_items = $normalized_items;
         }
 
-        $query_args = [
-            'post_type'      => $post_type,
-            'post_status'    => 'publish',
-            'posts_per_page' => max(1, $max_items),
-            'meta_query'     => count($meta_query) > 1 ? $meta_query : [],
-            'orderby'        => 'date',
-            'order'          => 'ASC',
-        ];
-
-        if ('post' === $post_type) {
-            $query_args['category_name'] = 'seminarios';
-            $query_args['meta_key'] = 'fecha_inicio';
-            $query_args['orderby'] = 'meta_value';
-            $query_args['meta_type'] = 'DATE';
+        if (empty($seminarios_items)) {
+            ob_start();
+            ?>
+            <section class="flacso-seminarios-proximos position-relative py-5">
+                <div class="flacso-content-shell">
+                    <div class="text-center mb-4">
+                        <h2 class="h2 mb-3" style="color: var(--global-palette1, #1d3a72); font-weight: 700;">
+                            <?php esc_html_e('Seminarios Próximos', 'flacso-main-page'); ?>
+                        </h2>
+                        <p class="lead mb-3" style="color: var(--global-palette4, #6b7280);">
+                            <?php esc_html_e('Formación intensiva con enfoque práctico', 'flacso-main-page'); ?>
+                        </p>
+                        <p style="color: var(--global-palette4, #6b7280); margin-bottom: 1rem;">
+                            <?php esc_html_e('No hay seminarios próximos para mostrar en este momento.', 'flacso-main-page'); ?>
+                        </p>
+                        <a href="https://flacso.edu.uy/formacion/seminarios/" class="button button-primary" style="background-color: var(--global-palette1, #1d3a72); color: #fff; padding: 0.65rem 1.4rem; border-radius: 8px; text-decoration: none; display: inline-block; font-weight: 600; border: none;">
+                            <?php esc_html_e('Ver todos los seminarios abiertos', 'flacso-main-page'); ?>
+                        </a>
+                    </div>
+                </div>
+            </section>
+            <?php
+            return (string) ob_get_clean();
         }
 
-        $query = new WP_Query($query_args);
+        usort($seminarios_items, static function (array $a, array $b): int {
+            $a_diff = isset($a['diff_days']) ? (int) $a['diff_days'] : PHP_INT_MAX;
+            $b_diff = isset($b['diff_days']) ? (int) $b['diff_days'] : PHP_INT_MAX;
 
-        if (!$query->have_posts()) {
-            return '';
-        }
+            $a_group = $a_diff >= 0 ? 0 : 1;
+            $b_group = $b_diff >= 0 ? 0 : 1;
+            if ($a_group !== $b_group) {
+                return $a_group <=> $b_group;
+            }
+
+            if (0 === $a_group) {
+                return $a_diff <=> $b_diff;
+            }
+
+            return $b_diff <=> $a_diff;
+        });
+
+        $seminarios_items = array_slice($seminarios_items, 0, $max_items);
 
         ob_start();
         ?>
@@ -547,50 +837,7 @@ if (!function_exists('flacso_section_seminarios_proximos_render')) {
 
                 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" style="margin: 0;">
                     <?php
-                    while ($query->have_posts()) :
-                        $query->the_post();
-                        $post_id = get_the_ID();
-                        $img = get_the_post_thumbnail_url($post_id, 'large') ?: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1350&q=80';
-                        $inicio = class_exists('Flacso_Main_Page_Seminarios')
-                            ? Flacso_Main_Page_Seminarios::get_start_date($post_id)
-                            : get_post_meta($post_id, 'fecha_inicio', true);
-                        if (!$inicio) {
-                            continue;
-                        }
-
-                        $inicio_ts = strtotime($inicio);
-                        if (!$inicio_ts) {
-                            continue;
-                        }
-
-                        $diff = ($inicio_ts - strtotime($today)) / DAY_IN_SECONDS;
-                        if ($diff <= -10) {
-                            continue;
-                        }
-
-                        $fecha = date_i18n('j \\d\\e F', $inicio_ts);
-                        $hora_meta_keys = ['hora_inicio', '_seminario_hora_inicio', '_hora_inicio'];
-                        $hora = '';
-                        foreach ($hora_meta_keys as $hkey) {
-                            $val = get_post_meta($post_id, $hkey, true);
-                            if (!empty($val)) {
-                                $hora = $val;
-                                break;
-                            }
-                        }
-
-                        $estado_badge = '';
-                        $badge_color = '';
-                        if ($diff > 0) {
-                            $estado_badge = sprintf(
-                                __('En %d días', 'flacso-main-page'),
-                                intval($diff)
-                            );
-                            $badge_color = '#f59e0b';
-                        } else {
-                            $estado_badge = __('En curso', 'flacso-main-page');
-                            $badge_color = '#10b981';
-                        }
+                    foreach ($seminarios_items as $seminario_item) :
                         ?>
                         <div class="col">
                             <article class="h-100 seminario-card" style="
@@ -606,8 +853,8 @@ if (!function_exists('flacso_section_seminarios_proximos_render')) {
                                 <!-- Imagen -->
                                 <div class="position-relative" style="height: 220px; overflow: hidden; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                                     <img 
-                                        src="<?php echo esc_url($img); ?>" 
-                                        alt="<?php the_title_attribute(); ?>" 
+                                        src="<?php echo esc_url($seminario_item['img']); ?>" 
+                                        alt="<?php echo esc_attr($seminario_item['title']); ?>" 
                                         style="width: 100%; height: 100%; object-fit: cover; opacity: 0.9;"
                                         loading="lazy">
                                     
@@ -616,7 +863,7 @@ if (!function_exists('flacso_section_seminarios_proximos_render')) {
                                         position: absolute;
                                         top: 12px;
                                         right: 12px;
-                                        background: <?php echo esc_attr($badge_color); ?>;
+                                        background: <?php echo esc_attr($seminario_item['badge_color']); ?>;
                                         color: white;
                                         padding: 6px 14px;
                                         border-radius: 20px;
@@ -624,7 +871,7 @@ if (!function_exists('flacso_section_seminarios_proximos_render')) {
                                         font-weight: 600;
                                         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
                                     ">
-                                        <?php echo esc_html($estado_badge); ?>
+                                        <?php echo esc_html($seminario_item['estado_badge']); ?>
                                     </div>
                                 </div>
 
@@ -638,12 +885,12 @@ if (!function_exists('flacso_section_seminarios_proximos_render')) {
                                     ">
                                         <p style="margin: 0; color: var(--global-palette1, #1d3a72); font-size: 0.9rem; font-weight: 600;">
                                             <i class="bi bi-calendar3" style="margin-right: 6px;"></i>
-                                            <?php echo esc_html($fecha); ?>
+                                            <?php echo esc_html($seminario_item['fecha']); ?>
                                         </p>
-                                        <?php if ($hora): ?>
+                                        <?php if (!empty($seminario_item['hora'])): ?>
                                             <p style="margin: 6px 0 0 0; color: #6b7280; font-size: 0.9rem;">
                                                 <i class="bi bi-clock" style="margin-right: 6px;"></i>
-                                                <?php echo esc_html($hora); ?>
+                                                <?php echo esc_html($seminario_item['hora']); ?>
                                             </p>
                                         <?php endif; ?>
                                     </div>
@@ -657,11 +904,11 @@ if (!function_exists('flacso_section_seminarios_proximos_render')) {
                                         line-height: 1.4;
                                         flex-grow: 1;
                                     ">
-                                        <?php the_title(); ?>
+                                        <?php echo esc_html($seminario_item['title']); ?>
                                     </h3>
 
                                     <!-- Botón -->
-                                    <a href="<?php the_permalink(); ?>" style="
+                                    <a href="<?php echo esc_url($seminario_item['permalink']); ?>" style="
                                         display: inline-block;
                                         margin-top: 12px;
                                         padding: 10px 16px;
@@ -681,7 +928,7 @@ if (!function_exists('flacso_section_seminarios_proximos_render')) {
                                 </div>
                             </article>
                         </div>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </div>
             </div>
         </section>

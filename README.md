@@ -103,19 +103,9 @@ Desde ese momento, cada `git commit`:
 2. corre `.github/scripts/check_encoding.py`,
 3. bloquea el commit si encuentra problemas de encoding.
 
-## Actualizacion automatica (sin SSH)
+## Actualizacion del plugin
 
-Este repositorio incluye un workflow que publica un release de GitHub en cada `push` a `main`:
-- `.github/workflows/release-auto-update.yml`
-
-Para que el sitio se actualice solo:
-1. En WordPress, activar **Auto-actualizaciones** para este plugin.
-2. Verificar que el plugin tenga acceso al repo configurado en `FLACSO_URUGUAY_UPDATE_REPO`.
-3. Hacer `push` a `main`.
-
-Opcional:
-- Si alguna vez tienen credenciales FTP/SFTP, tambien existe deploy directo:
-  `.github/workflows/deploy-plugin.yml` (solo corre si estan definidos los secrets de deploy).
+La actualizacion del plugin se realiza por los canales habituales de despliegue del sitio (por ejemplo, copia del plugin en servidor o pipeline de deploy propio).
 
 ## Notas de tracking (Meta Pixel)
 

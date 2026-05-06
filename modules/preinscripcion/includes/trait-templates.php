@@ -133,36 +133,40 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
         <div class="flacso-preinscripciones-container">
             <?php $this->render_hero_header($info_posgrado); ?>
 
-            <div class="container" style="margin: 40px auto;">
-                <div class="row justify-content-center">
-                    <div class="col-12 col-lg-8">
-                        <div class="flacso-formulario-card">
-                            <div class="flacso-formulario-body">
-                                <form id="flacso-formulario-preinscripcion" class="needs-validation" enctype="multipart/form-data" novalidate>
-                                    <?php
-                                    $this->render_campos_ocultos($info_posgrado);
-                                    $this->render_seccion_correo();
-                                    $this->render_seccion_info_personal();
-                                    $this->render_seccion_contacto();
-                                    $this->render_seccion_academica($info_posgrado);
-                                    $this->render_seccion_documentacion($info_posgrado);
-                                    
-                                    // Cartas de recomendación solo para maestrías
-                                    if ($info_posgrado['es_maestria']) { 
-                                        $this->render_seccion_cartas_recomendacion(); 
-                                    }
-                                    
-                                    $this->render_seccion_adicional();
-                                    $this->render_boton_envio();
-                                    ?>
-                                </form>
+            <?php if (!empty($info_posgrado['preinscripcion_cerrada'])): ?>
+                <?php $this->render_aviso_preinscripciones_cerradas($info_posgrado); ?>
+            <?php else: ?>
+                <div class="container" style="margin: 40px auto;">
+                    <div class="row justify-content-center">
+                        <div class="col-12 col-lg-8">
+                            <div class="flacso-formulario-card">
+                                <div class="flacso-formulario-body">
+                                    <form id="flacso-formulario-preinscripcion" class="needs-validation" enctype="multipart/form-data" novalidate>
+                                        <?php
+                                        $this->render_campos_ocultos($info_posgrado);
+                                        $this->render_seccion_correo();
+                                        $this->render_seccion_info_personal();
+                                        $this->render_seccion_contacto();
+                                        $this->render_seccion_academica($info_posgrado);
+                                        $this->render_seccion_documentacion($info_posgrado);
+                                        
+                                        // Cartas de recomendación solo para maestrías
+                                        if ($info_posgrado['es_maestria']) { 
+                                            $this->render_seccion_cartas_recomendacion(); 
+                                        }
+                                        
+                                        $this->render_seccion_adicional();
+                                        $this->render_boton_envio();
+                                        ?>
+                                    </form>
 
-                                <div id="flacso-resultado-envio" class="flacso-resultado-area mt-4" aria-live="polite" role="status"></div>
+                                    <div id="flacso-resultado-envio" class="flacso-resultado-area mt-4" aria-live="polite" role="status"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            <?php endif; ?>
         </div>
         <?php
     }
@@ -184,35 +188,39 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
         <div class="flacso-preinscripciones-container flacso-preinscripcion-shortcode">
             <?php $this->render_hero_header($info_posgrado); ?>
 
-            <div class="container" style="margin: 40px auto;">
-                <div class="row justify-content-center">
-                    <div class="col-12 col-lg-8">
-                        <div class="flacso-formulario-card">
-                            <div class="flacso-formulario-body">
-                                <form id="flacso-formulario-preinscripcion" class="needs-validation" enctype="multipart/form-data" novalidate>
-                                    <?php
-                                    $this->render_campos_ocultos($info_posgrado);
-                                    $this->render_seccion_correo();
-                                    $this->render_seccion_info_personal();
-                                    $this->render_seccion_contacto();
-                                    $this->render_seccion_academica($info_posgrado);
-                                    $this->render_seccion_documentacion($info_posgrado);
+            <?php if (!empty($info_posgrado['preinscripcion_cerrada'])): ?>
+                <?php $this->render_aviso_preinscripciones_cerradas($info_posgrado); ?>
+            <?php else: ?>
+                <div class="container" style="margin: 40px auto;">
+                    <div class="row justify-content-center">
+                        <div class="col-12 col-lg-8">
+                            <div class="flacso-formulario-card">
+                                <div class="flacso-formulario-body">
+                                    <form id="flacso-formulario-preinscripcion" class="needs-validation" enctype="multipart/form-data" novalidate>
+                                        <?php
+                                        $this->render_campos_ocultos($info_posgrado);
+                                        $this->render_seccion_correo();
+                                        $this->render_seccion_info_personal();
+                                        $this->render_seccion_contacto();
+                                        $this->render_seccion_academica($info_posgrado);
+                                        $this->render_seccion_documentacion($info_posgrado);
 
-                                    if ($info_posgrado['es_maestria']) {
-                                        $this->render_seccion_cartas_recomendacion();
-                                    }
+                                        if ($info_posgrado['es_maestria']) {
+                                            $this->render_seccion_cartas_recomendacion();
+                                        }
 
-                                    $this->render_seccion_adicional();
-                                    $this->render_boton_envio();
-                                    ?>
-                                </form>
+                                        $this->render_seccion_adicional();
+                                        $this->render_boton_envio();
+                                        ?>
+                                    </form>
 
-                                <div id="flacso-resultado-envio" class="flacso-resultado-area mt-4" aria-live="polite" role="status"></div>
+                                    <div id="flacso-resultado-envio" class="flacso-resultado-area mt-4" aria-live="polite" role="status"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            <?php endif; ?>
         </div>
         <?php
         return ob_get_clean();
@@ -234,6 +242,7 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
             'id_posgrado' => $id_posgrado,
             'titulo_posgrado' => get_the_title($id_posgrado),
             'es_maestria' => in_array($id_posgrado, $maestrias, true),
+            'preinscripcion_cerrada' => $this->formulario_preinscripcion_esta_cerrado($id_posgrado),
             'imagen_destacada' => '',
             'convenios_validos' => $this->obtener_convenios_validos(),
         );

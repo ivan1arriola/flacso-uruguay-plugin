@@ -1,3 +1,24 @@
+## Version 3.0.15 - 23 de abril de 2026
+
+### Resumen
+- Se elimina la integración de actualización desde GitHub en runtime.
+- Se incrementa la versión global del plugin a `3.0.15`.
+
+### Cambios detallados
+- Bootstrap principal:
+  - `flacso-uruguay.php`
+  - Se remueven constantes y hooks de update checker basados en GitHub.
+  - Se actualiza `Version:` y `FLACSO_URUGUAY_VERSION` a `3.0.15`.
+- Limpieza de integración:
+  - `includes/core/github-updater.php` eliminado.
+- Documentación:
+  - `README.md` ajustado para no referenciar auto-actualización vía GitHub.
+
+### Verificaciones
+- `php -l flacso-uruguay.php`
+
+---
+
 ## Version 2.1.4 - 20 de marzo de 2026
 
 ### Resumen

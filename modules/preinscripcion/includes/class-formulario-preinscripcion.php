@@ -111,6 +111,42 @@ class FLACSO_Formulario_Preinscripcion_Final {
         return in_array((int)$page_id, array_map('intval', $paginas_activas));
     }
 
+    /**
+     * Retorna true cuando las preinscripciones estan cerradas globalmente.
+     */
+    public function preinscripciones_estan_cerradas() {
+        return (bool) get_option('flacso_preinscripciones_cerradas', 0);
+    }
+
+    /**
+     * Retorna true cuando un programa tiene su formulario cerrado temporalmente.
+     */
+    public function preinscripcion_programa_esta_cerrada($programa_id) {
+        $programa_id = (int) $programa_id;
+        if ($programa_id <= 0) {
+            return false;
+        }
+        $paginas_cerradas = get_option('flacso_preinscripciones_cerradas_por_programa', array());
+        return in_array($programa_id, array_map('intval', $paginas_cerradas), true);
+    }
+
+    /**
+     * Evalua cierre global o cierre puntual por programa.
+     */
+    public function formulario_preinscripcion_esta_cerrado($programa_id = 0) {
+        if ($this->preinscripciones_estan_cerradas()) {
+            return true;
+        }
+        return $this->preinscripcion_programa_esta_cerrada($programa_id);
+    }
+
+    /**
+     * Mensaje estandar mostrado cuando las preinscripciones estan cerradas.
+     */
+    public function obtener_mensaje_preinscripciones_cerradas() {
+        return 'Por el momento no estamos recibiendo más preinscripciones.';
+    }
+
     public function enqueue_assets() {
         // Cargar assets globales solo en la ruta virtual de preinscripcion.
         if (!get_query_var('es_preinscripcion')) {
@@ -135,6 +171,7 @@ class FLACSO_Formulario_Preinscripcion_Final {
             'id_posgrado' => $id_posgrado,
             'titulo_posgrado' => $id_posgrado ? get_the_title($id_posgrado) : '',
             'es_maestria' => in_array($id_posgrado, $maestrias, true),
+            'preinscripcion_cerrada' => $this->formulario_preinscripcion_esta_cerrado($id_posgrado),
             'imagen_destacada' => '',
             'convenios_validos' => $this->obtener_convenios_validos(),
         );
@@ -189,6 +226,9 @@ class FLACSO_Formulario_Preinscripcion_Final {
         $titulo_posgrado = sanitize_text_field($_POST['titulo_posgrado'] ?? '');
         $es_maestria     = (($_POST['es_maestria'] ?? '') === 'si');
         if (!$id_pagina || !$titulo_posgrado) { $this->send_json_error('Datos incompletos del formulario.'); }
+        if ($this->formulario_preinscripcion_esta_cerrado($id_pagina)) {
+            $this->send_json_error($this->obtener_mensaje_preinscripciones_cerradas(), 403);
+        }
 
         $campos_obligatorios = array('correo', 'nombre1', 'apellido1', 'celular');
         foreach ($campos_obligatorios as $campo) {
@@ -203,9 +243,9 @@ class FLACSO_Formulario_Preinscripcion_Final {
         $tipo_documento = $_POST['tipo_documento'] ?? '';
         if ($tipo_documento === 'cedula_uruguaya') {
             $documento = $_POST['cedula_uruguaya'] ?? '';
-            if (empty($documento)) { $this->send_json_error('El campo Cedula de Identidad Uruguaya es obligatorio.'); }
+            if (empty($documento)) { $this->send_json_error('El campo Cédula de Identidad Uruguaya es obligatorio.'); }
             $documento = preg_replace('/\D+/', '', $documento);
-            if (!$this->validar_cedula_uruguaya($documento)) { $this->send_json_error('El numero de cedula uruguaya no es valido. Verifique el digito verificador.'); }
+            if (!$this->validar_cedula_uruguaya($documento)) { $this->send_json_error('El número de cédula uruguaya no es válido. Verifique el dígito verificador.'); }
             $_POST['documento'] = $documento;
         } else {
             $documento = $_POST['otro_documento'] ?? '';

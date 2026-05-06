@@ -3,7 +3,7 @@
  * Plugin Name: FLACSO Uruguay - Plataforma Integrada
  * Plugin URI: https://flacso.edu.uy
  * Description: Plataforma integrada de FLACSO Uruguay con gestion de docentes, seminarios, eventos, oferta academica y formularios. Consolida multiples plugins en una arquitectura modular.
- * Version: 3.0.15
+ * Version: 3.5.4
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: FLACSO Uruguay
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 // ============================================
 // Constantes Globales
 // ============================================
-define('FLACSO_URUGUAY_VERSION', '3.0.15');
+define('FLACSO_URUGUAY_VERSION', '3.5.4');
 define('FLACSO_URUGUAY_FILE', __FILE__);
 define('FLACSO_URUGUAY_PATH', plugin_dir_path(__FILE__));
 define('FLACSO_URUGUAY_URL', plugin_dir_url(__FILE__));
@@ -52,82 +52,10 @@ define('FLACSO_POSGRADOS_SLUG', 'flacso-posgrados-docentes');
 define('FLACSO_POSGRADOS_PLUGIN_PATH', FLACSO_URUGUAY_PATH);
 
 // ============================================
-// Configuracion de actualizaciones desde GitHub
-// ============================================
-// Se puede definir en wp-config.php o en un mu-plugin.
-if (!defined('FLACSO_URUGUAY_UPDATE_REPO')) {
-    define('FLACSO_URUGUAY_UPDATE_REPO', 'https://github.com/ivan1arriola/flacso-uruguay-plugin/');
-}
-
-if (!defined('FLACSO_URUGUAY_UPDATE_BRANCH')) {
-    define('FLACSO_URUGUAY_UPDATE_BRANCH', 'main');
-}
-
-if (!defined('FLACSO_URUGUAY_GITHUB_TOKEN')) {
-    define('FLACSO_URUGUAY_GITHUB_TOKEN', '');
-}
-
-// ============================================
 // Carga de funciones principales
 // ============================================
 require_once FLACSO_URUGUAY_PATH . 'includes/core/helpers.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/loader.php';
-require_once FLACSO_URUGUAY_PATH . 'includes/core/github-updater.php';
-
-if (!function_exists('flacso_uruguay_setup_update_checker')) {
-    /**
-     * Configura Plugin Update Checker para actualizaciones desde GitHub.
-     *
-     * Requisitos:
-     * - Definir FLACSO_URUGUAY_UPDATE_REPO con la URL del repo GitHub.
-     * - Incluir la libreria en /plugin-update-checker o via Composer.
-     */
-    function flacso_uruguay_setup_update_checker() {
-        $repo_url = trim((string) FLACSO_URUGUAY_UPDATE_REPO);
-        if ($repo_url === '') {
-            return;
-        }
-
-        $puc_file = FLACSO_URUGUAY_PATH . 'plugin-update-checker/plugin-update-checker.php';
-        $autoload_file = FLACSO_URUGUAY_PATH . 'vendor/autoload.php';
-
-        if (file_exists($puc_file)) {
-            require_once $puc_file;
-        } elseif (file_exists($autoload_file)) {
-            require_once $autoload_file;
-        }
-
-        if (!class_exists('YahnisElsts\\PluginUpdateChecker\\v5\\PucFactory')) {
-            return;
-        }
-
-        $update_checker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
-            $repo_url,
-            FLACSO_URUGUAY_FILE,
-            'flacso-uruguay'
-        );
-
-        $branch = trim((string) FLACSO_URUGUAY_UPDATE_BRANCH);
-        if ($branch === '') {
-            $branch = 'main';
-        }
-        $update_checker->setBranch($branch);
-
-        if (method_exists($update_checker, 'getVcsApi')) {
-            $vcs_api = $update_checker->getVcsApi();
-            if (is_object($vcs_api) && method_exists($vcs_api, 'enableReleaseAssets')) {
-                $vcs_api->enableReleaseAssets();
-            }
-        }
-
-        $token = trim((string) FLACSO_URUGUAY_GITHUB_TOKEN);
-        if ($token !== '') {
-            $update_checker->setAuthentication($token);
-        }
-    }
-}
-
-add_action('plugins_loaded', 'flacso_uruguay_setup_update_checker', 20);
 
 if (!function_exists('flacso_uruguay_guard_encoding_on_upgrade_source')) {
     /**

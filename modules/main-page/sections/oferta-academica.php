@@ -711,7 +711,10 @@ if (!function_exists('flacso_render_seminarios_unificados')) {
                     <?php
                     while ($query->have_posts()) :
                         $query->the_post();
-                        $img = get_the_post_thumbnail_url(get_the_ID(), 'large') ?: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1350&q=80';
+                        $img = get_the_post_thumbnail_url(get_the_ID(), 'large');
+                        if (!$img) {
+                            continue;
+                        }
                         $inicio = class_exists('Flacso_Main_Page_Seminarios')
                             ? Flacso_Main_Page_Seminarios::get_start_date(get_the_ID())
                             : get_post_meta(get_the_ID(), 'fecha_inicio', true);
@@ -779,7 +782,7 @@ if (!function_exists('flacso_render_seminarios_unificados')) {
                 </div>
                 <div class="flacso-section-cta" style="text-align: center; margin-top: 3rem;">
                     <a href="https://flacso.edu.uy/formacion/seminarios/" class="button button-primary" style="background-color: var(--global-palette1, #1d3a72); color: #fff; padding: 0.75rem 2rem; border-radius: 8px; text-decoration: none; display: inline-block; font-weight: 600; border: none; cursor: pointer;">
-                        <?php esc_html_e('Ver todos los seminarios', 'flacso-main-page'); ?>
+                        <?php esc_html_e('Ver todos los seminarios abiertos', 'flacso-main-page'); ?>
                     </a>
                 </div>
                 <?php

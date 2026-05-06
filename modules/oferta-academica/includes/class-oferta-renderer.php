@@ -216,7 +216,7 @@ class Oferta_Renderer {
                     <?php echo self::render_seminarios_bootstrap(); ?>
                     <div class="flacso-oferta-section__actions">
                         <a class="flacso-oferta-section__btn flacso-oferta-section__btn--primary" href="https://flacso.edu.uy/formacion/seminarios/">
-                            <?php esc_html_e('Ver todos los seminarios', 'flacso-oferta-academica'); ?>
+                            <?php esc_html_e('Ver todos los seminarios abiertos', 'flacso-oferta-academica'); ?>
                         </a>
                         <a class="flacso-oferta-section__btn flacso-oferta-section__btn--outline" href="https://flacso.edu.uy/preguntas-frecuentes/">
                             <?php esc_html_e('Preguntas frecuentes', 'flacso-oferta-academica'); ?>
@@ -261,7 +261,8 @@ class Oferta_Renderer {
                 } else if (diff === 0) {
                     label.textContent = '<?php echo esc_js(__('Comienza hoy', 'flacso-oferta-academica')); ?>';
                 } else {
-                    label.textContent = '<?php echo esc_js(__('Finalizado', 'flacso-oferta-academica')); ?>';
+                    el.style.display = 'none';
+                    el.setAttribute('aria-hidden', 'true');
                 }
             });
         })();
@@ -1128,8 +1129,8 @@ class Oferta_Renderer {
         $fecha_fmt   = $ts ? date_i18n('l j \d\e F Y', $ts) : '';
         $fecha_iso   = $ts ? date('Y-m-d', $ts) : '';
         $faltan_dias = $ts ? floor(($ts - current_time('timestamp')) / DAY_IN_SECONDS) : null;
-        $faltan_txt  = is_int($faltan_dias)
-            ? ($faltan_dias >= 0 ? sprintf(__('Faltan %d días', 'flacso-oferta-academica'), $faltan_dias) : __('Finalizado', 'flacso-oferta-academica'))
+        $faltan_txt  = is_int($faltan_dias) && $faltan_dias >= 0
+            ? sprintf(__('Faltan %d días', 'flacso-oferta-academica'), $faltan_dias)
             : '';
 
         ?>
@@ -1164,7 +1165,7 @@ class Oferta_Renderer {
                             <span><?php printf(__('Créditos: %s', 'flacso-oferta-academica'), esc_html($creditos)); ?></span>
                         </div>
                     <?php endif; ?>
-                    <?php if ($fecha_raw) : ?>
+                    <?php if ($fecha_raw && is_int($faltan_dias) && $faltan_dias >= 0) : ?>
                         <div class="flacso-oferta-countdown mt-2" data-countdown="<?php echo esc_attr($fecha_iso); ?>" aria-live="polite">
                             <i class="bi bi-clock" aria-hidden="true"></i>
                             <span class="flacso-oferta-countdown__text">

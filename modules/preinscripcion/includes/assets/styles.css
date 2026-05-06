@@ -6,6 +6,15 @@
 .flacso-hero-badge { display:inline-flex; align-items:center; gap:.35rem; background:#fed222; color:#0f1a2d; padding:.5rem 1.5rem; border-radius:999px; font-weight:700; margin-bottom:1rem; font-size:.85rem; text-transform:uppercase; letter-spacing:.5px; }
 .flacso-hero-title { font-size:2.15rem; font-weight:800; margin-bottom:1rem; line-height:1.15; color:#fff; }
 .flacso-hero-description { font-size:1.05rem; opacity:.92; margin-bottom:1.25rem; line-height:1.6; max-width:560px; color:#fff; }
+.flacso-hero-description--compact { margin-top:-.35rem; margin-bottom:1rem; }
+.flacso-cierre-actions { display:flex; flex-wrap:wrap; gap:.75rem; margin-top:1rem; }
+.flacso-cierre-btn { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:.72rem 1.2rem; border-radius:999px; border:1px solid transparent; font-weight:700; line-height:1.2; text-decoration:none; transition:all .25s ease; }
+.flacso-cierre-btn:hover { transform:translateY(-1px); text-decoration:none; }
+.flacso-cierre-btn:focus-visible { outline:3px solid rgba(255,255,255,.45); outline-offset:2px; }
+.flacso-hero-copy .flacso-cierre-btn--primary { background:#fed222; color:#0f1a2d; box-shadow:0 10px 28px rgba(0,0,0,.24); }
+.flacso-hero-copy .flacso-cierre-btn--primary:hover { color:#0f1a2d; box-shadow:0 14px 34px rgba(0,0,0,.3); }
+.flacso-hero-copy .flacso-cierre-btn--secondary { background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.65); color:#fff; }
+.flacso-hero-copy .flacso-cierre-btn--secondary:hover { background:rgba(255,255,255,.22); color:#fff; }
 .flacso-hero-checklist { list-style:none; padding:0; margin:1.5rem 0; display:grid; gap:.5rem; font-size:.95rem; color:#fff; }
 .flacso-hero-checklist li { display:flex; gap:.5rem; align-items:flex-start; }
 .flacso-hero-checklist i { color:#4ade80; font-size:1.2rem; margin-top:.15rem; flex-shrink:0; }
@@ -82,6 +91,16 @@
 .flacso-success-steps h5 { font-weight:700; margin-bottom:.5rem; color:#14532d; }
 .flacso-success-steps ol { padding-left:1.2rem; margin:0; display:grid; gap:.35rem; }
 
+.flacso-preinscripcion-cierre { padding:2.5rem 1rem 3rem; }
+.flacso-preinscripcion-cierre-card { background:#fff8e1; border:1px solid #f9d977; border-left:6px solid #d97706; border-radius:14px; padding:1.5rem; box-shadow:0 10px 24px rgba(15,23,42,.08); max-width:860px; margin:0 auto; }
+.flacso-preinscripcion-cierre-card h2 { margin:0 0 .75rem; color:#7c2d12; font-size:1.35rem; font-weight:800; }
+.flacso-preinscripcion-cierre-card p { margin:0 0 .5rem; color:#78350f; line-height:1.6; font-size:1rem; }
+.flacso-preinscripcion-cierre-card .flacso-cierre-actions { margin-top:.9rem; }
+.flacso-preinscripcion-cierre-card .flacso-cierre-btn--primary { background:#1d3a72; border-color:#1d3a72; color:#fff; }
+.flacso-preinscripcion-cierre-card .flacso-cierre-btn--primary:hover { background:#16305f; border-color:#16305f; color:#fff; }
+.flacso-preinscripcion-cierre-card .flacso-cierre-btn--secondary { background:#fff; border-color:#1d3a72; color:#1d3a72; }
+.flacso-preinscripcion-cierre-card .flacso-cierre-btn--secondary:hover { background:#eef3ff; color:#1d3a72; }
+
 .flacso-boton-envio { background:#f8f9fa; padding:2rem 1rem; margin:0 -1rem -1.5rem; }
 .flacso-boton-envio .btn { border-radius:12px; padding:1rem 2rem; font-size:1.1rem; font-weight:600; transition:all .3s; }
 .flacso-boton-envio .btn:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(40,167,69,.3); }
@@ -109,6 +128,8 @@
     .flacso-hero-layout { grid-template-columns:1fr; }
     .flacso-hero-title { font-size:1.65rem; }
     .flacso-hero-header { padding:2.5rem 1rem; }
+    .flacso-cierre-actions { flex-direction:column; }
+    .flacso-cierre-btn { width:100%; }
     .flacso-hero-actions { flex-direction:column; }
     .flacso-btn-primary, .flacso-btn-convenios { width:100%; justify-content:center; }
 }

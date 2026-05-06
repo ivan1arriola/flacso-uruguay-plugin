@@ -23,16 +23,18 @@ jQuery(function($){
         maxFileSize: 5,
         maxTotalSize: 25,
         ajaxUrl: '/wp-admin/admin-ajax.php',
-        tituloPosgrado: ''
+        tituloPosgrado: '',
+        preinscripcionesCerradas: false,
+        mensajeCierre: 'Por el momento no estamos recibiendo más preinscripciones.'
     };
 
     // Error map según documentación oficial de intl-tel-input
     const errorMap = [
-        "Numero invalido",
-        "Codigo de pais invalido",
-        "Numero demasiado corto",
-        "Numero demasiado largo",
-        "Numero invalido"
+        "Número inválido",
+        "Código de país inválido",
+        "Número demasiado corto",
+        "Número demasiado largo",
+        "Número inválido"
     ];
 
     function validarCedulaUruguaya(ci){
@@ -54,6 +56,8 @@ jQuery(function($){
     const form       = $('#flacso-formulario-preinscripcion');
     const resultado  = $('#flacso-resultado-envio');
     const btnSubmit  = $('.btn.btn-success');
+    const preinscripcionesCerradas = !!config.preinscripcionesCerradas;
+    const mensajeCierre = (config.mensajeCierre || 'Por el momento no estamos recibiendo más preinscripciones.').trim();
     const raf        = window.requestAnimationFrame || function(cb){ return setTimeout(cb, 16); };
     const caf        = window.cancelAnimationFrame || clearTimeout;
     let itiInstance  = null;
@@ -90,10 +94,27 @@ jQuery(function($){
         telefonoPaddingFrame = raf(() => ajustarPaddingTelefono());
     };
 
-    const mensajeCedulaBase = 'Ingrese solo numeros sin puntos ni guiones e incluya el digito verificador (7 u 8 digitos).';
+    const mensajeCedulaBase = 'Ingrese solo números sin puntos ni guiones e incluya el dígito verificador (7 u 8 dígitos).';
     const actualizarFeedbackCedula = (texto) => {
         const fb = $('#cedula-invalid-feedback');
         if(fb.length){ fb.text(texto); }
+    };
+
+    const mostrarAvisoCierre = () => {
+        if(!resultado.length){
+            return;
+        }
+        resultado.html(`
+            <div class="alert alert-warning">
+                <div class="d-flex align-items-start">
+                    <i class="bi bi-info-circle-fill me-2 mt-1"></i>
+                    <div>
+                        <h5 class="alert-heading mb-2">Preinscripciones cerradas</h5>
+                        <p class="mb-0">${mensajeCierre}</p>
+                    </div>
+                </div>
+            </div>
+        `);
     };
 
     const limpiarDialCodeDelInput = () => {
@@ -207,13 +228,13 @@ jQuery(function($){
         if(value === ''){
             tel.removeClass('is-valid is-invalid');
             hidden.val('');
-            return { isValid:false, message:'El numero de telefono es requerido', showInResult:false };
+            return { isValid:false, message:'El número de teléfono es requerido', showInResult:false };
         }
         
         if(!itiInstance){
             tel.removeClass('is-valid').addClass('is-invalid');
             if(invalidFeedback.length){ invalidFeedback.text('Error en la configuración del teléfono'); }
-            return { isValid:false, message:'Error en la configuracion del telefono', showInResult:true };
+            return { isValid:false, message:'Error en la configuración del teléfono', showInResult:true };
         }
 
         try {
@@ -243,7 +264,7 @@ jQuery(function($){
                 hidden.val(e164Number || '');
                 
                 console.info('[Preinscripcion] Teléfono válido', { mode: startsWithPlus ? 'international' : 'local' });
-                return { isValid:true, message:'Numero valido', showInResult:false };
+                return { isValid:true, message:'Número válido', showInResult:false };
             } else {
                 // Número inválido
                 tel.removeClass('is-valid');
@@ -269,7 +290,7 @@ jQuery(function($){
     function resetValidacionTelefono(){
         $('#celular').removeClass('is-valid is-invalid');
         const fb = $('#celular-invalid-feedback');
-        if(fb.length){ fb.text('Por favor ingrese un numero de celular valido.'); }
+        if(fb.length){ fb.text('Por favor ingrese un número de celular válido.'); }
         $('#celular_e164').val('');
     }
 
@@ -326,7 +347,7 @@ jQuery(function($){
         }
         if(soloDigitos.length < 7){
             $(this).removeClass('is-valid').addClass('is-invalid');
-            actualizarFeedbackCedula('La cedula debe tener 7 u 8 digitos.');
+            actualizarFeedbackCedula('La cédula debe tener 7 u 8 dígitos.');
             return;
         }
         if(validarCedulaUruguaya(soloDigitos)){
@@ -334,7 +355,7 @@ jQuery(function($){
             actualizarFeedbackCedula(mensajeCedulaBase);
         } else {
             $(this).removeClass('is-valid').addClass('is-invalid');
-            actualizarFeedbackCedula('El digito verificador no coincide. Revise el numero ingresado.');
+            actualizarFeedbackCedula('El dígito verificador no coincide. Revise el número ingresado.');
         }
     });
     $('#otro_documento').on('input', function(){ const v=$(this).val().trim(); $(this).toggleClass('is-invalid', v==='').toggleClass('is-valid', v!==''); });
@@ -402,10 +423,10 @@ jQuery(function($){
         // Tipo de documento coherente
         const tipo = $('#tipo_documento').val();
         if(tipo==='cedula_uruguaya' && !validarCedulaUruguaya($('#cedula_uruguaya').val()||'')){
-            errores.push({ label:'Cedula de Identidad Uruguaya', msg:'Ingrese 7 u 8 digitos con un digito verificador valido.' });
+            errores.push({ label:'Cédula de Identidad Uruguaya', msg:'Ingrese 7 u 8 dígitos con un dígito verificador válido.' });
         }
         if(tipo && tipo!=='cedula_uruguaya' && !($('#otro_documento').val()||'').trim()){
-            errores.push({ label:'Numero de Documento', msg:'Este campo es obligatorio.' });
+            errores.push({ label:'Número de Documento', msg:'Este campo es obligatorio.' });
         }
 
         // Documentación faltante si marcó "No"
@@ -437,6 +458,12 @@ jQuery(function($){
     }
     
     async function enviarFormulario(){
+        if(preinscripcionesCerradas){
+            mostrarAvisoCierre();
+            btnSubmit.prop('disabled', true);
+            return;
+        }
+
         // Validación del teléfono previa
         const vTel = validarTelefono();
         // Preparar campo documento oculto
@@ -497,15 +524,15 @@ jQuery(function($){
                         </div>
                         <div class="flacso-success-body">
                             <h4>Gracias, ${nombreCompleto}</h4>
-                            <p class="lead mb-2">Hemos recibido tu postulacion para <strong>${posgrado}</strong>.</p>
+                            <p class="lead mb-2">Hemos recibido tu postulación para <strong>${posgrado}</strong>.</p>
                             <ul class="flacso-success-list">
                                 <li><strong>Correo de contacto:</strong> ${correo || 'no provisto'}</li>
-                                <li><strong>Estado:</strong> Recibida y en revision inicial.</li>
+                                <li><strong>Estado:</strong> Recibida y en revisión inicial.</li>
                             </ul>
                             <div class="flacso-success-steps">
-                                <h5>Proximos pasos</h5>
+                                <h5>Próximos pasos</h5>
                                 <ol>
-                                    <li>Recibiras un correo de confirmacion en los proximos minutos.</li>
+                                    <li>Recibirás un correo de confirmación en los próximos minutos.</li>
                                     <li>Revisa spam/promociones si no lo ves en tu bandeja principal.</li>
                                     <li>Ante dudas, escribe a <a href="mailto:inscripciones@flacso.edu.uy">inscripciones@flacso.edu.uy</a>.</li>
                                 </ol>
@@ -552,6 +579,11 @@ jQuery(function($){
         Array.from(forms).forEach(f=>{
             f.addEventListener('submit', async function(ev){
                 ev.preventDefault(); ev.stopPropagation();
+
+                if(preinscripcionesCerradas){
+                    mostrarAvisoCierre();
+                    return;
+                }
 
                 // Forzar evaluar teléfono si el usuario nunca interactuó
                 if(!telefonoHaSidoInteractuado){ telefonoHaSidoInteractuado = true; validarTelefono(); }

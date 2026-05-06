@@ -86,6 +86,24 @@ function flacso_charlas_abiertas_register_cpt() {
         'auth_callback' => '__return_true',
         'sanitize_callback' => 'wp_kses_post',
     ]);
+
+    register_post_meta('charla_abierta', '_charla_evento_id', [
+        'single' => true,
+        'type' => 'integer',
+        'show_in_rest' => true,
+        'auth_callback' => '__return_true',
+        'sanitize_callback' => 'absint',
+    ]);
+
+    register_post_meta('charla_abierta', '_charla_sync_evento', [
+        'single' => true,
+        'type' => 'boolean',
+        'show_in_rest' => true,
+        'auth_callback' => '__return_true',
+        'sanitize_callback' => static function ($value) {
+            return !empty($value);
+        },
+    ]);
 }
 
 add_filter('use_block_editor_for_post_type', 'flacso_charlas_abiertas_disable_block_editor_for_cpt', 10, 2);
@@ -280,6 +298,31 @@ function flacso_charlas_abiertas_render_meta_box($post) {
         ]);
         ?>
     </p>
+    <?php
+    $linked_evento_id = flacso_charlas_abiertas_get_linked_evento_id((int) $post->ID);
+    $sync_evento_raw = get_post_meta($post->ID, '_charla_sync_evento', true);
+    $sync_evento_enabled = '' === (string) $sync_evento_raw ? true : !empty($sync_evento_raw);
+    ?>
+    <hr>
+    <p><strong>Integración con Eventos</strong></p>
+    <p>
+        <label>
+            <input type="checkbox" name="flacso_charla_sync_evento" value="1" <?php checked($sync_evento_enabled); ?>>
+            Crear o actualizar automáticamente un evento vinculado al guardar esta charla.
+        </label>
+    </p>
+    <?php if ($linked_evento_id > 0) : ?>
+        <p style="margin:8px 0 0;">
+            Evento vinculado:
+            <a href="<?php echo esc_url(get_edit_post_link($linked_evento_id)); ?>">#<?php echo esc_html((string) $linked_evento_id); ?> <?php echo esc_html(get_the_title($linked_evento_id)); ?></a>
+            ·
+            <a href="<?php echo esc_url(get_permalink($linked_evento_id)); ?>" target="_blank" rel="noopener noreferrer">Ver evento</a>
+        </p>
+    <?php else : ?>
+        <p style="margin:8px 0 0;color:#646970;">
+            Todavía no hay un evento vinculado a esta charla.
+        </p>
+    <?php endif; ?>
     <script>
       (function() {
         var fecha = document.getElementById('flacso_charla_inicio_fecha');
@@ -301,6 +344,129 @@ function flacso_charlas_abiertas_render_meta_box($post) {
       })();
     </script>
     <?php
+}
+
+function flacso_charlas_abiertas_get_linked_evento_id($charla_id) {
+    $charla_id = absint($charla_id);
+    if ($charla_id <= 0) {
+        return 0;
+    }
+
+    $linked_evento_id = absint(get_post_meta($charla_id, '_charla_evento_id', true));
+    if ($linked_evento_id > 0) {
+        $linked_event = get_post($linked_evento_id);
+        if ($linked_event && 'evento' === $linked_event->post_type && 'trash' !== $linked_event->post_status) {
+            return $linked_evento_id;
+        }
+        delete_post_meta($charla_id, '_charla_evento_id');
+    }
+
+    if (!post_type_exists('evento')) {
+        return 0;
+    }
+
+    $existing = get_posts([
+        'post_type'      => 'evento',
+        'post_status'    => ['publish', 'future', 'draft', 'pending', 'private'],
+        'posts_per_page' => 1,
+        'fields'         => 'ids',
+        'meta_query'     => [
+            [
+                'key'   => '_evento_charla_abierta_id',
+                'value' => (string) $charla_id,
+            ],
+        ],
+    ]);
+
+    if (!empty($existing)) {
+        $linked_evento_id = (int) $existing[0];
+        update_post_meta($charla_id, '_charla_evento_id', $linked_evento_id);
+        return $linked_evento_id;
+    }
+
+    return 0;
+}
+
+function flacso_charlas_abiertas_sync_evento_from_charla($charla_id, $force_create = false) {
+    $charla_id = absint($charla_id);
+    if ($charla_id <= 0) {
+        return new WP_Error('charla_invalid_id', 'ID de charla inválido.');
+    }
+
+    $charla = get_post($charla_id);
+    if (!$charla || 'charla_abierta' !== $charla->post_type) {
+        return new WP_Error('charla_not_found', 'La charla no existe.');
+    }
+
+    if (!post_type_exists('evento')) {
+        return new WP_Error('evento_cpt_missing', 'El CPT evento no está disponible.');
+    }
+
+    $titulo = trim((string) get_the_title($charla_id));
+    if ('' === $titulo) {
+        return new WP_Error('charla_missing_title', 'La charla no tiene título.');
+    }
+
+    $inicio_raw = trim((string) get_post_meta($charla_id, '_charla_inicio', true));
+    if ('' === $inicio_raw) {
+        return new WP_Error('charla_missing_start', 'La charla no tiene fecha de inicio.');
+    }
+
+    try {
+        $inicio_dt = new DateTimeImmutable($inicio_raw);
+    } catch (Exception $e) {
+        return new WP_Error('charla_invalid_start', 'La fecha de inicio de la charla es inválida.');
+    }
+
+    $duracion_minutos = absint(get_post_meta($charla_id, '_charla_duracion_minutos', true));
+    $fin_dt = $duracion_minutos > 0
+        ? $inicio_dt->modify('+' . $duracion_minutos . ' minutes')
+        : $inicio_dt;
+
+    $allowed_statuses = ['publish', 'future', 'draft', 'pending', 'private'];
+    $event_status = in_array((string) $charla->post_status, $allowed_statuses, true)
+        ? (string) $charla->post_status
+        : 'draft';
+
+    $evento_id = $force_create ? 0 : flacso_charlas_abiertas_get_linked_evento_id($charla_id);
+    $event_data = [
+        'post_type'    => 'evento',
+        'post_status'  => $event_status,
+        'post_title'   => $titulo,
+        'post_content' => (string) get_post_meta($charla_id, '_charla_descripcion', true),
+    ];
+
+    if ($evento_id > 0) {
+        $event_data['ID'] = $evento_id;
+        $updated_id = wp_update_post($event_data, true);
+        if (is_wp_error($updated_id)) {
+            return $updated_id;
+        }
+        $evento_id = (int) $updated_id;
+    } else {
+        $created_id = wp_insert_post($event_data, true);
+        if (is_wp_error($created_id)) {
+            return $created_id;
+        }
+        $evento_id = (int) $created_id;
+    }
+
+    update_post_meta($evento_id, 'evento_inicio_fecha', $inicio_dt->format('Y-m-d'));
+    update_post_meta($evento_id, 'evento_inicio_hora', $inicio_dt->format('H:i'));
+    update_post_meta($evento_id, 'evento_fin_fecha', $fin_dt->format('Y-m-d'));
+    update_post_meta($evento_id, 'evento_fin_hora', $fin_dt->format('H:i'));
+    update_post_meta($evento_id, 'evento_post_asociado', 0);
+    update_post_meta($evento_id, 'evento_display_title', $titulo);
+    update_post_meta($evento_id, '_evento_charla_abierta_id', $charla_id);
+
+    $charla_thumbnail_id = get_post_thumbnail_id($charla_id);
+    if ($charla_thumbnail_id > 0 && function_exists('set_post_thumbnail')) {
+        set_post_thumbnail($evento_id, $charla_thumbnail_id);
+    }
+
+    update_post_meta($charla_id, '_charla_evento_id', $evento_id);
+
+    return $evento_id;
 }
 
 add_action('save_post_charla_abierta', 'flacso_charlas_abiertas_save_meta', 10, 2);
@@ -381,6 +547,16 @@ function flacso_charlas_abiertas_save_meta($post_id, $post) {
 
     if (isset($_POST['flacso_charla_descripcion'])) {
         update_post_meta($post_id, '_charla_descripcion', wp_kses_post(wp_unslash($_POST['flacso_charla_descripcion'])));
+    }
+
+    $sync_evento_enabled = isset($_POST['flacso_charla_sync_evento']) && '1' === sanitize_text_field(wp_unslash($_POST['flacso_charla_sync_evento']));
+    update_post_meta($post_id, '_charla_sync_evento', $sync_evento_enabled ? 1 : 0);
+
+    if ($sync_evento_enabled) {
+        $sync_result = flacso_charlas_abiertas_sync_evento_from_charla($post_id);
+        if (is_wp_error($sync_result) && defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('[FLACSO Charlas] No se pudo sincronizar evento para charla ' . $post_id . ': ' . $sync_result->get_error_message());
+        }
     }
 }
 

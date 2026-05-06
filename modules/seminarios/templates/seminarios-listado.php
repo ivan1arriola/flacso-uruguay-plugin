@@ -164,24 +164,17 @@ if ($seminarios_query->have_posts()) {
         $meta = class_exists('Seminario_Meta') ? Seminario_Meta::get_meta($seminario_id) : array();
 
         $fecha_inicio = isset($meta['periodo_inicio']) ? (string) $meta['periodo_inicio'] : '';
-        $fecha_fin = isset($meta['periodo_fin']) ? (string) $meta['periodo_fin'] : '';
-
         $inicio_obj = $parse_date($fecha_inicio);
         if (!$inicio_obj) {
             continue;
         }
 
-        $fin_obj = $parse_date($fecha_fin);
-        if (!$fin_obj) {
-            $fin_obj = $inicio_obj;
-        }
-
         $dias_hasta_inicio = $days_diff($hoy, $inicio_obj);
-        $dias_hasta_fin = $days_diff($hoy, $fin_obj);
+        $dias_desde_inicio = $dias_hasta_inicio < 0 ? abs($dias_hasta_inicio) : 0;
 
         $is_upcoming = $dias_hasta_inicio >= 0;
-        $is_past_recent = $dias_hasta_fin < 0 && $dias_hasta_fin >= -10;
-        $is_visible = $is_upcoming || $is_past_recent;
+        $is_started_recent = $dias_hasta_inicio < 0 && $dias_hasta_inicio >= -7;
+        $is_visible = $is_upcoming || $is_started_recent;
 
         if (!$is_visible) {
             continue;
@@ -226,9 +219,9 @@ if ($seminarios_query->have_posts()) {
             'month_label'    => $month_label,
             'date_long'      => $fecha_larga,
             'days_left'      => $dias_hasta_inicio,
-            'days_to_end'    => $dias_hasta_fin,
+            'days_since_start' => $dias_desde_inicio,
             'is_upcoming'    => $is_upcoming,
-            'is_past_recent' => $is_past_recent,
+            'is_started_recent' => $is_started_recent,
             'modality'       => $modalidad,
             'credits'        => $creditos,
             'carga_horaria'  => $carga_horaria,
@@ -347,8 +340,8 @@ $modalidades_total = count($modalidades_unicas);
                         $featured_badge = $seminario_destacado['days_left'] === 0
                             ? 'Comienza hoy'
                             : sprintf('Faltan %d dias', $seminario_destacado['days_left']);
-                    } elseif ($seminario_destacado['is_past_recent']) {
-                        $featured_badge = sprintf('Finalizo hace %d dias', abs($seminario_destacado['days_to_end']));
+                    } elseif ($seminario_destacado['is_started_recent']) {
+                        $featured_badge = sprintf('Inicio hace %d dias', $seminario_destacado['days_since_start']);
                     }
                     ?>
                     <article class="seminarios-featured" aria-labelledby="seminario-destacado-titulo">
@@ -451,7 +444,7 @@ $modalidades_total = count($modalidades_unicas);
 
                                     <div class="seminarios-grid">
                                         <?php foreach ($grupo['items'] as $seminario_item) : ?>
-                                            <article class="seminario-card<?php echo $seminario_item['is_past_recent'] ? ' is-recent' : ''; ?>">
+                                            <article class="seminario-card<?php echo $seminario_item['is_started_recent'] ? ' is-recent' : ''; ?>">
                                                 <a class="seminario-card__media-link" href="<?php echo esc_url($seminario_item['permalink']); ?>">
                                                     <?php if (!empty($seminario_item['image_url'])) : ?>
                                                         <img
@@ -471,8 +464,8 @@ $modalidades_total = count($modalidades_unicas);
 
                                                     <div class="seminario-card__badges" aria-hidden="true">
                                                         <span class="seminarios-chip seminarios-chip--light"><?php echo esc_html($seminario_item['month_label']); ?></span>
-                                                        <?php if ($seminario_item['is_past_recent']) : ?>
-                                                            <span class="seminarios-chip seminarios-chip--dark"><?php esc_html_e('Finalizado recientemente', 'flacso-uruguay'); ?></span>
+                                                        <?php if ($seminario_item['is_started_recent']) : ?>
+                                                            <span class="seminarios-chip seminarios-chip--dark"><?php esc_html_e('Iniciado recientemente', 'flacso-uruguay'); ?></span>
                                                         <?php elseif ($seminario_item['is_upcoming']) : ?>
                                                             <span class="seminarios-chip seminarios-chip--sky"><?php esc_html_e('Proximamente', 'flacso-uruguay'); ?></span>
                                                         <?php endif; ?>
@@ -504,10 +497,10 @@ $modalidades_total = count($modalidades_unicas);
                                                                     ?>
                                                                 </span>
                                                             </li>
-                                                        <?php elseif ($seminario_item['is_past_recent']) : ?>
+                                                        <?php elseif ($seminario_item['is_started_recent']) : ?>
                                                             <li>
                                                                 <i class="bi bi-clock" aria-hidden="true"></i>
-                                                                <span><?php echo esc_html(sprintf(__('Finalizo hace %d dias', 'flacso-uruguay'), abs($seminario_item['days_to_end']))); ?></span>
+                                                                <span><?php echo esc_html(sprintf(__('Inicio hace %d dias', 'flacso-uruguay'), $seminario_item['days_since_start'])); ?></span>
                                                             </li>
                                                         <?php endif; ?>
                                                         <li>

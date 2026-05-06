@@ -103,6 +103,106 @@ trait FLACSO_Formulario_Preinscripcion_Admin {
     private function guardar_paginas_activas($paginas) {
         update_option('flacso_preinscripciones_activas', $paginas);
     }
+
+    /**
+     * Obtiene las páginas con formulario cerrado temporalmente.
+     */
+    private function obtener_paginas_cerradas_temporalmente() {
+        return get_option('flacso_preinscripciones_cerradas_por_programa', array());
+    }
+
+    /**
+     * Guarda páginas con formulario cerrado temporalmente.
+     */
+    private function guardar_paginas_cerradas_temporalmente($paginas) {
+        update_option('flacso_preinscripciones_cerradas_por_programa', $paginas);
+    }
+
+    /**
+     * Esquema de referencia del payload enviado al webhook.
+     */
+    private function obtener_esquema_payload_webhook() {
+        return array(
+            'posgrado' => array(
+                'id' => 12345,
+                'titulo' => 'Nombre del programa',
+                'es_maestria' => 'si'
+            ),
+            'datos' => array(
+                'correo' => 'persona@correo.com',
+                'nombre1' => 'Nombre',
+                'apellido1' => 'Apellido',
+                'nombre2' => '',
+                'apellido2' => '',
+                'tipo_documento' => 'cedula_uruguaya',
+                'documento' => '12345678',
+                'fecha_nacimiento' => '1990-01-30',
+                'genero' => 'Mujer',
+                'genero_otra' => '',
+                'celular' => '+59899111222',
+                'celular_e164' => '+59899111222',
+                'pais_nacimiento' => 'Uruguay',
+                'pais_residencia' => 'Uruguay',
+                'domicilio' => 'Calle 123, Montevideo',
+                'ocupacion' => 'Docente',
+                'estudios' => 'Licenciatura',
+                'posgrado_flacso' => 'Si',
+                'posgrado_flacso_detalle' => '',
+                'convenio_flacso' => 'No',
+                'convenio_flacso_detalle' => '',
+                'fuente' => 'Web',
+                'acepta_difusion' => 'No',
+                'titulo_grado_especificacion' => 'Licenciatura en Psicologia',
+                'documentacion_completa' => 'Si',
+                'documentacion_faltante' => '',
+                'direccion' => '',
+                'nivel_estudios' => '',
+                'titulo_obtenido' => '',
+                'institucion_egreso' => '',
+                'ano_egreso' => '',
+                'area_conocimiento' => '',
+                'ocupacion_actual' => '',
+                'institucion_trabajo' => '',
+                'como_conociste' => ''
+            ),
+            'archivos' => array(
+                'documento_identidad' => array(
+                    array(
+                        'name' => 'documento.pdf',
+                        'type' => 'application/pdf',
+                        'content' => 'JVBERi0xLjQKJ... (base64)'
+                    )
+                ),
+                'cv' => array(
+                    array(
+                        'name' => 'cv.pdf',
+                        'type' => 'application/pdf',
+                        'content' => 'JVBERi0xLjQKJ... (base64)'
+                    )
+                ),
+                'carta_motivacion' => array(
+                    array(
+                        'name' => 'carta.pdf',
+                        'type' => 'application/pdf',
+                        'content' => 'JVBERi0xLjQKJ... (base64)'
+                    )
+                ),
+                'titulo_grado' => array(
+                    array(
+                        'name' => 'titulo.pdf',
+                        'type' => 'application/pdf',
+                        'content' => 'JVBERi0xLjQKJ... (base64)'
+                    )
+                )
+            ),
+            'meta' => array(
+                'timestamp' => '2026-04-23 14:30:00',
+                'ip' => '190.0.0.1',
+                'ua' => 'Mozilla/5.0 (...)',
+                'origen' => 'wordpress_formulario_preinscripcion'
+            )
+        );
+    }
     
     /**
      * Procesa el formulario de administración
@@ -140,7 +240,21 @@ trait FLACSO_Formulario_Preinscripcion_Admin {
         if (!current_user_can('manage_options')) {
             return;
         }
-        
+
+        $mensajes = array();
+        $debe_refrescar_rewrite = false;
+
+        // Guardar estado global de preinscripciones
+        if (isset($_POST['actualizar_estado_preinscripciones'])) {
+            $preinscripciones_cerradas = isset($_POST['preinscripciones_cerradas']) ? 1 : 0;
+            update_option('flacso_preinscripciones_cerradas', $preinscripciones_cerradas);
+            if ($preinscripciones_cerradas) {
+                $mensajes[] = 'Las preinscripciones quedaron cerradas globalmente.';
+            } else {
+                $mensajes[] = 'Las preinscripciones quedaron abiertas globalmente.';
+            }
+        }
+
         // Guardar páginas padre si se enviaron
         if (isset($_POST['paginas_padre']) && is_array($_POST['paginas_padre'])) {
             $paginas_padre = array();
@@ -153,29 +267,46 @@ trait FLACSO_Formulario_Preinscripcion_Admin {
                 }
             }
             update_option('flacso_preinscripciones_paginas_padre', $paginas_padre);
+            $mensajes[] = 'Se actualizaron las categorias de programas.';
+            $debe_refrescar_rewrite = true;
         }
-        
-        $paginas_seleccionadas = isset($_POST['paginas_preinscripcion']) && is_array($_POST['paginas_preinscripcion']) 
-            ? array_map('intval', $_POST['paginas_preinscripcion']) 
-            : array();
-        
+
         // Guardar webhook URL
         if (isset($_POST['webhook_url'])) {
             $webhook_url = esc_url_raw($_POST['webhook_url']);
             update_option('flacso_preinscripciones_webhook_url', $webhook_url);
+            $mensajes[] = 'Se actualizo el webhook.';
         }
-        
-        // Guardar la configuración de páginas activas
-        $this->guardar_paginas_activas($paginas_seleccionadas);
-        
-        // Limpiar rewrite rules para que las URLs virtuales funcionen
-        flush_rewrite_rules();
-        
+
+        // Guardar la configuración de páginas activas (solo desde el formulario de programas)
+        if (isset($_POST['actualizar_paginas_preinscripcion'])) {
+            $paginas_seleccionadas = isset($_POST['paginas_preinscripcion']) && is_array($_POST['paginas_preinscripcion'])
+                ? array_map('intval', $_POST['paginas_preinscripcion'])
+                : array();
+            $paginas_cerradas = isset($_POST['paginas_preinscripcion_cerradas']) && is_array($_POST['paginas_preinscripcion_cerradas'])
+                ? array_map('intval', $_POST['paginas_preinscripcion_cerradas'])
+                : array();
+            // Solo se pueden cerrar formularios de programas activos.
+            $paginas_cerradas = array_values(array_intersect($paginas_cerradas, $paginas_seleccionadas));
+
+            $this->guardar_paginas_activas($paginas_seleccionadas);
+            $this->guardar_paginas_cerradas_temporalmente($paginas_cerradas);
+            $mensajes[] = 'Se actualizaron los programas con preinscripcion (' . count($paginas_seleccionadas) . ' activos).';
+            if (!empty($paginas_cerradas)) {
+                $mensajes[] = count($paginas_cerradas) . ' formulario(s) quedaron cerrados temporalmente.';
+            }
+            $debe_refrescar_rewrite = true;
+        }
+
+        if ($debe_refrescar_rewrite) {
+            // Limpiar rewrite rules para que las URLs virtuales funcionen
+            flush_rewrite_rules();
+        }
+
         // Mostrar mensaje de éxito
-        $mensaje = 'Configuración guardada correctamente.';
-        $total_activas = count($paginas_seleccionadas);
-        if ($total_activas > 0) {
-            $mensaje .= " Se activaron formularios de preinscripción para $total_activas programa(s).";
+        $mensaje = 'Configuracion guardada correctamente.';
+        if (!empty($mensajes)) {
+            $mensaje .= ' ' . implode(' ', $mensajes);
         }
         
         add_settings_error(
@@ -199,6 +330,7 @@ trait FLACSO_Formulario_Preinscripcion_Admin {
         
         $paginas_disponibles = $this->obtener_paginas_disponibles();
         $paginas_activas = $this->obtener_paginas_activas();
+        $paginas_cerradas = $this->obtener_paginas_cerradas_temporalmente();
         $todas_paginas = get_pages(array(
             'post_type' => 'page',
             'post_status' => 'publish',
@@ -211,6 +343,12 @@ trait FLACSO_Formulario_Preinscripcion_Admin {
             array('id' => 12309, 'nombre' => 'Especializaciones'),
             array('id' => 12275, 'nombre' => 'Diplomados'),
         ));
+        $preinscripciones_cerradas = $this->preinscripciones_estan_cerradas();
+        $mensaje_cierre = $this->obtener_mensaje_preinscripciones_cerradas();
+        $webhook_schema = wp_json_encode(
+            $this->obtener_esquema_payload_webhook(),
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        );
         
         ?>
         <div class="wrap">
@@ -243,6 +381,36 @@ trait FLACSO_Formulario_Preinscripcion_Admin {
                     </form>
                 </div>
             <?php endif; ?>
+
+            <div style="background: #fff; border: 1px solid #ddd; border-radius: 5px; padding: 25px; margin-bottom: 25px;">
+                <h2 style="margin-top: 0; padding-bottom: 15px; border-bottom: 3px solid <?php echo $preinscripciones_cerradas ? '#b42318' : '#15803d'; ?>; color: <?php echo $preinscripciones_cerradas ? '#b42318' : '#15803d'; ?>;">
+                    Estado General de Preinscripciones
+                </h2>
+                <p style="margin-top: 0; color: #444;">
+                    Estado actual:
+                    <strong style="color: <?php echo $preinscripciones_cerradas ? '#b42318' : '#15803d'; ?>;">
+                        <?php echo $preinscripciones_cerradas ? 'Cerradas temporalmente' : 'Abiertas'; ?>
+                    </strong>
+                </p>
+                <form method="post" action="">
+                    <?php wp_nonce_field('flacso_preinscripciones_guardar', 'flacso_preinscripciones_nonce'); ?>
+                    <input type="hidden" name="actualizar_estado_preinscripciones" value="1">
+
+                    <label style="display: flex; align-items: start; gap: 10px; margin-bottom: 10px;">
+                        <input type="checkbox" name="preinscripciones_cerradas" value="1" <?php checked($preinscripciones_cerradas); ?> style="margin-top: 3px;">
+                        <span style="line-height: 1.5;">
+                            Cerrar temporalmente todos los formularios de preinscripcion.
+                            <br>
+                            <small style="color: #666;">
+                                Si esta marcado, no se mostrara el formulario para completar y se mostrara este mensaje:
+                                "<?php echo esc_html($mensaje_cierre); ?>"
+                            </small>
+                        </span>
+                    </label>
+
+                    <button type="submit" class="button button-primary" style="padding: 10px 20px;">Guardar Estado General</button>
+                </form>
+            </div>
             
             <!-- PASO 1: WEBHOOK -->
             <div style="background: #fff; border: 1px solid #ddd; border-radius: 5px; padding: 25px; margin-bottom: 25px;">
@@ -266,6 +434,18 @@ trait FLACSO_Formulario_Preinscripcion_Admin {
                                style="width: 100%; max-width: 600px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
                         <p style="color: #666; font-size: 0.9em; margin-top: 8px;">Ej: https://script.google.com/macros/s/AKfycbz.../usercontent</p>
                     </div>
+
+                    <details style="margin: 18px 0; border: 1px solid #dcdcde; border-radius: 4px; background: #f6f7f7;">
+                        <summary style="cursor: pointer; padding: 10px 12px; font-weight: 600; color: #1d2327;">
+                            Ver esquema JSON que se envía al webhook
+                        </summary>
+                        <div style="padding: 0 12px 12px 12px;">
+                            <p style="margin: 10px 0 8px 0; color: #444;">
+                                Este es un esquema de referencia del payload real. Los campos pueden llegar vacíos si no aplican y en <code>archivos</code> se envían solo los archivos cargados.
+                            </p>
+                            <pre style="margin: 0; padding: 12px; background: #fff; border: 1px solid #dcdcde; border-radius: 4px; overflow: auto; max-height: 420px; line-height: 1.35;"><?php echo esc_html($webhook_schema); ?></pre>
+                        </div>
+                    </details>
                     
                     <button type="submit" class="button button-primary" style="padding: 10px 20px;">Guardar Webhook</button>
                 </form>
@@ -367,6 +547,7 @@ trait FLACSO_Formulario_Preinscripcion_Admin {
                 
                 <form method="post" action="">
                     <?php wp_nonce_field('flacso_preinscripciones_guardar', 'flacso_preinscripciones_nonce'); ?>
+                    <input type="hidden" name="actualizar_paginas_preinscripcion" value="1">
                     
                     <?php if (empty($paginas_disponibles)): ?>
                         <div style="background: #fff8e5; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 20px;">
@@ -413,6 +594,7 @@ trait FLACSO_Formulario_Preinscripcion_Admin {
                             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-bottom: 30px;">
                                 <?php foreach ($paginas_categoria as $page_id => $page_data): 
                                     $checked = in_array($page_id, $paginas_activas);
+                                    $cerrado = in_array($page_id, $paginas_cerradas);
                                     $url_preinscripcion = trailingslashit($page_data['url']) . 'preinscripcion/';
                                 ?>
                                 <div style="border: 2px solid <?php echo $checked ? '#0073aa' : '#e0e0e0'; ?>; border-radius: 5px; padding: 15px; background: <?php echo $checked ? '#f0f7ff' : '#fafafa'; ?>; transition: all 0.3s;">
@@ -435,6 +617,16 @@ trait FLACSO_Formulario_Preinscripcion_Admin {
                                                     </a>
                                                 </div>
                                             <?php endif; ?>
+                                            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #ddd;">
+                                                <label style="display: flex; align-items: start; gap: 6px; cursor: pointer; margin: 0; font-size: 0.85em; color: #7a1c12;">
+                                                    <input type="checkbox"
+                                                           name="paginas_preinscripcion_cerradas[]"
+                                                           value="<?php echo esc_attr($page_id); ?>"
+                                                           style="margin-top: 2px;"
+                                                           <?php checked($cerrado); ?>>
+                                                    <span>Cerrar temporalmente este formulario</span>
+                                                </label>
+                                            </div>
                                         </div>
                                     </label>
                                 </div>
@@ -460,6 +652,8 @@ trait FLACSO_Formulario_Preinscripcion_Admin {
                     <li><strong>Páginas Virtuales:</strong> No se crean páginas reales en la base de datos.</li>
                     <li><strong>URLs dinámicas:</strong> Se generan automáticamente siguiendo el patrón de tus páginas.</li>
                     <li><strong>Títulos automáticos:</strong> Cada formulario muestra "Preinscripción - [Nombre del Programa]".</li>
+                    <li><strong>Cierre temporal:</strong> Puedes cerrar todas las preinscripciones sin despublicar páginas ni cambiar URLs.</li>
+                    <li><strong>Cierre por programa:</strong> También puedes cerrar formularios individuales sin desactivar su URL.</li>
                     <li><strong>Sin pérdida de datos:</strong> Al desactivar un programa, se desactiva el acceso pero no se pierde nada.</li>
                     <li><strong>Datos a Google Sheets:</strong> Los formularios envían datos al webhook configurado.</li>
                 </ul>
