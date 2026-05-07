@@ -28,3 +28,39 @@
     width: 60px;
     height: auto;
 }
+
+.flacso-cpt-seminario-admin .seminario-inversion-panel {
+    margin: 8px 0 18px;
+    padding: 14px;
+    border: 1px solid #dcdcde;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.flacso-cpt-seminario-admin .seminario-inversion-table th[scope="row"] {
+    width: 260px;
+    font-weight: 600;
+}
+
+.flacso-cpt-seminario-admin .seminario-inversion-table input[type="number"] {
+    width: 100%;
+    max-width: 240px;
+}
+
+#seminario_detalles .seminario-inversion-panel {
+    margin: 8px 0 18px;
+    padding: 14px;
+    border: 1px solid #dcdcde;
+    border-radius: 8px;
+    background: #fff;
+}
+
+#seminario_detalles .seminario-inversion-table th[scope="row"] {
+    width: 260px;
+    font-weight: 600;
+}
+
+#seminario_detalles .seminario-inversion-table input[type="number"] {
+    width: 100%;
+    max-width: 240px;
+}

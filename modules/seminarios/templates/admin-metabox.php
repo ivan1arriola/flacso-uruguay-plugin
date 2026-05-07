@@ -4,9 +4,25 @@ if (!defined('ABSPATH')) {
 }
 
 wp_nonce_field('flacso_seminario_save', 'flacso_seminario_nonce');
+
+$inversion_keys = array(
+    'valor_uyu',
+    'valor_uyu_15_descuento',
+    'valor_usd',
+    'valor_usd_15_descuento',
+);
+
+$valor_uyu = get_post_meta($post->ID, '_seminario_valor_uyu', true);
+$valor_uyu_15_descuento = get_post_meta($post->ID, '_seminario_valor_uyu_15_descuento', true);
+$valor_usd = get_post_meta($post->ID, '_seminario_valor_usd', true);
+$valor_usd_15_descuento = get_post_meta($post->ID, '_seminario_valor_usd_15_descuento', true);
 ?>
 <table class="form-table">
     <?php foreach ($fields as $key => $label) :
+        if (in_array($key, $inversion_keys, true)) {
+            continue;
+        }
+
         $meta_key = '_seminario_' . $key;
         $value = get_post_meta($post->ID, $meta_key, true);
         ?>
@@ -24,10 +40,6 @@ wp_nonce_field('flacso_seminario_save', 'flacso_seminario_nonce');
                     <input type="date" class="regular-text" name="<?php echo esc_attr($meta_key); ?>" id="<?php echo esc_attr($meta_key); ?>" value="<?php echo esc_attr($value); ?>">
                 <?php elseif ($key === 'creditos') : ?>
                     <input type="number" step="0.1" min="0" class="regular-text" name="<?php echo esc_attr($meta_key); ?>" id="<?php echo esc_attr($meta_key); ?>" value="<?php echo esc_attr($value); ?>">
-                <?php elseif ($key === 'valor_uyu' || $key === 'valor_uyu_15_descuento') : ?>
-                    <input type="number" step="1" min="0" class="regular-text" name="<?php echo esc_attr($meta_key); ?>" id="<?php echo esc_attr($meta_key); ?>" value="<?php echo esc_attr($value); ?>">
-                <?php elseif ($key === 'valor_usd' || $key === 'valor_usd_15_descuento') : ?>
-                    <input type="number" step="0.01" min="0" class="regular-text" name="<?php echo esc_attr($meta_key); ?>" id="<?php echo esc_attr($meta_key); ?>" value="<?php echo esc_attr($value); ?>">
                 <?php elseif ($key === 'carga_horaria') : ?>
                     <input type="number" step="1" min="0" class="regular-text" name="<?php echo esc_attr($meta_key); ?>" id="<?php echo esc_attr($meta_key); ?>" value="<?php echo esc_attr($value); ?>">
                 <?php else : ?>
@@ -37,6 +49,75 @@ wp_nonce_field('flacso_seminario_save', 'flacso_seminario_nonce');
         </tr>
     <?php endforeach; ?>
 </table>
+
+<h3>Inversion</h3>
+<div class="seminario-inversion-panel">
+    <p class="description">
+        Los montos son opcionales. Se muestra en el front solo lo que tenga valor.
+    </p>
+
+    <table class="widefat striped seminario-inversion-table">
+        <thead>
+            <tr>
+                <th></th>
+                <th>UYU</th>
+                <th>USD</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <th scope="row">Valor general</th>
+                <td>
+                    <input
+                        type="number"
+                        step="1"
+                        min="0"
+                        class="regular-text"
+                        name="_seminario_valor_uyu"
+                        id="_seminario_valor_uyu"
+                        value="<?php echo esc_attr($valor_uyu); ?>"
+                    >
+                </td>
+                <td>
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        class="regular-text"
+                        name="_seminario_valor_usd"
+                        id="_seminario_valor_usd"
+                        value="<?php echo esc_attr($valor_usd); ?>"
+                    >
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">Comunidad FLACSO (15% OFF)</th>
+                <td>
+                    <input
+                        type="number"
+                        step="1"
+                        min="0"
+                        class="regular-text"
+                        name="_seminario_valor_uyu_15_descuento"
+                        id="_seminario_valor_uyu_15_descuento"
+                        value="<?php echo esc_attr($valor_uyu_15_descuento); ?>"
+                    >
+                </td>
+                <td>
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        class="regular-text"
+                        name="_seminario_valor_usd_15_descuento"
+                        id="_seminario_valor_usd_15_descuento"
+                        value="<?php echo esc_attr($valor_usd_15_descuento); ?>"
+                    >
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
 
 <h3>Encuentros sincronicos</h3>
 <table class="widefat striped" id="seminario-encuentros">
