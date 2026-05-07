@@ -13,6 +13,10 @@ class Seminario_Meta
             'periodo_fin' => array('type' => 'string'),
             'creditos' => array('type' => 'number'),
             'carga_horaria' => array('type' => 'integer'),
+            'valor_uyu' => array('type' => 'number'),
+            'valor_uyu_15_descuento' => array('type' => 'number'),
+            'valor_usd' => array('type' => 'number'),
+            'valor_usd_15_descuento' => array('type' => 'number'),
             'acredita_maestria' => array('type' => 'boolean'),
             'acredita_doctorado' => array('type' => 'boolean'),
             'forma_aprobacion' => array('type' => 'string'),
@@ -207,6 +211,10 @@ class Seminario_Meta
             return is_numeric($value) ? (int) $value : '';
         }
 
+        if (in_array($key, array('valor_uyu', 'valor_uyu_15_descuento', 'valor_usd', 'valor_usd_15_descuento'), true)) {
+            return self::sanitize_amount($value);
+        }
+
         if ($key === 'periodo_inicio' || $key === 'periodo_fin') {
             $value = sanitize_text_field($value);
             return preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) ? $value : '';
@@ -221,6 +229,42 @@ class Seminario_Meta
         }
 
         return sanitize_text_field($value);
+    }
+
+    private static function sanitize_amount($value)
+    {
+        if (is_string($value)) {
+            $value = trim($value);
+
+            if ($value === '') {
+                return '';
+            }
+
+            $value = str_replace(array('U$S', 'USD', '$', ' '), '', $value);
+
+            if (strpos($value, ',') !== false && strpos($value, '.') !== false) {
+                if (strrpos($value, ',') > strrpos($value, '.')) {
+                    $value = str_replace('.', '', $value);
+                    $value = str_replace(',', '.', $value);
+                } else {
+                    $value = str_replace(',', '', $value);
+                }
+            } elseif (strpos($value, ',') !== false) {
+                $value = str_replace('.', '', $value);
+                $value = str_replace(',', '.', $value);
+            }
+        }
+
+        if (!is_numeric($value)) {
+            return '';
+        }
+
+        $amount = (float) $value;
+        if ($amount < 0) {
+            return '';
+        }
+
+        return round($amount, 2);
     }
 
     public static function get_meta($post_id)

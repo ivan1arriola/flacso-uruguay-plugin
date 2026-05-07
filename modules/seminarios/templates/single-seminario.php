@@ -60,6 +60,28 @@ while (have_posts()) : the_post();
             'ID' => $post_id,
         ), $preinscripcion_base);
     }
+
+    $valor_uyu = isset($meta['valor_uyu']) && $meta['valor_uyu'] !== '' ? (float) $meta['valor_uyu'] : null;
+    $valor_uyu_15_descuento = isset($meta['valor_uyu_15_descuento']) && $meta['valor_uyu_15_descuento'] !== '' ? (float) $meta['valor_uyu_15_descuento'] : null;
+    $valor_usd = isset($meta['valor_usd']) && $meta['valor_usd'] !== '' ? (float) $meta['valor_usd'] : null;
+    $valor_usd_15_descuento = isset($meta['valor_usd_15_descuento']) && $meta['valor_usd_15_descuento'] !== '' ? (float) $meta['valor_usd_15_descuento'] : null;
+
+    $has_valor_general = $valor_uyu !== null || $valor_usd !== null;
+    $has_valor_descuento = $valor_uyu_15_descuento !== null || $valor_usd_15_descuento !== null;
+    $has_inversion = $has_valor_general || $has_valor_descuento;
+
+    $format_monto = function ($monto) {
+        if ($monto === null) {
+            return '';
+        }
+        $decimales = ((float) $monto === floor((float) $monto)) ? 0 : 2;
+        return number_format((float) $monto, $decimales, ',', '.');
+    };
+
+    $valor_uyu_text = $format_monto($valor_uyu);
+    $valor_uyu_15_descuento_text = $format_monto($valor_uyu_15_descuento);
+    $valor_usd_text = $format_monto($valor_usd);
+    $valor_usd_15_descuento_text = $format_monto($valor_usd_15_descuento);
 ?>
 
 <style>
@@ -446,6 +468,83 @@ while (have_posts()) : the_post();
     .info-grid > * {
         min-height: 100%;
     }
+
+    .inversion-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .inversion-card {
+        border: 1px solid var(--global-palette7);
+        border-radius: 12px;
+        background: var(--global-palette9);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+    }
+
+    .inversion-card-head {
+        padding: 1rem 1.25rem;
+        background: var(--global-palette8);
+        border-bottom: 1px solid var(--global-palette7);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .inversion-card-title {
+        margin: 0;
+        color: var(--global-palette1);
+        font-size: 1rem;
+        font-weight: 800;
+    }
+
+    .inversion-card-badge {
+        display: inline-block;
+        background: var(--global-palette2);
+        color: var(--global-palette3);
+        font-size: 0.75rem;
+        line-height: 1;
+        font-weight: 800;
+        border-radius: 999px;
+        padding: 0.4rem 0.6rem;
+    }
+
+    .inversion-card-body {
+        padding: 1.25rem;
+        display: grid;
+        gap: 1rem;
+    }
+
+    .inversion-monto {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        align-items: baseline;
+    }
+
+    .inversion-monto-label {
+        color: var(--global-palette5);
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .inversion-monto-value {
+        color: var(--global-palette1);
+        font-size: 1.35rem;
+        font-weight: 900;
+        line-height: 1;
+        text-align: right;
+    }
+
+    .inversion-card-descuento .inversion-card-head {
+        background: rgba(254, 210, 34, 0.2);
+    }
+
+    .inversion-card-descuento .inversion-monto-value {
+        color: var(--global-palette-btn-bg);
+    }
     
     /* Responsive adjustments */
     @media (max-width: 768px) {
@@ -709,6 +808,61 @@ while (have_posts()) : the_post();
             <?php endif; ?>
         </div>
     </section>
+
+    <?php if ($has_inversion) : ?>
+        <section class="py-5">
+            <div class="section-header">
+                <h2 class="fw-bold">Inversión</h2>
+            </div>
+
+            <div class="inversion-grid">
+                <?php if ($has_valor_general) : ?>
+                    <article class="inversion-card">
+                        <div class="inversion-card-head">
+                            <h3 class="inversion-card-title">Valor general</h3>
+                        </div>
+                        <div class="inversion-card-body">
+                            <?php if ($valor_uyu !== null) : ?>
+                                <div class="inversion-monto">
+                                    <span class="inversion-monto-label">UYU</span>
+                                    <span class="inversion-monto-value">$<?php echo esc_html($valor_uyu_text); ?></span>
+                                </div>
+                            <?php endif; ?>
+                            <?php if ($valor_usd !== null) : ?>
+                                <div class="inversion-monto">
+                                    <span class="inversion-monto-label">USD</span>
+                                    <span class="inversion-monto-value">U$S <?php echo esc_html($valor_usd_text); ?></span>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </article>
+                <?php endif; ?>
+
+                <?php if ($has_valor_descuento) : ?>
+                    <article class="inversion-card inversion-card-descuento">
+                        <div class="inversion-card-head">
+                            <h3 class="inversion-card-title">Comunidad FLACSO</h3>
+                            <span class="inversion-card-badge">15% OFF</span>
+                        </div>
+                        <div class="inversion-card-body">
+                            <?php if ($valor_uyu_15_descuento !== null) : ?>
+                                <div class="inversion-monto">
+                                    <span class="inversion-monto-label">UYU</span>
+                                    <span class="inversion-monto-value">$<?php echo esc_html($valor_uyu_15_descuento_text); ?></span>
+                                </div>
+                            <?php endif; ?>
+                            <?php if ($valor_usd_15_descuento !== null) : ?>
+                                <div class="inversion-monto">
+                                    <span class="inversion-monto-label">USD</span>
+                                    <span class="inversion-monto-value">U$S <?php echo esc_html($valor_usd_15_descuento_text); ?></span>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </article>
+                <?php endif; ?>
+            </div>
+        </section>
+    <?php endif; ?>
     
     <!-- Sección detallada de "Encuentros sincrónicos" removida a pedido:
          se conserva solo la tarjeta-resumen en la grilla de información. -->

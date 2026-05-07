@@ -24,6 +24,10 @@ wp_nonce_field('flacso_seminario_save', 'flacso_seminario_nonce');
                     <input type="date" class="regular-text" name="<?php echo esc_attr($meta_key); ?>" id="<?php echo esc_attr($meta_key); ?>" value="<?php echo esc_attr($value); ?>">
                 <?php elseif ($key === 'creditos') : ?>
                     <input type="number" step="0.1" min="0" class="regular-text" name="<?php echo esc_attr($meta_key); ?>" id="<?php echo esc_attr($meta_key); ?>" value="<?php echo esc_attr($value); ?>">
+                <?php elseif ($key === 'valor_uyu' || $key === 'valor_uyu_15_descuento') : ?>
+                    <input type="number" step="1" min="0" class="regular-text" name="<?php echo esc_attr($meta_key); ?>" id="<?php echo esc_attr($meta_key); ?>" value="<?php echo esc_attr($value); ?>">
+                <?php elseif ($key === 'valor_usd' || $key === 'valor_usd_15_descuento') : ?>
+                    <input type="number" step="0.01" min="0" class="regular-text" name="<?php echo esc_attr($meta_key); ?>" id="<?php echo esc_attr($meta_key); ?>" value="<?php echo esc_attr($value); ?>">
                 <?php elseif ($key === 'carga_horaria') : ?>
                     <input type="number" step="1" min="0" class="regular-text" name="<?php echo esc_attr($meta_key); ?>" id="<?php echo esc_attr($meta_key); ?>" value="<?php echo esc_attr($value); ?>">
                 <?php else : ?>
