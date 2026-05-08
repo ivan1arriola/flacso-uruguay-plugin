@@ -794,3 +794,64 @@
         scroll-behavior: auto !important;
     }
 }
+
+/* Sección de Ofertas Vinculadas */
+.flacso-seminarios-page .seminarios-ofertas-vinculadas {
+    margin-bottom: clamp(2rem, 4vw, 3.5rem);
+}
+
+.flacso-seminarios-page .seminarios-ofertas__panel {
+    background: #ffffff;
+    border-radius: 2rem;
+    padding: clamp(1.5rem, 3.5vw, 2.5rem);
+    border: 1px solid rgba(var(--seminario-primary-rgb), 0.1);
+    box-shadow: var(--seminario-shadow);
+}
+
+.flacso-seminarios-page .seminarios-ofertas__header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.flacso-seminarios-page .seminarios-ofertas__title {
+    margin: 0;
+    font-size: clamp(1.5rem, 3vw, 2.1rem);
+    color: #051938;
+    letter-spacing: -0.02em;
+}
+
+.flacso-seminarios-page .seminarios-ofertas__subtitle {
+    margin: 0.5rem 0 0;
+    color: var(--seminario-muted);
+    font-size: 0.95rem;
+}
+
+.flacso-seminarios-page .seminarios-ofertas__grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.flacso-seminarios-page .seminarios-btn--outline {
+    border-color: var(--seminario-primary);
+    background: transparent;
+    color: var(--seminario-primary);
+}
+
+.flacso-seminarios-page .seminarios-btn--outline:hover {
+    background: var(--seminario-primary);
+    color: #ffffff;
+    box-shadow: 0 10px 20px -10px rgba(var(--seminario-primary-rgb), 0.4);
+}
+
+@media (max-width: 767px) {
+    .flacso-seminarios-page .seminarios-ofertas__panel {
+        border-radius: 1.4rem;
+        padding: 1.5rem;
+    }
+    
+    .flacso-seminarios-page .seminarios-ofertas__grid {
+        flex-direction: column;
+    }
+}

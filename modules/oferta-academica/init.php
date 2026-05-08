@@ -36,6 +36,8 @@ flacso_safe_require('modules/oferta-academica/includes/class-oferta-docentes-int
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-seminarios-integration.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-data-metabox.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-consulta-form.php');
+flacso_safe_require('modules/oferta-academica/includes/class-oferta-seminarios-routes.php');
+flacso_safe_require('modules/oferta-academica/includes/class-oferta-seminarios-admin-links.php');
 
 // Inicializar
 add_action('init', function() {
@@ -50,6 +52,8 @@ add_action('init', function() {
     Oferta_Seminarios_Integration::init();
     Oferta_Data_MetaBox::init();
     Oferta_Consulta_Form::init();
+    Oferta_Seminarios_Routes::init();
+    Oferta_Seminarios_Admin_Links::init();
 }, 5); // Prioridad 5 para que se ejecute antes
 
 add_action('after_setup_theme', function() {

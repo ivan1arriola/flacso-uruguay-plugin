@@ -552,6 +552,51 @@ $modalidades_total = count($modalidades_unicas);
             </div>
         </section>
 
+<?php
+// Lógica para detectar qué programas tienen seminarios disponibles actualmente
+$ofertas_con_seminarios_disponibles = array();
+foreach ($seminarios_catalogo as $item) {
+    if (isset($seminarios_por_posgrado[$item['id']])) {
+        foreach ($seminarios_por_posgrado[$item['id']] as $oferta_id) {
+            $ofertas_con_seminarios_disponibles[$oferta_id] = true;
+        }
+    }
+}
+$ofertas_con_seminarios_disponibles = array_keys($ofertas_con_seminarios_disponibles);
+?>
+
+<?php if (!empty($ofertas_con_seminarios_disponibles)) : ?>
+    <section class="seminarios-ofertas-vinculadas" aria-labelledby="seminarios-ofertas-titulo">
+        <div class="site-container">
+            <div class="seminarios-ofertas__panel">
+                <header class="seminarios-ofertas__header">
+                    <h2 id="seminarios-ofertas-titulo" class="seminarios-ofertas__title"><?php esc_html_e('Seminarios por Programa', 'flacso-uruguay'); ?></h2>
+                    <p class="seminarios-ofertas__subtitle"><?php esc_html_e('Explora los seminarios específicos asociados a nuestras Maestrías y Diplomas:', 'flacso-uruguay'); ?></p>
+                </header>
+                
+                <div class="seminarios-ofertas__grid">
+                    <?php 
+                    foreach ($ofertas_con_seminarios_disponibles as $oferta_id) : 
+                        $permalink = get_permalink($oferta_id);
+                        $link_seminarios = trailingslashit($permalink) . 'seminarios/';
+                        $titulo = get_the_title($oferta_id);
+                        // Limpiar el título para los botones
+                        $display_title = str_replace(
+                            array('Maestría en ', 'Diploma Superior en ', 'Especialización en ', 'Diploma en '), 
+                            '', 
+                            $titulo
+                        );
+                    ?>
+                        <a href="<?php echo esc_url($link_seminarios); ?>" class="seminarios-btn seminarios-btn--outline">
+                            <?php echo esc_html($display_title); ?>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+    </section>
+<?php endif; ?>
+
         <section class="seminarios-contacto" aria-labelledby="seminarios-contacto-titulo">
             <div class="site-container">
                 <div class="seminarios-contacto__panel">

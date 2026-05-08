@@ -127,10 +127,10 @@ class Oferta_Seminarios_Integration {
                     'contenido' => $seminario->post_content,
                     'thumbnail' => get_post_thumbnail_id($seminario->ID),
                     'permalink' => get_permalink($seminario->ID),
-                    'fecha_inicio' => get_post_meta($seminario->ID, '_seminario_fecha_inicio', true),
-                    'fecha_fin' => get_post_meta($seminario->ID, '_seminario_fecha_fin', true),
+                    'fecha_inicio' => get_post_meta($seminario->ID, '_seminario_periodo_inicio', true),
+                    'fecha_fin' => get_post_meta($seminario->ID, '_seminario_periodo_fin', true),
                     'modalidad' => get_post_meta($seminario->ID, '_seminario_modalidad', true),
-                    'costo' => get_post_meta($seminario->ID, '_seminario_costo', true),
+                    'costo' => get_post_meta($seminario->ID, '_seminario_valor_uyu', true),
                 ];
             }
         }
