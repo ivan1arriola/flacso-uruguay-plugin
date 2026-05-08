@@ -43,7 +43,13 @@ class Oferta_Seminarios_Routes {
      * Redirigir a la plantilla personalizada si el endpoint está activo
      */
     public static function template_include(string $template): string {
-        if (!self::is_seminarios_endpoint_request()) {
+        $is_seminarios_endpoint = self::is_seminarios_endpoint_request();
+        $is_oferta_singular = is_singular('oferta-academica');
+
+        // Solo intervenir en:
+        // - endpoint /seminarios/ de programa
+        // - single del CPT oferta-academica
+        if (!$is_seminarios_endpoint && !$is_oferta_singular) {
             return $template;
         }
 
@@ -94,7 +100,11 @@ class Oferta_Seminarios_Routes {
         }
 
         if ($is_oferta) {
-            $plugin_template = self::template_path('oferta-seminarios.php');
+            $template_name = $is_seminarios_endpoint
+                ? 'oferta-seminarios.php'
+                : 'single-oferta-academica.php';
+
+            $plugin_template = self::template_path($template_name);
             
             if (file_exists($plugin_template)) {
                 return $plugin_template;
