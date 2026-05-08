@@ -122,18 +122,25 @@ class Oferta_Seminarios_Routes {
             return;
         }
 
-        // Reutilizar estilos de la oferta académica si es necesario
+        // Cargar estilos base de la oferta académica
         if (class_exists('Oferta_Renderer')) {
             Oferta_Renderer::enqueue_styles();
         }
 
-        // Estilos específicos para el listado de seminarios si existen
-        if (class_exists('Seminario_Templates')) {
-             wp_enqueue_style(
-                'flacso-seminarios-listado',
-                plugins_url('modules/seminarios/assets/css/seminarios-listado.css', FLACSO_URUGUAY_FILE),
+        // Cargar estilos premium del listado de seminarios
+        $seminarios_css_url = plugins_url('modules/seminarios/assets/css/seminarios-listado.css', FLACSO_URUGUAY_FILE);
+        $kadence_css_url = plugins_url('modules/seminarios/assets/kadence-compat.css', FLACSO_URUGUAY_FILE);
+
+        wp_enqueue_style('flacso-kadence-compat', $kadence_css_url, [], FLACSO_URUGUAY_VERSION);
+        wp_enqueue_style('flacso-seminarios-listado', $seminarios_css_url, ['flacso-kadence-compat'], FLACSO_URUGUAY_VERSION);
+
+        // Asegurar iconos de Bootstrap
+        if (!wp_style_is('bootstrap-icons', 'enqueued')) {
+            wp_enqueue_style(
+                'bootstrap-icons',
+                'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css',
                 [],
-                FLACSO_URUGUAY_VERSION
+                '1.11.3'
             );
         }
     }
