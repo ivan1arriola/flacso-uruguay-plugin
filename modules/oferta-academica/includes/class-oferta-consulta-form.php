@@ -180,6 +180,15 @@ class Oferta_Consulta_Form {
         <?php
     }
 
+    /**
+     * Compatibilidad legacy: algunos templates invocan render_shortcode().
+     *
+     * @param array $atts Atributos legacy (actualmente no utilizados).
+     */
+    public static function render_shortcode(array $atts = []): string {
+        return self::render_floating_form();
+    }
+
     public static function render_floating_form(): string {
         if (!self::is_button_enabled()) {
             return '';

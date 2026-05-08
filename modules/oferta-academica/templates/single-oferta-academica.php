@@ -30,7 +30,12 @@ get_header();
             <div class="row align-items-center">
                 <div class="col-lg-8">
                     <p class="text-uppercase tracking-wider mb-2" style="font-weight: 600; font-size: 0.9rem; color: #fbc02d;">
-                        <?php echo esc_html(get_the_term_list($post_id, 'tipo-oferta-academica', '', ', ')); ?>
+                        <?php
+                        $tipo_html = get_the_term_list($post_id, 'tipo-oferta-academica', '', ', ');
+                        if (!is_wp_error($tipo_html) && !empty($tipo_html)) {
+                            echo wp_kses_post($tipo_html);
+                        }
+                        ?>
                     </p>
                     <h1 class="display-3 fw-bold mb-3"><?php the_title(); ?></h1>
                     
