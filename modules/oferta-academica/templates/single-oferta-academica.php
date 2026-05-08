@@ -96,7 +96,7 @@ get_header();
                                                         
                                                         <?php 
                                                         if (class_exists('Oferta_Consulta_Form')) {
-                                                            echo Oferta_Consulta_Form::render_shortcode(['id' => $post_id]);
+                                                            echo Oferta_Consulta_Form::render_inline_form($post_id);
                                                         }
                                                         ?>
                                                     </div>
@@ -343,11 +343,18 @@ jQuery(document).ready(function($) {
     padding: 80px 0;
     text-align: center;
     color: white;
+    position: relative;
+    overflow: hidden;
 }
 .flacso-oferta-academica-premium .hero-section-overlay {
     position: absolute;
     inset: 0;
     background: linear-gradient(135deg, rgba(5, 25, 56, 0.9) 0%, rgba(22, 57, 112, 0.5) 100%);
+    z-index: 1;
+}
+.flacso-oferta-academica-premium .hero-container {
+    position: relative;
+    z-index: 2;
 }
 .flacso-oferta-academica-premium .entry-title {
     font-size: clamp(2.5rem, 5vw, 4rem);
@@ -366,13 +373,61 @@ jQuery(document).ready(function($) {
     text-decoration: none;
 }
 
-/* Formulario Sidebar */
+/* Formulario */
 .flacso-consultas-formulario {
     background: white;
     padding: 35px;
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.08);
     border-top: 6px solid var(--flacso-yellow);
+}
+.flacso-oa-consulta__field {
+    margin-bottom: 20px;
+    text-align: left;
+}
+.flacso-oa-consulta__field label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--flacso-blue-light);
+    font-size: 0.9rem;
+}
+.flacso-oa-consulta__field input,
+.flacso-oa-consulta__field textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+    transition: all 0.3s;
+}
+.flacso-oa-consulta__field input:focus,
+.flacso-oa-consulta__field textarea:focus {
+    border-color: var(--flacso-blue-light);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(22, 57, 112, 0.1);
+    outline: none;
+}
+.flacso-oa-consulta__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+.flacso-oa-consulta__submit {
+    width: 100%;
+    background: var(--flacso-yellow);
+    color: var(--flacso-blue-light);
+    border: none;
+    padding: 15px;
+    border-radius: 50px;
+    font-weight: 800;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.flacso-oa-consulta__submit:hover {
+    background: #e5bd14;
+    transform: translateY(-2px);
 }
 .flacso-btn-preinsc {
     display: block;

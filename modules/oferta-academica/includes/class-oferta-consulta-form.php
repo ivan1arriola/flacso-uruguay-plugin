@@ -181,12 +181,58 @@ class Oferta_Consulta_Form {
     }
 
     /**
-     * Compatibilidad legacy: algunos templates invocan render_shortcode().
+     * Renderiza el formulario. Por defecto usa la versión flotante,
+     * pero puede forzarse la versión integrada.
      *
-     * @param array $atts Atributos legacy (actualmente no utilizados).
+     * @param array $atts Atributos del shortcode.
      */
     public static function render_shortcode(array $atts = []): string {
+        $atts = shortcode_atts([
+            'inline' => '0',
+            'id' => '',
+        ], $atts);
+
+        if ($atts['inline'] === '1' || $atts['inline'] === 'true') {
+            return self::render_inline_form((int) $atts['id']);
+        }
+
         return self::render_floating_form();
+    }
+
+    /**
+     * Renderiza el formulario integrado en la página.
+     */
+    public static function render_inline_form(int $post_id = 0): string {
+        if (!self::is_button_enabled()) {
+            return '';
+        }
+
+        $dialog_id = function_exists('wp_unique_id')
+            ? wp_unique_id('flacso-oa-inline-')
+            : ('flacso-oa-inline-' . wp_rand(1000, 9999));
+
+        ob_start();
+        ?>
+        <div
+            class="flacso-oa-consulta flacso-oa-consulta--inline"
+            data-flacso-oa-consulta
+            data-ajax-url="<?php echo esc_url(admin_url('admin-ajax.php', 'relative')); ?>"
+            data-nonce="<?php echo esc_attr(wp_create_nonce('flacso_oferta_consulta_submit')); ?>"
+        >
+            <div class="flacso-oa-consulta__content">
+                <form class="flacso-oa-consulta__form" data-oa-consulta-form novalidate>
+                    <?php self::render_form_fields($dialog_id, $post_id); ?>
+                    <div class="flacso-oa-consulta__actions">
+                        <button type="submit" class="flacso-oa-consulta__submit" data-oa-consulta-submit>
+                            <?php esc_html_e('Enviar consulta', 'flacso-oferta-academica'); ?>
+                        </button>
+                    </div>
+                    <p class="flacso-oa-consulta__status" data-oa-consulta-status aria-live="polite"></p>
+                </form>
+            </div>
+        </div>
+        <?php
+        return (string) ob_get_clean();
     }
 
     public static function render_floating_form(): string {
@@ -237,50 +283,7 @@ class Oferta_Consulta_Form {
                         </p>
 
                         <form class="flacso-oa-consulta__form" data-oa-consulta-form novalidate>
-                            <div class="flacso-oa-consulta__grid">
-                                <div class="flacso-oa-consulta__field">
-                                    <label for="<?php echo esc_attr($dialog_id); ?>-nombre"><?php esc_html_e('Nombre', 'flacso-oferta-academica'); ?></label>
-                                    <input id="<?php echo esc_attr($dialog_id); ?>-nombre" name="nombre" type="text" required autocomplete="given-name" />
-                                </div>
-                                <div class="flacso-oa-consulta__field">
-                                    <label for="<?php echo esc_attr($dialog_id); ?>-apellido"><?php esc_html_e('Apellido', 'flacso-oferta-academica'); ?></label>
-                                    <input id="<?php echo esc_attr($dialog_id); ?>-apellido" name="apellido" type="text" required autocomplete="family-name" />
-                                </div>
-                            </div>
-
-                            <div class="flacso-oa-consulta__field">
-                                <label for="<?php echo esc_attr($dialog_id); ?>-correo"><?php esc_html_e('Correo', 'flacso-oferta-academica'); ?></label>
-                                <input id="<?php echo esc_attr($dialog_id); ?>-correo" name="correo" type="email" required autocomplete="email" />
-                            </div>
-
-                            <div class="flacso-oa-consulta__field">
-                                <label for="<?php echo esc_attr($dialog_id); ?>-oferta"><?php esc_html_e('¿De cuál oferta académica querés información?', 'flacso-oferta-academica'); ?></label>
-                                <input
-                                    id="<?php echo esc_attr($dialog_id); ?>-oferta"
-                                    name="oferta_titulo"
-                                    type="text"
-                                    list="<?php echo esc_attr($dialog_id); ?>-oferta-list"
-                                    placeholder="<?php esc_attr_e('Seleccioná una opción', 'flacso-oferta-academica'); ?>"
-                                    required
-                                    autocomplete="off"
-                                    data-oa-oferta-input
-                                />
-                                <datalist id="<?php echo esc_attr($dialog_id); ?>-oferta-list">
-                                    <?php foreach ($options as $option) : ?>
-                                        <option
-                                            value="<?php echo esc_attr($option['title']); ?>"
-                                            data-oferta-id="<?php echo esc_attr((string) $option['id']); ?>"
-                                        ></option>
-                                    <?php endforeach; ?>
-                                </datalist>
-                                <input type="hidden" name="oferta_id" value="" data-oa-oferta-id />
-                            </div>
-
-                            <div class="flacso-oa-consulta__field">
-                                <label for="<?php echo esc_attr($dialog_id); ?>-consulta"><?php esc_html_e('Comentarios o información que necesitás', 'flacso-oferta-academica'); ?></label>
-                                <textarea id="<?php echo esc_attr($dialog_id); ?>-consulta" name="consulta" rows="5" required></textarea>
-                            </div>
-
+                            <?php self::render_form_fields($dialog_id); ?>
                             <div class="flacso-oa-consulta__actions">
                                 <button type="submit" class="flacso-oa-consulta__submit" data-oa-consulta-submit>
                                     <?php esc_html_e('Enviar consulta', 'flacso-oferta-academica'); ?>
@@ -301,6 +304,63 @@ class Oferta_Consulta_Form {
         <?php
 
         return (string) ob_get_clean();
+    }
+
+    /**
+     * Renderiza los campos comunes del formulario.
+     */
+    private static function render_form_fields(string $dialog_id, int $selected_id = 0): void {
+        $options = self::get_oferta_options();
+        $selected_title = '';
+        if ($selected_id > 0) {
+            $selected_title = get_the_title($selected_id);
+        }
+        ?>
+        <div class="flacso-oa-consulta__grid">
+            <div class="flacso-oa-consulta__field">
+                <label for="<?php echo esc_attr($dialog_id); ?>-nombre"><?php esc_html_e('Nombre', 'flacso-oferta-academica'); ?></label>
+                <input id="<?php echo esc_attr($dialog_id); ?>-nombre" name="nombre" type="text" required autocomplete="given-name" />
+            </div>
+            <div class="flacso-oa-consulta__field">
+                <label for="<?php echo esc_attr($dialog_id); ?>-apellido"><?php esc_html_e('Apellido', 'flacso-oferta-academica'); ?></label>
+                <input id="<?php echo esc_attr($dialog_id); ?>-apellido" name="apellido" type="text" required autocomplete="family-name" />
+            </div>
+        </div>
+
+        <div class="flacso-oa-consulta__field">
+            <label for="<?php echo esc_attr($dialog_id); ?>-correo"><?php esc_html_e('Correo', 'flacso-oferta-academica'); ?></label>
+            <input id="<?php echo esc_attr($dialog_id); ?>-correo" name="correo" type="email" required autocomplete="email" />
+        </div>
+
+        <div class="flacso-oa-consulta__field">
+            <label for="<?php echo esc_attr($dialog_id); ?>-oferta"><?php esc_html_e('¿De cuál oferta académica querés información?', 'flacso-oferta-academica'); ?></label>
+            <input
+                id="<?php echo esc_attr($dialog_id); ?>-oferta"
+                name="oferta_titulo"
+                type="text"
+                list="<?php echo esc_attr($dialog_id); ?>-oferta-list"
+                placeholder="<?php esc_attr_e('Seleccioná una opción', 'flacso-oferta-academica'); ?>"
+                required
+                autocomplete="off"
+                data-oa-oferta-input
+                value="<?php echo esc_attr($selected_title); ?>"
+            />
+            <datalist id="<?php echo esc_attr($dialog_id); ?>-oferta-list">
+                <?php foreach ($options as $option) : ?>
+                    <option
+                        value="<?php echo esc_attr($option['title']); ?>"
+                        data-oferta-id="<?php echo esc_attr((string) $option['id']); ?>"
+                    ></option>
+                <?php endforeach; ?>
+            </datalist>
+            <input type="hidden" name="oferta_id" value="<?php echo esc_attr((string) $selected_id); ?>" data-oa-oferta-id />
+        </div>
+
+        <div class="flacso-oa-consulta__field">
+            <label for="<?php echo esc_attr($dialog_id); ?>-consulta"><?php esc_html_e('Comentarios o información que necesitás', 'flacso-oferta-academica'); ?></label>
+            <textarea id="<?php echo esc_attr($dialog_id); ?>-consulta" name="consulta" rows="5" required></textarea>
+        </div>
+        <?php
     }
 
     public static function handle_ajax_submit(): void {
