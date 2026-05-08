@@ -94,7 +94,7 @@ class Oferta_Seminarios_Routes {
         }
 
         if ($is_oferta) {
-            $plugin_template = FLACSO_OFERTA_ACADEMICA_PATH . 'templates/oferta-seminarios.php';
+            $plugin_template = self::template_path('oferta-seminarios.php');
             
             if (file_exists($plugin_template)) {
                 return $plugin_template;
@@ -157,5 +157,12 @@ class Oferta_Seminarios_Routes {
         }
 
         return $path;
+    }
+
+    /**
+     * Ruta absoluta a templates del módulo oferta-academica.
+     */
+    private static function template_path(string $filename): string {
+        return dirname(__DIR__) . '/templates/' . ltrim($filename, '/');
     }
 }

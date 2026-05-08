@@ -56,20 +56,6 @@ if ($oferta_id > 0 && class_exists('Oferta_Seminarios_Integration')) {
 }
 
 get_header();
-
-// Bloque de depuración para administradores
-if (current_user_can('manage_options')) {
-    echo '<div class="container mt-4"><div class="alert alert-warning shadow-sm" style="font-family: monospace; font-size: 13px;">';
-    echo '<strong>[DEBUG MODE]</strong><br>';
-    echo 'ID consultado: ' . get_queried_object_id() . '<br>';
-    echo 'ID de la Oferta: ' . (int)$oferta_id . '<br>';
-    echo 'Tipo de Post: ' . get_post_type($oferta_id) . '<br>';
-    echo 'Seminarios detectados: ' . count($seminarios) . '<br>';
-    if (!empty($seminarios)) {
-        echo 'IDs de Seminarios: ' . implode(', ', array_column($seminarios, 'id')) . '<br>';
-    }
-    echo '</div></div>';
-}
 ?>
 <div class="flacso-oferta-academica-seminarios-view">
     <div class="container py-5">
