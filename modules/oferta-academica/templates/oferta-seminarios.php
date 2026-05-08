@@ -7,24 +7,51 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-$oferta_id = get_the_ID();
+$request_path = isset($_SERVER['REQUEST_URI']) ? (string) parse_url((string) $_SERVER['REQUEST_URI'], PHP_URL_PATH) : '';
 
-// Si estamos en una página asociada, resolvemos el ID de la oferta
-if (get_post_type($oferta_id) !== 'oferta-academica') {
-    $associated_ofertas = get_posts([
-        'post_type' => 'oferta-academica',
-        'meta_key' => '_oferta_page_id',
-        'meta_value' => $oferta_id,
-        'posts_per_page' => 1,
-        'fields' => 'ids',
-    ]);
-    if (!empty($associated_ofertas)) {
-        $oferta_id = $associated_ofertas[0];
+$resolve_oferta_id = static function () use ($request_path): int {
+    $candidate_id = (int) get_queried_object_id();
+    if ($candidate_id <= 0) {
+        $candidate_id = (int) get_the_ID();
     }
-}
+
+    if ($candidate_id > 0 && get_post_type($candidate_id) === 'oferta-academica') {
+        return $candidate_id;
+    }
+
+    if ($candidate_id > 0) {
+        $associated_ofertas = get_posts([
+            'post_type' => 'oferta-academica',
+            'meta_key' => '_oferta_page_id',
+            'meta_value' => $candidate_id,
+            'posts_per_page' => 1,
+            'fields' => 'ids',
+        ]);
+
+        if (!empty($associated_ofertas)) {
+            return (int) $associated_ofertas[0];
+        }
+    }
+
+    if (is_string($request_path) && preg_match('|/programa/([^/]+)/|', $request_path, $matches)) {
+        $slug = sanitize_title((string) $matches[1]);
+        if ($slug !== '') {
+            $post_obj = get_page_by_path($slug, OBJECT, 'oferta-academica');
+            if ($post_obj instanceof WP_Post) {
+                return (int) $post_obj->ID;
+            }
+        }
+    }
+
+    return 0;
+};
+
+$oferta_id = $resolve_oferta_id();
+$oferta_title = $oferta_id > 0 ? get_the_title($oferta_id) : '';
+$oferta_permalink = $oferta_id > 0 ? get_permalink($oferta_id) : '';
 
 $seminarios = [];
-if (class_exists('Oferta_Seminarios_Integration')) {
+if ($oferta_id > 0 && class_exists('Oferta_Seminarios_Integration')) {
     $seminarios = Oferta_Seminarios_Integration::get_programa_seminarios_data($oferta_id);
 }
 
@@ -47,10 +74,17 @@ if (current_user_can('manage_options')) {
 <div class="flacso-oferta-academica-seminarios-view">
     <div class="container py-5">
         <header class="mb-5 text-center">
-            <h1 class="display-4 fw-bold"><?php echo sprintf(__('Seminarios de %s', 'flacso-uruguay'), get_the_title($oferta_id)); ?></h1>
+            <h1 class="display-4 fw-bold">
+                <?php
+                $programa_label = is_string($oferta_title) && $oferta_title !== ''
+                    ? $oferta_title
+                    : __('este programa', 'flacso-uruguay');
+                echo sprintf(__('Seminarios de %s', 'flacso-uruguay'), esc_html($programa_label));
+                ?>
+            </h1>
             <p class="lead"><?php _e('Explora los seminarios específicos asociados a este programa académico.', 'flacso-uruguay'); ?></p>
             <div class="mt-3">
-                <a href="<?php echo get_permalink($oferta_id); ?>" class="btn btn-outline-primary btn-sm">
+                <a href="<?php echo esc_url(is_string($oferta_permalink) && $oferta_permalink !== '' ? $oferta_permalink : home_url('/formacion/seminarios/')); ?>" class="btn btn-outline-primary btn-sm">
                     <i class="bi bi-arrow-left"></i> <?php _e('Volver al programa', 'flacso-uruguay'); ?>
                 </a>
             </div>

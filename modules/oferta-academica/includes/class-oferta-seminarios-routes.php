@@ -43,23 +43,31 @@ class Oferta_Seminarios_Routes {
      * Redirigir a la plantilla personalizada si el endpoint está activo
      */
     public static function template_include(string $template): string {
-        $is_seminarios_endpoint = get_query_var('seminarios') !== false;
-        
-        // Fallback: verificar URL si el query_var falló (para depuración y resiliencia)
-        if (!$is_seminarios_endpoint) {
-            $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-            if (strpos(trailingslashit($path), '/seminarios/') !== false) {
-                $is_seminarios_endpoint = true;
-            }
-        }
-        
-        if (!$is_seminarios_endpoint) {
+        if (!self::is_seminarios_endpoint_request()) {
             return $template;
         }
 
         $post_id = get_queried_object_id();
         if (!$post_id) {
             $post_id = get_the_ID();
+        }
+
+        // Resiliencia extrema: Si no hay ID, intentar resolverlo por el slug en la URL
+        if (!$post_id) {
+            $path = self::request_path();
+            if (preg_match('|/programa/([^/]+)/|', $path, $matches)) {
+                $slug = $matches[1];
+                $post_obj = get_page_by_path($slug, OBJECT, 'oferta-academica');
+                if ($post_obj) {
+                    $post_id = $post_obj->ID;
+                } else {
+                    // Intentar como página si no es CPT
+                    $post_obj = get_page_by_path($slug, OBJECT, 'page');
+                    if ($post_obj) {
+                        $post_id = $post_obj->ID;
+                    }
+                }
+            }
         }
 
         if (!$post_id) {
@@ -80,11 +88,14 @@ class Oferta_Seminarios_Routes {
             ]);
             if (!empty($associated_ofertas)) {
                 $is_oferta = true;
+                // Importante: para el resto de la lógica usamos el ID de la oferta
+                $post_id = $associated_ofertas[0]; 
             }
         }
 
         if ($is_oferta) {
             $plugin_template = FLACSO_OFERTA_ACADEMICA_PATH . 'templates/oferta-seminarios.php';
+            
             if (file_exists($plugin_template)) {
                 return $plugin_template;
             }
@@ -97,7 +108,7 @@ class Oferta_Seminarios_Routes {
      * Cargar assets necesarios para la vista de seminarios
      */
     public static function enqueue_assets(): void {
-        if (get_query_var('seminarios') === false) {
+        if (!self::is_seminarios_endpoint_request()) {
             return;
         }
 
@@ -115,5 +126,36 @@ class Oferta_Seminarios_Routes {
                 FLACSO_URUGUAY_VERSION
             );
         }
+    }
+
+    /**
+     * Detecta si el request actual corresponde al endpoint /seminarios/.
+     *
+     * Nota: get_query_var('seminarios') puede devolver string vacío cuando
+     * el endpoint existe sin valor, por eso usamos default null para
+     * distinguir ausencia real del query var.
+     */
+    private static function is_seminarios_endpoint_request(): bool {
+        $query_var = get_query_var('seminarios', null);
+        if ($query_var !== null) {
+            return true;
+        }
+
+        $path = trailingslashit(self::request_path());
+        return (bool) preg_match('#/programa/[^/]+/seminarios/#', $path);
+    }
+
+    /**
+     * Obtiene el path actual de forma segura.
+     */
+    private static function request_path(): string {
+        $request_uri = isset($_SERVER['REQUEST_URI']) ? (string) $_SERVER['REQUEST_URI'] : '';
+        $path = parse_url($request_uri, PHP_URL_PATH);
+
+        if (!is_string($path) || $path === '') {
+            return '/';
+        }
+
+        return $path;
     }
 }
