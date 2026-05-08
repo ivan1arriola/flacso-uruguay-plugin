@@ -17,9 +17,17 @@ class Oferta_Seminarios_Routes {
     }
 
     /**
-     * Registrar el endpoint /seminarios/
+     * Registrar la regla de reescritura para /seminarios/
      */
     public static function register_endpoints(): void {
+        // Regla específica para el CPT oferta-academica
+        add_rewrite_rule(
+            '^programa/([^/]+)/seminarios/?$',
+            'index.php?oferta-academica=$matches[1]&seminarios=1',
+            'top'
+        );
+        
+        // Mantener el endpoint por si acaso para otros tipos
         add_rewrite_endpoint('seminarios', EP_PERMALINK | EP_PAGES);
     }
 
@@ -36,6 +44,14 @@ class Oferta_Seminarios_Routes {
      */
     public static function template_include(string $template): string {
         $is_seminarios_endpoint = get_query_var('seminarios') !== false;
+        
+        // Fallback: verificar URL si el query_var falló (para depuración y resiliencia)
+        if (!$is_seminarios_endpoint) {
+            $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+            if (strpos(trailingslashit($path), '/seminarios/') !== false) {
+                $is_seminarios_endpoint = true;
+            }
+        }
         
         if (!$is_seminarios_endpoint) {
             return $template;
