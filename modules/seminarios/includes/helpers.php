@@ -79,6 +79,7 @@ class Seminario_Helpers
             'content' => $post->post_content,
             'status' => $post->post_status,
             'meta' => Seminario_Meta::get_meta($post->ID),
+            'featured_image' => get_the_post_thumbnail_url($post->ID, 'full') ?: null,
             'ofertas_academicas' => Seminario_Taxonomies::get_related_ofertas($post->ID),
             'taxonomies' => Seminario_Taxonomies::get_taxonomies($post->ID),
         );

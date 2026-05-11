@@ -151,8 +151,8 @@ class Flacso_Main_Page_Seminarios {
                 continue;
             }
 
-            $decoded = json_decode($valor, true);
-            $display = $decoded ? print_r($decoded, true) : $valor;
+            $decoded = is_array($valor) ? $valor : json_decode((string) $valor, true);
+            $display = !empty($decoded) ? print_r($decoded, true) : $valor;
             ?>
             <p>
                 <strong><?php echo esc_html($label); ?>:</strong><br>
@@ -445,4 +445,3 @@ class Flacso_Main_Page_Seminarios {
         return is_string($value) ? wp_kses_post($value) : '';
     }
 }
-

@@ -32,6 +32,7 @@ Obtiene el listado de seminarios.
   "title": "Nombre del Seminario",
   "content": "Descripción detallada...",
   "status": "publish",
+  "featured_image": "https://flacso.edu.uy/wp-content/uploads/2026/05/imagen.jpg",
   "meta": {
     "nombre": "Nombre Académico",
     "periodo_inicio": "2026-05-20",
