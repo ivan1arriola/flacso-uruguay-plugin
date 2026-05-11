@@ -13,6 +13,7 @@ class Oferta_Seminarios_Routes {
         add_action('init', [__CLASS__, 'register_endpoints']);
         add_filter('query_vars', [__CLASS__, 'add_query_vars']);
         add_filter('template_include', [__CLASS__, 'template_include'], 15);
+        add_action('template_redirect', [__CLASS__, 'maybe_redirect_oferta_singular']);
         add_action('wp_enqueue_scripts', [__CLASS__, 'enqueue_assets']);
     }
 
@@ -112,6 +113,28 @@ class Oferta_Seminarios_Routes {
         }
 
         return $template;
+    }
+
+    /**
+     * Redirige la vista individual de oferta-academica a su página asociada si existe.
+     * Esto oculta la vista propia del CPT en favor de la página maquetada.
+     */
+    public static function maybe_redirect_oferta_singular(): void {
+        // No redirigir si es el endpoint de seminarios
+        if (self::is_seminarios_endpoint_request()) {
+            return;
+        }
+
+        if (is_singular('oferta-academica')) {
+            $post_id = get_queried_object_id();
+            if (class_exists('Oferta_Page_Adapter')) {
+                $associated_page_id = Oferta_Page_Adapter::get_page_id($post_id);
+                if ($associated_page_id) {
+                    wp_redirect(get_permalink($associated_page_id), 301);
+                    exit;
+                }
+            }
+        }
     }
 
     /**

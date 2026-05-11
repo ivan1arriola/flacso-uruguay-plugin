@@ -79,7 +79,7 @@ class Seminario_Helpers
             'content' => $post->post_content,
             'status' => $post->post_status,
             'meta' => Seminario_Meta::get_meta($post->ID),
-            'posgrados' => Seminario_Taxonomies::get_related_ofertas($post->ID),
+            'ofertas_academicas' => Seminario_Taxonomies::get_related_ofertas($post->ID),
             'taxonomies' => Seminario_Taxonomies::get_taxonomies($post->ID),
         );
     }

@@ -107,11 +107,20 @@ if (function_exists('flacso_global_styles')) {
                         <?php _e('Explora los seminarios específicos asociados a esta propuesta académica. Aquí encontrarás fechas, modalidades y detalles de inscripción.', 'flacso-uruguay'); ?>
                     </p>
 
+                    <?php 
+                    $volver_url = get_permalink($oferta_id);
+                    if (class_exists('Oferta_Page_Adapter')) {
+                        $associated_page_id = Oferta_Page_Adapter::get_page_id($oferta_id);
+                        if ($associated_page_id) {
+                            $volver_url = get_permalink($associated_page_id);
+                        }
+                    }
+                    ?>
                     <div class="seminarios-hero__actions">
                         <a class="seminarios-btn seminarios-btn--primary" href="#listado">
                             <?php _e('Ver seminarios', 'flacso-uruguay'); ?>
                         </a>
-                        <a class="seminarios-btn seminarios-btn--ghost" href="<?php echo get_permalink($oferta_id); ?>">
+                        <a class="seminarios-btn seminarios-btn--ghost" href="<?php echo esc_url($volver_url); ?>">
                             <i class="bi bi-arrow-left me-2"></i> <?php _e('Volver al programa', 'flacso-uruguay'); ?>
                         </a>
                     </div>
@@ -209,7 +218,7 @@ if (function_exists('flacso_global_styles')) {
                         <h3><?php _e('No hay seminarios disponibles', 'flacso-uruguay'); ?></h3>
                         <p><?php _e('No se encontraron seminarios vigentes para este programa en este momento. Te invitamos a consultar más adelante o contactarnos directamente.', 'flacso-uruguay'); ?></p>
                         <div class="mt-4">
-                            <a href="<?php echo get_permalink($oferta_id); ?>" class="btn btn-primary">
+                            <a href="<?php echo esc_url($volver_url); ?>" class="btn btn-primary">
                                 <?php _e('Volver al programa', 'flacso-uruguay'); ?>
                             </a>
                         </div>

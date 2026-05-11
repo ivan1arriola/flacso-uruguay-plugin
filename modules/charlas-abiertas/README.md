@@ -4,6 +4,9 @@ Plugin para gestionar charlas como objeto (`charla_abierta`), renderizar formula
 
 ## Endpoints
 
+> [!IMPORTANT]
+> La documentación técnica completa y actualizada de todos los endpoints de este y otros módulos se encuentra en el archivo principal [API.md](../../API.md) en la raíz del proyecto.
+
 ### Listado de charlas
 
 - `GET /wp-json/flacso-charlas/v1/charla-abierta`

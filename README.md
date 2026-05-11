@@ -116,8 +116,13 @@ Eventos usados por el plugin:
 
 No se usan eventos custom (`trackCustom`) en los flujos actuales.
 
+## Documentación de la API
+
+La documentación técnica completa de los endpoints REST disponibles se encuentra en [API.md](file:///home/ivan/repositorios/flacso-uruguay-plugin/API.md).
+
 ## Soporte
 
 Para diagnostico y mantenimiento, revisar:
 - `CHANGELOG.md`
+- `API.md` (Documentación de la API REST)
 - documentacion de cada modulo en `modules/*`

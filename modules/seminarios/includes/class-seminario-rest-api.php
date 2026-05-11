@@ -7,6 +7,13 @@ class Seminario_REST_API
 {
     public static function register_routes()
     {
+        register_rest_route('flacso/v1', '/ofertas-academicas', array(
+            'methods' => WP_REST_Server::READABLE,
+            'callback' => array(__CLASS__, 'get_posgrados'),
+            'permission_callback' => '__return_true',
+        ));
+
+        // Alias para compatibilidad
         register_rest_route('flacso/v1', '/posgrados', array(
             'methods' => WP_REST_Server::READABLE,
             'callback' => array(__CLASS__, 'get_posgrados'),
@@ -128,7 +135,10 @@ class Seminario_REST_API
     {
         $per_page = (int) $request->get_param('per_page');
         $page = (int) $request->get_param('page');
-        $posgrado = $request->get_param('posgrado');
+        $posgrado = $request->get_param('oferta_academica'); // Nuevo nombre preferido
+        if ($posgrado === null) {
+            $posgrado = $request->get_param('posgrado'); // Fallback
+        }
         $legacy_programa = $request->get_param('programa');
         $posgrado_value = $posgrado !== null && $posgrado !== '' ? $posgrado : $legacy_programa;
 
