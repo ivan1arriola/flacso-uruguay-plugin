@@ -24,7 +24,54 @@ class Seminario_Taxonomies
 
     public static function set_terms_from_request($post_id, $taxonomies)
     {
-        // Legacy: sin asignacion de taxonomias en seminarios.
+        if (!is_array($taxonomies)) {
+            return;
+        }
+
+        // --- Ofertas Académicas (CPT Relation) ---
+        if (isset($taxonomies['ofertas_academicas'])) {
+            $new_ofertas = $taxonomies['ofertas_academicas'];
+            if (!is_array($new_ofertas)) {
+                $new_ofertas = array();
+            }
+
+            // Convertir a IDs
+            $new_oferta_ids = array();
+            foreach ($new_ofertas as $o) {
+                if (is_array($o) && isset($o['id'])) {
+                    $new_oferta_ids[] = absint($o['id']);
+                } elseif (is_numeric($o)) {
+                    $new_oferta_ids[] = absint($o);
+                }
+            }
+            $new_oferta_ids = array_unique(array_filter($new_oferta_ids));
+
+            // Obtener ofertas actualmente vinculadas
+            $current_oferta_ids = self::get_related_oferta_ids($post_id);
+
+            // 1. Desvincular de ofertas que ya no están
+            $to_remove = array_diff($current_oferta_ids, $new_oferta_ids);
+            foreach ($to_remove as $oferta_id) {
+                $seminarios = get_post_meta($oferta_id, '_oferta_seminarios_ids', true);
+                if (is_array($seminarios)) {
+                    $seminarios = array_values(array_diff($seminarios, array($post_id)));
+                    update_post_meta($oferta_id, '_oferta_seminarios_ids', $seminarios);
+                }
+            }
+
+            // 2. Vincular a nuevas ofertas
+            $to_add = array_diff($new_oferta_ids, $current_oferta_ids);
+            foreach ($to_add as $oferta_id) {
+                $seminarios = get_post_meta($oferta_id, '_oferta_seminarios_ids', true);
+                if (!is_array($seminarios)) {
+                    $seminarios = array();
+                }
+                if (!in_array($post_id, $seminarios)) {
+                    $seminarios[] = $post_id;
+                    update_post_meta($oferta_id, '_oferta_seminarios_ids', $seminarios);
+                }
+            }
+        }
     }
 
     public static function term_response($term)
