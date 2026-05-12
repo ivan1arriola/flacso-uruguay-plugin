@@ -76,6 +76,10 @@ class Seminario_Meta
                     ),
                 ),
             ),
+            'mail_contacto' => array('type' => 'string'),
+            'acreditacion' => array('type' => 'string'),
+            'descripcion_horas' => array('type' => 'string'),
+            'mostrar_en_formulario' => array('type' => 'boolean'),
         );
     }
 
@@ -198,7 +202,7 @@ class Seminario_Meta
             return array_values(array_unique($clean));
         }
 
-        if ($key === 'acredita_maestria' || $key === 'acredita_doctorado') {
+        if ($key === 'acredita_maestria' || $key === 'acredita_doctorado' || $key === 'mostrar_en_formulario') {
             return (bool) $value;
         }
 
@@ -220,10 +224,10 @@ class Seminario_Meta
             return preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) ? $value : '';
         }
 
-        if (in_array($key, array('forma_aprobacion', 'objetivo_general', 'presentacion_seminario', 'modalidad', 'nombre'), true)) {
+        if (in_array($key, array('forma_aprobacion', 'objetivo_general', 'presentacion_seminario', 'modalidad', 'nombre', 'mail_contacto', 'acreditacion', 'descripcion_horas'), true)) {
             $sanitized = wp_kses_post($value);
-            if ($key === 'presentacion_seminario') {
-                return wp_trim_words($sanitized, 250, '');
+            if ($key === 'mail_contacto') {
+                return sanitize_email($value);
             }
             return $sanitized;
         }

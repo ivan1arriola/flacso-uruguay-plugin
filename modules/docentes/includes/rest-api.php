@@ -138,10 +138,21 @@ if (!function_exists('dp_rest_build_docente_payload')) {
             'id' => (int) $post->ID,
             'title' => $post->post_title,
             'slug' => $post->post_name,
+            'content' => $post->post_content,
             'status' => $post->post_status,
             'link' => get_permalink($post),
             'date' => $post->post_date_gmt,
             'modified' => $post->post_modified_gmt,
+            'meta' => [
+                'prefijo_abrev' => get_post_meta($post->ID, 'prefijo_abrev', true),
+                'prefijo_full' => get_post_meta($post->ID, 'prefijo_full', true),
+                'nombre' => get_post_meta($post->ID, 'nombre', true),
+                'apellido' => get_post_meta($post->ID, 'apellido', true),
+                'cv' => get_post_meta($post->ID, 'cv', true),
+                'docente_correos' => is_array($correos) ? $correos : [],
+                'docente_redes' => is_array($redes) ? $redes : [],
+            ],
+            // Compatibilidad
             'prefijo_abrev' => get_post_meta($post->ID, 'prefijo_abrev', true),
             'prefijo_full' => get_post_meta($post->ID, 'prefijo_full', true),
             'nombre' => get_post_meta($post->ID, 'nombre', true),
@@ -149,11 +160,9 @@ if (!function_exists('dp_rest_build_docente_payload')) {
             'cv' => get_post_meta($post->ID, 'cv', true),
             'correos' => is_array($correos) ? $correos : [],
             'redes' => is_array($redes) ? $redes : [],
-            // Compatibilidad hacia atras: sin taxonomias de equipos.
-            'equipos' => [],
-            'equipos_detalle' => [],
-            'featured_image' => $featured_image,
-            'featured_image_url' => $featured_image['url'] ?? '',
+            'featured_image' => $featured_image['url'] ?? '',
+            'featured_media' => (int) ($featured_image['id'] ?? 0),
+            'featured_image_url' => $featured_image['url'] ?? '', // Mantener por retrocompatibilidad momentanea
         ];
     }
 }
@@ -186,6 +195,16 @@ if (!function_exists('dp_rest_get_docentes')) {
             $args['s'] = $search;
         }
 
+        $include = $request->get_param('include');
+        if (!empty($include)) {
+            $ids = is_array($include) ? $include : explode(',', $include);
+            $args['post__in'] = array_map('intval', $ids);
+            $args['orderby'] = 'post__in';
+            $args['posts_per_page'] = -1;
+            $args['paged'] = 1;
+            $args['post_status'] = 'any';
+        }
+
         $query = new WP_Query($args);
         $items = [];
 
@@ -216,6 +235,12 @@ if (!function_exists('dp_rest_get_docente')) {
 if (!function_exists('dp_rest_create_docente')) {
     function dp_rest_create_docente(WP_REST_Request $request) {
         $params = dp_rest_get_payload($request);
+        
+        // Handle meta key if present
+        $meta = $params['meta'] ?? [];
+        if (!empty($meta) && is_array($meta)) {
+            $params = array_merge($params, $meta);
+        }
 
         $prefijo_abrev = isset($params['prefijo_abrev']) ? sanitize_text_field($params['prefijo_abrev']) : '';
         $prefijo_full = isset($params['prefijo_full']) ? sanitize_text_field($params['prefijo_full']) : '';
@@ -249,6 +274,13 @@ if (!function_exists('dp_rest_create_docente')) {
         $doc_id = wp_insert_post($post_data, true);
         if (is_wp_error($doc_id)) {
             return $doc_id;
+        }
+
+        if (array_key_exists('featured_media', $params)) {
+            $featured_id = (int) $params['featured_media'];
+            if ($featured_id > 0) {
+                set_post_thumbnail($doc_id, $featured_id);
+            }
         }
 
         update_post_meta($doc_id, 'prefijo_abrev', $prefijo_abrev);
@@ -302,6 +334,21 @@ if (!function_exists('dp_rest_update_docente')) {
             }
         }
 
+        if (array_key_exists('featured_media', $params)) {
+            $featured_id = (int) $params['featured_media'];
+            if ($featured_id > 0) {
+                set_post_thumbnail($doc_id, $featured_id);
+            } else {
+                delete_post_thumbnail($doc_id);
+            }
+        }
+
+        // Handle meta key if present
+        $meta = $params['meta'] ?? [];
+        if (!empty($meta) && is_array($meta)) {
+            $params = array_merge($params, $meta);
+        }
+
         if (array_key_exists('prefijo_abrev', $params)) {
             update_post_meta($doc_id, 'prefijo_abrev', sanitize_text_field($params['prefijo_abrev']));
         }
@@ -328,7 +375,7 @@ if (!function_exists('dp_rest_update_docente')) {
             update_post_meta($doc_id, 'docente_redes', dp_rest_sanitize_docente_redes($redes));
         }
 
-        return new WP_REST_Response(dp_rest_build_docente_payload($doc_id), 200);
+        return new WP_REST_Response(dp_rest_build_docente_payload($doc_id), 201);
     }
 }
 

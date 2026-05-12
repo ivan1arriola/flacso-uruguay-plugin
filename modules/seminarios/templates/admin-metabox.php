@@ -124,8 +124,8 @@ $valor_usd_15_descuento = get_post_meta($post->ID, '_seminario_valor_usd_15_desc
     <thead>
         <tr>
             <th>Fecha</th>
-            <th>Hora inicio</th>
-            <th>Hora fin</th>
+            <th>Hora inicio (UY)</th>
+            <th>Hora fin (UY)</th>
             <th>Plataforma</th>
             <th></th>
         </tr>

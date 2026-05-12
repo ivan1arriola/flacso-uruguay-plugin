@@ -14,16 +14,16 @@ if (class_exists('Flacso_Main_Page_Seminarios')) {
 
 class Flacso_Main_Page_Seminarios {
     public static function init(): void {
-        add_action('init', [__CLASS__, 'register_meta_fields'], 15);
-        add_action('add_meta_boxes', [__CLASS__, 'register_meta_box']);
-        add_action('save_post', [__CLASS__, 'save_post_meta'], 10, 2);
+        // add_action('init', [__CLASS__, 'register_meta_fields'], 15);
+        // add_action('add_meta_boxes', [__CLASS__, 'register_meta_box']);
+        // add_action('save_post', [__CLASS__, 'save_post_meta'], 10, 2);
 
-        add_filter('manage_post_posts_columns', [__CLASS__, 'add_admin_columns']);
-        add_action('manage_post_posts_custom_column', [__CLASS__, 'render_admin_column'], 10, 2);
-        add_filter('manage_seminario_posts_columns', [__CLASS__, 'add_admin_columns']);
-        add_action('manage_seminario_posts_custom_column', [__CLASS__, 'render_admin_column'], 10, 2);
+        // add_filter('manage_post_posts_columns', [__CLASS__, 'add_admin_columns']);
+        // add_action('manage_post_posts_custom_column', [__CLASS__, 'render_admin_column'], 10, 2);
+        // add_filter('manage_seminario_posts_columns', [__CLASS__, 'add_admin_columns']);
+        // add_action('manage_seminario_posts_custom_column', [__CLASS__, 'render_admin_column'], 10, 2);
 
-        add_action('admin_head', [__CLASS__, 'print_admin_styles']);
+        // add_action('admin_head', [__CLASS__, 'print_admin_styles']);
     }
 
     public static function register_meta_fields(): void {
@@ -144,21 +144,26 @@ class Flacso_Main_Page_Seminarios {
             '_seminario_encuentros' => __('Encuentros sincrónicos', 'flacso-main-page'),
         ];
 
-        echo '<h3>' . esc_html__('Datos estructurados (solo lectura)', 'flacso-main-page') . '</h3>';
+        $structured_data = [];
         foreach ($json_fields as $meta_key => $label) {
             $valor = get_post_meta($post->ID, $meta_key, true);
-            if (!$valor) {
-                continue;
+            if ($valor) {
+                $structured_data[$label] = $valor;
             }
+        }
 
-            $decoded = is_array($valor) ? $valor : json_decode((string) $valor, true);
-            $display = !empty($decoded) ? print_r($decoded, true) : $valor;
-            ?>
-            <p>
-                <strong><?php echo esc_html($label); ?>:</strong><br>
-                <textarea readonly class="large-text" rows="3" style="width:100%;background:#f6f7f7;"><?php echo esc_textarea($display); ?></textarea>
-            </p>
-            <?php
+        if (!empty($structured_data)) {
+            echo '<h3>' . esc_html__('Datos estructurados (solo lectura)', 'flacso-main-page') . '</h3>';
+            foreach ($structured_data as $label => $valor) {
+                $decoded = is_array($valor) ? $valor : json_decode((string) $valor, true);
+                $display = !empty($decoded) ? print_r($decoded, true) : $valor;
+                ?>
+                <p>
+                    <strong><?php echo esc_html($label); ?>:</strong><br>
+                    <textarea readonly class="large-text" rows="3" style="width:100%;background:#f6f7f7;"><?php echo esc_textarea($display); ?></textarea>
+                </p>
+                <?php
+            }
         }
     }
 

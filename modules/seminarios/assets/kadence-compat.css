@@ -944,3 +944,53 @@ textarea.form-control {
         padding: 1rem;
     }
 }
+
+/* ==========================================
+   RICH TEXT & LIST SUPPORT (Editor Parity)
+   ========================================== */
+
+.seminario-content,
+.docente-bio-content,
+.info-card p {
+    line-height: 1.7;
+    color: var(--global-palette4);
+}
+
+.seminario-content ul,
+.docente-bio-content ul,
+.info-card ul {
+    padding-left: 1.5rem !important;
+    margin-bottom: 1.5rem !important;
+    list-style-type: disc !important;
+}
+
+.seminario-content ol,
+.docente-bio-content ol,
+.info-card ol {
+    padding-left: 1.5rem !important;
+    margin-bottom: 1.5rem !important;
+    list-style-type: decimal !important;
+}
+
+.seminario-content li,
+.docente-bio-content li,
+.info-card li {
+    margin-bottom: 0.8rem !important;
+    display: list-item !important;
+}
+
+.seminario-content h1, .seminario-content h2, .seminario-content h3, 
+.seminario-content h4, .seminario-content h5, .seminario-content h6 {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+.seminario-content p,
+.seminario-content div {
+    margin-bottom: 1.25rem !important;
+}
+
+.seminario-content li p,
+.seminario-content li div {
+    margin-bottom: 0.5rem !important;
+}

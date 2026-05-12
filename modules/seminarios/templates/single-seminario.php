@@ -422,19 +422,41 @@ while (have_posts()) : the_post();
         color: var(--global-palette-btn-hover) !important;
     }
     
-    .seminario-content {
+    .seminario-content,
+    .docente-bio-content {
         line-height: 1.7;
         color: var(--global-palette4);
         font-family: var(--global-body-font-family, var(--global-fallback-font));
     }
     
     .seminario-content ul,
-    .seminario-content ol {
-        padding-left: 1.5rem;
+    .docente-bio-content ul,
+    .seminario-content ol,
+    .docente-bio-content ol {
+        padding-left: 1.5rem !important;
+        margin-bottom: 1.5rem !important;
+        list-style-type: initial !important;
     }
     
-    .seminario-content li {
-        margin-bottom: 0.8rem;
+    .seminario-content ul,
+    .docente-bio-content ul {
+        list-style-type: disc !important;
+    }
+    
+    .seminario-content ol,
+    .docente-bio-content ol {
+        list-style-type: decimal !important;
+    }
+    
+    .seminario-content li,
+    .docente-bio-content li {
+        margin-bottom: 0.8rem !important;
+        display: list-item !important;
+    }
+    
+    .seminario-content p,
+    .seminario-content div {
+        margin-bottom: 1.25rem !important;
     }
     
     h1, h2, h3, h4, h5, h6 {
@@ -744,9 +766,9 @@ while (have_posts()) : the_post();
                         <div class="card-body text-start p-4">
                             <div class="info-card-icon">📝</div>
                             <h5 class="card-title fw-bold mb-3">Evaluación</h5>
-                            <p class="mb-0" style="font-size: 0.95rem; line-height: 1.5; color: var(--global-palette4);">
+                            <div class="seminario-content" style="font-size: 0.95rem; line-height: 1.5; color: var(--global-palette4);">
                                 <?php echo wp_kses_post($meta['forma_aprobacion']); ?>
-                            </p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -892,7 +914,7 @@ while (have_posts()) : the_post();
     <?php endif; ?>
     
     <!-- Objetivos Específicos -->
-    <?php if (!empty($objetivos) && count($objetivos) > 1) : ?>
+    <?php if (!empty($objetivos) && count($objetivos) >= 1) : ?>
         <section class="py-5">
             <div class="section-header">
                 <h2 class="fw-bold">Objetivos Específicos</h2>
