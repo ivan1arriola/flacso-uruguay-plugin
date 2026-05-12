@@ -12,6 +12,13 @@ class Oferta_Rest_API
 
     public static function register_routes()
     {
+        // Endpoint para obtener taxonomías (REGISTRAR ANTES DE LOS IDS PARA EVITAR CONFLICTOS)
+        register_rest_route('flacso/v1', '/oferta-academica/taxonomies', array(
+            'methods' => 'GET',
+            'callback' => [self::class, 'get_taxonomies'],
+            'permission_callback' => '__return_true'
+        ));
+
         // Endpoint para el listado
         register_rest_route('flacso/v1', '/oferta-academica', array(
             'methods' => 'GET',
@@ -35,13 +42,6 @@ class Oferta_Rest_API
             'permission_callback' => function () {
                 return current_user_can('edit_posts');
             }
-        ));
-
-        // Endpoint para obtener taxonomías (para los selectores del editor)
-        register_rest_route('flacso/v1', '/oferta-academica/taxonomies', array(
-            'methods' => 'GET',
-            'callback' => [self::class, 'get_taxonomies'],
-            'permission_callback' => '__return_true'
         ));
     }
 
