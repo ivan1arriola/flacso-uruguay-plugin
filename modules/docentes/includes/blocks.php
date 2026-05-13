@@ -565,13 +565,6 @@ function dp_docentes_grupo_block_render($attributes = []) {
 
         $titulo_academico = trim((string) get_post_meta($id, 'titulo_academico', true));
 
-        $pref = '';
-        foreach (['titulo_academico', 'prefijo', 'prefijo_abrev'] as $meta_key) {
-            $meta_val = trim((string) get_post_meta($id, $meta_key, true));
-            if ($meta_val !== '') {
-                break;
-            }
-        }
         $pref_abrev = trim((string) get_post_meta($id, 'prefijo_abrev', true));
         $display_name = $pref_abrev ? $pref_abrev . ' ' . $base : $base;
 

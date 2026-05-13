@@ -432,15 +432,17 @@ function dp_docente_destacado($attributes = []) {
     }
 
     $titulo = dp_nombre_completo($doc_id);
+    $pref_abrev = trim((string) get_post_meta($doc_id, 'prefijo_abrev', true));
+    $tit_acad   = trim((string) get_post_meta($doc_id, 'titulo_academico', true));
+    
+    $display_name = $titulo;
+    $academic_label = $tit_acad ? $tit_acad : $pref_abrev;
 
-    $pref = '';
-    foreach (['titulo_academico', 'prefijo', 'prefijo_abrev'] as $meta_key) {
-        $meta_val = trim((string) get_post_meta($doc_id, $meta_key, true));
-        if ($meta_val !== '') {
-            $pref = $meta_val;
-            break;
-        }
+    // Si el nombre ya contiene el título académico largo (raro) o el prefijo, evitamos duplicar la etiqueta inmediatamente debajo
+    if ($academic_label !== '' && strpos($display_name, $academic_label) !== false) {
+        $academic_label = '';
     }
+
     $cv_raw = (string) get_post_meta($doc_id, 'cv', true);
 
     $admin = '';
@@ -461,7 +463,7 @@ function dp_docente_destacado($attributes = []) {
             <div class="dd-header">
                 <div class="dd-avatar-column">
                     <div class="dd-avatar-frame">
-                        <?php echo dp_avatar_markup($doc_id, $titulo, 240, 'dd-img'); ?>
+                        <?php echo dp_avatar_markup($doc_id, $display_name, 240, 'dd-img'); ?>
                     </div>
                 </div>
                 <div class="dd-info-column">
@@ -469,23 +471,22 @@ function dp_docente_destacado($attributes = []) {
                         <span class="dd-kicker"><?php echo esc_html($rol); ?></span>
                     <?php endif; ?>
                     
-                    <h2 id="dest-<?php echo esc_attr($doc_id); ?>" class="dd-name"><?php echo esc_html($titulo); ?></h2>
+                    <h2 id="dest-<?php echo esc_attr($doc_id); ?>" class="dd-name"><?php echo esc_html($display_name); ?></h2>
                     
-                    <?php if ($pref): ?>
-                        <p class="dd-academic-title"><?php echo esc_html($pref); ?></p>
-                    <?php endif; ?>
-
-                    <?php if ($cv_raw): ?>
-                        <div class="dd-bio">
-                            <?php
-                                $cv_html = (strpos($cv_raw, '<p>') === false) ? wpautop($cv_raw) : $cv_raw;
-                                echo dp_safe_cv_html(wp_trim_words($cv_html, 45));
-                            ?>
-                            <a href="<?php echo esc_url(get_permalink($doc_id)); ?>" class="dd-link">Ver perfil completo →</a>
-                        </div>
+                    <?php if ($academic_label): ?>
+                        <p class="dd-academic-title"><?php echo esc_html($academic_label); ?></p>
                     <?php endif; ?>
                 </div>
             </div>
+
+            <?php if ($cv_raw): ?>
+                <div class="dd-bio-full">
+                    <?php
+                        $cv_html = (strpos($cv_raw, '<p>') === false) ? wpautop($cv_raw) : $cv_raw;
+                        echo dp_safe_cv_html($cv_html);
+                    ?>
+                </div>
+            <?php endif; ?>
         </div>
     </section>
 
@@ -496,52 +497,48 @@ function dp_docente_destacado($attributes = []) {
         --dd-text: var(--global-palette4, #1f2937);
         --dd-muted: #64748b;
         --dd-bg: #ffffff;
-        --dd-radius: 24px;
+        --dd-radius: 20px;
         
         position: relative;
         background: var(--dd-bg);
-        border: 1px solid rgba(226, 232, 240, 0.8);
+        border: 1px solid #e2e8f0;
         border-radius: var(--dd-radius);
         padding: 3rem;
-        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.05);
+        box-shadow: 0 10px 40px rgba(15, 23, 42, 0.06);
         margin: 2rem 0;
-        transition: all 0.3s ease;
         overflow: hidden;
     }
     
-    .is-selected .docente-destacado-v2 {
-        outline: 3px solid var(--dd-p1);
-        outline-offset: 4px;
-    }
-
-    .docente-destacado-v2:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 30px 60px rgba(15, 23, 42, 0.1);
-        border-color: var(--dd-p1);
-    }
-
     .dd-container { position: relative; z-index: 2; }
 
     .dd-header {
         display: flex;
-        gap: 3rem;
+        gap: 2.5rem;
         align-items: center;
+        margin-bottom: 2.5rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid #f1f5f9;
     }
 
     .dd-avatar-column { flex-shrink: 0; }
     
     .dd-avatar-frame {
-        width: 180px;
-        height: 180px;
-        border-radius: 30px;
+        width: 150px;
+        height: 150px;
+        border-radius: 20px;
         overflow: hidden;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-        background: var(--dd-bg);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        background: #f8fafc; /* Fondo neutro para cuando la imagen no rellena */
     }
     
-    .dd-img { width: 100%; height: 100%; object-fit: cover; }
+    .dd-img { 
+        width: 100%; 
+        height: 100%; 
+        object-fit: contain; /* Rellena sin recortar */
+        background: #f8fafc;
+    }
 
-    .dd-info-column { flex-grow: 1; }
+    .dd-info-column { flex-grow: 1; text-align: left; }
 
     .dd-kicker {
         display: inline-block;
@@ -561,34 +558,24 @@ function dp_docente_destacado($attributes = []) {
         font-size: 2.2rem;
         font-weight: 850;
         color: var(--dd-p1);
-        line-height: 1.1;
-        letter-spacing: -0.02em;
+        line-height: 1.2;
     }
 
     .dd-academic-title {
         font-size: 1.1rem;
         color: var(--dd-muted);
         font-weight: 600;
-        margin-bottom: 1.5rem;
+        margin: 0;
     }
 
-    .dd-bio {
-        font-size: 1.05rem;
-        line-height: 1.7;
+    .dd-bio-full {
+        font-size: 1.1rem;
+        line-height: 1.8;
         color: var(--dd-text);
-        border-left: 3px solid var(--dd-accent);
-        padding-left: 1.5rem;
     }
     
-    .dd-link {
-        display: inline-block;
-        margin-top: 1rem;
-        font-weight: 700;
-        color: var(--dd-p1);
-        text-decoration: none;
-        font-size: 0.9rem;
-    }
-    .dd-link:hover { text-decoration: underline; }
+    .dd-bio-full p { margin-bottom: 1.5rem; }
+    .dd-bio-full p:last-child { margin-bottom: 0; }
 
     .docente-destacado__edit-btn {
         position: absolute;
@@ -596,7 +583,7 @@ function dp_docente_destacado($attributes = []) {
         right: 1.5rem;
         width: 36px;
         height: 36px;
-        background: var(--dd-bg);
+        background: #f8fafc;
         border: 1px solid #e2e8f0;
         border-radius: 10px;
         display: flex;
@@ -605,17 +592,12 @@ function dp_docente_destacado($attributes = []) {
         color: var(--dd-muted);
         text-decoration: none;
         transition: all 0.2s ease;
-        z-index: 10;
     }
-    .docente-destacado__edit-btn:hover {
-        background: var(--dd-p1);
-        color: #fff;
-        transform: scale(1.1);
-    }
+    .docente-destacado__edit-btn:hover { background: var(--dd-p1); color: #fff; }
 
-    @media (max-width: 860px) {
-        .dd-header { flex-direction: column; text-align: center; gap: 2rem; }
-        .dd-bio { border-left: none; border-top: 3px solid var(--dd-accent); padding-left: 0; padding-top: 1.5rem; }
+    @media (max-width: 768px) {
+        .dd-header { flex-direction: column; text-align: center; gap: 1.5rem; }
+        .dd-info-column { text-align: center; }
         .docente-destacado-v2 { padding: 2rem; }
     }
     </style>
