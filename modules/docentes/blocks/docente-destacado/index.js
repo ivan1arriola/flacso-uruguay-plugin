@@ -122,12 +122,19 @@
                         })
                     )
                 ),
-            ServerSideRender
-                ? el(ServerSideRender, {
-                      block: 'flacso-uruguay/docente-destacado',
-                      attributes: { docId: docId || 0, slug, role },
-                  })
-                : el(Notice, { status: 'warning', isDismissible: false }, 'No se pudo cargar la vista previa del bloque.')
+            el(
+                'div',
+                { 
+                    className: 'docente-destacado-editor-wrapper',
+                    style: { cursor: 'pointer', position: 'relative', minHeight: '100px' } 
+                },
+                ServerSideRender
+                    ? el(ServerSideRender, {
+                          block: 'flacso-uruguay/docente-destacado',
+                          attributes: { docId: docId || 0, slug, role },
+                      })
+                    : el(Notice, { status: 'warning', isDismissible: false }, 'No se pudo cargar la vista previa del bloque.')
+            )
         );
     }
 
