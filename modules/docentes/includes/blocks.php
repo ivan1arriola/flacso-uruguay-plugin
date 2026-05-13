@@ -378,8 +378,8 @@ function dp_docentes_lista_block($attributes = [], $content = '', $block = null)
         $id = get_the_ID();
         $titulo = function_exists('dp_nombre_completo') ? dp_nombre_completo($id) : get_the_title($id);
         $pref_abrev = get_post_meta($id, 'prefijo_abrev', true);
-        $titulo_meta = get_post_meta($id, 'titulo', true);
-        $pref = $pref_abrev ?: $titulo_meta;
+        $titulo_academico = get_post_meta($id, 'titulo_academico', true);
+        $pref = $pref_abrev ?: $titulo_academico;
         $nombre = get_post_meta($id, 'nombre', true);
         $apellido = get_post_meta($id, 'apellido', true);
         $display_name = trim(($nombre ?: '') . ' ' . ($apellido ?: ''));
@@ -563,13 +563,17 @@ function dp_docentes_grupo_block_render($attributes = []) {
             $base = get_the_title($id) ?: (string) get_post_field('post_title', $id);
         }
 
-        $titulo_full = trim((string) get_post_meta($id, '_docente_titulo', true));
-        if ($titulo_full === '') {
-            $titulo_full = trim((string) get_post_meta($id, 'titulo', true));
-        }
+        $titulo_academico = trim((string) get_post_meta($id, 'titulo_academico', true));
 
-        $prefijo = trim((string) get_post_meta($id, 'prefijo', true));
-        $display_name = $prefijo ? trim($prefijo . ' ' . $base) : $base;
+        $pref = '';
+        foreach (['titulo_academico', 'prefijo', 'prefijo_abrev'] as $meta_key) {
+            $meta_val = trim((string) get_post_meta($id, $meta_key, true));
+            if ($meta_val !== '') {
+                $pref = $meta_val;
+                break;
+            }
+        }
+        $display_name = $base;
 
         $cv_raw = trim((string) get_post_meta($id, 'cv', true));
         $cv_html = $cv_raw !== '' ? wp_kses(wpautop($cv_raw), $allowed_cv_tags) : '';
@@ -604,9 +608,9 @@ function dp_docentes_grupo_block_render($attributes = []) {
                     <h3 class="fdc-name" id="<?php echo esc_attr($label_id); ?>">
                         <?php echo esc_html($display_name); ?>
                     </h3>
-
-                    <?php if ($titulo_full !== '') : ?>
-                        <div class="fdc-title-full"><?php echo esc_html($titulo_full); ?></div>
+                    
+                    <?php if ($titulo_academico !== '') : ?>
+                        <div class="fdc-title-full"><?php echo esc_html($titulo_academico); ?></div>
                     <?php endif; ?>
 
                     <?php if ($can_edit && $edit_url) : ?>

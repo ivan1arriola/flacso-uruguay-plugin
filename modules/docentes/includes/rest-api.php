@@ -145,7 +145,7 @@ if (!function_exists('dp_rest_build_docente_payload')) {
             'modified' => $post->post_modified_gmt,
             'meta' => [
                 'prefijo_abrev' => get_post_meta($post->ID, 'prefijo_abrev', true),
-                'prefijo_full' => get_post_meta($post->ID, 'prefijo_full', true),
+                'titulo_academico' => get_post_meta($post->ID, 'titulo_academico', true),
                 'nombre' => get_post_meta($post->ID, 'nombre', true),
                 'apellido' => get_post_meta($post->ID, 'apellido', true),
                 'cv' => get_post_meta($post->ID, 'cv', true),
@@ -243,7 +243,7 @@ if (!function_exists('dp_rest_create_docente')) {
         }
 
         $prefijo_abrev = isset($params['prefijo_abrev']) ? sanitize_text_field($params['prefijo_abrev']) : '';
-        $prefijo_full = isset($params['prefijo_full']) ? sanitize_text_field($params['prefijo_full']) : '';
+        $titulo_academico = isset($params['titulo_academico']) ? sanitize_text_field($params['titulo_academico']) : '';
         $nombre = isset($params['nombre']) ? sanitize_text_field($params['nombre']) : '';
         $apellido = isset($params['apellido']) ? sanitize_text_field($params['apellido']) : '';
         $title = isset($params['title']) ? sanitize_text_field($params['title']) : '';
@@ -287,7 +287,7 @@ if (!function_exists('dp_rest_create_docente')) {
         }
 
         update_post_meta($doc_id, 'prefijo_abrev', $prefijo_abrev);
-        update_post_meta($doc_id, 'prefijo_full', $prefijo_full);
+        update_post_meta($doc_id, 'titulo_academico', $titulo_academico);
         update_post_meta($doc_id, 'nombre', $nombre);
         update_post_meta($doc_id, 'apellido', $apellido);
         update_post_meta($doc_id, 'cv', $cv);
@@ -366,8 +366,8 @@ if (!function_exists('dp_rest_update_docente')) {
         if (array_key_exists('prefijo_abrev', $params)) {
             update_post_meta($doc_id, 'prefijo_abrev', sanitize_text_field($params['prefijo_abrev']));
         }
-        if (array_key_exists('prefijo_full', $params)) {
-            update_post_meta($doc_id, 'prefijo_full', sanitize_text_field($params['prefijo_full']));
+        if (array_key_exists('titulo_academico', $params)) {
+            update_post_meta($doc_id, 'titulo_academico', sanitize_text_field($params['titulo_academico']));
         }
         if (array_key_exists('nombre', $params)) {
             update_post_meta($doc_id, 'nombre', sanitize_text_field($params['nombre']));

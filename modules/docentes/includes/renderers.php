@@ -293,8 +293,8 @@ function dp_docentes_lista_bloques($atts = [], $block = null) {
             $id     = get_the_ID();
             $titulo = dp_nombre_completo($id);
             $pref_abrev = get_post_meta($id, 'prefijo_abrev', true);
-            $titulo_meta  = get_post_meta($id, 'titulo', true);
-            $pref       = $pref_abrev ?: $titulo_meta;
+            $titulo_academico = get_post_meta($id, 'titulo_academico', true);
+            $pref       = $pref_abrev ?: $titulo_academico;
             $nombre     = get_post_meta($id, 'nombre', true);
             $apellido   = get_post_meta($id, 'apellido', true);
             $display_name = trim(($nombre ?: '') . ' ' . ($apellido ?: ''));
@@ -324,8 +324,8 @@ function dp_docentes_lista_bloques($atts = [], $block = null) {
                             <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2 docentes-lista-card__top">
                                 <div>
                                     <h3 id="<?php echo esc_attr($h_id); ?>" class="mb-1 docentes-lista-card__name"><?php echo esc_html($heading_name); ?></h3>
-                                    <?php if ($titulo_meta): ?>
-                                        <p class="text-muted small mb-0 docentes-lista-card__prefix"><?php echo esc_html($titulo_meta); ?></p>
+                                    <?php if ($titulo_academico): ?>
+                                        <p class="text-muted small mb-0 docentes-lista-card__prefix"><?php echo esc_html($titulo_academico); ?></p>
                                     <?php endif; ?>
                                 </div>
                                 <div class="d-flex gap-2">
@@ -445,7 +445,7 @@ function dp_docente_destacado($atts = []) {
     $titulo = dp_nombre_completo($doc_id);
 
     $pref = '';
-    foreach (['prefijo_full', 'titulo', 'prefijo', 'prefijo_abrev'] as $meta_key) {
+    foreach (['titulo_academico', 'prefijo', 'prefijo_abrev'] as $meta_key) {
         $meta_val = trim((string) get_post_meta($doc_id, $meta_key, true));
         if ($meta_val !== '') {
             $pref = $meta_val;
@@ -621,7 +621,7 @@ function flacso_render_docente_profile($atts = []) {
 
     $meta = get_post_meta($doc_id);
     $prefijo_abrev = !empty($meta['prefijo_abrev'][0]) ? trim((string) $meta['prefijo_abrev'][0]) : '';
-    $titulo_meta   = !empty($meta['titulo'][0]) ? trim((string) $meta['titulo'][0]) : '';
+    $titulo_academico = !empty($meta['titulo_academico'][0]) ? trim((string) $meta['titulo_academico'][0]) : '';
     $nombre_meta   = !empty($meta['nombre'][0]) ? trim((string) $meta['nombre'][0]) : '';
     $apellido_meta = !empty($meta['apellido'][0]) ? trim((string) $meta['apellido'][0]) : '';
 
@@ -660,8 +660,8 @@ function flacso_render_docente_profile($atts = []) {
                         <<?php echo $heading; ?> id="<?php echo esc_attr($heading_id); ?>" class="fw-bold mb-3 docente-nombre">
                                                         <?php echo esc_html($heading_name); ?>
                         </<?php echo $heading; ?>>
-                        <?php if ($titulo_meta !== ''): ?>
-                            <p class="text-muted small mb-3"><?php echo esc_html($titulo_meta); ?></p>
+                        <?php if ($titulo_academico !== ''): ?>
+                            <p class="text-muted small mb-3"><?php echo esc_html($titulo_academico); ?></p>
                         <?php endif; ?>
             <div class="flacso-docente-cv">
               <?php echo $cv_html; ?>

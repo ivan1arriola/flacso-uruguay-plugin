@@ -18,9 +18,7 @@ if (class_exists('CPT_Docente') || class_exists('Docente_Taxonomies') || class_e
     return;
 }
 
-if (!defined('FLACSO_MAIN_DOCENTES_MODULE_LOADED')) {
-    define('FLACSO_MAIN_DOCENTES_MODULE_LOADED', true);
-}
+define('FLACSO_MAIN_DOCENTES_MODULE_LOADED', true);
 
 // Cargar clases principales del modulo.
 flacso_safe_require('modules/docentes/includes/class-cpt-docente.php');

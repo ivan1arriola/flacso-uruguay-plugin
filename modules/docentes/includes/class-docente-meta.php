@@ -17,7 +17,7 @@ class Docente_Meta {
     }
 
     public static function register_meta_fields(): void {
-        $campos = ['prefijo_abrev', 'titulo', 'nombre', 'apellido', 'cv'];
+        $campos = ['prefijo_abrev', 'titulo_academico', 'nombre', 'apellido', 'cv'];
         foreach ($campos as $campo) {
             register_post_meta('docente', $campo, [
                 'type' => 'string',
@@ -75,7 +75,7 @@ class Docente_Meta {
 
     public static function render_info_meta_box($post): void {
         $prefijo_abrev = get_post_meta($post->ID, 'prefijo_abrev', true);
-        $titulo        = get_post_meta($post->ID, 'titulo', true);
+        $titulo_academico = get_post_meta($post->ID, 'titulo_academico', true);
         $nombre        = get_post_meta($post->ID, 'nombre', true);
         $apellido      = get_post_meta($post->ID, 'apellido', true);
         $cv            = get_post_meta($post->ID, 'cv', true);
@@ -106,7 +106,7 @@ class Docente_Meta {
               <input type="text" name="prefijo_abrev" value="'.esc_attr($prefijo_abrev).'" placeholder="Ing., Dra., Dr." style="width:100%"></p>';
 
         echo '<p><label>Título</label><br>
-              <input type="text" name="titulo" value="'.esc_attr($titulo).'" placeholder="Ingeniero, Doctora, Doctor, Licenciado" style="width:100%"></p>';
+              <input type="text" name="titulo_academico" value="'.esc_attr($titulo_academico).'" placeholder="Ingeniero, Doctora, Doctor, Licenciado" style="width:100%"></p>';
 
         echo '<p><label>Nombre <span style="color:red">*</span></label><br>
               <input type="text" name="nombre" value="'.esc_attr($nombre).'" style="width:100%" required></p>';
@@ -328,7 +328,7 @@ class Docente_Meta {
             }
         }
 
-        foreach (['prefijo_abrev', 'titulo', 'nombre', 'apellido', 'cv'] as $campo) {
+        foreach (['prefijo_abrev', 'titulo_academico', 'nombre', 'apellido', 'cv'] as $campo) {
             if (isset($_POST[$campo])) {
                 if ($campo === 'cv') {
                     update_post_meta($post_id, $campo, wp_kses_post($_POST[$campo]));
@@ -412,7 +412,7 @@ class Docente_Meta {
     public static function get_docente_data($post_id): array {
         return [
             'prefijo_abrev' => get_post_meta($post_id, 'prefijo_abrev', true),
-            'titulo' => get_post_meta($post_id, 'titulo', true),
+            'titulo_academico' => get_post_meta($post_id, 'titulo_academico', true),
             'nombre' => get_post_meta($post_id, 'nombre', true),
             'apellido' => get_post_meta($post_id, 'apellido', true),
             'cv' => get_post_meta($post_id, 'cv', true),

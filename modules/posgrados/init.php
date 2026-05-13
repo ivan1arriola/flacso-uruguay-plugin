@@ -25,14 +25,7 @@ flacso_safe_require('modules/posgrados/includes/class-flacso-posgrados-consultas
 flacso_safe_require('modules/posgrados/includes/class-flacso-posgrados-docentes-sync.php');
 flacso_safe_require('modules/posgrados/includes/rest-api-posgrados.php');
 
-// Cargar módulo interno de docentes solo como fallback.
-if (
-    !defined('FLACSO_MAIN_DOCENTES_MODULE_LOADED')
-    && !class_exists('CPT_Docente')
-    && !function_exists('dp_docentes_register_assets')
-) {
-    flacso_safe_require('modules/posgrados/docentes/docentes-plugin.php');
-}
+// Módulo de docentes principal ya cargado por el plugin base.
 
 // Inicializar
 add_action('plugins_loaded', function() {
