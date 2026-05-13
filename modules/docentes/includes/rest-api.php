@@ -427,23 +427,20 @@ add_action('rest_api_init', function () {
 
     // Ruta para ítems individuales (Ver, Actualizar, Eliminar)
     register_rest_route('flacso-docentes/v1', '/docentes/(?P<id>[0-9]+)', [
-        'methods' => 'GET, POST, PUT, PATCH, DELETE',
-        'callback' => function ($request) {
-            $method = $request->get_method();
-            if ($method === 'DELETE') {
-                return dp_rest_delete_docente($request);
-            }
-            if ($method === 'GET') {
-                return dp_rest_get_docente($request);
-            }
-            return dp_rest_update_docente($request);
-        },
-        'permission_callback' => function ($request) {
-            $method = $request->get_method();
-            if ($method === 'GET') {
-                return dp_rest_can_read_docentes();
-            }
-            return dp_rest_can_edit_docentes();
-        },
+        [
+            'methods' => 'GET',
+            'callback' => 'dp_rest_get_docente',
+            'permission_callback' => 'dp_rest_can_read_docentes',
+        ],
+        [
+            'methods' => 'POST, PUT, PATCH',
+            'callback' => 'dp_rest_update_docente',
+            'permission_callback' => 'dp_rest_can_edit_docentes',
+        ],
+        [
+            'methods' => 'DELETE',
+            'callback' => 'dp_rest_delete_docente',
+            'permission_callback' => 'dp_rest_can_edit_docentes',
+        ],
     ]);
 });
