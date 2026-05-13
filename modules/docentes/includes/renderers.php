@@ -493,7 +493,7 @@ function flacso_render_docente_profile($atts = []) {
           </div>
           <?php endif; ?>
           <div class="col">
-                        <<?php echo $heading; ?> id="<?php echo esc_attr($heading_id); ?>" class="fw-bold mb-3 docente-nombre">
+                        <?php echo $heading; ?> id="<?php echo esc_attr($heading_id); ?>" class="fw-bold mb-3 docente-nombre">
                                                         <?php echo esc_html($heading_name); ?>
                         </<?php echo $heading; ?>>
                         <?php if ($titulo_academico !== ''): ?>
