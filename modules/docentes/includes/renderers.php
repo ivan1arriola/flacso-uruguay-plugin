@@ -503,9 +503,9 @@ function dp_docente_destacado($attributes = []) {
         background: var(--dd-bg);
         border: 1px solid #e2e8f0;
         border-radius: var(--dd-radius);
-        padding: 3rem;
+        padding: 2rem; /* Reducido de 3rem */
         box-shadow: 0 10px 40px rgba(15, 23, 42, 0.06);
-        margin: 2rem 0;
+        margin: 1.5rem 0;
         overflow: hidden;
     }
     
@@ -513,28 +513,29 @@ function dp_docente_destacado($attributes = []) {
 
     .dd-header {
         display: flex;
-        gap: 2.5rem;
+        gap: 2rem;
         align-items: center;
-        margin-bottom: 2.5rem;
-        padding-bottom: 2rem;
+        margin-bottom: 1.25rem; /* Reducido de 2.5rem */
+        padding-bottom: 1.25rem; /* Reducido de 2rem */
         border-bottom: 1px solid #f1f5f9;
     }
 
     .dd-avatar-column { flex-shrink: 0; }
     
     .dd-avatar-frame {
-        width: 150px;
-        height: 150px;
-        border-radius: 20px;
+        width: 130px; /* Un poco más pequeño para ganar espacio */
+        height: 130px;
+        border-radius: 18px;
         overflow: hidden;
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        background: #f8fafc; /* Fondo neutro para cuando la imagen no rellena */
+        background: #f8fafc;
     }
     
-    .dd-img { 
-        width: 100%; 
-        height: 100%; 
-        object-fit: contain; /* Rellena sin recortar */
+    /* FIX: Apuntar directamente a la imagen interna */
+    .dd-avatar-frame img { 
+        width: 100% !important; 
+        height: 100% !important; 
+        object-fit: contain !important; 
         background: #f8fafc;
     }
 
@@ -544,61 +545,60 @@ function dp_docente_destacado($attributes = []) {
         display: inline-block;
         background: var(--dd-accent);
         color: var(--dd-p1);
-        font-size: 0.75rem;
+        font-size: 0.65rem; /* Más compacto */
         font-weight: 800;
         text-transform: uppercase;
-        padding: 0.35rem 0.85rem;
-        border-radius: 8px;
-        margin-bottom: 1rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
         letter-spacing: 0.05em;
     }
 
     .dd-name {
-        margin: 0 0 0.5rem !important;
-        font-size: 2.2rem;
+        margin: 0 0 0.25rem !important;
+        font-size: 1.7rem; /* Un poco más pequeño para que no ocupe tanto */
         font-weight: 850;
         color: var(--dd-p1);
         line-height: 1.2;
     }
 
     .dd-academic-title {
-        font-size: 1.1rem;
+        font-size: 0.95rem;
         color: var(--dd-muted);
         font-weight: 600;
         margin: 0;
     }
 
     .dd-bio-full {
-        font-size: 1.1rem;
-        line-height: 1.8;
+        font-size: 1.05rem;
+        line-height: 1.65;
         color: var(--dd-text);
     }
     
-    .dd-bio-full p { margin-bottom: 1.5rem; }
+    .dd-bio-full p { margin-bottom: 1rem; }
     .dd-bio-full p:last-child { margin-bottom: 0; }
 
     .docente-destacado__edit-btn {
         position: absolute;
-        top: 1.5rem;
-        right: 1.5rem;
-        width: 36px;
-        height: 36px;
+        top: 1rem;
+        right: 1rem;
+        width: 32px;
+        height: 32px;
         background: #f8fafc;
         border: 1px solid #e2e8f0;
-        border-radius: 10px;
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
         color: var(--dd-muted);
         text-decoration: none;
-        transition: all 0.2s ease;
     }
     .docente-destacado__edit-btn:hover { background: var(--dd-p1); color: #fff; }
 
-    @media (max-width: 768px) {
-        .dd-header { flex-direction: column; text-align: center; gap: 1.5rem; }
+    @media (max-width: 640px) {
+        .dd-header { flex-direction: column; text-align: center; gap: 1rem; }
         .dd-info-column { text-align: center; }
-        .docente-destacado-v2 { padding: 2rem; }
+        .docente-destacado-v2 { padding: 1.25rem; }
     }
     </style>
     <?php
