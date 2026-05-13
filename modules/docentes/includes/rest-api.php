@@ -375,7 +375,7 @@ if (!function_exists('dp_rest_update_docente')) {
             update_post_meta($doc_id, 'docente_redes', dp_rest_sanitize_docente_redes($redes));
         }
 
-        return new WP_REST_Response(dp_rest_build_docente_payload($doc_id), 201);
+        return new WP_REST_Response(dp_rest_build_docente_payload($doc_id), 200);
     }
 }
 
@@ -407,7 +407,7 @@ add_action('rest_api_init', function () {
         ],
     ]);
 
-    register_rest_route('flacso-docentes/v1', '/docentes/(?P<id>\\d+)', [
+    register_rest_route('flacso-docentes/v1', '/docentes/(?P<id>[0-9]+)', [
         [
             'methods' => WP_REST_Server::READABLE,
             'callback' => 'dp_rest_get_docente',
