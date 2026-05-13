@@ -252,16 +252,13 @@ if (!function_exists('dp_rest_create_docente')) {
         $content = isset($params['content']) ? wp_kses_post($params['content']) : '';
         $cv = isset($params['cv']) ? wp_kses_post($params['cv']) : '';
 
-        // Forzar titulo y slug segun requisitos del usuario (incluyendo prefijo si existe)
-        $full_title_parts = array_filter([$prefijo_abrev, $nombre, $apellido]);
-        if (!empty($full_title_parts)) {
-            $title = implode(' ', $full_title_parts);
-            $slug = sanitize_title($nombre . '-' . $apellido); // El slug lo mantenemos sin prefijo por SEO
-        }
-
+        // Generar el post_title limpio (solo Nombre + Apellido)
+        $title = trim($nombre . ' ' . $apellido);
         if ($title === '') {
             return new WP_Error('dp_docente_missing_title', __('Debes enviar al menos nombre y apellido.', 'flacso-posgrados-docentes'), ['status' => 400]);
         }
+        
+        $slug = ($slug !== '') ? $slug : sanitize_title($title);
 
         $post_data = [
             'post_type' => 'docente',
@@ -322,9 +319,8 @@ if (!function_exists('dp_rest_update_docente')) {
         $nombre = isset($params['nombre']) ? sanitize_text_field($params['nombre']) : get_post_meta($doc_id, 'nombre', true);
         $apellido = isset($params['apellido']) ? sanitize_text_field($params['apellido']) : get_post_meta($doc_id, 'apellido', true);
         
-        if (array_key_exists('nombre', $params) || array_key_exists('apellido', $params) || array_key_exists('prefijo_abrev', $params)) {
-            $full_title_parts = array_filter([$prefijo, $nombre, $apellido]);
-            $update['post_title'] = implode(' ', $full_title_parts);
+        if (array_key_exists('nombre', $params) || array_key_exists('apellido', $params)) {
+            $update['post_title'] = trim($nombre . ' ' . $apellido);
             $update['post_name'] = sanitize_title($nombre . '-' . $apellido);
         } else {
             if (array_key_exists('title', $params)) {

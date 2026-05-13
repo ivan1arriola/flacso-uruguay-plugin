@@ -569,11 +569,18 @@ function dp_docentes_grupo_block_render($attributes = []) {
         foreach (['titulo_academico', 'prefijo', 'prefijo_abrev'] as $meta_key) {
             $meta_val = trim((string) get_post_meta($id, $meta_key, true));
             if ($meta_val !== '') {
-                $pref = $meta_val;
                 break;
             }
         }
-        $display_name = $base;
+        $pref_abrev = trim((string) get_post_meta($id, 'prefijo_abrev', true));
+        $display_name = $pref_abrev ? $pref_abrev . ' ' . $base : $base;
+
+        $titulo_academico = trim((string) get_post_meta($id, 'titulo_academico', true));
+        
+        // Evitar redundancia: si el título académico es igual al prefijo, no lo mostramos doble
+        if (strtolower($titulo_academico) === strtolower($pref_abrev)) {
+            $titulo_academico = '';
+        }
 
         $cv_raw = trim((string) get_post_meta($id, 'cv', true));
         $cv_html = $cv_raw !== '' ? wp_kses(wpautop($cv_raw), $allowed_cv_tags) : '';
@@ -581,15 +588,6 @@ function dp_docentes_grupo_block_render($attributes = []) {
         $inic = 'FL';
         if ($nombre !== '' && $apellido !== '') {
             $inic = $mb_substr_safe($nombre, 0, 1) . $mb_substr_safe($apellido, 0, 1);
-        } elseif ($nombre !== '') {
-            $inic = $mb_substr_safe($nombre, 0, 2);
-        } elseif ($base !== '') {
-            $parts = array_values(array_filter(preg_split('/\s+/', $base)));
-            if (count($parts) >= 2) {
-                $inic = $mb_substr_safe($parts[0], 0, 1) . $mb_substr_safe($parts[1], 0, 1);
-            } else {
-                $inic = $mb_substr_safe($base, 0, 2);
-            }
         }
         $inic = strtoupper((string) $inic);
 
@@ -600,29 +598,28 @@ function dp_docentes_grupo_block_render($attributes = []) {
         ob_start();
         ?>
         <article class="fdc-card" aria-labelledby="<?php echo esc_attr($label_id); ?>">
-            <div class="fdc-top">
-                <div class="fdc-avatar">
+            <?php if ($can_edit && $edit_url) : ?>
+                <a class="fdc-edit-overlay" href="<?php echo esc_url($edit_url); ?>" target="_blank" rel="noopener" title="Editar Docente">
+                    <span class="edit-icon">✎</span>
+                </a>
+            <?php endif; ?>
+
+            <div class="fdc-header">
+                <div class="fdc-avatar-wrap">
                     <?php echo $build_avatar($id, $display_name, $inic); ?>
                 </div>
-                <div class="fdc-meta">
+                <div class="fdc-info">
                     <h3 class="fdc-name" id="<?php echo esc_attr($label_id); ?>">
                         <?php echo esc_html($display_name); ?>
                     </h3>
-                    
                     <?php if ($titulo_academico !== '') : ?>
-                        <div class="fdc-title-full"><?php echo esc_html($titulo_academico); ?></div>
-                    <?php endif; ?>
-
-                    <?php if ($can_edit && $edit_url) : ?>
-                        <a class="fdc-edit" href="<?php echo esc_url($edit_url); ?>" target="_blank" rel="noopener noreferrer">
-                            <?php esc_html_e('Editar', 'flacso-posgrados-docentes'); ?>
-                        </a>
+                        <div class="fdc-academic-title"><?php echo esc_html($titulo_academico); ?></div>
                     <?php endif; ?>
                 </div>
             </div>
 
             <?php if ($cv_html !== '') : ?>
-                <div class="fdc-cv">
+                <div class="fdc-cv-preview">
                     <?php echo $cv_html; ?>
                 </div>
             <?php endif; ?>
