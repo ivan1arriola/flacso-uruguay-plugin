@@ -405,33 +405,22 @@ function dp_cv_docente_texto($atts = []) {
 }
 
 if (!function_exists('dp_docente_destacado')) {
-function dp_docente_destacado($atts = []) {
-    $atts = wp_parse_args($atts, [
-        'slug'  => '',
-        'docId' => 0,
-        'rol'   => '',
-        'role'  => '',
-    ]);
-
+function dp_docente_destacado($attributes = []) {
     // Compatibilidad: algunos bloques guardan "role" y otros "rol".
     $rol = '';
-    if (!empty($atts['rol'])) {
-        $rol = sanitize_text_field((string) $atts['rol']);
-    } elseif (!empty($atts['role'])) {
-        $rol = sanitize_text_field((string) $atts['role']);
+    if (!empty($attributes['rol'])) {
+        $rol = sanitize_text_field((string) $attributes['rol']);
+    } elseif (!empty($attributes['role'])) {
+        $rol = sanitize_text_field((string) $attributes['role']);
     }
 
-    $doc_id = absint($atts['docId']);
-    if (!$doc_id && !empty($atts['slug'])) {
-        $doc = get_page_by_path($atts['slug'], OBJECT, 'docente');
+    $doc_id = isset($attributes['docId']) ? (int) $attributes['docId'] : 0;
+    if (!$doc_id && !empty($attributes['slug'])) {
+        $doc = get_page_by_path($attributes['slug'], OBJECT, 'docente');
         if ($doc) {
             $doc_id = $doc->ID;
         }
     }
-
-function dp_docente_destacado($attributes = []) {
-    $rol = isset($attributes['rol']) ? (string) $attributes['rol'] : '';
-    $doc_id = isset($attributes['docId']) ? (int) $attributes['docId'] : 0;
 
     if (!$doc_id) {
         return '<div class="alert alert-info docente-destacado-placeholder">Selecciona un docente para destacar.</div>';
@@ -520,7 +509,6 @@ function dp_docente_destacado($attributes = []) {
         overflow: hidden;
     }
     
-    /* Ayuda para el editor: área de clic clara */
     .is-selected .docente-destacado-v2 {
         outline: 3px solid var(--dd-p1);
         outline-offset: 4px;
