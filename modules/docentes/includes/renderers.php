@@ -462,9 +462,7 @@ function dp_docente_destacado($attributes = []) {
         <div class="dd-container">
             <div class="dd-header">
                 <div class="dd-avatar-column">
-                    <div class="dd-avatar-frame">
-                        <?php echo dp_avatar_markup($doc_id, $display_name, 240, 'dd-img'); ?>
-                    </div>
+                    <?php echo dp_avatar_markup($doc_id, $display_name, 240, 'dd-img'); ?>
                 </div>
                 <div class="dd-info-column">
                     <?php if ($rol): ?>
@@ -503,7 +501,7 @@ function dp_docente_destacado($attributes = []) {
         background: var(--dd-bg);
         border: 1px solid #e2e8f0;
         border-radius: var(--dd-radius);
-        padding: 2rem; /* Reducido de 3rem */
+        padding: 2.5rem;
         box-shadow: 0 10px 40px rgba(15, 23, 42, 0.06);
         margin: 1.5rem 0;
         overflow: hidden;
@@ -513,60 +511,67 @@ function dp_docente_destacado($attributes = []) {
 
     .dd-header {
         display: flex;
-        gap: 2rem;
+        gap: 1.5rem; /* Reducido para dar más espacio al texto */
         align-items: center;
-        margin-bottom: 1.25rem; /* Reducido de 2.5rem */
-        padding-bottom: 1.25rem; /* Reducido de 2rem */
+        margin-bottom: 1.25rem;
+        padding-bottom: 1.25rem;
         border-bottom: 1px solid #f1f5f9;
     }
 
     .dd-avatar-column { flex-shrink: 0; }
     
-    .dd-avatar-frame {
-        width: 130px; /* Un poco más pequeño para ganar espacio */
-        height: 130px;
-        border-radius: 18px;
+    .dd-img {
+        width: 140px !important; /* Tamaño más equilibrado */
+        height: 140px !important;
+        border-radius: 16px;
         overflow: hidden;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
         background: #f8fafc;
+        line-height: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
-    /* FIX: Apuntar directamente a la imagen interna */
-    .dd-avatar-frame img { 
-        width: 100% !important; 
-        height: 100% !important; 
+    .dd-img img { 
+        display: block;
+        max-width: 100% !important; 
+        max-height: 100% !important; 
+        width: auto !important;
+        height: auto !important;
         object-fit: contain !important; 
         background: #f8fafc;
     }
 
-    .dd-info-column { flex-grow: 1; text-align: left; }
+    .dd-info-column { flex-grow: 1; text-align: left; min-width: 0; } /* min-width: 0 ayuda con el truncado */
 
     .dd-kicker {
         display: inline-block;
         background: var(--dd-accent);
         color: var(--dd-p1);
-        font-size: 0.65rem; /* Más compacto */
+        font-size: 0.6rem;
         font-weight: 800;
         text-transform: uppercase;
-        padding: 0.25rem 0.65rem;
-        border-radius: 6px;
+        padding: 0.25rem 0.6rem;
+        border-radius: 5px;
         margin-bottom: 0.5rem;
-        letter-spacing: 0.05em;
     }
 
     .dd-name {
         margin: 0 0 0.25rem !important;
-        font-size: 1.7rem; /* Un poco más pequeño para que no ocupe tanto */
+        font-size: 1.45rem !important; /* Reducido para evitar saltos de línea feos */
         font-weight: 850;
         color: var(--dd-p1);
-        line-height: 1.2;
+        line-height: 1.1;
+        word-wrap: break-word;
     }
 
     .dd-academic-title {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         color: var(--dd-muted);
         font-weight: 600;
         margin: 0;
+        line-height: 1.3;
     }
 
     .dd-bio-full {
