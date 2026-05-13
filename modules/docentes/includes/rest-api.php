@@ -394,34 +394,42 @@ if (!function_exists('dp_rest_delete_docente')) {
 }
 
 add_action('rest_api_init', function () {
+    // Ruta para la colección (Listado y Creación)
     register_rest_route('flacso-docentes/v1', '/docentes', [
-        [
-            'methods' => WP_REST_Server::READABLE,
-            'callback' => 'dp_rest_get_docentes',
-            'permission_callback' => 'dp_rest_can_read_docentes',
-        ],
-        [
-            'methods' => WP_REST_Server::CREATABLE,
-            'callback' => 'dp_rest_create_docente',
-            'permission_callback' => 'dp_rest_can_edit_docentes',
-        ],
+        'methods' => 'GET, POST',
+        'callback' => function ($request) {
+            if ($request->get_method() === 'POST') {
+                return dp_rest_create_docente($request);
+            }
+            return dp_rest_get_docentes($request);
+        },
+        'permission_callback' => function ($request) {
+            if ($request->get_method() === 'POST') {
+                return dp_rest_can_edit_docentes();
+            }
+            return dp_rest_can_read_docentes();
+        },
     ]);
 
+    // Ruta para ítems individuales (Ver, Actualizar, Eliminar)
     register_rest_route('flacso-docentes/v1', '/docentes/(?P<id>[0-9]+)', [
-        [
-            'methods' => WP_REST_Server::READABLE,
-            'callback' => 'dp_rest_get_docente',
-            'permission_callback' => 'dp_rest_can_read_docentes',
-        ],
-        [
-            'methods' => WP_REST_Server::EDITABLE,
-            'callback' => 'dp_rest_update_docente',
-            'permission_callback' => 'dp_rest_can_edit_docentes',
-        ],
-        [
-            'methods' => WP_REST_Server::DELETABLE,
-            'callback' => 'dp_rest_delete_docente',
-            'permission_callback' => 'dp_rest_can_edit_docentes',
-        ],
+        'methods' => 'GET, POST, PUT, PATCH, DELETE',
+        'callback' => function ($request) {
+            $method = $request->get_method();
+            if ($method === 'DELETE') {
+                return dp_rest_delete_docente($request);
+            }
+            if ($method === 'GET') {
+                return dp_rest_get_docente($request);
+            }
+            return dp_rest_update_docente($request);
+        },
+        'permission_callback' => function ($request) {
+            $method = $request->get_method();
+            if ($method === 'GET') {
+                return dp_rest_can_read_docentes();
+            }
+            return dp_rest_can_edit_docentes();
+        },
     ]);
 });
