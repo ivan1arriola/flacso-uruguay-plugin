@@ -192,26 +192,6 @@ if (!function_exists('flacso_pos_rest_featured_image_payload')) {
     }
 }
 
-if (!function_exists('flacso_pos_rest_equipo_payload')) {
-    function flacso_pos_rest_equipo_payload(int $term_id): array {
-        if (function_exists('dp_rest_build_equipo_payload')) {
-            return dp_rest_build_equipo_payload($term_id);
-        }
-
-        $term = get_term($term_id, 'equipo-docente');
-        if (!$term || is_wp_error($term)) {
-            return [];
-        }
-
-        return [
-            'id' => (int) $term->term_id,
-            'name' => $term->name,
-            'slug' => $term->slug,
-            'link' => get_term_link($term),
-        ];
-    }
-}
-
 if (!function_exists('flacso_pos_rest_build_payload')) {
     function flacso_pos_rest_build_payload($post): array {
         $post = is_numeric($post) ? get_post((int) $post) : $post;
@@ -248,18 +228,8 @@ if (!function_exists('flacso_pos_rest_build_payload')) {
         $data['featured_image'] = flacso_pos_rest_featured_image_payload($post->ID);
         $data['featured_image_url'] = $data['featured_image']['url'] ?? '';
 
-        $equipo_ids = function_exists('dp_get_equipo_term_ids_by_page')
-            ? dp_get_equipo_term_ids_by_page($post->ID)
-            : [];
-        if ($equipo_ids) {
-            $equipos = [];
-            foreach ($equipo_ids as $term_id) {
-                $equipos[] = flacso_pos_rest_equipo_payload((int) $term_id);
-            }
-            $data['equipos'] = $equipos;
-        } else {
-            $data['equipos'] = [];
-        }
+        // Equipo functionality removed.
+        $data['equipos'] = [];
 
         return $data;
     }

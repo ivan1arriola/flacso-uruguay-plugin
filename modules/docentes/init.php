@@ -43,7 +43,7 @@ add_action('init', function () {
     CPT_Docente::init();
     Docente_Meta::init();
 
-    // Garantizar que el CPT docente no use taxonomias de equipos.
+    // Garantizar que el CPT docente no use taxonomias de equipos (Eliminado del todo)
     if (taxonomy_exists('equipo-docente') && function_exists('unregister_taxonomy_for_object_type')) {
         unregister_taxonomy_for_object_type('equipo-docente', 'docente');
     }
@@ -166,4 +166,5 @@ if (!function_exists('dp_purge_equipo_docente_data_once')) {
     }
 }
 
+// Purga de datos de equipos (Ejecucion solicitada por el usuario para eliminacion total)
 add_action('init', 'dp_purge_equipo_docente_data_once', 200);

@@ -146,172 +146,6 @@ add_action('init', function() {
     ]);
 });
 
-if (!function_exists('dp_docentes_equipo_bloques')) {
-function dp_docentes_equipo_bloques($attributes = [], $content = '', $block = null) {
-    if (wp_style_is('dp-docentes-equipo-style', 'registered')) {
-        wp_enqueue_style('dp-docentes-equipo-style');
-    }
-
-    $attributes = wp_parse_args($attributes, [
-        'useCurrentPage' => true,
-        'termId' => 0,
-        'columns' => 3,
-        'pageId' => 0,
-    ]);
-
-    $term_id = (int) $attributes['termId'];
-    $columns = max(1, min(4, (int) $attributes['columns']));
-    $context_page_id = (int) $attributes['pageId'];
-    $term_ids = [];
-
-    if (!$context_page_id && $block instanceof WP_Block && !empty($block->context['postId'])) {
-        $context_page_id = (int) $block->context['postId'];
-    }
-
-    if (!$context_page_id && function_exists('get_the_ID')) {
-        $context_page_id = (int) get_the_ID();
-    }
-
-    if ($term_id) {
-        $term_ids = [$term_id];
-    }
-
-    if (!$term_ids && !empty($attributes['useCurrentPage']) && $context_page_id && function_exists('dp_get_equipo_term_ids_by_page')) {
-        $term_ids = dp_get_equipo_term_ids_by_page($context_page_id);
-    }
-
-    $term_ids = array_values(array_unique(array_filter(array_map('intval', $term_ids))));
-
-    if (!$term_ids) {
-        return dp_docentes_wrap_output('<div class="dp-docentes-equipo-block__placeholder">' . esc_html__('No hay un equipo academico asociado a esta pagina.', 'flacso-posgrados-docentes') . '</div>');
-    }
-    $sections = [];
-    $wrapper_classes = sprintf('dp-docentes-equipo-block dp-docentes-equipo-block--cols-%d', $columns);
-
-    foreach ($term_ids as $term_id) {
-        $term = get_term($term_id, 'equipo-docente');
-        if (!$term || is_wp_error($term)) {
-            continue;
-        }
-
-        $docentes = get_posts([
-            'post_type'      => 'docente',
-            'posts_per_page' => -1,
-            'orderby'        => 'meta_value',
-            'meta_key'       => 'apellido',
-            'order'          => 'ASC',
-            'tax_query'      => [
-                [
-                    'taxonomy' => 'equipo-docente',
-                    'field'    => 'term_id',
-                    'terms'    => $term_id,
-                ],
-            ],
-        ]);
-
-        if (empty($docentes)) {
-            if (count($term_ids) === 1) {
-                return dp_docentes_wrap_output('<div class="dp-docentes-equipo-block__placeholder">' . esc_html__('No hay integrantes asignados todavia.', 'flacso-posgrados-docentes') . '</div>');
-            }
-            continue;
-        }
-
-        $term_name  = function_exists('dp_get_equipo_relacion_nombre')
-            ? dp_get_equipo_relacion_nombre($term_id, $term->name)
-            : $term->name;
-        $term_color = function_exists('get_equipo_color') ? get_equipo_color($term_id) : '#1d3a72';
-
-        $output  = '<section class="' . esc_attr($wrapper_classes) . '" data-columns="' . esc_attr($columns) . '">';
-
-        if ($term_name) {
-            $output .= '<header class="dp-docentes-equipo-block__header">';
-            $output .= '<span class="dp-docentes-equipo-block__badge" style="background-color:' . esc_attr($term_color) . '">';
-            $output .= esc_html($term_name);
-            $output .= '</span>';
-            $output .= '</header>';
-        }
-
-        $output .= '<div class="dp-docentes-equipo-block__grid">';
-
-        foreach ($docentes as $docente) {
-            $nombre   = function_exists('dp_nombre_completo') ? dp_nombre_completo($docente->ID) : get_the_title($docente->ID);
-            $prefijo_abrev = get_post_meta($docente->ID, 'prefijo_abrev', true);
-            $nombre_meta   = get_post_meta($docente->ID, 'nombre', true);
-            $apellido_meta = get_post_meta($docente->ID, 'apellido', true);
-            $display_name  = trim(($nombre_meta ?: '') . ' ' . ($apellido_meta ?: ''));
-            if ($display_name === '') {
-                $display_name = $nombre;
-            }
-            $resumen  = wp_trim_words(wp_strip_all_tags(get_post_meta($docente->ID, 'cv', true)), 24);
-            $avatar   = get_the_post_thumbnail_url($docente->ID, 'medium');
-            $correo   = function_exists('dp_get_docente_principal_email') ? dp_get_docente_principal_email($docente->ID) : null;
-            $perfil   = get_permalink($docente->ID);
-
-            $output .= '<article class="dp-docentes-equipo-block__item">';
-            $output .= '<div class="dp-docentes-equipo-block__avatar">';
-
-            if ($avatar) {
-                $output .= '<img src="' . esc_url($avatar) . '" alt="' . esc_attr($nombre) . '">';
-            } else {
-                $initials = '';
-                $segments = array_values(array_filter(preg_split('/\s+/', trim($nombre))));
-                if (!empty($segments)) {
-                    $first = $segments[0];
-                    $last  = $segments[count($segments) - 1];
-                    $substr = function ($value) {
-                        $value = (string) $value;
-                        if (function_exists('mb_substr')) {
-                            return mb_substr($value, 0, 1);
-                        }
-                        return substr($value, 0, 1);
-                    };
-                    $initials = strtoupper($substr($first) . $substr($last));
-                }
-                $output .= '<span class="dp-docentes-equipo-block__initials" style="background-color:' . esc_attr($term_color) . '">';
-                $output .= esc_html($initials ?: 'D');
-                $output .= '</span>';
-            }
-
-            $output .= '</div>';
-            $output .= '<div class="dp-docentes-equipo-block__body">';
-            if ($prefijo_abrev) {
-                $output .= '<span class="dp-docentes-equipo-block__abbr">' . esc_html($prefijo_abrev) . '</span>';
-            }
-            $output .= '<h3 class="dp-docentes-equipo-block__title"><a href="' . esc_url($perfil) . '">' . esc_html($display_name) . '</a></h3>';
-
-            if ($resumen) {
-                $output .= '<p class="dp-docentes-equipo-block__excerpt">' . esc_html($resumen) . '</p>';
-            }
-
-            if ($correo && !empty($correo['email'])) {
-                $label = !empty($correo['label']) ? $correo['label'] . ': ' : '';
-                $output .= '<p class="dp-docentes-equipo-block__contact">';
-                $output .= esc_html($label) . '<a href="mailto:' . esc_attr($correo['email']) . '">' . esc_html($correo['email']) . '</a>';
-                $output .= '</p>';
-            }
-
-            $output .= '<div class="dp-docentes-equipo-block__actions">';
-            $output .= '<a class="btn btn-primary btn-sm" href="' . esc_url($perfil) . '">' . esc_html__('Ver perfil', 'flacso-posgrados-docentes') . '</a>';
-            if (current_user_can('edit_post', $docente->ID)) {
-                $output .= '<a class="btn btn-outline-secondary btn-sm" href="' . esc_url(get_edit_post_link($docente->ID, '')) . '">' . esc_html__('Editar docente', 'flacso-posgrados-docentes') . '</a>';
-            }
-            $output .= '</div>';
-            $output .= '</div>';
-            $output .= '</article>';
-        }
-
-        $output .= '</div></section>';
-        $sections[] = $output;
-    }
-
-    if (!$sections) {
-        return dp_docentes_wrap_output('<div class="dp-docentes-equipo-block__placeholder">' . esc_html__('No hay integrantes asignados todavia.', 'flacso-posgrados-docentes') . '</div>');
-    }
-
-    return dp_docentes_wrap_output(implode('', $sections));
-}
-}
-
 if (!function_exists('dp_docente_resumen_block')) {
 function dp_docente_resumen_block($attributes = []) {
     if (!function_exists('flacso_render_docente_profile')) {
@@ -350,11 +184,8 @@ function dp_docentes_lista_block($attributes = [], $content = '', $block = null)
         'post_type' => 'docente',
         'post_status' => 'publish',
         'posts_per_page' => ($limit > 0) ? $limit : -1,
-        'meta_key' => 'apellido',
-        'orderby' => [
-            'meta_value' => 'ASC',
-            'title' => 'ASC',
-        ],
+        'orderby' => 'title',
+        'order' => 'ASC',
         'no_found_rows' => true,
     ];
 
@@ -566,14 +397,8 @@ function dp_docentes_grupo_block_render($attributes = []) {
         $titulo_academico = trim((string) get_post_meta($id, 'titulo_academico', true));
 
         $pref_abrev = trim((string) get_post_meta($id, 'prefijo_abrev', true));
-        $display_name = $pref_abrev ? $pref_abrev . ' ' . $base : $base;
-
-        $titulo_academico = trim((string) get_post_meta($id, 'titulo_academico', true));
-        
-        // Evitar redundancia: si el título académico es igual al prefijo, no lo mostramos doble
-        if (strtolower($titulo_academico) === strtolower($pref_abrev)) {
-            $titulo_academico = '';
-        }
+        $display_name = $pref_abrev ? $pref_abrev . ' ' : '';
+        $display_name .= $base;
 
         $cv_raw = trim((string) get_post_meta($id, 'cv', true));
         $cv_html = $cv_raw !== '' ? wp_kses(wpautop($cv_raw), $allowed_cv_tags) : '';
@@ -661,8 +486,3 @@ function dp_docentes_grupo_block_render($attributes = []) {
     return function_exists('dp_docentes_wrap_output') ? dp_docentes_wrap_output(ob_get_clean()) : ob_get_clean();
 }
 }
-
-
-
-
-

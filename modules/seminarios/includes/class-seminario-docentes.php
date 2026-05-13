@@ -18,7 +18,6 @@ class FLACSO_Docentes_Consistente {
         add_action('wp_head', [__CLASS__, 'print_scoped_css'], 50);
         add_shortcode('dp_docentes_grid',      [__CLASS__, 'sc_docentes_grid']);
         add_shortcode('dp_docente_destacado', [__CLASS__, 'sc_docente_destacado']);
-        // Legacy shortcode intentionally disabled. Use block flacso/docentes-grupo.
     }
 
     public static function setup_images() {
@@ -156,7 +155,6 @@ class FLACSO_Docentes_Consistente {
                 padding: 0 18px;
             }
 
-            /* NOTA: SIN HEADER/descripcion por diseño (para no “descripción del posgrado”) */
             .flacso-doc-consistente .fdc-grid{
                 display: grid;
                 grid-template-columns: repeat(12, 1fr);
@@ -190,7 +188,6 @@ class FLACSO_Docentes_Consistente {
                 border-color: rgba(29,58,114,.22);
             }
 
-            /* CLAVE: mismo layout siempre. No hay “modo móvil” distinto. */
             .flacso-doc-consistente .fdc-top{
                 display: grid;
                 grid-template-columns: 88px 1fr;
@@ -251,7 +248,6 @@ class FLACSO_Docentes_Consistente {
                 line-height: 1.35;
             }
 
-            /* CV SIEMPRE VISIBLE */
             .flacso-doc-consistente .fdc-cv{
                 margin-top: 14px;
                 padding: 14px 14px;
@@ -266,19 +262,13 @@ class FLACSO_Docentes_Consistente {
             .flacso-doc-consistente .fdc-cv ol{ margin: 0 0 12px 20px; padding: 0; }
             .flacso-doc-consistente .fdc-cv li{ margin: 0 0 6px; }
             .flacso-doc-consistente .fdc-cv strong{ color: var(--p1); font-weight: 750; }
-
-            /* Opcional: si querés 1 columna en mobile sí o sí, descomentá:
-            @media (max-width: 960px){ .flacso-doc-consistente .fdc-grid > .fdc-card{ grid-column: span 12; } }
-            */
         </style>
     <?php }
 
     /* ================= SHORTCODES ================= */
 
-    // Importante: NO imprimimos titulo/descripcion aquí (para que no salga "descripción del posgrado").
     public static function sc_docentes_grid($atts) {
         $atts = shortcode_atts([
-            'equipo' => '',
             'cantidad' => -1,
             'orden' => 'nombre',
         ], $atts);
@@ -295,14 +285,6 @@ class FLACSO_Docentes_Consistente {
         if ($atts['orden'] === 'apellido') {
             $args['meta_key'] = 'apellido';
             $args['orderby'] = 'meta_value';
-        }
-
-        if (!empty($atts['equipo'])) {
-            $args['tax_query'] = [[
-                'taxonomy' => 'equipo-docente',
-                'field' => 'slug',
-                'terms' => sanitize_title($atts['equipo']),
-            ]];
         }
 
         $q = new WP_Query($args);
@@ -337,30 +319,9 @@ class FLACSO_Docentes_Consistente {
         $post = get_page_by_path($slug, OBJECT, 'docente');
         if (!$post) return '<div class="flacso-doc-consistente"><div class="fdc-wrap" style="padding:18px;color:#b82105;text-align:center;">❌ Docente no encontrado.</div></div>';
 
-        // Destacado: reutiliza card (mismo look)
         return '<div class="flacso-doc-consistente"><div class="fdc-wrap" style="margin:18px auto 42px;">'
             . self::build_card((int)$post->ID, ['mostrar_cv' => 'completo'])
             . '</div></div>';
-    }
-
-    public static function sc_docentes_equipo($atts) {
-        $atts = shortcode_atts([
-            'slug' => '',
-            'cantidad' => -1,
-            'orden' => 'nombre',
-        ], $atts);
-
-        $slug = sanitize_title($atts['slug']);
-        if (!$slug) return '<div class="flacso-doc-consistente"><div class="fdc-wrap" style="padding:18px;color:#b82105;text-align:center;">⚠️ Falta el slug del equipo.</div></div>';
-
-        $term = get_term_by('slug', $slug, 'equipo-docente');
-        if (!$term || is_wp_error($term)) return '<div class="flacso-doc-consistente"><div class="fdc-wrap" style="padding:18px;color:#b82105;text-align:center;">❌ Equipo no encontrado.</div></div>';
-
-        return self::sc_docentes_grid([
-            'equipo' => $slug,
-            'cantidad' => $atts['cantidad'],
-            'orden' => $atts['orden'],
-        ]);
     }
 }
 

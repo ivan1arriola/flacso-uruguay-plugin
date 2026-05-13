@@ -788,7 +788,7 @@ while (have_posts()) : the_post();
                     <div class="card info-card h-100 shadow-sm">
                         <div class="card-body text-start p-4">
                             <div class="info-card-icon">🎥</div>
-                            <h5 class="card-title fw-bold mb-3">Encuentros sincronicos</h5>
+                            <h5 class="card-title fw-bold mb-3">Encuentros sincrónicos</h5>
                             <?php if (!empty($meta['es_asincronico'])) : ?>
                                 <div class="alert alert-light border-info py-3 px-3 mb-0" style="font-size: 0.9rem; border-radius: 10px; background-color: #f0f9ff;">
                                     <i class="bi bi-info-circle-fill text-info me-2"></i>

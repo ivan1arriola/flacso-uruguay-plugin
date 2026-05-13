@@ -23,7 +23,7 @@ if (!class_exists('FLACSO_Posgrados_Docentes_Sync')) {
             add_filter('dp_posgrado_root_page_id', [__CLASS__, 'sync_root_page_id']);
             add_filter('dp_posgrado_excluded_branch_ids', [__CLASS__, 'sync_excluded_branch_ids']);
 
-            add_action('init', [__CLASS__, 'synchronize_terms_with_programs'], 20);
+            // synchronization with equipo-docente intentionally disabled.
             add_action('save_post_' . FLACSO_Posgrados_Fields::POST_TYPE, [__CLASS__, 'handle_program_save'], 20, 3);
         }
 
@@ -41,17 +41,6 @@ if (!class_exists('FLACSO_Posgrados_Docentes_Sync')) {
             }
 
             return array_values(array_map('intval', (array) $value));
-        }
-
-        public static function synchronize_terms_with_programs(): void {
-            if (!taxonomy_exists('equipo-docente')) {
-                return;
-            }
-
-            foreach (self::get_syncable_page_ids() as $page_id) {
-                self::sync_tipo_with_parent($page_id);
-                self::ensure_child_pages($page_id);
-            }
         }
 
         public static function handle_program_save(int $post_id, WP_Post $post, bool $update): void {
@@ -85,111 +74,6 @@ if (!class_exists('FLACSO_Posgrados_Docentes_Sync')) {
             }
 
             return FLACSO_Posgrados_Pages::get_allowed_page_ids();
-        }
-
-        private static function sync_term_with_page(int $page_id): void {
-            $page = get_post($page_id);
-            if (!$page || $page->post_type !== FLACSO_Posgrados_Fields::POST_TYPE) {
-                return;
-            }
-
-            $term_id = self::get_term_id_by_page($page_id);
-
-            if (!$term_id) {
-                $result = wp_insert_term(
-                    $page->post_title,
-                    'equipo-docente',
-                    [
-                        'slug'        => sanitize_title($page->post_name ?: $page->post_title),
-                        'description' => self::generate_description($page),
-                    ]
-                );
-
-                if (is_wp_error($result)) {
-                    if ($result->get_error_code() === 'term_exists') {
-                        $term_id = (int) $result->get_error_data('term_exists');
-                    } else {
-                        return;
-                    }
-                } else {
-                    $term_id = (int) $result['term_id'];
-                }
-            }
-
-            $term = get_term($term_id, 'equipo-docente');
-            $auto_sync = get_term_meta($term_id, 'equipo_docente_autosync', true);
-            $relacion_nombre = get_term_meta($term_id, 'equipo_docente_relacion_nombre', true);
-            $page_slug = sanitize_title($page->post_name ?: $page->post_title);
-
-            $should_sync_name = !empty($auto_sync);
-            if (!$should_sync_name && $term && !is_wp_error($term)) {
-                $should_sync_name = ($relacion_nombre === '' && sanitize_title($term->slug) === $page_slug);
-            }
-
-            if ($should_sync_name) {
-                wp_update_term(
-                    $term_id,
-                    'equipo-docente',
-                    [
-                        'name'        => $page->post_title,
-                        'description' => self::generate_description($page),
-                    ]
-                );
-                if (empty($auto_sync)) {
-                    update_term_meta($term_id, 'equipo_docente_autosync', 1);
-                }
-            }
-
-            update_term_meta($term_id, 'equipo_docente_page_id', $page_id);
-
-            self::maybe_assign_color($term_id, $page_id);
-        }
-
-        private static function generate_description(WP_Post $page): string {
-            if (has_excerpt($page)) {
-                return wp_strip_all_tags($page->post_excerpt);
-            }
-
-            return wp_trim_words(wp_strip_all_tags($page->post_content), 40);
-        }
-
-        private static function maybe_assign_color(int $term_id, int $page_id): void {
-            $existing_color = get_term_meta($term_id, 'equipo_docente_color', true);
-            if ($existing_color) {
-                return;
-            }
-
-            $tipo      = get_post_meta($page_id, 'tipo_posgrado', true);
-            $color_map = apply_filters('flacso_pos_docentes_color_map', self::DEFAULT_COLOR_MAP);
-
-            if (!empty($color_map[$tipo])) {
-                update_term_meta($term_id, 'equipo_docente_color', sanitize_hex_color($color_map[$tipo]) ?: $color_map[$tipo]);
-            }
-        }
-
-        private static function get_term_id_by_page(int $page_id): int {
-            if (function_exists('dp_get_equipo_term_id_by_page')) {
-                return (int) dp_get_equipo_term_id_by_page($page_id);
-            }
-
-            $terms = get_terms([
-                'taxonomy'   => 'equipo-docente',
-                'hide_empty' => false,
-                'fields'     => 'ids',
-                'number'     => 1,
-                'meta_query' => [
-                    [
-                        'key'   => 'equipo_docente_page_id',
-                        'value' => $page_id,
-                    ],
-                ],
-            ]);
-
-            if (is_wp_error($terms) || empty($terms)) {
-                return 0;
-            }
-
-            return (int) $terms[0];
         }
 
         private static function sync_tipo_with_parent(int $post_id): void {

@@ -183,11 +183,8 @@ if (!function_exists('dp_rest_get_docentes')) {
             'post_type' => 'docente',
             'posts_per_page' => $per_page,
             'paged' => $page,
-            'orderby' => [
-                'meta_value' => 'ASC',
-                'title' => 'ASC',
-            ],
-            'meta_key' => 'apellido',
+            'orderby' => 'title',
+            'order' => 'ASC',
             'post_status' => $status ?: 'any',
         ];
 

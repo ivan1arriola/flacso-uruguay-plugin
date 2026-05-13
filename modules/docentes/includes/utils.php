@@ -47,32 +47,7 @@ if (!function_exists('dp_strip_prefix_from_name')) {
     }
 }
 
-// Función para obtener el color de un equipo (persistente)
-function get_equipo_color($term_id) {
-    $color = get_term_meta($term_id, 'equipo_docente_color', true);
-
-    if ($color) {
-        return $color; // Color definido manualmente
-    }
-
-    // Si no hay color guardado → generar uno determinista por slug
-    $term  = get_term($term_id);
-    $slug  = $term ? $term->slug : 'default';
-
-    // Hash del slug → convertir en número
-    $hash  = crc32($slug);
-
-    // Paleta fija
-    $colors = [
-        '#0073aa', '#46b450', '#d54e21', '#ffb900',
-        '#7928a1', '#dd9933', '#00a0d2', '#e91e63', '#009688'
-    ];
-
-    // Seleccionar color según hash
-    $index = $hash % count($colors);
-
-    return $colors[$index];
-}
+/* get_equipo_color removed */
 
 
 // Función para generar color aleatorio basado en las iniciales (consistente)
@@ -298,120 +273,7 @@ function dp_get_docente_socials($docente_id) {
     return $limpias;
 }
 
-function dp_get_equipo_page_id($term_id) {
-    return (int) get_term_meta($term_id, 'equipo_docente_page_id', true);
-}
-
-function dp_get_equipo_page($term_id) {
-    $page_id = dp_get_equipo_page_id($term_id);
-    if (!$page_id) {
-        return null;
-    }
-    $page = get_post($page_id);
-    if (!$page || $page->post_status !== 'publish') {
-        return null;
-    }
-    return $page;
-}
-
-if (!function_exists('dp_get_equipo_relacion_nombre')) {
-function dp_get_equipo_relacion_nombre($term_id, $fallback = '') {
-    $label = get_term_meta($term_id, 'equipo_docente_relacion_nombre', true);
-    $label = is_string($label) ? trim($label) : '';
-
-    if ($label !== '') {
-        return $label;
-    }
-
-    if ($fallback !== '') {
-        return $fallback;
-    }
-
-    $term = get_term($term_id);
-    if ($term && !is_wp_error($term)) {
-        return $term->name;
-    }
-
-    return '';
-}
-}
-
-function dp_get_equipo_page_data($term_id) {
-    $page = dp_get_equipo_page($term_id);
-    if (!$page) {
-        return null;
-    }
-
-    return [
-        'id' => $page->ID,
-        'title' => get_the_title($page),
-        'permalink' => get_permalink($page),
-        'excerpt' => wp_trim_words(has_excerpt($page) ? $page->post_excerpt : wp_strip_all_tags($page->post_content), 30),
-        'thumbnail' => get_the_post_thumbnail_url($page, 'large'),
-        'modified' => get_post_modified_time(get_option('date_format'), false, $page->ID, true),
-    ];
-}
-
-if (!function_exists('dp_get_equipo_term_ids_by_page')) {
-function dp_get_equipo_term_ids_by_page($page_id) {
-    $page_id = (int) $page_id;
-    if (!$page_id) {
-        return [];
-    }
-
-    $terms = get_terms([
-        'taxonomy'   => 'equipo-docente',
-        'hide_empty' => false,
-        'fields'     => 'ids',
-        'orderby'    => 'term_id',
-        'order'      => 'ASC',
-        'meta_query' => [
-            [
-                'key'   => 'equipo_docente_page_id',
-                'value' => $page_id,
-            ],
-        ],
-    ]);
-
-    if (is_wp_error($terms) || empty($terms)) {
-        return [];
-    }
-
-    return array_values(array_map('intval', $terms));
-}
-}
-
-if (!function_exists('dp_get_equipo_term_id_by_page')) {
-function dp_get_equipo_term_id_by_page($page_id) {
-    $page_id = (int) $page_id;
-    static $cache = [];
-
-    if (!$page_id) {
-        return 0;
-    }
-
-    if (isset($cache[$page_id])) {
-        return $cache[$page_id];
-    }
-
-    $terms = dp_get_equipo_term_ids_by_page($page_id);
-    if (empty($terms)) {
-        $cache[$page_id] = 0;
-        return 0;
-    }
-
-    foreach ($terms as $term_id) {
-        $auto_sync = get_term_meta($term_id, 'equipo_docente_autosync', true);
-        if (!empty($auto_sync)) {
-            $cache[$page_id] = (int) $term_id;
-            return $cache[$page_id];
-        }
-    }
-
-    $cache[$page_id] = (int) $terms[0];
-    return $cache[$page_id];
-}
-}
+/* team-page mapping functions removed */
 
 if (!function_exists('dp_page_has_ancestor_in_list')) {
 function dp_page_has_ancestor_in_list($page_id, array $ancestor_ids) {

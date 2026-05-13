@@ -119,7 +119,7 @@ $valor_usd_15_descuento = get_post_meta($post->ID, '_seminario_valor_usd_15_desc
     </table>
 </div>
 
-<h3>Encuentros sincronicos</h3>
+<h3>Encuentros sincrónicos</h3>
 <table class="widefat striped" id="seminario-encuentros">
     <thead>
         <tr>
