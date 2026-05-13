@@ -252,12 +252,14 @@ if (!function_exists('dp_rest_create_docente')) {
         $content = isset($params['content']) ? wp_kses_post($params['content']) : '';
         $cv = isset($params['cv']) ? wp_kses_post($params['cv']) : '';
 
-        if ($title === '') {
-            $title = trim($prefijo_abrev . ' ' . $nombre . ' ' . $apellido);
+        // Forzar titulo y slug segun requisitos del usuario
+        if ($nombre !== '' || $apellido !== '') {
+            $title = trim($nombre . ' ' . $apellido);
+            $slug = sanitize_title($nombre . '-' . $apellido);
         }
 
         if ($title === '') {
-            return new WP_Error('dp_docente_missing_title', __('Debes enviar un titulo o nombre/apellido.', 'flacso-posgrados-docentes'), ['status' => 400]);
+            return new WP_Error('dp_docente_missing_title', __('Debes enviar al menos nombre y apellido.', 'flacso-posgrados-docentes'), ['status' => 400]);
         }
 
         $post_data = [
@@ -314,11 +316,20 @@ if (!function_exists('dp_rest_update_docente')) {
         $params = dp_rest_get_payload($request);
         $update = ['ID' => $doc_id];
 
-        if (array_key_exists('title', $params)) {
-            $update['post_title'] = sanitize_text_field($params['title']);
-        }
-        if (array_key_exists('slug', $params)) {
-            $update['post_name'] = sanitize_title($params['slug']);
+        // Forzar titulo y slug si se actualizan nombre o apellido
+        $nombre = isset($params['nombre']) ? sanitize_text_field($params['nombre']) : get_post_meta($doc_id, 'nombre', true);
+        $apellido = isset($params['apellido']) ? sanitize_text_field($params['apellido']) : get_post_meta($doc_id, 'apellido', true);
+        
+        if (array_key_exists('nombre', $params) || array_key_exists('apellido', $params)) {
+            $update['post_title'] = trim($nombre . ' ' . $apellido);
+            $update['post_name'] = sanitize_title($nombre . '-' . $apellido);
+        } else {
+            if (array_key_exists('title', $params)) {
+                $update['post_title'] = sanitize_text_field($params['title']);
+            }
+            if (array_key_exists('slug', $params)) {
+                $update['post_name'] = sanitize_title($params['slug']);
+            }
         }
         if (array_key_exists('status', $params)) {
             $update['post_status'] = sanitize_key($params['status']);
