@@ -80,6 +80,7 @@ class Seminario_Meta
             'acreditacion' => array('type' => 'string'),
             'descripcion_horas' => array('type' => 'string'),
             'mostrar_en_formulario' => array('type' => 'boolean'),
+            'es_asincronico' => array('type' => 'boolean'),
         );
     }
 
@@ -202,7 +203,7 @@ class Seminario_Meta
             return array_values(array_unique($clean));
         }
 
-        if ($key === 'acredita_maestria' || $key === 'acredita_doctorado' || $key === 'mostrar_en_formulario') {
+        if ($key === 'acredita_maestria' || $key === 'acredita_doctorado' || $key === 'mostrar_en_formulario' || $key === 'es_asincronico') {
             return (bool) $value;
         }
 

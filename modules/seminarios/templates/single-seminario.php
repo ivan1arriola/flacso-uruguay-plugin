@@ -720,13 +720,15 @@ while (have_posts()) : the_post();
             <?php endif; ?>
             
             <!-- Modalidad -->
-            <?php if (!empty($meta['modalidad'])) : ?>
+            <?php if (!empty($meta['modalidad']) || !empty($meta['es_asincronico'])) : ?>
                 <div>
                     <div class="card info-card h-100 shadow-sm">
                         <div class="card-body text-start p-4">
                             <div class="info-card-icon">📹</div>
                             <h5 class="card-title fw-bold mb-3">Modalidad</h5>
-                            <p class="mb-0" style="color: var(--global-palette4);"><?php echo wp_kses_post($meta['modalidad']); ?></p>
+                            <?php if (!empty($meta['modalidad'])) : ?>
+                                <p class="mb-0" style="color: var(--global-palette4);"><?php echo wp_kses_post($meta['modalidad']); ?></p>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -780,13 +782,19 @@ while (have_posts()) : the_post();
             $encuentros_card_validos = array_filter($encuentros_card, function($e) {
                 return !empty($e['fecha']);
             });
-            if (!empty($encuentros_card_validos)) : 
+            if (!empty($encuentros_card_validos) || !empty($meta['es_asincronico'])) : 
             ?>
                 <div>
                     <div class="card info-card h-100 shadow-sm">
                         <div class="card-body text-start p-4">
                             <div class="info-card-icon">🎥</div>
                             <h5 class="card-title fw-bold mb-3">Encuentros sincronicos</h5>
+                            <?php if (!empty($meta['es_asincronico'])) : ?>
+                                <div class="alert alert-light border-info py-3 px-3 mb-0" style="font-size: 0.9rem; border-radius: 10px; background-color: #f0f9ff;">
+                                    <i class="bi bi-info-circle-fill text-info me-2"></i>
+                                    Este seminario se dicta de forma <strong>totalmente asincrónica</strong>. No requiere conexiones en vivo en horarios fijos.
+                                </div>
+                            <?php endif; ?>
                             <div style="font-size: 0.9rem; color: var(--global-palette4);">
                                 <?php foreach ($encuentros_card_validos as $index => $encuentro) : 
                                     $fecha = isset($encuentro['fecha']) ? $encuentro['fecha'] : '';

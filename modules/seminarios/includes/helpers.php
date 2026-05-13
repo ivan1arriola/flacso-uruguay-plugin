@@ -31,6 +31,7 @@ class Seminario_Helpers
             'acreditacion',
             'descripcion_horas',
             'mostrar_en_formulario',
+            'es_asincronico',
         );
     }
 
