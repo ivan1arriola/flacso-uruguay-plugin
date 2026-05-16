@@ -580,12 +580,7 @@ $ofertas_con_seminarios_disponibles = array_keys($ofertas_con_seminarios_disponi
                         $permalink = get_permalink($oferta_id);
                         $link_seminarios = trailingslashit($permalink) . 'seminarios/';
                         $titulo = get_the_title($oferta_id);
-                        // Limpiar el título para los botones
-                        $display_title = str_replace(
-                            array('Maestría en ', 'Diploma Superior en ', 'Especialización en ', 'Diploma en '), 
-                            '', 
-                            $titulo
-                        );
+                        $display_title = $titulo;
                     ?>
                         <a href="<?php echo esc_url($link_seminarios); ?>" class="seminarios-btn seminarios-btn--outline">
                             <?php echo esc_html($display_title); ?>

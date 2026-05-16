@@ -27,7 +27,7 @@ if (!function_exists('dp_rest_check_cap')) {
 
 if (!function_exists('dp_rest_can_read_docentes')) {
     function dp_rest_can_read_docentes() {
-        return dp_rest_check_cap('edit_posts');
+        return true;
     }
 }
 
