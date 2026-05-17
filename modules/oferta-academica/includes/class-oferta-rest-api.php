@@ -49,6 +49,24 @@ class Oferta_Rest_API
             'schema' => null,
         ]);
 
+        // Registrar seminarios asociados a la oferta
+        register_rest_field('oferta-academica', '_oferta_seminarios_ids', [
+            'get_callback' => function ($post_array) {
+                $val = get_post_meta($post_array['id'], '_oferta_seminarios_ids', true);
+                return is_array($val) ? array_values(array_map('intval', $val)) : [];
+            },
+            'update_callback' => function ($value, $post_obj) {
+                if (is_array($value)) {
+                    $cleaned = array_values(array_unique(array_map('intval', $value)));
+                    update_post_meta($post_obj->ID, '_oferta_seminarios_ids', $cleaned);
+                } else {
+                    delete_post_meta($post_obj->ID, '_oferta_seminarios_ids');
+                }
+                return true;
+            },
+            'schema' => null,
+        ]);
+
         // Registrar campo para taxonomías simplificadas (mantenemos compatibilidad con el frontend)
         register_rest_field('oferta-academica', 'taxonomies', [
             'get_callback' => function ($post_array) {
