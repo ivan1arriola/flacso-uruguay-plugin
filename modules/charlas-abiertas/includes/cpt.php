@@ -455,7 +455,11 @@ function flacso_charlas_abiertas_sync_evento_from_charla($charla_id, $force_crea
     update_post_meta($evento_id, 'evento_inicio_hora', $inicio_dt->format('H:i'));
     update_post_meta($evento_id, 'evento_fin_fecha', $fin_dt->format('Y-m-d'));
     update_post_meta($evento_id, 'evento_fin_hora', $fin_dt->format('H:i'));
-    update_post_meta($evento_id, 'evento_post_asociado', 0);
+    $post_asociado_id = (int) get_post_meta($charla_id, '_charla_post_id', true);
+    if ($post_asociado_id <= 0 || get_post_status($post_asociado_id) !== 'publish') {
+        $post_asociado_id = $charla_id;
+    }
+    update_post_meta($evento_id, 'evento_post_asociado', $post_asociado_id);
     update_post_meta($evento_id, 'evento_display_title', $titulo);
     update_post_meta($evento_id, '_evento_charla_abierta_id', $charla_id);
 
@@ -467,6 +471,78 @@ function flacso_charlas_abiertas_sync_evento_from_charla($charla_id, $force_crea
     update_post_meta($charla_id, '_charla_evento_id', $evento_id);
 
     return $evento_id;
+}
+
+function flacso_charlas_abiertas_sync_post_from_charla($charla_id) {
+    $charla_id = absint($charla_id);
+    if ($charla_id <= 0) {
+        return 0;
+    }
+
+    $charla = get_post($charla_id);
+    if (!$charla || 'charla_abierta' !== $charla->post_type) {
+        return 0;
+    }
+
+    $titulo = trim((string) get_the_title($charla_id));
+    if ('' === $titulo) {
+        return 0;
+    }
+
+    $descripcion = (string) get_post_meta($charla_id, '_charla_descripcion', true);
+    $post_content = $descripcion . "\n\n<!-- wp:flacso-uy/charlas-abiertas-formulario {\"eventoId\":" . $charla_id . "} /-->";
+
+    $post_id = (int) get_post_meta($charla_id, '_charla_post_id', true);
+    $post_exists = $post_id > 0 && get_post_type($post_id) === 'post' && get_post_status($post_id) !== 'trash';
+
+    if ($post_exists) {
+        $update_data = [
+            'ID'           => $post_id,
+            'post_title'   => $titulo,
+            'post_content' => $post_content,
+            'post_status'  => $charla->post_status,
+        ];
+        wp_update_post($update_data);
+    } else {
+        $insert_data = [
+            'post_type'    => 'post',
+            'post_title'   => $titulo,
+            'post_content' => $post_content,
+            'post_status'  => $charla->post_status,
+        ];
+        $inserted_id = wp_insert_post($insert_data);
+        if (!is_wp_error($inserted_id) && $inserted_id > 0) {
+            $post_id = (int) $inserted_id;
+            update_post_meta($charla_id, '_charla_post_id', $post_id);
+            update_post_meta($post_id, '_post_charla_id', $charla_id);
+        }
+    }
+
+    if ($post_id > 0) {
+        $charla_thumbnail_id = get_post_thumbnail_id($charla_id);
+        if ($charla_thumbnail_id > 0 && function_exists('set_post_thumbnail')) {
+            set_post_thumbnail($post_id, $charla_thumbnail_id);
+        }
+    }
+
+    return $post_id;
+}
+
+add_action('rest_after_insert_charla_abierta', 'flacso_charlas_abiertas_sync_evento_on_rest_save', 10, 3);
+function flacso_charlas_abiertas_sync_evento_on_rest_save($post, $request, $creating) {
+    if (!($post instanceof WP_Post) || 'charla_abierta' !== $post->post_type || 'publish' !== $post->post_status) {
+        return;
+    }
+
+    flacso_charlas_abiertas_sync_post_from_charla($post->ID);
+
+    $sync_evento_raw = get_post_meta($post->ID, '_charla_sync_evento', true);
+    if (!empty($sync_evento_raw)) {
+        $sync_result = flacso_charlas_abiertas_sync_evento_from_charla($post->ID);
+        if (is_wp_error($sync_result) && defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('[FLACSO Charlas REST] No se pudo sincronizar evento para charla ' . $post->ID . ': ' . $sync_result->get_error_message());
+        }
+    }
 }
 
 add_action('save_post_charla_abierta', 'flacso_charlas_abiertas_save_meta', 10, 2);
@@ -548,6 +624,8 @@ function flacso_charlas_abiertas_save_meta($post_id, $post) {
     if (isset($_POST['flacso_charla_descripcion'])) {
         update_post_meta($post_id, '_charla_descripcion', wp_kses_post(wp_unslash($_POST['flacso_charla_descripcion'])));
     }
+
+    flacso_charlas_abiertas_sync_post_from_charla($post_id);
 
     $sync_evento_enabled = isset($_POST['flacso_charla_sync_evento']) && '1' === sanitize_text_field(wp_unslash($_POST['flacso_charla_sync_evento']));
     update_post_meta($post_id, '_charla_sync_evento', $sync_evento_enabled ? 1 : 0);

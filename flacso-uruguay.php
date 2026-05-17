@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 // ============================================
 // Constantes Globales
 // ============================================
-define('FLACSO_URUGUAY_VERSION', '4.2.4');
+define('FLACSO_URUGUAY_VERSION', '4.2.5');
 define('FLACSO_URUGUAY_FILE', __FILE__);
 define('FLACSO_URUGUAY_PATH', plugin_dir_path(__FILE__));
 define('FLACSO_URUGUAY_URL', plugin_dir_url(__FILE__));

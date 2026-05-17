@@ -332,6 +332,12 @@ class Oferta_Data_Schema {
             ],
         ]);
 
+        register_rest_route('flacso/v1', '/oferta-academica/taxonomies', [
+            'methods' => \WP_REST_Server::READABLE,
+            'callback' => [self::class, 'rest_get_taxonomies'],
+            'permission_callback' => '__return_true',
+        ]);
+
         register_rest_route('flacso/v1', '/oferta-academica/(?P<id>\d+)', [
             'methods' => \WP_REST_Server::EDITABLE,
             'callback' => [self::class, 'rest_update_oferta'],
@@ -342,6 +348,32 @@ class Oferta_Data_Schema {
                 ],
             ],
         ]);
+    }
+
+    public static function rest_get_taxonomies() {
+        $response = [
+            'tipo-oferta-academica' => [],
+            'area_tematica'         => [],
+        ];
+
+        foreach (['tipo-oferta-academica', 'area_tematica'] as $tax) {
+            $terms = get_terms([
+                'taxonomy'   => $tax,
+                'hide_empty' => false,
+            ]);
+
+            if (!is_wp_error($terms) && is_array($terms)) {
+                foreach ($terms as $t) {
+                    $response[$tax][] = [
+                        'id'   => (int) $t->term_id,
+                        'name' => $t->name,
+                        'slug' => $t->slug,
+                    ];
+                }
+            }
+        }
+
+        return rest_ensure_response($response);
     }
 
     public static function rest_get_oferta(\WP_REST_Request $request) {
