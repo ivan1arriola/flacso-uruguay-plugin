@@ -69,7 +69,6 @@ function flacso_autoridades_get_data() {
         $data['imagen_fondo'] = 'https://flacso.edu.uy/wp-content/uploads/2024/12/IMG_20220914_151738883-scaled-e1733249869591.jpg';
     }
 
-    // Normalización si faltan campos de dirección o secciones
     if (!isset($data['direccion']) || !is_array($data['direccion'])) {
         $dir_encontrada = false;
         if (!empty($data['secciones']) && is_array($data['secciones'])) {
@@ -264,7 +263,7 @@ function flacso_autoridades_admin_page() {
                 <code style="font-size:14px; padding:4px 8px; font-weight:bold;">[flacso_autoridades]</code>
             </p>
             <p class="description">
-                <?php esc_html_e('Búsqueda Instantánea con Select2 y soporte completo de Prefijos (Dra., Mag., Cra.) tanto automáticos desde el perfil como para personal ingresado manualmente.', 'flacso-uruguay'); ?>
+                <?php esc_html_e('Interfaz Inteligente: Al seleccionar un perfil docente, los campos manuales (Nombre, Título, CV) se ocultan automáticamente para mantener el panel limpio. Los datos se toman directamente de su ficha oficial.', 'flacso-uruguay'); ?>
             </p>
         </div>
 
@@ -298,7 +297,7 @@ function flacso_autoridades_admin_page() {
             </div>
 
             <!-- Dirección de FLACSO -->
-            <div class="postbox persona-item" style="padding: 24px; background: #fff; border-radius: 8px; border-left: 5px solid #fed222; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px;">
+            <div class="postbox persona-item <?php echo ($data['direccion']['docente_id'] > 0) ? 'has-docente' : ''; ?>" style="padding: 24px; background: #fff; border-radius: 8px; border-left: 5px solid #fed222; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px;">
                 <h2 style="margin-top:0; border-bottom: 2px solid #fed222; padding-bottom: 12px; font-size: 20px; color: #1d3a72;">
                     <span class="dashicons dashicons-awards" style="vertical-align: middle; color: #1d3a72;"></span>
                     <?php esc_html_e('Dirección de FLACSO Uruguay', 'flacso-uruguay'); ?>
@@ -322,53 +321,15 @@ function flacso_autoridades_admin_page() {
                                 </select>
                             </div>
                             <?php if ($data['direccion']['docente_id'] > 0): ?>
-                                <a href="<?php echo esc_url(admin_url('post.php?post=' . $data['direccion']['docente_id'] . '&action=edit')); ?>" target="_blank" class="button button-small edit-doc-link" title="<?php esc_attr_e('Editar perfil en nueva pestaña', 'flacso-uruguay'); ?>" style="display: flex; align-items: center; justify-content: center; height: 36px; width: 36px;">
+                                <a href="<?php echo esc_url(admin_url('post.php?post=' . $data['direccion']['docente_id'] . '&action=edit')); ?>" target="_blank" class="button button-small edit-doc-link" title="<?php esc_attr_e('Editar ficha oficial del docente', 'flacso-uruguay'); ?>" style="display: flex; align-items: center; justify-content: center; height: 36px; width: 36px;">
                                     <span class="dashicons dashicons-edit"></span>
                                 </a>
                             <?php endif; ?>
                         </div>
-                        <span class="description small"><?php esc_html_e('Toma foto, prefijo, título y CV.', 'flacso-uruguay'); ?></span>
+                        <span class="description small doc-info-hint"><?php esc_html_e('Al elegir un docente, los datos se leen automáticamente de su ficha oficial.', 'flacso-uruguay'); ?></span>
                     </div>
 
-                    <div>
-                        <label><strong><?php esc_html_e('Prefijo (Ej: Dra., Mag., Cra.)', 'flacso-uruguay'); ?></strong></label><br>
-                        <input
-                            type="text"
-                            name="direccion[prefijo]"
-                            value="<?php echo esc_attr($data['direccion']['prefijo']); ?>"
-                            class="regular-text"
-                            style="width: 100%; margin-top: 4px; border-radius: 4px; height: 36px;"
-                            placeholder="<?php esc_attr_e('Ej: Dra.', 'flacso-uruguay'); ?>"
-                        >
-                        <span class="description small"><?php esc_html_e('Aparece justo antes del nombre.', 'flacso-uruguay'); ?></span>
-                    </div>
-
-                    <div>
-                        <label><strong><?php esc_html_e('Nombre / Apellido', 'flacso-uruguay'); ?></strong></label><br>
-                        <input
-                            type="text"
-                            name="direccion[nombre_manual]"
-                            value="<?php echo esc_attr($data['direccion']['nombre_manual']); ?>"
-                            class="regular-text nombre-manual-input"
-                            style="width: 100%; margin-top: 4px; border-radius: 4px; height: 36px;"
-                            placeholder="<?php esc_attr_e('Ej: Ana Gabriela Fernández', 'flacso-uruguay'); ?>"
-                        >
-                        <span class="description small"><?php esc_html_e('Se usa si es manual o para sobrescribir.', 'flacso-uruguay'); ?></span>
-                    </div>
-
-                    <div>
-                        <label><strong><?php esc_html_e('Título Académico', 'flacso-uruguay'); ?></strong></label><br>
-                        <input
-                            type="text"
-                            name="direccion[titulo_academico]"
-                            value="<?php echo esc_attr($data['direccion']['titulo_academico']); ?>"
-                            class="regular-text"
-                            style="width: 100%; margin-top: 4px; border-radius: 4px; height: 36px;"
-                            placeholder="<?php esc_attr_e('Ej: Doctora en Género y Diversidad', 'flacso-uruguay'); ?>"
-                        >
-                        <span class="description small"><?php esc_html_e('Aparece en gris bajo el nombre.', 'flacso-uruguay'); ?></span>
-                    </div>
-
+                    <!-- Cargo (Siempre visible) -->
                     <div>
                         <label><strong><?php esc_html_e('Cargo Institucional', 'flacso-uruguay'); ?> <span style="color:#d63638;">*</span></strong></label><br>
                         <input
@@ -382,6 +343,7 @@ function flacso_autoridades_admin_page() {
                         <span class="description small"><?php esc_html_e('Destacado en el kicker amarillo.', 'flacso-uruguay'); ?></span>
                     </div>
 
+                    <!-- Enlace Externa (Siempre visible) -->
                     <div>
                         <label><strong><?php esc_html_e('Enlace Opcional Externa', 'flacso-uruguay'); ?></strong></label><br>
                         <input
@@ -395,14 +357,54 @@ function flacso_autoridades_admin_page() {
                         <span class="description small"><?php esc_html_e('Opcional si tiene un sitio externo.', 'flacso-uruguay'); ?></span>
                     </div>
 
-                    <div style="grid-column: 1 / -1;">
-                        <label><strong><?php esc_html_e('Biografía / CV (Para Ingreso Manual)', 'flacso-uruguay'); ?></strong></label><br>
+                    <!-- CAMPOS MANUALES (Ocultos si hay docente vinculado) -->
+                    <div class="manual-field">
+                        <label><strong><?php esc_html_e('Prefijo Manual', 'flacso-uruguay'); ?></strong></label><br>
+                        <input
+                            type="text"
+                            name="direccion[prefijo]"
+                            value="<?php echo esc_attr($data['direccion']['prefijo']); ?>"
+                            class="regular-text"
+                            style="width: 100%; margin-top: 4px; border-radius: 4px; height: 36px;"
+                            placeholder="<?php esc_attr_e('Ej: Dra.', 'flacso-uruguay'); ?>"
+                        >
+                        <span class="description small"><?php esc_html_e('Aparece justo antes del nombre.', 'flacso-uruguay'); ?></span>
+                    </div>
+
+                    <div class="manual-field">
+                        <label><strong><?php esc_html_e('Nombre / Apellido Manual', 'flacso-uruguay'); ?></strong></label><br>
+                        <input
+                            type="text"
+                            name="direccion[nombre_manual]"
+                            value="<?php echo esc_attr($data['direccion']['nombre_manual']); ?>"
+                            class="regular-text nombre-manual-input"
+                            style="width: 100%; margin-top: 4px; border-radius: 4px; height: 36px;"
+                            placeholder="<?php esc_attr_e('Ej: Ana Gabriela Fernández', 'flacso-uruguay'); ?>"
+                        >
+                        <span class="description small"><?php esc_html_e('Se usa para el ingreso manual.', 'flacso-uruguay'); ?></span>
+                    </div>
+
+                    <div class="manual-field">
+                        <label><strong><?php esc_html_e('Título Académico Manual', 'flacso-uruguay'); ?></strong></label><br>
+                        <input
+                            type="text"
+                            name="direccion[titulo_academico]"
+                            value="<?php echo esc_attr($data['direccion']['titulo_academico']); ?>"
+                            class="regular-text"
+                            style="width: 100%; margin-top: 4px; border-radius: 4px; height: 36px;"
+                            placeholder="<?php esc_attr_e('Ej: Doctora en Género y Diversidad', 'flacso-uruguay'); ?>"
+                        >
+                        <span class="description small"><?php esc_html_e('Aparece bajo el nombre.', 'flacso-uruguay'); ?></span>
+                    </div>
+
+                    <div class="manual-field" style="grid-column: 1 / -1;">
+                        <label><strong><?php esc_html_e('Biografía / CV Manual', 'flacso-uruguay'); ?></strong></label><br>
                         <textarea
                             name="direccion[cv]"
                             class="large-text"
                             rows="2"
                             style="width: 100%; margin-top: 4px; border-radius: 4px;"
-                            placeholder="<?php esc_attr_e('Escribe la biografía o texto del currículum para mostrar en la tarjeta si no tiene perfil vinculado...', 'flacso-uruguay'); ?>"
+                            placeholder="<?php esc_attr_e('Escribe la biografía o texto del currículum para mostrar en la tarjeta...', 'flacso-uruguay'); ?>"
                         ><?php echo esc_textarea($data['direccion']['cv']); ?></textarea>
                     </div>
                 </div>
@@ -455,7 +457,7 @@ function flacso_autoridades_admin_page() {
                             <?php endif; ?>
 
                             <?php foreach ($seccion['personas'] as $j => $persona): ?>
-                                <div class="persona-item" data-person-index="<?php echo esc_attr($j); ?>" style="border: 1px solid #ccd0d4; border-radius: 6px; padding: 20px; margin-bottom: 16px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative;">
+                                <div class="persona-item <?php echo ($persona['docente_id'] > 0) ? 'has-docente' : ''; ?>" data-person-index="<?php echo esc_attr($j); ?>" style="border: 1px solid #ccd0d4; border-radius: 6px; padding: 20px; margin-bottom: 16px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative;">
                                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
                                         
                                         <!-- Selector Docente con Select2 -->
@@ -473,57 +475,15 @@ function flacso_autoridades_admin_page() {
                                                     </select>
                                                 </div>
                                                 <?php if ($persona['docente_id'] > 0): ?>
-                                                    <a href="<?php echo esc_url(admin_url('post.php?post=' . $persona['docente_id'] . '&action=edit')); ?>" target="_blank" class="button button-small edit-doc-link" title="<?php esc_attr_e('Editar perfil en nueva pestaña', 'flacso-uruguay'); ?>" style="display: flex; align-items: center; justify-content: center; height: 36px; width: 36px;">
+                                                    <a href="<?php echo esc_url(admin_url('post.php?post=' . $persona['docente_id'] . '&action=edit')); ?>" target="_blank" class="button button-small edit-doc-link" title="<?php esc_attr_e('Editar ficha oficial del docente', 'flacso-uruguay'); ?>" style="display: flex; align-items: center; justify-content: center; height: 36px; width: 36px;">
                                                         <span class="dashicons dashicons-edit"></span>
                                                     </a>
                                                 <?php endif; ?>
                                             </div>
-                                            <span class="description small"><?php esc_html_e('Toma foto, prefijo y CV.', 'flacso-uruguay'); ?></span>
+                                            <span class="description small doc-info-hint"><?php esc_html_e('Toma foto, prefijo, título y CV oficiales.', 'flacso-uruguay'); ?></span>
                                         </div>
 
-                                        <!-- Prefijo -->
-                                        <div>
-                                            <label><strong><?php esc_html_e('Prefijo (Ej: Dra., Mag., Cra.)', 'flacso-uruguay'); ?></strong></label><br>
-                                            <input
-                                                type="text"
-                                                name="secciones[<?php echo esc_attr($i); ?>][personas][<?php echo esc_attr($j); ?>][prefijo]"
-                                                value="<?php echo esc_attr($persona['prefijo']); ?>"
-                                                class="regular-text"
-                                                style="width: 100%; margin-top: 4px; border-radius: 4px; height: 36px;"
-                                                placeholder="<?php esc_attr_e('Ej: Mag.', 'flacso-uruguay'); ?>"
-                                            >
-                                            <span class="description small"><?php esc_html_e('Aparece antes del nombre.', 'flacso-uruguay'); ?></span>
-                                        </div>
-
-                                        <!-- Nombre Manual -->
-                                        <div>
-                                            <label><strong><?php esc_html_e('Nombre / Apellido', 'flacso-uruguay'); ?></strong></label><br>
-                                            <input
-                                                type="text"
-                                                name="secciones[<?php echo esc_attr($i); ?>][personas][<?php echo esc_attr($j); ?>][nombre_manual]"
-                                                value="<?php echo esc_attr($persona['nombre_manual']); ?>"
-                                                class="regular-text nombre-manual-input"
-                                                style="width: 100%; margin-top: 4px; border-radius: 4px; height: 36px;"
-                                                placeholder="<?php esc_attr_e('Ej: Juan Pérez', 'flacso-uruguay'); ?>"
-                                            >
-                                            <span class="description small"><?php esc_html_e('Se usa si es manual o para sobrescribir.', 'flacso-uruguay'); ?></span>
-                                        </div>
-
-                                        <!-- Título Académico -->
-                                        <div>
-                                            <label><strong><?php esc_html_e('Título Académico', 'flacso-uruguay'); ?></strong></label><br>
-                                            <input
-                                                type="text"
-                                                name="secciones[<?php echo esc_attr($i); ?>][personas][<?php echo esc_attr($j); ?>][titulo_academico]"
-                                                value="<?php echo esc_attr($persona['titulo_academico']); ?>"
-                                                class="regular-text"
-                                                style="width: 100%; margin-top: 4px; border-radius: 4px; height: 36px;"
-                                                placeholder="<?php esc_attr_e('Ej: Doctor en Sociología', 'flacso-uruguay'); ?>"
-                                            >
-                                            <span class="description small"><?php esc_html_e('Aparece bajo el nombre.', 'flacso-uruguay'); ?></span>
-                                        </div>
-
-                                        <!-- Cargo -->
+                                        <!-- Cargo (Siempre Visible) -->
                                         <div>
                                             <label><strong><?php esc_html_e('Cargo en la Comisión', 'flacso-uruguay'); ?> <span style="color:#d63638;">*</span></strong></label><br>
                                             <input
@@ -537,7 +497,7 @@ function flacso_autoridades_admin_page() {
                                             <span class="description small"><?php esc_html_e('Destacado en el kicker.', 'flacso-uruguay'); ?></span>
                                         </div>
 
-                                        <!-- Programa -->
+                                        <!-- Programa (Siempre Visible) -->
                                         <div>
                                             <label><strong><?php esc_html_e('Programa Asociado (Opcional)', 'flacso-uruguay'); ?></strong></label><br>
                                             <input
@@ -551,7 +511,7 @@ function flacso_autoridades_admin_page() {
                                             <span class="description small"><?php esc_html_e('Especial para áreas académicas.', 'flacso-uruguay'); ?></span>
                                         </div>
 
-                                        <!-- Enlace Opcional -->
+                                        <!-- Enlace Opcional (Siempre Visible) -->
                                         <div>
                                             <label><strong><?php esc_html_e('Enlace Opcional del Programa', 'flacso-uruguay'); ?></strong></label><br>
                                             <input
@@ -565,15 +525,54 @@ function flacso_autoridades_admin_page() {
                                             <span class="description small"><?php esc_html_e('Convierte el programa en enlace.', 'flacso-uruguay'); ?></span>
                                         </div>
 
-                                        <!-- CV / Bio manual -->
-                                        <div style="grid-column: 1 / -1;">
-                                            <label><strong><?php esc_html_e('Biografía / CV (Para Ingreso Manual)', 'flacso-uruguay'); ?></strong></label><br>
+                                        <!-- CAMPOS MANUALES (Ocultos si hay docente vinculado) -->
+                                        <div class="manual-field">
+                                            <label><strong><?php esc_html_e('Prefijo Manual', 'flacso-uruguay'); ?></strong></label><br>
+                                            <input
+                                                type="text"
+                                                name="secciones[<?php echo esc_attr($i); ?>][personas][<?php echo esc_attr($j); ?>][prefijo]"
+                                                value="<?php echo esc_attr($persona['prefijo']); ?>"
+                                                class="regular-text"
+                                                style="width: 100%; margin-top: 4px; border-radius: 4px; height: 36px;"
+                                                placeholder="<?php esc_attr_e('Ej: Cra.', 'flacso-uruguay'); ?>"
+                                            >
+                                            <span class="description small"><?php esc_html_e('Aparece antes del nombre.', 'flacso-uruguay'); ?></span>
+                                        </div>
+
+                                        <div class="manual-field">
+                                            <label><strong><?php esc_html_e('Nombre / Apellido Manual', 'flacso-uruguay'); ?></strong></label><br>
+                                            <input
+                                                type="text"
+                                                name="secciones[<?php echo esc_attr($i); ?>][personas][<?php echo esc_attr($j); ?>][nombre_manual]"
+                                                value="<?php echo esc_attr($persona['nombre_manual']); ?>"
+                                                class="regular-text nombre-manual-input"
+                                                style="width: 100%; margin-top: 4px; border-radius: 4px; height: 36px;"
+                                                placeholder="<?php esc_attr_e('Ej: Juan Pérez', 'flacso-uruguay'); ?>"
+                                            >
+                                            <span class="description small"><?php esc_html_e('Se usa para ingreso manual.', 'flacso-uruguay'); ?></span>
+                                        </div>
+
+                                        <div class="manual-field">
+                                            <label><strong><?php esc_html_e('Título Académico Manual', 'flacso-uruguay'); ?></strong></label><br>
+                                            <input
+                                                type="text"
+                                                name="secciones[<?php echo esc_attr($i); ?>][personas][<?php echo esc_attr($j); ?>][titulo_academico]"
+                                                value="<?php echo esc_attr($persona['titulo_academico']); ?>"
+                                                class="regular-text"
+                                                style="width: 100%; margin-top: 4px; border-radius: 4px; height: 36px;"
+                                                placeholder="<?php esc_attr_e('Ej: Doctor en Sociología', 'flacso-uruguay'); ?>"
+                                            >
+                                            <span class="description small"><?php esc_html_e('Aparece bajo el nombre.', 'flacso-uruguay'); ?></span>
+                                        </div>
+
+                                        <div class="manual-field" style="grid-column: 1 / -1;">
+                                            <label><strong><?php esc_html_e('Biografía / CV Manual', 'flacso-uruguay'); ?></strong></label><br>
                                             <textarea
                                                 name="secciones[<?php echo esc_attr($i); ?>][personas][<?php echo esc_attr($j); ?>][cv]"
                                                 class="large-text"
                                                 rows="2"
                                                 style="width: 100%; margin-top: 4px; border-radius: 4px;"
-                                                placeholder="<?php esc_attr_e('Escribe la biografía o texto del currículum para mostrar en la tarjeta si no tiene perfil vinculado...', 'flacso-uruguay'); ?>"
+                                                placeholder="<?php esc_attr_e('Escribe la biografía o texto del currículum para mostrar en la tarjeta...', 'flacso-uruguay'); ?>"
                                             ><?php echo esc_textarea($persona['cv']); ?></textarea>
                                         </div>
                                     </div>
@@ -654,40 +653,7 @@ function flacso_autoridades_admin_page() {
                                     </select>
                                 </div>
                             </div>
-                            <span class="description small"><?php esc_html_e('Toma foto, prefijo y CV.', 'flacso-uruguay'); ?></span>
-                        </div>
-                        <div>
-                            <label><strong><?php esc_html_e('Prefijo (Ej: Dra., Mag., Cra.)', 'flacso-uruguay'); ?></strong></label><br>
-                            <input
-                                type="text"
-                                name="secciones[${seccionIndex}][personas][${personaIndex}][prefijo]"
-                                class="regular-text"
-                                style="width: 100%; margin-top: 4px; border-radius: 4px; height: 36px;"
-                                placeholder="<?php esc_attr_e('Ej: Mag.', 'flacso-uruguay'); ?>"
-                            >
-                            <span class="description small"><?php esc_html_e('Aparece antes del nombre.', 'flacso-uruguay'); ?></span>
-                        </div>
-                        <div>
-                            <label><strong><?php esc_html_e('Nombre / Apellido', 'flacso-uruguay'); ?></strong></label><br>
-                            <input
-                                type="text"
-                                name="secciones[${seccionIndex}][personas][${personaIndex}][nombre_manual]"
-                                class="regular-text nombre-manual-input"
-                                style="width: 100%; margin-top: 4px; border-radius: 4px; height: 36px;"
-                                placeholder="<?php esc_attr_e('Ej: Juan Pérez', 'flacso-uruguay'); ?>"
-                            >
-                            <span class="description small"><?php esc_html_e('Se usa si es manual o para sobrescribir.', 'flacso-uruguay'); ?></span>
-                        </div>
-                        <div>
-                            <label><strong><?php esc_html_e('Título Académico', 'flacso-uruguay'); ?></strong></label><br>
-                            <input
-                                type="text"
-                                name="secciones[${seccionIndex}][personas][${personaIndex}][titulo_academico]"
-                                class="regular-text"
-                                style="width: 100%; margin-top: 4px; border-radius: 4px; height: 36px;"
-                                placeholder="<?php esc_attr_e('Ej: Doctor en Sociología', 'flacso-uruguay'); ?>"
-                            >
-                            <span class="description small"><?php esc_html_e('Aparece bajo el nombre.', 'flacso-uruguay'); ?></span>
+                            <span class="description small doc-info-hint"><?php esc_html_e('Toma foto, prefijo, título y CV oficiales.', 'flacso-uruguay'); ?></span>
                         </div>
                         <div>
                             <label><strong><?php esc_html_e('Cargo en la Comisión', 'flacso-uruguay'); ?> <span style="color:#d63638;">*</span></strong></label><br>
@@ -722,14 +688,47 @@ function flacso_autoridades_admin_page() {
                             >
                             <span class="description small"><?php esc_html_e('Convierte el programa en enlace.', 'flacso-uruguay'); ?></span>
                         </div>
-                        <div style="grid-column: 1 / -1;">
-                            <label><strong><?php esc_html_e('Biografía / CV (Para Ingreso Manual)', 'flacso-uruguay'); ?></strong></label><br>
+                        <div class="manual-field">
+                            <label><strong><?php esc_html_e('Prefijo Manual', 'flacso-uruguay'); ?></strong></label><br>
+                            <input
+                                type="text"
+                                name="secciones[${seccionIndex}][personas][${personaIndex}][prefijo]"
+                                class="regular-text"
+                                style="width: 100%; margin-top: 4px; border-radius: 4px; height: 36px;"
+                                placeholder="<?php esc_attr_e('Ej: Mag.', 'flacso-uruguay'); ?>"
+                            >
+                            <span class="description small"><?php esc_html_e('Aparece antes del nombre.', 'flacso-uruguay'); ?></span>
+                        </div>
+                        <div class="manual-field">
+                            <label><strong><?php esc_html_e('Nombre / Apellido Manual', 'flacso-uruguay'); ?></strong></label><br>
+                            <input
+                                type="text"
+                                name="secciones[${seccionIndex}][personas][${personaIndex}][nombre_manual]"
+                                class="regular-text nombre-manual-input"
+                                style="width: 100%; margin-top: 4px; border-radius: 4px; height: 36px;"
+                                placeholder="<?php esc_attr_e('Ej: Juan Pérez', 'flacso-uruguay'); ?>"
+                            >
+                            <span class="description small"><?php esc_html_e('Se usa para ingreso manual.', 'flacso-uruguay'); ?></span>
+                        </div>
+                        <div class="manual-field">
+                            <label><strong><?php esc_html_e('Título Académico Manual', 'flacso-uruguay'); ?></strong></label><br>
+                            <input
+                                type="text"
+                                name="secciones[${seccionIndex}][personas][${personaIndex}][titulo_academico]"
+                                class="regular-text"
+                                style="width: 100%; margin-top: 4px; border-radius: 4px; height: 36px;"
+                                placeholder="<?php esc_attr_e('Ej: Doctor en Sociología', 'flacso-uruguay'); ?>"
+                            >
+                            <span class="description small"><?php esc_html_e('Aparece bajo el nombre.', 'flacso-uruguay'); ?></span>
+                        </div>
+                        <div class="manual-field" style="grid-column: 1 / -1;">
+                            <label><strong><?php esc_html_e('Biografía / CV Manual', 'flacso-uruguay'); ?></strong></label><br>
                             <textarea
                                 name="secciones[${seccionIndex}][personas][${personaIndex}][cv]"
                                 class="large-text"
                                 rows="2"
                                 style="width: 100%; margin-top: 4px; border-radius: 4px;"
-                                placeholder="<?php esc_attr_e('Escribe la biografía o texto del currículum para mostrar en la tarjeta si no tiene perfil vinculado...', 'flacso-uruguay'); ?>"
+                                placeholder="<?php esc_attr_e('Escribe la biografía o texto del currículum...', 'flacso-uruguay'); ?>"
                             ></textarea>
                         </div>
                     </div>
@@ -818,25 +817,19 @@ function flacso_autoridades_admin_page() {
         $(document).on('change', '.docente-select', function() {
             const select = $(this);
             const personaItem = select.closest('.persona-item');
-            const inputNombre = personaItem.find('.nombre-manual-input');
-            const selectedText = select.find('option:selected').text().trim();
             const selectedValue = select.val();
 
             if (selectedValue !== '0') {
-                if (inputNombre.length && inputNombre.val().trim() === '') {
-                    inputNombre.attr('placeholder', 'Automático: ' + selectedText);
-                }
+                personaItem.addClass('has-docente');
                 let editBtn = personaItem.find('.edit-doc-link');
                 const editUrl = '<?php echo esc_url(admin_url('post.php?action=edit&post=')); ?>' + selectedValue;
                 if (editBtn.length === 0) {
-                    select.parent().append(`<a href="${editUrl}" target="_blank" class="button button-small edit-doc-link" title="Editar perfil en nueva pestaña" style="display: flex; align-items: center; justify-content: center; height: 36px; width: 36px; margin-left: 8px;"><span class="dashicons dashicons-edit"></span></a>`);
+                    select.parent().append(`<a href="${editUrl}" target="_blank" class="button button-small edit-doc-link" title="Editar ficha oficial del docente" style="display: flex; align-items: center; justify-content: center; height: 36px; width: 36px; margin-left: 8px;"><span class="dashicons dashicons-edit"></span></a>`);
                 } else {
                     editBtn.attr('href', editUrl);
                 }
             } else {
-                if (inputNombre.length) {
-                    inputNombre.attr('placeholder', '<?php esc_attr_e('Ej: Juan Pérez', 'flacso-uruguay'); ?>');
-                }
+                personaItem.removeClass('has-docente');
                 personaItem.find('.edit-doc-link').remove();
             }
         });
@@ -847,6 +840,11 @@ function flacso_autoridades_admin_page() {
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(4px); }
         to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* UX Premium: Ocultar los campos manuales cuando se seleccionó un perfil de docente */
+    .persona-item.has-docente .manual-field {
+        display: none !important;
     }
     
     .select2-container--default .select2-selection--single {

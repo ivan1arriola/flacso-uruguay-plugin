@@ -23,7 +23,7 @@ add_shortcode('flacso_autoridades', function () {
         $programa = esc_html($persona['programa'] ?? '');
         $enlace   = esc_url($persona['enlace'] ?? '');
 
-        // Datos manuales
+        // Datos para ingreso manual
         $prefijo_manual = trim($persona['prefijo'] ?? '');
         $nombre_manual  = trim($persona['nombre_manual'] ?? '');
         $titulo_manual  = trim($persona['titulo_academico'] ?? '');
@@ -43,8 +43,8 @@ add_shortcode('flacso_autoridades', function () {
                 $nombre_base = get_the_title($doc_id);
             }
             
-            // Priorizar prefijo manual si se escribió algo, sino el del post meta
-            $prefijo = ($prefijo_manual !== '') ? $prefijo_manual : trim((string) get_post_meta($doc_id, 'prefijo_abrev', true));
+            // Tomar siempre los datos oficiales del perfil oficial del docente
+            $prefijo = trim((string) get_post_meta($doc_id, 'prefijo_abrev', true));
             
             if ($prefijo !== '' && mb_strpos($nombre_base, $prefijo) === false) {
                 $nombre_completo = trim($prefijo . ' ' . trim($nombre_base));
@@ -52,8 +52,8 @@ add_shortcode('flacso_autoridades', function () {
                 $nombre_completo = trim($nombre_base);
             }
 
-            $titulo_academico = ($titulo_manual !== '') ? $titulo_manual : (string) get_post_meta($doc_id, 'titulo_academico', true);
-            $cv_raw           = ($cv_manual !== '') ? $cv_manual : (string) get_post_meta($doc_id, 'cv', true);
+            $titulo_academico = (string) get_post_meta($doc_id, 'titulo_academico', true);
+            $cv_raw           = (string) get_post_meta($doc_id, 'cv', true);
             
             if (function_exists('dp_avatar_markup')) {
                 $avatar_html = dp_avatar_markup($doc_id, $nombre_completo, 140, 'flacso-autoridad__avatar-img');
@@ -71,7 +71,7 @@ add_shortcode('flacso_autoridades', function () {
                 $redes = dp_get_docente_socials($doc_id);
             }
         } else {
-            // Ingreso Manual o sin vincular
+            // Ingreso Manual
             $nombre_completo  = trim(($prefijo_manual !== '' ? $prefijo_manual . ' ' : '') . trim($nombre_manual));
             $titulo_academico = $titulo_manual;
             $cv_raw           = $cv_manual;
@@ -460,14 +460,12 @@ add_shortcode('flacso_autoridades', function () {
     </style>
 
     <div class="flacso-autoridades-wrapper">
-        <!-- Banner Hero -->
         <section class="flacso-autoridades-hero" aria-label="<?php esc_attr_e('Cabecera de Autoridades', 'flacso-uruguay'); ?>">
             <div class="flacso-hero-accent"></div>
             <h1><?php esc_html_e('Autoridades de FLACSO Uruguay', 'flacso-uruguay'); ?></h1>
             <p><?php esc_html_e('Conoce el equipo directivo, académico y administrativo que guía nuestra misión en la docencia e investigación.', 'flacso-uruguay'); ?></p>
         </section>
 
-        <!-- Navegación por Pestañas -->
         <nav class="flacso-autoridades-tabs-nav" role="tablist" aria-label="<?php esc_attr_e('Navegación de Secciones', 'flacso-uruguay'); ?>">
             <button
                 type="button"
@@ -495,16 +493,13 @@ add_shortcode('flacso_autoridades', function () {
             <?php endforeach; ?>
         </nav>
 
-        <!-- Contenedor de Paneles -->
         <div class="flacso-autoridades-panels">
-            <!-- Panel de Dirección -->
             <div id="flacso-tabpanel-direccion" class="flacso-tab-panel active" role="tabpanel" aria-labelledby="flacso-tab-direccion">
                 <div class="flacso-direccion-hero-grid">
                     <?php echo $render_autoridad_card($data['direccion']); ?>
                 </div>
             </div>
 
-            <!-- Paneles de Comisiones -->
             <?php foreach ($data['secciones'] as $i => $seccion): ?>
                 <div
                     id="flacso-tabpanel-<?php echo esc_attr($i); ?>"
