@@ -22,17 +22,17 @@ add_action('admin_menu', function () {
 function flacso_autoridades_default_data() {
     return [
         'imagen_fondo' => 'https://flacso.edu.uy/wp-content/uploads/2024/12/IMG_20220914_151738883-scaled-e1733249869591.jpg',
+        'direccion' => [
+            'docente_id'    => 0,
+            'nombre_manual' => 'Dra. Ana Gabriela Fernández',
+            'cargo'         => 'Directora',
+            'enlace'        => '',
+        ],
         'secciones' => [
             [
-                'titulo' => 'Dirección',
-                'personas' => [
-                    ['cargo' => 'Directora', 'nombre_manual' => 'Dra. Ana Gabriela Fernández', 'docente_id' => 0, 'programa' => '', 'enlace' => ''],
-                ],
-            ],
-            [
                 'titulo' => 'Comisión Académica',
+                'incluir_direccion' => true,
                 'personas' => [
-                    ['cargo' => 'Directora', 'nombre_manual' => 'Dra. Ana Gabriela Fernández', 'docente_id' => 0, 'programa' => '', 'enlace' => ''],
                     ['cargo' => 'Coordinadora Académica', 'nombre_manual' => 'Dra. Silvana Darré', 'docente_id' => 0, 'programa' => '', 'enlace' => ''],
                     ['cargo' => 'Secretaria Académica', 'nombre_manual' => 'Mag. Lena Fontela', 'docente_id' => 0, 'programa' => '', 'enlace' => ''],
                     ['cargo' => 'Coordinador Académico', 'nombre_manual' => 'Mag. José Miguel García', 'docente_id' => 0, 'programa' => 'Programa Educación, Ciencia y Tecnología', 'enlace' => ''],
@@ -42,8 +42,8 @@ function flacso_autoridades_default_data() {
             ],
             [
                 'titulo' => 'Comisión Administrativa',
+                'incluir_direccion' => true,
                 'personas' => [
-                    ['cargo' => 'Directora', 'nombre_manual' => 'Dra. Ana Gabriela Fernández', 'docente_id' => 0, 'programa' => '', 'enlace' => ''],
                     ['cargo' => 'Gestión Administrativa y Financiera', 'nombre_manual' => 'Cra. Gianella Gómez', 'docente_id' => 0, 'programa' => '', 'enlace' => ''],
                     ['cargo' => 'Secretaria Académica', 'nombre_manual' => 'Mag. Lena Fontela', 'docente_id' => 0, 'programa' => '', 'enlace' => ''],
                     ['cargo' => 'Secretaria Administrativa', 'nombre_manual' => 'María Inglese', 'docente_id' => 0, 'programa' => '', 'enlace' => ''],
@@ -56,7 +56,7 @@ function flacso_autoridades_default_data() {
 function flacso_autoridades_get_data() {
     $data = get_option('flacso_autoridades_data');
 
-    if (!$data || !is_array($data) || empty($data['secciones'])) {
+    if (!$data || !is_array($data)) {
         $data = flacso_autoridades_default_data();
         update_option('flacso_autoridades_data', $data);
         return $data;
@@ -66,33 +66,81 @@ function flacso_autoridades_get_data() {
         $data['imagen_fondo'] = 'https://flacso.edu.uy/wp-content/uploads/2024/12/IMG_20220914_151738883-scaled-e1733249869591.jpg';
     }
 
-    foreach ($data['secciones'] as &$seccion) {
-        if (!isset($seccion['titulo'])) $seccion['titulo'] = '';
-        if (!isset($seccion['personas']) || !is_array($seccion['personas'])) $seccion['personas'] = [];
-
-        foreach ($seccion['personas'] as &$persona) {
-            if (!isset($persona['docente_id'])) $persona['docente_id'] = 0;
-            if (!isset($persona['cargo'])) $persona['cargo'] = '';
-            if (!isset($persona['programa'])) $persona['programa'] = '';
-            if (!isset($persona['enlace'])) $persona['enlace'] = '';
-
-            if (!isset($persona['nombre_manual'])) {
-                $nombre_antiguo = trim($persona['nombre'] ?? '');
-                if ($nombre_antiguo !== '') {
-                    if (strpos($nombre_antiguo, "\n") !== false && empty($persona['programa'])) {
-                        $lineas = array_map('trim', explode("\n", $nombre_antiguo));
-                        $persona['nombre_manual'] = $lineas[0];
-                        if (isset($lineas[1])) {
-                            $persona['programa'] = $lineas[1];
-                        }
-                    } else {
-                        $persona['nombre_manual'] = $nombre_antiguo;
+    // Normalización y eliminación de redundancia si provienen de datos antiguos
+    if (!isset($data['direccion']) || !is_array($data['direccion'])) {
+        $dir_encontrada = false;
+        if (!empty($data['secciones']) && is_array($data['secciones'])) {
+            foreach ($data['secciones'] as $k => $sec) {
+                $titulo_sec = strtolower(trim($sec['titulo'] ?? ''));
+                if ($titulo_sec === 'dirección' || $titulo_sec === 'direccion') {
+                    if (!empty($sec['personas'][0]) && is_array($sec['personas'][0])) {
+                        $p = $sec['personas'][0];
+                        $data['direccion'] = [
+                            'docente_id'    => intval($p['docente_id'] ?? 0),
+                            'nombre_manual' => trim($p['nombre_manual'] ?? ($p['nombre'] ?? 'Dra. Ana Gabriela Fernández')),
+                            'cargo'         => trim($p['cargo'] ?? 'Directora'),
+                            'enlace'        => trim($p['enlace'] ?? ''),
+                        ];
+                        $dir_encontrada = true;
                     }
-                } else {
-                    $persona['nombre_manual'] = '';
+                    unset($data['secciones'][$k]);
+                    break;
                 }
             }
-            unset($persona['nombre']);
+        }
+        if (!$dir_encontrada) {
+            $data['direccion'] = [
+                'docente_id'    => 0,
+                'nombre_manual' => 'Dra. Ana Gabriela Fernández',
+                'cargo'         => 'Directora',
+                'enlace'        => '',
+            ];
+        }
+        if (isset($data['secciones']) && is_array($data['secciones'])) {
+            $data['secciones'] = array_values($data['secciones']);
+        } else {
+            $data['secciones'] = [];
+        }
+    }
+
+    $dir_nombre = trim(strtolower($data['direccion']['nombre_manual']));
+
+    if (!empty($data['secciones']) && is_array($data['secciones'])) {
+        foreach ($data['secciones'] as &$seccion) {
+            if (!isset($seccion['titulo'])) $seccion['titulo'] = '';
+            if (!isset($seccion['incluir_direccion'])) $seccion['incluir_direccion'] = true;
+            if (!isset($seccion['personas']) || !is_array($seccion['personas'])) $seccion['personas'] = [];
+
+            foreach ($seccion['personas'] as $k => &$persona) {
+                if (!isset($persona['docente_id'])) $persona['docente_id'] = 0;
+                if (!isset($persona['cargo'])) $persona['cargo'] = '';
+                if (!isset($persona['programa'])) $persona['programa'] = '';
+                if (!isset($persona['enlace'])) $persona['enlace'] = '';
+
+                if (!isset($persona['nombre_manual'])) {
+                    $nombre_antiguo = trim($persona['nombre'] ?? '');
+                    if ($nombre_antiguo !== '') {
+                        if (strpos($nombre_antiguo, "\n") !== false && empty($persona['programa'])) {
+                            $lineas = array_map('trim', explode("\n", $nombre_antiguo));
+                            $persona['nombre_manual'] = $lineas[0];
+                            if (isset($lineas[1])) {
+                                $persona['programa'] = $lineas[1];
+                            }
+                        } else {
+                            $persona['nombre_manual'] = $nombre_antiguo;
+                        }
+                    } else {
+                        $persona['nombre_manual'] = '';
+                    }
+                }
+                unset($persona['nombre']);
+
+                // Eliminar redundancia si la Directora seguía repetida en la comisión
+                if ($dir_nombre !== '' && trim(strtolower($persona['nombre_manual'])) === $dir_nombre) {
+                    unset($seccion['personas'][$k]);
+                }
+            }
+            $seccion['personas'] = array_values($seccion['personas']);
         }
     }
 
@@ -110,14 +158,21 @@ function flacso_autoridades_admin_page() {
     ) {
         $data = [
             'imagen_fondo' => esc_url_raw($_POST['imagen_fondo'] ?? ''),
+            'direccion' => [
+                'docente_id'    => intval($_POST['direccion']['docente_id'] ?? 0),
+                'nombre_manual' => sanitize_text_field($_POST['direccion']['nombre_manual'] ?? ''),
+                'cargo'         => sanitize_text_field($_POST['direccion']['cargo'] ?? 'Directora'),
+                'enlace'        => esc_url_raw($_POST['direccion']['enlace'] ?? ''),
+            ],
             'secciones' => [],
         ];
 
         if (!empty($_POST['secciones']) && is_array($_POST['secciones'])) {
             foreach ($_POST['secciones'] as $seccion) {
                 $nueva_seccion = [
-                    'titulo' => sanitize_text_field($seccion['titulo'] ?? ''),
-                    'personas' => [],
+                    'titulo'            => sanitize_text_field($seccion['titulo'] ?? ''),
+                    'incluir_direccion' => !empty($seccion['incluir_direccion']),
+                    'personas'          => [],
                 ];
 
                 if (!empty($seccion['personas']) && is_array($seccion['personas'])) {
@@ -147,12 +202,11 @@ function flacso_autoridades_admin_page() {
         }
 
         update_option('flacso_autoridades_data', $data);
-        echo '<div class="updated notice is-dismissible"><p><strong>' . esc_html__('Autoridades guardadas correctamente.', 'flacso-uruguay') . '</strong></p></div>';
+        echo '<div class="updated notice is-dismissible"><p><strong>' . esc_html__('Autoridades guardadas correctamente sin redundancias.', 'flacso-uruguay') . '</strong></p></div>';
     }
 
     $data = flacso_autoridades_get_data();
 
-    // Obtener lista de docentes disponibles
     $docentes_query = get_posts([
         'post_type'      => 'docente',
         'post_status'    => 'publish',
@@ -186,13 +240,14 @@ function flacso_autoridades_admin_page() {
                 <code style="font-size:14px; padding:4px 8px; font-weight:bold;">[flacso_autoridades]</code>
             </p>
             <p class="description">
-                <?php esc_html_e('Nota: Puedes vincular cada autoridad a un perfil existente de la sección Docentes para que tome automáticamente su foto, CV y título. Si la persona no tiene un perfil creado (ej. secretarios o personal administrativo), selecciona "Ingreso Manual" y escribe su nombre.', 'flacso-uruguay'); ?>
+                <?php esc_html_e('Arquitectura Sin Redundancias: Configura a la persona a cargo de la Dirección de FLACSO Uruguay en la caja principal una única vez. Ella encabezará automáticamente la pestaña de Dirección y las comisiones que selecciones.', 'flacso-uruguay'); ?>
             </p>
         </div>
 
         <form method="post" id="flacso-autoridades-form">
             <?php wp_nonce_field('guardar_flacso_autoridades', 'flacso_autoridades_nonce'); ?>
 
+            <!-- Apariencia -->
             <div class="postbox" style="padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 24px;">
                 <h2 style="margin-top:0; border-bottom: 1px solid #eee; padding-bottom: 12px; font-size: 18px; color: #1d3a72;">
                     <span class="dashicons dashicons-format-image" style="vertical-align: middle;"></span>
@@ -213,44 +268,132 @@ function flacso_autoridades_admin_page() {
                                 placeholder="https://flacso.edu.uy/wp-content/uploads/..."
                                 style="width: 100%; border-radius: 4px;"
                             >
-                            <p class="description">
-                                <?php esc_html_e('Imagen de fondo que se mostrará en el banner superior del componente de autoridades.', 'flacso-uruguay'); ?>
-                            </p>
                         </td>
                     </tr>
                 </table>
             </div>
 
+            <!-- Dirección de FLACSO -->
+            <div class="postbox" style="padding: 24px; background: #fff; border-radius: 8px; border-left: 5px solid #fed222; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px;">
+                <h2 style="margin-top:0; border-bottom: 2px solid #fed222; padding-bottom: 12px; font-size: 20px; color: #1d3a72;">
+                    <span class="dashicons dashicons-awards" style="vertical-align: middle; color: #1d3a72;"></span>
+                    <?php esc_html_e('Dirección de FLACSO Uruguay', 'flacso-uruguay'); ?>
+                </h2>
+                <p class="description" style="margin-bottom: 20px;">
+                    <?php esc_html_e('Esta persona ocupa la titularidad de la Dirección y se mostrará en su propia pestaña dedicada, además de encabezar de forma automática las comisiones.', 'flacso-uruguay'); ?>
+                </p>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; padding: 16px; background: #fcfcfc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <div>
+                        <label><strong><?php esc_html_e('Vincular a Perfil Docente', 'flacso-uruguay'); ?></strong></label><br>
+                        <div style="display: flex; gap: 8px; margin-top: 4px;">
+                            <select name="direccion[docente_id]" class="docente-select" style="width: 100%; border-radius: 4px;">
+                                <option value="0"><?php esc_html_e('--- Ninguno / Ingreso Manual ---', 'flacso-uruguay'); ?></option>
+                                <?php foreach ($opciones_docentes as $id => $nombre_doc): ?>
+                                    <option value="<?php echo esc_attr($id); ?>" <?php selected($data['direccion']['docente_id'], $id); ?>>
+                                        <?php echo esc_html($nombre_doc); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <?php if ($data['direccion']['docente_id'] > 0): ?>
+                                <a href="<?php echo esc_url(admin_url('post.php?post=' . $data['direccion']['docente_id'] . '&action=edit')); ?>" target="_blank" class="button button-small" title="<?php esc_attr_e('Editar perfil en nueva pestaña', 'flacso-uruguay'); ?>">
+                                    <span class="dashicons dashicons-edit" style="margin-top: 4px;"></span>
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                        <span class="description small"><?php esc_html_e('Toma foto, título y CV de la ficha del docente.', 'flacso-uruguay'); ?></span>
+                    </div>
+
+                    <div>
+                        <label><strong><?php esc_html_e('Nombre / Detalle Manual', 'flacso-uruguay'); ?></strong></label><br>
+                        <input
+                            type="text"
+                            name="direccion[nombre_manual]"
+                            value="<?php echo esc_attr($data['direccion']['nombre_manual']); ?>"
+                            class="regular-text nombre-manual-input"
+                            style="width: 100%; margin-top: 4px; border-radius: 4px;"
+                            placeholder="<?php esc_attr_e('Ej: Dra. Ana Gabriela Fernández', 'flacso-uruguay'); ?>"
+                        >
+                        <span class="description small"><?php esc_html_e('Se usa si no vinculas un perfil o para sobrescribir el nombre.', 'flacso-uruguay'); ?></span>
+                    </div>
+
+                    <div>
+                        <label><strong><?php esc_html_e('Cargo Institucional', 'flacso-uruguay'); ?> <span style="color:#d63638;">*</span></strong></label><br>
+                        <input
+                            type="text"
+                            name="direccion[cargo]"
+                            value="<?php echo esc_attr($data['direccion']['cargo']); ?>"
+                            class="regular-text"
+                            style="width: 100%; margin-top: 4px; border-radius: 4px; border-color: #1d3a72; font-weight: bold;"
+                            placeholder="<?php esc_attr_e('Ej: Directora', 'flacso-uruguay'); ?>"
+                        >
+                        <span class="description small"><?php esc_html_e('Aparece destacado en el kicker de la tarjeta.', 'flacso-uruguay'); ?></span>
+                    </div>
+
+                    <div>
+                        <label><strong><?php esc_html_e('Enlace Opcional de Bio Externa', 'flacso-uruguay'); ?></strong></label><br>
+                        <input
+                            type="url"
+                            name="direccion[enlace]"
+                            value="<?php echo esc_attr($data['direccion']['enlace']); ?>"
+                            class="regular-text code"
+                            style="width: 100%; margin-top: 4px; border-radius: 4px;"
+                            placeholder="https://..."
+                        >
+                        <span class="description small"><?php esc_html_e('Opcional si tiene un sitio o página específica.', 'flacso-uruguay'); ?></span>
+                    </div>
+                </div>
+            </div>
+
+            <h2 style="font-size: 22px; color: #1d3a72; margin: 30px 0 15px;">
+                <span class="dashicons dashicons-networking" style="vertical-align: middle;"></span>
+                <?php esc_html_e('Comisiones y Equipos de Trabajo', 'flacso-uruguay'); ?>
+            </h2>
+
             <div id="secciones-container">
                 <?php foreach ($data['secciones'] as $i => $seccion): ?>
                     <div class="postbox seccion-box" data-index="<?php echo esc_attr($i); ?>" style="padding: 20px; margin-bottom: 24px; border-radius: 8px; border-left: 4px solid #1d3a72; background: #fbfbfb;">
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 16px; margin-bottom: 16px;">
-                            <div style="display: flex; align-items: center; width: 60%;">
-                                <label style="font-size: 16px; font-weight: bold; margin-right: 12px; color: #1d3a72;"><?php esc_html_e('Pestaña / Sección:', 'flacso-uruguay'); ?></label>
-                                <input
-                                    type="text"
-                                    name="secciones[<?php echo esc_attr($i); ?>][titulo]"
-                                    value="<?php echo esc_attr($seccion['titulo']); ?>"
-                                    class="regular-text"
-                                    style="font-size: 16px; font-weight: bold; width: 300px; border-radius: 4px;"
-                                    placeholder="Ej: Dirección, Comisión Académica"
-                                >
+                            <div style="display: flex; align-items: center; gap: 24px; width: 75%;">
+                                <div style="display: flex; align-items: center;">
+                                    <label style="font-size: 16px; font-weight: bold; margin-right: 12px; color: #1d3a72; white-space: nowrap;"><?php esc_html_e('Nombre de Comisión:', 'flacso-uruguay'); ?></label>
+                                    <input
+                                        type="text"
+                                        name="secciones[<?php echo esc_attr($i); ?>][titulo]"
+                                        value="<?php echo esc_attr($seccion['titulo']); ?>"
+                                        class="regular-text"
+                                        style="font-size: 16px; font-weight: bold; width: 280px; border-radius: 4px;"
+                                        placeholder="Ej: Comisión Académica"
+                                    >
+                                </div>
+                                <div style="display: flex; align-items: center; background: #eef2f8; padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                                    <label style="cursor: pointer; display: flex; align-items: center; font-weight: 600; color: #1d3a72; font-size: 14px;">
+                                        <input
+                                            type="checkbox"
+                                            name="secciones[<?php echo esc_attr($i); ?>][incluir_direccion]"
+                                            value="1"
+                                            <?php checked($seccion['incluir_direccion']); ?>
+                                            style="margin-right: 8px;"
+                                        >
+                                        <?php esc_html_e('Encabezar esta comisión con la Dirección', 'flacso-uruguay'); ?>
+                                    </label>
+                                </div>
                             </div>
                             <button type="button" class="button button-link-delete delete-seccion-btn" style="color: #d63638; text-decoration: none;">
-                                <span class="dashicons dashicons-trash" style="vertical-align: middle;"></span> <?php esc_html_e('Eliminar Sección', 'flacso-uruguay'); ?>
+                                <span class="dashicons dashicons-trash" style="vertical-align: middle;"></span> <?php esc_html_e('Eliminar Comisión', 'flacso-uruguay'); ?>
                             </button>
                         </div>
 
                         <div class="personas-list">
-                            <h3 style="font-size: 14px; text-transform: uppercase; color: #555; margin-bottom: 12px;"><?php esc_html_e('Integrantes de esta sección', 'flacso-uruguay'); ?></h3>
+                            <h3 style="font-size: 14px; text-transform: uppercase; color: #555; margin-bottom: 12px;"><?php esc_html_e('Integrantes específicos de esta comisión', 'flacso-uruguay'); ?></h3>
 
                             <?php if (empty($seccion['personas'])): ?>
-                                <p class="no-personas-msg description" style="font-style: italic; color: #888;"><?php esc_html_e('No hay integrantes en esta sección. Añade uno abajo.', 'flacso-uruguay'); ?></p>
+                                <p class="no-personas-msg description" style="font-style: italic; color: #888;"><?php esc_html_e('No hay integrantes en esta comisión. Añade uno abajo.', 'flacso-uruguay'); ?></p>
                             <?php endif; ?>
 
                             <?php foreach ($seccion['personas'] as $j => $persona): ?>
                                 <div class="persona-item" data-person-index="<?php echo esc_attr($j); ?>" style="border: 1px solid #ccd0d4; border-radius: 6px; padding: 16px; margin-bottom: 16px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.04); position: relative;">
-                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
                                         
                                         <!-- Selector Docente -->
                                         <div>
@@ -265,12 +408,12 @@ function flacso_autoridades_admin_page() {
                                                     <?php endforeach; ?>
                                                 </select>
                                                 <?php if ($persona['docente_id'] > 0): ?>
-                                                    <a href="<?php echo esc_url(admin_url('post.php?post=' . $persona['docente_id'] . '&action=edit')); ?>" target="_blank" class="button button-small edit-doc-link" title="<?php esc_attr_e('Editar perfil en nueva pestaña', 'flacso-uruguay'); ?>">
+                                                    <a href="<?php echo esc_url(admin_url('post.php?post=' . $persona['docente_id'] . '&action=edit')); ?>" target="_blank" class="button button-small" title="<?php esc_attr_e('Editar perfil en nueva pestaña', 'flacso-uruguay'); ?>">
                                                         <span class="dashicons dashicons-edit" style="margin-top: 4px;"></span>
                                                     </a>
                                                 <?php endif; ?>
                                             </div>
-                                            <span class="description small"><?php esc_html_e('Toma foto, título y CV de la ficha del docente.', 'flacso-uruguay'); ?></span>
+                                            <span class="description small"><?php esc_html_e('Toma foto, título y CV.', 'flacso-uruguay'); ?></span>
                                         </div>
 
                                         <!-- Nombre Manual -->
@@ -283,23 +426,22 @@ function flacso_autoridades_admin_page() {
                                                 class="regular-text nombre-manual-input"
                                                 style="width: 100%; margin-top: 4px; border-radius: 4px;"
                                                 placeholder="<?php esc_attr_e('Ej: Mag. Juan Pérez', 'flacso-uruguay'); ?>"
-                                                <?php echo ($persona['docente_id'] > 0) ? 'placeholder="Automático desde el perfil"' : ''; ?>
                                             >
-                                            <span class="description small"><?php esc_html_e('Se usa si no vinculas un perfil o para sobrescribir el nombre.', 'flacso-uruguay'); ?></span>
+                                            <span class="description small"><?php esc_html_e('Se usa si no vinculas un perfil o para sobrescribir.', 'flacso-uruguay'); ?></span>
                                         </div>
 
                                         <!-- Cargo -->
                                         <div>
-                                            <label><strong><?php esc_html_e('Cargo / Rol en la Sección', 'flacso-uruguay'); ?> <span style="color:#d63638;">*</span></strong></label><br>
+                                            <label><strong><?php esc_html_e('Cargo en la Comisión', 'flacso-uruguay'); ?> <span style="color:#d63638;">*</span></strong></label><br>
                                             <input
                                                 type="text"
                                                 name="secciones[<?php echo esc_attr($i); ?>][personas][<?php echo esc_attr($j); ?>][cargo]"
                                                 value="<?php echo esc_attr($persona['cargo']); ?>"
                                                 class="regular-text"
                                                 style="width: 100%; margin-top: 4px; border-radius: 4px; border-color: #1d3a72;"
-                                                placeholder="<?php esc_attr_e('Ej: Directora, Coordinador Académico', 'flacso-uruguay'); ?>"
+                                                placeholder="<?php esc_attr_e('Ej: Coordinadora Académica', 'flacso-uruguay'); ?>"
                                             >
-                                            <span class="description small"><?php esc_html_e('Aparece destacado en la tarjeta.', 'flacso-uruguay'); ?></span>
+                                            <span class="description small"><?php esc_html_e('Destacado en el kicker.', 'flacso-uruguay'); ?></span>
                                         </div>
 
                                         <!-- Programa -->
@@ -313,12 +455,12 @@ function flacso_autoridades_admin_page() {
                                                 style="width: 100%; margin-top: 4px; border-radius: 4px;"
                                                 placeholder="<?php esc_attr_e('Ej: Programa Educación, Ciencia y Tecnología', 'flacso-uruguay'); ?>"
                                             >
-                                            <span class="description small"><?php esc_html_e('Especial para Comisión Académica.', 'flacso-uruguay'); ?></span>
+                                            <span class="description small"><?php esc_html_e('Especial para áreas académicas.', 'flacso-uruguay'); ?></span>
                                         </div>
 
                                         <!-- Enlace Opcional -->
                                         <div>
-                                            <label><strong><?php esc_html_e('Enlace Opcional del Programa / Bio', 'flacso-uruguay'); ?></strong></label><br>
+                                            <label><strong><?php esc_html_e('Enlace Opcional del Programa', 'flacso-uruguay'); ?></strong></label><br>
                                             <input
                                                 type="url"
                                                 name="secciones[<?php echo esc_attr($i); ?>][personas][<?php echo esc_attr($j); ?>][enlace]"
@@ -327,7 +469,7 @@ function flacso_autoridades_admin_page() {
                                                 style="width: 100%; margin-top: 4px; border-radius: 4px;"
                                                 placeholder="https://..."
                                             >
-                                            <span class="description small"><?php esc_html_e('Convierte el bloque del programa en enlace.', 'flacso-uruguay'); ?></span>
+                                            <span class="description small"><?php esc_html_e('Convierte el programa en enlace.', 'flacso-uruguay'); ?></span>
                                         </div>
                                     </div>
 
@@ -345,7 +487,7 @@ function flacso_autoridades_admin_page() {
                         <div style="margin-top: 16px;">
                             <button type="button" class="button add-persona-btn" style="border-color: #1d3a72; color: #1d3a72; background: #fff;">
                                 <span class="dashicons dashicons-plus" style="vertical-align: middle;"></span>
-                                <strong><?php esc_html_e('Añadir integrante a esta sección', 'flacso-uruguay'); ?></strong>
+                                <strong><?php esc_html_e('Añadir integrante a esta comisión', 'flacso-uruguay'); ?></strong>
                             </button>
                         </div>
                     </div>
@@ -356,7 +498,7 @@ function flacso_autoridades_admin_page() {
             <div style="margin-bottom: 30px; background: #eef2f8; padding: 20px; border-radius: 8px; text-align: center; border: 2px dashed #1d3a72;">
                 <button type="button" id="add-seccion-btn" class="button button-primary button-large" style="background: #1d3a72; border-color: #1d3a72; font-size: 16px; padding: 6px 24px;">
                     <span class="dashicons dashicons-plus-alt2" style="vertical-align: middle; margin-top: 3px;"></span>
-                    <?php esc_html_e('Añadir Nueva Pestaña / Sección', 'flacso-uruguay'); ?>
+                    <?php esc_html_e('Añadir Nueva Comisión / Equipo', 'flacso-uruguay'); ?>
                 </button>
                 <p class="description" style="margin-top: 8px; color: #555;">
                     <?php esc_html_e('Crea una nueva división en las pestañas de autoridades.', 'flacso-uruguay'); ?>
@@ -372,13 +514,11 @@ function flacso_autoridades_admin_page() {
         </form>
     </div>
 
-    <!-- Script para dinamismo del formulario en JS puro -->
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         const container = document.getElementById('secciones-container');
         const addSeccionBtn = document.getElementById('add-seccion-btn');
 
-        // Plantilla de opciones de docentes en formato string para inyectar rápido
         const opcionesDocentesHtml = `
             <option value="0"><?php esc_html_e('--- Ninguno / Ingreso Manual ---', 'flacso-uruguay'); ?></option>
             <?php foreach ($opciones_docentes as $id => $nombre_doc): ?>
@@ -389,7 +529,7 @@ function flacso_autoridades_admin_page() {
         function crearPlantillaPersona(seccionIndex, personaIndex) {
             return `
                 <div class="persona-item" data-person-index="${personaIndex}" style="border: 1px solid #ccd0d4; border-radius: 6px; padding: 16px; margin-bottom: 16px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.04); position: relative; animation: fadeIn 0.25s ease;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
                         <div>
                             <label><strong><?php esc_html_e('Vincular a Perfil Docente', 'flacso-uruguay'); ?></strong></label><br>
                             <div style="display: flex; gap: 8px; margin-top: 4px;">
@@ -397,7 +537,7 @@ function flacso_autoridades_admin_page() {
                                     ${opcionesDocentesHtml}
                                 </select>
                             </div>
-                            <span class="description small"><?php esc_html_e('Toma foto, título y CV de la ficha del docente.', 'flacso-uruguay'); ?></span>
+                            <span class="description small"><?php esc_html_e('Toma foto, título y CV.', 'flacso-uruguay'); ?></span>
                         </div>
                         <div>
                             <label><strong><?php esc_html_e('Nombre / Detalle Manual', 'flacso-uruguay'); ?></strong></label><br>
@@ -408,18 +548,18 @@ function flacso_autoridades_admin_page() {
                                 style="width: 100%; margin-top: 4px; border-radius: 4px;"
                                 placeholder="<?php esc_attr_e('Ej: Mag. Juan Pérez', 'flacso-uruguay'); ?>"
                             >
-                            <span class="description small"><?php esc_html_e('Se usa si no vinculas un perfil o para sobrescribir el nombre.', 'flacso-uruguay'); ?></span>
+                            <span class="description small"><?php esc_html_e('Se usa si no vinculas un perfil o para sobrescribir.', 'flacso-uruguay'); ?></span>
                         </div>
                         <div>
-                            <label><strong><?php esc_html_e('Cargo / Rol en la Sección', 'flacso-uruguay'); ?> <span style="color:#d63638;">*</span></strong></label><br>
+                            <label><strong><?php esc_html_e('Cargo en la Comisión', 'flacso-uruguay'); ?> <span style="color:#d63638;">*</span></strong></label><br>
                             <input
                                 type="text"
                                 name="secciones[${seccionIndex}][personas][${personaIndex}][cargo]"
                                 class="regular-text"
                                 style="width: 100%; margin-top: 4px; border-radius: 4px; border-color: #1d3a72;"
-                                placeholder="<?php esc_attr_e('Ej: Directora, Coordinador Académico', 'flacso-uruguay'); ?>"
+                                placeholder="<?php esc_attr_e('Ej: Coordinadora Académica', 'flacso-uruguay'); ?>"
                             >
-                            <span class="description small"><?php esc_html_e('Aparece destacado en la tarjeta.', 'flacso-uruguay'); ?></span>
+                            <span class="description small"><?php esc_html_e('Destacado en el kicker.', 'flacso-uruguay'); ?></span>
                         </div>
                         <div>
                             <label><strong><?php esc_html_e('Programa Asociado (Opcional)', 'flacso-uruguay'); ?></strong></label><br>
@@ -430,10 +570,10 @@ function flacso_autoridades_admin_page() {
                                 style="width: 100%; margin-top: 4px; border-radius: 4px;"
                                 placeholder="<?php esc_attr_e('Ej: Programa Educación, Ciencia y Tecnología', 'flacso-uruguay'); ?>"
                             >
-                            <span class="description small"><?php esc_html_e('Especial para Comisión Académica.', 'flacso-uruguay'); ?></span>
+                            <span class="description small"><?php esc_html_e('Especial para áreas académicas.', 'flacso-uruguay'); ?></span>
                         </div>
                         <div>
-                            <label><strong><?php esc_html_e('Enlace Opcional del Programa / Bio', 'flacso-uruguay'); ?></strong></label><br>
+                            <label><strong><?php esc_html_e('Enlace Opcional del Programa', 'flacso-uruguay'); ?></strong></label><br>
                             <input
                                 type="url"
                                 name="secciones[${seccionIndex}][personas][${personaIndex}][enlace]"
@@ -441,7 +581,7 @@ function flacso_autoridades_admin_page() {
                                 style="width: 100%; margin-top: 4px; border-radius: 4px;"
                                 placeholder="https://..."
                             >
-                            <span class="description small"><?php esc_html_e('Convierte el bloque del programa en enlace.', 'flacso-uruguay'); ?></span>
+                            <span class="description small"><?php esc_html_e('Convierte el programa en enlace.', 'flacso-uruguay'); ?></span>
                         </div>
                     </div>
                     <div style="text-align: right; margin-top: 12px; border-top: 1px dashed #eee; padding-top: 12px;">
@@ -457,37 +597,43 @@ function flacso_autoridades_admin_page() {
             return `
                 <div class="postbox seccion-box" data-index="${seccionIndex}" style="padding: 20px; margin-bottom: 24px; border-radius: 8px; border-left: 4px solid #1d3a72; background: #fbfbfb; animation: fadeIn 0.3s ease;">
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 16px; margin-bottom: 16px;">
-                        <div style="display: flex; align-items: center; width: 60%;">
-                            <label style="font-size: 16px; font-weight: bold; margin-right: 12px; color: #1d3a72;"><?php esc_html_e('Pestaña / Sección:', 'flacso-uruguay'); ?></label>
-                            <input
-                                type="text"
-                                name="secciones[${seccionIndex}][titulo]"
-                                class="regular-text"
-                                style="font-size: 16px; font-weight: bold; width: 300px; border-radius: 4px;"
-                                placeholder="Ej: Dirección, Comisión Académica"
-                            >
+                        <div style="display: flex; align-items: center; gap: 24px; width: 75%;">
+                            <div style="display: flex; align-items: center;">
+                                <label style="font-size: 16px; font-weight: bold; margin-right: 12px; color: #1d3a72; white-space: nowrap;"><?php esc_html_e('Nombre de Comisión:', 'flacso-uruguay'); ?></label>
+                                <input
+                                    type="text"
+                                    name="secciones[${seccionIndex}][titulo]"
+                                    class="regular-text"
+                                    style="font-size: 16px; font-weight: bold; width: 280px; border-radius: 4px;"
+                                    placeholder="Ej: Comisión Académica"
+                                >
+                            </div>
+                            <div style="display: flex; align-items: center; background: #eef2f8; padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                                <label style="cursor: pointer; display: flex; align-items: center; font-weight: 600; color: #1d3a72; font-size: 14px;">
+                                    <input type="checkbox" name="secciones[${seccionIndex}][incluir_direccion]" value="1" checked style="margin-right: 8px;">
+                                    <?php esc_html_e('Encabezar esta comisión con la Dirección', 'flacso-uruguay'); ?>
+                                </label>
+                            </div>
                         </div>
                         <button type="button" class="button button-link-delete delete-seccion-btn" style="color: #d63638; text-decoration: none;">
-                            <span class="dashicons dashicons-trash" style="vertical-align: middle;"></span> <?php esc_html_e('Eliminar Sección', 'flacso-uruguay'); ?>
+                            <span class="dashicons dashicons-trash" style="vertical-align: middle;"></span> <?php esc_html_e('Eliminar Comisión', 'flacso-uruguay'); ?>
                         </button>
                     </div>
                     <div class="personas-list">
-                        <h3 style="font-size: 14px; text-transform: uppercase; color: #555; margin-bottom: 12px;"><?php esc_html_e('Integrantes de esta sección', 'flacso-uruguay'); ?></h3>
-                        <p class="no-personas-msg description" style="font-style: italic; color: #888;"><?php esc_html_e('No hay integrantes en esta sección. Añade uno abajo.', 'flacso-uruguay'); ?></p>
+                        <h3 style="font-size: 14px; text-transform: uppercase; color: #555; margin-bottom: 12px;"><?php esc_html_e('Integrantes específicos de esta comisión', 'flacso-uruguay'); ?></h3>
+                        <p class="no-personas-msg description" style="font-style: italic; color: #888;"><?php esc_html_e('No hay integrantes en esta comisión. Añade uno abajo.', 'flacso-uruguay'); ?></p>
                     </div>
                     <div style="margin-top: 16px;">
                         <button type="button" class="button add-persona-btn" style="border-color: #1d3a72; color: #1d3a72; background: #fff;">
                             <span class="dashicons dashicons-plus" style="vertical-align: middle;"></span>
-                            <strong><?php esc_html_e('Añadir integrante a esta sección', 'flacso-uruguay'); ?></strong>
+                            <strong><?php esc_html_e('Añadir integrante a esta comisión', 'flacso-uruguay'); ?></strong>
                         </button>
                     </div>
                 </div>
             `;
         }
 
-        // Delegación de eventos global para el contenedor
         container.addEventListener('click', function (e) {
-            // Añadir Persona
             const addPersonaBtn = e.target.closest('.add-persona-btn');
             if (addPersonaBtn) {
                 const seccionBox = addPersonaBtn.closest('.seccion-box');
@@ -501,35 +647,31 @@ function flacso_autoridades_admin_page() {
                 return;
             }
 
-            // Eliminar Persona
             const deletePersonaBtn = e.target.closest('.delete-persona-btn');
             if (deletePersonaBtn) {
                 const personaItem = deletePersonaBtn.closest('.persona-item');
                 const personasList = personaItem.closest('.personas-list');
                 personaItem.remove();
                 if (personasList.children.length === 1 && personasList.querySelector('h3')) {
-                    personasList.insertAdjacentHTML('beforeend', '<p class="no-personas-msg description" style="font-style: italic; color: #888;"><?php esc_html_e('No hay integrantes en esta sección. Añade uno abajo.', 'flacso-uruguay'); ?></p>');
+                    personasList.insertAdjacentHTML('beforeend', '<p class="no-personas-msg description" style="font-style: italic; color: #888;"><?php esc_html_e('No hay integrantes en esta comisión. Añade uno abajo.', 'flacso-uruguay'); ?></p>');
                 }
                 return;
             }
 
-            // Eliminar Sección
             const deleteSeccionBtn = e.target.closest('.delete-seccion-btn');
             if (deleteSeccionBtn) {
-                if (confirm('<?php esc_html_e('¿Estás seguro de que deseas eliminar esta sección completa con todos sus integrantes?', 'flacso-uruguay'); ?>')) {
+                if (confirm('<?php esc_html_e('¿Estás seguro de que deseas eliminar esta comisión completa con todos sus integrantes?', 'flacso-uruguay'); ?>')) {
                     deleteSeccionBtn.closest('.seccion-box').remove();
                 }
                 return;
             }
         });
 
-        // Evento para añadir nueva sección
         addSeccionBtn.addEventListener('click', function () {
             const uniqueSeccionIndex = 'sec_' + Date.now();
             container.insertAdjacentHTML('beforeend', crearPlantillaSeccion(uniqueSeccionIndex));
         });
 
-        // Dinamismo del select de docente
         container.addEventListener('change', function (e) {
             if (e.target.classList.contains('docente-select')) {
                 const select = e.target;
