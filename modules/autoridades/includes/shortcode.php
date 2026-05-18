@@ -16,12 +16,18 @@ add_shortcode('flacso_autoridades', function () {
 
     ob_start();
 
-    // Función auxiliar DRY para renderizar tarjetas de autoridad con su CV directo
+    // Función auxiliar DRY para renderizar tarjetas de autoridad
     $render_autoridad_card = function ($persona) {
         $doc_id   = intval($persona['docente_id'] ?? 0);
         $cargo    = esc_html($persona['cargo'] ?? '');
         $programa = esc_html($persona['programa'] ?? '');
         $enlace   = esc_url($persona['enlace'] ?? '');
+
+        // Datos manuales
+        $prefijo_manual = trim($persona['prefijo'] ?? '');
+        $nombre_manual  = trim($persona['nombre_manual'] ?? '');
+        $titulo_manual  = trim($persona['titulo_academico'] ?? '');
+        $cv_manual      = trim($persona['cv'] ?? '');
 
         $nombre_completo  = '';
         $titulo_academico = '';
@@ -32,9 +38,22 @@ add_shortcode('flacso_autoridades', function () {
         $has_docente      = ($doc_id > 0 && get_post_status($doc_id) === 'publish');
 
         if ($has_docente) {
-            $nombre_completo  = function_exists('dp_nombre_completo') ? dp_nombre_completo($doc_id, true) : get_the_title($doc_id);
-            $titulo_academico = (string) get_post_meta($doc_id, 'titulo_academico', true);
-            $cv_raw           = (string) get_post_meta($doc_id, 'cv', true);
+            $nombre_base = function_exists('dp_nombre_completo') ? dp_nombre_completo($doc_id, false) : get_the_title($doc_id);
+            if (!$nombre_base || $nombre_base === (string)$doc_id) {
+                $nombre_base = get_the_title($doc_id);
+            }
+            
+            // Priorizar prefijo manual si se escribió algo, sino el del post meta
+            $prefijo = ($prefijo_manual !== '') ? $prefijo_manual : trim((string) get_post_meta($doc_id, 'prefijo_abrev', true));
+            
+            if ($prefijo !== '' && mb_strpos($nombre_base, $prefijo) === false) {
+                $nombre_completo = trim($prefijo . ' ' . trim($nombre_base));
+            } else {
+                $nombre_completo = trim($nombre_base);
+            }
+
+            $titulo_academico = ($titulo_manual !== '') ? $titulo_manual : (string) get_post_meta($doc_id, 'titulo_academico', true);
+            $cv_raw           = ($cv_manual !== '') ? $cv_manual : (string) get_post_meta($doc_id, 'cv', true);
             
             if (function_exists('dp_avatar_markup')) {
                 $avatar_html = dp_avatar_markup($doc_id, $nombre_completo, 140, 'flacso-autoridad__avatar-img');
@@ -52,8 +71,12 @@ add_shortcode('flacso_autoridades', function () {
                 $redes = dp_get_docente_socials($doc_id);
             }
         } else {
-            $nombre_completo = esc_html($persona['nombre_manual'] ?? '');
-            $iniciales = function_exists('dp_iniciales') ? dp_iniciales($nombre_completo, '') : substr($nombre_completo, 0, 2);
+            // Ingreso Manual o sin vincular
+            $nombre_completo  = trim(($prefijo_manual !== '' ? $prefijo_manual . ' ' : '') . trim($nombre_manual));
+            $titulo_academico = $titulo_manual;
+            $cv_raw           = $cv_manual;
+
+            $iniciales = function_exists('dp_iniciales') ? dp_iniciales($nombre_manual ?: 'Autoridad', '') : mb_substr($nombre_manual ?: 'FL', 0, 2);
             $avatar_html = '<div class="flacso-autoridad__avatar-img" style="background: linear-gradient(135deg, #1d3a72 0%, #0f1e3b 100%); color: #fed222;">' . esc_html($iniciales) . '</div>';
         }
 
@@ -226,7 +249,6 @@ add_shortcode('flacso_autoridades', function () {
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Usamos align-items: start para que las tarjetas se expandan de forma natural con el CV */
         .flacso-autoridades-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -367,7 +389,6 @@ add_shortcode('flacso_autoridades', function () {
             transform: scale(1.02);
         }
 
-        /* Estilo de la Biografía / CV directo en la tarjeta */
         .flacso-autoridad__cv {
             margin-top: 0.5rem;
             padding-top: 1.5rem;
@@ -386,7 +407,6 @@ add_shortcode('flacso_autoridades', function () {
             margin-bottom: 0;
         }
 
-        /* Barra de Contacto */
         .flacso-autoridad__contact-bar {
             margin-top: 1.75rem;
             padding-top: 1.5rem;
@@ -494,12 +514,10 @@ add_shortcode('flacso_autoridades', function () {
                 >
                     <div class="flacso-autoridades-grid">
                         <?php 
-                        // Si la comisión debe ser encabezada por la Dirección, inyectamos su tarjeta al inicio
                         if (!empty($seccion['incluir_direccion'])) {
                             echo $render_autoridad_card($data['direccion']);
                         }
 
-                        // Iterar por las personas específicas de la comisión
                         foreach ($seccion['personas'] as $persona) {
                             echo $render_autoridad_card($persona);
                         }
@@ -510,7 +528,6 @@ add_shortcode('flacso_autoridades', function () {
         </div>
     </div>
 
-    <!-- Script de interactividad de Pestañas -->
     <script>
     (function () {
         const wrapper = document.querySelector('.flacso-autoridades-wrapper');
