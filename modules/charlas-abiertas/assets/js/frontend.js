@@ -52,6 +52,7 @@
             initialCountry: "auto",
             countryOrder: ["uy", "ar", "br", "cl", "py", "bo", "mx", "es", "us"],
             countryNameLocale: "es",
+            separateDialCode: true,
             nationalMode: true,
             formatAsYouType: true,
             formatOnDisplay: true,
@@ -170,25 +171,25 @@
 
     function getPhoneValidationMessage(iti) {
         if (!iti || typeof iti.getValidationError !== "function") {
-            return "El número de celular no es válido para el país seleccionado.";
+            return "El número de teléfono no es válido para el país seleccionado.";
         }
         var utils = window.intlTelInput && window.intlTelInput.utils ? window.intlTelInput.utils : null;
         var errors = utils && utils.validationError ? utils.validationError : null;
         var code = iti.getValidationError();
 
         if (!errors) {
-            return "El número de celular no es válido para el país seleccionado.";
+            return "El número de teléfono no es válido para el país seleccionado.";
         }
         if (code === errors.TOO_SHORT) {
-            return "El número de celular es demasiado corto.";
+            return "El número de teléfono es demasiado corto.";
         }
         if (code === errors.TOO_LONG) {
-            return "El número de celular es demasiado largo.";
+            return "El número de teléfono es demasiado largo.";
         }
         if (code === errors.INVALID_COUNTRY_CODE) {
             return "El código de país no es válido.";
         }
-        return "El número de celular no es válido para el país seleccionado.";
+        return "El número de teléfono no es válido para el país seleccionado.";
     }
 
     function bindForm(wrapper) {
@@ -201,11 +202,12 @@
         var modalidadLocknote = form ? form.querySelector(".flacso-modalidad-locknote") : null;
         var correoInput = form ? form.querySelector('input[name="correo"]') : null;
         var countryInput = form ? form.querySelector(".flacso-pais-residencia") : null;
-        var celularInput = form ? form.querySelector(".flacso-celular") : null;
-        var celularGroup = form ? form.querySelector(".flacso-celular-group") : null;
+        var telefonoInput = form ? form.querySelector(".flacso-telefono") : null;
+        var telefonoHiddenInput = form ? form.querySelector(".flacso-telefono-e164") : null;
+        var telefonoGroup = form ? form.querySelector(".flacso-telefono-group") : null;
         var correoFeedback = form ? form.querySelector(".flacso-correo-feedback") : null;
         var modalidadFeedback = form ? form.querySelector(".flacso-modalidad-feedback") : null;
-        var celularFeedback = form ? form.querySelector(".flacso-celular-feedback") : null;
+        var telefonoFeedback = form ? form.querySelector(".flacso-telefono-feedback") : null;
 
         if (!form || !result || !endpoint) {
             return;
@@ -258,7 +260,7 @@
             result.innerHTML = '<div class="error">' + escapeHtml(message || "No se pudo enviar la inscripción.") + "</div>";
         }
 
-        var iti = bindIntlTelInput(celularInput);
+        var iti = bindIntlTelInput(telefonoInput);
 
         function setFieldError(field, feedbackEl, message) {
             if (!field) {
@@ -295,41 +297,108 @@
             setFieldError(field, feedbackEl, field.validationMessage || fallbackMessage || "Campo inválido.");
         }
 
-        function setCelularError(message) {
-            if (!celularInput) {
+        function setTelefonoError(message) {
+            if (!telefonoInput) {
                 return;
             }
             var msg = String(message || "").trim();
-            celularInput.setCustomValidity(msg);
+            telefonoInput.setCustomValidity(msg);
             if (msg) {
-                celularInput.classList.add("is-invalid");
-                celularInput.classList.remove("is-valid");
-                if (celularGroup) {
-                    celularGroup.classList.add("is-invalid");
+                telefonoInput.classList.add("is-invalid");
+                telefonoInput.classList.remove("is-valid");
+                if (telefonoGroup) {
+                    telefonoGroup.classList.add("is-invalid");
                 }
             } else {
-                celularInput.classList.remove("is-invalid");
-                if (celularGroup) {
-                    celularGroup.classList.remove("is-invalid");
+                telefonoInput.classList.remove("is-invalid");
+                if (telefonoGroup) {
+                    telefonoGroup.classList.remove("is-invalid");
                 }
-                if (celularInput.value && celularInput.value.trim()) {
-                    celularInput.classList.add("is-valid");
+                if (telefonoInput.value && telefonoInput.value.trim()) {
+                    telefonoInput.classList.add("is-valid");
                 } else {
-                    celularInput.classList.remove("is-valid");
+                    telefonoInput.classList.remove("is-valid");
                 }
             }
-            if (celularFeedback) {
-                celularFeedback.textContent = msg;
+            if (telefonoFeedback) {
+                telefonoFeedback.textContent = msg;
             }
         }
 
-        if (celularInput) {
-            celularInput.addEventListener("countrychange", function () {
-                setCelularError("");
+        function normalizePhoneValue(rawValue) {
+            var value = String(rawValue || "").trim();
+            if (!value) {
+                return {
+                    isValid: true,
+                    raw: "",
+                    normalized: "",
+                };
+            }
+
+            if (!iti) {
+                return {
+                    isValid: false,
+                    message: "Error en la configuración del teléfono.",
+                };
+            }
+
+            var digitsOnly = value.replace(/\D/g, "");
+            var isLocalNumber = /^\d{8,}$/.test(digitsOnly);
+            var isInternational = typeof iti.isValidNumber === "function" ? iti.isValidNumber() : false;
+
+            if (!isLocalNumber && !isInternational) {
+                return {
+                    isValid: false,
+                    message: getPhoneValidationMessage(iti),
+                };
+            }
+
+            var normalized = "";
+            if (typeof iti.getNumber === "function") {
+                try {
+                    normalized = iti.getNumber() || "";
+                } catch (e) {
+                    normalized = "";
+                }
+            }
+
+            if (!normalized) {
+                var selected = typeof iti.getSelectedCountryData === "function" ? iti.getSelectedCountryData() : null;
+                var dialCode = selected && selected.dialCode ? String(selected.dialCode) : "598";
+                normalized = "+" + dialCode + digitsOnly.replace(/^0+/, "");
+            }
+
+            return {
+                isValid: true,
+                raw: value,
+                normalized: normalized,
+            };
+        }
+
+        if (telefonoInput) {
+            telefonoInput.addEventListener("countrychange", function () {
+                setTelefonoError("");
+                if (telefonoHiddenInput) {
+                    telefonoHiddenInput.value = "";
+                }
                 result.innerHTML = "";
             });
-            celularInput.addEventListener("input", function () {
-                setCelularError("");
+            telefonoInput.addEventListener("input", function () {
+                setTelefonoError("");
+                if (telefonoHiddenInput) {
+                    telefonoHiddenInput.value = "";
+                }
+            });
+            telefonoInput.addEventListener("blur", function () {
+                var normalizedPhone = normalizePhoneValue(telefonoInput.value);
+                if (!normalizedPhone.isValid) {
+                    setTelefonoError(normalizedPhone.message);
+                    return;
+                }
+                setTelefonoError("");
+                if (telefonoHiddenInput) {
+                    telefonoHiddenInput.value = normalizedPhone.normalized || "";
+                }
             });
         }
 
@@ -339,6 +408,7 @@
                 modalidadSelect.required = true;
                 modalidadSelect.classList.remove("flacso-modalidad-readonly");
                 if (modalidadLocknote) {
+                    modalidadLocknote.textContent = "";
                     modalidadLocknote.hidden = true;
                 }
             } else {
@@ -347,6 +417,9 @@
                 modalidadSelect.required = false;
                 modalidadSelect.classList.add("flacso-modalidad-readonly");
                 if (modalidadLocknote) {
+                    modalidadLocknote.textContent = modalidadEvento === "presencial"
+                        ? "Esta charla es 100% presencial. La asistencia quedó fijada en Presencial."
+                        : "Esta charla es 100% virtual. La asistencia quedó fijada en Virtual.";
                     modalidadLocknote.hidden = false;
                 }
                 if (modalidadFeedback) {
@@ -403,30 +476,29 @@
 
             var paisResidencia = String(fd.get("pais_residencia") || "").trim();
 
-            var celular = String(fd.get("celular") || "").trim();
-            if (iti && celular) {
+            var telefono = String(fd.get("telefono") || "").trim();
+            var telefonoE164 = String(fd.get("telefono_e164") || "").trim();
+            if (telefono) {
                 await waitIntlTelReady(iti);
-
-                var hasPlusPrefix = /^\s*\+/.test(celular);
-                var selected = typeof iti.getSelectedCountryData === "function" ? iti.getSelectedCountryData() : null;
-                if (!hasPlusPrefix && (!selected || !selected.iso2) && typeof iti.setCountry === "function") {
-                    iti.setCountry("uy");
-                }
-
-                if (typeof iti.isValidNumber === "function" && !iti.isValidNumber()) {
-                    setCelularError(getPhoneValidationMessage(iti));
+                var normalizedPhone = normalizePhoneValue(telefono);
+                if (!normalizedPhone.isValid) {
+                    setTelefonoError(normalizedPhone.message);
                     form.reportValidity();
                     return;
                 }
-                setCelularError("");
-                if (typeof iti.getNumber === "function") {
-                    var normalizedCell = iti.getNumber();
-                    if (normalizedCell) {
-                        celular = normalizedCell;
-                    }
+                telefono = normalizedPhone.raw;
+                telefonoE164 = normalizedPhone.normalized;
+                setTelefonoError("");
+                if (telefonoHiddenInput) {
+                    telefonoHiddenInput.value = telefonoE164 || "";
                 }
             } else {
-                setCelularError("");
+                telefono = "";
+                telefonoE164 = "";
+                setTelefonoError("");
+                if (telefonoHiddenInput) {
+                    telefonoHiddenInput.value = "";
+                }
             }
 
             var duracionMinutosRaw = String(wrapper.dataset.eventoDuracionMinutos || "").trim();
@@ -444,6 +516,7 @@
                 youtube_transmision_url: String(wrapper.dataset.eventoYoutubeTransmisionUrl || "").trim(),
                 duracion_minutos: duracionMinutos,
                 direccion: String(wrapper.dataset.eventoDireccion || "").trim(),
+                google_maps_url: String(wrapper.dataset.eventoGoogleMapsUrl || "").trim(),
                 descripcion: decodeBase64Utf8(wrapper.dataset.eventoDescripcionB64 || ""),
             };
 
@@ -454,7 +527,9 @@
                 pais_residencia: paisResidencia,
                 profesion: String(fd.get("profesion") || "").trim(),
                 institucion: String(fd.get("institucion") || "").trim(),
-                celular: celular,
+                telefono: telefono,
+                telefono_e164: telefonoE164,
+                celular: telefonoE164 || telefono,
                 modalidad_asistencia: modalidadAsistencia,
             };
 
@@ -541,6 +616,12 @@
                     var correoMostrado = inscripcionData.correo || "";
                     var nombreMostrado = nombreApellido || "participante";
                     var eventoTitulo = eventoData.titulo || "la actividad";
+                    var emailStatus =
+                        response &&
+                        response.data &&
+                        typeof response.data.email === "string"
+                            ? response.data.email
+                            : "";
                     if (response && response.code === "DUPLICADA") {
                         showSuccessState(
                             "Hola <strong>" + escapeHtml(nombreMostrado) + "</strong>, ya contábamos con tu inscripción para <strong>" +
@@ -548,11 +629,18 @@
                         );
                         return;
                     }
-                    showSuccessState(
-                        "Hola <strong>" + escapeHtml(nombreMostrado) + "</strong>, tu inscripción a <strong>" + escapeHtml(eventoTitulo) +
-                        '</strong> fue confirmada. Te enviamos la confirmación a <strong>' + escapeHtml(correoMostrado) +
-                        "</strong>. Si no lo encuentras en tu bandeja principal, revisa también Spam y Promociones."
-                    );
+                    if (emailStatus === "sent") {
+                        showSuccessState(
+                            "Hola <strong>" + escapeHtml(nombreMostrado) + "</strong>, tu inscripción a <strong>" + escapeHtml(eventoTitulo) +
+                            '</strong> fue confirmada. Te enviamos la confirmación a <strong>' + escapeHtml(correoMostrado) +
+                            "</strong>. Si no lo encuentras en tu bandeja principal, revisa también Spam y Promociones."
+                        );
+                    } else {
+                        showSuccessState(
+                            "Hola <strong>" + escapeHtml(nombreMostrado) + "</strong>, tu inscripción a <strong>" + escapeHtml(eventoTitulo) +
+                            "</strong> fue confirmada correctamente."
+                        );
+                    }
                     form.reset();
                     form.classList.remove("was-validated");
                     if (correoInput) {
@@ -561,9 +649,12 @@
                     if (modalidadSelect) {
                         setFieldError(modalidadSelect, modalidadFeedback, "");
                     }
-                    setCelularError("");
+                    setTelefonoError("");
                     if (iti) {
                         iti.setCountry("uy");
+                    }
+                    if (telefonoHiddenInput) {
+                        telefonoHiddenInput.value = "";
                     }
                 })
                 .catch(function (err) {

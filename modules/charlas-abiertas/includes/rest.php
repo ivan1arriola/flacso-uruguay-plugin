@@ -215,7 +215,7 @@ function flacso_charlas_abiertas_decode_json_loose($raw) {
     return is_array($parsed) ? $parsed : null;
 }
 
-function flacso_charlas_abiertas_post_google_webhook($url, $json_body) {
+function flacso_charlas_abiertas_post_webhook($url, $json_body) {
     $current_url = (string) $url;
     $max_hops = 4;
 
@@ -256,10 +256,11 @@ function flacso_charlas_abiertas_post_google_webhook($url, $json_body) {
             ];
         }
 
+        $is_google_webhook = false !== stripos($current_url, 'script.google.com/macros/');
         $current_url = trim($location);
 
         // Google Apps Script suele responder 302 a macros/echo y ahí se debe seguir con GET.
-        if (in_array($status, [301, 302, 303], true)) {
+        if ($is_google_webhook && in_array($status, [301, 302, 303], true)) {
             $get_response = wp_remote_get($current_url, [
                 'headers' => [
                     'Accept' => 'application/json',
@@ -327,6 +328,7 @@ function flacso_charlas_abiertas_build_charla_data($post) {
         $duracion_minutos = max(0, (int) $duracion_minutos_raw);
     }
     $direccion = (string) get_post_meta($post->ID, '_charla_direccion', true);
+    $google_maps_url = (string) get_post_meta($post->ID, '_charla_google_maps_url', true);
     $descripcion = (string) get_post_meta($post->ID, '_charla_descripcion', true);
     $post_featured_image = get_the_post_thumbnail_url($post, 'full');
     $inicio_timestamp = flacso_charlas_abiertas_parse_inicio_timestamp($inicio);
@@ -341,6 +343,7 @@ function flacso_charlas_abiertas_build_charla_data($post) {
         '_charla_youtube_transmision_url' => $youtube_transmision_url,
         '_charla_duracion_minutos' => $duracion_minutos,
         '_charla_direccion' => $direccion,
+        '_charla_google_maps_url' => $google_maps_url,
         '_charla_descripcion' => $descripcion,
         '_charla_post_id' => $post_id,
         '_charla_evento_id' => $evento_id,
@@ -358,6 +361,7 @@ function flacso_charlas_abiertas_build_charla_data($post) {
         'youtube_transmision_url' => $youtube_transmision_url,
         'duracion_minutos' => $duracion_minutos,
         'direccion' => $direccion,
+        'google_maps_url' => $google_maps_url,
         'descripcion' => $descripcion,
         'descripcion_rendered' => apply_filters('the_content', $descripcion),
         'post_featured_image' => is_string($post_featured_image) ? $post_featured_image : '',
@@ -603,9 +607,11 @@ function flacso_charlas_abiertas_receive_inscripcion(WP_REST_Request $request) {
             $errors[] = ['field' => 'inscripcion.modalidad_asistencia', 'message' => 'Debe ser presencial o virtual.'];
         }
 
-        $celular = sanitize_text_field($inscripcion['celular'] ?? '');
-        if ('' !== $celular && !preg_match('/^\+?[0-9()\-\s]{6,20}$/', $celular)) {
-            $errors[] = ['field' => 'inscripcion.celular', 'message' => 'Formato inválido.'];
+        $telefono = sanitize_text_field($inscripcion['telefono'] ?? ($inscripcion['celular'] ?? ''));
+        $telefono_e164 = sanitize_text_field($inscripcion['telefono_e164'] ?? '');
+        $telefono_normalizado = '' !== $telefono_e164 ? $telefono_e164 : $telefono;
+        if ('' !== $telefono_normalizado && !preg_match('/^\+?[0-9()\-\s]{8,20}$/', $telefono_normalizado)) {
+            $errors[] = ['field' => 'inscripcion.telefono', 'message' => 'Formato inválido.'];
         }
 
         if (!empty($errors)) {
@@ -641,6 +647,7 @@ function flacso_charlas_abiertas_receive_inscripcion(WP_REST_Request $request) {
                 'youtube_transmision_url' => esc_url_raw($evento['youtube_transmision_url'] ?? get_post_meta($evento_id, '_charla_youtube_transmision_url', true)),
                 'duracion_minutos' => $evento_duracion_minutos,
                 'direccion' => sanitize_text_field($evento['direccion'] ?? get_post_meta($evento_id, '_charla_direccion', true)),
+                'google_maps_url' => esc_url_raw($evento['google_maps_url'] ?? get_post_meta($evento_id, '_charla_google_maps_url', true)),
                 'descripcion' => wp_kses_post($evento['descripcion'] ?? get_post_meta($evento_id, '_charla_descripcion', true)),
             ],
             'inscripcion' => [
@@ -650,7 +657,9 @@ function flacso_charlas_abiertas_receive_inscripcion(WP_REST_Request $request) {
                 'pais_residencia' => sanitize_text_field($inscripcion['pais_residencia'] ?? ''),
                 'profesion' => sanitize_text_field($inscripcion['profesion'] ?? ''),
                 'institucion' => sanitize_text_field($inscripcion['institucion'] ?? ''),
-                'celular' => $celular,
+                'telefono' => $telefono,
+                'telefono_e164' => $telefono_e164,
+                'celular' => $telefono_normalizado,
                 'modalidad_asistencia' => $modalidad_asistencia,
             ],
             'device' => [
@@ -676,119 +685,127 @@ function flacso_charlas_abiertas_receive_inscripcion(WP_REST_Request $request) {
         do_action('flacso_charlas_abiertas_inscripcion_recibida', $clean_payload, $request, $inscripcion_id);
 
         $webhook_url = flacso_charlas_abiertas_get_webhook_url();
+        if (empty($webhook_url)) {
+            return flacso_charlas_abiertas_error_response(
+                $started_at,
+                500,
+                'INTERNAL_ERROR',
+                'Webhook de inscripciones no configurado.',
+                null
+            );
+        }
+
         $webhook_url_used = $webhook_url;
         $webhook_code = null;
         $webhook_data = null;
-        if (!empty($webhook_url)) {
-            $encoded_payload = wp_json_encode($clean_payload);
-            $post_result = flacso_charlas_abiertas_post_google_webhook($webhook_url, $encoded_payload);
-            $webhook_response = isset($post_result['response']) ? $post_result['response'] : null;
-            if (!empty($post_result['url_used']) && is_string($post_result['url_used'])) {
-                $webhook_url_used = $post_result['url_used'];
-            }
-            if (is_wp_error($webhook_response)) {
-                return flacso_charlas_abiertas_error_response(
-                    $started_at,
-                    500,
-                    'INTERNAL_ERROR',
-                    'Error reenviando la inscripción al webhook',
-                    [
-                        'message' => $webhook_response->get_error_message(),
-                        'webhook_url' => $webhook_url_used,
-                    ]
+        $encoded_payload = wp_json_encode($clean_payload);
+        $post_result = flacso_charlas_abiertas_post_webhook($webhook_url, $encoded_payload);
+        $webhook_response = isset($post_result['response']) ? $post_result['response'] : null;
+        if (!empty($post_result['url_used']) && is_string($post_result['url_used'])) {
+            $webhook_url_used = $post_result['url_used'];
+        }
+        if (is_wp_error($webhook_response)) {
+            return flacso_charlas_abiertas_error_response(
+                $started_at,
+                500,
+                'INTERNAL_ERROR',
+                'Error reenviando la inscripción al webhook',
+                [
+                    'message' => $webhook_response->get_error_message(),
+                    'webhook_url' => $webhook_url_used,
+                ]
+            );
+        }
+
+        $status_code = wp_remote_retrieve_response_code($webhook_response);
+        $raw_body = wp_remote_retrieve_body($webhook_response);
+
+        $parsed = flacso_charlas_abiertas_decode_json_loose($raw_body);
+
+        if (!is_array($parsed)) {
+            if ($status_code < 200 || $status_code >= 300) {
+                $raw_body_text = is_scalar($raw_body) ? (string) $raw_body : '';
+                $is_google_400_html = (
+                    false !== stripos($raw_body_text, '<!DOCTYPE html')
+                    && false !== stripos($raw_body_text, 'Error 400')
+                    && false !== stripos($raw_body_text, 'google')
                 );
-            }
 
-            $status_code = wp_remote_retrieve_response_code($webhook_response);
-            $raw_body = wp_remote_retrieve_body($webhook_response);
-
-            $parsed = flacso_charlas_abiertas_decode_json_loose($raw_body);
-
-            if (!is_array($parsed)) {
-                if ($status_code < 200 || $status_code >= 300) {
-                    $raw_body_text = is_scalar($raw_body) ? (string) $raw_body : '';
-                    $is_google_400_html = (
-                        false !== stripos($raw_body_text, '<!DOCTYPE html')
-                        && false !== stripos($raw_body_text, 'Error 400')
-                        && false !== stripos($raw_body_text, 'google')
-                    );
-
-                    if ($is_google_400_html) {
-                        return flacso_charlas_abiertas_error_response(
-                            $started_at,
-                            500,
-                            'INTERNAL_ERROR',
-                            'Google Apps Script devolvió HTTP 400 al webhook',
-                            [
-                                'status' => $status_code,
-                                'webhook_url' => $webhook_url_used,
-                            ]
-                        );
-                    }
-
+                if ($is_google_400_html) {
                     return flacso_charlas_abiertas_error_response(
                         $started_at,
                         500,
                         'INTERNAL_ERROR',
-                        'El webhook devolvió un estado no exitoso',
+                        'Google Apps Script devolvió HTTP 400 al webhook',
                         [
                             'status' => $status_code,
-                            'body' => $raw_body_text ? substr($raw_body_text, 0, 500) : null,
                             'webhook_url' => $webhook_url_used,
                         ]
                     );
                 }
+
                 return flacso_charlas_abiertas_error_response(
                     $started_at,
                     500,
                     'INTERNAL_ERROR',
-                    'El webhook devolvió una respuesta inválida',
-                    ['status' => $status_code]
-                );
-            }
-
-            // Tolerancia: algunos proveedores pueden devolver HTTP no-2xx con body JSON válido.
-            if (($status_code < 200 || $status_code >= 300) && (!array_key_exists('ok', $parsed) || !empty($parsed['ok']))) {
-                $status_code = 200;
-            }
-
-            if ($status_code < 200 || $status_code >= 300) {
-                $remote_error = isset($parsed['error']) && is_array($parsed['error']) ? $parsed['error'] : null;
-                $remote_message = isset($remote_error['message']) ? sanitize_text_field((string) $remote_error['message']) : 'El webhook devolvió un estado no exitoso';
-                return flacso_charlas_abiertas_error_response(
-                    $started_at,
-                    500,
-                    isset($parsed['code']) ? sanitize_text_field((string) $parsed['code']) : 'INTERNAL_ERROR',
-                    $remote_message,
+                    'El webhook devolvió un estado no exitoso',
                     [
                         'status' => $status_code,
-                        'details' => isset($remote_error['details']) ? $remote_error['details'] : null,
+                        'body' => $raw_body_text ? substr($raw_body_text, 0, 500) : null,
                         'webhook_url' => $webhook_url_used,
                     ]
                 );
             }
-
-            if (array_key_exists('ok', $parsed) && empty($parsed['ok'])) {
-                $remote_error = isset($parsed['error']) && is_array($parsed['error']) ? $parsed['error'] : null;
-                $remote_message = isset($remote_error['message']) ? sanitize_text_field((string) $remote_error['message']) : 'Error del webhook';
-                return flacso_charlas_abiertas_error_response(
-                    $started_at,
-                    422,
-                    isset($parsed['code']) ? sanitize_text_field((string) $parsed['code']) : 'VALIDATION_ERROR',
-                    $remote_message,
-                    isset($remote_error['details']) ? $remote_error['details'] : null
-                );
-            }
-
-            $webhook_code = isset($parsed['code']) ? sanitize_text_field((string) $parsed['code']) : null;
-            $webhook_data = isset($parsed['data']) && is_array($parsed['data']) ? $parsed['data'] : null;
+            return flacso_charlas_abiertas_error_response(
+                $started_at,
+                500,
+                'INTERNAL_ERROR',
+                'El webhook devolvió una respuesta inválida',
+                ['status' => $status_code]
+            );
         }
+
+        // Tolerancia: algunos proveedores pueden devolver HTTP no-2xx con body JSON válido.
+        if (($status_code < 200 || $status_code >= 300) && (!array_key_exists('ok', $parsed) || !empty($parsed['ok']))) {
+            $status_code = 200;
+        }
+
+        if ($status_code < 200 || $status_code >= 300) {
+            $remote_error = isset($parsed['error']) && is_array($parsed['error']) ? $parsed['error'] : null;
+            $remote_message = isset($remote_error['message']) ? sanitize_text_field((string) $remote_error['message']) : 'El webhook devolvió un estado no exitoso';
+            return flacso_charlas_abiertas_error_response(
+                $started_at,
+                500,
+                isset($parsed['code']) ? sanitize_text_field((string) $parsed['code']) : 'INTERNAL_ERROR',
+                $remote_message,
+                [
+                    'status' => $status_code,
+                    'details' => isset($remote_error['details']) ? $remote_error['details'] : null,
+                    'webhook_url' => $webhook_url_used,
+                ]
+            );
+        }
+
+        if (array_key_exists('ok', $parsed) && empty($parsed['ok'])) {
+            $remote_error = isset($parsed['error']) && is_array($parsed['error']) ? $parsed['error'] : null;
+            $remote_message = isset($remote_error['message']) ? sanitize_text_field((string) $remote_error['message']) : 'Error del webhook';
+            return flacso_charlas_abiertas_error_response(
+                $started_at,
+                422,
+                isset($parsed['code']) ? sanitize_text_field((string) $parsed['code']) : 'VALIDATION_ERROR',
+                $remote_message,
+                isset($remote_error['details']) ? $remote_error['details'] : null
+            );
+        }
+
+        $webhook_code = isset($parsed['code']) ? sanitize_text_field((string) $parsed['code']) : null;
+        $webhook_data = isset($parsed['data']) && is_array($parsed['data']) ? $parsed['data'] : null;
 
         $data = [
             'inscripcion_id' => $inscripcion_id,
             'duplicada' => false,
             'saved' => true,
-            'telegram' => !empty($webhook_url) ? 'sent' : 'failed',
+            'telegram' => 'sent',
             'email' => 'skipped',
             'email_sender' => null,
             'gmail_message_url' => null,

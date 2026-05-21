@@ -61,7 +61,7 @@
     width: 100%;
 }
 
-.flacso-charla-form-wrapper .flacso-celular-feedback {
+.flacso-charla-form-wrapper .flacso-telefono-feedback {
     display: none;
     width: 100%;
     margin-top: .25rem;
@@ -83,13 +83,13 @@
     display: block;
 }
 
-.flacso-charla-form-wrapper .flacso-celular-group.is-invalid + .flacso-celular-feedback {
+.flacso-charla-form-wrapper .flacso-telefono-group.is-invalid + .flacso-telefono-feedback {
     display: block;
 }
 
 .flacso-charla-form-wrapper .flacso-correo.is-invalid,
 .flacso-charla-form-wrapper .flacso-modalidad-asistencia.is-invalid,
-.flacso-charla-form-wrapper .flacso-celular.is-invalid {
+.flacso-charla-form-wrapper .flacso-telefono.is-invalid {
     border-color: var(--global-palette13, #b82105);
 }
 

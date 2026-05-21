@@ -5,7 +5,6 @@ if (!defined('ABSPATH')) {
 }
 
 const FLACSO_CHARLAS_ABIERTAS_OPTION_WEBHOOK = 'flacso_charlas_abiertas_webhook_url';
-const FLACSO_CHARLAS_ABIERTAS_WEBHOOK_HARDCODED = 'https://script.google.com/macros/s/AKfycbw3pBICUwynHaNGR-GSBxhNBqy1ikzGqZhGY0HJEeci9aAwZXtSkHX5hmwWBK-9S4Yc/exec';
 
 function flacso_charlas_abiertas_extract_google_webapp_id($value) {
     $raw = trim((string) $value);
@@ -34,7 +33,17 @@ function flacso_charlas_abiertas_build_google_webhook_url_from_id($id) {
 }
 
 function flacso_charlas_abiertas_sanitize_webhook_url($value) {
-    return flacso_charlas_abiertas_extract_google_webapp_id($value);
+    $raw = trim((string) $value);
+    if ('' === $raw) {
+        return '';
+    }
+
+    $google_id = flacso_charlas_abiertas_extract_google_webapp_id($raw);
+    if ('' !== $google_id) {
+        return flacso_charlas_abiertas_build_google_webhook_url_from_id($google_id);
+    }
+
+    return esc_url_raw($raw);
 }
 
 add_action('admin_init', 'flacso_charlas_abiertas_register_settings');
@@ -58,7 +67,7 @@ function flacso_charlas_abiertas_register_settings() {
 
     add_settings_field(
         'flacso_charlas_abiertas_webhook_url_field',
-        'Google Apps Script Deployment ID',
+        'Webhook URL',
         'flacso_charlas_abiertas_render_webhook_field',
         'flacso-charlas-abiertas-settings',
         'flacso_charlas_abiertas_webhook_section'
@@ -66,22 +75,29 @@ function flacso_charlas_abiertas_register_settings() {
 }
 
 function flacso_charlas_abiertas_render_webhook_field() {
-    $deployment_id = get_option(FLACSO_CHARLAS_ABIERTAS_OPTION_WEBHOOK, '');
-    $resolved_url = flacso_charlas_abiertas_build_google_webhook_url_from_id($deployment_id);
+    $webhook_url = get_option(FLACSO_CHARLAS_ABIERTAS_OPTION_WEBHOOK, '');
+    $google_id = flacso_charlas_abiertas_extract_google_webapp_id($webhook_url);
     ?>
     <input
         type="text"
         name="<?php echo esc_attr(FLACSO_CHARLAS_ABIERTAS_OPTION_WEBHOOK); ?>"
-        value="<?php echo esc_attr($deployment_id); ?>"
+        value="<?php echo esc_attr($webhook_url); ?>"
         class="regular-text"
-        placeholder="AKfycbz..."
+        placeholder="https://tu-dominio.com/api/charlas/inscripciones"
         spellcheck="false"
         autocapitalize="off"
         autocorrect="off"
     />
-    <p class="description">Ingresa solo el <strong>Deployment ID</strong> de Google Apps Script. También puedes pegar la URL completa: se extraerá el ID automáticamente.</p>
-    <?php if (!empty($resolved_url)) : ?>
-        <p class="description">Webhook resuelto: <code><?php echo esc_html($resolved_url); ?></code></p>
+    <p class="description">
+        Ingresa la <strong>URL completa</strong> del webhook de <code>flacso-editor</code>.
+        La ruta sugerida es <code>/api/charlas/inscripciones</code>.
+        Por compatibilidad, también puedes pegar la URL o el Deployment ID de Google Apps Script.
+    </p>
+    <?php if (!empty($webhook_url)) : ?>
+        <p class="description">Webhook configurado: <code><?php echo esc_html($webhook_url); ?></code></p>
+    <?php endif; ?>
+    <?php if (!empty($google_id)) : ?>
+        <p class="description">Compatibilidad Google detectada: <code><?php echo esc_html($google_id); ?></code></p>
     <?php endif; ?>
     <?php
 }
@@ -106,7 +122,7 @@ function flacso_charlas_abiertas_render_settings_page() {
     ?>
     <div class="wrap">
         <h1>Webhook de Charlas Abiertas</h1>
-        <p>Configura el endpoint de Google Apps Script para procesar inscripciones.</p>
+        <p>Configura el endpoint que recibirá las inscripciones de charlas abiertas.</p>
         <form method="post" action="options.php">
             <?php
             settings_fields('flacso_charlas_abiertas_settings_group');
@@ -119,5 +135,6 @@ function flacso_charlas_abiertas_render_settings_page() {
 }
 
 function flacso_charlas_abiertas_get_webhook_url() {
-    return esc_url_raw(FLACSO_CHARLAS_ABIERTAS_WEBHOOK_HARDCODED);
+    $url = get_option(FLACSO_CHARLAS_ABIERTAS_OPTION_WEBHOOK, '');
+    return is_string($url) ? esc_url_raw($url) : '';
 }

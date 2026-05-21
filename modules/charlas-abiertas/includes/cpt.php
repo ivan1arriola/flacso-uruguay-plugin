@@ -79,6 +79,14 @@ function flacso_charlas_abiertas_register_cpt() {
         'sanitize_callback' => 'sanitize_text_field',
     ]);
 
+    register_post_meta('charla_abierta', '_charla_google_maps_url', [
+        'single' => true,
+        'type' => 'string',
+        'show_in_rest' => true,
+        'auth_callback' => '__return_true',
+        'sanitize_callback' => 'esc_url_raw',
+    ]);
+
     register_post_meta('charla_abierta', '_charla_descripcion', [
         'single' => true,
         'type' => 'string',
@@ -168,6 +176,7 @@ function flacso_charlas_abiertas_render_meta_box($post) {
     $duracion_minutos = get_post_meta($post->ID, '_charla_duracion_minutos', true);
     $duracion_hhmm = flacso_charlas_abiertas_format_duracion_hhmm_desde_minutos($duracion_minutos);
     $direccion = get_post_meta($post->ID, '_charla_direccion', true);
+    $google_maps_url = get_post_meta($post->ID, '_charla_google_maps_url', true);
     $descripcion = get_post_meta($post->ID, '_charla_descripcion', true);
     $inicio_fecha = '';
     $inicio_hora = '';
@@ -284,6 +293,18 @@ function flacso_charlas_abiertas_render_meta_box($post) {
             name="flacso_charla_direccion"
             value="<?php echo esc_attr($direccion); ?>"
             style="width:100%;"
+            placeholder="Ej. Centro Cultural, salón 2, Rivera 1234, Montevideo"
+        />
+    </p>
+    <p>
+        <label for="flacso_charla_google_maps_url"><strong>Google Maps URL</strong></label><br>
+        <input
+            type="url"
+            id="flacso_charla_google_maps_url"
+            name="flacso_charla_google_maps_url"
+            value="<?php echo esc_attr($google_maps_url); ?>"
+            style="width:100%;"
+            placeholder="https://maps.google.com/..."
         />
     </p>
     <p>
@@ -621,6 +642,10 @@ function flacso_charlas_abiertas_save_meta($post_id, $post) {
         update_post_meta($post_id, '_charla_direccion', sanitize_text_field(wp_unslash($_POST['flacso_charla_direccion'])));
     }
 
+    if (isset($_POST['flacso_charla_google_maps_url'])) {
+        update_post_meta($post_id, '_charla_google_maps_url', esc_url_raw(wp_unslash($_POST['flacso_charla_google_maps_url'])));
+    }
+
     if (isset($_POST['flacso_charla_descripcion'])) {
         update_post_meta($post_id, '_charla_descripcion', wp_kses_post(wp_unslash($_POST['flacso_charla_descripcion'])));
     }
@@ -681,15 +706,20 @@ function flacso_charlas_abiertas_render_admin_column($column, $post_id) {
         $modalidad = get_post_meta($post_id, '_charla_modalidad', true);
         $zoom = get_post_meta($post_id, '_charla_zoom_join_url', true);
         $direccion = get_post_meta($post_id, '_charla_direccion', true);
+        $google_maps_url = get_post_meta($post_id, '_charla_google_maps_url', true);
+        $direccion_html = $direccion ? esc_html($direccion) : '<span style="color:#646970;">Sin dirección</span>';
+        if ($google_maps_url) {
+            $direccion_html .= '<br><a href="' . esc_url($google_maps_url) . '" target="_blank" rel="noopener noreferrer">Ver Google Maps</a>';
+        }
 
         if ('presencial' === $modalidad) {
-            echo $direccion ? esc_html($direccion) : '<span style="color:#646970;">Sin dirección</span>';
+            echo wp_kses_post($direccion_html);
             return;
         }
 
         if ('hibrida' === $modalidad) {
             $parts = [];
-            $parts[] = $direccion ? esc_html($direccion) : '<span style="color:#646970;">Sin dirección</span>';
+            $parts[] = $direccion_html;
             $parts[] = $zoom ? '<a href="' . esc_url($zoom) . '" target="_blank" rel="noopener noreferrer">Zoom</a>' : '<span style="color:#646970;">Sin Zoom</span>';
             echo wp_kses_post(implode('<br>', $parts));
             return;
@@ -865,6 +895,7 @@ function flacso_charlas_abiertas_build_visualizer_item($post, $now_timestamp) {
         'zoom_join_url' => (string) get_post_meta($post->ID, '_charla_zoom_join_url', true),
         'youtube_transmision_url' => (string) get_post_meta($post->ID, '_charla_youtube_transmision_url', true),
         'direccion' => (string) get_post_meta($post->ID, '_charla_direccion', true),
+        'google_maps_url' => (string) get_post_meta($post->ID, '_charla_google_maps_url', true),
         'status_key' => $status_key,
         'status_label' => $status_label,
         'priority' => $priority,
@@ -903,6 +934,9 @@ function flacso_charlas_abiertas_render_visualizer_card($item) {
     }
 
     $links = [];
+    if (!empty($item['google_maps_url'])) {
+        $links[] = '<a href="' . esc_url((string) $item['google_maps_url']) . '" target="_blank" rel="noopener noreferrer">Google Maps</a>';
+    }
     if (!empty($item['zoom_join_url'])) {
         $links[] = '<a href="' . esc_url((string) $item['zoom_join_url']) . '" target="_blank" rel="noopener noreferrer">Zoom</a>';
     }

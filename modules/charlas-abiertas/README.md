@@ -150,6 +150,7 @@ type Payload = {
     youtube_transmision_url?: string;    // URL
     duracion_minutos?: number;           // minutos
     direccion?: string;
+    google_maps_url?: string;            // URL opcional
     descripcion?: string;                // puede incluir HTML
   };
 
@@ -161,7 +162,9 @@ type Payload = {
     pais_residencia?: string;
     profesion?: string;
     institucion?: string;
-    celular?: string;                    // opcional (si viene, se valida formato)
+    telefono?: string;                   // opcional, valor visible ingresado por el usuario
+    telefono_e164?: string;              // opcional, normalizado por intl-tel-input
+    celular?: string;                    // opcional, alias legacy para compatibilidad
     modalidad_asistencia: 'presencial' | 'virtual'; // requerido
   };
 
@@ -199,6 +202,7 @@ type Payload = {
     "youtube_transmision_url": "string (url) [opcional]",
     "duracion_minutos": "number [opcional, en minutos]",
     "direccion": "string [opcional]",
+    "google_maps_url": "string (url) [opcional]",
     "descripcion": "string [opcional]"
   },
   "inscripcion": {
@@ -209,7 +213,9 @@ type Payload = {
     "pais_residencia": "string [opcional]",
     "profesion": "string [opcional]",
     "institucion": "string [opcional]",
-    "celular": "string [opcional]",
+    "telefono": "string [opcional]",
+    "telefono_e164": "string [opcional]",
+    "celular": "string [opcional, alias legacy]",
     "modalidad_asistencia": "presencial|virtual"
   },
   "device": {
@@ -329,18 +335,23 @@ Notas:
 - `inscripcion.correo` (servidor): además se valida que el dominio exista por DNS (`MX/A/AAAA/CNAME`) con caché de 6 horas.
 - Excepción DNS: si el dominio termina en `gmail.com` o `outlook.com`, se omite verificación DNS.
 - `inscripcion.modalidad_asistencia`: obligatorio, `virtual|presencial`.
-- `inscripcion.celular`: opcional; si viene, formato validado.
+- `inscripcion.telefono`: opcional; si viene, formato validado.
+- `inscripcion.telefono_e164`: opcional; si viene, se prioriza como valor normalizado.
+- `inscripcion.celular`: alias legacy opcional para compatibilidad.
 
 ## Integraciones Frontend
 
 ### intl-tel-input
 
-- Campo: `inscripcion.celular`.
+- Campo visible: `inscripcion.telefono`.
+- Campo oculto normalizado: `inscripcion.telefono_e164`.
+- Compatibilidad legacy: `inscripcion.celular`.
 - Inicialización: `assets/js/frontend.js`.
 - Assets: cargados desde CDN en `includes/frontend-assets.php`.
 - Comportamiento:
-  - Si el usuario ingresa celular, se valida con `intl-tel-input`.
-  - Si es válido, se normaliza y envía en formato internacional (`E.164`).
+  - Si el usuario ingresa teléfono, se valida con la misma lógica de `preinscripcion`: se aceptan números locales de 8+ dígitos o internacionales válidos.
+  - Si es válido, se normaliza y envía en formato internacional (`E.164`) en `telefono_e164`.
+  - Además se mantiene `celular` como alias compatible para consumidores legacy.
   - Si no es válido, no se envía el formulario y se muestra error en pantalla.
 
 ### country-select-js
@@ -376,6 +387,8 @@ Resultado:
 
 - Webhook configurable en: `Ajustes > Charlas Abiertas`.
 - Campo: `Webhook URL`.
+- Destino sugerido para la app: `https://<tu-dominio-flacso-editor>/api/charlas/inscripciones`.
+- Si el webhook no está configurado, el plugin ahora corta el envío para evitar perder inscripciones silenciosamente.
 
 ## Estructura del modulo integrado
 

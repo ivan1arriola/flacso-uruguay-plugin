@@ -54,6 +54,7 @@ function flacso_charlas_abiertas_render_block($attributes) {
         $duracion_minutos = max(0, (int) $duracion_minutos_raw);
     }
     $direccion = get_post_meta($evento_id, '_charla_direccion', true);
+    $google_maps_url = get_post_meta($evento_id, '_charla_google_maps_url', true);
     $descripcion = get_post_meta($evento_id, '_charla_descripcion', true);
     $descripcion_b64 = base64_encode((string) $descripcion);
     if (!$modalidad) {
@@ -68,8 +69,8 @@ function flacso_charlas_abiertas_render_block($attributes) {
     $wrapper_id = 'flacso-charla-form-' . wp_unique_id();
     $correo_input_id = $wrapper_id . '-correo';
     $correo_feedback_id = $wrapper_id . '-correo-feedback';
-    $celular_input_id = $wrapper_id . '-celular';
-    $celular_feedback_id = $wrapper_id . '-celular-feedback';
+    $telefono_input_id = $wrapper_id . '-telefono';
+    $telefono_feedback_id = $wrapper_id . '-telefono-feedback';
     $modalidad_select_id = $wrapper_id . '-modalidad-asistencia';
     $modalidad_feedback_id = $wrapper_id . '-modalidad-asistencia-feedback';
     $is_logged_in = is_user_logged_in() ? 'true' : 'false';
@@ -92,6 +93,7 @@ function flacso_charlas_abiertas_render_block($attributes) {
         data-evento-youtube-transmision-url="<?php echo esc_url($youtube_transmision_url ?: ''); ?>"
         data-evento-duracion-minutos="<?php echo esc_attr(null === $duracion_minutos ? '' : (string) $duracion_minutos); ?>"
         data-evento-direccion="<?php echo esc_attr((string) $direccion); ?>"
+        data-evento-google-maps-url="<?php echo esc_url($google_maps_url ?: ''); ?>"
         data-evento-descripcion-b64="<?php echo esc_attr($descripcion_b64); ?>"
         data-wp-user-logged-in="<?php echo esc_attr($is_logged_in); ?>"
         data-host-post-id="<?php echo esc_attr((string) absint($host_post_id)); ?>"
@@ -140,17 +142,19 @@ function flacso_charlas_abiertas_render_block($attributes) {
             </p>
 
             <p>
-                <label>Celular</label>
-                <div class="input-group has-validation flacso-celular-group">
+                <label>Número de teléfono</label>
+                <div class="input-group has-validation flacso-telefono-group">
                     <input
                         type="tel"
-                        id="<?php echo esc_attr($celular_input_id); ?>"
-                        name="celular"
-                        class="flacso-celular"
-                        aria-describedby="<?php echo esc_attr($celular_feedback_id); ?>"
+                        id="<?php echo esc_attr($telefono_input_id); ?>"
+                        name="telefono"
+                        class="flacso-telefono"
+                        aria-describedby="<?php echo esc_attr($telefono_feedback_id); ?>"
+                        inputmode="tel"
                     />
+                    <input type="hidden" name="telefono_e164" class="flacso-telefono-e164" value="" />
                 </div>
-                <div id="<?php echo esc_attr($celular_feedback_id); ?>" class="invalid-feedback flacso-celular-feedback" aria-live="polite"></div>
+                <div id="<?php echo esc_attr($telefono_feedback_id); ?>" class="invalid-feedback flacso-telefono-feedback" aria-live="polite"></div>
             </p>
 
             <p>
