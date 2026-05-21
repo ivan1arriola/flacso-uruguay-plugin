@@ -218,12 +218,22 @@ function flacso_charlas_abiertas_decode_json_loose($raw) {
 function flacso_charlas_abiertas_post_webhook($url, $json_body) {
     $current_url = (string) $url;
     $max_hops = 4;
+    $webhook_token = function_exists('flacso_charlas_abiertas_get_webhook_token')
+        ? flacso_charlas_abiertas_get_webhook_token()
+        : '';
+
+    $headers = [
+        'Content-Type' => 'application/json; charset=utf-8',
+        'Accept' => 'application/json',
+    ];
+
+    if ('' !== $webhook_token) {
+        $headers['Authorization'] = 'Bearer ' . $webhook_token;
+        $headers['X-FLACSO-Webhook-Token'] = $webhook_token;
+    }
 
     $post_args = [
-        'headers' => [
-            'Content-Type' => 'application/json; charset=utf-8',
-            'Accept' => 'application/json',
-        ],
+        'headers' => $headers,
         'body' => $json_body,
         'timeout' => 60,
         // Seguimos redirecciones manualmente para preservar método POST.
@@ -590,11 +600,31 @@ function flacso_charlas_abiertas_receive_inscripcion(WP_REST_Request $request) {
         $apellido = sanitize_text_field($inscripcion['apellido'] ?? '');
         // Compatibilidad legacy: si llega nombre_apellido desde clientes viejos, se usa como fallback.
         $nombre_apellido = sanitize_text_field($inscripcion['nombre_apellido'] ?? '');
+        if (('' === $nombre || '' === $apellido) && '' !== $nombre_apellido) {
+            $name_parts = preg_split('/\s+/', trim($nombre_apellido));
+            if (is_array($name_parts) && count($name_parts) > 1) {
+                $legacy_apellido = array_pop($name_parts);
+                $legacy_nombre = trim(implode(' ', $name_parts));
+                if ('' === $nombre) {
+                    $nombre = $legacy_nombre;
+                }
+                if ('' === $apellido) {
+                    $apellido = $legacy_apellido;
+                }
+            } elseif ('' === $nombre) {
+                $nombre = $nombre_apellido;
+            }
+        }
+
         if ('' === $nombre_apellido && ('' !== $nombre || '' !== $apellido)) {
             $nombre_apellido = trim($nombre . ' ' . $apellido);
         }
-        if ('' === $nombre_apellido) {
-            $errors[] = ['field' => 'inscripcion.nombre', 'message' => 'Nombre y apellido requeridos.'];
+
+        if ('' === $nombre) {
+            $errors[] = ['field' => 'inscripcion.nombre', 'message' => 'Campo requerido.'];
+        }
+        if ('' === $apellido) {
+            $errors[] = ['field' => 'inscripcion.apellido', 'message' => 'Campo requerido.'];
         }
 
         $correo = sanitize_email($inscripcion['correo'] ?? '');

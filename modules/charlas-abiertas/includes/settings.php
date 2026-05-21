@@ -5,6 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 const FLACSO_CHARLAS_ABIERTAS_OPTION_WEBHOOK = 'flacso_charlas_abiertas_webhook_url';
+const FLACSO_CHARLAS_ABIERTAS_OPTION_WEBHOOK_TOKEN = 'flacso_charlas_abiertas_webhook_token';
 
 function flacso_charlas_abiertas_extract_google_webapp_id($value) {
     $raw = trim((string) $value);
@@ -46,6 +47,10 @@ function flacso_charlas_abiertas_sanitize_webhook_url($value) {
     return esc_url_raw($raw);
 }
 
+function flacso_charlas_abiertas_sanitize_webhook_token($value) {
+    return trim((string) $value);
+}
+
 add_action('admin_init', 'flacso_charlas_abiertas_register_settings');
 function flacso_charlas_abiertas_register_settings() {
     register_setting(
@@ -54,6 +59,16 @@ function flacso_charlas_abiertas_register_settings() {
         [
             'type' => 'string',
             'sanitize_callback' => 'flacso_charlas_abiertas_sanitize_webhook_url',
+            'default' => '',
+        ]
+    );
+
+    register_setting(
+        'flacso_charlas_abiertas_settings_group',
+        FLACSO_CHARLAS_ABIERTAS_OPTION_WEBHOOK_TOKEN,
+        [
+            'type' => 'string',
+            'sanitize_callback' => 'flacso_charlas_abiertas_sanitize_webhook_token',
             'default' => '',
         ]
     );
@@ -69,6 +84,14 @@ function flacso_charlas_abiertas_register_settings() {
         'flacso_charlas_abiertas_webhook_url_field',
         'Webhook URL',
         'flacso_charlas_abiertas_render_webhook_field',
+        'flacso-charlas-abiertas-settings',
+        'flacso_charlas_abiertas_webhook_section'
+    );
+
+    add_settings_field(
+        'flacso_charlas_abiertas_webhook_token_field',
+        'Webhook Token',
+        'flacso_charlas_abiertas_render_webhook_token_field',
         'flacso-charlas-abiertas-settings',
         'flacso_charlas_abiertas_webhook_section'
     );
@@ -98,6 +121,31 @@ function flacso_charlas_abiertas_render_webhook_field() {
     <?php endif; ?>
     <?php if (!empty($google_id)) : ?>
         <p class="description">Compatibilidad Google detectada: <code><?php echo esc_html($google_id); ?></code></p>
+    <?php endif; ?>
+    <?php
+}
+
+function flacso_charlas_abiertas_render_webhook_token_field() {
+    $webhook_token = get_option(FLACSO_CHARLAS_ABIERTAS_OPTION_WEBHOOK_TOKEN, '');
+    ?>
+    <input
+        type="password"
+        name="<?php echo esc_attr(FLACSO_CHARLAS_ABIERTAS_OPTION_WEBHOOK_TOKEN); ?>"
+        value="<?php echo esc_attr($webhook_token); ?>"
+        class="regular-text"
+        placeholder="Pega aquí el mismo token configurado en Vercel"
+        spellcheck="false"
+        autocomplete="new-password"
+        autocapitalize="off"
+        autocorrect="off"
+    />
+    <p class="description">
+        Opcional pero recomendado: si en <code>flacso-editor</code> configuras la variable
+        <code>FLACSO_CHARLAS_WEBHOOK_TOKEN</code>, pega aquí exactamente el mismo valor.
+        El plugin lo enviará en el header <code>Authorization: Bearer ...</code>.
+    </p>
+    <?php if (!empty($webhook_token)) : ?>
+        <p class="description">Token configurado: <code>********</code></p>
     <?php endif; ?>
     <?php
 }
@@ -137,4 +185,9 @@ function flacso_charlas_abiertas_render_settings_page() {
 function flacso_charlas_abiertas_get_webhook_url() {
     $url = get_option(FLACSO_CHARLAS_ABIERTAS_OPTION_WEBHOOK, '');
     return is_string($url) ? esc_url_raw($url) : '';
+}
+
+function flacso_charlas_abiertas_get_webhook_token() {
+    $token = get_option(FLACSO_CHARLAS_ABIERTAS_OPTION_WEBHOOK_TOKEN, '');
+    return is_string($token) ? trim($token) : '';
 }

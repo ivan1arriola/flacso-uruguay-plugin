@@ -155,9 +155,8 @@ type Payload = {
   };
 
   inscripcion: {
-    nombre?: string;                     // opcional (adicional, separado)
-    apellido?: string;                   // opcional (adicional, separado)
-    nombre_apellido: string;             // requerido
+    nombre: string;                      // requerido
+    apellido: string;                    // requerido
     correo: string;                      // requerido (email válido)
     pais_residencia?: string;
     profesion?: string;
@@ -206,9 +205,8 @@ type Payload = {
     "descripcion": "string [opcional]"
   },
   "inscripcion": {
-    "nombre": "string [opcional]",
-    "apellido": "string [opcional]",
-    "nombre_apellido": "string",
+    "nombre": "string",
+    "apellido": "string",
     "correo": "string (email)",
     "pais_residencia": "string [opcional]",
     "profesion": "string [opcional]",
@@ -330,7 +328,8 @@ Notas:
 - `evento.titulo`: obligatorio.
 - `evento.inicio`: obligatorio, ISO 8601 con zona horaria.
 - `evento.modalidad`: obligatorio.
-- `inscripcion.nombre_apellido`: obligatorio.
+- `inscripcion.nombre`: obligatorio.
+- `inscripcion.apellido`: obligatorio.
 - `inscripcion.correo`: obligatorio, email válido.
 - `inscripcion.correo` (servidor): además se valida que el dominio exista por DNS (`MX/A/AAAA/CNAME`) con caché de 6 horas.
 - Excepción DNS: si el dominio termina en `gmail.com` o `outlook.com`, se omite verificación DNS.
@@ -368,10 +367,11 @@ Notas:
 - En el formulario se solicitan por separado:
   - `nombre`
   - `apellido`
-- En el POST se envían los tres campos:
+- En el POST se envían por separado:
   - `inscripcion.nombre`
   - `inscripcion.apellido`
-  - `inscripcion.nombre_apellido` (combinado para compatibilidad del contrato principal)
+- Compatibilidad legacy:
+  - Si un cliente viejo envía `inscripcion.nombre_apellido`, el receptor lo intenta separar automáticamente en `nombre` y `apellido`.
 
 ## Duplicados
 
@@ -388,6 +388,10 @@ Resultado:
 - Webhook configurable en: `Ajustes > Charlas Abiertas`.
 - Campo: `Webhook URL`.
 - Destino sugerido para la app: `https://<tu-dominio-flacso-editor>/api/charlas/inscripciones`.
+- Seguridad opcional recomendada:
+  - En `flacso-editor`, definir `FLACSO_CHARLAS_WEBHOOK_TOKEN`.
+  - En WordPress, pegar ese mismo valor en `Ajustes > Charlas Abiertas > Webhook Token`.
+  - El plugin lo enviará como `Authorization: Bearer <token>`.
 - Si el webhook no está configurado, el plugin ahora corta el envío para evitar perder inscripciones silenciosamente.
 
 ## Estructura del modulo integrado
