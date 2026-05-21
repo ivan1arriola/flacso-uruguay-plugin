@@ -786,11 +786,12 @@ function flacso_charlas_abiertas_admin_list_ordering($query) {
         return;
     }
 
-    // Orden por defecto: próximas primero por fecha de inicio.
+    // Orden por defecto en el admin: las charlas creadas/actualizadas más recientes primero.
+    // Evitamos forzar meta_key acá porque excluye charlas sin _charla_inicio
+    // y además puede mandar las recién creadas a páginas posteriores del listado.
     if (empty($orderby)) {
-        $query->set('meta_key', '_charla_inicio');
-        $query->set('orderby', 'meta_value');
-        $query->set('order', 'ASC');
+        $query->set('orderby', 'date');
+        $query->set('order', 'DESC');
     }
 }
 
