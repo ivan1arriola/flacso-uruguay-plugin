@@ -249,12 +249,17 @@ function flacso_autoridades_admin_page() {
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <div class="wrap flacso-admin-wrap">
-        <div class="flacso-admin-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h1 class="wp-heading-inline"><?php esc_html_e('Gestión de Autoridades FLACSO', 'flacso-uruguay'); ?></h1>
-            <a href="<?php echo esc_url(admin_url('post-new.php?post_type=docente')); ?>" target="_blank" class="page-title-action button button-primary">
-                <span class="dashicons dashicons-plus-alt2" style="vertical-align: middle; margin-top: 3px;"></span>
-                <?php esc_html_e('Crear nuevo perfil de Docente / Autoridad', 'flacso-uruguay'); ?>
-            </a>
+        <div class="flacso-admin-header" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid #ccd0d4;">
+            <h1 style="font-size: 24px; font-weight: 600; color: #1d3a72; margin: 0; padding: 0; display: flex; align-items: center; gap: 10px;">
+                <span class="dashicons dashicons-groups" style="font-size: 28px; width: 28px; height: 28px;"></span>
+                <?php esc_html_e('Gestión de Autoridades FLACSO', 'flacso-uruguay'); ?>
+            </h1>
+            <div>
+                <a href="<?php echo esc_url(admin_url('post-new.php?post_type=docente')); ?>" target="_blank" class="button" style="background: #1d3a72; border-color: #1d3a72; color: #ffffff; font-weight: 600; padding: 6px 16px; height: 38px; border-radius: 6px; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-size: 14px; box-shadow: 0 2px 6px rgba(29, 58, 114, 0.25);">
+                    <span class="dashicons dashicons-plus-alt2"></span>
+                    <span><?php esc_html_e('Crear nuevo perfil de Docente / Autoridad', 'flacso-uruguay'); ?></span>
+                </a>
+            </div>
         </div>
 
         <div class="notice notice-info" style="margin-left:0;">
