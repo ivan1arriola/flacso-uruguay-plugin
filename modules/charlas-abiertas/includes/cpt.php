@@ -421,8 +421,7 @@ function flacso_charlas_abiertas_render_meta_box($post) {
     $linked_post_valid = $linked_post && 'post' === $linked_post->post_type && 'trash' !== $linked_post->post_status;
     $sync_post_enabled = flacso_charlas_abiertas_should_sync_post((int) $post->ID);
     $linked_evento_id = flacso_charlas_abiertas_get_linked_evento_id((int) $post->ID);
-    $sync_evento_raw = get_post_meta($post->ID, '_charla_sync_evento', true);
-    $sync_evento_enabled = '' === (string) $sync_evento_raw ? true : !empty($sync_evento_raw);
+    $sync_evento_enabled = flacso_charlas_abiertas_should_sync_evento((int) $post->ID);
     ?>
     <hr>
     <p><strong>Integración con Posts</strong></p>
@@ -522,6 +521,19 @@ function flacso_charlas_abiertas_should_sync_post($charla_id) {
 
     $linked_post_id = (int) get_post_meta($charla_id, '_charla_post_id', true);
     return $linked_post_id > 0 && get_post_type($linked_post_id) === 'post' && get_post_status($linked_post_id) !== 'trash';
+}
+
+function flacso_charlas_abiertas_should_sync_evento($charla_id) {
+    $charla_id = absint($charla_id);
+    if ($charla_id <= 0) {
+        return false;
+    }
+
+    if (metadata_exists('post', $charla_id, '_charla_sync_evento')) {
+        return !empty(get_post_meta($charla_id, '_charla_sync_evento', true));
+    }
+
+    return flacso_charlas_abiertas_get_linked_evento_id($charla_id) > 0;
 }
 
 function flacso_charlas_abiertas_get_linked_evento_id($charla_id) {
@@ -774,8 +786,7 @@ function flacso_charlas_abiertas_sync_evento_on_rest_save($post, $request, $crea
         flacso_charlas_abiertas_sync_post_from_charla($post->ID);
     }
 
-    $sync_evento_raw = get_post_meta($post->ID, '_charla_sync_evento', true);
-    if (!empty($sync_evento_raw)) {
+    if (flacso_charlas_abiertas_should_sync_evento($post->ID)) {
         $sync_result = flacso_charlas_abiertas_sync_evento_from_charla($post->ID);
         if (is_wp_error($sync_result) && defined('WP_DEBUG') && WP_DEBUG) {
             error_log('[FLACSO Charlas REST] No se pudo sincronizar evento para charla ' . $post->ID . ': ' . $sync_result->get_error_message());

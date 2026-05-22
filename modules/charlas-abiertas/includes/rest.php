@@ -353,7 +353,9 @@ function flacso_charlas_abiertas_build_charla_data($post) {
     $sync_post_enabled = function_exists('flacso_charlas_abiertas_should_sync_post')
         ? flacso_charlas_abiertas_should_sync_post($post->ID)
         : !empty(get_post_meta($post->ID, '_charla_sync_post', true));
-    $sync_evento = get_post_meta($post->ID, '_charla_sync_evento', true);
+    $sync_evento_enabled = function_exists('flacso_charlas_abiertas_should_sync_evento')
+        ? flacso_charlas_abiertas_should_sync_evento($post->ID)
+        : !empty(get_post_meta($post->ID, '_charla_sync_evento', true));
     $ocultar_post = get_post_meta($post->ID, '_charla_ocultar_post', true);
     $ocultar_evento = get_post_meta($post->ID, '_charla_ocultar_evento', true);
 
@@ -371,7 +373,7 @@ function flacso_charlas_abiertas_build_charla_data($post) {
         '_charla_post_id' => $post_id,
         '_charla_evento_id' => $evento_id,
         '_charla_sync_post' => $sync_post_enabled,
-        '_charla_sync_evento' => '' === (string) $sync_evento ? true : !empty($sync_evento),
+        '_charla_sync_evento' => $sync_evento_enabled,
         '_charla_ocultar_post' => !empty($ocultar_post),
         '_charla_ocultar_evento' => !empty($ocultar_evento),
     ];
