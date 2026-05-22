@@ -345,6 +345,8 @@ function flacso_charlas_abiertas_build_charla_data($post) {
     $post_id = (int) get_post_meta($post->ID, '_charla_post_id', true);
     $evento_id = (int) get_post_meta($post->ID, '_charla_evento_id', true);
     $sync_evento = get_post_meta($post->ID, '_charla_sync_evento', true);
+    $ocultar_post = get_post_meta($post->ID, '_charla_ocultar_post', true);
+    $ocultar_evento = get_post_meta($post->ID, '_charla_ocultar_evento', true);
 
     $meta = [
         '_charla_inicio' => $inicio,
@@ -358,6 +360,8 @@ function flacso_charlas_abiertas_build_charla_data($post) {
         '_charla_post_id' => $post_id,
         '_charla_evento_id' => $evento_id,
         '_charla_sync_evento' => '' === (string) $sync_evento ? true : !empty($sync_evento),
+        '_charla_ocultar_post' => !empty($ocultar_post),
+        '_charla_ocultar_evento' => !empty($ocultar_evento),
     ];
 
     return [

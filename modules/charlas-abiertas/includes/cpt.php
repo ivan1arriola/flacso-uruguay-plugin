@@ -25,7 +25,7 @@ function flacso_charlas_abiertas_register_cpt() {
         'show_in_rest' => true,
         'rest_base' => 'charla-abierta',
         'menu_icon' => 'dashicons-welcome-learn-more',
-        'supports' => ['title', 'thumbnail'],
+        'supports' => ['title', 'thumbnail', 'custom-fields'],
         'has_archive' => false,
         'rewrite' => false,
         'query_var' => false,
@@ -104,6 +104,26 @@ function flacso_charlas_abiertas_register_cpt() {
     ]);
 
     register_post_meta('charla_abierta', '_charla_sync_evento', [
+        'single' => true,
+        'type' => 'boolean',
+        'show_in_rest' => true,
+        'auth_callback' => '__return_true',
+        'sanitize_callback' => static function ($value) {
+            return !empty($value);
+        },
+    ]);
+
+    register_post_meta('charla_abierta', '_charla_ocultar_post', [
+        'single' => true,
+        'type' => 'boolean',
+        'show_in_rest' => true,
+        'auth_callback' => '__return_true',
+        'sanitize_callback' => static function ($value) {
+            return !empty($value);
+        },
+    ]);
+
+    register_post_meta('charla_abierta', '_charla_ocultar_evento', [
         'single' => true,
         'type' => 'boolean',
         'show_in_rest' => true,
@@ -489,6 +509,9 @@ function flacso_charlas_abiertas_sync_evento_from_charla($charla_id, $force_crea
         set_post_thumbnail($evento_id, $charla_thumbnail_id);
     }
 
+    $ocultar_evento = get_post_meta($charla_id, '_charla_ocultar_evento', true);
+    update_post_meta($evento_id, '_charla_ocultar_evento', !empty($ocultar_evento) ? '1' : '0');
+
     update_post_meta($charla_id, '_charla_evento_id', $evento_id);
 
     return $evento_id;
@@ -540,6 +563,9 @@ function flacso_charlas_abiertas_sync_post_from_charla($charla_id) {
     }
 
     if ($post_id > 0) {
+        $ocultar_post = get_post_meta($charla_id, '_charla_ocultar_post', true);
+        update_post_meta($post_id, '_charla_ocultar_post', !empty($ocultar_post) ? '1' : '0');
+
         $charla_thumbnail_id = get_post_thumbnail_id($charla_id);
         if ($charla_thumbnail_id > 0 && function_exists('set_post_thumbnail')) {
             set_post_thumbnail($post_id, $charla_thumbnail_id);
@@ -654,6 +680,12 @@ function flacso_charlas_abiertas_save_meta($post_id, $post) {
 
     $sync_evento_enabled = isset($_POST['flacso_charla_sync_evento']) && '1' === sanitize_text_field(wp_unslash($_POST['flacso_charla_sync_evento']));
     update_post_meta($post_id, '_charla_sync_evento', $sync_evento_enabled ? 1 : 0);
+
+    $ocultar_post_enabled = isset($_POST['flacso_charla_ocultar_post']) && '1' === sanitize_text_field(wp_unslash($_POST['flacso_charla_ocultar_post']));
+    update_post_meta($post_id, '_charla_ocultar_post', $ocultar_post_enabled ? 1 : 0);
+
+    $ocultar_evento_enabled = isset($_POST['flacso_charla_ocultar_evento']) && '1' === sanitize_text_field(wp_unslash($_POST['flacso_charla_ocultar_evento']));
+    update_post_meta($post_id, '_charla_ocultar_evento', $ocultar_evento_enabled ? 1 : 0);
 
     if ($sync_evento_enabled) {
         $sync_result = flacso_charlas_abiertas_sync_evento_from_charla($post_id);
@@ -1133,4 +1165,44 @@ function flacso_charlas_abiertas_render_visualizer_page() {
 
     echo '</div>';
     echo '</div>';
+}
+
+add_action('pre_get_posts', 'flacso_charlas_abiertas_exclude_hidden_posts_and_events');
+function flacso_charlas_abiertas_exclude_hidden_posts_and_events($query) {
+    if (is_admin() || !$query->is_main_query()) {
+        return;
+    }
+
+    $post_types = $query->get('post_type');
+    if (empty($post_types)) {
+        $post_types = ['post'];
+    } elseif (is_string($post_types)) {
+        $post_types = [$post_types];
+    }
+
+    $has_post = in_array('post', $post_types, true);
+    $has_evento = in_array('evento', $post_types, true);
+
+    if ($has_post || $has_evento) {
+        $meta_query = $query->get('meta_query');
+        if (!is_array($meta_query)) {
+            $meta_query = [];
+        }
+
+        $meta_query[] = [
+            'relation' => 'AND',
+            [
+                'relation' => 'OR',
+                ['key' => '_charla_ocultar_post', 'compare' => 'NOT EXISTS'],
+                ['key' => '_charla_ocultar_post', 'value' => '1', 'compare' => '!=']
+            ],
+            [
+                'relation' => 'OR',
+                ['key' => '_charla_ocultar_evento', 'compare' => 'NOT EXISTS'],
+                ['key' => '_charla_ocultar_evento', 'value' => '1', 'compare' => '!=']
+            ]
+        ];
+
+        $query->set('meta_query', $meta_query);
+    }
 }
