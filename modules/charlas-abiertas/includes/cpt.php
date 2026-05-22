@@ -103,6 +103,16 @@ function flacso_charlas_abiertas_register_cpt() {
         'sanitize_callback' => 'absint',
     ]);
 
+    register_post_meta('charla_abierta', '_charla_sync_post', [
+        'single' => true,
+        'type' => 'boolean',
+        'show_in_rest' => true,
+        'auth_callback' => '__return_true',
+        'sanitize_callback' => static function ($value) {
+            return !empty($value);
+        },
+    ]);
+
     register_post_meta('charla_abierta', '_charla_sync_evento', [
         'single' => true,
         'type' => 'boolean',
@@ -340,10 +350,41 @@ function flacso_charlas_abiertas_render_meta_box($post) {
         ?>
     </p>
     <?php
+    $linked_post_id = (int) get_post_meta((int) $post->ID, '_charla_post_id', true);
+    $linked_post = $linked_post_id > 0 ? get_post($linked_post_id) : null;
+    $linked_post_valid = $linked_post && 'post' === $linked_post->post_type && 'trash' !== $linked_post->post_status;
+    $sync_post_enabled = flacso_charlas_abiertas_should_sync_post((int) $post->ID);
     $linked_evento_id = flacso_charlas_abiertas_get_linked_evento_id((int) $post->ID);
     $sync_evento_raw = get_post_meta($post->ID, '_charla_sync_evento', true);
     $sync_evento_enabled = '' === (string) $sync_evento_raw ? true : !empty($sync_evento_raw);
     ?>
+    <hr>
+    <p><strong>Integración con Posts</strong></p>
+    <p>
+        <label>
+            <input type="checkbox" name="flacso_charla_sync_post" value="1" <?php checked($sync_post_enabled); ?>>
+            Crear o actualizar automáticamente un post vinculado al guardar esta charla.
+        </label>
+    </p>
+    <p style="margin:8px 0 0;color:#646970;">
+        El post asociado es opcional.
+    </p>
+    <?php if ($linked_post_valid) : ?>
+        <p style="margin:8px 0 0;">
+            Post vinculado:
+            <a href="<?php echo esc_url(get_edit_post_link($linked_post_id)); ?>">#<?php echo esc_html((string) $linked_post_id); ?> <?php echo esc_html(get_the_title($linked_post_id)); ?></a>
+            ·
+            <a href="<?php echo esc_url(get_permalink($linked_post_id)); ?>" target="_blank" rel="noopener noreferrer">Ver post</a>
+        </p>
+    <?php elseif ($sync_post_enabled) : ?>
+        <p style="margin:8px 0 0;color:#646970;">
+            Todavía no hay un post vinculado. Se creará al guardar si la charla está publicada.
+        </p>
+    <?php else : ?>
+        <p style="margin:8px 0 0;color:#646970;">
+            Esta charla puede guardarse sin post asociado.
+        </p>
+    <?php endif; ?>
     <hr>
     <p><strong>Integración con Eventos</strong></p>
     <p>
@@ -385,6 +426,20 @@ function flacso_charlas_abiertas_render_meta_box($post) {
       })();
     </script>
     <?php
+}
+
+function flacso_charlas_abiertas_should_sync_post($charla_id) {
+    $charla_id = absint($charla_id);
+    if ($charla_id <= 0) {
+        return false;
+    }
+
+    if (metadata_exists('post', $charla_id, '_charla_sync_post')) {
+        return !empty(get_post_meta($charla_id, '_charla_sync_post', true));
+    }
+
+    $linked_post_id = (int) get_post_meta($charla_id, '_charla_post_id', true);
+    return $linked_post_id > 0 && get_post_type($linked_post_id) === 'post' && get_post_status($linked_post_id) !== 'trash';
 }
 
 function flacso_charlas_abiertas_get_linked_evento_id($charla_id) {
@@ -523,6 +578,10 @@ function flacso_charlas_abiertas_sync_post_from_charla($charla_id) {
         return 0;
     }
 
+    if (!flacso_charlas_abiertas_should_sync_post($charla_id)) {
+        return (int) get_post_meta($charla_id, '_charla_post_id', true);
+    }
+
     $charla = get_post($charla_id);
     if (!$charla || 'charla_abierta' !== $charla->post_type) {
         return 0;
@@ -575,13 +634,47 @@ function flacso_charlas_abiertas_sync_post_from_charla($charla_id) {
     return $post_id;
 }
 
+function flacso_charlas_abiertas_update_linked_post_visibility($charla_id) {
+    $charla_id = absint($charla_id);
+    if ($charla_id <= 0) {
+        return 0;
+    }
+
+    $post_id = (int) get_post_meta($charla_id, '_charla_post_id', true);
+    if ($post_id > 0 && get_post_type($post_id) === 'post' && get_post_status($post_id) !== 'trash') {
+        $ocultar_post = get_post_meta($charla_id, '_charla_ocultar_post', true);
+        update_post_meta($post_id, '_charla_ocultar_post', !empty($ocultar_post) ? '1' : '0');
+        return $post_id;
+    }
+
+    return 0;
+}
+
+function flacso_charlas_abiertas_update_linked_event_visibility($charla_id) {
+    $charla_id = absint($charla_id);
+    if ($charla_id <= 0) {
+        return 0;
+    }
+
+    $evento_id = flacso_charlas_abiertas_get_linked_evento_id($charla_id);
+    if ($evento_id > 0) {
+        $ocultar_evento = get_post_meta($charla_id, '_charla_ocultar_evento', true);
+        update_post_meta($evento_id, '_charla_ocultar_evento', !empty($ocultar_evento) ? '1' : '0');
+        return $evento_id;
+    }
+
+    return 0;
+}
+
 add_action('rest_after_insert_charla_abierta', 'flacso_charlas_abiertas_sync_evento_on_rest_save', 10, 3);
 function flacso_charlas_abiertas_sync_evento_on_rest_save($post, $request, $creating) {
     if (!($post instanceof WP_Post) || 'charla_abierta' !== $post->post_type || 'publish' !== $post->post_status) {
         return;
     }
 
-    flacso_charlas_abiertas_sync_post_from_charla($post->ID);
+    if (flacso_charlas_abiertas_should_sync_post($post->ID)) {
+        flacso_charlas_abiertas_sync_post_from_charla($post->ID);
+    }
 
     $sync_evento_raw = get_post_meta($post->ID, '_charla_sync_evento', true);
     if (!empty($sync_evento_raw)) {
@@ -590,6 +683,9 @@ function flacso_charlas_abiertas_sync_evento_on_rest_save($post, $request, $crea
             error_log('[FLACSO Charlas REST] No se pudo sincronizar evento para charla ' . $post->ID . ': ' . $sync_result->get_error_message());
         }
     }
+
+    flacso_charlas_abiertas_update_linked_post_visibility($post->ID);
+    flacso_charlas_abiertas_update_linked_event_visibility($post->ID);
 }
 
 add_action('save_post_charla_abierta', 'flacso_charlas_abiertas_save_meta', 10, 2);
@@ -676,7 +772,12 @@ function flacso_charlas_abiertas_save_meta($post_id, $post) {
         update_post_meta($post_id, '_charla_descripcion', wp_kses_post(wp_unslash($_POST['flacso_charla_descripcion'])));
     }
 
-    flacso_charlas_abiertas_sync_post_from_charla($post_id);
+    $sync_post_enabled = isset($_POST['flacso_charla_sync_post']) && '1' === sanitize_text_field(wp_unslash($_POST['flacso_charla_sync_post']));
+    update_post_meta($post_id, '_charla_sync_post', $sync_post_enabled ? 1 : 0);
+
+    if ($sync_post_enabled) {
+        flacso_charlas_abiertas_sync_post_from_charla($post_id);
+    }
 
     $sync_evento_enabled = isset($_POST['flacso_charla_sync_evento']) && '1' === sanitize_text_field(wp_unslash($_POST['flacso_charla_sync_evento']));
     update_post_meta($post_id, '_charla_sync_evento', $sync_evento_enabled ? 1 : 0);
@@ -686,6 +787,9 @@ function flacso_charlas_abiertas_save_meta($post_id, $post) {
 
     $ocultar_evento_enabled = isset($_POST['flacso_charla_ocultar_evento']) && '1' === sanitize_text_field(wp_unslash($_POST['flacso_charla_ocultar_evento']));
     update_post_meta($post_id, '_charla_ocultar_evento', $ocultar_evento_enabled ? 1 : 0);
+
+    flacso_charlas_abiertas_update_linked_post_visibility($post_id);
+    flacso_charlas_abiertas_update_linked_event_visibility($post_id);
 
     if ($sync_evento_enabled) {
         $sync_result = flacso_charlas_abiertas_sync_evento_from_charla($post_id);
