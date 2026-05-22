@@ -1,114 +1,250 @@
+/* 
+ * FLACSO Uruguay - Charlas Abiertas Frontend Premium Styles
+ * Highly Responsive, Accessible, and Visually Stunning Design
+ */
+
+:root {
+    --flacso-primary: var(--global-palette1, #1d3a72);
+    --flacso-primary-hover: #13274f;
+    --flacso-primary-light: rgba(29, 58, 114, 0.08);
+    --flacso-accent: var(--global-palette2, #3d6fc2);
+    --flacso-accent-light: rgba(61, 111, 194, 0.12);
+    --flacso-text-dark: var(--global-palette3, #0f1a2d);
+    --flacso-text-muted: var(--global-palette5, #6e7b8d);
+    --flacso-bg-card: var(--global-palette9, #ffffff);
+    --flacso-border-color: var(--global-palette6, #c9d2de);
+    --flacso-border-focus: #3d6fc2;
+    --flacso-success: var(--global-palette11, #13612e);
+    --flacso-success-bg: #eaf6ed;
+    --flacso-danger: var(--global-palette13, #b82105);
+    --flacso-danger-bg: #fdf2f0;
+    --flacso-radius-lg: 16px;
+    --flacso-radius-md: 10px;
+    --flacso-shadow: 0 10px 30px rgba(15, 26, 45, 0.05), 0 1px 3px rgba(15, 26, 45, 0.02);
+    --flacso-transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Base Wrapper Card */
 .flacso-charla-form-wrapper {
     max-width: 760px;
-    margin: 2rem auto;
-    padding: 1.2rem;
-    border: 1px solid var(--global-palette6, #c9d2de);
-    border-radius: 12px;
-    background: var(--global-palette9, #ffffff);
-    font-family: var(--global-body-font-family, Roboto, sans-serif);
+    margin: 2.5rem auto;
+    padding: 2.25rem;
+    border: 1px solid var(--flacso-border-color);
+    border-radius: var(--flacso-radius-lg);
+    background: var(--flacso-bg-card);
+    font-family: var(--global-body-font-family, 'Inter', Roboto, sans-serif);
     color: var(--global-palette4, #2e2f34);
+    box-shadow: var(--flacso-shadow);
+    box-sizing: border-box;
+    transition: var(--flacso-transition);
 }
 
-.flacso-charla-form-wrapper h3 {
-    margin: 0 0 1rem;
-    font-size: var(--global-kb-font-size-lg, 1.75rem);
-    line-height: 1.3;
-    color: var(--global-palette1, #1d3a72);
+.flacso-charla-form-wrapper * {
+    box-sizing: border-box;
 }
 
+/* Header Section */
+.flacso-form-title {
+    position: relative;
+    margin: 0 0 2rem;
+    font-size: var(--global-kb-font-size-lg, 1.85rem);
+    line-height: 1.25;
+    font-weight: 700;
+    color: var(--flacso-primary);
+    padding-bottom: 0.85rem;
+}
+
+.flacso-form-title::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--flacso-primary) 0%, var(--flacso-accent) 100%);
+    border-radius: 99px;
+}
+
+/* Grid System for Fields */
+.flacso-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem 1.75rem;
+    margin-bottom: 2rem;
+}
+
+/* Full Width Fields override */
+.flacso-form-group-full {
+    grid-column: span 2;
+}
+
+/* Form Group Container */
+.flacso-form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Labels */
 .flacso-charla-form-wrapper label {
     display: block;
     font-weight: 600;
-    margin-bottom: .3rem;
+    font-size: 0.92rem;
+    color: var(--flacso-text-dark);
+    margin-bottom: 0.45rem;
+    transition: var(--flacso-transition);
 }
 
-.flacso-charla-form-wrapper .flacso-charla-form input,
+/* Inputs & Select Elements */
+.flacso-charla-form-wrapper .flacso-charla-form input[type="text"],
+.flacso-charla-form-wrapper .flacso-charla-form input[type="email"],
+.flacso-charla-form-wrapper .flacso-charla-form input[type="tel"],
 .flacso-charla-form-wrapper .flacso-charla-form select {
     width: 100%;
-    padding: .72rem .85rem;
-    border: 1px solid var(--global-palette6, #c9d2de);
-    border-radius: 10px;
-    background: var(--global-palette9, #ffffff);
-    color: var(--global-palette3, #0f1a2d);
-    font-size: 1rem;
+    padding: 0.8rem 1rem;
+    border: 1.5px solid var(--flacso-border-color);
+    border-radius: var(--flacso-radius-md);
+    background: var(--flacso-bg-card);
+    color: var(--flacso-text-dark);
+    font-size: 0.98rem;
+    line-height: 1.5;
+    outline: none;
+    transition: var(--flacso-transition);
+    box-shadow: inset 0 1px 2px rgba(15, 26, 45, 0.01);
 }
 
-.flacso-charla-form-wrapper .flacso-charla-form button[type="submit"] {
-    padding: .75rem 1.2rem;
-    min-width: 220px;
+/* Hover States */
+.flacso-charla-form-wrapper .flacso-charla-form input[type="text"]:hover,
+.flacso-charla-form-wrapper .flacso-charla-form input[type="email"]:hover,
+.flacso-charla-form-wrapper .flacso-charla-form input[type="tel"]:hover,
+.flacso-charla-form-wrapper .flacso-charla-form select:hover {
+    border-color: #a4b3c6;
 }
 
-.flacso-charla-form-result .ok {
-    color: #0f5132;
-    background: #d1e7dd;
-    padding: .75rem;
-    border-radius: 6px;
+/* Focus States */
+.flacso-charla-form-wrapper .flacso-charla-form input[type="text"]:focus,
+.flacso-charla-form-wrapper .flacso-charla-form input[type="email"]:focus,
+.flacso-charla-form-wrapper .flacso-charla-form input[type="tel"]:focus,
+.flacso-charla-form-wrapper .flacso-charla-form select:focus {
+    border-color: var(--flacso-border-focus);
+    box-shadow: 0 0 0 4px var(--flacso-accent-light);
+    background: #fff;
 }
 
-.flacso-charla-form-result .error {
-    color: #842029;
-    background: #f8d7da;
-    padding: .75rem;
-    border-radius: 6px;
-}
-
+/* Phone input library wrapper */
 .flacso-charla-form-wrapper .iti {
     width: 100%;
     display: block;
 }
 
 .flacso-charla-form-wrapper .iti input {
-    width: 100%;
+    width: 100% !important;
 }
 
-.flacso-charla-form-wrapper .flacso-telefono-feedback {
+/* Validity feedback styles */
+.flacso-charla-form-wrapper .invalid-feedback {
     display: none;
     width: 100%;
-    margin-top: .25rem;
-    font-size: .875rem;
-    color: #842029;
+    margin-top: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--flacso-danger);
+    animation: flacso-fade-in 0.2s ease-out;
 }
 
-.flacso-charla-form-wrapper .flacso-correo-feedback,
-.flacso-charla-form-wrapper .flacso-modalidad-feedback {
-    display: none;
-    width: 100%;
-    margin-top: .25rem;
-    font-size: .875rem;
-    color: #842029;
-}
-
-.flacso-charla-form-wrapper .flacso-correo.is-invalid + .flacso-correo-feedback,
-.flacso-charla-form-wrapper .flacso-modalidad-asistencia.is-invalid + .flacso-modalidad-feedback {
+/* Sibling selection to display errors when invalid */
+.flacso-charla-form-wrapper .flacso-correo.is-invalid ~ .flacso-correo-feedback,
+.flacso-charla-form-wrapper .flacso-modalidad-asistencia.is-invalid ~ .flacso-modalidad-feedback,
+.flacso-charla-form-wrapper .flacso-telefono-group.is-invalid ~ .flacso-telefono-feedback {
     display: block;
 }
 
-.flacso-charla-form-wrapper .flacso-telefono-group.is-invalid + .flacso-telefono-feedback {
-    display: block;
-}
-
+/* Invalid Inputs Border Color */
 .flacso-charla-form-wrapper .flacso-correo.is-invalid,
 .flacso-charla-form-wrapper .flacso-modalidad-asistencia.is-invalid,
 .flacso-charla-form-wrapper .flacso-telefono.is-invalid {
-    border-color: var(--global-palette13, #b82105);
+    border-color: var(--flacso-danger);
+    background-color: var(--flacso-danger-bg);
 }
 
+.flacso-charla-form-wrapper .flacso-correo.is-invalid:focus,
+.flacso-charla-form-wrapper .flacso-modalidad-asistencia.is-invalid:focus,
+.flacso-charla-form-wrapper .flacso-telefono.is-invalid:focus {
+    box-shadow: 0 0 0 4px rgba(184, 33, 5, 0.15);
+}
+
+/* Valid Inputs styling (with subtle green border on blur if valid) */
+.flacso-charla-form-wrapper .flacso-correo.is-valid,
+.flacso-charla-form-wrapper .flacso-modalidad-asistencia.is-valid,
+.flacso-charla-form-wrapper .flacso-telefono.is-valid {
+    border-color: var(--flacso-success);
+}
+
+/* Modalidad Readonly & Locked notes */
 .flacso-charla-form-wrapper .flacso-modalidad-asistencia.flacso-modalidad-readonly,
 .flacso-charla-form-wrapper .flacso-modalidad-asistencia:disabled {
-    background: var(--global-palette8, #f8f9fa);
-    color: var(--global-palette5, #7a8696);
+    background: var(--global-palette8, #f5f7fa);
+    color: var(--flacso-text-muted);
     cursor: not-allowed;
-    border-color: var(--global-palette6, #c9d2de);
-    opacity: 1;
-    box-shadow: inset 0 0 0 1px rgba(29, 58, 114, 0.03);
+    border-color: var(--flacso-border-color);
+    opacity: 0.95;
+    box-shadow: none;
 }
 
 .flacso-charla-form-wrapper .flacso-modalidad-locknote {
     display: block;
-    margin-top: .35rem;
-    color: var(--global-palette1, #1d3a72);
-    font-size: .86rem;
+    margin-top: 0.5rem;
+    color: var(--flacso-accent);
+    background: var(--flacso-accent-light);
+    font-size: 0.85rem;
     font-weight: 500;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    border-left: 3px solid var(--flacso-accent);
+}
+
+/* Button & Action Bar styling */
+.flacso-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1rem;
+    border-top: 1px solid var(--flacso-border-color);
+    padding-top: 1.5rem;
+}
+
+.flacso-charla-form-wrapper .flacso-btn-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    background: var(--flacso-primary);
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.85rem 1.85rem;
+    border: none;
+    border-radius: var(--flacso-radius-md);
+    cursor: pointer;
+    transition: var(--flacso-transition);
+    box-shadow: 0 4px 12px rgba(29, 58, 114, 0.15);
+}
+
+.flacso-charla-form-wrapper .flacso-btn-submit:hover {
+    background: var(--flacso-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(29, 58, 114, 0.24);
+}
+
+.flacso-charla-form-wrapper .flacso-btn-submit:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(29, 58, 114, 0.12);
+}
+
+.flacso-btn-icon {
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.flacso-btn-submit:hover .flacso-btn-icon {
+    transform: translate(3px, -3px);
 }
 
 /* Prevent theme styles from breaking intl-tel-input dropdown controls. */
@@ -116,10 +252,13 @@
     list-style: none !important;
     margin: 0 !important;
     padding: 0 !important;
+    border-radius: var(--flacso-radius-md) !important;
+    box-shadow: 0 8px 24px rgba(15, 26, 45, 0.12) !important;
 }
 
 .flacso-charla-form-wrapper .iti__country {
     list-style: none !important;
+    padding: 8px 12px !important;
 }
 
 .flacso-charla-form-wrapper .iti__selected-country,
@@ -130,55 +269,97 @@
     padding: 0 !important;
 }
 
-.flacso-charla-status-screen {
+/* Form results (Error Messages) */
+.flacso-charla-form-result {
     margin-top: 1rem;
 }
 
+.flacso-charla-form-result .error {
+    color: var(--flacso-danger);
+    background: var(--flacso-danger-bg);
+    padding: 0.9rem 1.2rem;
+    border-radius: var(--flacso-radius-md);
+    border: 1px solid rgba(184, 33, 5, 0.18);
+    font-size: 0.95rem;
+    line-height: 1.45;
+    font-weight: 500;
+    animation: flacso-fade-in 0.25s ease-out;
+}
+
+/* Success and Loading Screen Card Styles */
+.flacso-charla-status-screen {
+    margin-top: 0.5rem;
+    animation: flacso-fade-in 0.3s ease-out;
+}
+
 .flacso-charla-status-card {
-    padding: 1.2rem 1.3rem;
-    border: 1px solid var(--global-palette6, #c9d2de);
-    border-radius: 12px;
-    background: var(--global-palette9, #ffffff);
-    color: var(--global-palette3, #0f1a2d);
+    padding: 2.5rem;
+    border: 1px solid var(--flacso-border-color);
+    border-radius: var(--flacso-radius-lg);
+    background: var(--flacso-bg-card);
+    color: var(--flacso-text-dark);
+    text-align: center;
+    box-shadow: var(--flacso-shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: var(--flacso-transition);
 }
 
 .flacso-charla-status-card.is-loading {
-    border-color: #b6c5d9;
-    background:
-        radial-gradient(circle at top right, rgba(29, 58, 114, 0.06), transparent 45%),
-        var(--global-palette9, #ffffff);
-    box-shadow: 0 10px 28px rgba(16, 36, 71, 0.08);
+    border-color: var(--flacso-border-color);
+    background: radial-gradient(circle at top right, rgba(29, 58, 114, 0.04), transparent 50%), var(--flacso-bg-card);
+    box-shadow: 0 12px 36px rgba(15, 26, 45, 0.08);
 }
 
 .flacso-charla-loader-wrap {
     position: relative;
-    width: 54px;
-    height: 54px;
-    margin-bottom: 1rem;
+    width: 60px;
+    height: 60px;
+    margin-bottom: 1.5rem;
+}
+
+.flacso-charla-loader {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 4px solid rgba(29, 58, 114, 0.12);
+    border-top-color: var(--flacso-primary);
+    animation: flacso-spin .85s cubic-bezier(0.6, 0.3, 0.3, 0.8) infinite;
+}
+
+.flacso-charla-loader-ping {
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 2px solid rgba(29, 58, 114, 0.18);
+    animation: flacso-ping 1.8s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
 }
 
 .flacso-charla-loading-copy h3 {
     margin: 0;
-    color: var(--global-palette1, #1d3a72);
-    font-size: clamp(1.7rem, 3.4vw, 2.1rem);
-    line-height: 1.2;
+    color: var(--flacso-primary);
+    font-size: clamp(1.4rem, 4vw, 1.8rem);
+    font-weight: 700;
+    line-height: 1.25;
 }
 
 .flacso-charla-loading-copy p {
-    margin: .85rem 0 0;
-    line-height: 1.45;
-    font-size: var(--global-kb-font-size-md, 1.1rem);
-    color: var(--global-palette3, #0f1a2d);
+    margin: 0.75rem 0 1.25rem;
+    line-height: 1.5;
+    font-size: 1.05rem;
+    color: var(--flacso-text-dark);
 }
 
 .flacso-charla-loading-progress {
     position: relative;
-    margin-top: 1rem;
-    width: min(420px, 100%);
+    width: min(340px, 100%);
     height: 6px;
-    border-radius: 999px;
+    border-radius: 99px;
     overflow: hidden;
-    background: #dfe7f2;
+    background: #e2e8f0;
+    margin: 0.5rem 0 0.85rem;
 }
 
 .flacso-charla-loading-progress::before {
@@ -187,52 +368,63 @@
     inset: 0;
     width: 40%;
     border-radius: inherit;
-    background: linear-gradient(90deg, #1d3a72 0%, #3d6fc2 100%);
-    animation: flacso-progress 1.45s ease-in-out infinite;
+    background: linear-gradient(90deg, var(--flacso-primary) 0%, var(--flacso-accent) 100%);
+    animation: flacso-progress 1.5s ease-in-out infinite;
 }
 
 .flacso-charla-loading-hint {
-    margin: .6rem 0 0;
-    font-size: .92rem;
-    color: var(--global-palette5, #6e7b8d);
+    margin: 0.5rem 0 0;
+    font-size: 0.88rem;
+    color: var(--flacso-text-muted);
 }
 
+/* Success Card specifics */
 .flacso-charla-status-card.success {
-    border-color: var(--global-palette6, #c9d2de);
-    background: var(--global-palette9, #ffffff);
-    border-top: 4px solid var(--global-palette11, #13612e);
+    border-color: rgba(19, 97, 46, 0.18);
+    background: radial-gradient(circle at top right, rgba(19, 97, 46, 0.04), transparent 50%), var(--flacso-bg-card);
+    border-top: 5px solid var(--flacso-success);
+    padding: 3rem 2rem;
+}
+
+/* Custom visual animated Checkmark for Success state */
+.flacso-charla-status-card.success::before {
+    content: "✓";
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    background-color: var(--flacso-success-bg);
+    color: var(--flacso-success);
+    font-size: 2rem;
+    font-weight: bold;
+    border-radius: 50%;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 12px rgba(19, 97, 46, 0.12);
+    animation: flacso-bounce-in 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .flacso-charla-status-card.success h3 {
-    color: var(--global-palette1, #1d3a72);
-    font-size: var(--global-kb-font-size-lg, 1.75rem);
-    margin: 0;
+    color: var(--flacso-success);
+    font-size: clamp(1.4rem, 4vw, 1.85rem);
+    font-weight: 700;
+    margin: 0 0 0.85rem;
 }
 
 .flacso-charla-status-message {
-    margin: .55rem 0 0;
-    line-height: 1.45;
-    font-size: var(--global-kb-font-size-md, 1.1rem);
-    color: var(--global-palette3, #0f1a2d);
+    margin: 0;
+    line-height: 1.55;
+    font-size: 1.08rem;
+    color: var(--flacso-text-dark);
+    max-width: 520px;
 }
 
-.flacso-charla-loader {
-    width: 54px;
-    height: 54px;
-    border-radius: 50%;
-    border: 4px solid #cad5e4;
-    border-top-color: var(--global-palette1, #1d3a72);
-    animation: flacso-spin .8s linear infinite;
+.flacso-charla-status-message strong {
+    color: var(--flacso-primary);
+    font-weight: 600;
 }
 
-.flacso-charla-loader-ping {
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    border: 2px solid rgba(29, 58, 114, 0.28);
-    animation: flacso-ping 1.8s ease-out infinite;
-}
-
+/* Animations */
 @keyframes flacso-spin {
     to {
         transform: rotate(360deg);
@@ -241,15 +433,15 @@
 
 @keyframes flacso-ping {
     0% {
-        transform: scale(.86);
-        opacity: .55;
+        transform: scale(0.85);
+        opacity: 0.6;
     }
     70% {
-        transform: scale(1.25);
+        transform: scale(1.3);
         opacity: 0;
     }
     100% {
-        transform: scale(1.25);
+        transform: scale(1.3);
         opacity: 0;
     }
 }
@@ -263,5 +455,68 @@
     }
     100% {
         transform: translateX(250%);
+    }
+}
+
+@keyframes flacso-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes flacso-bounce-in {
+    from {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    50% {
+        opacity: 0.9;
+        transform: scale(1.1);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 640px) {
+    .flacso-charla-form-wrapper {
+        padding: 1.5rem;
+        margin: 1.5rem auto;
+    }
+
+    .flacso-form-title {
+        margin-bottom: 1.5rem;
+        font-size: 1.5rem;
+    }
+
+    .flacso-form-grid {
+        grid-template-columns: 1fr;
+        gap: 1.15rem;
+    }
+
+    .flacso-form-group-full {
+        grid-column: span 1;
+    }
+
+    .flacso-form-actions {
+        flex-direction: column;
+        align-items: stretch;
+        margin-top: 0.75rem;
+    }
+
+    .flacso-charla-form-wrapper .flacso-btn-submit {
+        width: 100%;
+        padding: 0.9rem;
+    }
+
+    .flacso-charla-status-card {
+        padding: 1.75rem 1.25rem;
     }
 }

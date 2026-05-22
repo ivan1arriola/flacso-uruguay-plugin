@@ -101,82 +101,91 @@ function flacso_charlas_abiertas_render_block($attributes) {
         data-endpoint="<?php echo esc_url(rest_url('flacso-charlas/v1/inscripcion')); ?>"
     >
         <form class="flacso-charla-form" novalidate>
-            <h3>Inscripción a <?php echo esc_html(get_the_title($evento_id)); ?></h3>
+            <h3 class="flacso-form-title">Inscripción a <?php echo esc_html(get_the_title($evento_id)); ?></h3>
 
-            <p>
-                <label>Nombre *</label>
-                <input type="text" name="nombre" required />
-            </p>
-
-            <p>
-                <label>Apellido *</label>
-                <input type="text" name="apellido" required />
-            </p>
-
-            <p>
-                <label>Correo *</label>
-                <input
-                    type="email"
-                    id="<?php echo esc_attr($correo_input_id); ?>"
-                    name="correo"
-                    class="flacso-correo"
-                    aria-describedby="<?php echo esc_attr($correo_feedback_id); ?>"
-                    required
-                />
-                <div id="<?php echo esc_attr($correo_feedback_id); ?>" class="invalid-feedback flacso-correo-feedback" aria-live="polite"></div>
-            </p>
-
-            <p>
-                <label>País de residencia</label>
-                <input type="text" name="pais_residencia" class="flacso-pais-residencia" />
-            </p>
-
-            <p>
-                <label>Profesión</label>
-                <input type="text" name="profesion" />
-            </p>
-
-            <p>
-                <label>Institución</label>
-                <input type="text" name="institucion" />
-            </p>
-
-            <p>
-                <label>Número de teléfono</label>
-                <div class="input-group has-validation flacso-telefono-group">
-                    <input
-                        type="tel"
-                        id="<?php echo esc_attr($telefono_input_id); ?>"
-                        name="telefono"
-                        class="flacso-telefono"
-                        aria-describedby="<?php echo esc_attr($telefono_feedback_id); ?>"
-                        inputmode="tel"
-                    />
-                    <input type="hidden" name="telefono_e164" class="flacso-telefono-e164" value="" />
+            <div class="flacso-form-grid">
+                <div class="flacso-form-group">
+                    <label for="<?php echo esc_attr($wrapper_id); ?>-nombre">Nombre *</label>
+                    <input type="text" id="<?php echo esc_attr($wrapper_id); ?>-nombre" name="nombre" placeholder="Ej. Juan" required />
                 </div>
-                <div id="<?php echo esc_attr($telefono_feedback_id); ?>" class="invalid-feedback flacso-telefono-feedback" aria-live="polite"></div>
-            </p>
 
-            <p>
-                <label>Modalidad de asistencia *</label>
-                <select
-                    id="<?php echo esc_attr($modalidad_select_id); ?>"
-                    name="modalidad_asistencia"
-                    class="flacso-modalidad-asistencia"
-                    aria-describedby="<?php echo esc_attr($modalidad_feedback_id); ?>"
-                    required
-                >
-                    <option value="">Seleccionar</option>
-                    <option value="virtual">Virtual</option>
-                    <option value="presencial">Presencial</option>
-                </select>
-                <small class="flacso-modalidad-locknote" hidden>Modalidad fija según la charla seleccionada.</small>
-                <div id="<?php echo esc_attr($modalidad_feedback_id); ?>" class="invalid-feedback flacso-modalidad-feedback" aria-live="polite"></div>
-            </p>
+                <div class="flacso-form-group">
+                    <label for="<?php echo esc_attr($wrapper_id); ?>-apellido">Apellido *</label>
+                    <input type="text" id="<?php echo esc_attr($wrapper_id); ?>-apellido" name="apellido" placeholder="Ej. Pérez" required />
+                </div>
 
-            <p>
-                <button type="submit" class="button">Enviar inscripción</button>
-            </p>
+                <div class="flacso-form-group flacso-form-group-full">
+                    <label for="<?php echo esc_attr($correo_input_id); ?>">Correo *</label>
+                    <input
+                        type="email"
+                        id="<?php echo esc_attr($correo_input_id); ?>"
+                        name="correo"
+                        class="flacso-correo"
+                        placeholder="correo@ejemplo.com"
+                        aria-describedby="<?php echo esc_attr($correo_feedback_id); ?>"
+                        required
+                    />
+                    <div id="<?php echo esc_attr($correo_feedback_id); ?>" class="invalid-feedback flacso-correo-feedback" aria-live="polite"></div>
+                </div>
+
+                <div class="flacso-form-group">
+                    <label for="<?php echo esc_attr($wrapper_id); ?>-pais-residencia">País de residencia</label>
+                    <input type="text" id="<?php echo esc_attr($wrapper_id); ?>-pais-residencia" name="pais_residencia" class="flacso-pais-residencia" placeholder="Ej. Uruguay" />
+                </div>
+
+                <div class="flacso-form-group">
+                    <label for="<?php echo esc_attr($wrapper_id); ?>-profesion">Profesión</label>
+                    <input type="text" id="<?php echo esc_attr($wrapper_id); ?>-profesion" name="profesion" placeholder="Ej. Docente, Estudiante" />
+                </div>
+
+                <div class="flacso-form-group">
+                    <label for="<?php echo esc_attr($wrapper_id); ?>-institucion">Institución</label>
+                    <input type="text" id="<?php echo esc_attr($wrapper_id); ?>-institucion" name="institucion" placeholder="Ej. Universidad, FLACSO" />
+                </div>
+
+                <div class="flacso-form-group">
+                    <label for="<?php echo esc_attr($telefono_input_id); ?>">Número de teléfono</label>
+                    <div class="input-group has-validation flacso-telefono-group">
+                        <input
+                            type="tel"
+                            id="<?php echo esc_attr($telefono_input_id); ?>"
+                            name="telefono"
+                            class="flacso-telefono"
+                            aria-describedby="<?php echo esc_attr($telefono_feedback_id); ?>"
+                            inputmode="tel"
+                        />
+                        <input type="hidden" name="telefono_e164" class="flacso-telefono-e164" value="" />
+                    </div>
+                    <div id="<?php echo esc_attr($telefono_feedback_id); ?>" class="invalid-feedback flacso-telefono-feedback" aria-live="polite"></div>
+                </div>
+
+                <div class="flacso-form-group flacso-form-group-full">
+                    <label for="<?php echo esc_attr($modalidad_select_id); ?>">Modalidad de asistencia *</label>
+                    <select
+                        id="<?php echo esc_attr($modalidad_select_id); ?>"
+                        name="modalidad_asistencia"
+                        class="flacso-modalidad-asistencia"
+                        aria-describedby="<?php echo esc_attr($modalidad_feedback_id); ?>"
+                        required
+                    >
+                        <option value="">Seleccionar</option>
+                        <option value="virtual">Virtual</option>
+                        <option value="presencial">Presencial</option>
+                    </select>
+                    <small class="flacso-modalidad-locknote" hidden>Modalidad fija según la charla seleccionada.</small>
+                    <div id="<?php echo esc_attr($modalidad_feedback_id); ?>" class="invalid-feedback flacso-modalidad-feedback" aria-live="polite"></div>
+                </div>
+            </div>
+
+            <div class="flacso-form-actions">
+                <button type="submit" class="button flacso-btn-submit">
+                    <span>Enviar inscripción</span>
+                    <svg class="flacso-btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
         </form>
         <div class="flacso-charla-form-result" aria-live="polite"></div>
     </div>
