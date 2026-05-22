@@ -79,6 +79,14 @@ function flacso_charlas_abiertas_register_cpt() {
         'sanitize_callback' => 'sanitize_text_field',
     ]);
 
+    register_post_meta('charla_abierta', '_charla_lugar_nombre', [
+        'single' => true,
+        'type' => 'string',
+        'show_in_rest' => true,
+        'auth_callback' => '__return_true',
+        'sanitize_callback' => 'sanitize_text_field',
+    ]);
+
     register_post_meta('charla_abierta', '_charla_google_maps_url', [
         'single' => true,
         'type' => 'string',
@@ -205,6 +213,7 @@ function flacso_charlas_abiertas_render_meta_box($post) {
     $youtube_transmision_url = get_post_meta($post->ID, '_charla_youtube_transmision_url', true);
     $duracion_minutos = get_post_meta($post->ID, '_charla_duracion_minutos', true);
     $duracion_hhmm = flacso_charlas_abiertas_format_duracion_hhmm_desde_minutos($duracion_minutos);
+    $lugar_nombre = get_post_meta($post->ID, '_charla_lugar_nombre', true);
     $direccion = get_post_meta($post->ID, '_charla_direccion', true);
     $google_maps_url = get_post_meta($post->ID, '_charla_google_maps_url', true);
     $descripcion = get_post_meta($post->ID, '_charla_descripcion', true);
@@ -314,6 +323,17 @@ function flacso_charlas_abiertas_render_meta_box($post) {
         <small style="display:block;margin-top:4px;color:#646970;">
             Formato HH:MM. En la API se expone en minutos.
         </small>
+    </p>
+    <p>
+        <label for="flacso_charla_lugar_nombre"><strong>Nombre del lugar</strong></label><br>
+        <input
+            type="text"
+            id="flacso_charla_lugar_nombre"
+            name="flacso_charla_lugar_nombre"
+            value="<?php echo esc_attr($lugar_nombre); ?>"
+            style="width:100%;"
+            placeholder="Ej. FLACSO Uruguay, Auditorio principal"
+        />
     </p>
     <p>
         <label for="flacso_charla_direccion"><strong>Dirección</strong></label><br>
@@ -764,6 +784,10 @@ function flacso_charlas_abiertas_save_meta($post_id, $post) {
         update_post_meta($post_id, '_charla_direccion', sanitize_text_field(wp_unslash($_POST['flacso_charla_direccion'])));
     }
 
+    if (isset($_POST['flacso_charla_lugar_nombre'])) {
+        update_post_meta($post_id, '_charla_lugar_nombre', sanitize_text_field(wp_unslash($_POST['flacso_charla_lugar_nombre'])));
+    }
+
     if (isset($_POST['flacso_charla_google_maps_url'])) {
         update_post_meta($post_id, '_charla_google_maps_url', esc_url_raw(wp_unslash($_POST['flacso_charla_google_maps_url'])));
     }
@@ -840,10 +864,20 @@ function flacso_charlas_abiertas_render_admin_column($column, $post_id) {
 
     if ('charla_acceso' === $column) {
         $modalidad = get_post_meta($post_id, '_charla_modalidad', true);
+        $lugar_nombre = get_post_meta($post_id, '_charla_lugar_nombre', true);
         $zoom = get_post_meta($post_id, '_charla_zoom_join_url', true);
         $direccion = get_post_meta($post_id, '_charla_direccion', true);
         $google_maps_url = get_post_meta($post_id, '_charla_google_maps_url', true);
-        $direccion_html = $direccion ? esc_html($direccion) : '<span style="color:#646970;">Sin dirección</span>';
+        $direccion_parts = [];
+        if ($lugar_nombre) {
+            $direccion_parts[] = esc_html($lugar_nombre);
+        }
+        if ($direccion) {
+            $direccion_parts[] = esc_html($direccion);
+        }
+        $direccion_html = !empty($direccion_parts)
+            ? implode('<br>', $direccion_parts)
+            : '<span style="color:#646970;">Sin dirección</span>';
         if ($google_maps_url) {
             $direccion_html .= '<br><a href="' . esc_url($google_maps_url) . '" target="_blank" rel="noopener noreferrer">Ver Google Maps</a>';
         }
@@ -1031,6 +1065,7 @@ function flacso_charlas_abiertas_build_visualizer_item($post, $now_timestamp) {
         'modalidad' => $modalidad,
         'zoom_join_url' => (string) get_post_meta($post->ID, '_charla_zoom_join_url', true),
         'youtube_transmision_url' => (string) get_post_meta($post->ID, '_charla_youtube_transmision_url', true),
+        'lugar_nombre' => (string) get_post_meta($post->ID, '_charla_lugar_nombre', true),
         'direccion' => (string) get_post_meta($post->ID, '_charla_direccion', true),
         'google_maps_url' => (string) get_post_meta($post->ID, '_charla_google_maps_url', true),
         'status_key' => $status_key,
@@ -1066,8 +1101,15 @@ function flacso_charlas_abiertas_render_visualizer_card($item) {
     if (!empty($item['duracion_hhmm'])) {
         echo '<p class="charla-meta">Duracion: ' . esc_html((string) $item['duracion_hhmm']) . '</p>';
     }
-    if (!empty($item['direccion']) && in_array((string) $item['modalidad'], ['presencial', 'hibrida'], true)) {
-        echo '<p class="charla-meta">Lugar: ' . esc_html((string) $item['direccion']) . '</p>';
+    if ((!empty($item['lugar_nombre']) || !empty($item['direccion'])) && in_array((string) $item['modalidad'], ['presencial', 'hibrida'], true)) {
+        $location_parts = [];
+        if (!empty($item['lugar_nombre'])) {
+            $location_parts[] = (string) $item['lugar_nombre'];
+        }
+        if (!empty($item['direccion'])) {
+            $location_parts[] = (string) $item['direccion'];
+        }
+        echo '<p class="charla-meta">Lugar: ' . esc_html(implode(' - ', $location_parts)) . '</p>';
     }
 
     $links = [];

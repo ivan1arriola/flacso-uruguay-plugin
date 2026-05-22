@@ -53,6 +53,7 @@ function flacso_charlas_abiertas_render_block($attributes) {
     if ('' !== trim((string) $duracion_minutos_raw) && is_numeric($duracion_minutos_raw)) {
         $duracion_minutos = max(0, (int) $duracion_minutos_raw);
     }
+    $lugar_nombre = get_post_meta($evento_id, '_charla_lugar_nombre', true);
     $direccion = get_post_meta($evento_id, '_charla_direccion', true);
     $google_maps_url = get_post_meta($evento_id, '_charla_google_maps_url', true);
     $descripcion = get_post_meta($evento_id, '_charla_descripcion', true);
@@ -92,6 +93,7 @@ function flacso_charlas_abiertas_render_block($attributes) {
         data-evento-zoom-join-url="<?php echo esc_url($zoom_join_url ?: ''); ?>"
         data-evento-youtube-transmision-url="<?php echo esc_url($youtube_transmision_url ?: ''); ?>"
         data-evento-duracion-minutos="<?php echo esc_attr(null === $duracion_minutos ? '' : (string) $duracion_minutos); ?>"
+        data-evento-lugar-nombre="<?php echo esc_attr((string) $lugar_nombre); ?>"
         data-evento-direccion="<?php echo esc_attr((string) $direccion); ?>"
         data-evento-google-maps-url="<?php echo esc_url($google_maps_url ?: ''); ?>"
         data-evento-descripcion-b64="<?php echo esc_attr($descripcion_b64); ?>"

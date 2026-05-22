@@ -515,6 +515,7 @@
                 zoom_join_url: String(wrapper.dataset.eventoZoomJoinUrl || "").trim(),
                 youtube_transmision_url: String(wrapper.dataset.eventoYoutubeTransmisionUrl || "").trim(),
                 duracion_minutos: duracionMinutos,
+                lugar_nombre: String(wrapper.dataset.eventoLugarNombre || "").trim(),
                 direccion: String(wrapper.dataset.eventoDireccion || "").trim(),
                 google_maps_url: String(wrapper.dataset.eventoGoogleMapsUrl || "").trim(),
                 descripcion: decodeBase64Utf8(wrapper.dataset.eventoDescripcionB64 || ""),

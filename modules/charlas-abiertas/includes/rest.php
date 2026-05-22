@@ -337,6 +337,7 @@ function flacso_charlas_abiertas_build_charla_data($post) {
     if ('' !== trim((string) $duracion_minutos_raw) && is_numeric($duracion_minutos_raw)) {
         $duracion_minutos = max(0, (int) $duracion_minutos_raw);
     }
+    $lugar_nombre = (string) get_post_meta($post->ID, '_charla_lugar_nombre', true);
     $direccion = (string) get_post_meta($post->ID, '_charla_direccion', true);
     $google_maps_url = (string) get_post_meta($post->ID, '_charla_google_maps_url', true);
     $descripcion = (string) get_post_meta($post->ID, '_charla_descripcion', true);
@@ -357,6 +358,7 @@ function flacso_charlas_abiertas_build_charla_data($post) {
         '_charla_zoom_join_url' => $zoom_join_url,
         '_charla_youtube_transmision_url' => $youtube_transmision_url,
         '_charla_duracion_minutos' => $duracion_minutos,
+        '_charla_lugar_nombre' => $lugar_nombre,
         '_charla_direccion' => $direccion,
         '_charla_google_maps_url' => $google_maps_url,
         '_charla_descripcion' => $descripcion,
@@ -378,6 +380,7 @@ function flacso_charlas_abiertas_build_charla_data($post) {
         'zoom_join_url' => $zoom_join_url,
         'youtube_transmision_url' => $youtube_transmision_url,
         'duracion_minutos' => $duracion_minutos,
+        'lugar_nombre' => $lugar_nombre,
         'direccion' => $direccion,
         'google_maps_url' => $google_maps_url,
         'descripcion' => $descripcion,
@@ -684,6 +687,7 @@ function flacso_charlas_abiertas_receive_inscripcion(WP_REST_Request $request) {
                 'zoom_join_url' => esc_url_raw($evento['zoom_join_url'] ?? get_post_meta($evento_id, '_charla_zoom_join_url', true)),
                 'youtube_transmision_url' => esc_url_raw($evento['youtube_transmision_url'] ?? get_post_meta($evento_id, '_charla_youtube_transmision_url', true)),
                 'duracion_minutos' => $evento_duracion_minutos,
+                'lugar_nombre' => sanitize_text_field($evento['lugar_nombre'] ?? get_post_meta($evento_id, '_charla_lugar_nombre', true)),
                 'direccion' => sanitize_text_field($evento['direccion'] ?? get_post_meta($evento_id, '_charla_direccion', true)),
                 'google_maps_url' => esc_url_raw($evento['google_maps_url'] ?? get_post_meta($evento_id, '_charla_google_maps_url', true)),
                 'descripcion' => wp_kses_post($evento['descripcion'] ?? get_post_meta($evento_id, '_charla_descripcion', true)),
