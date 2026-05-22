@@ -4,6 +4,41 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+if (!function_exists('flacso_charlas_abiertas_normalize_form_variant')) {
+    function flacso_charlas_abiertas_normalize_form_variant($value) {
+        $variant = sanitize_key((string) $value);
+        return 'nombre_apellido' === $variant ? 'nombre_apellido' : 'estandar';
+    }
+}
+
+if (!function_exists('flacso_charlas_abiertas_get_linked_form_block_attrs')) {
+    function flacso_charlas_abiertas_get_linked_form_block_attrs($post_id) {
+        $post = get_post($post_id);
+        if (!$post || !function_exists('parse_blocks')) {
+            return [];
+        }
+
+        $blocks = parse_blocks((string) $post->post_content);
+        if (!is_array($blocks)) {
+            return [];
+        }
+
+        foreach ($blocks as $block) {
+            if (
+                is_array($block) &&
+                isset($block['blockName']) &&
+                'flacso-uy/charlas-abiertas-formulario' === $block['blockName'] &&
+                !empty($block['attrs']) &&
+                is_array($block['attrs'])
+            ) {
+                return $block['attrs'];
+            }
+        }
+
+        return [];
+    }
+}
+
 add_action('init', 'flacso_charlas_abiertas_register_cpt');
 function flacso_charlas_abiertas_register_cpt() {
     register_post_type('charla_abierta', [
@@ -101,6 +136,14 @@ function flacso_charlas_abiertas_register_cpt() {
         'show_in_rest' => true,
         'auth_callback' => '__return_true',
         'sanitize_callback' => 'wp_kses_post',
+    ]);
+
+    register_post_meta('charla_abierta', '_charla_form_variant', [
+        'single' => true,
+        'type' => 'string',
+        'show_in_rest' => true,
+        'auth_callback' => '__return_true',
+        'sanitize_callback' => 'flacso_charlas_abiertas_normalize_form_variant',
     ]);
 
     register_post_meta('charla_abierta', '_charla_evento_id', [
@@ -217,6 +260,9 @@ function flacso_charlas_abiertas_render_meta_box($post) {
     $direccion = get_post_meta($post->ID, '_charla_direccion', true);
     $google_maps_url = get_post_meta($post->ID, '_charla_google_maps_url', true);
     $descripcion = get_post_meta($post->ID, '_charla_descripcion', true);
+    $form_variant = flacso_charlas_abiertas_normalize_form_variant(
+        get_post_meta($post->ID, '_charla_form_variant', true)
+    );
     $inicio_fecha = '';
     $inicio_hora = '';
     $timezone_label = wp_timezone_string();
@@ -405,6 +451,22 @@ function flacso_charlas_abiertas_render_meta_box($post) {
             Esta charla puede guardarse sin post asociado.
         </p>
     <?php endif; ?>
+    <hr>
+    <p><strong>Formulario de inscripción</strong></p>
+    <p>
+        <label for="flacso_charla_form_variant"><strong>Versión del formulario</strong></label><br>
+        <select id="flacso_charla_form_variant" name="flacso_charla_form_variant" style="width:100%;max-width:420px;">
+            <option value="estandar" <?php selected($form_variant, 'estandar'); ?>>
+                Estándar: nombre, apellido y profesión
+            </option>
+            <option value="nombre_apellido" <?php selected($form_variant, 'nombre_apellido'); ?>>
+                Alternativa: nombre y apellido en un solo campo
+            </option>
+        </select>
+    </p>
+    <p style="margin:8px 0 0;color:#646970;">
+        Esta preferencia se usa tanto en el bloque de la charla como en el post vinculado que se sincroniza automáticamente.
+    </p>
     <hr>
     <p><strong>Integración con Eventos</strong></p>
     <p>
@@ -613,10 +675,26 @@ function flacso_charlas_abiertas_sync_post_from_charla($charla_id) {
     }
 
     $descripcion = (string) get_post_meta($charla_id, '_charla_descripcion', true);
-    $post_content = $descripcion . "\n\n<!-- wp:flacso-uy/charlas-abiertas-formulario {\"eventoId\":" . $charla_id . "} /-->";
+    $form_variant = flacso_charlas_abiertas_normalize_form_variant(
+        get_post_meta($charla_id, '_charla_form_variant', true)
+    );
+    $block_attributes = ['eventoId' => $charla_id];
+    if ('estandar' !== $form_variant) {
+        $block_attributes['variant'] = $form_variant;
+    }
 
     $post_id = (int) get_post_meta($charla_id, '_charla_post_id', true);
     $post_exists = $post_id > 0 && get_post_type($post_id) === 'post' && get_post_status($post_id) !== 'trash';
+    if ($post_exists) {
+        $existing_block_attrs = flacso_charlas_abiertas_get_linked_form_block_attrs($post_id);
+        $existing_heading = isset($existing_block_attrs['heading'])
+            ? sanitize_text_field((string) $existing_block_attrs['heading'])
+            : '';
+        if ('' !== $existing_heading) {
+            $block_attributes['heading'] = $existing_heading;
+        }
+    }
+    $post_content = $descripcion . "\n\n<!-- wp:flacso-uy/charlas-abiertas-formulario " . wp_json_encode($block_attributes) . " /-->";
 
     if ($post_exists) {
         $update_data = [
@@ -794,6 +872,16 @@ function flacso_charlas_abiertas_save_meta($post_id, $post) {
 
     if (isset($_POST['flacso_charla_descripcion'])) {
         update_post_meta($post_id, '_charla_descripcion', wp_kses_post(wp_unslash($_POST['flacso_charla_descripcion'])));
+    }
+
+    if (isset($_POST['flacso_charla_form_variant'])) {
+        update_post_meta(
+            $post_id,
+            '_charla_form_variant',
+            flacso_charlas_abiertas_normalize_form_variant(
+                wp_unslash($_POST['flacso_charla_form_variant'])
+            )
+        );
     }
 
     $sync_post_enabled = isset($_POST['flacso_charla_sync_post']) && '1' === sanitize_text_field(wp_unslash($_POST['flacso_charla_sync_post']));

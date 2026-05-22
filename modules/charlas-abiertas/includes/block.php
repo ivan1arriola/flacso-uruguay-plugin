@@ -6,6 +6,13 @@ if (!defined('ABSPATH')) {
 
 add_action('init', 'flacso_charlas_abiertas_register_block');
 function flacso_charlas_abiertas_register_block() {
+    wp_register_style(
+        'flacso-charlas-abiertas-block-editor-style',
+        FLACSO_CHARLAS_ABIERTAS_URL . 'assets/css/frontend.css',
+        [],
+        FLACSO_CHARLAS_ABIERTAS_VERSION
+    );
+
     wp_register_script(
         'flacso-charlas-abiertas-block-editor',
         FLACSO_CHARLAS_ABIERTAS_URL . 'assets/js/block-editor.js',
@@ -17,11 +24,18 @@ function flacso_charlas_abiertas_register_block() {
     register_block_type('flacso-uy/charlas-abiertas-formulario', [
         'api_version' => 2,
         'editor_script' => 'flacso-charlas-abiertas-block-editor',
+        'editor_style' => 'flacso-charlas-abiertas-block-editor-style',
         'render_callback' => 'flacso_charlas_abiertas_render_block',
         'attributes' => [
             'eventoId' => [
                 'type' => 'number',
                 'default' => 0,
+            ],
+            'variant' => [
+                'type' => 'string',
+            ],
+            'heading' => [
+                'type' => 'string',
             ],
         ],
     ]);
@@ -43,6 +57,20 @@ function flacso_charlas_abiertas_render_block($attributes) {
     ) {
         return '<p>La charla seleccionada no está disponible.</p>';
     }
+
+    $stored_variant = function_exists('flacso_charlas_abiertas_normalize_form_variant')
+        ? flacso_charlas_abiertas_normalize_form_variant(get_post_meta($evento_id, '_charla_form_variant', true))
+        : 'estandar';
+    $attribute_variant = isset($attributes['variant']) ? (string) $attributes['variant'] : '';
+    $heading = isset($attributes['heading']) ? sanitize_text_field((string) $attributes['heading']) : '';
+    $form_variant = $attribute_variant !== ''
+        ? (
+            function_exists('flacso_charlas_abiertas_normalize_form_variant')
+                ? flacso_charlas_abiertas_normalize_form_variant($attribute_variant)
+                : sanitize_key($attribute_variant)
+        )
+        : $stored_variant;
+    $form_heading = '' !== $heading ? $heading : 'Inscripción a ' . get_the_title($evento_id);
 
     $inicio = get_post_meta($evento_id, '_charla_inicio', true);
     $modalidad = get_post_meta($evento_id, '_charla_modalidad', true);
@@ -97,24 +125,32 @@ function flacso_charlas_abiertas_render_block($attributes) {
         data-evento-direccion="<?php echo esc_attr((string) $direccion); ?>"
         data-evento-google-maps-url="<?php echo esc_url($google_maps_url ?: ''); ?>"
         data-evento-descripcion-b64="<?php echo esc_attr($descripcion_b64); ?>"
+        data-form-variant="<?php echo esc_attr($form_variant); ?>"
         data-wp-user-logged-in="<?php echo esc_attr($is_logged_in); ?>"
         data-host-post-id="<?php echo esc_attr((string) absint($host_post_id)); ?>"
         data-host-post-featured-image="<?php echo esc_url($host_featured_image ?: ''); ?>"
         data-endpoint="<?php echo esc_url(rest_url('flacso-charlas/v1/inscripcion')); ?>"
     >
         <form class="flacso-charla-form" novalidate>
-            <h3 class="flacso-form-title">Inscripción a <?php echo esc_html(get_the_title($evento_id)); ?></h3>
+            <h3 class="flacso-form-title"><?php echo esc_html($form_heading); ?></h3>
 
             <div class="flacso-form-grid">
-                <div class="flacso-form-group">
-                    <label for="<?php echo esc_attr($wrapper_id); ?>-nombre">Nombre *</label>
-                    <input type="text" id="<?php echo esc_attr($wrapper_id); ?>-nombre" name="nombre" placeholder="Ej. Juan" required />
-                </div>
+                <?php if ('nombre_apellido' === $form_variant) : ?>
+                    <div class="flacso-form-group flacso-form-group-full">
+                        <label for="<?php echo esc_attr($wrapper_id); ?>-nombre-apellido">Nombre y apellido *</label>
+                        <input type="text" id="<?php echo esc_attr($wrapper_id); ?>-nombre-apellido" name="nombre_apellido" placeholder="Ej. Juan Pérez" required />
+                    </div>
+                <?php else : ?>
+                    <div class="flacso-form-group">
+                        <label for="<?php echo esc_attr($wrapper_id); ?>-nombre">Nombre *</label>
+                        <input type="text" id="<?php echo esc_attr($wrapper_id); ?>-nombre" name="nombre" placeholder="Ej. Juan" required />
+                    </div>
 
-                <div class="flacso-form-group">
-                    <label for="<?php echo esc_attr($wrapper_id); ?>-apellido">Apellido *</label>
-                    <input type="text" id="<?php echo esc_attr($wrapper_id); ?>-apellido" name="apellido" placeholder="Ej. Pérez" required />
-                </div>
+                    <div class="flacso-form-group">
+                        <label for="<?php echo esc_attr($wrapper_id); ?>-apellido">Apellido *</label>
+                        <input type="text" id="<?php echo esc_attr($wrapper_id); ?>-apellido" name="apellido" placeholder="Ej. Pérez" required />
+                    </div>
+                <?php endif; ?>
 
                 <div class="flacso-form-group flacso-form-group-full">
                     <label for="<?php echo esc_attr($correo_input_id); ?>">Correo *</label>
@@ -135,10 +171,12 @@ function flacso_charlas_abiertas_render_block($attributes) {
                     <input type="text" id="<?php echo esc_attr($wrapper_id); ?>-pais-residencia" name="pais_residencia" class="flacso-pais-residencia" placeholder="Ej. Uruguay" />
                 </div>
 
-                <div class="flacso-form-group">
-                    <label for="<?php echo esc_attr($wrapper_id); ?>-profesion">Profesión</label>
-                    <input type="text" id="<?php echo esc_attr($wrapper_id); ?>-profesion" name="profesion" placeholder="Ej. Docente, Estudiante" />
-                </div>
+                <?php if ('nombre_apellido' !== $form_variant) : ?>
+                    <div class="flacso-form-group">
+                        <label for="<?php echo esc_attr($wrapper_id); ?>-profesion">Profesión</label>
+                        <input type="text" id="<?php echo esc_attr($wrapper_id); ?>-profesion" name="profesion" placeholder="Ej. Docente, Estudiante" />
+                    </div>
+                <?php endif; ?>
 
                 <div class="flacso-form-group">
                     <label for="<?php echo esc_attr($wrapper_id); ?>-institucion">Institución</label>

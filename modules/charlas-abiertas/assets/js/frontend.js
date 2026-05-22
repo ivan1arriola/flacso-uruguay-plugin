@@ -192,11 +192,35 @@
         return "El número de teléfono no es válido para el país seleccionado.";
     }
 
+    function splitFullName(fullName) {
+        var normalized = String(fullName || "").replace(/\s+/g, " ").trim();
+        if (!normalized) {
+            return {
+                nombre: "",
+                apellido: "",
+            };
+        }
+
+        var lastSpaceIndex = normalized.lastIndexOf(" ");
+        if (lastSpaceIndex === -1) {
+            return {
+                nombre: normalized,
+                apellido: "",
+            };
+        }
+
+        return {
+            nombre: normalized.slice(0, lastSpaceIndex).trim(),
+            apellido: normalized.slice(lastSpaceIndex + 1).trim(),
+        };
+    }
+
     function bindForm(wrapper) {
         var form = wrapper.querySelector("form.flacso-charla-form");
         var result = wrapper.querySelector(".flacso-charla-form-result");
         var statusScreen = wrapper.querySelector(".flacso-charla-status-screen");
         var endpoint = wrapper.dataset.endpoint;
+        var formVariant = String(wrapper.dataset.formVariant || "estandar").toLowerCase();
         var modalidadEvento = String(wrapper.dataset.eventoModalidad || "virtual").toLowerCase();
         var modalidadSelect = form ? form.querySelector('select[name="modalidad_asistencia"]') : null;
         var modalidadLocknote = form ? form.querySelector(".flacso-modalidad-locknote") : null;
@@ -470,9 +494,19 @@
                 modalidadAsistencia = modalidadEvento === "presencial" ? "presencial" : "virtual";
             }
 
-            var nombre = String(fd.get("nombre") || "").trim();
-            var apellido = String(fd.get("apellido") || "").trim();
-            var nombreApellido = (nombre + " " + apellido).trim();
+            var nombre = "";
+            var apellido = "";
+            var nombreApellido = "";
+            if (formVariant === "nombre_apellido") {
+                nombreApellido = String(fd.get("nombre_apellido") || "").replace(/\s+/g, " ").trim();
+                var splitName = splitFullName(nombreApellido);
+                nombre = splitName.nombre;
+                apellido = splitName.apellido;
+            } else {
+                nombre = String(fd.get("nombre") || "").trim();
+                apellido = String(fd.get("apellido") || "").trim();
+                nombreApellido = (nombre + " " + apellido).trim();
+            }
 
             var paisResidencia = String(fd.get("pais_residencia") || "").trim();
 
@@ -524,9 +558,10 @@
             var inscripcionData = {
                 nombre: nombre,
                 apellido: apellido,
+                nombre_apellido: nombreApellido,
                 correo: String(fd.get("correo") || "").trim(),
                 pais_residencia: paisResidencia,
-                profesion: String(fd.get("profesion") || "").trim(),
+                profesion: formVariant === "nombre_apellido" ? "" : String(fd.get("profesion") || "").trim(),
                 institucion: String(fd.get("institucion") || "").trim(),
                 telefono: telefono,
                 telefono_e164: telefonoE164,

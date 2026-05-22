@@ -341,6 +341,11 @@ function flacso_charlas_abiertas_build_charla_data($post) {
     $direccion = (string) get_post_meta($post->ID, '_charla_direccion', true);
     $google_maps_url = (string) get_post_meta($post->ID, '_charla_google_maps_url', true);
     $descripcion = (string) get_post_meta($post->ID, '_charla_descripcion', true);
+    $form_variant = function_exists('flacso_charlas_abiertas_normalize_form_variant')
+        ? flacso_charlas_abiertas_normalize_form_variant(
+            get_post_meta($post->ID, '_charla_form_variant', true)
+        )
+        : 'estandar';
     $post_featured_image = get_the_post_thumbnail_url($post, 'full');
     $inicio_timestamp = flacso_charlas_abiertas_parse_inicio_timestamp($inicio);
     $post_id = (int) get_post_meta($post->ID, '_charla_post_id', true);
@@ -362,6 +367,7 @@ function flacso_charlas_abiertas_build_charla_data($post) {
         '_charla_direccion' => $direccion,
         '_charla_google_maps_url' => $google_maps_url,
         '_charla_descripcion' => $descripcion,
+        '_charla_form_variant' => $form_variant,
         '_charla_post_id' => $post_id,
         '_charla_evento_id' => $evento_id,
         '_charla_sync_post' => $sync_post_enabled,
@@ -385,6 +391,7 @@ function flacso_charlas_abiertas_build_charla_data($post) {
         'google_maps_url' => $google_maps_url,
         'descripcion' => $descripcion,
         'descripcion_rendered' => apply_filters('the_content', $descripcion),
+        'form_variant' => $form_variant,
         'post_featured_image' => is_string($post_featured_image) ? $post_featured_image : '',
         'post_id' => $post_id,
         'post_permalink' => $post_id > 0 && get_post_status($post_id) !== 'trash' ? get_permalink($post_id) : '',
@@ -634,7 +641,7 @@ function flacso_charlas_abiertas_receive_inscripcion(WP_REST_Request $request) {
         if ('' === $nombre) {
             $errors[] = ['field' => 'inscripcion.nombre', 'message' => 'Campo requerido.'];
         }
-        if ('' === $apellido) {
+        if ('' === $apellido && '' === $nombre_apellido) {
             $errors[] = ['field' => 'inscripcion.apellido', 'message' => 'Campo requerido.'];
         }
 
@@ -695,6 +702,7 @@ function flacso_charlas_abiertas_receive_inscripcion(WP_REST_Request $request) {
             'inscripcion' => [
                 'nombre' => $nombre,
                 'apellido' => $apellido,
+                'nombre_apellido' => $nombre_apellido,
                 'correo' => $correo,
                 'pais_residencia' => sanitize_text_field($inscripcion['pais_residencia'] ?? ''),
                 'profesion' => sanitize_text_field($inscripcion['profesion'] ?? ''),
