@@ -184,7 +184,7 @@ function flacso_charlas_abiertas_render_block($attributes) {
                 </div>
 
                 <div class="flacso-form-group">
-                    <label for="<?php echo esc_attr($telefono_input_id); ?>">Número de teléfono</label>
+                    <label for="<?php echo esc_attr($telefono_input_id); ?>">Número de teléfono (Opcional)</label>
                     <div class="input-group has-validation flacso-telefono-group">
                         <input
                             type="tel"

@@ -123,7 +123,7 @@
         return el("div", {
             className: "flacso-form-group"
         }, [
-            el("label", { key: "label" }, __("Número de teléfono", "flacso-charlas-abiertas")),
+            el("label", { key: "label" }, __("Número de teléfono (Opcional)", "flacso-charlas-abiertas")),
             el("input", {
                 key: "input",
                 type: "tel",
