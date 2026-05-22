@@ -11,34 +11,6 @@ if (!function_exists('flacso_charlas_abiertas_normalize_form_variant')) {
     }
 }
 
-if (!function_exists('flacso_charlas_abiertas_get_linked_form_block_attrs')) {
-    function flacso_charlas_abiertas_get_linked_form_block_attrs($post_id) {
-        $post = get_post($post_id);
-        if (!$post || !function_exists('parse_blocks')) {
-            return [];
-        }
-
-        $blocks = parse_blocks((string) $post->post_content);
-        if (!is_array($blocks)) {
-            return [];
-        }
-
-        foreach ($blocks as $block) {
-            if (
-                is_array($block) &&
-                isset($block['blockName']) &&
-                'flacso-uy/charlas-abiertas-formulario' === $block['blockName'] &&
-                !empty($block['attrs']) &&
-                is_array($block['attrs'])
-            ) {
-                return $block['attrs'];
-            }
-        }
-
-        return [];
-    }
-}
-
 add_action('init', 'flacso_charlas_abiertas_register_cpt');
 function flacso_charlas_abiertas_register_cpt() {
     register_post_type('charla_abierta', [
@@ -428,7 +400,7 @@ function flacso_charlas_abiertas_render_meta_box($post) {
     <p>
         <label>
             <input type="checkbox" name="flacso_charla_sync_post" value="1" <?php checked($sync_post_enabled); ?>>
-            Crear o actualizar automáticamente un post vinculado al guardar esta charla.
+            Crear automáticamente un post vinculado al guardar esta charla si todavía no existe.
         </label>
     </p>
     <p style="margin:8px 0 0;color:#646970;">
@@ -441,9 +413,12 @@ function flacso_charlas_abiertas_render_meta_box($post) {
             ·
             <a href="<?php echo esc_url(get_permalink($linked_post_id)); ?>" target="_blank" rel="noopener noreferrer">Ver post</a>
         </p>
+        <p style="margin:8px 0 0;color:#646970;">
+            Si este post ya existe, no se sobrescribe al guardar cambios en la charla.
+        </p>
     <?php elseif ($sync_post_enabled) : ?>
         <p style="margin:8px 0 0;color:#646970;">
-            Todavía no hay un post vinculado. Se creará al guardar si la charla está publicada.
+            Todavía no hay un post vinculado. Se creará al guardar con la configuración actual de la charla.
         </p>
     <?php else : ?>
         <p style="margin:8px 0 0;color:#646970;">
@@ -464,7 +439,7 @@ function flacso_charlas_abiertas_render_meta_box($post) {
         </select>
     </p>
     <p style="margin:8px 0 0;color:#646970;">
-        Esta preferencia se usa tanto en el bloque de la charla como en el post vinculado que se sincroniza automáticamente.
+        Esta preferencia se usa en el bloque de la charla y también en cualquier post vinculado nuevo que se cree desde aquí.
     </p>
     <hr>
     <p><strong>Integración con Eventos</strong></p>
@@ -686,37 +661,21 @@ function flacso_charlas_abiertas_sync_post_from_charla($charla_id) {
         return 0;
     }
 
-    $descripcion = (string) get_post_meta($charla_id, '_charla_descripcion', true);
-    $form_variant = flacso_charlas_abiertas_normalize_form_variant(
-        get_post_meta($charla_id, '_charla_form_variant', true)
-    );
-    $block_attributes = ['eventoId' => $charla_id];
-    if ('estandar' !== $form_variant) {
-        $block_attributes['variant'] = $form_variant;
-    }
-
     $post_id = (int) get_post_meta($charla_id, '_charla_post_id', true);
     $post_exists = $post_id > 0 && get_post_type($post_id) === 'post' && get_post_status($post_id) !== 'trash';
     if ($post_exists) {
-        $existing_block_attrs = flacso_charlas_abiertas_get_linked_form_block_attrs($post_id);
-        $existing_heading = isset($existing_block_attrs['heading'])
-            ? sanitize_text_field((string) $existing_block_attrs['heading'])
-            : '';
-        if ('' !== $existing_heading) {
-            $block_attributes['heading'] = $existing_heading;
-        }
-    }
-    $post_content = $descripcion . "\n\n<!-- wp:flacso-uy/charlas-abiertas-formulario " . wp_json_encode($block_attributes) . " /-->";
-
-    if ($post_exists) {
-        $update_data = [
-            'ID'           => $post_id,
-            'post_title'   => $titulo,
-            'post_content' => $post_content,
-            'post_status'  => $charla->post_status,
-        ];
-        wp_update_post($update_data);
+        update_post_meta($post_id, '_post_charla_id', $charla_id);
     } else {
+        $descripcion = (string) get_post_meta($charla_id, '_charla_descripcion', true);
+        $form_variant = flacso_charlas_abiertas_normalize_form_variant(
+            get_post_meta($charla_id, '_charla_form_variant', true)
+        );
+        $block_attributes = ['eventoId' => $charla_id];
+        if ('estandar' !== $form_variant) {
+            $block_attributes['variant'] = $form_variant;
+        }
+
+        $post_content = $descripcion . "\n\n<!-- wp:flacso-uy/charlas-abiertas-formulario " . wp_json_encode($block_attributes) . " /-->";
         $insert_data = [
             'post_type'    => 'post',
             'post_title'   => $titulo,
@@ -736,7 +695,7 @@ function flacso_charlas_abiertas_sync_post_from_charla($charla_id) {
         update_post_meta($post_id, '_charla_ocultar_post', !empty($ocultar_post) ? '1' : '0');
 
         $charla_thumbnail_id = get_post_thumbnail_id($charla_id);
-        if ($charla_thumbnail_id > 0 && function_exists('set_post_thumbnail')) {
+        if (!$post_exists && $charla_thumbnail_id > 0 && function_exists('set_post_thumbnail')) {
             set_post_thumbnail($post_id, $charla_thumbnail_id);
         }
     }
