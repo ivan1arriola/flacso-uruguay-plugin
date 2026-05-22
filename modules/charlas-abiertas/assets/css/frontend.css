@@ -193,14 +193,21 @@
 
 .flacso-charla-form-wrapper .flacso-modalidad-locknote {
     display: block;
-    margin-top: 0.5rem;
-    color: var(--flacso-accent);
-    background: var(--flacso-accent-light);
-    font-size: 0.85rem;
+    margin-top: 0.65rem;
+    color: var(--flacso-primary);
+    background: var(--flacso-primary-light);
+    font-size: 0.88rem;
     font-weight: 500;
-    padding: 0.5rem 0.75rem;
+    padding: 0.65rem 0.95rem;
     border-radius: 6px;
-    border-left: 3px solid var(--flacso-accent);
+    border-left: 3.5px solid var(--flacso-accent);
+    line-height: 1.45;
+}
+
+/* Explicit high-contrast input placeholders */
+.flacso-charla-form-wrapper .flacso-charla-form input::placeholder {
+    color: #5c6a7e;
+    opacity: 0.9;
 }
 
 /* Button & Action Bar styling */
