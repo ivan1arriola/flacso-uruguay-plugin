@@ -129,7 +129,7 @@ class Flacso_Inscripciones_Banner_Block {
         if (file_exists($logo_path)) {
             $logo_url = 'data:image/png;base64,' . base64_encode(file_get_contents($logo_path));
         } else {
-            $logo_url = 'https://flacso.edu.uy/wp-content/uploads/2024/10/384ddefb-522d-432a-bbc8-c86f09bdceef.png';
+            $logo_url = 'https://flacso.edu.uy/wp-content/uploads/2026/05/logo_flacso_uruguay_20anos_blanco.png';
         }
 
         $featured_url = '';

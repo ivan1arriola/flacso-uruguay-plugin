@@ -9,7 +9,7 @@ function fc_email_logo_url() {
         if (file_exists($logo_path)) {
             $default = 'data:image/png;base64,' . base64_encode(file_get_contents($logo_path));
         } else {
-            $default = 'https://flacso.edu.uy/wp-content/uploads/2024/10/384ddefb-522d-432a-bbc8-c86f09bdceef.png';
+            $default = 'https://flacso.edu.uy/wp-content/uploads/2026/05/logo_flacso_uruguay_20anos_blanco.png';
         }
         return apply_filters( 'fc_email_logo_url', $default );
 }
