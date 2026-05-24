@@ -1,3 +1,29 @@
+## Version 4.4.2 - 24 de mayo de 2026
+
+### Resumen
+- Se incrementan las versiones publicadas del plugin integrado, del bloque de consultas y del editor.
+- Se deja como endpoint oficial de consultas la ruta en español `/api/consultas`.
+
+### Cambios detallados
+- Plugin integrado:
+  - `flacso-uruguay.php`
+  - Se actualiza `Version:` y `FLACSO_URUGUAY_VERSION` a `4.4.2`.
+- Bloque de consultas:
+  - `modules/main-page/includes/flacso-consultas.php`
+  - Se actualiza `Version:` y `FLACSO_CONSULTAS_VERSION` a `1.1.2`.
+- Editor:
+  - `flacso-editor/package.json`
+  - `flacso-editor/package-lock.json`
+  - Se actualiza la versión de la app a `0.2.1`.
+- Integración:
+  - La API de consultas queda publicada en `/api/consultas`.
+
+### Verificaciones
+- `php -l flacso-uruguay.php`
+- `php -l modules/main-page/includes/flacso-consultas.php`
+
+---
+
 ## Version 3.0.15 - 23 de abril de 2026
 
 ### Resumen

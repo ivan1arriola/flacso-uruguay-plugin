@@ -3,7 +3,7 @@
  * Merged Plugin:     FLACSO Consultas (Bloque Gutenberg)
  * Plugin URI:        https://www.flacso.edu.uy/
  * Description:       Formulario de consultas FLACSO con integración AJAX, página virtual /gracias y bloque Gutenberg.
- * Version:           1.1.1
+ * Version:           1.1.2
  * Author:            FLACSO Uruguay
  * Author URI:        https://www.flacso.edu.uy/
  * Requires at least: 6.3
@@ -26,7 +26,7 @@ if ( defined( 'FLACSO_CONSULTAS_LOADED' ) ) {
 define( 'FLACSO_CONSULTAS_LOADED', true );
 
 if ( ! defined( 'FLACSO_CONSULTAS_VERSION' ) ) {
-	define( 'FLACSO_CONSULTAS_VERSION', '1.1.1' );
+	define( 'FLACSO_CONSULTAS_VERSION', '1.1.2' );
 }
 
 // Registrar con flacso-common para creación de sinergias
