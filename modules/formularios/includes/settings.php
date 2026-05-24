@@ -236,6 +236,32 @@ function fc_add_consulta_settings_submenu() {
 }
 add_action( 'admin_menu', 'fc_add_consulta_settings_submenu' );
 
+function fc_get_consultas_settings_page_url( array $args = [] ) {
+    return add_query_arg(
+        array_merge(
+            [
+                'post_type' => 'fc_consulta',
+                'page'      => 'fc_options_page',
+            ],
+            $args
+        ),
+        admin_url( 'edit.php' )
+    );
+}
+
+function fc_get_oferta_settings_page_url( array $args = [] ) {
+    return add_query_arg(
+        array_merge(
+            [
+                'post_type' => 'fc_info_request',
+                'page'      => 'fc_oferta_options_page',
+            ],
+            $args
+        ),
+        admin_url( 'edit.php' )
+    );
+}
+
 function fc_render_options_page() {
     if ( ! current_user_can( 'manage_options' ) ) {
         return;
@@ -249,6 +275,15 @@ function fc_render_options_page() {
             do_settings_sections( 'fc_options_page' );
             submit_button();
             ?>
+        </form>
+
+        <hr>
+        <h2><?php esc_html_e( 'Prueba del webhook', 'flacso-flacso-formulario-consultas' ); ?></h2>
+        <p><?php esc_html_e( 'Envía una solicitud de prueba al endpoint configurado. Si el destino es FLACSO Editor, esta verificación no crea consultas ni envía correos.', 'flacso-flacso-formulario-consultas' ); ?></p>
+        <form action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post">
+            <?php wp_nonce_field( 'fc_test_consultas_webhook', 'fc_consultas_webhook_test_nonce' ); ?>
+            <input type="hidden" name="action" value="fc_test_consultas_webhook" />
+            <?php submit_button( __( 'Probar conexión con el editor', 'flacso-flacso-formulario-consultas' ), 'secondary', 'submit', false ); ?>
         </form>
 
         <hr>
@@ -292,6 +327,15 @@ function fc_render_oferta_options_page() {
             submit_button();
             ?>
         </form>
+
+        <hr>
+        <h2><?php esc_html_e( 'Prueba del webhook', 'flacso-flacso-formulario-consultas' ); ?></h2>
+        <p><?php esc_html_e( 'Envía una solicitud de prueba al endpoint configurado para oferta académica. Si el destino es FLACSO Editor, esta verificación no crea consultas ni envía correos.', 'flacso-flacso-formulario-consultas' ); ?></p>
+        <form action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post">
+            <?php wp_nonce_field( 'fc_test_oferta_webhook', 'fc_oferta_webhook_test_nonce' ); ?>
+            <input type="hidden" name="action" value="fc_test_oferta_webhook" />
+            <?php submit_button( __( 'Probar conexión con el editor', 'flacso-flacso-formulario-consultas' ), 'secondary', 'submit', false ); ?>
+        </form>
     </div>
     <?php
 }
@@ -329,11 +373,93 @@ function fc_handle_send_test_email() {
     }
 
     $res = $ok ? 'success' : 'fail';
-    $redirect = add_query_arg( [ 'page' => 'fc_options_page', 'fc_test' => $res ], admin_url( 'options-general.php' ) );
-    wp_safe_redirect( $redirect );
+    wp_safe_redirect( fc_get_consultas_settings_page_url( [ 'fc_test' => $res ] ) );
     exit;
 }
 add_action( 'admin_post_fc_send_test_email', 'fc_handle_send_test_email' );
+
+function fc_handle_test_consultas_webhook() {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_die( esc_html__( 'No tienes permisos suficientes.', 'flacso-flacso-formulario-consultas' ) );
+    }
+    if ( ! isset( $_POST['fc_consultas_webhook_test_nonce'] ) || ! wp_verify_nonce( wp_unslash( $_POST['fc_consultas_webhook_test_nonce'] ), 'fc_test_consultas_webhook' ) ) {
+        wp_die( esc_html__( 'Solicitud no válida.', 'flacso-flacso-formulario-consultas' ) );
+    }
+
+    $result = function_exists( 'fc_send_consulta_webhook_test' )
+        ? fc_send_consulta_webhook_test()
+        : [
+            'ok'      => false,
+            'code'    => 0,
+            'error'   => 'La prueba del webhook no está disponible.',
+            'message' => '',
+        ];
+
+    $args = [
+        'fc_consultas_webhook_test' => $result['ok'] ? 'success' : 'fail',
+    ];
+
+    if ( ! empty( $result['code'] ) ) {
+        $args['fc_consultas_webhook_code'] = (int) $result['code'];
+    }
+
+    $message = '';
+    if ( ! empty( $result['message'] ) ) {
+        $message = sanitize_text_field( (string) $result['message'] );
+    } elseif ( ! empty( $result['error'] ) ) {
+        $message = sanitize_text_field( (string) $result['error'] );
+    }
+
+    if ( '' !== $message ) {
+        $args['fc_consultas_webhook_message'] = $message;
+    }
+
+    wp_safe_redirect( fc_get_consultas_settings_page_url( $args ) );
+    exit;
+}
+add_action( 'admin_post_fc_test_consultas_webhook', 'fc_handle_test_consultas_webhook' );
+
+function fc_handle_test_oferta_webhook() {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_die( esc_html__( 'No tienes permisos suficientes.', 'flacso-flacso-formulario-consultas' ) );
+    }
+    if ( ! isset( $_POST['fc_oferta_webhook_test_nonce'] ) || ! wp_verify_nonce( wp_unslash( $_POST['fc_oferta_webhook_test_nonce'] ), 'fc_test_oferta_webhook' ) ) {
+        wp_die( esc_html__( 'Solicitud no válida.', 'flacso-flacso-formulario-consultas' ) );
+    }
+
+    $result = function_exists( 'fc_send_info_request_webhook_test' )
+        ? fc_send_info_request_webhook_test()
+        : [
+            'ok'      => false,
+            'code'    => 0,
+            'error'   => 'La prueba del webhook no está disponible.',
+            'message' => '',
+        ];
+
+    $args = [
+        'fc_oferta_webhook_test' => $result['ok'] ? 'success' : 'fail',
+    ];
+
+    if ( ! empty( $result['code'] ) ) {
+        $args['fc_oferta_webhook_code'] = (int) $result['code'];
+    }
+
+    $message = '';
+    if ( ! empty( $result['message'] ) ) {
+        $message = sanitize_text_field( (string) $result['message'] );
+    } elseif ( ! empty( $result['error'] ) ) {
+        $message = sanitize_text_field( (string) $result['error'] );
+    }
+
+    if ( '' !== $message ) {
+        $args['fc_oferta_webhook_message'] = $message;
+    }
+
+    wp_safe_redirect( fc_get_oferta_settings_page_url( $args ) );
+    exit;
+}
+add_action( 'admin_post_fc_test_oferta_webhook', 'fc_handle_test_oferta_webhook' );
+
 function fc_handle_send_test_telegram() {
     if ( ! current_user_can( 'manage_options' ) ) {
         wp_die( esc_html__( 'No tienes permisos suficientes.', 'flacso-flacso-formulario-consultas' ) );
@@ -347,28 +473,73 @@ function fc_handle_send_test_telegram() {
         $ok = fc_send_telegram_message( $msg );
     }
     $res = $ok ? 'success' : 'fail';
-    $redirect = add_query_arg( [ 'page' => 'fc_options_page', 'fc_tg_test' => $res ], admin_url( 'options-general.php' ) );
-    wp_safe_redirect( $redirect );
+    wp_safe_redirect( fc_get_consultas_settings_page_url( [ 'fc_tg_test' => $res ] ) );
     exit;
 }
 add_action( 'admin_post_fc_send_test_telegram', 'fc_handle_send_test_telegram' );
 
+function fc_render_webhook_test_notice( $status, $code, $message, $token_variable_name ) {
+    if ( 'success' === $status ) {
+        echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'La app respondió correctamente y aceptó la prueba del webhook.', 'flacso-flacso-formulario-consultas' ) . '</p></div>';
+        return;
+    }
+
+    if ( 401 === $code ) {
+        $notice = sprintf(
+            /* translators: %s: environment variable name */
+            __( 'La app rechazó el token del webhook. Revisá que coincida con %s.', 'flacso-flacso-formulario-consultas' ),
+            $token_variable_name
+        );
+    } elseif ( 404 === $code ) {
+        $notice = __( 'La URL del webhook respondió 404. Revisá que el endpoint exista en la app.', 'flacso-flacso-formulario-consultas' );
+    } elseif ( $code >= 500 ) {
+        $notice = sprintf(
+            /* translators: %d: HTTP status code */
+            __( 'La app respondió con un error interno (HTTP %d).', 'flacso-flacso-formulario-consultas' ),
+            $code
+        );
+    } elseif ( '' !== $message ) {
+        $notice = $message;
+    } else {
+        $notice = __( 'No se pudo validar la conexión con la app. Revisá la URL configurada y el token.', 'flacso-flacso-formulario-consultas' );
+    }
+
+    echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( $notice ) . '</p></div>';
+}
+
 // Notice post-envío
 function fc_settings_admin_notices() {
-    if ( ! isset( $_GET['page'] ) || $_GET['page'] !== 'fc_options_page' ) { return; }
-    if ( isset( $_GET['fc_test'] ) ) {
-        if ( $_GET['fc_test'] === 'success' ) {
-            echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Correo de prueba enviado correctamente.', 'flacso-flacso-formulario-consultas' ) . '</p></div>';
-        } else {
-            echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'No se pudo enviar el correo de prueba. Revisa la configuración o el registro (debug.log).', 'flacso-flacso-formulario-consultas' ) . '</p></div>';
+    $page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+
+    if ( 'fc_options_page' === $page ) {
+        if ( isset( $_GET['fc_consultas_webhook_test'] ) ) {
+            $status  = sanitize_key( wp_unslash( $_GET['fc_consultas_webhook_test'] ) );
+            $code    = isset( $_GET['fc_consultas_webhook_code'] ) ? absint( wp_unslash( $_GET['fc_consultas_webhook_code'] ) ) : 0;
+            $message = isset( $_GET['fc_consultas_webhook_message'] ) ? sanitize_text_field( wp_unslash( $_GET['fc_consultas_webhook_message'] ) ) : '';
+            fc_render_webhook_test_notice( $status, $code, $message, 'FLACSO_CONSULTAS_WEBHOOK_TOKEN' );
+        }
+
+        if ( isset( $_GET['fc_test'] ) ) {
+            if ( $_GET['fc_test'] === 'success' ) {
+                echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Correo de prueba enviado correctamente.', 'flacso-flacso-formulario-consultas' ) . '</p></div>';
+            } else {
+                echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'No se pudo enviar el correo de prueba. Revisa la configuración o el registro (debug.log).', 'flacso-flacso-formulario-consultas' ) . '</p></div>';
+            }
+        }
+        if ( isset( $_GET['fc_tg_test'] ) ) {
+            if ( $_GET['fc_tg_test'] === 'success' ) {
+                echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Mensaje de Telegram enviado correctamente.', 'flacso-flacso-formulario-consultas' ) . '</p></div>';
+            } else {
+                echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'No se pudo enviar el mensaje de Telegram. Revisa el token y chat ID.', 'flacso-flacso-formulario-consultas' ) . '</p></div>';
+            }
         }
     }
-    if ( isset( $_GET['fc_tg_test'] ) ) {
-        if ( $_GET['fc_tg_test'] === 'success' ) {
-            echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Mensaje de Telegram enviado correctamente.', 'flacso-flacso-formulario-consultas' ) . '</p></div>';
-        } else {
-            echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'No se pudo enviar el mensaje de Telegram. Revisa el token y chat ID.', 'flacso-flacso-formulario-consultas' ) . '</p></div>';
-        }
+
+    if ( 'fc_oferta_options_page' === $page && isset( $_GET['fc_oferta_webhook_test'] ) ) {
+        $status  = sanitize_key( wp_unslash( $_GET['fc_oferta_webhook_test'] ) );
+        $code    = isset( $_GET['fc_oferta_webhook_code'] ) ? absint( wp_unslash( $_GET['fc_oferta_webhook_code'] ) ) : 0;
+        $message = isset( $_GET['fc_oferta_webhook_message'] ) ? sanitize_text_field( wp_unslash( $_GET['fc_oferta_webhook_message'] ) ) : '';
+        fc_render_webhook_test_notice( $status, $code, $message, 'FLACSO_CONSULTAS_WEBHOOK_TOKEN' );
     }
 }
 add_action( 'admin_notices', 'fc_settings_admin_notices' );

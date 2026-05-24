@@ -210,7 +210,7 @@ add_action( 'admin_post_fc_submit_consulta', 'fc_handle_form_submit' );
  *
  * @param array $payload Datos de la consulta.
  */
-function fc_send_consulta_webhook( array $payload ) {
+function fc_get_consulta_webhook_url() {
     $webhook_url = trim( (string) get_option( 'fc_consultas_webhook_url', '' ) );
     if ( '' === $webhook_url ) {
         $webhook_url = trim( (string) get_option( 'fc_oferta_webhook_url', '' ) );
@@ -218,7 +218,21 @@ function fc_send_consulta_webhook( array $payload ) {
     if ( '' === $webhook_url && defined( 'FLACSO_WEBHOOK_URL' ) ) {
         $webhook_url = trim( (string) FLACSO_WEBHOOK_URL );
     }
+
+    return '' === $webhook_url ? '' : esc_url_raw( $webhook_url );
+}
+
+function fc_send_consulta_webhook( array $payload ) {
+    $webhook_url = fc_get_consulta_webhook_url();
     if ( '' === $webhook_url ) {
+        return;
+    }
+
+    if ( function_exists( 'fc_dispatch_info_request_webhook' ) ) {
+        $result = fc_dispatch_info_request_webhook( $payload, [], $webhook_url );
+        if ( ! $result['ok'] ) {
+            error_log( '[FLACSO-FC] Webhook consultas ' . ( $result['error'] ?: 'error' ) . ( ! empty( $result['message'] ) ? ' message=' . $result['message'] : '' ) );
+        }
         return;
     }
 
@@ -258,4 +272,39 @@ function fc_send_consulta_webhook( array $payload ) {
     if ( is_array( $json ) && isset( $json['success'] ) && false === $json['success'] ) {
         error_log( '[FLACSO-FC] Webhook consultas respondió success=false: ' . substr( $body, 0, 500 ) );
     }
+}
+
+function fc_send_consulta_webhook_test() {
+    $webhook_url = fc_get_consulta_webhook_url();
+    if ( '' === $webhook_url ) {
+        return [
+            'ok'      => false,
+            'target'  => '',
+            'code'    => 0,
+            'body'    => '',
+            'error'   => 'No hay endpoint configurado para consultas.',
+            'message' => '',
+        ];
+    }
+
+    if ( function_exists( 'fc_dispatch_info_request_webhook' ) ) {
+        return fc_dispatch_info_request_webhook(
+            [
+                'test'         => true,
+                'source'       => 'wordpress_admin',
+                'requested_at' => current_time( 'c' ),
+            ],
+            [ 'X-FLACSO-Webhook-Test' => '1' ],
+            $webhook_url
+        );
+    }
+
+    return [
+        'ok'      => false,
+        'target'  => $webhook_url,
+        'code'    => 0,
+        'body'    => '',
+        'error'   => 'La utilidad de prueba del webhook no está disponible.',
+        'message' => '',
+    ];
 }

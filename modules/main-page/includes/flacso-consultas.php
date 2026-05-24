@@ -3,7 +3,7 @@
  * Merged Plugin:     FLACSO Consultas (Bloque Gutenberg)
  * Plugin URI:        https://www.flacso.edu.uy/
  * Description:       Formulario de consultas FLACSO con integración AJAX, página virtual /gracias y bloque Gutenberg.
- * Version:           1.1.2
+ * Version:           1.1.3
  * Author:            FLACSO Uruguay
  * Author URI:        https://www.flacso.edu.uy/
  * Requires at least: 6.3
@@ -26,7 +26,7 @@ if ( defined( 'FLACSO_CONSULTAS_LOADED' ) ) {
 define( 'FLACSO_CONSULTAS_LOADED', true );
 
 if ( ! defined( 'FLACSO_CONSULTAS_VERSION' ) ) {
-	define( 'FLACSO_CONSULTAS_VERSION', '1.1.2' );
+	define( 'FLACSO_CONSULTAS_VERSION', '1.1.3' );
 }
 
 // Registrar con flacso-common para creación de sinergias
@@ -663,6 +663,54 @@ add_action( 'wp_ajax_nopriv_flacso_enviar_consulta', 'flacso_enviar_consulta_fun
 /**
  * Página /gracias virtual.
  */
+function flacso_consultas_apply_virtual_page_title( $base_title ) {
+	$base_title = trim( (string) $base_title );
+	$site_name  = trim( (string) get_bloginfo( 'name' ) );
+	$full_title = $site_name ? $base_title . ' - ' . $site_name : $base_title;
+
+	add_filter(
+		'pre_get_document_title',
+		static function () use ( $full_title ) {
+			return $full_title;
+		},
+		999
+	);
+
+	add_filter(
+		'document_title_parts',
+		static function ( $parts ) use ( $base_title ) {
+			$parts['title'] = $base_title;
+			unset( $parts['tagline'] );
+			return $parts;
+		},
+		999
+	);
+
+	add_filter(
+		'wp_title',
+		static function () use ( $full_title ) {
+			return $full_title;
+		},
+		999
+	);
+
+	add_filter(
+		'rank_math/frontend/title',
+		static function () use ( $full_title ) {
+			return $full_title;
+		},
+		999
+	);
+
+	add_filter(
+		'wpseo_title',
+		static function () use ( $full_title ) {
+			return $full_title;
+		},
+		999
+	);
+}
+
 function flacso_render_gracias_virtual() {
         $path = wp_parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH );
         if ( ! preg_match( '#/(gracias|confirmacion-consulta)/?$#', $path ) ) {
@@ -674,6 +722,10 @@ function flacso_render_gracias_virtual() {
         if ( $wp_query ) {
                 $wp_query->is_404 = false;
                 $wp_query->is_singular = true;
+                $wp_query->is_page = true;
+                $wp_query->is_archive = false;
+                $wp_query->is_home = false;
+                $wp_query->is_posts_page = false;
                 $wp_query->set_404( false );
         }
 
@@ -687,9 +739,13 @@ function flacso_render_gracias_virtual() {
         $volver_href = $pid ? get_permalink( $pid ) : home_url( '/' );
 
         $intro = $titulo_programa ? flacso_intro_con_articulo( $titulo_programa ) : '';
+        $page_title = $titulo_programa
+                ? sprintf( 'Consulta enviada - %s', $titulo_programa )
+                : 'Consulta enviada';
 
         status_header( 200 );
         nocache_headers();
+        flacso_consultas_apply_virtual_page_title( $page_title );
         get_header();
         ?>
                 <main class="flacso-gracias-container position-relative overflow-hidden">

@@ -163,6 +163,19 @@ function flacso_charlas_abiertas_add_settings_page() {
     );
 }
 
+function flacso_charlas_abiertas_get_settings_page_url(array $args = []) {
+    return add_query_arg(
+        array_merge(
+            [
+                'post_type' => 'charla_abierta',
+                'page' => 'flacso-charlas-abiertas-settings',
+            ],
+            $args
+        ),
+        admin_url('edit.php')
+    );
+}
+
 function flacso_charlas_abiertas_render_settings_page() {
     if (!current_user_can('manage_options')) {
         return;
@@ -178,6 +191,15 @@ function flacso_charlas_abiertas_render_settings_page() {
             submit_button();
             ?>
         </form>
+
+        <hr>
+        <h2>Prueba del webhook</h2>
+        <p>Envía una solicitud de prueba al endpoint configurado. Si el destino es FLACSO Editor, esta verificación no crea inscripciones ni envía correos.</p>
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+            <?php wp_nonce_field('flacso_charlas_abiertas_test_webhook', 'flacso_charlas_abiertas_test_webhook_nonce'); ?>
+            <input type="hidden" name="action" value="flacso_charlas_abiertas_test_webhook" />
+            <?php submit_button('Probar conexión con el editor', 'secondary', 'submit', false); ?>
+        </form>
     </div>
     <?php
 }
@@ -191,3 +213,146 @@ function flacso_charlas_abiertas_get_webhook_token() {
     $token = get_option(FLACSO_CHARLAS_ABIERTAS_OPTION_WEBHOOK_TOKEN, '');
     return is_string($token) ? trim($token) : '';
 }
+
+function flacso_charlas_abiertas_send_webhook_test() {
+    $webhook_url = flacso_charlas_abiertas_get_webhook_url();
+    if ('' === $webhook_url) {
+        return [
+            'ok' => false,
+            'code' => 0,
+            'body' => '',
+            'error' => 'No hay endpoint configurado para charlas abiertas.',
+            'message' => '',
+        ];
+    }
+
+    if (!function_exists('flacso_charlas_abiertas_post_webhook')) {
+        return [
+            'ok' => false,
+            'code' => 0,
+            'body' => '',
+            'error' => 'La utilidad de prueba del webhook no está disponible.',
+            'message' => '',
+        ];
+    }
+
+    $payload = wp_json_encode([
+        'test' => true,
+        'source' => 'wordpress_admin',
+        'requested_at' => current_time('c'),
+    ]);
+    $post_result = flacso_charlas_abiertas_post_webhook(
+        $webhook_url,
+        $payload,
+        ['X-FLACSO-Webhook-Test' => '1']
+    );
+    $response = isset($post_result['response']) ? $post_result['response'] : null;
+
+    if (is_wp_error($response)) {
+        return [
+            'ok' => false,
+            'code' => 0,
+            'body' => '',
+            'error' => $response->get_error_message(),
+            'message' => '',
+        ];
+    }
+
+    $code = (int) wp_remote_retrieve_response_code($response);
+    $body = (string) wp_remote_retrieve_body($response);
+    $message = '';
+    $ok = $code >= 200 && $code < 300;
+
+    if (function_exists('flacso_charlas_abiertas_decode_json_loose')) {
+        $decoded = flacso_charlas_abiertas_decode_json_loose($body);
+        if (is_array($decoded) && isset($decoded['data']['message'])) {
+            $message = sanitize_text_field((string) $decoded['data']['message']);
+        } elseif (is_array($decoded) && isset($decoded['error']['message'])) {
+            $message = sanitize_text_field((string) $decoded['error']['message']);
+        }
+
+        if (is_array($decoded) && isset($decoded['ok']) && false === $decoded['ok']) {
+            $ok = false;
+        }
+    }
+
+    return [
+        'ok' => $ok,
+        'code' => $code,
+        'body' => $body,
+        'error' => $ok ? '' : 'HTTP ' . $code,
+        'message' => $message,
+    ];
+}
+
+function flacso_charlas_abiertas_handle_test_webhook() {
+    if (!current_user_can('manage_options')) {
+        wp_die('No tienes permisos suficientes.');
+    }
+    if (
+        !isset($_POST['flacso_charlas_abiertas_test_webhook_nonce']) ||
+        !wp_verify_nonce(
+            wp_unslash($_POST['flacso_charlas_abiertas_test_webhook_nonce']),
+            'flacso_charlas_abiertas_test_webhook'
+        )
+    ) {
+        wp_die('Solicitud no válida.');
+    }
+
+    $result = flacso_charlas_abiertas_send_webhook_test();
+    $args = [
+        'flacso_charlas_webhook_test' => $result['ok'] ? 'success' : 'fail',
+    ];
+
+    if (!empty($result['code'])) {
+        $args['flacso_charlas_webhook_code'] = (int) $result['code'];
+    }
+
+    $message = '';
+    if (!empty($result['message'])) {
+        $message = sanitize_text_field((string) $result['message']);
+    } elseif (!empty($result['error'])) {
+        $message = sanitize_text_field((string) $result['error']);
+    }
+
+    if ('' !== $message) {
+        $args['flacso_charlas_webhook_message'] = $message;
+    }
+
+    wp_safe_redirect(flacso_charlas_abiertas_get_settings_page_url($args));
+    exit;
+}
+add_action('admin_post_flacso_charlas_abiertas_test_webhook', 'flacso_charlas_abiertas_handle_test_webhook');
+
+function flacso_charlas_abiertas_admin_notices() {
+    $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+    if ('flacso-charlas-abiertas-settings' !== $page || !isset($_GET['flacso_charlas_webhook_test'])) {
+        return;
+    }
+
+    $status = sanitize_key(wp_unslash($_GET['flacso_charlas_webhook_test']));
+    $code = isset($_GET['flacso_charlas_webhook_code']) ? absint(wp_unslash($_GET['flacso_charlas_webhook_code'])) : 0;
+    $message = isset($_GET['flacso_charlas_webhook_message'])
+        ? sanitize_text_field(wp_unslash($_GET['flacso_charlas_webhook_message']))
+        : '';
+
+    if ('success' === $status) {
+        echo '<div class="notice notice-success is-dismissible"><p>La app respondió correctamente y aceptó la prueba del webhook.</p></div>';
+        return;
+    }
+
+    if (401 === $code) {
+        $notice = 'La app rechazó el token del webhook. Revisá que coincida con FLACSO_CHARLAS_WEBHOOK_TOKEN.';
+    } elseif (404 === $code) {
+        $notice = 'La URL del webhook respondió 404. Revisá que el endpoint exista en la app.';
+    } elseif ($code >= 500) {
+        $notice = 'La app respondió con un error interno.';
+    } elseif ('' !== $message) {
+        $notice = $message;
+    } else {
+        $notice = 'No se pudo validar la conexión con la app. Revisá la URL configurada y el token.';
+    }
+
+    echo '<div class="notice notice-error is-dismissible"><p>' . esc_html($notice) . '</p></div>';
+}
+add_action('admin_notices', 'flacso_charlas_abiertas_admin_notices');

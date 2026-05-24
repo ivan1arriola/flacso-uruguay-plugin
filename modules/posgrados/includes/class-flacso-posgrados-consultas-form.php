@@ -382,6 +382,54 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
             return 'unknown';
         }
 
+        private static function apply_virtual_page_title(string $base_title): void {
+            $base_title = trim($base_title);
+            $site_name  = trim((string) get_bloginfo('name'));
+            $full_title = $site_name ? $base_title . ' - ' . $site_name : $base_title;
+
+            add_filter(
+                'pre_get_document_title',
+                static function () use ($full_title) {
+                    return $full_title;
+                },
+                999
+            );
+
+            add_filter(
+                'document_title_parts',
+                static function ($parts) use ($base_title) {
+                    $parts['title'] = $base_title;
+                    unset($parts['tagline']);
+                    return $parts;
+                },
+                999
+            );
+
+            add_filter(
+                'wp_title',
+                static function () use ($full_title) {
+                    return $full_title;
+                },
+                999
+            );
+
+            add_filter(
+                'rank_math/frontend/title',
+                static function () use ($full_title) {
+                    return $full_title;
+                },
+                999
+            );
+
+            add_filter(
+                'wpseo_title',
+                static function () use ($full_title) {
+                    return $full_title;
+                },
+                999
+            );
+        }
+
         public static function maybe_render_thankyou(): void {
             $path = wp_parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
             if (!preg_match('#/gracias/?$#', $path ?? '')) {
@@ -394,9 +442,24 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
                 ? wp_get_attachment_image_url(get_post_thumbnail_id($pid), 'full')
                 : '';
             $back = $pid ? get_permalink($pid) : home_url('/');
+            $page_title = $title
+                ? sprintf('Consulta enviada - %s', $title)
+                : 'Consulta enviada';
+
+            global $wp_query;
+            if ($wp_query) {
+                $wp_query->is_404 = false;
+                $wp_query->is_singular = true;
+                $wp_query->is_page = true;
+                $wp_query->is_archive = false;
+                $wp_query->is_home = false;
+                $wp_query->is_posts_page = false;
+                $wp_query->set_404(false);
+            }
 
             status_header(200);
             nocache_headers();
+            self::apply_virtual_page_title($page_title);
             get_header();
             ?>
             <main class="flacso-pos-consultas-thanks d-flex align-items-center">

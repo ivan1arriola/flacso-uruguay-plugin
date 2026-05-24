@@ -1,3 +1,35 @@
+## Version 4.4.3 - 24 de mayo de 2026
+
+### Resumen
+- Se agregan pruebas seguras de webhook desde WordPress para todos los endpoints que integran con la app.
+- La app acepta un modo de validación de token que no persiste datos ni dispara correos.
+- Se incrementan las versiones publicadas del plugin integrado, del bloque de consultas y del editor.
+
+### Cambios detallados
+- Plugin integrado:
+  - `flacso-uruguay.php`
+  - Se actualiza `Version:` y `FLACSO_URUGUAY_VERSION` a `4.4.3`.
+- Bloque de consultas:
+  - `modules/main-page/includes/flacso-consultas.php`
+  - Se actualiza `Version:` y `FLACSO_CONSULTAS_VERSION` a `1.1.3`.
+- Editor:
+  - `flacso-editor/package.json`
+  - `flacso-editor/package-lock.json`
+  - Se actualiza la versión de la app a `0.2.2`.
+- Integración:
+  - WordPress suma botones `Probar conexión con el editor` en consultas, solicitudes de información y charlas abiertas.
+  - Los endpoints `/api/consultas` y `/api/charlas/inscripciones` aceptan `X-FLACSO-Webhook-Test: 1` para validar URL y token sin guardar registros.
+
+### Verificaciones
+- `npm test`
+- `php -l modules/formularios/includes/helpers.php`
+- `php -l modules/formularios/includes/form-handlers.php`
+- `php -l modules/formularios/includes/settings.php`
+- `php -l modules/charlas-abiertas/includes/settings.php`
+- `php -l modules/charlas-abiertas/includes/rest.php`
+
+---
+
 ## Version 4.4.2 - 24 de mayo de 2026
 
 ### Resumen

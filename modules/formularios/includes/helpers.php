@@ -73,6 +73,87 @@ function fc_get_info_request_webhook_token() {
     return sanitize_text_field( $token );
 }
 
+function fc_build_info_request_webhook_headers() {
+    $headers = [ 'Content-Type' => 'application/json' ];
+    $token   = fc_get_info_request_webhook_token();
+
+    if ( '' !== $token ) {
+        $headers['Authorization']          = 'Bearer ' . $token;
+        $headers['X-FLACSO-Webhook-Token'] = $token;
+    }
+
+    return $headers;
+}
+
+function fc_dispatch_info_request_webhook( array $payload, array $extra_headers = [], $target_override = '' ) {
+    $target = is_string( $target_override ) && '' !== trim( $target_override )
+        ? esc_url_raw( $target_override )
+        : fc_get_info_request_webhook_url();
+    if ( '' === $target ) {
+        return [
+            'ok'      => false,
+            'target'  => '',
+            'code'    => 0,
+            'body'    => '',
+            'error'   => 'No hay endpoint configurado para solicitud de informacion.',
+            'message' => '',
+        ];
+    }
+
+    $headers = array_merge( fc_build_info_request_webhook_headers(), $extra_headers );
+    $args    = [
+        'body'        => wp_json_encode( $payload ),
+        'headers'     => $headers,
+        'timeout'     => defined( 'FLACSO_WEBHOOK_TIMEOUT' ) ? (int) FLACSO_WEBHOOK_TIMEOUT : 25,
+        'redirection' => 3,
+        'blocking'    => true,
+        'httpversion' => '1.1',
+        'data_format' => 'body',
+    ];
+
+    $response = wp_remote_post( $target, $args );
+    if ( is_wp_error( $response ) ) {
+        return [
+            'ok'      => false,
+            'target'  => $target,
+            'code'    => 0,
+            'body'    => '',
+            'error'   => $response->get_error_message(),
+            'message' => '',
+        ];
+    }
+
+    $code    = (int) wp_remote_retrieve_response_code( $response );
+    $body    = (string) wp_remote_retrieve_body( $response );
+    $message = '';
+    $decoded = json_decode( $body, true );
+
+    if ( is_array( $decoded ) && isset( $decoded['message'] ) ) {
+        $message = sanitize_text_field( (string) $decoded['message'] );
+    } elseif ( is_array( $decoded ) && isset( $decoded['data']['message'] ) ) {
+        $message = sanitize_text_field( (string) $decoded['data']['message'] );
+    } elseif ( is_array( $decoded ) && isset( $decoded['error']['message'] ) ) {
+        $message = sanitize_text_field( (string) $decoded['error']['message'] );
+    }
+
+    $ok = $code >= 200 && $code < 300;
+    if ( is_array( $decoded ) && isset( $decoded['ok'] ) && false === $decoded['ok'] ) {
+        $ok = false;
+    }
+    if ( is_array( $decoded ) && isset( $decoded['success'] ) && false === $decoded['success'] ) {
+        $ok = false;
+    }
+
+    return [
+        'ok'      => $ok,
+        'target'  => $target,
+        'code'    => $code,
+        'body'    => $body,
+        'error'   => $ok ? '' : 'HTTP ' . $code,
+        'message' => $message,
+    ];
+}
+
 /**
  * Completa el contexto del programa usando el ID del CPT como fuente de verdad.
  *
@@ -172,55 +253,19 @@ function fc_build_info_request_webhook_payload( array $data ) {
  * @return array { ok, target, code, body, error }
  */
 function fc_send_info_request_webhook( array $data ) {
-    $target = fc_get_info_request_webhook_url();
-    if ( '' === $target ) {
-        return [
-            'ok'     => false,
-            'target' => '',
-            'code'   => 0,
-            'body'   => '',
-            'error'  => 'No hay endpoint configurado para solicitud de informacion.',
-        ];
-    }
-
     $payload = fc_build_info_request_webhook_payload( $data );
-    $args    = [
-        'body'        => wp_json_encode( $payload ),
-        'headers'     => [ 'Content-Type' => 'application/json' ],
-        'timeout'     => defined( 'FLACSO_WEBHOOK_TIMEOUT' ) ? (int) FLACSO_WEBHOOK_TIMEOUT : 25,
-        'redirection' => 3,
-        'blocking'    => true,
-        'httpversion' => '1.1',
-        'data_format' => 'body',
-    ];
+    return fc_dispatch_info_request_webhook( $payload );
+}
 
-    $token = fc_get_info_request_webhook_token();
-    if ( '' !== $token ) {
-        $args['headers']['Authorization'] = 'Bearer ' . $token;
-        $args['headers']['X-FLACSO-Webhook-Token'] = $token;
-    }
-
-    $response = wp_remote_post( $target, $args );
-    if ( is_wp_error( $response ) ) {
-        return [
-            'ok'     => false,
-            'target' => $target,
-            'code'   => 0,
-            'body'   => '',
-            'error'  => $response->get_error_message(),
-        ];
-    }
-
-    $code = (int) wp_remote_retrieve_response_code( $response );
-    $body = (string) wp_remote_retrieve_body( $response );
-
-    return [
-        'ok'     => $code >= 200 && $code < 300,
-        'target' => $target,
-        'code'   => $code,
-        'body'   => $body,
-        'error'  => $code >= 200 && $code < 300 ? '' : 'HTTP ' . $code,
-    ];
+function fc_send_info_request_webhook_test() {
+    return fc_dispatch_info_request_webhook(
+        [
+            'test'         => true,
+            'source'       => 'wordpress_admin',
+            'requested_at' => current_time( 'c' ),
+        ],
+        [ 'X-FLACSO-Webhook-Test' => '1' ]
+    );
 }
 
 /**

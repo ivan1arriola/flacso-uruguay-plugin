@@ -215,7 +215,7 @@ function flacso_charlas_abiertas_decode_json_loose($raw) {
     return is_array($parsed) ? $parsed : null;
 }
 
-function flacso_charlas_abiertas_post_webhook($url, $json_body) {
+function flacso_charlas_abiertas_post_webhook($url, $json_body, array $extra_headers = []) {
     $current_url = (string) $url;
     $max_hops = 4;
     $webhook_token = function_exists('flacso_charlas_abiertas_get_webhook_token')
@@ -233,7 +233,7 @@ function flacso_charlas_abiertas_post_webhook($url, $json_body) {
     }
 
     $post_args = [
-        'headers' => $headers,
+        'headers' => array_merge($headers, $extra_headers),
         'body' => $json_body,
         'timeout' => 60,
         // Seguimos redirecciones manualmente para preservar método POST.
