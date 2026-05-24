@@ -273,7 +273,24 @@ get_header();
                                 <!-- Seminarios Vinculados -->
                                 <?php
                                 if (class_exists('Oferta_Seminarios_Integration')) {
-                                    $seminarios = Oferta_Seminarios_Integration::get_programa_seminarios_data($post_id);
+                                    $seminarios_all = Oferta_Seminarios_Integration::get_programa_seminarios_data($post_id);
+                                    $seminarios = array();
+                                    $hoy = new DateTimeImmutable('today', wp_timezone());
+                                    foreach ($seminarios_all as $s) {
+                                        if (empty($s['fecha_inicio'])) {
+                                            continue;
+                                        }
+                                        $inicio_obj = DateTimeImmutable::createFromFormat('Y-m-d|', $s['fecha_inicio'], wp_timezone());
+                                        if (!$inicio_obj) {
+                                            continue;
+                                        }
+                                        $dias_hasta_inicio = (int) floor(($inicio_obj->getTimestamp() - $hoy->getTimestamp()) / DAY_IN_SECONDS);
+                                        $is_upcoming = $dias_hasta_inicio >= 0;
+                                        $is_started_recent = $dias_hasta_inicio < 0 && $dias_hasta_inicio >= -7;
+                                        if ($is_upcoming || $is_started_recent) {
+                                            $seminarios[] = $s;
+                                        }
+                                    }
                                     if (!empty($seminarios)) :
                                 ?>
                                     <div class="site-container my-5 py-5">

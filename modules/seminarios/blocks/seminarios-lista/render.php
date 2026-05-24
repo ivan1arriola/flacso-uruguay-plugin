@@ -37,13 +37,60 @@ function flacso_render_seminarios_lista_block($attributes)
         ? array('publish', 'private')
         : array('publish');
 
-    $posgrados = get_posts(array(
+    $posgrados_all = get_posts(array(
         'post_type'      => 'oferta-academica',
         'post_status'    => $statuses,
         'posts_per_page' => -1,
         'orderby'        => 'title',
         'order'          => 'ASC',
     ));
+
+    // Filtrar posgrados para incluir solo aquellos que tienen seminarios activos o próximos
+    $posgrados = array();
+    $hoy = new DateTimeImmutable('today', wp_timezone());
+
+    foreach ($posgrados_all as $item) {
+        $seminarios_ids = get_post_meta($item->ID, '_oferta_seminarios_ids', true);
+        if (!is_array($seminarios_ids) || empty($seminarios_ids)) {
+            continue;
+        }
+
+        $tiene_activo = false;
+        foreach ($seminarios_ids as $seminario_id) {
+            $seminario_id = (int) $seminario_id;
+            if ($seminario_id <= 0) {
+                continue;
+            }
+
+            // Verificar si el seminario está publicado
+            if (get_post_status($seminario_id) !== 'publish') {
+                continue;
+            }
+
+            $fecha_inicio = get_post_meta($seminario_id, '_seminario_periodo_inicio', true);
+            if (empty($fecha_inicio)) {
+                continue;
+            }
+
+            $inicio_obj = DateTimeImmutable::createFromFormat('Y-m-d|', $fecha_inicio, wp_timezone());
+            if (!$inicio_obj) {
+                continue;
+            }
+
+            $dias_hasta_inicio = (int) floor(($inicio_obj->getTimestamp() - $hoy->getTimestamp()) / DAY_IN_SECONDS);
+            $is_upcoming = $dias_hasta_inicio >= 0;
+            $is_started_recent = $dias_hasta_inicio < 0 && $dias_hasta_inicio >= -7;
+
+            if ($is_upcoming || $is_started_recent) {
+                $tiene_activo = true;
+                break;
+            }
+        }
+
+        if ($tiene_activo) {
+            $posgrados[] = $item;
+        }
+    }
 
     $resolve_oferta_id = static function ($value) use ($posgrados): int {
         if ($value === null || $value === '') {
