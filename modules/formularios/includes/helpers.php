@@ -68,6 +68,53 @@ function fc_get_info_request_webhook_url() {
     return '';
 }
 
+function fc_get_info_request_webhook_token() {
+    $token = trim( (string) get_option( 'fc_consultas_webhook_token', '' ) );
+    return sanitize_text_field( $token );
+}
+
+/**
+ * Completa el contexto del programa usando el ID del CPT como fuente de verdad.
+ *
+ * @param array $data Datos del formulario.
+ * @return array
+ */
+function fc_enrich_info_request_program_context( array $data ) {
+    $offer_id = 0;
+    if ( isset( $data['id_pagina'] ) ) {
+        $offer_id = absint( $data['id_pagina'] );
+    } elseif ( isset( $data['programa_id'] ) ) {
+        $offer_id = absint( $data['programa_id'] );
+    }
+
+    $resolved_title = '';
+    $resolved_url   = '';
+
+    if ( $offer_id > 0 ) {
+        $resolved_title = (string) get_the_title( $offer_id );
+        $resolved_url   = (string) get_permalink( $offer_id );
+    }
+
+    if ( '' === $resolved_title && isset( $data['titulo_posgrado'] ) ) {
+        $resolved_title = sanitize_text_field( (string) $data['titulo_posgrado'] );
+    }
+    if ( '' === $resolved_title && isset( $data['programa_titulo'] ) ) {
+        $resolved_title = sanitize_text_field( (string) $data['programa_titulo'] );
+    }
+
+    if ( '' === $resolved_url && isset( $data['url_base'] ) ) {
+        $resolved_url = esc_url_raw( (string) $data['url_base'] );
+    }
+
+    $data['id_pagina']       = $offer_id;
+    $data['programa_id']     = $offer_id;
+    $data['titulo_posgrado'] = $resolved_title;
+    $data['programa_titulo'] = $resolved_title;
+    $data['url_base']        = $resolved_url;
+
+    return $data;
+}
+
 /**
  * Normaliza el payload de Solicitud de Informacion para la API del panel.
  * Mantiene tambien los campos legacy para compatibilidad.
@@ -76,6 +123,7 @@ function fc_get_info_request_webhook_url() {
  * @return array
  */
 function fc_build_info_request_webhook_payload( array $data ) {
+    $data     = fc_enrich_info_request_program_context( $data );
     $offer_id = isset( $data['id_pagina'] ) ? (string) absint( $data['id_pagina'] ) : '';
     if ( '0' === $offer_id ) {
         $offer_id = '';
@@ -83,32 +131,38 @@ function fc_build_info_request_webhook_payload( array $data ) {
 
     $inquiry_at = isset( $data['fecha_envio'] ) ? sanitize_text_field( (string) $data['fecha_envio'] ) : '';
     if ( '' === $inquiry_at ) {
-        $inquiry_at = current_time( 'mysql' );
+        $inquiry_at = current_time( 'c' );
     }
 
-    return array_merge(
-        $data,
-        [
-            // Campos canónicos (PanelFLACSOConsultas /api/inquiries)
-            'email'           => isset( $data['correo'] ) ? sanitize_email( $data['correo'] ) : '',
-            'first_name'      => isset( $data['nombre'] ) ? sanitize_text_field( $data['nombre'] ) : '',
-            'last_name'       => isset( $data['apellido'] ) ? sanitize_text_field( $data['apellido'] ) : '',
-            'country'         => isset( $data['pais'] ) ? sanitize_text_field( $data['pais'] ) : '',
-            'profession'      => isset( $data['profesion'] ) ? sanitize_text_field( $data['profesion'] ) : '',
-            'education_level' => isset( $data['nivel_academico'] ) ? sanitize_text_field( $data['nivel_academico'] ) : '',
-            'offer_id'        => $offer_id,
-            'offer_name'      => isset( $data['titulo_posgrado'] ) ? sanitize_text_field( $data['titulo_posgrado'] ) : '',
-            'offer_type'      => '',
-            'source'          => 'Web',
-            'inquiry_at'      => $inquiry_at,
+    return [
+        // Campos canónicos (PanelFLACSOConsultas /api/consultas)
+        'email'           => isset( $data['correo'] ) ? sanitize_email( $data['correo'] ) : '',
+        'first_name'      => isset( $data['nombre'] ) ? sanitize_text_field( $data['nombre'] ) : '',
+        'last_name'       => isset( $data['apellido'] ) ? sanitize_text_field( $data['apellido'] ) : '',
+        'country'         => isset( $data['pais'] ) ? sanitize_text_field( $data['pais'] ) : '',
+        'profession'      => isset( $data['profesion'] ) ? sanitize_text_field( $data['profesion'] ) : '',
+        'education_level' => isset( $data['nivel_academico'] ) ? sanitize_text_field( $data['nivel_academico'] ) : '',
+        'offer_id'        => $offer_id,
+        'source'          => 'Web',
+        'url_referer'     => isset( $data['url_referer'] ) ? esc_url_raw( $data['url_referer'] ) : '',
+        'inquiry_at'      => $inquiry_at,
+        'ip_address'      => isset( $data['ip_usuario'] ) ? sanitize_text_field( $data['ip_usuario'] ) : '',
+        'user_agent'      => isset( $data['user_agent'] ) ? sanitize_text_field( $data['user_agent'] ) : '',
 
-            // Alias utiles para compatibilidad con importadores previos
-            'post_id'         => $offer_id,
-            'oferta'          => isset( $data['titulo_posgrado'] ) ? sanitize_text_field( $data['titulo_posgrado'] ) : '',
-            'origen'          => 'Web',
-            'nivel_educativo' => isset( $data['nivel_academico'] ) ? sanitize_text_field( $data['nivel_academico'] ) : '',
-        ]
-    );
+        // Alias útiles para compatibilidad con el payload legacy
+        'nombre'          => isset( $data['nombre'] ) ? sanitize_text_field( $data['nombre'] ) : '',
+        'apellido'        => isset( $data['apellido'] ) ? sanitize_text_field( $data['apellido'] ) : '',
+        'correo'          => isset( $data['correo'] ) ? sanitize_email( $data['correo'] ) : '',
+        'pais'            => isset( $data['pais'] ) ? sanitize_text_field( $data['pais'] ) : '',
+        'profesion'       => isset( $data['profesion'] ) ? sanitize_text_field( $data['profesion'] ) : '',
+        'nivel_academico' => isset( $data['nivel_academico'] ) ? sanitize_text_field( $data['nivel_academico'] ) : '',
+        'nivel_educativo' => isset( $data['nivel_academico'] ) ? sanitize_text_field( $data['nivel_academico'] ) : '',
+        'id_pagina'       => $offer_id,
+        'post_id'         => $offer_id,
+        'origen'          => 'Web',
+        'fecha_envio'     => $inquiry_at,
+        'ip_usuario'      => isset( $data['ip_usuario'] ) ? sanitize_text_field( $data['ip_usuario'] ) : '',
+    ];
 }
 
 /**
@@ -139,6 +193,12 @@ function fc_send_info_request_webhook( array $data ) {
         'httpversion' => '1.1',
         'data_format' => 'body',
     ];
+
+    $token = fc_get_info_request_webhook_token();
+    if ( '' !== $token ) {
+        $args['headers']['Authorization'] = 'Bearer ' . $token;
+        $args['headers']['X-FLACSO-Webhook-Token'] = $token;
+    }
 
     $response = wp_remote_post( $target, $args );
     if ( is_wp_error( $response ) ) {
@@ -346,7 +406,7 @@ function fc_record_info_request_entry( array $payload ) {
         'ip'              => '',
         'user_agent'      => '',
     ];
-    $data = wp_parse_args( $payload, $defaults );
+    $data = fc_enrich_info_request_program_context( wp_parse_args( $payload, $defaults ) );
 
     $nombre    = sanitize_text_field( $data['nombre'] );
     $apellido  = sanitize_text_field( $data['apellido'] );

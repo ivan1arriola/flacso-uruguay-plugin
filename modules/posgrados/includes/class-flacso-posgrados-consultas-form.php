@@ -293,6 +293,9 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
             $data['fecha_envio'] = current_time('c');
             $data['ip_usuario']  = self::get_user_ip();
             $data['user_agent']  = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field($_SERVER['HTTP_USER_AGENT']) : '';
+            if (function_exists('fc_enrich_info_request_program_context')) {
+                $data = fc_enrich_info_request_program_context($data);
+            }
 
             $required = ['nombre','apellido','pais','nivel_academico','correo','profesion'];
             $missing  = [ ];
@@ -312,6 +315,9 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
                 if (!FLACSO_RELAXED_MODE) {
                     wp_send_json_error(__('Correo inválido.', 'flacso-posgrados-docentes'));
                 }
+            }
+            if (empty($data['id_pagina'])) {
+                wp_send_json_error(__('No se pudo identificar la oferta académica.', 'flacso-posgrados-docentes'));
             }
 
             if (function_exists('fc_record_info_request_entry')) {

@@ -19,6 +19,7 @@ function fc_register_settings() {
     register_setting( 'fc_options_group', 'fc_recaptcha_site_key', [ 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'default' => '' ] );
     register_setting( 'fc_options_group', 'fc_recaptcha_secret_key', [ 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'default' => '' ] );
     register_setting( 'fc_options_group', 'fc_consultas_webhook_url', [ 'type' => 'string', 'sanitize_callback' => 'esc_url_raw', 'default' => '' ] );
+    register_setting( 'fc_options_group', 'fc_consultas_webhook_token', [ 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'default' => '' ] );
 
     add_settings_section( 'fc_main_section', __( 'Ajustes de formulario de consultas', 'flacso-flacso-formulario-consultas' ), function(){
         echo '<p>' . esc_html__( 'Configura el destinatario y los asuntos de los correos. Inserta el formulario con el bloque “Formulario de Consulta”.', 'flacso-flacso-formulario-consultas' ) . '</p>';
@@ -28,6 +29,7 @@ function fc_register_settings() {
     add_settings_field( 'fc_asunto_admin', __( 'Asunto para administrador', 'flacso-flacso-formulario-consultas' ), 'fc_field_asunto_admin_cb', 'fc_options_page', 'fc_main_section' );
     add_settings_field( 'fc_asunto_usuario', __( 'Asunto para usuario', 'flacso-flacso-formulario-consultas' ), 'fc_field_asunto_usuario_cb', 'fc_options_page', 'fc_main_section' );
     add_settings_field( 'fc_consultas_webhook_url', __( 'Webhook de consultas', 'flacso-flacso-formulario-consultas' ), 'fc_field_consultas_webhook_url_cb', 'fc_options_page', 'fc_main_section' );
+    add_settings_field( 'fc_consultas_webhook_token', __( 'Token del webhook', 'flacso-flacso-formulario-consultas' ), 'fc_field_consultas_webhook_token_cb', 'fc_options_page', 'fc_main_section' );
     add_settings_field( 'fc_cargar_bootstrap', __( 'Cargar Bootstrap automáticamente', 'flacso-flacso-formulario-consultas' ), 'fc_field_bootstrap_cb', 'fc_options_page', 'fc_main_section' );
     // Opción para Gmail API
     add_settings_field( 'fc_use_gmail_api', __( 'Usar Gmail API (Google Workspace)', 'flacso-flacso-formulario-consultas' ), 'fc_field_use_gmail_api_cb', 'fc_options_page', 'fc_main_section' );
@@ -70,6 +72,16 @@ function fc_register_settings_oferta() {
         ]
     );
 
+    register_setting(
+        'fc_oferta_options_group',
+        'fc_consultas_webhook_token',
+        [
+            'type'              => 'string',
+            'sanitize_callback' => 'sanitize_text_field',
+            'default'           => '',
+        ]
+    );
+
     add_settings_section(
         'fc_oferta_main_section',
         __( 'Webhook de Solicitud de Información', 'flacso-flacso-formulario-consultas' ),
@@ -84,9 +96,17 @@ function fc_register_settings_oferta() {
         __( 'URL del Webhook', 'flacso-flacso-formulario-consultas' ),
         function () {
             $value = esc_url( get_option( 'fc_oferta_webhook_url', '' ) );
-            echo '<input type="url" class="regular-text code" name="fc_oferta_webhook_url" value="' . $value . '" placeholder="https://tu-dominio/api/inquiries" />';
+            echo '<input type="url" class="regular-text code" name="fc_oferta_webhook_url" value="' . $value . '" placeholder="https://tu-dominio/api/consultas" />';
             echo '<p class="description">' . esc_html__( 'Se usa para el envio AJAX del formulario de Solicitud de Informacion. Este endpoint se configura desde este menu.', 'flacso-flacso-formulario-consultas' ) . '</p>';
         },
+        'fc_oferta_options_page',
+        'fc_oferta_main_section'
+    );
+
+    add_settings_field(
+        'fc_consultas_webhook_token',
+        __( 'Token del Webhook', 'flacso-flacso-formulario-consultas' ),
+        'fc_field_consultas_webhook_token_cb',
         'fc_oferta_options_page',
         'fc_oferta_main_section'
     );
@@ -112,8 +132,14 @@ function fc_field_asunto_usuario_cb() {
 
 function fc_field_consultas_webhook_url_cb() {
     $value = esc_url( get_option( 'fc_consultas_webhook_url', '' ) );
-    echo '<input type="url" class="regular-text code" name="fc_consultas_webhook_url" value="' . $value . '" placeholder="https://tu-dominio/api/inquiries" />';
+    echo '<input type="url" class="regular-text code" name="fc_consultas_webhook_url" value="' . $value . '" placeholder="https://tu-dominio/api/consultas" />';
     echo '<p class="description">' . esc_html__( 'URL para enviar por POST JSON cada consulta recibida desde este formulario. Se puede editar desde este menu.', 'flacso-flacso-formulario-consultas' ) . '</p>';
+}
+
+function fc_field_consultas_webhook_token_cb() {
+    $value = esc_attr( get_option( 'fc_consultas_webhook_token', '' ) );
+    echo '<input type="password" class="regular-text code" name="fc_consultas_webhook_token" value="' . $value . '" placeholder="Pega aquí el token del editor" autocomplete="new-password" spellcheck="false" />';
+    echo '<p class="description">' . esc_html__( 'Opcional pero recomendado. Si el editor configura FLACSO_CONSULTAS_WEBHOOK_TOKEN, pega aquí exactamente el mismo valor. El plugin lo enviará como Authorization: Bearer y X-FLACSO-Webhook-Token.', 'flacso-flacso-formulario-consultas' ) . '</p>';
 }
 
 function fc_field_bootstrap_cb() {

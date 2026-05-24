@@ -581,6 +581,9 @@ function flacso_enviar_consulta_func() {
 	$data['fecha_envio'] = current_time( 'c' );
 	$data['ip_usuario']  = flacso_get_user_ip();
 	$data['user_agent']  = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
+	if ( function_exists( 'fc_enrich_info_request_program_context' ) ) {
+		$data = fc_enrich_info_request_program_context( $data );
+	}
 
 	$campos_obligatorios = array( 'nombre', 'apellido', 'pais', 'nivel_academico', 'correo', 'profesion' );
 	$faltan              = array();
@@ -598,6 +601,10 @@ function flacso_enviar_consulta_func() {
 			wp_send_json_error( 'Correo inválido.' );
 		}
 		error_log( '[FLACSO] Correo inválido, RELAXED_MODE=on → seguimos.' );
+	}
+	if ( empty( $data['id_pagina'] ) ) {
+		error_log( '[FLACSO] Solicitud de información sin ID de oferta académica.' );
+		wp_send_json_error( 'No se pudo identificar la oferta académica.' );
 	}
 
 	if ( function_exists( 'fc_record_info_request_entry' ) ) {

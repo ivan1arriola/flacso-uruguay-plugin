@@ -232,6 +232,14 @@ function fc_send_consulta_webhook( array $payload ) {
         'data_format' => 'body',
     ];
 
+    if ( function_exists( 'fc_get_info_request_webhook_token' ) ) {
+        $token = fc_get_info_request_webhook_token();
+        if ( '' !== $token ) {
+            $args['headers']['Authorization'] = 'Bearer ' . $token;
+            $args['headers']['X-FLACSO-Webhook-Token'] = $token;
+        }
+    }
+
     $response = wp_remote_post( esc_url_raw( $webhook_url ), $args );
     if ( is_wp_error( $response ) ) {
         error_log( '[FLACSO-FC] Webhook consultas error: ' . $response->get_error_message() );
