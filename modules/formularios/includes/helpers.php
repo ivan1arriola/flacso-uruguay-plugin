@@ -196,6 +196,50 @@ function fc_enrich_info_request_program_context( array $data ) {
     return $data;
 }
 
+function fc_resolve_info_request_offer_id( array $data ) {
+    $candidate_ids = [];
+
+    foreach ( [ 'offer_id', 'id_pagina', 'programa_id', 'post_id', 'oferta_id' ] as $field ) {
+        if ( ! isset( $data[ $field ] ) ) {
+            continue;
+        }
+
+        $candidate = absint( $data[ $field ] );
+        if ( $candidate > 0 ) {
+            $candidate_ids[] = $candidate;
+        }
+    }
+
+    $candidate_ids = array_values( array_unique( $candidate_ids ) );
+
+    foreach ( $candidate_ids as $candidate_id ) {
+        if ( 'oferta-academica' === get_post_type( $candidate_id ) ) {
+            return $candidate_id;
+        }
+
+        $related = get_posts(
+            [
+                'post_type'      => 'oferta-academica',
+                'posts_per_page' => 1,
+                'post_status'    => 'any',
+                'fields'         => 'ids',
+                'meta_query'     => [
+                    [
+                        'key'   => '_oferta_page_id',
+                        'value' => $candidate_id,
+                    ],
+                ],
+            ]
+        );
+
+        if ( ! empty( $related ) ) {
+            return (int) $related[0];
+        }
+    }
+
+    return 0;
+}
+
 /**
  * Normaliza el payload de Solicitud de Informacion para la API del panel.
  * Mantiene tambien los campos legacy para compatibilidad.
@@ -205,10 +249,11 @@ function fc_enrich_info_request_program_context( array $data ) {
  */
 function fc_build_info_request_webhook_payload( array $data ) {
     $data     = fc_enrich_info_request_program_context( $data );
-    $offer_id = isset( $data['id_pagina'] ) ? (string) absint( $data['id_pagina'] ) : '';
-    if ( '0' === $offer_id ) {
-        $offer_id = '';
+    $offer_id = fc_resolve_info_request_offer_id( $data );
+    if ( $offer_id <= 0 ) {
+        $offer_id = isset( $data['id_pagina'] ) ? absint( $data['id_pagina'] ) : 0;
     }
+    $offer_id = $offer_id > 0 ? (string) $offer_id : '';
 
     $inquiry_at = isset( $data['fecha_envio'] ) ? sanitize_text_field( (string) $data['fecha_envio'] ) : '';
     if ( '' === $inquiry_at ) {
