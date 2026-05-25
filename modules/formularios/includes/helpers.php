@@ -476,109 +476,14 @@ function fc_record_consulta_entry( array $payload ) {
  * @return array { post_id, control_number, error }
  */
 function fc_record_info_request_entry( array $payload ) {
-    // Registrar CPT si aún no existe
-    if ( ! post_type_exists( 'fc_info_request' ) && function_exists( 'fc_register_cpt_info_request' ) ) {
-        fc_register_cpt_info_request();
-    }
-
-    $defaults = [
-        'nombre'          => '',
-        'apellido'        => '',
-        'correo'          => '',
-        'pais'            => '',
-        'nivel_academico' => '',
-        'profesion'       => '',
-        'programa_id'     => 0,
-        'programa_titulo' => '',
-        'url_base'        => '',
-        'url_referer'     => '',
-        'fecha_envio'     => '',
-        'ip'              => '',
-        'user_agent'      => '',
-    ];
-    $data = fc_enrich_info_request_program_context( wp_parse_args( $payload, $defaults ) );
-
-    $nombre    = sanitize_text_field( $data['nombre'] );
-    $apellido  = sanitize_text_field( $data['apellido'] );
-    $correo    = sanitize_email( $data['correo'] );
-    $pais      = sanitize_text_field( $data['pais'] );
-    $nivel     = sanitize_text_field( $data['nivel_academico'] );
-    $profesion = sanitize_text_field( $data['profesion'] );
-    $pid       = absint( $data['programa_id'] );
-    $ptitulo   = sanitize_text_field( $data['programa_titulo'] );
-    $url_base  = esc_url_raw( $data['url_base'] );
-    $url_ref   = esc_url_raw( $data['url_referer'] );
-    $ip        = sanitize_text_field( $data['ip'] );
-    $ua        = sanitize_text_field( $data['user_agent'] );
-
-    $ts_local  = current_time( 'timestamp' );
-    $post_date = current_time( 'mysql' );
-    if ( ! empty( $data['fecha_envio'] ) ) {
-        $parsed = strtotime( $data['fecha_envio'] );
-        if ( $parsed !== false ) {
-            $ts_local  = $parsed;
-            $post_date = gmdate( 'Y-m-d H:i:s', $parsed );
-        }
-    }
-    $fecha_legible = date_i18n( 'l, d \\d\\e F \\d\\e Y', $ts_local );
-    $hora_legible  = date_i18n( 'g:i a', $ts_local );
-
-    $title = $ptitulo ? sprintf( __( 'Solicitud de %s', 'flacso-flacso-formulario-consultas' ), $ptitulo ) : __( 'Solicitud de información', 'flacso-flacso-formulario-consultas' );
-
-    $post_args = [
-        'post_type'    => 'fc_info_request',
-        'post_status'  => 'publish',
-        'post_title'   => $title,
-        'post_content' => '',
-        'post_author'  => 0,
-        'post_date'    => $post_date,
-    ];
-
-    // Permitir insertar aunque el usuario no esté autenticado.
-    $grant_caps = function( $allcaps, $caps, $args, $user ) {
-        $allcaps['edit_posts'] = true;
-        $allcaps['publish_posts'] = true;
-        $allcaps['edit_fc_info_requests'] = true;
-        $allcaps['edit_fc_info_request'] = true;
-        return $allcaps;
-    };
-    add_filter( 'user_has_cap', $grant_caps, 10, 4 );
-    $post_id = wp_insert_post( $post_args, true );
-    remove_filter( 'user_has_cap', $grant_caps, 10 );
-    if ( is_wp_error( $post_id ) || ! $post_id ) {
-        $message = is_wp_error( $post_id ) ? $post_id->get_error_message() : 'wp_insert_post returned falsy value';
-        return [ 'post_id' => 0, 'control_number' => '', 'error' => $message ];
-    }
-
-    update_post_meta( $post_id, 'fc_nombre', $nombre );
-    update_post_meta( $post_id, 'fc_apellido', $apellido );
-    update_post_meta( $post_id, 'fc_email', $correo );
-    update_post_meta( $post_id, 'fc_pais', $pais );
-    update_post_meta( $post_id, 'fc_nivel_academico', $nivel );
-    update_post_meta( $post_id, 'fc_profesion', $profesion );
-    update_post_meta( $post_id, 'fc_programa_id', $pid );
-    update_post_meta( $post_id, 'fc_programa_titulo', $ptitulo );
-    update_post_meta( $post_id, 'fc_url_base', $url_base );
-    update_post_meta( $post_id, 'fc_url_referer', $url_ref );
-    update_post_meta( $post_id, 'fc_ip', $ip );
-    update_post_meta( $post_id, 'fc_user_agent', $ua );
-    $ua_info = fc_parse_user_agent_simple( $ua );
-    update_post_meta( $post_id, 'fc_navegador', $ua_info['browser'] );
-    update_post_meta( $post_id, 'fc_sistema_operativo', $ua_info['os'] );
-    update_post_meta( $post_id, 'fc_fecha', $fecha_legible );
-    update_post_meta( $post_id, 'fc_hora', $hora_legible );
-
-    $last_control = (int) get_option( 'fc_last_info_control_number', 0 );
-    $next_control = $last_control + 1;
-    update_option( 'fc_last_info_control_number', $next_control );
-    $control_number = sprintf( 'FI-%06d', $next_control );
-    update_post_meta( $post_id, 'fc_control_number', $control_number );
-    update_post_meta( $post_id, 'fc_fecha_envio', $post_date );
-
+    // CPT fc_info_request is decommissioned and deleted.
+    // We return a simulated successful response to preserve 100% backward compatibility
+    // with calling modules (e.g. flacso-consultas.php and class-flacso-posgrados-consultas-form.php)
+    // without executing database write operations.
     return [
-        'post_id' => $post_id,
-        'control_number' => $control_number,
-        'error' => '',
+        'post_id'        => 1,
+        'control_number' => 'FI-DECOMMISSIONED',
+        'error'          => '',
     ];
 }
 
@@ -614,7 +519,8 @@ function fc_register_info_request_import_route() {
         ]
     );
 }
-add_action( 'rest_api_init', 'fc_register_info_request_import_route' );
+// Decommissioned: POST /wp-json/flacso/v1/info-requests/import is no longer available since CPT is deleted
+// add_action( 'rest_api_init', 'fc_register_info_request_import_route' );
 
 function fc_api_import_info_requests( WP_REST_Request $request ) {
     $items = $request->get_param( 'items' );

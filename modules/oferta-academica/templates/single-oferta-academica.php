@@ -63,12 +63,7 @@ get_header();
                                                         <?php echo !empty($data['inscripciones_abiertas']) ? __('Inscripciones 2026', 'flacso-uruguay') : __('Próximamente', 'flacso-uruguay'); ?>
                                                     </div>
                                                     <?php
-                                                    $logo_path = '/home/ivan/repositorios/Plugin y Editor FLACSO/flacso-editor/public/logo_flacso_uruguay_20anos_blanco.png';
-                                                    if (file_exists($logo_path)) {
-                                                        $logo_url = 'data:image/png;base64,' . base64_encode(file_get_contents($logo_path));
-                                                    } else {
-                                                        $logo_url = 'https://flacso.edu.uy/wp-content/uploads/2026/05/logo_flacso_uruguay_20anos_blanco.png';
-                                                    }
+                                                    $logo_url = 'https://flacso.edu.uy/wp-content/uploads/2026/05/logo_flacso_uruguay_20anos_blanco.png';
                                                     ?>
                                                     <img decoding="async" src="<?php echo esc_url($logo_url); ?>" alt="FLACSO Uruguay" class="flacso-inscripciones-banner__logo">
                                                 </div>

@@ -205,6 +205,69 @@ function fc_field_recaptcha_site_key_cb() {
     echo '<p class="description">' . esc_html__( 'Clave pública de reCAPTCHA v3 (Site Key)', 'flacso-flacso-formulario-consultas' ) . '</p>';
 }
 
+function fc_field_bootstrap_cb() {
+    $value = get_option( 'fc_cargar_bootstrap', '1' );
+    echo '<label><input type="checkbox" name="fc_cargar_bootstrap" value="1" ' . checked( '1', $value, false ) . ' /> ' . esc_html__( 'Cargar CSS/JS de Bootstrap 5 al mostrar el formulario', 'flacso-flacso-formulario-consultas' ) . '</label>';
+}
+
+function fc_field_use_gmail_api_cb() {
+    $value = get_option( 'fc_use_gmail_api', '0' );
+    echo '<label><input type="checkbox" name="fc_use_gmail_api" value="1" ' . checked( '1', $value, false ) . ' /> ' . esc_html__( 'Enviar correos mediante Gmail API con cuenta de servicio', 'flacso-flacso-formulario-consultas' ) . '</label>';
+    echo '<p class="description">' . esc_html__( 'Requiere dominio Google Workspace con delegación a nivel de dominio y el alcance gmail.send', 'flacso-flacso-formulario-consultas' ) . '</p>';
+}
+
+function fc_field_google_impersonated_cb() {
+    $value = esc_attr( get_option( 'fc_google_impersonated', 'noreply@flacso.edu.uy' ) );
+    echo '<input type="email" class="regular-text" name="fc_google_impersonated" value="' . $value . '" />';
+    echo '<p class="description">' . esc_html__( 'Cuenta del dominio desde la que se envía (p.ej., noreply@flacso.edu.uy).', 'flacso-flacso-formulario-consultas' ) . '</p>';
+}
+
+function fc_field_google_json_cb() {
+    $value = get_option( 'fc_google_service_account_json', '' );
+    $masked = '';
+    if ( $value ) {
+        // Evitar mostrar la clave privada completa
+        $masked = preg_replace( '/"private_key"\s*:\s*"[\s\S]*?"/m', '"private_key":"*** oculto ***"', $value );
+    }
+    echo '<textarea name="fc_google_service_account_json" rows="8" class="large-text code" placeholder="{\n  \"type\": \"service_account\",...\n}">';
+    echo esc_textarea( $masked ? $masked : '' );
+    echo '</textarea>';
+    echo '<p class="description">' . esc_html__( 'Pega aquí el JSON de la cuenta de servicio con delegación a nivel de dominio habilitada.', 'flacso-flacso-formulario-consultas' ) . '</p>';
+}
+
+function fc_field_fallback_senders_cb() {
+    $value = esc_attr( get_option( 'fc_fallback_senders', '' ) );
+    echo '<input type="text" class="regular-text" name="fc_fallback_senders" value="' . $value . '" placeholder="noreply@flacso.edu.uy, wordpress@flacso.edu.uy, web@flacso.edu.uy" />';
+    echo '<p class="description">' . esc_html__( 'Lista de correos separados por coma usados si Gmail API no está disponible o falla el envío. Se intentan en orden.', 'flacso-flacso-formulario-consultas' ) . '</p>';
+}
+
+function fc_field_use_telegram_cb() {
+    $value = get_option( 'fc_use_telegram', '0' );
+    echo '<label><input type="checkbox" name="fc_use_telegram" value="1" ' . checked( '1', $value, false ) . ' /> ' . esc_html__( 'Enviar notificaciones a Telegram al recibir una consulta', 'flacso-flacso-formulario-consultas' ) . '</label>';
+}
+
+function fc_field_telegram_bot_token_cb() {
+    $value = esc_attr( get_option( 'fc_telegram_bot_token', '' ) );
+    echo '<input type="text" class="regular-text" name="fc_telegram_bot_token" value="' . $value . '" placeholder="123456789:ABC-DEF1234ghIkl-zyx57W2v1u123ew11" />';
+}
+
+function fc_field_telegram_chat_id_cb() {
+    $value = esc_attr( get_option( 'fc_telegram_chat_id', '' ) );
+    echo '<input type="text" class="regular-text" name="fc_telegram_chat_id" value="' . $value . '" placeholder="7456441753 o -1001234567890" />';
+}
+
+function fc_field_use_recaptcha_cb() {
+    $value = get_option( 'fc_use_recaptcha', '0' );
+    echo '<label><input type="checkbox" name="fc_use_recaptcha" value="1" ' . checked( '1', $value, false ) . ' /> ' . esc_html__( 'Proteger el formulario con Google reCAPTCHA v3', 'flacso-flacso-formulario-consultas' ) . '</label>';
+    echo '<p class="description">' . esc_html__( 'Protección invisible contra spam. Obtén tus claves en ', 'flacso-flacso-formulario-consultas' ) . '<a href="https://www.google.com/recaptcha/admin" target="_blank">https://www.google.com/recaptcha/admin</a></p>';
+}
+
+function fc_field_recaptcha_site_key_cb() {
+    $value = esc_attr( get_option( 'fc_recaptcha_site_key', '' ) );
+    echo '<input type="text" class="regular-text" name="fc_recaptcha_site_key" value="' . $value . '" placeholder="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" />';
+    echo '<p class="description">' . esc_html__( 'Clave pública de reCAPTCHA v3 (Site Key)', 'flacso-flacso-formulario-consultas' ) . '</p>';
+}
+
 function fc_field_recaptcha_secret_key_cb() {
     $value = esc_attr( get_option( 'fc_recaptcha_secret_key', '' ) );
     $masked = $value ? str_repeat( '*', strlen( $value ) - 8 ) . substr( $value, -8 ) : '';
@@ -214,9 +277,9 @@ function fc_field_recaptcha_secret_key_cb() {
 
 function fc_add_oferta_settings_submenu() {
     add_submenu_page(
-        'edit.php?post_type=fc_info_request',
-        __( 'Configuracion Webhook', 'flacso-flacso-formulario-consultas' ),
-        __( 'Config. Webhook', 'flacso-flacso-formulario-consultas' ),
+        'options-general.php',
+        __( 'Configuracion Webhook (Ofertas)', 'flacso-flacso-formulario-consultas' ),
+        __( 'Webhook Ofertas', 'flacso-flacso-formulario-consultas' ),
         'manage_options',
         'fc_oferta_options_page',
         'fc_render_oferta_options_page'
@@ -226,9 +289,9 @@ add_action( 'admin_menu', 'fc_add_oferta_settings_submenu' );
 
 function fc_add_consulta_settings_submenu() {
     add_submenu_page(
-        'edit.php?post_type=fc_consulta',
-        __( 'Config. Formulario de Consultas', 'flacso-flacso-formulario-consultas' ),
-        __( 'Config. Formulario de Consultas', 'flacso-flacso-formulario-consultas' ),
+        'options-general.php',
+        __( 'Configuracion Webhook (Consultas)', 'flacso-flacso-formulario-consultas' ),
+        __( 'Webhook Consultas', 'flacso-flacso-formulario-consultas' ),
         'manage_options',
         'fc_options_page',
         'fc_render_options_page'
@@ -240,12 +303,11 @@ function fc_get_consultas_settings_page_url( array $args = [] ) {
     return add_query_arg(
         array_merge(
             [
-                'post_type' => 'fc_consulta',
                 'page'      => 'fc_options_page',
             ],
             $args
         ),
-        admin_url( 'edit.php' )
+        admin_url( 'options-general.php' )
     );
 }
 
@@ -253,12 +315,11 @@ function fc_get_oferta_settings_page_url( array $args = [] ) {
     return add_query_arg(
         array_merge(
             [
-                'post_type' => 'fc_info_request',
                 'page'      => 'fc_oferta_options_page',
             ],
             $args
         ),
-        admin_url( 'edit.php' )
+        admin_url( 'options-general.php' )
     );
 }
 

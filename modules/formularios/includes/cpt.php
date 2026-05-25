@@ -79,7 +79,8 @@ function fc_register_cpt_info_request() {
 
     register_post_type( 'fc_info_request', $args );
 }
-add_action( 'init', 'fc_register_cpt_info_request' );
+// Decommissioned: Solicitudes de información CPT is no longer registered or stored locally
+// add_action( 'init', 'fc_register_cpt_info_request' );
 
 /**
  * Columnas personalizadas en el listado de consultas
@@ -159,7 +160,7 @@ function fc_info_columns( $columns ) {
     $new['date']         = $columns['date'];
     return $new;
 }
-add_filter( 'manage_fc_info_request_posts_columns', 'fc_info_columns' );
+// add_filter( 'manage_fc_info_request_posts_columns', 'fc_info_columns' );
 
 function fc_info_columns_content( $column, $post_id ) {
     switch ( $column ) {
@@ -189,7 +190,7 @@ function fc_info_columns_content( $column, $post_id ) {
             break;
     }
 }
-add_action( 'manage_fc_info_request_posts_custom_column', 'fc_info_columns_content', 10, 2 );
+// add_action( 'manage_fc_info_request_posts_custom_column', 'fc_info_columns_content', 10, 2 );
 
 /**
  * Metabox con detalles de la consulta
@@ -219,7 +220,7 @@ function fc_info_add_metabox() {
         'default'
     );
 }
-add_action( 'add_meta_boxes', 'fc_info_add_metabox' );
+// add_action( 'add_meta_boxes', 'fc_info_add_metabox' );
 
 function fc_info_metabox_render( $post ) {
     $nombre   = get_post_meta( $post->ID, 'fc_nombre', true );
@@ -531,7 +532,7 @@ function fc_add_info_overview_submenu() {
 		'fc_render_info_overview'
 	);
 }
-add_action( 'admin_menu', 'fc_add_info_overview_submenu' );
+// add_action( 'admin_menu', 'fc_add_info_overview_submenu' );
 
 function fc_render_info_overview() {
 	if ( ! current_user_can( 'edit_posts' ) ) {
@@ -691,3 +692,25 @@ function fc_handle_delete_consulta() {
 	exit;
 }
 add_action( 'admin_post_fc_delete_consulta', 'fc_handle_delete_consulta' );
+
+/**
+ * Limpieza automática y segura del CPT obsoleto fc_info_request y sus metadatos.
+ * Se ejecuta una sola vez en el admin_init para purgar la base de datos de WordPress.
+ */
+function fc_cleanup_legacy_info_requests() {
+    if ( get_option( 'fc_info_requests_cleaned_up' ) === 'yes' ) {
+        return;
+    }
+
+    global $wpdb;
+    
+    // 1. Borrar todas las entradas del CPT obsoleto fc_info_request
+    $wpdb->query( "DELETE FROM {$wpdb->posts} WHERE post_type = 'fc_info_request'" );
+    
+    // 2. Borrar metadatos huérfanos asociados
+    $wpdb->query( "DELETE FROM {$wpdb->postmeta} WHERE post_id NOT IN (SELECT ID FROM {$wpdb->posts})" );
+    
+    // Registrar que la limpieza se completó para no volver a ejecutar
+    update_option( 'fc_info_requests_cleaned_up', 'yes' );
+}
+add_action( 'admin_init', 'fc_cleanup_legacy_info_requests' );
