@@ -1,3 +1,32 @@
+## Version 4.4.4 - 25 de mayo de 2026
+
+### Resumen
+- Se corrige el módulo de formularios que tenía funciones duplicadas en settings y dejaba inestable el panel.
+- El plugin entra en modo de gestión centralizada para que WordPress oculte las pantallas legacy ya cubiertas por la app.
+- Se incrementan las versiones publicadas del plugin integrado y del editor.
+
+### Cambios detallados
+- Plugin integrado:
+  - `flacso-uruguay.php`
+  - `includes/core/class-flacso-editor-admin-mode.php`
+  - Se actualiza `Version:` y `FLACSO_URUGUAY_VERSION` a `4.4.4`.
+  - Se agrega una capa central para ocultar del admin de WordPress las secciones gestionadas desde la app: docentes, seminarios, ofertas, charlas y consultas.
+- Formularios:
+  - `modules/formularios/includes/settings.php`
+  - Se eliminan definiciones duplicadas que impedían cargar correctamente la configuración del módulo.
+- Editor:
+  - `flacso-editor/package.json`
+  - `flacso-editor/package-lock.json`
+  - Se actualiza la versión de la app a `0.2.3`.
+
+### Verificaciones
+- `php -l flacso-uruguay.php`
+- `php -l includes/core/class-flacso-editor-admin-mode.php`
+- `php -l modules/formularios/includes/settings.php`
+- `npm test`
+
+---
+
 ## Version 4.4.3 - 24 de mayo de 2026
 
 ### Resumen
