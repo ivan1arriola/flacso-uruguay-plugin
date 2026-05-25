@@ -3,21 +3,32 @@
 ### Resumen
 - Se corrige el módulo de formularios que tenía funciones duplicadas en settings y dejaba inestable el panel.
 - El plugin entra en modo de gestión centralizada para que WordPress oculte las pantallas legacy ya cubiertas por la app.
+- `main-page` pasa a tener API propia y una pantalla nueva dentro del editor para administrar la home institucional.
 - Se incrementan las versiones publicadas del plugin integrado y del editor.
 
 ### Cambios detallados
 - Plugin integrado:
   - `flacso-uruguay.php`
   - `includes/core/class-flacso-editor-admin-mode.php`
+  - `modules/main-page/init.php`
+  - `modules/main-page/includes/class-flacso-main-page-rest-api.php`
   - Se actualiza `Version:` y `FLACSO_URUGUAY_VERSION` a `4.4.4`.
-  - Se agrega una capa central para ocultar del admin de WordPress las secciones gestionadas desde la app: docentes, seminarios, ofertas, charlas y consultas.
+  - Se agrega una capa central para ocultar del admin de WordPress las secciones gestionadas desde la app: home, docentes, seminarios, ofertas, charlas y consultas.
+  - Se expone la configuración completa de `main-page` por REST para que la app pueda leer y guardar la portada sin pasar por el admin legacy.
 - Formularios:
   - `modules/formularios/includes/settings.php`
   - Se eliminan definiciones duplicadas que impedían cargar correctamente la configuración del módulo.
 - Editor:
   - `flacso-editor/package.json`
   - `flacso-editor/package-lock.json`
+  - `flacso-editor/src/app/main-page/page.js`
+  - `flacso-editor/src/app/main-page/MainPageEditor.js`
+  - `flacso-editor/src/app/main-page/main-page.module.css`
+  - `flacso-editor/src/lib/api/main-page.js`
+  - `flacso-editor/src/components/Sidebar.js`
+  - `flacso-editor/src/app/page.js`
   - Se actualiza la versión de la app a `0.2.3`.
+  - Se suma una pantalla nueva para controlar `main-page` desde la app con edición por secciones y guardado saneado.
 
 ### Verificaciones
 - `php -l flacso-uruguay.php`

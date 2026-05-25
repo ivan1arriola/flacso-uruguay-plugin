@@ -21,6 +21,7 @@ require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-set
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-blocks.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-loader.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-migrations.php';
+require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-rest-api.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-telegram-manager.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/flacso-consultas.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/flacso-raw-content-api.php';

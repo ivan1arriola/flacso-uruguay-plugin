@@ -39,6 +39,8 @@ class FLACSO_Editor_Admin_Mode {
         'flacso-oferta-migracion',
         'flacso-charlas-abiertas-settings',
         'flacso-charlas-abiertas-visualizador',
+        'flacso-main-page',
+        'flacso-main-page-oferta-academica',
     ];
 
     public static function init(): void {
@@ -74,7 +76,19 @@ class FLACSO_Editor_Admin_Mode {
      * @return string[]
      */
     private static function managed_page_slugs(): array {
-        return apply_filters('flacso_editor_admin_managed_page_slugs', self::MANAGED_PAGE_SLUGS);
+        $page_slugs = self::MANAGED_PAGE_SLUGS;
+
+        if (class_exists('Flacso_Main_Page_Admin')) {
+            $page_slugs = array_merge(
+                $page_slugs,
+                Flacso_Main_Page_Admin::get_admin_page_slugs()
+            );
+        }
+
+        return apply_filters(
+            'flacso_editor_admin_managed_page_slugs',
+            array_values(array_unique($page_slugs))
+        );
     }
 
     public static function hide_menus(): void {
@@ -87,6 +101,7 @@ class FLACSO_Editor_Admin_Mode {
         }
 
         remove_menu_page('docentes_panel');
+        remove_menu_page('flacso-main-page');
         remove_submenu_page('options-general.php', 'fc_options_page');
         remove_submenu_page('options-general.php', 'fc_oferta_options_page');
 
@@ -106,6 +121,8 @@ class FLACSO_Editor_Admin_Mode {
         foreach (self::managed_post_types() as $post_type) {
             $admin_bar->remove_node('new-' . $post_type);
         }
+
+        $admin_bar->remove_node('flacso-main-page-bar');
     }
 
     public static function redirect_managed_screens($screen): void {
@@ -147,7 +164,7 @@ class FLACSO_Editor_Admin_Mode {
         <div class="notice notice-info is-dismissible">
             <p>
                 <strong><?php esc_html_e('Gestor FLACSO ahora se administra desde la app.', 'flacso-uruguay'); ?></strong>
-                <?php esc_html_e('Las pantallas legacy de WordPress para docentes, seminarios, ofertas, charlas y consultas fueron ocultadas para evitar lógica duplicada.', 'flacso-uruguay'); ?>
+                <?php esc_html_e('Las pantallas legacy de WordPress para la home, docentes, seminarios, ofertas, charlas y consultas fueron ocultadas para evitar lógica duplicada.', 'flacso-uruguay'); ?>
             </p>
         </div>
         <?php
