@@ -370,7 +370,133 @@ class FLACSO_Integrations_Settings {
             .flacso-integrations-links li {
                 margin-bottom: 8px;
             }
+
+            .flacso-test-result-placeholder {
+                margin-top: 12px;
+                min-height: 20px;
+            }
+
+            .flacso-test-loading {
+                color: #64748b;
+                font-weight: 500;
+                font-size: 13px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .flacso-test-result {
+                padding: 10px 14px;
+                border-radius: 8px;
+                font-size: 13px;
+                line-height: 1.4;
+                font-weight: 600;
+                box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+            }
+
+            .flacso-test-result.success {
+                background: #ecfdf5;
+                color: #047857;
+                border: 1px solid #a7f3d0;
+            }
+
+            .flacso-test-result.error {
+                background: #fdf2f2;
+                color: #b91c1c;
+                border: 1px solid #fecdca;
+            }
+
+            .flacso-test-result .desc {
+                font-weight: 400;
+                font-size: 12px;
+                color: currentColor;
+                opacity: 0.9;
+                display: block;
+                margin-top: 4px;
+            }
         </style>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const forms = document.querySelectorAll('.flacso-integrations-test-card');
+                forms.forEach(form => {
+                    form.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        
+                        const button = form.querySelector('input[type="submit"]');
+                        const placeholder = form.querySelector('.flacso-test-result-placeholder');
+                        const originalButtonVal = button.value;
+                        
+                        // Set loading state
+                        button.disabled = true;
+                        button.value = '<?php esc_attr_e('Ejecutando...', 'flacso-uruguay'); ?>';
+                        placeholder.innerHTML = '<div class="flacso-test-loading">⚡ <?php esc_html_e('Conectando y validando...', 'flacso-uruguay'); ?></div>';
+                        
+                        const formData = new FormData(form);
+                        
+                        fetch(form.action, {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => {
+                            const finalUrl = new URL(response.url);
+                            let status = '';
+                            let code = '';
+                            let message = '';
+                            let tokenVar = '';
+
+                            if (finalUrl.searchParams.has('fc_consultas_webhook_test')) {
+                                status = finalUrl.searchParams.get('fc_consultas_webhook_test');
+                                code = finalUrl.searchParams.get('fc_consultas_webhook_code') || '';
+                                message = finalUrl.searchParams.get('fc_consultas_webhook_message') || '';
+                                tokenVar = 'FLACSO_CONSULTAS_WEBHOOK_TOKEN';
+                            } else if (finalUrl.searchParams.has('fc_oferta_webhook_test')) {
+                                status = finalUrl.searchParams.get('fc_oferta_webhook_test');
+                                code = finalUrl.searchParams.get('fc_oferta_webhook_code') || '';
+                                message = finalUrl.searchParams.get('fc_oferta_webhook_message') || '';
+                                tokenVar = 'FLACSO_CONSULTAS_WEBHOOK_TOKEN';
+                            } else if (finalUrl.searchParams.has('flacso_charlas_webhook_test')) {
+                                status = finalUrl.searchParams.get('flacso_charlas_webhook_test');
+                                code = finalUrl.searchParams.get('flacso_charlas_webhook_code') || '';
+                                message = finalUrl.searchParams.get('flacso_charlas_webhook_message') || '';
+                                tokenVar = 'FLACSO_CHARLAS_WEBHOOK_TOKEN';
+                            }
+
+                            let noticeText = '';
+                            if (status === 'success') {
+                                noticeText = '<?php esc_html_e('La app respondió correctamente y aceptó la prueba del webhook.', 'flacso-uruguay'); ?>';
+                            } else {
+                                const codeNum = parseInt(code, 10);
+                                if (codeNum === 401) {
+                                    noticeText = '<?php esc_html_e('La app rechazó el token del webhook. Revisá que coincida con', 'flacso-uruguay'); ?> ' + tokenVar + '.';
+                                } else if (codeNum === 404) {
+                                    noticeText = '<?php esc_html_e('La URL del webhook respondió 404. Revisá que el endpoint exista en la app.', 'flacso-uruguay'); ?>';
+                                } else if (codeNum >= 500) {
+                                    noticeText = '<?php esc_html_e('La app respondió con un error interno (HTTP', 'flacso-uruguay'); ?> ' + codeNum + ').';
+                                } else if (message) {
+                                    noticeText = message;
+                                } else {
+                                    noticeText = '<?php esc_html_e('No se pudo validar la conexión con la app. Revisá la URL configurada y el token.', 'flacso-uruguay'); ?>';
+                                }
+                            }
+
+                            if (status === 'success') {
+                                placeholder.innerHTML = '<div class="flacso-test-result success">✅ <?php esc_html_e('Conexión Exitosa!', 'flacso-uruguay'); ?><br><span class="desc">' + noticeText + '</span></div>';
+                            } else {
+                                placeholder.innerHTML = '<div class="flacso-test-result error">❌ <?php esc_html_e('Fallo de Conexión', 'flacso-uruguay'); ?> ' + (code ? '(HTTP ' + code + ')' : '') + '<br><span class="desc">' + noticeText + '</span></div>';
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            placeholder.innerHTML = '<div class="flacso-test-result error">❌ <?php esc_html_e('Error de red', 'flacso-uruguay'); ?><br><span class="desc"><?php esc_html_e('No se pudo establecer comunicación con el servidor local o la app.', 'flacso-uruguay'); ?></span></div>';
+                        })
+                        .finally(() => {
+                            button.disabled = false;
+                            button.value = originalButtonVal;
+                        });
+                    });
+                });
+            });
+        </script>
         <?php
     }
 
@@ -546,6 +672,7 @@ class FLACSO_Integrations_Settings {
             <input type="hidden" name="action" value="<?php echo esc_attr($action); ?>" />
             <input type="hidden" name="redirect_to" value="<?php echo esc_attr(self::get_page_url()); ?>" />
             <?php submit_button(__('Ejecutar prueba', 'flacso-uruguay'), 'secondary', 'submit', false); ?>
+            <div class="flacso-test-result-placeholder"></div>
         </form>
         <?php
     }
