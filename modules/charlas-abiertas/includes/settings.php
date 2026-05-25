@@ -150,29 +150,21 @@ function flacso_charlas_abiertas_render_webhook_token_field() {
     <?php
 }
 
-add_action('admin_menu', 'flacso_charlas_abiertas_add_settings_page');
+// Decommissioned in favor of unified Integraciones FLACSO page
+// add_action('admin_menu', 'flacso_charlas_abiertas_add_settings_page');
 function flacso_charlas_abiertas_add_settings_page() {
-    add_submenu_page(
-        'edit.php?post_type=charla_abierta',
-        'Webhook de Charlas Abiertas',
-        'Webhook',
-        'manage_options',
-        'flacso-charlas-abiertas-settings',
-        'flacso_charlas_abiertas_render_settings_page',
-        99
-    );
+    // Left as legacy function placeholder
 }
 
 function flacso_charlas_abiertas_get_settings_page_url(array $args = []) {
     return add_query_arg(
         array_merge(
             [
-                'post_type' => 'charla_abierta',
-                'page' => 'flacso-charlas-abiertas-settings',
+                'page' => 'flacso-integraciones',
             ],
             $args
         ),
-        admin_url('edit.php')
+        admin_url('options-general.php')
     );
 }
 
@@ -180,6 +172,9 @@ function flacso_charlas_abiertas_render_settings_page() {
     if (!current_user_can('manage_options')) {
         return;
     }
+    wp_safe_redirect(admin_url('options-general.php?page=flacso-integraciones'));
+    exit;
+}
     ?>
     <div class="wrap">
         <h1>Webhook de Charlas Abiertas</h1>

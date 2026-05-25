@@ -263,9 +263,6 @@ class FLACSO_Integrations_Settings {
             <div class="flacso-integrations-links">
                 <h2><?php esc_html_e('Pantallas relacionadas', 'flacso-uruguay'); ?></h2>
                 <ul>
-                    <li><a href="<?php echo esc_url(admin_url('options-general.php?page=fc_options_page')); ?>"><?php esc_html_e('Webhook Consultas', 'flacso-uruguay'); ?></a></li>
-                    <li><a href="<?php echo esc_url(admin_url('options-general.php?page=fc_oferta_options_page')); ?>"><?php esc_html_e('Webhook Ofertas', 'flacso-uruguay'); ?></a></li>
-                    <li><a href="<?php echo esc_url(admin_url('edit.php?post_type=charla_abierta&page=flacso-charlas-abiertas-settings')); ?>"><?php esc_html_e('Webhook de Charlas Abiertas', 'flacso-uruguay'); ?></a></li>
                     <li><a href="<?php echo esc_url(admin_url('edit.php?post_type=oferta-academica&page=flacso-oferta-consulta-form')); ?>"><?php esc_html_e('Formulario flotante de Oferta Académica', 'flacso-uruguay'); ?></a></li>
                     <li><a href="<?php echo esc_url(admin_url('admin.php?page=flacso-preinscripciones')); ?>"><?php esc_html_e('Preinscripciones', 'flacso-uruguay'); ?></a></li>
                 </ul>
