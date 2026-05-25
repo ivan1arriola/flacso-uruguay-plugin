@@ -662,3 +662,100 @@ function fc_api_import_info_requests( WP_REST_Request $request ) {
         200
     );
 }
+
+/**
+ * REST API: exportar todas las consultas (cpt fc_consulta) para la migración.
+ * Endpoint: GET /wp-json/flacso/v1/consultas/export
+ */
+function fc_register_consultas_export_route() {
+    register_rest_route(
+        'flacso/v1',
+        '/consultas/export',
+        [
+            'methods'             => 'GET',
+            'permission_callback' => function ( WP_REST_Request $request ) {
+                if ( current_user_can( 'manage_options' ) ) {
+                    return true;
+                }
+                
+                $expected_token = fc_get_info_request_webhook_token();
+                $auth_header = $request->get_header( 'Authorization' );
+                $provided_token = '';
+                if ( ! empty( $auth_header ) && preg_match( '/Bearer\s+(.*)$/i', $auth_header, $matches ) ) {
+                    $provided_token = trim( $matches[1] );
+                }
+                if ( empty( $provided_token ) ) {
+                    $provided_token = $request->get_header( 'X-FLACSO-Webhook-Token' );
+                }
+                
+                return ! empty( $expected_token ) && $provided_token === $expected_token;
+            },
+            'callback'            => 'fc_api_export_consultas',
+        ]
+    );
+}
+add_action( 'rest_api_init', 'fc_register_consultas_export_route' );
+
+function fc_api_export_consultas() {
+    if ( function_exists( 'set_time_limit' ) ) {
+        set_time_limit( 300 );
+    }
+    
+    $query_args = [
+        'post_type'      => 'fc_consulta',
+        'posts_per_page' => -1,
+        'post_status'    => 'any',
+        'orderby'        => 'ID',
+        'order'          => 'ASC'
+    ];
+
+    $query = new WP_Query( $query_args );
+    $posts = $query->posts;
+
+    $exported_data = [];
+
+    foreach ( $posts as $post ) {
+        $post_id = $post->ID;
+        
+        $control_number   = get_post_meta( $post_id, 'fc_control_number', true );
+        $nombre           = get_post_meta( $post_id, 'fc_nombre', true );
+        $apellido         = get_post_meta( $post_id, 'fc_apellido', true );
+        $email            = get_post_meta( $post_id, 'fc_email', true );
+        $telefono         = get_post_meta( $post_id, 'fc_telefono', true );
+        $asunto           = get_post_meta( $post_id, 'fc_asunto', true );
+        $mensaje          = get_post_meta( $post_id, 'fc_mensaje', true );
+        if ( empty( $mensaje ) ) {
+            $mensaje = $post->post_content;
+        }
+        
+        $url_referer       = get_post_meta( $post_id, 'fc_url_referer', true );
+        $ip                = get_post_meta( $post_id, 'fc_ip', true );
+        $user_agent        = get_post_meta( $post_id, 'fc_user_agent', true );
+        $navegador         = get_post_meta( $post_id, 'fc_navegador', true );
+        $sistema_operativo = get_post_meta( $post_id, 'fc_sistema_operativo', true );
+        $fecha_envio       = get_post_meta( $post_id, 'fc_fecha_envio', true );
+        if ( empty( $fecha_envio ) ) {
+            $fecha_envio = $post->post_date_gmt && $post->post_date_gmt !== '0000-00-00 00:00:00' ? $post->post_date_gmt : $post->post_date;
+        }
+        
+        $exported_data[] = [
+            'wordpress_id'      => $post_id,
+            'control_number'    => $control_number,
+            'nombre'            => $nombre ?: 'Sin nombre',
+            'apellido'          => $apellido ?: 'Sin apellido',
+            'email'             => $email ?: 'sin-email@flacso.edu.uy',
+            'telefono'          => $telefono ?: null,
+            'asunto'            => $asunto ?: 'Consulta sin asunto',
+            'mensaje'           => $mensaje ?: '',
+            'url_referer'       => $url_referer ?: null,
+            'ip'                => $ip ?: null,
+            'user_agent'        => $user_agent ?: null,
+            'navegador'         => $navegador ?: null,
+            'sistema_operativo' => $sistema_operativo ?: null,
+            'created_at'        => date( 'c', strtotime( $fecha_envio ) )
+        ];
+    }
+
+    return new WP_REST_Response( $exported_data, 200 );
+}
+
