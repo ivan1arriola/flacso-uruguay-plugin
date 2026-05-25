@@ -4,17 +4,22 @@
 - Se corrige el módulo de formularios que tenía funciones duplicadas en settings y dejaba inestable el panel.
 - El plugin entra en modo de gestión centralizada para que WordPress oculte las pantallas legacy ya cubiertas por la app.
 - `main-page` pasa a tener API propia y una pantalla nueva dentro del editor para administrar la home institucional.
+- Se agrega una pantalla única en `Ajustes > Integraciones FLACSO` para concentrar tokens, endpoints y pruebas rápidas de los webhooks principales.
 - Se incrementan las versiones publicadas del plugin integrado y del editor.
 
 ### Cambios detallados
 - Plugin integrado:
   - `flacso-uruguay.php`
   - `includes/core/class-flacso-editor-admin-mode.php`
+  - `includes/core/class-flacso-integrations-settings.php`
   - `modules/main-page/init.php`
   - `modules/main-page/includes/class-flacso-main-page-rest-api.php`
+  - `modules/formularios/includes/settings.php`
+  - `modules/charlas-abiertas/includes/settings.php`
   - Se actualiza `Version:` y `FLACSO_URUGUAY_VERSION` a `4.4.4`.
   - Se agrega una capa central para ocultar del admin de WordPress las secciones gestionadas desde la app: home, docentes, seminarios, ofertas, charlas y consultas.
   - Se expone la configuración completa de `main-page` por REST para que la app pueda leer y guardar la portada sin pasar por el admin legacy.
+  - Se suma una pantalla consolidada para editar endpoints y tokens sin saltar entre varios módulos del admin.
 - Formularios:
   - `modules/formularios/includes/settings.php`
   - Se eliminan definiciones duplicadas que impedían cargar correctamente la configuración del módulo.

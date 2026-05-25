@@ -319,7 +319,10 @@ function flacso_charlas_abiertas_handle_test_webhook() {
         $args['flacso_charlas_webhook_message'] = $message;
     }
 
-    wp_safe_redirect(flacso_charlas_abiertas_get_settings_page_url($args));
+    $redirect_url = class_exists('FLACSO_Integrations_Settings')
+        ? FLACSO_Integrations_Settings::get_redirect_url_from_request($args, flacso_charlas_abiertas_get_settings_page_url())
+        : flacso_charlas_abiertas_get_settings_page_url($args);
+    wp_safe_redirect($redirect_url);
     exit;
 }
 add_action('admin_post_flacso_charlas_abiertas_test_webhook', 'flacso_charlas_abiertas_handle_test_webhook');

@@ -364,7 +364,10 @@ function fc_handle_send_test_email() {
     }
 
     $res = $ok ? 'success' : 'fail';
-    wp_safe_redirect( fc_get_consultas_settings_page_url( [ 'fc_test' => $res ] ) );
+    $redirect_url = class_exists( 'FLACSO_Integrations_Settings' )
+        ? FLACSO_Integrations_Settings::get_redirect_url_from_request( [ 'fc_test' => $res ], fc_get_consultas_settings_page_url() )
+        : fc_get_consultas_settings_page_url( [ 'fc_test' => $res ] );
+    wp_safe_redirect( $redirect_url );
     exit;
 }
 add_action( 'admin_post_fc_send_test_email', 'fc_handle_send_test_email' );
@@ -405,7 +408,10 @@ function fc_handle_test_consultas_webhook() {
         $args['fc_consultas_webhook_message'] = $message;
     }
 
-    wp_safe_redirect( fc_get_consultas_settings_page_url( $args ) );
+    $redirect_url = class_exists( 'FLACSO_Integrations_Settings' )
+        ? FLACSO_Integrations_Settings::get_redirect_url_from_request( $args, fc_get_consultas_settings_page_url() )
+        : fc_get_consultas_settings_page_url( $args );
+    wp_safe_redirect( $redirect_url );
     exit;
 }
 add_action( 'admin_post_fc_test_consultas_webhook', 'fc_handle_test_consultas_webhook' );
@@ -446,7 +452,10 @@ function fc_handle_test_oferta_webhook() {
         $args['fc_oferta_webhook_message'] = $message;
     }
 
-    wp_safe_redirect( fc_get_oferta_settings_page_url( $args ) );
+    $redirect_url = class_exists( 'FLACSO_Integrations_Settings' )
+        ? FLACSO_Integrations_Settings::get_redirect_url_from_request( $args, fc_get_oferta_settings_page_url() )
+        : fc_get_oferta_settings_page_url( $args );
+    wp_safe_redirect( $redirect_url );
     exit;
 }
 add_action( 'admin_post_fc_test_oferta_webhook', 'fc_handle_test_oferta_webhook' );
@@ -464,7 +473,10 @@ function fc_handle_send_test_telegram() {
         $ok = fc_send_telegram_message( $msg );
     }
     $res = $ok ? 'success' : 'fail';
-    wp_safe_redirect( fc_get_consultas_settings_page_url( [ 'fc_tg_test' => $res ] ) );
+    $redirect_url = class_exists( 'FLACSO_Integrations_Settings' )
+        ? FLACSO_Integrations_Settings::get_redirect_url_from_request( [ 'fc_tg_test' => $res ], fc_get_consultas_settings_page_url() )
+        : fc_get_consultas_settings_page_url( [ 'fc_tg_test' => $res ] );
+    wp_safe_redirect( $redirect_url );
     exit;
 }
 add_action( 'admin_post_fc_send_test_telegram', 'fc_handle_send_test_telegram' );
