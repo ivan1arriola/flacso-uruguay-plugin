@@ -69,7 +69,10 @@ function fc_get_info_request_webhook_url() {
 }
 
 function fc_get_info_request_webhook_token() {
-    $token = trim( (string) get_option( 'fc_consultas_webhook_token', '' ) );
+    $token = trim( (string) get_option( 'flacso_webhook_token', '' ) );
+    if ( '' === $token ) {
+        $token = trim( (string) get_option( 'fc_consultas_webhook_token', '' ) );
+    }
     return sanitize_text_field( $token );
 }
 

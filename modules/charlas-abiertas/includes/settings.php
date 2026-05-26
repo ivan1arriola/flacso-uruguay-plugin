@@ -205,7 +205,10 @@ function flacso_charlas_abiertas_get_webhook_url() {
 }
 
 function flacso_charlas_abiertas_get_webhook_token() {
-    $token = get_option(FLACSO_CHARLAS_ABIERTAS_OPTION_WEBHOOK_TOKEN, '');
+    $token = get_option('flacso_webhook_token', '');
+    if (empty($token)) {
+        $token = get_option(FLACSO_CHARLAS_ABIERTAS_OPTION_WEBHOOK_TOKEN, '');
+    }
     return is_string($token) ? trim($token) : '';
 }
 

@@ -9,11 +9,10 @@ class FLACSO_Integrations_Settings {
     private const SETTINGS_GROUP = 'flacso_integraciones_group';
 
     private const OPTION_CONSULTAS_WEBHOOK_URL = 'fc_consultas_webhook_url';
-    private const OPTION_CONSULTAS_WEBHOOK_TOKEN = 'fc_consultas_webhook_token';
+    private const OPTION_UNIFIED_WEBHOOK_TOKEN = 'flacso_webhook_token';
     private const OPTION_INFO_REQUEST_WEBHOOK_URL = 'fc_oferta_webhook_url';
     private const OPTION_OFERTA_FLOTANTE_ENDPOINT = 'flacso_oferta_consulta_endpoint_url';
     private const OPTION_CHARLAS_WEBHOOK_URL = 'flacso_charlas_abiertas_webhook_url';
-    private const OPTION_CHARLAS_WEBHOOK_TOKEN = 'flacso_charlas_abiertas_webhook_token';
     private const OPTION_PREINSCRIPCIONES_WEBHOOK_URL = 'flacso_preinscripciones_webhook_url';
     private const OPTION_TELEGRAM_BOT_TOKEN = 'fc_telegram_bot_token';
     private const OPTION_TELEGRAM_CHAT_ID = 'fc_telegram_chat_id';
@@ -53,7 +52,7 @@ class FLACSO_Integrations_Settings {
 
         register_setting(
             self::SETTINGS_GROUP,
-            self::OPTION_CONSULTAS_WEBHOOK_TOKEN,
+            self::OPTION_UNIFIED_WEBHOOK_TOKEN,
             [
                 'type' => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
@@ -91,15 +90,6 @@ class FLACSO_Integrations_Settings {
             ]
         );
 
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_CHARLAS_WEBHOOK_TOKEN,
-            [
-                'type' => 'string',
-                'sanitize_callback' => [self::class, 'sanitize_charlas_webhook_token'],
-                'default' => '',
-            ]
-        );
 
         register_setting(
             self::SETTINGS_GROUP,
@@ -519,11 +509,11 @@ class FLACSO_Integrations_Settings {
                 __('Usado por el bloque “Solicitud de Información” de oferta académica.', 'flacso-uruguay')
             );
             self::render_input_field(
-                self::OPTION_CONSULTAS_WEBHOOK_TOKEN,
-                __('Token compartido', 'flacso-uruguay'),
+                self::OPTION_UNIFIED_WEBHOOK_TOKEN,
+                __('Token unificado', 'flacso-uruguay'),
                 'password',
                 __('Mismo valor que FLACSO_WEBHOOK_TOKEN', 'flacso-uruguay'),
-                __('El plugin lo envía en Authorization: Bearer y X-FLACSO-Webhook-Token.', 'flacso-uruguay')
+                __('El token unificado que se enviará en las cabeceras de todas las peticiones webhook.', 'flacso-uruguay')
             );
             ?>
 
@@ -546,14 +536,18 @@ class FLACSO_Integrations_Settings {
                 'https://tu-dominio.com/api/charlas/inscripciones',
                 __('Ruta sugerida si el destino es FLACSO Editor.', 'flacso-uruguay')
             );
-            self::render_input_field(
-                self::OPTION_CHARLAS_WEBHOOK_TOKEN,
-                __('Token del webhook', 'flacso-uruguay'),
-                'password',
-                __('Mismo valor que FLACSO_WEBHOOK_TOKEN', 'flacso-uruguay'),
-                __('Se envía como Authorization: Bearer para validar la integración.', 'flacso-uruguay')
-            );
             ?>
+            <div class="flacso-integrations-field">
+                <label><?php esc_html_e('Token del webhook', 'flacso-uruguay'); ?></label>
+                <input
+                    type="text"
+                    class="regular-text code"
+                    value="<?php esc_attr_e('Compartido (Configurado en consultas)', 'flacso-uruguay'); ?>"
+                    disabled
+                    readonly
+                />
+                <p class="flacso-integrations-help"><?php esc_html_e('Usa el mismo token de integración configurado a la izquierda.', 'flacso-uruguay'); ?></p>
+            </div>
 
             <span class="flacso-integrations-note"><?php esc_html_e('Variable esperada en la app: FLACSO_WEBHOOK_TOKEN', 'flacso-uruguay'); ?></span>
         </section>
