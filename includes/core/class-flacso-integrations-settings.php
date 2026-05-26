@@ -202,204 +202,478 @@ class FLACSO_Integrations_Settings {
 
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e('Integraciones FLACSO', 'flacso-uruguay'); ?></h1>
-            <p><?php esc_html_e('Centralizá aquí los endpoints, tokens y claves que hoy están repartidos entre distintos módulos del plugin.', 'flacso-uruguay'); ?></p>
+            <div class="flacso-integrations-dashboard">
+                <header class="flacso-dashboard-header">
+                    <div class="flacso-dashboard-title-area">
+                        <h1 class="flacso-dashboard-title">
+                            <?php esc_html_e('Integraciones FLACSO', 'flacso-uruguay'); ?>
+                            <span class="flacso-badge">v2.0 – Centralizado</span>
+                        </h1>
+                    </div>
+                    <p class="flacso-dashboard-subtitle">
+                        <?php esc_html_e('Panel de control para centralizar, administrar y verificar de forma segura los endpoints y tokens unificados en todos los módulos del plugin FLACSO Uruguay.', 'flacso-uruguay'); ?>
+                    </p>
+                </header>
 
-            <?php settings_errors(); ?>
-            <?php self::render_inline_notices(); ?>
+                <?php settings_errors(); ?>
+                <?php self::render_inline_notices(); ?>
 
-            <form method="post" action="options.php">
-                <?php settings_fields(self::SETTINGS_GROUP); ?>
+                <form method="post" action="options.php">
+                    <?php settings_fields(self::SETTINGS_GROUP); ?>
 
-                <div class="flacso-integrations-grid">
-                    <?php self::render_consultas_card(); ?>
-                    <?php self::render_charlas_card(); ?>
-                    <?php self::render_oferta_flotante_card(); ?>
-                    <?php self::render_preinscripciones_card(); ?>
-                    <?php self::render_services_card(); ?>
+                    <div class="flacso-integrations-grid">
+                        <?php self::render_consultas_card(); ?>
+                        <?php self::render_charlas_card(); ?>
+                        <?php self::render_oferta_flotante_card(); ?>
+                        <?php self::render_preinscripciones_card(); ?>
+                        <?php self::render_services_card(); ?>
+                    </div>
+
+                    <div class="flacso-submit-section">
+                        <?php submit_button(__('Guardar integraciones', 'flacso-uruguay')); ?>
+                    </div>
+                </form>
+
+                <div class="flacso-integrations-tests">
+                    <div class="flacso-section-title-area">
+                        <h2>⚡ <?php esc_html_e('Pruebas de Conectividad Rápidas', 'flacso-uruguay'); ?></h2>
+                        <p><?php esc_html_e('Ejecutá pruebas asíncronas para validar que las URLs y tokens unificados se comuniquen perfectamente.', 'flacso-uruguay'); ?></p>
+                    </div>
+                    <div class="flacso-integrations-test-grid">
+                        <?php self::render_test_form(
+                            'fc_test_consultas_webhook',
+                            'fc_consultas_webhook_test_nonce',
+                            'fc_test_consultas_webhook',
+                            __('Probar consultas generales', 'flacso-uruguay'),
+                            __('Valida el webhook del formulario de consulta general.', 'flacso-uruguay')
+                        ); ?>
+                        <?php self::render_test_form(
+                            'fc_test_oferta_webhook',
+                            'fc_oferta_webhook_test_nonce',
+                            'fc_test_oferta_webhook',
+                            __('Probar solicitud de información', 'flacso-uruguay'),
+                            __('Valida el webhook usado por el bloque de solicitud de información.', 'flacso-uruguay')
+                        ); ?>
+                        <?php self::render_test_form(
+                            'flacso_charlas_abiertas_test_webhook',
+                            'flacso_charlas_abiertas_test_webhook_nonce',
+                            'flacso_charlas_abiertas_test_webhook',
+                            __('Probar charlas abiertas', 'flacso-uruguay'),
+                            __('Valida el webhook de inscripciones de charlas abiertas.', 'flacso-uruguay')
+                        ); ?>
+                    </div>
                 </div>
 
-                <?php submit_button(__('Guardar integraciones', 'flacso-uruguay')); ?>
-            </form>
-
-            <div class="flacso-integrations-tests">
-                <h2><?php esc_html_e('Pruebas rápidas', 'flacso-uruguay'); ?></h2>
-                <p><?php esc_html_e('Estas acciones validan que el plugin pueda hablar con la app usando la configuración actual.', 'flacso-uruguay'); ?></p>
-                <div class="flacso-integrations-test-grid">
-                    <?php self::render_test_form(
-                        'fc_test_consultas_webhook',
-                        'fc_consultas_webhook_test_nonce',
-                        'fc_test_consultas_webhook',
-                        __('Probar consultas generales', 'flacso-uruguay'),
-                        __('Valida el webhook del formulario de consulta general.', 'flacso-uruguay')
-                    ); ?>
-                    <?php self::render_test_form(
-                        'fc_test_oferta_webhook',
-                        'fc_oferta_webhook_test_nonce',
-                        'fc_test_oferta_webhook',
-                        __('Probar solicitud de información', 'flacso-uruguay'),
-                        __('Valida el webhook usado por el bloque de solicitud de información.', 'flacso-uruguay')
-                    ); ?>
-                    <?php self::render_test_form(
-                        'flacso_charlas_abiertas_test_webhook',
-                        'flacso_charlas_abiertas_test_webhook_nonce',
-                        'flacso_charlas_abiertas_test_webhook',
-                        __('Probar charlas abiertas', 'flacso-uruguay'),
-                        __('Valida el webhook de inscripciones de charlas abiertas.', 'flacso-uruguay')
-                    ); ?>
+                <div class="flacso-integrations-links">
+                    <h2>🔗 <?php esc_html_e('Accesos Directos Relacionados', 'flacso-uruguay'); ?></h2>
+                    <ul>
+                        <li><a href="<?php echo esc_url(admin_url('edit.php?post_type=oferta-academica&page=flacso-oferta-consulta-form')); ?>">🌐 <?php esc_html_e('Formulario flotante de Oferta Académica', 'flacso-uruguay'); ?></a></li>
+                        <li><a href="<?php echo esc_url(admin_url('admin.php?page=flacso-preinscripciones')); ?>">📝 <?php esc_html_e('Preinscripciones', 'flacso-uruguay'); ?></a></li>
+                    </ul>
                 </div>
-            </div>
-
-            <div class="flacso-integrations-links">
-                <h2><?php esc_html_e('Pantallas relacionadas', 'flacso-uruguay'); ?></h2>
-                <ul>
-                    <li><a href="<?php echo esc_url(admin_url('edit.php?post_type=oferta-academica&page=flacso-oferta-consulta-form')); ?>"><?php esc_html_e('Formulario flotante de Oferta Académica', 'flacso-uruguay'); ?></a></li>
-                    <li><a href="<?php echo esc_url(admin_url('admin.php?page=flacso-preinscripciones')); ?>"><?php esc_html_e('Preinscripciones', 'flacso-uruguay'); ?></a></li>
-                </ul>
             </div>
         </div>
 
         <style>
+            .flacso-integrations-dashboard {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+                max-width: 1280px;
+                margin: 20px auto 40px;
+                padding: 0 10px;
+            }
+
+            /* Header styling */
+            .flacso-dashboard-header {
+                background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+                color: #ffffff;
+                padding: 35px 40px;
+                border-radius: 16px;
+                box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15), 0 8px 10px -6px rgba(15, 23, 42, 0.15);
+                margin-bottom: 30px;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .flacso-dashboard-header::before {
+                content: '';
+                position: absolute;
+                top: -50%;
+                right: -20%;
+                width: 300px;
+                height: 300px;
+                background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 60%);
+                pointer-events: none;
+            }
+
+            .flacso-dashboard-title-area {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
+            .flacso-dashboard-title {
+                font-size: 28px;
+                font-weight: 800;
+                color: #ffffff;
+                margin: 0;
+                letter-spacing: -0.5px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .flacso-badge {
+                background: rgba(59, 130, 246, 0.2);
+                color: #60a5fa;
+                border: 1px solid rgba(59, 130, 246, 0.3);
+                padding: 4px 12px;
+                border-radius: 9999px;
+                font-size: 11px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .flacso-dashboard-subtitle {
+                margin: 12px 0 0;
+                font-size: 15px;
+                color: #94a3b8;
+                max-width: 800px;
+                line-height: 1.6;
+            }
+
+            /* Grid & Cards */
             .flacso-integrations-grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-                gap: 18px;
-                margin-top: 18px;
+                grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+                gap: 24px;
+                margin-bottom: 24px;
             }
 
-            .flacso-integrations-card,
-            .flacso-integrations-tests,
-            .flacso-integrations-links {
-                background: #fff;
-                border: 1px solid #dcdcde;
+            .flacso-integrations-card {
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 16px;
+                padding: 28px;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+                transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+
+            .flacso-integrations-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 12px 20px -8px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
+                border-color: #cbd5e1;
+            }
+
+            .flacso-card-header {
+                margin-bottom: 20px;
+            }
+
+            .flacso-card-icon-title {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 10px;
+            }
+
+            .flacso-card-icon-title h2 {
+                font-size: 18px;
+                font-weight: 700;
+                color: #0f172a;
+                margin: 0 !important;
+            }
+
+            .flacso-card-icon {
+                font-size: 20px;
+                width: 38px;
+                height: 38px;
                 border-radius: 10px;
-                padding: 20px;
-                box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
 
-            .flacso-integrations-card h2,
-            .flacso-integrations-tests h2,
-            .flacso-integrations-links h2 {
-                margin-top: 0;
-                margin-bottom: 8px;
-            }
+            /* Card custom colors based on service type */
+            .card-consultas .flacso-card-icon { background: #eff6ff; color: #3b82f6; }
+            .card-charlas .flacso-card-icon { background: #faf5ff; color: #a855f7; }
+            .card-flotante .flacso-card-icon { background: #fef2f2; color: #ef4444; }
+            .card-preinscripciones .flacso-card-icon { background: #ecfdf5; color: #10b981; }
+            .card-servicios .flacso-card-icon { background: #fff7ed; color: #f97316; }
 
             .flacso-integrations-card p.flacso-integrations-lead {
-                color: #50575e;
-                margin-top: 0;
-                margin-bottom: 18px;
+                color: #64748b;
+                font-size: 13.5px;
+                line-height: 1.5;
+                margin: 0;
             }
 
+            /* Field styling */
             .flacso-integrations-field {
-                margin-bottom: 16px;
+                margin-bottom: 18px;
             }
 
             .flacso-integrations-field label {
                 display: block;
+                font-size: 13px;
                 font-weight: 600;
+                color: #334155;
                 margin-bottom: 6px;
             }
 
             .flacso-integrations-field input {
                 width: 100%;
                 max-width: none;
+                border: 1px solid #cbd5e1;
+                border-radius: 8px;
+                padding: 10px 14px;
+                font-size: 14px;
+                color: #1e293b;
+                background: #f8fafc;
+                transition: all 0.2s ease-in-out;
+            }
+
+            .flacso-integrations-field input:focus {
+                border-color: #3b82f6;
+                background: #ffffff;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+                outline: none;
+            }
+
+            .flacso-integrations-field input[disabled] {
+                background: #e2e8f0;
+                border-color: #cbd5e1;
+                color: #475569;
+                cursor: not-allowed;
+                font-weight: 550;
             }
 
             .flacso-integrations-help {
                 margin: 6px 0 0;
-                color: #646970;
+                font-size: 12px;
+                color: #64748b;
+                line-height: 1.45;
             }
 
             .flacso-integrations-note {
-                display: inline-block;
-                margin-top: 10px;
-                padding: 6px 10px;
-                border-radius: 999px;
-                background: #eef4ff;
-                color: #1d4ed8;
-                font-size: 12px;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                margin-top: 15px;
+                padding: 6px 12px;
+                border-radius: 9999px;
+                background: #f1f5f9;
+                color: #475569;
+                font-size: 11px;
                 font-weight: 600;
+                border: 1px solid #e2e8f0;
             }
 
-            .flacso-integrations-tests,
-            .flacso-integrations-links {
-                margin-top: 24px;
+            /* Submit Area */
+            .flacso-submit-section {
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 16px;
+                padding: 20px 30px;
+                display: flex;
+                justify-content: flex-end;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+                margin-bottom: 40px;
+            }
+
+            .flacso-submit-section .submit {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .flacso-submit-section .button-primary {
+                background: #2563eb !important;
+                border: none !important;
+                border-radius: 8px !important;
+                padding: 12px 28px !important;
+                font-size: 14px !important;
+                font-weight: 600 !important;
+                height: auto !important;
+                line-height: 1.2 !important;
+                box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.25) !important;
+                transition: all 0.2s ease !important;
+                cursor: pointer;
+            }
+
+            .flacso-submit-section .button-primary:hover {
+                background: #1d4ed8 !important;
+                box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3) !important;
+                transform: translateY(-1px);
+            }
+
+            /* Test Section styling */
+            .flacso-integrations-tests {
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 16px;
+                padding: 32px;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+                margin-top: 40px;
+            }
+
+            .flacso-section-title-area {
+                margin-bottom: 25px;
+                border-bottom: 1px solid #f1f5f9;
+                padding-bottom: 18px;
+            }
+
+            .flacso-section-title-area h2 {
+                font-size: 20px;
+                font-weight: 800;
+                color: #0f172a;
+                margin: 0 0 6px;
+            }
+
+            .flacso-section-title-area p {
+                margin: 0;
+                color: #64748b;
+                font-size: 14px;
             }
 
             .flacso-integrations-test-grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-                gap: 14px;
-                margin-top: 14px;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 20px;
             }
 
             .flacso-integrations-test-card {
-                border: 1px solid #dcdcde;
-                border-radius: 8px;
-                padding: 14px;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 22px;
+                background: #f8fafc;
+                transition: all 0.22s ease;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+
+            .flacso-integrations-test-card:hover {
+                border-color: #cbd5e1;
+                background: #ffffff;
+                box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
             }
 
             .flacso-integrations-test-card h3 {
-                margin: 0 0 6px;
                 font-size: 15px;
+                font-weight: 700;
+                color: #0f172a;
+                margin: 0 0 8px;
             }
 
             .flacso-integrations-test-card p {
+                font-size: 13px;
+                color: #64748b;
+                line-height: 1.45;
+                margin: 0 0 20px;
                 min-height: 40px;
-                color: #646970;
+            }
+
+            .flacso-integrations-test-card .button-secondary {
+                border: 1px solid #cbd5e1 !important;
+                background: #ffffff !important;
+                color: #334155 !important;
+                border-radius: 8px !important;
+                padding: 10px 16px !important;
+                font-size: 13px !important;
+                font-weight: 600 !important;
+                height: auto !important;
+                line-height: 1.2 !important;
+                transition: all 0.2s ease !important;
+                width: 100%;
+                text-align: center;
+                cursor: pointer;
+            }
+
+            .flacso-integrations-test-card .button-secondary:hover {
+                background: #f1f5f9 !important;
+                color: #0f172a !important;
+                border-color: #94a3b8 !important;
+            }
+
+            /* Links Section */
+            .flacso-integrations-links {
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 16px;
+                padding: 30px;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+                margin-top: 30px;
+            }
+
+            .flacso-integrations-links h2 {
+                font-size: 18px;
+                font-weight: 700;
+                color: #0f172a;
+                margin: 0 0 15px;
             }
 
             .flacso-integrations-links ul {
                 margin: 0;
-                padding-left: 18px;
+                padding: 0;
+                list-style: none;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 15px;
             }
 
             .flacso-integrations-links li {
-                margin-bottom: 8px;
+                margin: 0;
             }
 
-            .flacso-test-result-placeholder {
-                margin-top: 12px;
-                min-height: 20px;
-            }
-
-            .flacso-test-loading {
-                color: #64748b;
-                font-weight: 500;
+            .flacso-integrations-links li a {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 10px 20px;
+                background: #f1f5f9;
+                color: #334155;
+                border-radius: 8px;
+                text-decoration: none;
                 font-size: 13px;
+                font-weight: 600;
+                transition: all 0.2s ease;
+                border: 1px solid #e2e8f0;
+            }
+
+            .flacso-integrations-links li a:hover {
+                background: #e2e8f0;
+                color: #0f172a;
+                transform: translateY(-1px);
+            }
+
+            /* Test loading and spinner */
+            .flacso-test-loading {
                 display: flex;
                 align-items: center;
-                gap: 6px;
-            }
-
-            .flacso-test-result {
-                padding: 10px 14px;
-                border-radius: 8px;
-                font-size: 13px;
-                line-height: 1.4;
-                font-weight: 600;
-                box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
-            }
-
-            .flacso-test-result.success {
-                background: #ecfdf5;
-                color: #047857;
-                border: 1px solid #a7f3d0;
-            }
-
-            .flacso-test-result.error {
-                background: #fdf2f2;
-                color: #b91c1c;
-                border: 1px solid #fecdca;
-            }
-
-            .flacso-test-result .desc {
-                font-weight: 400;
+                gap: 8px;
                 font-size: 12px;
-                color: currentColor;
-                opacity: 0.9;
-                display: block;
-                margin-top: 4px;
+                font-weight: 600;
+                color: #64748b;
+                margin-top: 15px;
+            }
+
+            .flacso-test-loading::before {
+                content: '';
+                width: 14px;
+                height: 14px;
+                border: 2px solid #cbd5e1;
+                border-top: 2px solid #3b82f6;
+                border-radius: 50%;
+                animation: flacso-spin 0.8s linear infinite;
+            }
+
+            @keyframes flacso-spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
             }
         </style>
         <script>
@@ -416,7 +690,7 @@ class FLACSO_Integrations_Settings {
                         // Set loading state
                         button.disabled = true;
                         button.value = '<?php esc_attr_e('Ejecutando...', 'flacso-uruguay'); ?>';
-                        placeholder.innerHTML = '<div class="flacso-test-loading">⚡ <?php esc_html_e('Conectando y validando...', 'flacso-uruguay'); ?></div>';
+                        placeholder.innerHTML = '<div class="flacso-test-loading"><?php esc_html_e('Conectando y validando...', 'flacso-uruguay'); ?></div>';
                         
                         const formData = new FormData(form);
                         
@@ -489,33 +763,40 @@ class FLACSO_Integrations_Settings {
 
     private static function render_consultas_card(): void {
         ?>
-        <section class="flacso-integrations-card">
-            <h2><?php esc_html_e('Consultas en la app', 'flacso-uruguay'); ?></h2>
-            <p class="flacso-integrations-lead"><?php esc_html_e('Agrupa el formulario general y el bloque de solicitud de información. Ambos comparten el mismo token en FLACSO Editor.', 'flacso-uruguay'); ?></p>
+        <section class="flacso-integrations-card card-consultas">
+            <div class="flacso-card-header">
+                <div class="flacso-card-icon-title">
+                    <span class="flacso-card-icon">💬</span>
+                    <h2><?php esc_html_e('Consultas en la app', 'flacso-uruguay'); ?></h2>
+                </div>
+                <p class="flacso-integrations-lead"><?php esc_html_e('Agrupa el formulario general y el bloque de solicitud de información. Ambos comparten el mismo token en FLACSO Editor.', 'flacso-uruguay'); ?></p>
+            </div>
 
-            <?php
-            self::render_input_field(
-                self::OPTION_CONSULTAS_WEBHOOK_URL,
-                __('Formulario de consulta general', 'flacso-uruguay'),
-                'url',
-                'https://tu-dominio.com/api/consultas/general',
-                __('Sugerido para el formulario de consulta general del módulo Formularios.', 'flacso-uruguay')
-            );
-            self::render_input_field(
-                self::OPTION_INFO_REQUEST_WEBHOOK_URL,
-                __('Solicitud de información', 'flacso-uruguay'),
-                'url',
-                'https://tu-dominio.com/api/consultas',
-                __('Usado por el bloque “Solicitud de Información” de oferta académica.', 'flacso-uruguay')
-            );
-            self::render_input_field(
-                self::OPTION_UNIFIED_WEBHOOK_TOKEN,
-                __('Token unificado', 'flacso-uruguay'),
-                'password',
-                __('Mismo valor que FLACSO_WEBHOOK_TOKEN', 'flacso-uruguay'),
-                __('El token unificado que se enviará en las cabeceras de todas las peticiones webhook.', 'flacso-uruguay')
-            );
-            ?>
+            <div class="flacso-card-body">
+                <?php
+                self::render_input_field(
+                    self::OPTION_CONSULTAS_WEBHOOK_URL,
+                    __('Formulario de consulta general', 'flacso-uruguay'),
+                    'url',
+                    'https://tu-dominio.com/api/consultas/general',
+                    __('Sugerido para el formulario de consulta general del módulo Formularios.', 'flacso-uruguay')
+                );
+                self::render_input_field(
+                    self::OPTION_INFO_REQUEST_WEBHOOK_URL,
+                    __('Solicitud de información', 'flacso-uruguay'),
+                    'url',
+                    'https://tu-dominio.com/api/consultas',
+                    __('Usado por el bloque “Solicitud de Información” de oferta académica.', 'flacso-uruguay')
+                );
+                self::render_input_field(
+                    self::OPTION_UNIFIED_WEBHOOK_TOKEN,
+                    __('Token unificado', 'flacso-uruguay'),
+                    'password',
+                    __('Mismo valor que FLACSO_WEBHOOK_TOKEN', 'flacso-uruguay'),
+                    __('El token unificado que se enviará en las cabeceras de todas las peticiones webhook.', 'flacso-uruguay')
+                );
+                ?>
+            </div>
 
             <span class="flacso-integrations-note"><?php esc_html_e('Variable esperada en la app: FLACSO_WEBHOOK_TOKEN', 'flacso-uruguay'); ?></span>
         </section>
@@ -524,29 +805,36 @@ class FLACSO_Integrations_Settings {
 
     private static function render_charlas_card(): void {
         ?>
-        <section class="flacso-integrations-card">
-            <h2><?php esc_html_e('Charlas abiertas', 'flacso-uruguay'); ?></h2>
-            <p class="flacso-integrations-lead"><?php esc_html_e('Configura el webhook que recibe inscripciones y el token asociado para la app.', 'flacso-uruguay'); ?></p>
+        <section class="flacso-integrations-card card-charlas">
+            <div class="flacso-card-header">
+                <div class="flacso-card-icon-title">
+                    <span class="flacso-card-icon">🎤</span>
+                    <h2><?php esc_html_e('Charlas abiertas', 'flacso-uruguay'); ?></h2>
+                </div>
+                <p class="flacso-integrations-lead"><?php esc_html_e('Configura el webhook que recibe inscripciones y el token asociado para la app.', 'flacso-uruguay'); ?></p>
+            </div>
 
-            <?php
-            self::render_input_field(
-                self::OPTION_CHARLAS_WEBHOOK_URL,
-                __('Webhook URL', 'flacso-uruguay'),
-                'url',
-                'https://tu-dominio.com/api/charlas/inscripciones',
-                __('Ruta sugerida si el destino es FLACSO Editor.', 'flacso-uruguay')
-            );
-            ?>
-            <div class="flacso-integrations-field">
-                <label><?php esc_html_e('Token del webhook', 'flacso-uruguay'); ?></label>
-                <input
-                    type="text"
-                    class="regular-text code"
-                    value="<?php esc_attr_e('Compartido (Configurado en consultas)', 'flacso-uruguay'); ?>"
-                    disabled
-                    readonly
-                />
-                <p class="flacso-integrations-help"><?php esc_html_e('Usa el mismo token de integración configurado a la izquierda.', 'flacso-uruguay'); ?></p>
+            <div class="flacso-card-body">
+                <?php
+                self::render_input_field(
+                    self::OPTION_CHARLAS_WEBHOOK_URL,
+                    __('Webhook URL', 'flacso-uruguay'),
+                    'url',
+                    'https://tu-dominio.com/api/charlas/inscripciones',
+                    __('Ruta sugerida si el destino es FLACSO Editor.', 'flacso-uruguay')
+                );
+                ?>
+                <div class="flacso-integrations-field">
+                    <label><?php esc_html_e('Token del webhook', 'flacso-uruguay'); ?></label>
+                    <input
+                        type="text"
+                        class="regular-text code"
+                        value="<?php esc_attr_e('Compartido (Configurado en consultas)', 'flacso-uruguay'); ?>"
+                        disabled
+                        readonly
+                    />
+                    <p class="flacso-integrations-help"><?php esc_html_e('Usa el mismo token de integración configurado a la izquierda.', 'flacso-uruguay'); ?></p>
+                </div>
             </div>
 
             <span class="flacso-integrations-note"><?php esc_html_e('Variable esperada en la app: FLACSO_WEBHOOK_TOKEN', 'flacso-uruguay'); ?></span>
@@ -556,19 +844,26 @@ class FLACSO_Integrations_Settings {
 
     private static function render_oferta_flotante_card(): void {
         ?>
-        <section class="flacso-integrations-card">
-            <h2><?php esc_html_e('Formulario de consulta de oferta académica', 'flacso-uruguay'); ?></h2>
-            <p class="flacso-integrations-lead"><?php esc_html_e('Este es el endpoint del botón flotante “Solicitar información”. No usa el mismo contrato que el bloque de solicitud de información.', 'flacso-uruguay'); ?></p>
+        <section class="flacso-integrations-card card-flotante">
+            <div class="flacso-card-header">
+                <div class="flacso-card-icon-title">
+                    <span class="flacso-card-icon">⚡</span>
+                    <h2><?php esc_html_e('Formulario flotante', 'flacso-uruguay'); ?></h2>
+                </div>
+                <p class="flacso-integrations-lead"><?php esc_html_e('Este es el endpoint del botón flotante “Solicitar información”. No usa el mismo contrato que el bloque de solicitud de información.', 'flacso-uruguay'); ?></p>
+            </div>
 
-            <?php
-            self::render_input_field(
-                self::OPTION_OFERTA_FLOTANTE_ENDPOINT,
-                __('Endpoint del formulario flotante', 'flacso-uruguay'),
-                'url',
-                'https://ejemplo.com/webhook/consultas',
-                __('Hoy este flujo solo usa URL; no envía token propio.', 'flacso-uruguay')
-            );
-            ?>
+            <div class="flacso-card-body">
+                <?php
+                self::render_input_field(
+                    self::OPTION_OFERTA_FLOTANTE_ENDPOINT,
+                    __('Endpoint del formulario flotante', 'flacso-uruguay'),
+                    'url',
+                    'https://ejemplo.com/webhook/consultas',
+                    __('Hoy este flujo solo usa URL; no envía token propio.', 'flacso-uruguay')
+                );
+                ?>
+            </div>
 
             <span class="flacso-integrations-note"><?php esc_html_e('Flujo distinto al bloque “Solicitud de Información”', 'flacso-uruguay'); ?></span>
         </section>
@@ -577,59 +872,73 @@ class FLACSO_Integrations_Settings {
 
     private static function render_preinscripciones_card(): void {
         ?>
-        <section class="flacso-integrations-card">
-            <h2><?php esc_html_e('Preinscripciones', 'flacso-uruguay'); ?></h2>
-            <p class="flacso-integrations-lead"><?php esc_html_e('Define el webhook externo que recibe los datos de preinscripción. Suele apuntar a Google Apps Script.', 'flacso-uruguay'); ?></p>
+        <section class="flacso-integrations-card card-preinscripciones">
+            <div class="flacso-card-header">
+                <div class="flacso-card-icon-title">
+                    <span class="flacso-card-icon">📝</span>
+                    <h2><?php esc_html_e('Preinscripciones', 'flacso-uruguay'); ?></h2>
+                </div>
+                <p class="flacso-integrations-lead"><?php esc_html_e('Define el webhook externo que recibe los datos de preinscripción. Suele apuntar a Google Apps Script.', 'flacso-uruguay'); ?></p>
+            </div>
 
-            <?php
-            self::render_input_field(
-                self::OPTION_PREINSCRIPCIONES_WEBHOOK_URL,
-                __('Webhook de preinscripciones', 'flacso-uruguay'),
-                'url',
-                'https://script.google.com/macros/s/.../exec',
-                __('Se guarda sobre la misma opción usada por el panel de Preinscripciones.', 'flacso-uruguay')
-            );
-            ?>
+            <div class="flacso-card-body">
+                <?php
+                self::render_input_field(
+                    self::OPTION_PREINSCRIPCIONES_WEBHOOK_URL,
+                    __('Webhook de preinscripciones', 'flacso-uruguay'),
+                    'url',
+                    'https://script.google.com/macros/s/.../exec',
+                    __('Se guarda sobre la misma opción usada por el panel de Preinscripciones.', 'flacso-uruguay')
+                );
+                ?>
+            </div>
         </section>
         <?php
     }
 
     private static function render_services_card(): void {
         ?>
-        <section class="flacso-integrations-card">
-            <h2><?php esc_html_e('Servicios auxiliares', 'flacso-uruguay'); ?></h2>
-            <p class="flacso-integrations-lead"><?php esc_html_e('Claves asociadas a integraciones complementarias del formulario general.', 'flacso-uruguay'); ?></p>
+        <section class="flacso-integrations-card card-servicios">
+            <div class="flacso-card-header">
+                <div class="flacso-card-icon-title">
+                    <span class="flacso-card-icon">⚙️</span>
+                    <h2><?php esc_html_e('Servicios auxiliares', 'flacso-uruguay'); ?></h2>
+                </div>
+                <p class="flacso-integrations-lead"><?php esc_html_e('Claves asociadas a integraciones complementarias del formulario general.', 'flacso-uruguay'); ?></p>
+            </div>
 
-            <?php
-            self::render_input_field(
-                self::OPTION_TELEGRAM_BOT_TOKEN,
-                __('Telegram Bot Token', 'flacso-uruguay'),
-                'password',
-                '123456789:ABC-DEF1234ghIkl-zyx57W2v1u123ew11',
-                __('Se usa si están activadas las notificaciones por Telegram en el formulario general.', 'flacso-uruguay')
-            );
-            self::render_input_field(
-                self::OPTION_TELEGRAM_CHAT_ID,
-                __('Telegram Chat ID', 'flacso-uruguay'),
-                'text',
-                '7456441753 o -1001234567890',
-                __('Chat o canal de destino para las notificaciones.', 'flacso-uruguay')
-            );
-            self::render_input_field(
-                self::OPTION_RECAPTCHA_SITE_KEY,
-                __('reCAPTCHA Site Key', 'flacso-uruguay'),
-                'text',
-                '6LeIxAcTAAAAA...',
-                __('Clave pública usada por el formulario general.', 'flacso-uruguay')
-            );
-            self::render_input_field(
-                self::OPTION_RECAPTCHA_SECRET_KEY,
-                __('reCAPTCHA Secret Key', 'flacso-uruguay'),
-                'password',
-                '6LeIxAcTAAAAA...',
-                __('Clave privada usada para validar reCAPTCHA en servidor.', 'flacso-uruguay')
-            );
-            ?>
+            <div class="flacso-card-body">
+                <?php
+                self::render_input_field(
+                    self::OPTION_TELEGRAM_BOT_TOKEN,
+                    __('Telegram Bot Token', 'flacso-uruguay'),
+                    'password',
+                    '123456789:ABC-DEF1234ghIkl-zyx57W2v1u123ew11',
+                    __('Se usa si están activadas las notificaciones por Telegram en el formulario general.', 'flacso-uruguay')
+                );
+                self::render_input_field(
+                    self::OPTION_TELEGRAM_CHAT_ID,
+                    __('Telegram Chat ID', 'flacso-uruguay'),
+                    'text',
+                    '7456441753 o -1001234567890',
+                    __('Chat o canal de destino para las notificaciones.', 'flacso-uruguay')
+                );
+                self::render_input_field(
+                    self::OPTION_RECAPTCHA_SITE_KEY,
+                    __('reCAPTCHA Site Key', 'flacso-uruguay'),
+                    'text',
+                    '6LeIxAcTAAAAA...',
+                    __('Clave pública usada por el formulario general.', 'flacso-uruguay')
+                );
+                self::render_input_field(
+                    self::OPTION_RECAPTCHA_SECRET_KEY,
+                    __('reCAPTCHA Secret Key', 'flacso-uruguay'),
+                    'password',
+                    '6LeIxAcTAAAAA...',
+                    __('Clave privada usada para validar reCAPTCHA en servidor.', 'flacso-uruguay')
+                );
+                ?>
+            </div>
         </section>
         <?php
     }
