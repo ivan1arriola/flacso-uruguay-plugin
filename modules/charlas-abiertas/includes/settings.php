@@ -174,7 +174,6 @@ function flacso_charlas_abiertas_render_settings_page() {
     }
     wp_safe_redirect(admin_url('options-general.php?page=flacso-integraciones'));
     exit;
-}
     ?>
     <div class="wrap">
         <h1>Webhook de Charlas Abiertas</h1>
