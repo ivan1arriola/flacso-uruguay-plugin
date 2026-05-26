@@ -221,6 +221,9 @@ class FLACSO_Integrations_Settings {
                 <form method="post" action="options.php">
                     <?php settings_fields(self::SETTINGS_GROUP); ?>
 
+                    <!-- Token de Acceso Global Único -->
+                    <?php self::render_global_token_card(); ?>
+
                     <div class="flacso-integrations-grid">
                         <?php self::render_consultas_card(); ?>
                         <?php self::render_charlas_card(); ?>
@@ -342,6 +345,69 @@ class FLACSO_Integrations_Settings {
                 color: #94a3b8;
                 max-width: 800px;
                 line-height: 1.6;
+            }
+
+            /* Global Token Card */
+            .flacso-global-token-card {
+                background: #ffffff;
+                border: 2px solid #3b82f6;
+                border-radius: 16px;
+                padding: 30px;
+                margin-bottom: 30px;
+                box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.05), 0 4px 6px -4px rgba(59, 130, 246, 0.05);
+                position: relative;
+                overflow: hidden;
+            }
+
+            .flacso-global-token-card::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                right: 0;
+                width: 150px;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.02));
+                pointer-events: none;
+            }
+
+            .flacso-global-token-header {
+                display: flex;
+                align-items: center;
+                gap: 18px;
+                margin-bottom: 20px;
+                border-bottom: 1px solid #f1f5f9;
+                padding-bottom: 18px;
+            }
+
+            .flacso-global-token-icon {
+                font-size: 24px;
+                width: 46px;
+                height: 46px;
+                border-radius: 12px;
+                background: #eff6ff;
+                color: #3b82f6;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+            }
+
+            .flacso-global-token-title-block h2 {
+                font-size: 19px;
+                font-weight: 800;
+                color: #0f172a;
+                margin: 0 0 4px !important;
+            }
+
+            .flacso-global-token-title-block p {
+                margin: 0;
+                color: #64748b;
+                font-size: 14px;
+                line-height: 1.5;
+            }
+
+            .flacso-global-token-body {
+                max-width: 720px;
             }
 
             /* Grid & Cards */
@@ -693,8 +759,9 @@ class FLACSO_Integrations_Settings {
                         placeholder.innerHTML = '<div class="flacso-test-loading"><?php esc_html_e('Conectando y validando...', 'flacso-uruguay'); ?></div>';
                         
                         const formData = new FormData(form);
+                        const actionUrl = form.getAttribute('action');
                         
-                        fetch(form.action, {
+                        fetch(actionUrl, {
                             method: 'POST',
                             body: formData
                         })
@@ -761,6 +828,32 @@ class FLACSO_Integrations_Settings {
         <?php
     }
 
+    private static function render_global_token_card(): void {
+        ?>
+        <div class="flacso-global-token-card">
+            <div class="flacso-global-token-header">
+                <span class="flacso-global-token-icon">🔑</span>
+                <div class="flacso-global-token-title-block">
+                    <h2><?php esc_html_e('Token de Autenticación Unificado', 'flacso-uruguay'); ?></h2>
+                    <p><?php esc_html_e('Este token es la credencial única que valida la comunicación segura entre WordPress y la aplicación Next.js (FLACSO Editor) para todas las integraciones (Consultas, Ofertas y Charlas).', 'flacso-uruguay'); ?></p>
+                </div>
+            </div>
+            <div class="flacso-global-token-body">
+                <?php
+                self::render_input_field(
+                    self::OPTION_UNIFIED_WEBHOOK_TOKEN,
+                    __('Token de Acceso Global', 'flacso-uruguay'),
+                    'password',
+                    __('Pega el token unificado aquí (coincidente con FLACSO_WEBHOOK_TOKEN)', 'flacso-uruguay'),
+                    __('Se enviará automáticamente en las cabeceras (X-FLACSO-Webhook-Token) de todas las consultas y solicitudes de inscripción.', 'flacso-uruguay')
+                );
+                ?>
+                <span class="flacso-integrations-note">🔑 <?php esc_html_e('Variable esperada en Next.js: FLACSO_WEBHOOK_TOKEN', 'flacso-uruguay'); ?></span>
+            </div>
+        </div>
+        <?php
+    }
+
     private static function render_consultas_card(): void {
         ?>
         <section class="flacso-integrations-card card-consultas">
@@ -769,7 +862,7 @@ class FLACSO_Integrations_Settings {
                     <span class="flacso-card-icon">💬</span>
                     <h2><?php esc_html_e('Consultas en la app', 'flacso-uruguay'); ?></h2>
                 </div>
-                <p class="flacso-integrations-lead"><?php esc_html_e('Agrupa el formulario general y el bloque de solicitud de información. Ambos comparten el mismo token en FLACSO Editor.', 'flacso-uruguay'); ?></p>
+                <p class="flacso-integrations-lead"><?php esc_html_e('Agrupa el formulario general y el bloque de solicitud de información. Ambos usan el token unificado global.', 'flacso-uruguay'); ?></p>
             </div>
 
             <div class="flacso-card-body">
@@ -788,17 +881,10 @@ class FLACSO_Integrations_Settings {
                     'https://tu-dominio.com/api/consultas',
                     __('Usado por el bloque “Solicitud de Información” de oferta académica.', 'flacso-uruguay')
                 );
-                self::render_input_field(
-                    self::OPTION_UNIFIED_WEBHOOK_TOKEN,
-                    __('Token unificado', 'flacso-uruguay'),
-                    'password',
-                    __('Mismo valor que FLACSO_WEBHOOK_TOKEN', 'flacso-uruguay'),
-                    __('El token unificado que se enviará en las cabeceras de todas las peticiones webhook.', 'flacso-uruguay')
-                );
                 ?>
             </div>
 
-            <span class="flacso-integrations-note"><?php esc_html_e('Variable esperada en la app: FLACSO_WEBHOOK_TOKEN', 'flacso-uruguay'); ?></span>
+            <span class="flacso-integrations-note">🔒 <?php esc_html_e('Usa el Token Global superior', 'flacso-uruguay'); ?></span>
         </section>
         <?php
     }
@@ -811,7 +897,7 @@ class FLACSO_Integrations_Settings {
                     <span class="flacso-card-icon">🎤</span>
                     <h2><?php esc_html_e('Charlas abiertas', 'flacso-uruguay'); ?></h2>
                 </div>
-                <p class="flacso-integrations-lead"><?php esc_html_e('Configura el webhook que recibe inscripciones y el token asociado para la app.', 'flacso-uruguay'); ?></p>
+                <p class="flacso-integrations-lead"><?php esc_html_e('Configura el webhook que recibe inscripciones para la app. Comparte el mismo token global.', 'flacso-uruguay'); ?></p>
             </div>
 
             <div class="flacso-card-body">
@@ -824,20 +910,9 @@ class FLACSO_Integrations_Settings {
                     __('Ruta sugerida si el destino es FLACSO Editor.', 'flacso-uruguay')
                 );
                 ?>
-                <div class="flacso-integrations-field">
-                    <label><?php esc_html_e('Token del webhook', 'flacso-uruguay'); ?></label>
-                    <input
-                        type="text"
-                        class="regular-text code"
-                        value="<?php esc_attr_e('Compartido (Configurado en consultas)', 'flacso-uruguay'); ?>"
-                        disabled
-                        readonly
-                    />
-                    <p class="flacso-integrations-help"><?php esc_html_e('Usa el mismo token de integración configurado a la izquierda.', 'flacso-uruguay'); ?></p>
-                </div>
             </div>
 
-            <span class="flacso-integrations-note"><?php esc_html_e('Variable esperada en la app: FLACSO_WEBHOOK_TOKEN', 'flacso-uruguay'); ?></span>
+            <span class="flacso-integrations-note">🔒 <?php esc_html_e('Usa el Token Global superior', 'flacso-uruguay'); ?></span>
         </section>
         <?php
     }
