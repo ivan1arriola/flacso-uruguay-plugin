@@ -139,7 +139,7 @@ function fc_field_consultas_webhook_url_cb() {
 function fc_field_consultas_webhook_token_cb() {
     $value = esc_attr( get_option( 'fc_consultas_webhook_token', '' ) );
     echo '<input type="password" class="regular-text code" name="fc_consultas_webhook_token" value="' . $value . '" placeholder="Pega aquí el token del editor" autocomplete="new-password" spellcheck="false" />';
-    echo '<p class="description">' . esc_html__( 'Opcional pero recomendado. Si el editor configura FLACSO_CONSULTAS_WEBHOOK_TOKEN, pega aquí exactamente el mismo valor. El plugin lo enviará como Authorization: Bearer y X-FLACSO-Webhook-Token.', 'flacso-flacso-formulario-consultas' ) . '</p>';
+    echo '<p class="description">' . esc_html__( 'Opcional pero recomendado. Si el editor configura FLACSO_WEBHOOK_TOKEN, pega aquí exactamente el mismo valor. El plugin lo enviará como Authorization: Bearer y X-FLACSO-Webhook-Token.', 'flacso-flacso-formulario-consultas' ) . '</p>';
 }
 
 function fc_field_bootstrap_cb() {
@@ -519,7 +519,7 @@ function fc_settings_admin_notices() {
             $status  = sanitize_key( wp_unslash( $_GET['fc_consultas_webhook_test'] ) );
             $code    = isset( $_GET['fc_consultas_webhook_code'] ) ? absint( wp_unslash( $_GET['fc_consultas_webhook_code'] ) ) : 0;
             $message = isset( $_GET['fc_consultas_webhook_message'] ) ? sanitize_text_field( wp_unslash( $_GET['fc_consultas_webhook_message'] ) ) : '';
-            fc_render_webhook_test_notice( $status, $code, $message, 'FLACSO_CONSULTAS_WEBHOOK_TOKEN' );
+            fc_render_webhook_test_notice( $status, $code, $message, 'FLACSO_WEBHOOK_TOKEN' );
         }
 
         if ( isset( $_GET['fc_test'] ) ) {
@@ -542,7 +542,7 @@ function fc_settings_admin_notices() {
         $status  = sanitize_key( wp_unslash( $_GET['fc_oferta_webhook_test'] ) );
         $code    = isset( $_GET['fc_oferta_webhook_code'] ) ? absint( wp_unslash( $_GET['fc_oferta_webhook_code'] ) ) : 0;
         $message = isset( $_GET['fc_oferta_webhook_message'] ) ? sanitize_text_field( wp_unslash( $_GET['fc_oferta_webhook_message'] ) ) : '';
-        fc_render_webhook_test_notice( $status, $code, $message, 'FLACSO_CONSULTAS_WEBHOOK_TOKEN' );
+        fc_render_webhook_test_notice( $status, $code, $message, 'FLACSO_WEBHOOK_TOKEN' );
     }
 }
 add_action( 'admin_notices', 'fc_settings_admin_notices' );

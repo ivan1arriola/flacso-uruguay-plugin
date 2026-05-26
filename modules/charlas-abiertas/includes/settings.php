@@ -141,7 +141,7 @@ function flacso_charlas_abiertas_render_webhook_token_field() {
     />
     <p class="description">
         Opcional pero recomendado: si en <code>flacso-editor</code> configuras la variable
-        <code>FLACSO_CHARLAS_WEBHOOK_TOKEN</code>, pega aquí exactamente el mismo valor.
+        <code>FLACSO_WEBHOOK_TOKEN</code>, pega aquí exactamente el mismo valor.
         El plugin lo enviará en el header <code>Authorization: Bearer ...</code>.
     </p>
     <?php if (!empty($webhook_token)) : ?>
@@ -340,7 +340,7 @@ function flacso_charlas_abiertas_admin_notices() {
     }
 
     if (401 === $code) {
-        $notice = 'La app rechazó el token del webhook. Revisá que coincida con FLACSO_CHARLAS_WEBHOOK_TOKEN.';
+        $notice = 'La app rechazó el token del webhook. Revisá que coincida con FLACSO_WEBHOOK_TOKEN.';
     } elseif (404 === $code) {
         $notice = 'La URL del webhook respondió 404. Revisá que el endpoint exista en la app.';
     } elseif ($code >= 500) {

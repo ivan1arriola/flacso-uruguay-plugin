@@ -389,7 +389,7 @@ Resultado:
 - Campo: `Webhook URL`.
 - Destino sugerido para la app: `https://<tu-dominio-flacso-editor>/api/charlas/inscripciones`.
 - Seguridad opcional recomendada:
-  - En `flacso-editor`, definir `FLACSO_CHARLAS_WEBHOOK_TOKEN`.
+  - En `flacso-editor`, definir `FLACSO_WEBHOOK_TOKEN`.
   - En WordPress, pegar ese mismo valor en `Ajustes > Charlas Abiertas > Webhook Token`.
   - El plugin lo enviará como `Authorization: Bearer <token>`.
 - Si el webhook no está configurado, el plugin ahora corta el envío para evitar perder inscripciones silenciosamente.

@@ -445,17 +445,17 @@ class FLACSO_Integrations_Settings {
                                 status = finalUrl.searchParams.get('fc_consultas_webhook_test');
                                 code = finalUrl.searchParams.get('fc_consultas_webhook_code') || '';
                                 message = finalUrl.searchParams.get('fc_consultas_webhook_message') || '';
-                                tokenVar = 'FLACSO_CONSULTAS_WEBHOOK_TOKEN';
+                                tokenVar = 'FLACSO_WEBHOOK_TOKEN';
                             } else if (finalUrl.searchParams.has('fc_oferta_webhook_test')) {
                                 status = finalUrl.searchParams.get('fc_oferta_webhook_test');
                                 code = finalUrl.searchParams.get('fc_oferta_webhook_code') || '';
                                 message = finalUrl.searchParams.get('fc_oferta_webhook_message') || '';
-                                tokenVar = 'FLACSO_CONSULTAS_WEBHOOK_TOKEN';
+                                tokenVar = 'FLACSO_WEBHOOK_TOKEN';
                             } else if (finalUrl.searchParams.has('flacso_charlas_webhook_test')) {
                                 status = finalUrl.searchParams.get('flacso_charlas_webhook_test');
                                 code = finalUrl.searchParams.get('flacso_charlas_webhook_code') || '';
                                 message = finalUrl.searchParams.get('flacso_charlas_webhook_message') || '';
-                                tokenVar = 'FLACSO_CHARLAS_WEBHOOK_TOKEN';
+                                tokenVar = 'FLACSO_WEBHOOK_TOKEN';
                             }
 
                             let noticeText = '';
@@ -522,12 +522,12 @@ class FLACSO_Integrations_Settings {
                 self::OPTION_CONSULTAS_WEBHOOK_TOKEN,
                 __('Token compartido', 'flacso-uruguay'),
                 'password',
-                __('Mismo valor que FLACSO_CONSULTAS_WEBHOOK_TOKEN', 'flacso-uruguay'),
+                __('Mismo valor que FLACSO_WEBHOOK_TOKEN', 'flacso-uruguay'),
                 __('El plugin lo envía en Authorization: Bearer y X-FLACSO-Webhook-Token.', 'flacso-uruguay')
             );
             ?>
 
-            <span class="flacso-integrations-note"><?php esc_html_e('Variable esperada en la app: FLACSO_CONSULTAS_WEBHOOK_TOKEN', 'flacso-uruguay'); ?></span>
+            <span class="flacso-integrations-note"><?php esc_html_e('Variable esperada en la app: FLACSO_WEBHOOK_TOKEN', 'flacso-uruguay'); ?></span>
         </section>
         <?php
     }
@@ -550,12 +550,12 @@ class FLACSO_Integrations_Settings {
                 self::OPTION_CHARLAS_WEBHOOK_TOKEN,
                 __('Token del webhook', 'flacso-uruguay'),
                 'password',
-                __('Mismo valor que FLACSO_CHARLAS_WEBHOOK_TOKEN', 'flacso-uruguay'),
+                __('Mismo valor que FLACSO_WEBHOOK_TOKEN', 'flacso-uruguay'),
                 __('Se envía como Authorization: Bearer para validar la integración.', 'flacso-uruguay')
             );
             ?>
 
-            <span class="flacso-integrations-note"><?php esc_html_e('Variable esperada en la app: FLACSO_CHARLAS_WEBHOOK_TOKEN', 'flacso-uruguay'); ?></span>
+            <span class="flacso-integrations-note"><?php esc_html_e('Variable esperada en la app: FLACSO_WEBHOOK_TOKEN', 'flacso-uruguay'); ?></span>
         </section>
         <?php
     }
@@ -683,14 +683,14 @@ class FLACSO_Integrations_Settings {
             $status = sanitize_key(wp_unslash($_GET['fc_consultas_webhook_test']));
             $code = isset($_GET['fc_consultas_webhook_code']) ? absint(wp_unslash($_GET['fc_consultas_webhook_code'])) : 0;
             $message = isset($_GET['fc_consultas_webhook_message']) ? sanitize_text_field(wp_unslash($_GET['fc_consultas_webhook_message'])) : '';
-            fc_render_webhook_test_notice($status, $code, $message, 'FLACSO_CONSULTAS_WEBHOOK_TOKEN');
+            fc_render_webhook_test_notice($status, $code, $message, 'FLACSO_WEBHOOK_TOKEN');
         }
 
         if (isset($_GET['fc_oferta_webhook_test'])) {
             $status = sanitize_key(wp_unslash($_GET['fc_oferta_webhook_test']));
             $code = isset($_GET['fc_oferta_webhook_code']) ? absint(wp_unslash($_GET['fc_oferta_webhook_code'])) : 0;
             $message = isset($_GET['fc_oferta_webhook_message']) ? sanitize_text_field(wp_unslash($_GET['fc_oferta_webhook_message'])) : '';
-            fc_render_webhook_test_notice($status, $code, $message, 'FLACSO_CONSULTAS_WEBHOOK_TOKEN');
+            fc_render_webhook_test_notice($status, $code, $message, 'FLACSO_WEBHOOK_TOKEN');
         }
 
         if (!isset($_GET['flacso_charlas_webhook_test'])) {
@@ -701,7 +701,7 @@ class FLACSO_Integrations_Settings {
         $code = isset($_GET['flacso_charlas_webhook_code']) ? absint(wp_unslash($_GET['flacso_charlas_webhook_code'])) : 0;
         $message = isset($_GET['flacso_charlas_webhook_message']) ? sanitize_text_field(wp_unslash($_GET['flacso_charlas_webhook_message'])) : '';
 
-        fc_render_webhook_test_notice($status, $code, $message, 'FLACSO_CHARLAS_WEBHOOK_TOKEN');
+        fc_render_webhook_test_notice($status, $code, $message, 'FLACSO_WEBHOOK_TOKEN');
     }
 }
 
