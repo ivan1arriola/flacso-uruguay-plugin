@@ -198,7 +198,7 @@ class Oferta_Data_Schema {
                                 'docentes' => [
                                     'type' => 'array',
                                     'items' => [
-                                        'type' => 'integer',
+                                        'type' => ['integer', 'object'],
                                     ],
                                 ],
                             ],
@@ -302,14 +302,21 @@ class Oferta_Data_Schema {
             $docentes = [];
             if (isset($item['docentes']) && is_array($item['docentes'])) {
                 foreach ($item['docentes'] as $docente) {
-                    $docente_id = intval($docente);
-                    if ($docente_id <= 0) {
-                        continue;
+                    if (is_array($docente)) {
+                        $docente_id = isset($docente['id']) ? intval($docente['id']) : 0;
+                        $rol = isset($docente['rol']) ? sanitize_text_field($docente['rol']) : '';
+                        if ($docente_id > 0) {
+                            $docentes[] = ['id' => $docente_id, 'rol' => $rol];
+                        }
+                    } else {
+                        $docente_id = intval($docente);
+                        if ($docente_id > 0) {
+                            $docentes[] = $docente_id;
+                        }
                     }
-                    $docentes[] = $docente_id;
                 }
             }
-            $docentes = array_values(array_unique($docentes));
+            // Remove array_unique since we may have arrays
             $out[] = [$name_key => $label, 'docentes' => $docentes];
         }
         return $out;

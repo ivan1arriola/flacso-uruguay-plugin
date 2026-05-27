@@ -116,74 +116,61 @@ get_header();
             <main id="main" class="site-main">
                 <article id="post-<?php echo esc_attr($post_id); ?>" <?php post_class('entry content-bg single-entry flacso-oa-article'); ?>>
 
-                    <section class="flacso-oa-hero-v3">
-                        <div class="flacso-oa-container">
+                    <?php
+                    $banner_featured_url = $thumbnail_url;
+                    if (!$banner_featured_url) {
+                        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="788" viewBox="0 0 1400 788">'
+                            . '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
+                            . '<stop offset="0" stop-color="#1d3a72"/><stop offset="1" stop-color="#0f1f3e"/>'
+                            . '</linearGradient></defs>'
+                            . '<rect width="1400" height="788" fill="url(#g)"/>'
+                            . '<circle cx="1080" cy="240" r="210" fill="rgba(254,210,34,0.18)"/>'
+                            . '<circle cx="1160" cy="320" r="150" fill="rgba(254,210,34,0.12)"/>'
+                            . '<rect x="90" y="560" width="1220" height="140" rx="16" fill="rgba(0,0,0,0.18)"/>'
+                            . '<text x="110" y="615" font-family="Inter, Arial" font-size="44" fill="rgba(255,255,255,0.92)">Previsualizacion</text>'
+                            . '<text x="110" y="670" font-family="Inter, Arial" font-size="28" fill="rgba(255,255,255,0.78)">Defini una imagen destacada para ver la foto real.</text>'
+                            . '</svg>';
+                        $banner_featured_url = 'data:image/svg+xml;base64,' . base64_encode($svg);
+                    }
 
-                            <div class="flacso-oa-hero-v3__intro">
-                                <div class="flacso-oa-hero-v3__main">
-                                    <?php if ($tipo_oferta !== '') : ?>
-                                        <p class="flacso-oa-hero-v3__eyebrow">
-                                            <?php echo esc_html($tipo_oferta); ?>
-                                        </p>
-                                    <?php endif; ?>
+                    $banner_cta_text = $inscripciones_abiertas
+                        ? 'Descuentos especiales disponibles. <a href="'. esc_url($preinscripcion_url) .'" style="color:white; text-decoration:underline; text-underline-offset: 4px;">Solicitá informacion e inscribite hoy.</a>'
+                        : 'Mantente atento a nuestras próximas aperturas.';
+                    ?>
 
-                                    <h1 class="flacso-oa-hero-v3__title">
-                                        <?php the_title(); ?>
-                                    </h1>
+                    <section class="flacso-inscripciones-banner" style="margin-bottom: 0; border-radius: 0; width: 100%; aspect-ratio: 2.5 / 1; min-height: 400px; max-height: 600px;">
+                        <img
+                            class="flacso-inscripciones-banner__img"
+                            src="<?php echo esc_url($banner_featured_url); ?>"
+                            alt="<?php echo esc_attr(get_the_title($post_id)); ?>">
 
-                                    <?php if (!empty($programa_meta)) : ?>
-                                        <div class="flacso-oa-hero-v3__meta" aria-label="<?php esc_attr_e('Datos del programa', 'flacso-uruguay'); ?>">
-                                            <?php foreach ($programa_meta as $meta_item) : ?>
-                                                <span><?php echo esc_html($meta_item); ?></span>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    <?php endif; ?>
+                        <div class="flacso-inscripciones-banner__overlay" style="padding: clamp(2rem, 5vw, 4rem);">
+                            <div class="flacso-inscripciones-banner__top">
+                                <div class="flacso-inscripciones-banner__tag">
+                                    <?php echo esc_html($hero_tag); ?>
                                 </div>
-
-                                <aside class="flacso-oa-hero-v3__summary" aria-label="<?php esc_attr_e('Información de inscripción', 'flacso-uruguay'); ?>">
-                                    <span class="flacso-oa-hero-v3__tag">
-                                        <?php echo esc_html($hero_tag); ?>
-                                    </span>
-
-                                    <div class="flacso-oa-hero-v3__cta">
-                                        <?php echo wp_kses_post($hero_cta_markup); ?>
-                                    </div>
-
-                                    <div class="flacso-oa-hero-v3__actions">
-                                        <a href="<?php echo esc_url($hero_primary_url); ?>" class="flacso-oa-hero-v3__button flacso-oa-hero-v3__button--primary">
-                                            <?php echo esc_html($hero_primary_label); ?>
-                                        </a>
-
-                                        <a href="#flacso-oa-contenido" class="flacso-oa-hero-v3__button flacso-oa-hero-v3__button--secondary">
-                                            <?php esc_html_e('Ver programa', 'flacso-uruguay'); ?>
-                                        </a>
-                                    </div>
-                                </aside>
+                                <img
+                                    src="<?php echo esc_url($logo_url); ?>"
+                                    alt="FLACSO Uruguay"
+                                    class="flacso-inscripciones-banner__logo">
                             </div>
 
-                            <div class="flacso-oa-hero-v3__media">
-                                <?php if ($thumbnail_url) : ?>
-                                    <img
-                                        class="flacso-oa-hero-v3__image"
-                                        src="<?php echo esc_url($thumbnail_url); ?>"
-                                        alt="<?php echo esc_attr(get_the_title($post_id)); ?>"
-                                        decoding="async"
-                                        fetchpriority="high"
-                                    >
-                                <?php else : ?>
-                                    <div class="flacso-oa-hero-v3__image flacso-oa-hero-v3__image--placeholder" aria-hidden="true"></div>
+                            <div class="flacso-inscripciones-banner__middle" style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; max-width: 1000px;">
+                                <?php if ($tipo_oferta !== '') : ?>
+                                    <p class="flacso-inscripciones-banner__eyebrow" style="margin: 0 0 16px; color: #fcd116; font-size: clamp(0.9rem, 1.2vw, 1.05rem); font-weight: 850; letter-spacing: 0.08em; text-transform: uppercase;">
+                                        <?php echo esc_html($tipo_oferta); ?>
+                                    </p>
                                 <?php endif; ?>
-
-                                <div class="flacso-oa-hero-v3__media-overlay">
-                                    <img
-                                        src="<?php echo esc_url($logo_url); ?>"
-                                        alt="<?php esc_attr_e('FLACSO Uruguay', 'flacso-uruguay'); ?>"
-                                        class="flacso-oa-hero-v3__logo"
-                                        decoding="async"
-                                    >
-                                </div>
+                                <h1 class="flacso-inscripciones-banner__title" style="margin: 0; color: #ffffff; font-size: clamp(2.2rem, 4.5vw, 4.2rem); font-weight: 900; letter-spacing: -0.025em; line-height: 1.1; text-wrap: balance; text-shadow: 0 4px 16px rgba(0,0,0,0.6);">
+                                    <?php the_title(); ?>
+                                </h1>
                             </div>
 
+                            <div class="flacso-inscripciones-banner__bottom">
+                                <div class="flacso-inscripciones-banner__cta" style="font-size: clamp(1rem, 1.2vw, 1.15rem);">
+                                    <?php echo wp_kses_post($banner_cta_text); ?>
+                                </div>
+                            </div>
                         </div>
                     </section>
 
@@ -192,51 +179,7 @@ get_header();
                             <div class="flacso-oa-main-grid">
 
                                 <div class="flacso-oa-main-content">
-                                    <?php
-                                    $banner_featured_url = $thumbnail_url;
-                                    if (!$banner_featured_url) {
-                                        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="788" viewBox="0 0 1400 788">'
-                                            . '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
-                                            . '<stop offset="0" stop-color="#1d3a72"/><stop offset="1" stop-color="#0f1f3e"/>'
-                                            . '</linearGradient></defs>'
-                                            . '<rect width="1400" height="788" fill="url(#g)"/>'
-                                            . '<circle cx="1080" cy="240" r="210" fill="rgba(254,210,34,0.18)"/>'
-                                            . '<circle cx="1160" cy="320" r="150" fill="rgba(254,210,34,0.12)"/>'
-                                            . '<rect x="90" y="560" width="1220" height="140" rx="16" fill="rgba(0,0,0,0.18)"/>'
-                                            . '<text x="110" y="615" font-family="Inter, Arial" font-size="44" fill="rgba(255,255,255,0.92)">Previsualizacion</text>'
-                                            . '<text x="110" y="670" font-family="Inter, Arial" font-size="28" fill="rgba(255,255,255,0.78)">Defini una imagen destacada para ver la foto real.</text>'
-                                            . '</svg>';
-                                        $banner_featured_url = 'data:image/svg+xml;base64,' . base64_encode($svg);
-                                    }
 
-                                    $banner_cta_text = $inscripciones_abiertas
-                                        ? 'Descuentos especiales disponibles. <a href="'. esc_url($preinscripcion_url) .'" style="color:white; text-decoration:underline; text-underline-offset: 4px;">Solicitá informacion e inscribite hoy.</a>'
-                                        : 'Mantente atento a nuestras próximas aperturas.';
-                                    ?>
-                                    <div class="flacso-inscripciones-banner">
-                                        <img
-                                            class="flacso-inscripciones-banner__img"
-                                            src="<?php echo esc_url($banner_featured_url); ?>"
-                                            alt="<?php echo esc_attr(get_the_title($post_id)); ?>">
-
-                                        <div class="flacso-inscripciones-banner__overlay">
-                                            <div class="flacso-inscripciones-banner__top">
-                                                <div class="flacso-inscripciones-banner__tag">
-                                                    <?php echo esc_html($hero_tag); ?>
-                                                </div>
-                                                <img
-                                                    src="<?php echo esc_url($logo_url); ?>"
-                                                    alt="FLACSO Uruguay"
-                                                    class="flacso-inscripciones-banner__logo">
-                                            </div>
-
-                                            <div class="flacso-inscripciones-banner__bottom">
-                                                <div class="flacso-inscripciones-banner__cta">
-                                                    <?php echo wp_kses_post($banner_cta_text); ?>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
 
                                     <?php if ($has_main_content) : ?>
                                         <section class="flacso-oa-content-card">
@@ -426,8 +369,16 @@ get_header();
                                                 </h3>
 
                                                 <div class="flacso-oa-docentes-grid">
-                                                    <?php foreach ($coord['docentes'] as $docente_id) : ?>
-                                                        <?php $render_docente_item($docente_id, $rol); ?>
+                                                    <?php foreach ($coord['docentes'] as $docente_item) : ?>
+                                                        <?php 
+                                                        if (is_array($docente_item)) {
+                                                            $docente_id = $docente_item['id'] ?? 0;
+                                                            $rol_especifico = !empty($docente_item['rol']) ? $docente_item['rol'] : $rol;
+                                                            $render_docente_item($docente_id, $rol_especifico);
+                                                        } else {
+                                                            $render_docente_item($docente_item, $rol);
+                                                        }
+                                                        ?>
                                                     <?php endforeach; ?>
                                                 </div>
                                             </section>
@@ -435,28 +386,44 @@ get_header();
                                     <?php endif; ?>
 
                                     <?php if ($has_equipos) : ?>
-                                        <?php foreach ($data['equipos'] as $grupo) : ?>
-                                            <?php
-                                            if (empty($grupo['docentes']) || !is_array($grupo['docentes'])) {
-                                                continue;
-                                            }
-
-                                            $grupo_nombre = !empty($grupo['nombre'])
-                                                ? (string) $grupo['nombre']
-                                                : __('Equipo docente', 'flacso-uruguay');
-                                            ?>
+                                        <?php
+                                        $equipos_validos = array_filter($data['equipos'], function ($g) {
+                                            return !empty($g['docentes']) && is_array($g['docentes']);
+                                        });
+                                        ?>
+                                        <?php if (!empty($equipos_validos)) : ?>
                                             <section class="flacso-oa-team-group-card">
                                                 <h3 class="flacso-oa-team-group-card__title">
-                                                    <?php echo esc_html($grupo_nombre); ?>
+                                                    <?php esc_html_e('Equipo docente', 'flacso-uruguay'); ?>
                                                 </h3>
 
-                                                <div class="flacso-oa-docentes-grid">
-                                                    <?php foreach ($grupo['docentes'] as $docente_id) : ?>
-                                                        <?php $render_docente_item($docente_id, ''); ?>
+                                                <div class="flacso-oa-team-subgroups">
+                                                    <?php foreach ($equipos_validos as $grupo) : ?>
+                                                        <div class="flacso-oa-team-subgroup">
+                                                            <?php if (!empty($grupo['nombre'])) : ?>
+                                                                <h4 class="flacso-oa-team-subgroup__title">
+                                                                    <?php echo esc_html($grupo['nombre']); ?>
+                                                                </h4>
+                                                            <?php endif; ?>
+
+                                                            <div class="flacso-oa-docentes-grid">
+                                                                <?php foreach ($grupo['docentes'] as $docente_item) : ?>
+                                                                    <?php
+                                                                    if (is_array($docente_item)) {
+                                                                        $docente_id = $docente_item['id'] ?? 0;
+                                                                        $rol_especifico = $docente_item['rol'] ?? '';
+                                                                        $render_docente_item($docente_id, $rol_especifico);
+                                                                    } else {
+                                                                        $render_docente_item($docente_item, '');
+                                                                    }
+                                                                    ?>
+                                                                <?php endforeach; ?>
+                                                            </div>
+                                                        </div>
                                                     <?php endforeach; ?>
                                                 </div>
                                             </section>
-                                        <?php endforeach; ?>
+                                        <?php endif; ?>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -1201,6 +1168,22 @@ get_header();
     font-weight: 900;
     letter-spacing: -0.025em;
     line-height: 1.15;
+}
+
+.flacso-oa-team-subgroup {
+    margin-bottom: 32px;
+}
+
+.flacso-oa-team-subgroup:last-child {
+    margin-bottom: 0;
+}
+
+.flacso-oa-team-subgroup__title {
+    margin: 0 0 20px;
+    font-size: 1.15rem;
+    color: var(--flacso-blue-dark);
+    font-weight: 750;
+    line-height: 1.3;
 }
 
 .flacso-oa-docentes-grid {
