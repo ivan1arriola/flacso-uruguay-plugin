@@ -446,7 +446,11 @@ class Oferta_Data_Schema {
         ];
 
         foreach (self::HTML_FIELDS as $field) {
-            $schema[$field] = self::get_meta_value($post_id, $field);
+            if ($field === 'financiacion_html') {
+                $schema[$field] = get_option('flacso_financiacion_html', '');
+            } else {
+                $schema[$field] = self::get_meta_value($post_id, $field);
+            }
         }
 
         foreach (self::PERSONNEL_GROUPS as $key => $label) {

@@ -29,9 +29,15 @@ class Oferta_Rest_API
         foreach ($meta_keys as $key) {
             register_rest_field('oferta-academica', $key, [
                 'get_callback' => function ($post_array) use ($key) {
+                    if ($key === 'financiacion_html') {
+                        return get_option('flacso_financiacion_html', '');
+                    }
                     return get_post_meta($post_array['id'], $key, true);
                 },
                 'update_callback' => function ($value, $post_obj) use ($key) {
+                    if ($key === 'financiacion_html') {
+                        return update_option('flacso_financiacion_html', $value);
+                    }
                     return update_post_meta($post_obj->ID, $key, $value);
                 },
                 'schema' => null,
