@@ -71,8 +71,19 @@ class Oferta_Data_MetaBox {
                         <td><input type="text" id="oferta_data_duracion_meses" name="oferta_data[duracion_meses]" value="<?php echo esc_attr($values['duracion_meses']); ?>" class="regular-text" /></td>
                     </tr>
                     <tr>
-                        <th><label for="oferta_data_proximo_inicio"><?php esc_html_e('Próximo inicio (valor)', 'flacso-oferta-academica'); ?></label></th>
-                        <td><input type="text" id="oferta_data_proximo_inicio" name="oferta_data[proximo_inicio]" value="<?php echo esc_attr($values['proximo_inicio']); ?>" class="regular-text" /></td>
+                        <th><label for="oferta_data_proximo_inicio"><?php esc_html_e('Próximo inicio', 'flacso-oferta-academica'); ?></label></th>
+                        <td>
+                            <?php
+                            $precision = $values['precision'];
+                            $type = 'date';
+                            if ($precision === 'month') {
+                                $type = 'month';
+                            } elseif ($precision === 'year') {
+                                $type = 'number';
+                            }
+                            ?>
+                            <input type="<?php echo esc_attr($type); ?>" id="oferta_data_proximo_inicio" name="oferta_data[proximo_inicio]" value="<?php echo esc_attr($values['proximo_inicio']); ?>" class="regular-text" <?php echo $type === 'number' ? 'min="2000" max="2100"' : ''; ?> />
+                        </td>
                     </tr>
                     <tr>
                         <th><label for="oferta_data_cohorte"><?php esc_html_e('Cohorte', 'flacso-oferta-academica'); ?></label></th>
@@ -145,6 +156,30 @@ class Oferta_Data_MetaBox {
                 <p class="description"><?php esc_html_e('Una entrada por línea.', 'flacso-oferta-academica'); ?></p>
             <?php endforeach; ?>
         </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var precisionSelect = document.getElementById('oferta_data_precision');
+                var proximoInicioInput = document.getElementById('oferta_data_proximo_inicio');
+                if (precisionSelect && proximoInicioInput) {
+                    precisionSelect.addEventListener('change', function() {
+                        var val = this.value;
+                        if (val === 'day') {
+                            proximoInicioInput.type = 'date';
+                            proximoInicioInput.removeAttribute('min');
+                            proximoInicioInput.removeAttribute('max');
+                        } else if (val === 'month') {
+                            proximoInicioInput.type = 'month';
+                            proximoInicioInput.removeAttribute('min');
+                            proximoInicioInput.removeAttribute('max');
+                        } else {
+                            proximoInicioInput.type = 'number';
+                            proximoInicioInput.min = '2000';
+                            proximoInicioInput.max = '2100';
+                        }
+                    });
+                }
+            });
+        </script>
         <?php
     }
 

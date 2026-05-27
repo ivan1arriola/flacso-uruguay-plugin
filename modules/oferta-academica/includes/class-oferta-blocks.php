@@ -430,34 +430,45 @@ class Oferta_Blocks {
         }
 
         if ($precision === 'month') {
-            if (preg_match('/^(\d{4})-(\d{2})$/', $value, $matches)) {
-                $year = $matches[1];
-                $month_number = (int) $matches[2];
+            if (preg_match('/^(\d{4})[-\/](\d{1,2})$/', $value, $matches) || preg_match('/^(\d{1,2})[-\/](\d{4})$/', $value, $matches)) {
+                // Determine which is year and which is month
+                $year = strlen($matches[1]) === 4 ? $matches[1] : $matches[2];
+                $month_number = (int) (strlen($matches[1]) === 4 ? $matches[2] : $matches[1]);
                 if ($month_number >= 1 && $month_number <= 12) {
                     $month_name = self::mb_ucfirst(date_i18n('F', mktime(0, 0, 0, $month_number, 1, (int) $year)));
                     return $month_name . ' del ' . $year;
                 }
             }
 
-            $timestamp = strtotime($value . '-01');
+            // Fallback para month
+            $timestamp = strtotime(preg_replace('/[-\/]/', '-', $value) . '-01');
+            if (!$timestamp) {
+                $timestamp = strtotime('01-' . preg_replace('/[-\/]/', '-', $value));
+            }
             if ($timestamp) {
                 return self::mb_ucfirst(date_i18n('F', $timestamp)) . ' del ' . date_i18n('Y', $timestamp);
             }
         }
 
         if ($precision === 'day') {
-            if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $matches)) {
+            if (preg_match('/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/', $value, $matches)) {
                 $year = (int) $matches[1];
                 $month_number = (int) $matches[2];
                 $day_number = (int) $matches[3];
-
-                if (checkdate($month_number, $day_number, $year)) {
-                    $month_name = self::mb_ucfirst(date_i18n('F', mktime(0, 0, 0, $month_number, 1, $year)));
-                    return $day_number . ' ' . $month_name . ' del ' . $year;
-                }
+            } elseif (preg_match('/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/', $value, $matches)) {
+                $day_number = (int) $matches[1];
+                $month_number = (int) $matches[2];
+                $year = (int) $matches[3];
+            } else {
+                $year = $month_number = $day_number = 0;
             }
 
-            $timestamp = strtotime($value);
+            if ($year > 0 && checkdate($month_number, $day_number, $year)) {
+                $month_name = self::mb_ucfirst(date_i18n('F', mktime(0, 0, 0, $month_number, 1, $year)));
+                return $day_number . ' ' . $month_name . ' del ' . $year;
+            }
+
+            $timestamp = strtotime(str_replace('/', '-', $value));
             if ($timestamp) {
                 $formatted = date_i18n('j F Y', $timestamp);
                 $parts = preg_split('/\\s+/', trim($formatted));
@@ -475,20 +486,16 @@ class Oferta_Blocks {
     }
 
     private static function detect_proximo_inicio_precision(string $value, $stored = ''): string {
-        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+        if (preg_match('/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}$/', $value) || preg_match('/^\d{1,2}[-\/]\d{1,2}[-\/]\d{4}$/', $value)) {
             return 'day';
         }
 
-        if (preg_match('/^\d{4}-\d{2}$/', $value)) {
+        if (preg_match('/^\d{4}[-\/]\d{1,2}$/', $value) || preg_match('/^\d{1,2}[-\/]\d{4}$/', $value)) {
             return 'month';
         }
 
         if (preg_match('/^\d{4}$/', $value)) {
             return 'year';
-        }
-
-        if (preg_match('/^\d{1,2}\/\d{1,2}\/\d{4}$/', $value)) {
-            return 'day';
         }
 
         $stored = is_string($stored) ? trim(strtolower($stored)) : '';

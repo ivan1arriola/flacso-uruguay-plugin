@@ -1197,8 +1197,8 @@ get_header();
 
 .flacso-oa-docentes-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
-    gap: clamp(16px, 2vw, 22px);
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
+    gap: clamp(24px, 3vw, 32px);
     align-items: stretch;
 }
 

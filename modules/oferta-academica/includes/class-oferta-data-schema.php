@@ -677,10 +677,10 @@ class Oferta_Data_Schema {
         if ($valor === '') {
             return 'year';
         }
-        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $valor)) {
+        if (preg_match('/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}$/', $valor) || preg_match('/^\d{1,2}[-\/]\d{1,2}[-\/]\d{4}$/', $valor)) {
             return 'day';
         }
-        if (preg_match('/^\d{4}-\d{2}$/', $valor)) {
+        if (preg_match('/^\d{4}[-\/]\d{1,2}$/', $valor) || preg_match('/^\d{1,2}[-\/]\d{4}$/', $valor)) {
             return 'month';
         }
         if (preg_match('/^\d{4}$/', $valor)) {
