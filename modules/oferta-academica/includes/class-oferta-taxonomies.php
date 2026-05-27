@@ -12,6 +12,7 @@ class Oferta_Taxonomies {
     public static function init(): void {
         self::register_taxonomies();
         add_action('init', [__CLASS__, 'create_default_terms'], 20);
+        add_action('init', [__CLASS__, 'register_rewrite_rules'], 10);
     }
 
     public static function register_taxonomies(): void {
@@ -96,6 +97,30 @@ class Oferta_Taxonomies {
             if (!term_exists($slug, 'area_tematica')) {
                 wp_insert_term($name, 'area_tematica', ['slug' => $slug]);
             }
+        }
+    }
+
+    public static function register_rewrite_rules(): void {
+        $tipos = [
+            'maestrias' => 'maestria',
+            'especializaciones' => 'especializacion',
+            'diplomados' => 'diplomado',
+            'diplomas' => 'diploma'
+        ];
+        
+        foreach ($tipos as $plural => $singular) {
+            // Regla para paginación
+            add_rewrite_rule(
+                '^formacion/' . $plural . '/page/?([0-9]{1,})/?$',
+                'index.php?tipo-oferta-academica=' . $singular . '&paged=$matches[1]',
+                'top'
+            );
+            // Regla principal
+            add_rewrite_rule(
+                '^formacion/' . $plural . '/?$',
+                'index.php?tipo-oferta-academica=' . $singular,
+                'top'
+            );
         }
     }
 }

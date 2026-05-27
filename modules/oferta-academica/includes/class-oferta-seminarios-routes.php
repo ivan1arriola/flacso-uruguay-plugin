@@ -13,7 +13,6 @@ class Oferta_Seminarios_Routes {
         add_action('init', [__CLASS__, 'register_endpoints']);
         add_filter('query_vars', [__CLASS__, 'add_query_vars']);
         add_filter('template_include', [__CLASS__, 'template_include'], 15);
-        add_action('template_redirect', [__CLASS__, 'maybe_redirect_oferta_singular']);
         add_action('wp_enqueue_scripts', [__CLASS__, 'enqueue_assets']);
     }
 
@@ -44,6 +43,13 @@ class Oferta_Seminarios_Routes {
      * Redirigir a la plantilla personalizada si el endpoint está activo
      */
     public static function template_include(string $template): string {
+        if (is_tax('tipo-oferta-academica')) {
+            $plugin_template = self::template_path('taxonomy-tipo-oferta-academica.php');
+            if (file_exists($plugin_template)) {
+                return $plugin_template;
+            }
+        }
+
         $is_seminarios_endpoint = self::is_seminarios_endpoint_request();
         $is_oferta_singular = is_singular('oferta-academica');
 
