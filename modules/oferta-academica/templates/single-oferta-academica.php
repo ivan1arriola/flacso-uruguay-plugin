@@ -53,22 +53,28 @@ get_header();
                                 <!-- Banner Superior -->
                                 <div class="wp-block-kadence-column mb-5">
                                     <div class="kt-inside-inner-col">
-                                        <div class="flacso-inscripciones-banner">
-                                            <?php if ($thumbnail_url) : ?>
-                                                <img decoding="async" class="flacso-inscripciones-banner__img" src="<?php echo esc_url($thumbnail_url); ?>" alt="<?php the_title_attribute(); ?>">
-                                            <?php endif; ?>
-                                            <div class="flacso-inscripciones-banner__overlay">
-                                                <div class="flacso-inscripciones-banner__top">
-                                                    <div class="flacso-inscripciones-banner__tag">
-                                                        <?php echo !empty($data['inscripciones_abiertas']) ? __('Inscripciones 2026', 'flacso-uruguay') : __('Próximamente', 'flacso-uruguay'); ?>
+                                        <?php 
+                                        if (class_exists('Flacso_Inscripciones_Banner_Block')) {
+                                            echo Flacso_Inscripciones_Banner_Block::init()->render_block([]); 
+                                        } else {
+                                        ?>
+                                            <div class="flacso-inscripciones-banner">
+                                                <?php if ($thumbnail_url) : ?>
+                                                    <img decoding="async" class="flacso-inscripciones-banner__img" src="<?php echo esc_url($thumbnail_url); ?>" alt="<?php the_title_attribute(); ?>">
+                                                <?php endif; ?>
+                                                <div class="flacso-inscripciones-banner__overlay">
+                                                    <div class="flacso-inscripciones-banner__top">
+                                                        <div class="flacso-inscripciones-banner__tag">
+                                                            <?php echo !empty($data['inscripciones_abiertas']) ? __('Inscripciones 2026', 'flacso-uruguay') : __('Próximamente', 'flacso-uruguay'); ?>
+                                                        </div>
+                                                        <?php
+                                                        $logo_url = 'https://flacso.edu.uy/wp-content/uploads/2026/05/logo_flacso_uruguay_20anos_blanco.png';
+                                                        ?>
+                                                        <img decoding="async" src="<?php echo esc_url($logo_url); ?>" alt="FLACSO Uruguay" class="flacso-inscripciones-banner__logo">
                                                     </div>
-                                                    <?php
-                                                    $logo_url = 'https://flacso.edu.uy/wp-content/uploads/2026/05/logo_flacso_uruguay_20anos_blanco.png';
-                                                    ?>
-                                                    <img decoding="async" src="<?php echo esc_url($logo_url); ?>" alt="FLACSO Uruguay" class="flacso-inscripciones-banner__logo">
                                                 </div>
                                             </div>
-                                        </div>
+                                        <?php } ?>
                                     </div>
                                 </div>
 
@@ -93,24 +99,30 @@ get_header();
                                         <div class="wp-block-kadence-column inner-column-2">
                                             <div class="kt-inside-inner-col">
                                                 <div class="flacso-consultas-formulario-wrapper">
-                                                    <div class="flacso-consultas-formulario">
-                                                        <h3 class="mb-2" style="font-weight: 800;"><?php _e('Solicitá información', 'flacso-uruguay'); ?></h3>
-                                                        <p class="mb-4 small text-muted"><?php _e('Llená el formulario y recibí toda la información de cursada 2026.', 'flacso-uruguay'); ?></p>
-                                                        
-                                                        <?php 
-                                                        if (class_exists('Oferta_Consulta_Form')) {
-                                                            echo Oferta_Consulta_Form::render_inline_form($post_id);
-                                                        }
-                                                        ?>
-                                                    </div>
-
-                                                    <?php if (!empty($data['inscripciones_abiertas'])) : ?>
-                                                        <div class="mt-4">
-                                                            <a href="<?php echo trailingslashit(get_permalink($post_id)) . 'preinscripcion'; ?>" class="flacso-btn-preinsc">
-                                                                <?php _e('Preinscripción 2026', 'flacso-uruguay'); ?>
-                                                            </a>
+                                                    <?php 
+                                                    if (function_exists('flacso_consultas_render_form')) {
+                                                        echo flacso_consultas_render_form(['mostrar_preinscripcion' => true]);
+                                                    } else {
+                                                    ?>
+                                                        <div class="flacso-consultas-formulario">
+                                                            <h3 class="mb-2" style="font-weight: 800;"><?php _e('Solicitá información', 'flacso-uruguay'); ?></h3>
+                                                            <p class="mb-4 small text-muted"><?php _e('Llená el formulario y recibí toda la información de cursada 2026.', 'flacso-uruguay'); ?></p>
+                                                            
+                                                            <?php 
+                                                            if (class_exists('Oferta_Consulta_Form')) {
+                                                                echo Oferta_Consulta_Form::render_inline_form($post_id);
+                                                            }
+                                                            ?>
                                                         </div>
-                                                    <?php endif; ?>
+
+                                                        <?php if (!empty($data['inscripciones_abiertas'])) : ?>
+                                                            <div class="mt-4">
+                                                                <a href="<?php echo trailingslashit(get_permalink($post_id)) . 'preinscripcion'; ?>" class="flacso-btn-preinsc">
+                                                                    <?php _e('Preinscripción 2026', 'flacso-uruguay'); ?>
+                                                                </a>
+                                                            </div>
+                                                        <?php endif; ?>
+                                                    <?php } ?>
                                                 </div>
                                             </div>
                                         </div>
@@ -236,33 +248,6 @@ get_header();
                                         <?php if (!empty($data['coordinacion_academica'])) : ?>
                                             <?php foreach ($data['coordinacion_academica'] as $coord) : ?>
                                                 <div class="mb-5">
-                                                    <h3 class="wp-block-heading text-center mb-4" style="font-size: 1.4rem; color: #163970; border-bottom: 2px solid #fcd116; display: inline-block; padding-bottom: 5px; margin-left: 50%; transform: translateX(-50%);"><?php echo esc_html($coord['rol']); ?></h3>
-                                                    <div class="row g-4 justify-content-center mt-3">
-                                                        <?php foreach ($coord['docentes'] as $docente_id) : 
-                                                            $doc_avatar = get_the_post_thumbnail_url($docente_id, 'medium');
-                                                            $doc_prefijo = get_post_meta($docente_id, '_docente_prefijo', true);
-                                                            $doc_cv = get_the_excerpt($docente_id);
-                                                        ?>
-                                                            <div class="col-md-5 col-lg-4">
-                                                                <div class="flacso-docente-card">
-                                                                    <div class="flacso-docente-card__avatar">
-                                                                        <?php if ($doc_avatar) : ?>
-                                                                            <img src="<?php echo esc_url($doc_avatar); ?>" alt="<?php echo esc_attr(get_the_title($docente_id)); ?>">
-                                                                        <?php else : ?>
-                                                                            <i class="bi bi-person"></i>
-                                                                        <?php endif; ?>
-                                                                    </div>
-                                                                    <div class="flacso-docente-card__info">
-                                                                        <h4><?php echo esc_html(get_the_title($docente_id)); ?></h4>
-                                                                        <?php if ($doc_prefijo) : ?>
-                                                                            <p class="flacso-docente-card__title"><?php echo esc_html($doc_prefijo); ?></p>
-                                                                        <?php endif; ?>
-                                                                        <?php if ($doc_cv) : ?>
-                                                                            <div class="flacso-docente-card__cv small text-muted">
-                                                                                <?php echo wp_trim_words($doc_cv, 20); ?>
-                                                                            </div>
-                                                                        <?php endif; ?>
-                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         <?php endforeach; ?>

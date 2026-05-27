@@ -176,6 +176,12 @@ function flacso_consultas_render_form( $attributes = array() ) {
 	}
 	$mostrar_pre     = wp_validate_boolean( $atts['mostrar_preinscripcion'] );
 
+	// ADAPTACIÓN CPT: Solo mostrar si las inscripciones están abiertas
+	if ( $mostrar_pre && get_post_type($id_pagina) === 'oferta-academica' ) {
+		$abiertas = get_post_meta($id_pagina, 'inscripciones_abiertas', true);
+		$mostrar_pre = ($abiertas === '1' || $abiertas === 'true' || $abiertas === true || $abiertas === 1);
+	}
+
 	if ( ! wp_script_is( 'jquery', 'enqueued' ) ) {
 		wp_enqueue_script( 'jquery' );
 	}

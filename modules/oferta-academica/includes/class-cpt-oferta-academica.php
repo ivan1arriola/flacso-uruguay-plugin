@@ -58,6 +58,16 @@ class CPT_Oferta_Academica {
 
         register_post_type('oferta-academica', $args);
         add_filter('post_type_link', [self::class, 'oferta_academica_permalink'], 10, 2);
+        
+        // REGLA PARA PÁGINAS LEGACY (_old)
+        // Evita que el CPT secuestre las páginas de WordPress que terminan en _old
+        add_action('init', function() {
+            add_rewrite_rule(
+                '^formacion/([^/]+)/([^/]+_old)/?$',
+                'index.php?pagename=formacion/$matches[1]/$matches[2]',
+                'top'
+            );
+        }, 11);
     }
 
     /**
