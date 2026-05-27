@@ -1184,20 +1184,14 @@ get_header();
 }
 
 .flacso-oa-team-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
-    gap: clamp(22px, 3vw, 34px);
-    align-items: start;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(40px, 5vw, 56px);
 }
 
 .flacso-oa-team-group-card {
     min-width: 0;
     height: fit-content;
-    border: 1px solid var(--flacso-border);
-    border-radius: var(--flacso-radius-md);
-    background: #ffffff;
-    padding: clamp(20px, 3vw, 30px);
-    box-shadow: var(--flacso-shadow-sm);
 }
 
 .flacso-oa-team-group-card__title {
@@ -1453,14 +1447,6 @@ get_header();
 }
 
 @media (min-width: 700px) {
-    .flacso-oa-info-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .flacso-oa-info-card--wide {
-        grid-column: 1 / -1;
-    }
-
     .flacso-oferta-responsive .flacso-oa-consulta__grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
