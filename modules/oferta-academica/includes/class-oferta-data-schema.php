@@ -9,6 +9,7 @@ if (!defined('ABSPATH')) {
  */
 class Oferta_Data_Schema {
     private const HTML_FIELDS = [
+        'descripcion_html',
         'modalidad_html',
         'duracion_html',
         'objetivos_html',
@@ -199,7 +200,8 @@ class Oferta_Data_Schema {
                                     'type' => 'array',
                                     'items' => [
                                         'type' => ['integer', 'object'],
-                                    ],
+                                        'additionalProperties' => true
+                                    ]
                                 ],
                             ],
                         ],

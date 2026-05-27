@@ -28,7 +28,8 @@ if (!is_wp_error($tipo_terms) && !empty($tipo_terms)) {
 }
 
 $raw_content = get_post_field('post_content', $post_id);
-$has_main_content = trim(wp_strip_all_tags(apply_filters('the_content', $raw_content))) !== '';
+$descripcion_html = !empty($data['descripcion_html']) ? $data['descripcion_html'] : '';
+$has_main_content = trim(wp_strip_all_tags(apply_filters('the_content', $raw_content))) !== '' || trim(wp_strip_all_tags($descripcion_html)) !== '';
 
 $inscripciones_meta = get_post_meta($post_id, 'inscripciones_abiertas', true);
 
@@ -146,7 +147,7 @@ get_header();
                                 alt="<?php echo esc_attr(get_the_title($post_id)); ?>"
                                 style="width: 100%; height: 100%; object-fit: cover;">
 
-                            <div class="flacso-inscripciones-banner__overlay" style="padding: clamp(2rem, 5vw, 4rem); background: linear-gradient(to right, rgba(5, 25, 56, 0.9), rgba(5, 25, 56, 0.4)); position: absolute; inset: 0; display: flex; flex-direction: column;">
+                            <div class="flacso-inscripciones-banner__overlay" style="padding: clamp(2rem, 5vw, 4rem); position: absolute; inset: 0; display: flex; flex-direction: column;">
                                 <div class="flacso-inscripciones-banner__top" style="display: flex; justify-content: space-between; align-items: flex-start;">
                                     <div class="flacso-inscripciones-banner__tag" style="background: var(--flacso-yellow); color: var(--flacso-blue-dark); padding: 4px 12px; font-weight: 800; text-transform: uppercase; border-radius: 4px;">
                                         <?php echo esc_html($hero_tag); ?>
@@ -154,7 +155,7 @@ get_header();
                                     <img
                                         src="<?php echo esc_url($logo_url); ?>"
                                         alt="FLACSO Uruguay"
-                                        class="flacso-inscripciones-banner__logo" style="max-width: 150px;">
+                                        class="flacso-inscripciones-banner__logo">
                                 </div>
 
                                 <div class="flacso-inscripciones-banner__middle" style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; max-width: 1000px;">
@@ -187,7 +188,12 @@ get_header();
                                     <?php if ($has_main_content) : ?>
                                         <section class="flacso-oa-content-card">
                                             <div class="flacso-oa-content-card__body">
-                                                <?php the_content(); ?>
+                                                <?php 
+                                                if (!empty($descripcion_html)) {
+                                                    echo wp_kses_post($descripcion_html);
+                                                }
+                                                the_content(); 
+                                                ?>
                                             </div>
                                         </section>
                                     <?php endif; ?>
@@ -1461,10 +1467,10 @@ get_header();
         inset: 0;
         z-index: 1;
         background: linear-gradient(
-            to bottom,
-            rgba(15, 31, 62, 0.45) 0%,
-            rgba(15, 31, 62, 0.35) 35%,
-            rgba(15, 31, 62, 0.85) 100%
+            to right,
+            rgba(5, 25, 56, 0.85) 0%,
+            rgba(5, 25, 56, 0.35) 60%,
+            rgba(5, 25, 56, 0.2) 100%
         );
         pointer-events: none;
     }
@@ -1506,7 +1512,7 @@ get_header();
     }
 
     .flacso-inscripciones-banner__logo {
-        max-width: clamp(135px, 14vw, 190px);
+        max-width: clamp(180px, 22vw, 260px);
         height: auto;
         flex: 0 0 auto;
     }
