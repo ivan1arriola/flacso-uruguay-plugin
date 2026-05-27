@@ -11,6 +11,35 @@ if (!defined('ABSPATH')) {
 $post_id = get_the_ID();
 $data = Oferta_Data_Schema::get_schema($post_id);
 $thumbnail_url = get_the_post_thumbnail_url($post_id, 'full');
+$tipo_oferta = '';
+$tipo_terms = get_the_terms($post_id, 'tipo-oferta-academica');
+
+if (!is_wp_error($tipo_terms) && !empty($tipo_terms)) {
+    $tipo_oferta = $tipo_terms[0]->name;
+}
+
+$inscripciones_abiertas = !empty($data['inscripciones_abiertas']);
+$hero_tag = $inscripciones_abiertas ? __('Inscripciones 2026', 'flacso-uruguay') : __('Próximamente', 'flacso-uruguay');
+$hero_cta = $inscripciones_abiertas
+    ? __('Descuentos especiales disponibles. Solicitá información e inscribite hoy.', 'flacso-uruguay')
+    : __('Solicitá información y te avisaremos cuando abra la próxima cohorte.', 'flacso-uruguay');
+$hero_cta_markup = esc_html($hero_cta);
+$logo_url = 'https://flacso.edu.uy/wp-content/uploads/2026/05/logo_flacso_uruguay_20anos_blanco.png';
+
+if ($inscripciones_abiertas) {
+    $preinscripcion_url = trailingslashit(get_permalink($post_id)) . 'preinscripcion/';
+    $hero_cta_markup = sprintf(
+        '%s <a href="%s">%s</a>',
+        esc_html__('Descuentos especiales disponibles.', 'flacso-uruguay'),
+        esc_url($preinscripcion_url),
+        esc_html__('Solicitá información e inscribite hoy.', 'flacso-uruguay')
+    );
+}
+
+$programa_meta = array_filter([
+    !empty($data['cohorte']) ? (string) $data['cohorte'] : '',
+    !empty($data['abreviacion']) ? strtoupper((string) $data['abreviacion']) : '',
+]);
 
 // Cargar estilos de la oferta
 if (class_exists('Oferta_Renderer')) {
@@ -30,38 +59,51 @@ get_header();
                         <div class="entry-content-wrap">
                             <div class="entry-content single-content">
                                 
-                                <!-- Título de la Oferta -->
-                                <h1 class="wp-block-heading flacso-oferta-title mb-4" style="color: #163970; font-weight: 900; text-align: left; font-size: clamp(2rem, 3.5vw, 3rem); line-height: 1.1; letter-spacing: -0.02em; text-transform: uppercase;">
-                                    <?php the_title(); ?>
-                                </h1>
-
                                 <!-- Banner Superior -->
-                                <div class="wp-block-kadence-column mb-5">
+                                <section class="flacso-oa-single-hero mb-4" aria-label="<?php esc_attr_e('Hero de inscripciones', 'flacso-uruguay'); ?>">
                                     <div class="kt-inside-inner-col">
-                                        <?php 
+                                        <?php
                                         if (class_exists('Flacso_Inscripciones_Banner_Block')) {
-                                            echo Flacso_Inscripciones_Banner_Block::get_instance()->render_block([]); 
+                                            echo Flacso_Inscripciones_Banner_Block::get_instance()->render_block([]);
                                         } else {
                                         ?>
                                             <div class="flacso-inscripciones-banner">
                                                 <?php if ($thumbnail_url) : ?>
                                                     <img decoding="async" class="flacso-inscripciones-banner__img" src="<?php echo esc_url($thumbnail_url); ?>" alt="<?php the_title_attribute(); ?>">
+                                                <?php else : ?>
+                                                    <div class="flacso-inscripciones-banner__img flacso-inscripciones-banner__img--placeholder" aria-hidden="true"></div>
                                                 <?php endif; ?>
                                                 <div class="flacso-inscripciones-banner__overlay">
                                                     <div class="flacso-inscripciones-banner__top">
                                                         <div class="flacso-inscripciones-banner__tag">
-                                                            <?php echo !empty($data['inscripciones_abiertas']) ? __('Inscripciones 2026', 'flacso-uruguay') : __('Próximamente', 'flacso-uruguay'); ?>
+                                                            <?php echo esc_html($hero_tag); ?>
                                                         </div>
-                                                        <?php
-                                                        $logo_url = 'https://flacso.edu.uy/wp-content/uploads/2026/05/logo_flacso_uruguay_20anos_blanco.png';
-                                                        ?>
                                                         <img decoding="async" src="<?php echo esc_url($logo_url); ?>" alt="FLACSO Uruguay" class="flacso-inscripciones-banner__logo">
+                                                    </div>
+                                                    <div class="flacso-inscripciones-banner__bottom">
+                                                        <div class="flacso-inscripciones-banner__cta">
+                                                            <?php echo wp_kses_post($hero_cta_markup); ?>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         <?php } ?>
                                     </div>
-                                </div>
+                                </section>
+
+                                <header class="flacso-oa-single-intro mb-5">
+                                    <?php if ($tipo_oferta !== '') : ?>
+                                        <p class="flacso-oa-single-intro__eyebrow"><?php echo esc_html($tipo_oferta); ?></p>
+                                    <?php endif; ?>
+                                    <h1 class="wp-block-heading flacso-oa-single-intro__title"><?php the_title(); ?></h1>
+                                    <?php if (!empty($programa_meta)) : ?>
+                                        <p class="flacso-oa-single-intro__meta">
+                                            <?php foreach ($programa_meta as $meta_item) : ?>
+                                                <span><?php echo esc_html($meta_item); ?></span>
+                                            <?php endforeach; ?>
+                                        </p>
+                                    <?php endif; ?>
+                                </header>
 
                                 <!-- Grid Principal (Descripción + Formulario) -->
                                 <div class="kb-row-layout-wrap wp-block-kadence-rowlayout mb-5">
@@ -88,10 +130,10 @@ get_header();
 
                                 <!-- Acordeones de Información -->
                                 <div class="mt-5">
-                                                <div class="flacso-oferta-cards-container">
+                                                <div class="flacso-oferta-cards-container flacso-oferta-cards-grid">
                                                     
                                                     <!-- MODALIDAD -->
-                                                    <div class="card mb-4 border-0 shadow-sm rounded-4 overflow-hidden" style="background-color: #f8fafc;">
+                                                    <div class="card flacso-oferta-info-card mb-4 border-0 shadow-sm rounded-4 overflow-hidden" style="background-color: #f8fafc;">
                                                         <div class="card-header bg-white border-0 py-3 px-4" style="border-left: 5px solid #fcd116 !important;">
                                                             <h3 class="card-title m-0" style="color: #163970; font-weight: 800; font-size: 1.1rem; text-transform: uppercase;"><?php _e('MODALIDAD', 'flacso-uruguay'); ?></h3>
                                                         </div>
@@ -102,7 +144,7 @@ get_header();
 
                                                     <!-- OBJETIVOS -->
                                                     <?php if (!empty($data['objetivos_html'])) : ?>
-                                                    <div class="card mb-4 border-0 shadow-sm rounded-4 overflow-hidden" style="background-color: #f8fafc;">
+                                                    <div class="card flacso-oferta-info-card mb-4 border-0 shadow-sm rounded-4 overflow-hidden" style="background-color: #f8fafc;">
                                                         <div class="card-header bg-white border-0 py-3 px-4" style="border-left: 5px solid #fcd116 !important;">
                                                             <h3 class="card-title m-0" style="color: #163970; font-weight: 800; font-size: 1.1rem; text-transform: uppercase;"><?php _e('OBJETIVOS', 'flacso-uruguay'); ?></h3>
                                                         </div>
@@ -113,7 +155,7 @@ get_header();
                                                     <?php endif; ?>
 
                                                     <!-- MALLA CURRICULAR -->
-                                                    <div class="card mb-4 border-0 shadow-sm rounded-4 overflow-hidden" style="background-color: #f8fafc;">
+                                                    <div class="card flacso-oferta-info-card flacso-oferta-info-card--span-2 mb-4 border-0 shadow-sm rounded-4 overflow-hidden" style="background-color: #f8fafc;">
                                                         <div class="card-header bg-white border-0 py-3 px-4" style="border-left: 5px solid #fcd116 !important;">
                                                             <h3 class="card-title m-0" style="color: #163970; font-weight: 800; font-size: 1.1rem; text-transform: uppercase;"><?php _e('MALLA CURRICULAR', 'flacso-uruguay'); ?></h3>
                                                         </div>
@@ -140,7 +182,7 @@ get_header();
                                                     </div>
 
                                                     <!-- CALENDARIO -->
-                                                    <div class="card mb-4 border-0 shadow-sm rounded-4 overflow-hidden" style="background-color: #f8fafc;">
+                                                    <div class="card flacso-oferta-info-card flacso-oferta-info-card--span-2 mb-4 border-0 shadow-sm rounded-4 overflow-hidden" style="background-color: #f8fafc;">
                                                         <div class="card-header bg-white border-0 py-3 px-4" style="border-left: 5px solid #fcd116 !important;">
                                                             <h3 class="card-title m-0" style="color: #163970; font-weight: 800; font-size: 1.1rem; text-transform: uppercase;"><?php _e('CALENDARIO', 'flacso-uruguay'); ?></h3>
                                                         </div>
@@ -167,7 +209,7 @@ get_header();
                                                     </div>
 
                                                     <!-- FINANCIACION -->
-                                                    <div class="card mb-4 border-0 shadow-sm rounded-4 overflow-hidden" style="background-color: #f8fafc;">
+                                                    <div class="card flacso-oferta-info-card flacso-oferta-info-card--span-2 mb-4 border-0 shadow-sm rounded-4 overflow-hidden" style="background-color: #f8fafc;">
                                                         <div class="card-header bg-white border-0 py-3 px-4" style="border-left: 5px solid #fcd116 !important;">
                                                             <h3 class="card-title m-0" style="color: #163970; font-weight: 800; font-size: 1.1rem; text-transform: uppercase;"><?php _e('FINANCIACIÓN Y BECAS', 'flacso-uruguay'); ?></h3>
                                                         </div>
