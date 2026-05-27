@@ -134,45 +134,48 @@ get_header();
                     }
 
                     $banner_cta_text = $inscripciones_abiertas
-                        ? 'Descuentos especiales disponibles. <a href="'. esc_url($preinscripcion_url) .'" style="color:white; text-decoration:underline; text-underline-offset: 4px;">Solicitá informacion e inscribite hoy.</a>'
+                        ? 'Descuentos especiales disponibles. Solicitá información e inscribite hoy.'
                         : 'Mantente atento a nuestras próximas aperturas.';
                     ?>
 
-                    <section class="flacso-inscripciones-banner" style="margin-bottom: 0; border-radius: 0; width: 100%; aspect-ratio: 2.5 / 1; min-height: 400px; max-height: 600px;">
-                        <img
-                            class="flacso-inscripciones-banner__img"
-                            src="<?php echo esc_url($banner_featured_url); ?>"
-                            alt="<?php echo esc_attr(get_the_title($post_id)); ?>">
+                    <div class="flacso-oa-container" style="padding-top: clamp(24px, 4vw, 48px); padding-bottom: clamp(16px, 3vw, 32px);">
+                        <section class="flacso-inscripciones-banner" style="margin-bottom: 0; aspect-ratio: 2.5 / 1; min-height: 400px; max-height: 600px; position: relative; overflow: hidden;">
+                            <img
+                                class="flacso-inscripciones-banner__img"
+                                src="<?php echo esc_url($banner_featured_url); ?>"
+                                alt="<?php echo esc_attr(get_the_title($post_id)); ?>"
+                                style="width: 100%; height: 100%; object-fit: cover;">
 
-                        <div class="flacso-inscripciones-banner__overlay" style="padding: clamp(2rem, 5vw, 4rem);">
-                            <div class="flacso-inscripciones-banner__top">
-                                <div class="flacso-inscripciones-banner__tag">
-                                    <?php echo esc_html($hero_tag); ?>
+                            <div class="flacso-inscripciones-banner__overlay" style="padding: clamp(2rem, 5vw, 4rem); background: linear-gradient(to right, rgba(5, 25, 56, 0.9), rgba(5, 25, 56, 0.4)); position: absolute; inset: 0; display: flex; flex-direction: column;">
+                                <div class="flacso-inscripciones-banner__top" style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                    <div class="flacso-inscripciones-banner__tag" style="background: var(--flacso-yellow); color: var(--flacso-blue-dark); padding: 4px 12px; font-weight: 800; text-transform: uppercase; border-radius: 4px;">
+                                        <?php echo esc_html($hero_tag); ?>
+                                    </div>
+                                    <img
+                                        src="<?php echo esc_url($logo_url); ?>"
+                                        alt="FLACSO Uruguay"
+                                        class="flacso-inscripciones-banner__logo" style="max-width: 150px;">
                                 </div>
-                                <img
-                                    src="<?php echo esc_url($logo_url); ?>"
-                                    alt="FLACSO Uruguay"
-                                    class="flacso-inscripciones-banner__logo">
-                            </div>
 
-                            <div class="flacso-inscripciones-banner__middle" style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; max-width: 1000px;">
-                                <?php if ($tipo_oferta !== '') : ?>
-                                    <p class="flacso-inscripciones-banner__eyebrow" style="margin: 0 0 16px; color: #fcd116; font-size: clamp(0.9rem, 1.2vw, 1.05rem); font-weight: 850; letter-spacing: 0.08em; text-transform: uppercase;">
-                                        <?php echo esc_html($tipo_oferta); ?>
-                                    </p>
-                                <?php endif; ?>
-                                <h1 class="flacso-inscripciones-banner__title" style="margin: 0; color: #ffffff; font-size: clamp(2.2rem, 4.5vw, 4.2rem); font-weight: 900; letter-spacing: -0.025em; line-height: 1.1; text-wrap: balance; text-shadow: 0 4px 16px rgba(0,0,0,0.6);">
-                                    <?php the_title(); ?>
-                                </h1>
-                            </div>
+                                <div class="flacso-inscripciones-banner__middle" style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; max-width: 1000px;">
+                                    <?php if ($tipo_oferta !== '') : ?>
+                                        <p class="flacso-inscripciones-banner__eyebrow" style="margin: 0 0 16px; color: #fcd116; font-size: clamp(0.9rem, 1.2vw, 1.05rem); font-weight: 850; letter-spacing: 0.08em; text-transform: uppercase;">
+                                            <?php echo esc_html($tipo_oferta); ?>
+                                        </p>
+                                    <?php endif; ?>
+                                    <h1 class="flacso-inscripciones-banner__title" style="margin: 0; color: #ffffff; font-size: clamp(2.2rem, 4.5vw, 4.2rem); font-weight: 900; letter-spacing: -0.025em; line-height: 1.1; text-wrap: balance; text-shadow: 0 4px 16px rgba(0,0,0,0.6);">
+                                        <?php the_title(); ?>
+                                    </h1>
+                                </div>
 
-                            <div class="flacso-inscripciones-banner__bottom">
-                                <div class="flacso-inscripciones-banner__cta" style="font-size: clamp(1rem, 1.2vw, 1.15rem);">
-                                    <?php echo wp_kses_post($banner_cta_text); ?>
+                                <div class="flacso-inscripciones-banner__bottom">
+                                    <div class="flacso-inscripciones-banner__cta" style="font-size: clamp(1rem, 1.2vw, 1.15rem); color: white;">
+                                        <?php echo esc_html($banner_cta_text); ?>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </section>
+                        </section>
+                    </div>
 
                     <section id="flacso-oa-contenido" class="flacso-oa-main-section">
                         <div class="flacso-oa-container">
@@ -1146,7 +1149,7 @@ get_header();
 
 .flacso-oa-team-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
     gap: clamp(22px, 3vw, 34px);
     align-items: start;
 }
@@ -1188,7 +1191,7 @@ get_header();
 
 .flacso-oa-docentes-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
     gap: clamp(16px, 2vw, 22px);
     align-items: stretch;
 }
@@ -1207,6 +1210,9 @@ get_header();
 .flacso-oa-docente-item .card {
     height: 100%;
     max-width: 100%;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+    min-width: 0;
 }
 
 .flacso-oa-seminarios-section {
@@ -1456,9 +1462,9 @@ get_header();
         z-index: 1;
         background: linear-gradient(
             to bottom,
-            rgba(0, 0, 0, 0.22) 0%,
-            rgba(0, 0, 0, 0.18) 35%,
-            rgba(0, 0, 0, 0.52) 100%
+            rgba(15, 31, 62, 0.45) 0%,
+            rgba(15, 31, 62, 0.35) 35%,
+            rgba(15, 31, 62, 0.85) 100%
         );
         pointer-events: none;
     }
