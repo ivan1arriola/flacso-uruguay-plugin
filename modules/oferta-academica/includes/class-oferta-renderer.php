@@ -770,12 +770,7 @@ class Oferta_Renderer {
     }
 
     private static function build_preinscripcion_url(int $page_id, int $oferta_id): string {
-        $base_page_id = $page_id > 0 ? $page_id : (int) get_post_meta($oferta_id, '_oferta_page_id', true);
-        if ($base_page_id <= 0) {
-            return '';
-        }
-
-        $base_permalink = get_permalink($base_page_id);
+        $base_permalink = get_permalink($oferta_id);
         if (!$base_permalink) {
             return '';
         }

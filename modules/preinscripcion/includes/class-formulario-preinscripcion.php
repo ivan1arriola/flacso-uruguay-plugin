@@ -87,10 +87,31 @@ class FLACSO_Formulario_Preinscripcion_Final {
      * Registra rewrite rules para páginas virtuales de preinscripción
      */
     public function registrar_rewrite_rules() {
-        // Captura /cualquier-pagina/preinscripcion/ como página virtual
+        // Captura /formacion/tipo/slug/preinscripcion/ para el CPT
+        add_rewrite_rule(
+            '^formacion/[^/]+/([^/]+)/preinscripcion/?$',
+            'index.php?oferta-academica=$matches[1]&es_preinscripcion=1',
+            'top'
+        );
+        
+        // Captura /formacion/tipo/slug/carta/ para el CPT
+        add_rewrite_rule(
+            '^formacion/[^/]+/([^/]+)/carta/?$',
+            'index.php?oferta-academica=$matches[1]&es_carta=1',
+            'top'
+        );
+
+        // Captura /cualquier-pagina/preinscripcion/ como página virtual (Legacy)
         add_rewrite_rule(
             '^(.+?)/preinscripcion/?$',
             'index.php?pagename=$matches[1]&es_preinscripcion=1',
+            'top'
+        );
+        
+        // Captura /cualquier-pagina/carta/ como página virtual (Legacy)
+        add_rewrite_rule(
+            '^(.+?)/carta/?$',
+            'index.php?pagename=$matches[1]&es_carta=1',
             'top'
         );
     }
@@ -100,15 +121,44 @@ class FLACSO_Formulario_Preinscripcion_Final {
      */
     public function agregar_query_vars($vars) {
         $vars[] = 'es_preinscripcion';
+        $vars[] = 'es_carta';
         return $vars;
     }
 
     /**
      * Verifica si una página tiene preinscripción activa
      */
+    /**
+     * Obtiene el ID de la oferta académica asociada a una página de WordPress.
+     */
+    private function obtener_oferta_id_por_pagina($page_id) {
+        $page_id = (int) $page_id;
+        if ($page_id <= 0) {
+            return 0;
+        }
+        $ids = get_posts(array(
+            'post_type' => 'oferta-academica',
+            'post_status' => array('publish', 'private'),
+            'posts_per_page' => 1,
+            'fields' => 'ids',
+            'meta_key' => '_oferta_page_id',
+            'meta_value' => $page_id,
+            'no_found_rows' => true,
+        ));
+        return !empty($ids) ? (int) $ids[0] : 0;
+    }
+
     public function es_pagina_preinscripcion_activa($page_id) {
+        $page_id = (int)$page_id;
+
+        // Si hay una oferta académica asociada, la preinscripción está activa
+        $oferta_id = $this->obtener_oferta_id_por_pagina($page_id);
+        if ($oferta_id > 0) {
+            return true;
+        }
+
         $paginas_activas = get_option('flacso_preinscripciones_activas', array());
-        return in_array((int)$page_id, array_map('intval', $paginas_activas));
+        return in_array($page_id, array_map('intval', $paginas_activas));
     }
 
     /**
@@ -126,6 +176,23 @@ class FLACSO_Formulario_Preinscripcion_Final {
         if ($programa_id <= 0) {
             return false;
         }
+
+        $oferta_id = 0;
+        if (get_post_type($programa_id) === 'oferta-academica') {
+            $oferta_id = $programa_id;
+        } else {
+            $oferta_id = $this->obtener_oferta_id_por_pagina($programa_id);
+        }
+
+        if ($oferta_id > 0) {
+            $inscripciones_abiertas = get_post_meta($oferta_id, 'inscripciones_abiertas', true);
+            if ($inscripciones_abiertas === '1' || $inscripciones_abiertas === 'true' || $inscripciones_abiertas === true || $inscripciones_abiertas === 1) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+
         $paginas_cerradas = get_option('flacso_preinscripciones_cerradas_por_programa', array());
         return in_array($programa_id, array_map('intval', $paginas_cerradas), true);
     }

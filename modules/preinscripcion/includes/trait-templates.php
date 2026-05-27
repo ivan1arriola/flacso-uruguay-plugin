@@ -23,8 +23,14 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
         // Cargar solo en la URL virtual /.../preinscripcion/.
         if (!get_query_var('es_preinscripcion')) return;
 
-        // Verificar si es una página con preinscripción activa.
-        if (!$this->es_pagina_preinscripcion_activa($post->ID)) return;
+        // Verificar si es una página u oferta con preinscripción activa.
+        if (is_singular('page') && !$this->es_pagina_preinscripcion_activa($post->ID)) return;
+        if (is_singular('oferta-academica')) {
+            $abiertas = get_post_meta($post->ID, 'inscripciones_abiertas', true);
+            if ($abiertas !== '1' && $abiertas !== 'true' && $abiertas !== true && $abiertas !== 1) {
+                return;
+            }
+        }
         
         // Bootstrap e íconos solo para el template virtual.
         $this->enqueue_assets();
@@ -60,9 +66,17 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
         // Verificar si es una URL virtual de preinscripción
         $es_preinscripcion = get_query_var('es_preinscripcion');
         
-        if ($es_preinscripcion && is_singular('page') && $post) {
+        if ($es_preinscripcion && (is_singular('page') || is_singular('oferta-academica')) && $post) {
             // Verificar si esta página tiene preinscripción activa
-            if ($this->es_pagina_preinscripcion_activa($post->ID)) {
+            $activa = false;
+            if (is_singular('page')) {
+                $activa = $this->es_pagina_preinscripcion_activa($post->ID);
+            } else {
+                $abiertas = get_post_meta($post->ID, 'inscripciones_abiertas', true);
+                $activa = ($abiertas === '1' || $abiertas === 'true' || $abiertas === true || $abiertas === 1);
+            }
+
+            if ($activa) {
                 $custom_template = $this->obtener_ruta_template();
                 
                 if (file_exists($custom_template)) {
