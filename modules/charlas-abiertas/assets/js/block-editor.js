@@ -155,7 +155,7 @@
     function buildPreviewFields(variant) {
         var fields = [];
 
-        if (variant === "nombre_apellido") {
+        if (variant === "nombre_apellido" || variant === "nombre_apellido_sin_telefono") {
             fields.push(
                 renderTextField(
                     __("Nombre y apellido *", "flacso-charlas-abiertas"),
@@ -189,7 +189,7 @@
             )
         );
 
-        if (variant !== "nombre_apellido") {
+        if (variant !== "nombre_apellido" && variant !== "nombre_apellido_sin_telefono") {
             fields.push(
                 renderTextField(
                     __("Profesión", "flacso-charlas-abiertas"),
@@ -206,7 +206,9 @@
                 false
             )
         );
-        fields.push(renderPhoneField());
+        if (variant !== "nombre_apellido_sin_telefono") {
+            fields.push(renderPhoneField());
+        }
         fields.push(renderAttendanceField());
 
         return fields;
@@ -276,9 +278,11 @@
                     }
                 ),
                 renderBadge(
-                    variant === "nombre_apellido"
-                        ? __("Versión alternativa", "flacso-charlas-abiertas")
-                        : __("Versión estándar", "flacso-charlas-abiertas"),
+                    variant === "nombre_apellido_sin_telefono"
+                        ? __("Alternativo 2", "flacso-charlas-abiertas")
+                        : (variant === "nombre_apellido"
+                            ? __("Versión alternativa", "flacso-charlas-abiertas")
+                            : __("Versión estándar", "flacso-charlas-abiertas")),
                     {
                         background: "#f4f0ff",
                         color: "#6d28d9",
@@ -438,7 +442,8 @@
                                     value: variant,
                                     options: [
                                         { label: __('Estándar: nombre, apellido y profesión', 'flacso-charlas-abiertas'), value: 'estandar' },
-                                        { label: __('Alternativa: nombre y apellido en un solo campo', 'flacso-charlas-abiertas'), value: 'nombre_apellido' }
+                                        { label: __('Alternativa: nombre y apellido en un solo campo', 'flacso-charlas-abiertas'), value: 'nombre_apellido' },
+                                        { label: __('Alternativo 2: nombre y apellido en un solo campo, sin teléfono', 'flacso-charlas-abiertas'), value: 'nombre_apellido_sin_telefono' }
                                     ],
                                     onChange: function(val){
                                         props.setAttributes({ variant: val || 'estandar' });

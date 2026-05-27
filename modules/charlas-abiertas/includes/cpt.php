@@ -7,7 +7,9 @@ if (!defined('ABSPATH')) {
 if (!function_exists('flacso_charlas_abiertas_normalize_form_variant')) {
     function flacso_charlas_abiertas_normalize_form_variant($value) {
         $variant = sanitize_key((string) $value);
-        return 'nombre_apellido' === $variant ? 'nombre_apellido' : 'estandar';
+        if ('nombre_apellido' === $variant) return 'nombre_apellido';
+        if ('nombre_apellido_sin_telefono' === $variant) return 'nombre_apellido_sin_telefono';
+        return 'estandar';
     }
 }
 
@@ -435,6 +437,9 @@ function flacso_charlas_abiertas_render_meta_box($post) {
             </option>
             <option value="nombre_apellido" <?php selected($form_variant, 'nombre_apellido'); ?>>
                 Alternativa: nombre y apellido en un solo campo
+            </option>
+            <option value="nombre_apellido_sin_telefono" <?php selected($form_variant, 'nombre_apellido_sin_telefono'); ?>>
+                Alternativo 2: nombre y apellido en un solo campo, sin teléfono
             </option>
         </select>
     </p>

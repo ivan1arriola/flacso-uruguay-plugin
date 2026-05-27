@@ -135,7 +135,7 @@ function flacso_charlas_abiertas_render_block($attributes) {
             <h3 class="flacso-form-title"><?php echo esc_html($form_heading); ?></h3>
 
             <div class="flacso-form-grid">
-                <?php if ('nombre_apellido' === $form_variant) : ?>
+                <?php if ('nombre_apellido' === $form_variant || 'nombre_apellido_sin_telefono' === $form_variant) : ?>
                     <div class="flacso-form-group flacso-form-group-full">
                         <label for="<?php echo esc_attr($wrapper_id); ?>-nombre-apellido">Nombre y apellido *</label>
                         <input type="text" id="<?php echo esc_attr($wrapper_id); ?>-nombre-apellido" name="nombre_apellido" placeholder="Ej. Juan Pérez" required />
@@ -171,7 +171,7 @@ function flacso_charlas_abiertas_render_block($attributes) {
                     <input type="text" id="<?php echo esc_attr($wrapper_id); ?>-pais-residencia" name="pais_residencia" class="flacso-pais-residencia" placeholder="Ej. Uruguay" />
                 </div>
 
-                <?php if ('nombre_apellido' !== $form_variant) : ?>
+                <?php if ('nombre_apellido' !== $form_variant && 'nombre_apellido_sin_telefono' !== $form_variant) : ?>
                     <div class="flacso-form-group">
                         <label for="<?php echo esc_attr($wrapper_id); ?>-profesion">Profesión</label>
                         <input type="text" id="<?php echo esc_attr($wrapper_id); ?>-profesion" name="profesion" placeholder="Ej. Docente, Estudiante" />
@@ -183,6 +183,7 @@ function flacso_charlas_abiertas_render_block($attributes) {
                     <input type="text" id="<?php echo esc_attr($wrapper_id); ?>-institucion" name="institucion" placeholder="Ej. Universidad, FLACSO" />
                 </div>
 
+                <?php if ('nombre_apellido_sin_telefono' !== $form_variant) : ?>
                 <div class="flacso-form-group">
                     <label for="<?php echo esc_attr($telefono_input_id); ?>">Número de teléfono (Opcional)</label>
                     <div class="input-group has-validation flacso-telefono-group">
@@ -198,6 +199,7 @@ function flacso_charlas_abiertas_render_block($attributes) {
                     </div>
                     <div id="<?php echo esc_attr($telefono_feedback_id); ?>" class="invalid-feedback flacso-telefono-feedback" aria-live="polite"></div>
                 </div>
+                <?php endif; ?>
 
                 <div class="flacso-form-group flacso-form-group-full">
                     <label for="<?php echo esc_attr($modalidad_select_id); ?>">Modalidad de asistencia *</label>
