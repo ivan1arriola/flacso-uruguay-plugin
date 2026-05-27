@@ -140,37 +140,37 @@ get_header();
                     ?>
 
                     <div class="flacso-oa-container" style="padding-top: clamp(24px, 4vw, 48px); padding-bottom: clamp(16px, 3vw, 32px);">
-                        <section class="flacso-inscripciones-banner" style="margin-bottom: 0; aspect-ratio: 2.5 / 1; min-height: 400px; max-height: 600px; position: relative; overflow: hidden;">
+                        <section class="flacso-inscripciones-banner" style="margin-bottom: 0; min-height: clamp(400px, 40vw, 600px); position: relative; overflow: hidden; display: flex; flex-direction: column;">
                             <img
                                 class="flacso-inscripciones-banner__img"
                                 src="<?php echo esc_url($banner_featured_url); ?>"
                                 alt="<?php echo esc_attr(get_the_title($post_id)); ?>"
-                                style="width: 100%; height: 100%; object-fit: cover;">
+                                style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0;">
 
-                            <div class="flacso-inscripciones-banner__overlay" style="padding: clamp(2rem, 5vw, 4rem); position: absolute; inset: 0; display: flex; flex-direction: column;">
-                                <div class="flacso-inscripciones-banner__top" style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                    <div class="flacso-inscripciones-banner__tag" style="background: var(--flacso-yellow); color: var(--flacso-blue-dark); padding: 4px 12px; font-weight: 800; text-transform: uppercase; border-radius: 4px;">
+                            <div class="flacso-inscripciones-banner__overlay" style="padding: clamp(2rem, 5vw, 4rem); position: relative; z-index: 2; display: flex; flex-direction: column; flex: 1;">
+                                <div class="flacso-inscripciones-banner__top" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+                                    <div class="flacso-inscripciones-banner__tag" style="background: var(--flacso-yellow); color: var(--flacso-blue-dark); padding: 4px 12px; font-weight: 800; text-transform: uppercase; border-radius: 4px; flex-shrink: 0;">
                                         <?php echo esc_html($hero_tag); ?>
                                     </div>
                                     <img
                                         src="<?php echo esc_url($logo_url); ?>"
                                         alt="FLACSO Uruguay"
-                                        class="flacso-inscripciones-banner__logo">
+                                        class="flacso-inscripciones-banner__logo" style="flex-shrink: 0; max-width: 150px; height: auto;">
                                 </div>
 
-                                <div class="flacso-inscripciones-banner__middle" style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; max-width: 1000px;">
+                                <div class="flacso-inscripciones-banner__middle" style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; max-width: 1100px; margin: clamp(1.5rem, 3vw, 3rem) 0;">
                                     <?php if ($tipo_oferta !== '') : ?>
-                                        <p class="flacso-inscripciones-banner__eyebrow" style="margin: 0 0 16px; color: #fcd116; font-size: clamp(0.9rem, 1.2vw, 1.05rem); font-weight: 850; letter-spacing: 0.08em; text-transform: uppercase;">
+                                        <p class="flacso-inscripciones-banner__eyebrow" style="margin: 0 0 12px; color: #fcd116; font-size: clamp(0.9rem, 1.2vw, 1.05rem); font-weight: 850; letter-spacing: 0.08em; text-transform: uppercase;">
                                             <?php echo esc_html($tipo_oferta); ?>
                                         </p>
                                     <?php endif; ?>
-                                    <h1 class="flacso-inscripciones-banner__title" style="margin: 0; color: #ffffff; font-size: clamp(2.2rem, 4.5vw, 4.2rem); font-weight: 900; letter-spacing: -0.025em; line-height: 1.1; text-wrap: balance; text-shadow: 0 4px 16px rgba(0,0,0,0.6);">
+                                    <h1 class="flacso-inscripciones-banner__title" style="margin: 0; color: #ffffff; font-size: clamp(2rem, 4vw, 3.8rem); font-weight: 900; letter-spacing: -0.025em; line-height: 1.15; text-wrap: balance; text-shadow: 0 4px 16px rgba(0,0,0,0.6);">
                                         <?php the_title(); ?>
                                     </h1>
                                 </div>
 
-                                <div class="flacso-inscripciones-banner__bottom">
-                                    <div class="flacso-inscripciones-banner__cta" style="font-size: clamp(1rem, 1.2vw, 1.15rem); color: white;">
+                                <div class="flacso-inscripciones-banner__bottom" style="margin-top: auto;">
+                                    <div class="flacso-inscripciones-banner__cta" style="font-size: clamp(1rem, 1.2vw, 1.15rem); color: white; font-weight: 600;">
                                         <?php echo esc_html($banner_cta_text); ?>
                                     </div>
                                 </div>
@@ -1454,7 +1454,7 @@ get_header();
     .flacso-inscripciones-banner {
         position: relative;
         width: 100%;
-        aspect-ratio: 5 / 2;
+        aspect-ratio: auto;
         overflow: hidden;
         border-radius: var(--flacso-radius-md);
         font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -1549,7 +1549,7 @@ get_header();
 
     @media (max-width: 600px) {
         .flacso-inscripciones-banner {
-            aspect-ratio: 16 / 9;
+            aspect-ratio: auto;
         }
 
         .flacso-inscripciones-banner__overlay {
@@ -1582,7 +1582,7 @@ get_header();
 
     @media (max-width: 420px) {
         .flacso-inscripciones-banner {
-            aspect-ratio: 4 / 3;
+            aspect-ratio: auto;
         }
 
         .flacso-inscripciones-banner__logo {

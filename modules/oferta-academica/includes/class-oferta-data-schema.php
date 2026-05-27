@@ -198,10 +198,6 @@ class Oferta_Data_Schema {
                                 ],
                                 'docentes' => [
                                     'type' => 'array',
-                                    'items' => [
-                                        'type' => ['integer', 'object'],
-                                        'additionalProperties' => true
-                                    ]
                                 ],
                             ],
                         ],
@@ -298,9 +294,6 @@ class Oferta_Data_Schema {
                 continue;
             }
             $label = isset($item[$name_key]) ? sanitize_text_field($item[$name_key]) : '';
-            if ($label === '') {
-                continue;
-            }
             $docentes = [];
             if (isset($item['docentes']) && is_array($item['docentes'])) {
                 foreach ($item['docentes'] as $docente) {
