@@ -27,7 +27,17 @@ if (!is_wp_error($tipo_terms) && !empty($tipo_terms)) {
     $tipo_oferta = $tipo_terms[0]->name;
 }
 
-$inscripciones_abiertas = !empty($data['inscripciones_abiertas']);
+$raw_content = get_post_field('post_content', $post_id);
+$has_main_content = trim(wp_strip_all_tags(apply_filters('the_content', $raw_content))) !== '';
+
+$inscripciones_meta = get_post_meta($post_id, 'inscripciones_abiertas', true);
+
+$inscripciones_abiertas = !empty($data['inscripciones_abiertas'])
+    || $inscripciones_meta === '1'
+    || $inscripciones_meta === 'true'
+    || $inscripciones_meta === true
+    || $inscripciones_meta === 1;
+
 $preinscripcion_url = trailingslashit(get_permalink($post_id)) . 'preinscripcion/';
 
 $hero_tag = $inscripciones_abiertas
@@ -43,9 +53,17 @@ $hero_cta_markup = $inscripciones_abiertas
     )
     : esc_html__('Solicitá información y te avisaremos cuando abra la próxima cohorte.', 'flacso-uruguay');
 
+$hero_primary_label = $inscripciones_abiertas
+    ? __('Preinscripción 2026', 'flacso-uruguay')
+    : __('Solicitar información', 'flacso-uruguay');
+
+$hero_primary_url = $inscripciones_abiertas
+    ? $preinscripcion_url
+    : '#flacso-oa-consulta';
+
 $programa_meta = array_filter([
-    !empty($data['cohorte']) ? (string) $data['cohorte'] : '',
     !empty($data['abreviacion']) ? strtoupper((string) $data['abreviacion']) : '',
+    !empty($data['duracion_meses']) ? sprintf(__('Duración: %s meses', 'flacso-uruguay'), $data['duracion_meses']) : '',
 ]);
 
 $render_info_card = static function ($title, $body, $extra_class = '') {
@@ -64,6 +82,27 @@ $render_info_card = static function ($title, $body, $extra_class = '') {
     <?php
 };
 
+$render_docente_item = static function ($docente_id, $rol = '') {
+    if (!function_exists('dp_docente_destacado')) {
+        return;
+    }
+
+    echo '<div class="flacso-oa-docente-item">';
+
+    $output = dp_docente_destacado([
+        'docId' => $docente_id,
+        'rol' => $rol,
+    ]);
+
+    if (function_exists('dp_docentes_wrap_output')) {
+        echo dp_docentes_wrap_output($output);
+    } else {
+        echo $output;
+    }
+
+    echo '</div>';
+};
+
 if (class_exists('Oferta_Renderer')) {
     Oferta_Renderer::enqueue_styles();
 }
@@ -77,92 +116,138 @@ get_header();
             <main id="main" class="site-main">
                 <article id="post-<?php echo esc_attr($post_id); ?>" <?php post_class('entry content-bg single-entry flacso-oa-article'); ?>>
 
-                    <section class="flacso-oa-hero-section">
+                    <section class="flacso-oa-hero-v3">
                         <div class="flacso-oa-container">
-                            <div class="flacso-oa-hero">
+
+                            <div class="flacso-oa-hero-v3__intro">
+                                <div class="flacso-oa-hero-v3__main">
+                                    <?php if ($tipo_oferta !== '') : ?>
+                                        <p class="flacso-oa-hero-v3__eyebrow">
+                                            <?php echo esc_html($tipo_oferta); ?>
+                                        </p>
+                                    <?php endif; ?>
+
+                                    <h1 class="flacso-oa-hero-v3__title">
+                                        <?php the_title(); ?>
+                                    </h1>
+
+                                    <?php if (!empty($programa_meta)) : ?>
+                                        <div class="flacso-oa-hero-v3__meta" aria-label="<?php esc_attr_e('Datos del programa', 'flacso-uruguay'); ?>">
+                                            <?php foreach ($programa_meta as $meta_item) : ?>
+                                                <span><?php echo esc_html($meta_item); ?></span>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+
+                                <aside class="flacso-oa-hero-v3__summary" aria-label="<?php esc_attr_e('Información de inscripción', 'flacso-uruguay'); ?>">
+                                    <span class="flacso-oa-hero-v3__tag">
+                                        <?php echo esc_html($hero_tag); ?>
+                                    </span>
+
+                                    <div class="flacso-oa-hero-v3__cta">
+                                        <?php echo wp_kses_post($hero_cta_markup); ?>
+                                    </div>
+
+                                    <div class="flacso-oa-hero-v3__actions">
+                                        <a href="<?php echo esc_url($hero_primary_url); ?>" class="flacso-oa-hero-v3__button flacso-oa-hero-v3__button--primary">
+                                            <?php echo esc_html($hero_primary_label); ?>
+                                        </a>
+
+                                        <a href="#flacso-oa-contenido" class="flacso-oa-hero-v3__button flacso-oa-hero-v3__button--secondary">
+                                            <?php esc_html_e('Ver programa', 'flacso-uruguay'); ?>
+                                        </a>
+                                    </div>
+                                </aside>
+                            </div>
+
+                            <div class="flacso-oa-hero-v3__media">
                                 <?php if ($thumbnail_url) : ?>
                                     <img
-                                        class="flacso-oa-hero__image"
+                                        class="flacso-oa-hero-v3__image"
                                         src="<?php echo esc_url($thumbnail_url); ?>"
                                         alt="<?php echo esc_attr(get_the_title($post_id)); ?>"
                                         decoding="async"
+                                        fetchpriority="high"
                                     >
                                 <?php else : ?>
-                                    <div class="flacso-oa-hero__image flacso-oa-hero__image--placeholder" aria-hidden="true"></div>
+                                    <div class="flacso-oa-hero-v3__image flacso-oa-hero-v3__image--placeholder" aria-hidden="true"></div>
                                 <?php endif; ?>
 
-                                <div class="flacso-oa-hero__overlay">
-                                    <div class="flacso-oa-hero__top">
-                                        <span class="flacso-oa-hero__tag">
-                                            <?php echo esc_html($hero_tag); ?>
-                                        </span>
-
-                                        <img
-                                            class="flacso-oa-hero__logo"
-                                            src="<?php echo esc_url($logo_url); ?>"
-                                            alt="<?php esc_attr_e('FLACSO Uruguay', 'flacso-uruguay'); ?>"
-                                            decoding="async"
-                                        >
-                                    </div>
-
-                                    <div class="flacso-oa-hero__bottom">
-                                        <div class="flacso-oa-hero__cta">
-                                            <?php echo wp_kses_post($hero_cta_markup); ?>
-                                        </div>
-                                    </div>
+                                <div class="flacso-oa-hero-v3__media-overlay">
+                                    <img
+                                        src="<?php echo esc_url($logo_url); ?>"
+                                        alt="<?php esc_attr_e('FLACSO Uruguay', 'flacso-uruguay'); ?>"
+                                        class="flacso-oa-hero-v3__logo"
+                                        decoding="async"
+                                    >
                                 </div>
                             </div>
+
                         </div>
                     </section>
 
-                    <section class="flacso-oa-intro-section">
-                        <div class="flacso-oa-container">
-                            <div class="flacso-oa-intro">
-                                <?php if ($tipo_oferta !== '') : ?>
-                                    <p class="flacso-oa-intro__eyebrow">
-                                        <?php echo esc_html($tipo_oferta); ?>
-                                    </p>
-                                <?php endif; ?>
-
-                                <h1 class="flacso-oa-intro__title">
-                                    <?php the_title(); ?>
-                                </h1>
-
-                                <?php if (!empty($programa_meta) || !empty($data['duracion_meses'])) : ?>
-                                    <div class="flacso-oa-intro__meta" aria-label="<?php esc_attr_e('Datos del programa', 'flacso-uruguay'); ?>">
-                                        <?php foreach ($programa_meta as $meta_item) : ?>
-                                            <span><?php echo esc_html($meta_item); ?></span>
-                                        <?php endforeach; ?>
-
-                                        <?php if (!empty($data['duracion_meses'])) : ?>
-                                            <span>
-                                                <?php
-                                                printf(
-                                                    esc_html__('Duración: %s meses', 'flacso-uruguay'),
-                                                    esc_html($data['duracion_meses'])
-                                                );
-                                                ?>
-                                            </span>
-                                        <?php endif; ?>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section class="flacso-oa-main-section">
+                    <section id="flacso-oa-contenido" class="flacso-oa-main-section">
                         <div class="flacso-oa-container">
                             <div class="flacso-oa-main-grid">
 
                                 <div class="flacso-oa-main-content">
-                                    <section class="flacso-oa-content-card">
-                                        <div class="flacso-oa-content-card__body">
-                                            <?php the_content(); ?>
+                                    <?php
+                                    $banner_featured_url = $thumbnail_url;
+                                    if (!$banner_featured_url) {
+                                        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="788" viewBox="0 0 1400 788">'
+                                            . '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
+                                            . '<stop offset="0" stop-color="#1d3a72"/><stop offset="1" stop-color="#0f1f3e"/>'
+                                            . '</linearGradient></defs>'
+                                            . '<rect width="1400" height="788" fill="url(#g)"/>'
+                                            . '<circle cx="1080" cy="240" r="210" fill="rgba(254,210,34,0.18)"/>'
+                                            . '<circle cx="1160" cy="320" r="150" fill="rgba(254,210,34,0.12)"/>'
+                                            . '<rect x="90" y="560" width="1220" height="140" rx="16" fill="rgba(0,0,0,0.18)"/>'
+                                            . '<text x="110" y="615" font-family="Inter, Arial" font-size="44" fill="rgba(255,255,255,0.92)">Previsualizacion</text>'
+                                            . '<text x="110" y="670" font-family="Inter, Arial" font-size="28" fill="rgba(255,255,255,0.78)">Defini una imagen destacada para ver la foto real.</text>'
+                                            . '</svg>';
+                                        $banner_featured_url = 'data:image/svg+xml;base64,' . base64_encode($svg);
+                                    }
+
+                                    $banner_cta_text = $inscripciones_abiertas
+                                        ? 'Descuentos especiales disponibles. <a href="'. esc_url($preinscripcion_url) .'" style="color:white; text-decoration:underline; text-underline-offset: 4px;">Solicitá informacion e inscribite hoy.</a>'
+                                        : 'Mantente atento a nuestras próximas aperturas.';
+                                    ?>
+                                    <div class="flacso-inscripciones-banner">
+                                        <img
+                                            class="flacso-inscripciones-banner__img"
+                                            src="<?php echo esc_url($banner_featured_url); ?>"
+                                            alt="<?php echo esc_attr(get_the_title($post_id)); ?>">
+
+                                        <div class="flacso-inscripciones-banner__overlay">
+                                            <div class="flacso-inscripciones-banner__top">
+                                                <div class="flacso-inscripciones-banner__tag">
+                                                    <?php echo esc_html($hero_tag); ?>
+                                                </div>
+                                                <img
+                                                    src="<?php echo esc_url($logo_url); ?>"
+                                                    alt="FLACSO Uruguay"
+                                                    class="flacso-inscripciones-banner__logo">
+                                            </div>
+
+                                            <div class="flacso-inscripciones-banner__bottom">
+                                                <div class="flacso-inscripciones-banner__cta">
+                                                    <?php echo wp_kses_post($banner_cta_text); ?>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </section>
+                                    </div>
+
+                                    <?php if ($has_main_content) : ?>
+                                        <section class="flacso-oa-content-card">
+                                            <div class="flacso-oa-content-card__body">
+                                                <?php the_content(); ?>
+                                            </div>
+                                        </section>
+                                    <?php endif; ?>
 
                                     <?php if (class_exists('Oferta_Blocks')) : ?>
-                                        <section class="flacso-oa-next-start">
+                                        <section class="flacso-oa-next-start <?php echo !$has_main_content ? 'flacso-oa-next-start--first' : ''; ?>">
                                             <?php echo Oferta_Blocks::render_dato_proximo_inicio(['ofertaId' => $post_id]); ?>
                                         </section>
                                     <?php endif; ?>
@@ -268,7 +353,7 @@ get_header();
                                     </div>
                                 </div>
 
-                                <aside class="flacso-oa-aside" aria-label="<?php esc_attr_e('Formulario de consulta', 'flacso-uruguay'); ?>">
+                                <aside id="flacso-oa-consulta" class="flacso-oa-aside" aria-label="<?php esc_attr_e('Formulario de consulta', 'flacso-uruguay'); ?>">
                                     <div class="flacso-oa-aside__sticky">
                                         <div class="flacso-oa-form-panel">
                                             <div class="flacso-oa-form-panel__header">
@@ -280,10 +365,8 @@ get_header();
                                                 <?php
                                                 if (function_exists('flacso_consultas_render_form')) {
                                                     echo flacso_consultas_render_form(['mostrar_preinscripcion' => true]);
-                                                } else {
-                                                    if (class_exists('Oferta_Consulta_Form')) {
-                                                        echo Oferta_Consulta_Form::render_inline_form($post_id);
-                                                    }
+                                                } elseif (class_exists('Oferta_Consulta_Form')) {
+                                                    echo Oferta_Consulta_Form::render_inline_form($post_id);
                                                 }
                                                 ?>
                                             </div>
@@ -325,29 +408,29 @@ get_header();
                                     <h2><?php esc_html_e('Equipo Académico', 'flacso-uruguay'); ?></h2>
                                 </header>
 
-                                <div class="flacso-oa-team-layout">
+                                <div class="flacso-oa-team-grid">
                                     <?php if ($has_coordinacion) : ?>
                                         <?php foreach ($data['coordinacion_academica'] as $coord) : ?>
                                             <?php
                                             if (empty($coord['docentes']) || !is_array($coord['docentes'])) {
                                                 continue;
                                             }
+
+                                            $rol = !empty($coord['rol'])
+                                                ? (string) $coord['rol']
+                                                : __('Coordinación académica', 'flacso-uruguay');
                                             ?>
-                                            <div class="flacso-oa-team-group">
-                                                <?php foreach ($coord['docentes'] as $docente_id) : ?>
-                                                    <div class="flacso-oa-team-item">
-                                                        <?php
-                                                        if (function_exists('dp_docente_destacado')) {
-                                                            $rol = !empty($coord['rol']) ? $coord['rol'] : '';
-                                                            echo dp_docentes_wrap_output(dp_docente_destacado([
-                                                                'docId' => $docente_id,
-                                                                'rol' => $rol,
-                                                            ]));
-                                                        }
-                                                        ?>
-                                                    </div>
-                                                <?php endforeach; ?>
-                                            </div>
+                                            <section class="flacso-oa-team-group-card">
+                                                <h3 class="flacso-oa-team-group-card__title">
+                                                    <?php echo esc_html($rol); ?>
+                                                </h3>
+
+                                                <div class="flacso-oa-docentes-grid">
+                                                    <?php foreach ($coord['docentes'] as $docente_id) : ?>
+                                                        <?php $render_docente_item($docente_id, $rol); ?>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                            </section>
                                         <?php endforeach; ?>
                                     <?php endif; ?>
 
@@ -358,21 +441,21 @@ get_header();
                                                 continue;
                                             }
 
-                                            $grupo_nombre = !empty($grupo['nombre']) ? $grupo['nombre'] : __('Equipo docente', 'flacso-uruguay');
+                                            $grupo_nombre = !empty($grupo['nombre'])
+                                                ? (string) $grupo['nombre']
+                                                : __('Equipo docente', 'flacso-uruguay');
                                             ?>
-                                            <div class="flacso-oa-team-group">
-                                                <?php
-                                                if (function_exists('dp_docentes_grupo_block_render')) {
-                                                    echo dp_docentes_grupo_block_render([
-                                                        'title' => $grupo_nombre,
-                                                        'level' => 'h3',
-                                                        'docenteIds' => $grupo['docentes'],
-                                                    ]);
-                                                } else {
-                                                    echo '<h3 class="flacso-oa-team-group__title">' . esc_html($grupo_nombre) . '</h3>';
-                                                }
-                                                ?>
-                                            </div>
+                                            <section class="flacso-oa-team-group-card">
+                                                <h3 class="flacso-oa-team-group-card__title">
+                                                    <?php echo esc_html($grupo_nombre); ?>
+                                                </h3>
+
+                                                <div class="flacso-oa-docentes-grid">
+                                                    <?php foreach ($grupo['docentes'] as $docente_id) : ?>
+                                                        <?php $render_docente_item($docente_id, ''); ?>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                            </section>
                                         <?php endforeach; ?>
                                     <?php endif; ?>
                                 </div>
@@ -513,9 +596,8 @@ get_header();
     --flacso-border: rgba(15, 23, 42, 0.10);
     --flacso-shadow-sm: 0 8px 22px rgba(15, 23, 42, 0.07);
     --flacso-shadow-md: 0 18px 45px rgba(15, 23, 42, 0.11);
-    --flacso-radius-sm: 14px;
     --flacso-radius-md: 22px;
-    --flacso-radius-lg: 30px;
+    --flacso-radius-lg: 34px;
     background: #ffffff;
     color: var(--flacso-text);
 }
@@ -546,140 +628,53 @@ get_header();
     overflow: hidden;
 }
 
-.flacso-oa-hero-section {
-    padding: clamp(18px, 3vw, 38px) 0 clamp(18px, 3vw, 34px);
-}
-
-.flacso-oa-hero {
-    position: relative;
-    min-height: clamp(300px, 42vw, 520px);
-    border-radius: var(--flacso-radius-lg);
-    overflow: hidden;
-    background: var(--flacso-blue-dark);
-    box-shadow: var(--flacso-shadow-md);
-    isolation: isolate;
-}
-
-.flacso-oa-hero__image {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.flacso-oa-hero__image--placeholder {
+.flacso-oa-hero-v3 {
+    padding: clamp(44px, 7vw, 92px) 0 clamp(38px, 6vw, 74px);
     background:
-        radial-gradient(circle at 20% 20%, rgba(252, 209, 22, 0.35), transparent 32%),
-        linear-gradient(135deg, var(--flacso-blue-dark), var(--flacso-blue));
+        radial-gradient(circle at 88% 8%, rgba(252, 209, 22, 0.16), transparent 26%),
+        linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
 }
 
-.flacso-oa-hero::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background:
-        linear-gradient(90deg, rgba(5, 25, 56, 0.84) 0%, rgba(5, 25, 56, 0.58) 46%, rgba(5, 25, 56, 0.18) 100%),
-        linear-gradient(180deg, rgba(5, 25, 56, 0.30) 0%, rgba(5, 25, 56, 0.78) 100%);
-    z-index: 1;
+.flacso-oa-hero-v3__intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(290px, 390px);
+    gap: clamp(28px, 5vw, 72px);
+    align-items: end;
+    margin-bottom: clamp(28px, 5vw, 52px);
 }
 
-.flacso-oa-hero__overlay {
-    position: relative;
-    z-index: 2;
-    min-height: inherit;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: clamp(22px, 4vw, 46px);
+.flacso-oa-hero-v3__main {
+    min-width: 0;
 }
 
-.flacso-oa-hero__top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 20px;
-}
-
-.flacso-oa-hero__tag {
-    display: inline-flex;
-    align-items: center;
-    width: fit-content;
-    max-width: 100%;
-    padding: 9px 18px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.95);
-    color: var(--flacso-blue-dark);
-    font-size: clamp(0.78rem, 1.3vw, 0.92rem);
-    font-weight: 850;
-    line-height: 1.2;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-}
-
-.flacso-oa-hero__logo {
-    width: clamp(132px, 18vw, 220px);
-    height: auto;
-    max-height: 82px;
-    object-fit: contain;
-    filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.22));
-}
-
-.flacso-oa-hero__bottom {
-    width: min(100%, 660px);
-}
-
-.flacso-oa-hero__cta {
-    color: #ffffff;
-    font-size: clamp(1.1rem, 2vw, 1.45rem);
-    font-weight: 750;
-    line-height: 1.35;
-    text-wrap: balance;
-}
-
-.flacso-oa-hero__cta a {
-    color: #ffffff;
-    text-decoration: underline;
-    text-decoration-thickness: 2px;
-    text-underline-offset: 5px;
-}
-
-.flacso-oa-intro-section {
-    padding: clamp(12px, 2vw, 22px) 0 clamp(28px, 5vw, 58px);
-}
-
-.flacso-oa-intro {
-    width: min(100%, 980px);
-}
-
-.flacso-oa-intro__eyebrow {
+.flacso-oa-hero-v3__eyebrow {
     margin: 0 0 12px;
     color: var(--flacso-blue);
-    font-size: 0.92rem;
-    font-weight: 850;
+    font-size: clamp(0.86rem, 1.15vw, 1rem);
+    font-weight: 900;
     letter-spacing: 0.08em;
-    line-height: 1.3;
+    line-height: 1.25;
     text-transform: uppercase;
 }
 
-.flacso-oa-intro__title {
+.flacso-oa-hero-v3__title {
     margin: 0;
     color: var(--flacso-blue-dark);
-    font-size: clamp(2rem, 5vw, 4.5rem);
-    font-weight: 900;
-    letter-spacing: -0.045em;
-    line-height: 0.98;
+    font-size: clamp(2.6rem, 6.4vw, 5.8rem);
+    font-weight: 950;
+    letter-spacing: -0.065em;
+    line-height: 0.93;
     text-wrap: balance;
 }
 
-.flacso-oa-intro__meta {
+.flacso-oa-hero-v3__meta {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    margin-top: clamp(18px, 3vw, 28px);
+    margin-top: clamp(22px, 3vw, 34px);
 }
 
-.flacso-oa-intro__meta span {
+.flacso-oa-hero-v3__meta span {
     display: inline-flex;
     align-items: center;
     min-height: 38px;
@@ -689,13 +684,154 @@ get_header();
     background: #ffffff;
     color: var(--flacso-blue);
     font-size: 0.92rem;
-    font-weight: 750;
+    font-weight: 800;
     line-height: 1.2;
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+}
+
+.flacso-oa-hero-v3__summary {
+    min-width: 0;
+    padding: clamp(22px, 3vw, 30px);
+    border: 1px solid var(--flacso-border);
+    border-radius: var(--flacso-radius-md);
+    background: #ffffff;
+    box-shadow: var(--flacso-shadow-sm);
+}
+
+.flacso-oa-hero-v3__tag {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    max-width: 100%;
+    margin-bottom: 16px;
+    padding: 9px 16px;
+    border-radius: 999px;
+    background: var(--flacso-blue-dark);
+    color: #ffffff;
+    font-size: 0.82rem;
+    font-weight: 900;
+    line-height: 1.2;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.flacso-oa-hero-v3__cta {
+    color: #334155;
+    font-size: clamp(1rem, 1.25vw, 1.08rem);
+    font-weight: 650;
+    line-height: 1.55;
+}
+
+.flacso-oa-hero-v3__cta a {
+    color: var(--flacso-blue);
+    font-weight: 850;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 5px;
+}
+
+.flacso-oa-hero-v3__actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    margin-top: 22px;
+}
+
+.flacso-oa-hero-v3__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 12px 18px;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 900;
+    line-height: 1.2;
+    letter-spacing: 0.04em;
+    text-align: center;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.flacso-oa-hero-v3__button--primary {
+    background: var(--flacso-yellow);
+    color: var(--flacso-blue-dark);
+    box-shadow: 0 10px 22px rgba(252, 209, 22, 0.26);
+}
+
+.flacso-oa-hero-v3__button--primary:hover {
+    background: var(--flacso-blue-dark);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.flacso-oa-hero-v3__button--secondary {
+    border: 1px solid var(--flacso-border);
+    background: #ffffff;
+    color: var(--flacso-blue);
+}
+
+.flacso-oa-hero-v3__button--secondary:hover {
+    border-color: var(--flacso-blue);
+    background: var(--flacso-blue);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.flacso-oa-hero-v3__media {
+    position: relative;
+    min-height: clamp(320px, 45vw, 540px);
+    border-radius: var(--flacso-radius-lg);
+    overflow: hidden;
+    background: var(--flacso-blue-dark);
+    box-shadow: 0 24px 65px rgba(5, 25, 56, 0.16);
+    isolation: isolate;
+}
+
+.flacso-oa-hero-v3__image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -3;
+}
+
+.flacso-oa-hero-v3__image--placeholder {
+    background:
+        radial-gradient(circle at 76% 24%, rgba(252, 209, 22, 0.28), transparent 28%),
+        linear-gradient(135deg, #1d3a72 0%, #0f1f3e 100%);
+}
+
+.flacso-oa-hero-v3__media::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background:
+        linear-gradient(90deg, rgba(5, 25, 56, 0.84) 0%, rgba(5, 25, 56, 0.58) 46%, rgba(5, 25, 56, 0.22) 100%),
+        linear-gradient(180deg, rgba(5, 25, 56, 0.16) 0%, rgba(5, 25, 56, 0.76) 100%);
+}
+
+.flacso-oa-hero-v3__media-overlay {
+    position: absolute;
+    inset: clamp(22px, 3vw, 34px);
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    pointer-events: none;
+}
+
+.flacso-oa-hero-v3__logo {
+    width: clamp(150px, 18vw, 230px);
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.24));
 }
 
 .flacso-oa-main-section {
-    padding: 0 0 clamp(46px, 7vw, 92px);
+    padding: clamp(40px, 7vw, 88px) 0 clamp(46px, 7vw, 92px);
 }
 
 .flacso-oa-main-grid {
@@ -724,11 +860,13 @@ get_header();
     color: #334155;
 }
 
-.flacso-oa-content-card__body > *:first-child {
+.flacso-oa-content-card__body > *:first-child,
+.flacso-oa-info-card__body > *:first-child {
     margin-top: 0;
 }
 
-.flacso-oa-content-card__body > *:last-child {
+.flacso-oa-content-card__body > *:last-child,
+.flacso-oa-info-card__body > *:last-child {
     margin-bottom: 0;
 }
 
@@ -757,15 +895,21 @@ get_header();
     margin-top: clamp(20px, 3vw, 34px);
 }
 
+.flacso-oa-next-start--first {
+    margin-top: 0;
+}
+
 .flacso-oa-info-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: clamp(18px, 2.4vw, 26px);
+    align-items: start;
     margin-top: clamp(24px, 4vw, 42px);
 }
 
 .flacso-oa-info-card {
     min-width: 0;
+    height: fit-content;
     border: 1px solid var(--flacso-border);
     border-radius: var(--flacso-radius-md);
     background: #ffffff;
@@ -807,16 +951,9 @@ get_header();
     line-height: 1.7;
 }
 
-.flacso-oa-info-card__body > *:first-child {
-    margin-top: 0;
-}
-
-.flacso-oa-info-card__body > *:last-child {
-    margin-bottom: 0;
-}
-
 .flacso-oa-aside {
     min-width: 0;
+    scroll-margin-top: 24px;
 }
 
 .flacso-oa-form-panel {
@@ -857,11 +994,31 @@ get_header();
     padding: 0 clamp(20px, 3vw, 30px) clamp(22px, 3vw, 30px);
 }
 
+.flacso-oferta-responsive .flacso-oa-form-panel__body form,
+.flacso-oferta-responsive .flacso-oa-form-panel__body .flacso-consultas-formulario,
+.flacso-oferta-responsive .flacso-oa-form-panel__body .flacso-consultas-formulario-wrapper {
+    border: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.flacso-oferta-responsive .flacso-oa-form-panel__body .flacso-consultas-formulario > h1,
+.flacso-oferta-responsive .flacso-oa-form-panel__body .flacso-consultas-formulario > h2,
+.flacso-oferta-responsive .flacso-oa-form-panel__body .flacso-consultas-formulario > h3,
+.flacso-oferta-responsive .flacso-oa-form-panel__body .flacso-consultas-formulario > p:first-of-type {
+    display: none !important;
+}
+
 .flacso-oferta-responsive .flacso-consultas-formulario {
-    background: transparent;
-    padding: 0;
-    border-radius: 0;
-    box-shadow: none;
+    background: transparent !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
     color: var(--flacso-blue-dark);
 }
 
@@ -901,7 +1058,7 @@ get_header();
     font-size: 1rem;
     line-height: 1.35;
     box-shadow: 0 5px 14px rgba(5, 25, 56, 0.08);
-    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .flacso-oferta-responsive .flacso-oa-consulta__field textarea,
@@ -1020,30 +1177,53 @@ get_header();
     text-transform: uppercase;
 }
 
-.flacso-oa-team-layout {
+.flacso-oa-team-grid {
     display: grid;
-    gap: clamp(24px, 4vw, 42px);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(22px, 3vw, 34px);
+    align-items: start;
 }
 
-.flacso-oa-team-group {
+.flacso-oa-team-group-card {
+    min-width: 0;
+    height: fit-content;
+    border: 1px solid var(--flacso-border);
+    border-radius: var(--flacso-radius-md);
+    background: #ffffff;
+    padding: clamp(20px, 3vw, 30px);
+    box-shadow: var(--flacso-shadow-sm);
+}
+
+.flacso-oa-team-group-card__title {
+    margin: 0 0 clamp(18px, 3vw, 28px);
+    color: var(--flacso-blue);
+    font-size: clamp(1.18rem, 2vw, 1.55rem);
+    font-weight: 900;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+}
+
+.flacso-oa-docentes-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(16px, 2vw, 22px);
+    align-items: stretch;
+}
+
+.flacso-oa-docente-item {
     min-width: 0;
 }
 
-.flacso-oa-team-group__title {
-    margin: 0 0 22px;
-    color: var(--flacso-blue);
-    font-size: clamp(1.25rem, 2.5vw, 1.7rem);
-    font-weight: 850;
-    text-align: center;
+.flacso-oa-docente-item > * {
+    height: 100%;
 }
 
-.flacso-oa-team-item {
-    width: min(100%, 960px);
-    margin-inline: auto;
-}
-
-.flacso-oa-team-item + .flacso-oa-team-item {
-    margin-top: 22px;
+.flacso-oa-docente-item .flacso-docente-card,
+.flacso-oa-docente-item .dp-docente-card,
+.flacso-oa-docente-item article,
+.flacso-oa-docente-item .card {
+    height: 100%;
+    max-width: 100%;
 }
 
 .flacso-oa-seminarios-section {
@@ -1182,7 +1362,22 @@ get_header();
     }
 }
 
+@media (max-width: 1199.98px) {
+    .flacso-oa-team-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
 @media (max-width: 991.98px) {
+    .flacso-oa-hero-v3__intro {
+        grid-template-columns: minmax(0, 1fr);
+        align-items: start;
+    }
+
+    .flacso-oa-hero-v3__summary {
+        width: min(100%, 680px);
+    }
+
     .flacso-oa-aside {
         order: -1;
     }
@@ -1202,27 +1397,21 @@ get_header();
         width: min(100% - 24px, 1180px);
     }
 
-    .flacso-oa-hero {
-        min-height: 420px;
-        border-radius: 22px;
+    .flacso-oa-hero-v3 {
+        padding-top: 34px;
     }
 
-    .flacso-oa-hero::after {
+    .flacso-oa-hero-v3__title {
+        letter-spacing: -0.045em;
+    }
+
+    .flacso-oa-hero-v3__media {
+        min-height: 430px;
+    }
+
+    .flacso-oa-hero-v3__media::after {
         background:
-            linear-gradient(180deg, rgba(5, 25, 56, 0.88) 0%, rgba(5, 25, 56, 0.56) 45%, rgba(5, 25, 56, 0.88) 100%);
-    }
-
-    .flacso-oa-hero__top {
-        align-items: flex-start;
-        flex-direction: column-reverse;
-    }
-
-    .flacso-oa-hero__logo {
-        width: min(190px, 72vw);
-    }
-
-    .flacso-oa-intro__title {
-        letter-spacing: -0.035em;
+            linear-gradient(180deg, rgba(5, 25, 56, 0.62) 0%, rgba(5, 25, 56, 0.84) 100%);
     }
 
     .flacso-oa-seminarios-heading {
@@ -1239,33 +1428,176 @@ get_header();
     }
 }
 
+@media (max-width: 675.98px) {
+    .flacso-oa-docentes-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
 @media (max-width: 575.98px) {
-    .flacso-oa-hero {
-        min-height: 460px;
-        border-radius: 18px;
-    }
-
-    .flacso-oa-hero__overlay {
-        padding: 20px;
-    }
-
-    .flacso-oa-intro__meta {
+    .flacso-oa-hero-v3__meta {
         display: grid;
         grid-template-columns: minmax(0, 1fr);
     }
 
-    .flacso-oa-intro__meta span {
+    .flacso-oa-hero-v3__meta span {
         justify-content: center;
         text-align: center;
     }
 
+    .flacso-oa-hero-v3__media,
+    .flacso-oa-hero-v3__summary,
     .flacso-oa-content-card,
     .flacso-oa-info-card,
     .flacso-oa-form-panel,
-    .flacso-oa-seminario-card {
+    .flacso-oa-seminario-card,
+    .flacso-oa-team-group-card {
         border-radius: 18px;
     }
 }
+
+    .flacso-inscripciones-banner {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 5 / 2;
+        overflow: hidden;
+        border-radius: var(--flacso-radius-md);
+        font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        margin-bottom: clamp(26px, 5vw, 56px);
+    }
+
+    .flacso-inscripciones-banner::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        background: linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 0.22) 0%,
+            rgba(0, 0, 0, 0.18) 35%,
+            rgba(0, 0, 0, 0.52) 100%
+        );
+        pointer-events: none;
+    }
+
+    .flacso-inscripciones-banner__img {
+        position: relative;
+        z-index: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        filter: brightness(0.9);
+    }
+
+    .flacso-inscripciones-banner__overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 1.4rem 1.8rem;
+        color: #fff;
+        text-shadow: 0 3px 8px rgba(0, 0, 0, 0.6);
+        gap: 0.8rem;
+    }
+
+    .flacso-inscripciones-banner__top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 0.9rem;
+    }
+
+    .flacso-inscripciones-banner__tag {
+        font-weight: 700;
+        font-size: clamp(1.1rem, 2.1vw, 1.6rem);
+        line-height: 1.1;
+    }
+
+    .flacso-inscripciones-banner__logo {
+        max-width: clamp(135px, 14vw, 190px);
+        height: auto;
+        flex: 0 0 auto;
+    }
+
+    .flacso-inscripciones-banner__bottom {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        margin-bottom: 1.1rem;
+    }
+
+    .flacso-inscripciones-banner__cta {
+        font-size: clamp(1.05rem, 2.2vw, 1.45rem);
+        font-weight: 700;
+        line-height: 1.25;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 900px) {
+        .flacso-inscripciones-banner__overlay {
+            padding: 1.05rem 1.25rem;
+        }
+
+        .flacso-inscripciones-banner__bottom {
+            margin-bottom: 0.8rem;
+        }
+
+        .flacso-inscripciones-banner__cta {
+            font-size: 1rem;
+            white-space: normal;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .flacso-inscripciones-banner {
+            aspect-ratio: 16 / 9;
+        }
+
+        .flacso-inscripciones-banner__overlay {
+            padding: 0.9rem 1rem;
+            gap: 0.7rem;
+        }
+
+        .flacso-inscripciones-banner__top {
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .flacso-inscripciones-banner__tag {
+            font-size: 1.05rem;
+        }
+
+        .flacso-inscripciones-banner__logo {
+            max-width: 140px;
+        }
+
+        .flacso-inscripciones-banner__bottom {
+            margin-bottom: 0.5rem;
+        }
+
+        .flacso-inscripciones-banner__cta {
+            font-size: 0.95rem;
+            line-height: 1.2;
+        }
+    }
+
+    @media (max-width: 420px) {
+        .flacso-inscripciones-banner {
+            aspect-ratio: 4 / 3;
+        }
+
+        .flacso-inscripciones-banner__logo {
+            max-width: 120px;
+        }
+
+        .flacso-inscripciones-banner__cta {
+            font-size: 0.9rem;
+        }
+    }
 
 @media (prefers-reduced-motion: reduce) {
     .flacso-oferta-responsive *,

@@ -43,7 +43,6 @@ require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/blocks/listar-paginas/bloc
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/blocks/otros-contactos/block.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/blocks/mapa-contacto/block.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/blocks/contacto-seccion/block.php';
-require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/blocks/inscripciones-banner/block.php';
 
 // Inicializar módulo
 add_action('init', function() {
