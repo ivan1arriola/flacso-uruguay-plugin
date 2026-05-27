@@ -30,6 +30,13 @@ class Flacso_Inscripciones_Banner_Block {
         }
     }
 
+    public static function get_instance(): ?self {
+        if (self::$instance === null) {
+            self::init();
+        }
+        return self::$instance;
+    }
+
     private function __construct() {
         add_action('init', [$this, 'register_assets'], 5);
         add_action('init', [$this, 'register_block'], 20);
@@ -190,7 +197,7 @@ class Flacso_Inscripciones_Banner_Block {
 
                 <div class="flacso-inscripciones-banner__bottom">
                     <div class="flacso-inscripciones-banner__cta">
-                        <?php echo esc_html($cta_text); ?>
+                        <?php echo wp_kses_post($cta_text); ?>
                     </div>
                 </div>
             </div>

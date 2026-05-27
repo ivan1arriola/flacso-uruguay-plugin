@@ -22,7 +22,7 @@ class Oferta_Rest_API
             'inscripciones_abiertas', 'modalidad_html', 'duracion_html', 
             'objetivos_html', 'perfil_ingreso_html', 'requisitos_ingreso_html', 
             'malla_curricular_html', 'calendario_html', 'perfil_egreso_html', 
-            'requisitos_egreso_html', 'titulos_certificaciones_html',
+            'requisitos_egreso_html', 'titulos_certificaciones_html', 'financiacion_html',
             'menciones', 'orientaciones', 'coordinacion_academica', 'equipos'
         ];
 

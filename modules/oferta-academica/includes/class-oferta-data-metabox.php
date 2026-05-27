@@ -18,6 +18,7 @@ class Oferta_Data_MetaBox {
         'calendario_html',
         'perfil_egreso_html',
         'requisitos_egreso_html',
+        'financiacion_html',
         'titulos_certificaciones_html',
     ];
 

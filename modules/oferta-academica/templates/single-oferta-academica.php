@@ -50,12 +50,17 @@ get_header();
                         <div class="entry-content-wrap">
                             <div class="entry-content single-content">
                                 
+                                <!-- Título de la Oferta -->
+                                <h1 class="wp-block-heading flacso-oferta-title mb-4" style="color: #163970; font-weight: 900; text-align: left; font-size: clamp(2rem, 3.5vw, 3rem); line-height: 1.1; letter-spacing: -0.02em; text-transform: uppercase;">
+                                    <?php the_title(); ?>
+                                </h1>
+
                                 <!-- Banner Superior -->
                                 <div class="wp-block-kadence-column mb-5">
                                     <div class="kt-inside-inner-col">
                                         <?php 
                                         if (class_exists('Flacso_Inscripciones_Banner_Block')) {
-                                            echo Flacso_Inscripciones_Banner_Block::init()->render_block([]); 
+                                            echo Flacso_Inscripciones_Banner_Block::get_instance()->render_block([]); 
                                         } else {
                                         ?>
                                             <div class="flacso-inscripciones-banner">
@@ -248,9 +253,65 @@ get_header();
                                         <?php if (!empty($data['coordinacion_academica'])) : ?>
                                             <?php foreach ($data['coordinacion_academica'] as $coord) : ?>
                                                 <div class="mb-5">
-                                                                </div>
+                                                    <div class="row justify-content-center">
+                                                        <?php foreach ($coord['docentes'] as $docente_id) : ?>
+                                                            <div class="col-12 col-lg-10 mb-4">
+                                                                <?php 
+                                                                if (function_exists('dp_docente_destacado')) {
+                                                                    echo dp_docentes_wrap_output(dp_docente_destacado(['docId' => $docente_id, 'rol' => $coord['rol']]));
+                                                                }
+                                                                ?>
                                                             </div>
                                                         <?php endforeach; ?>
+                                                    </div>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
+
+                                        <?php if (!empty($data['equipos'])) : ?>
+                                            <?php foreach ($data['equipos'] as $grupo) : ?>
+                                                <div class="mb-5">
+                                                    <h3 class="wp-block-heading text-center mb-4" style="font-size: 1.4rem; color: #163970; border-bottom: 2px solid #fcd116; display: inline-block; padding-bottom: 5px; margin-left: 50%; transform: translateX(-50%);"><?php echo esc_html($grupo['nombre']); ?></h3>
+                                                    <div class="row justify-content-center">
+                                                        <div class="col-12 col-lg-10">
+                                                            <div class="flacso-docentes-scope">
+                                                                <div class="docentes-lista-completa">
+                                                                    <?php foreach ($grupo['docentes'] as $docente_id) : ?>
+                                                                        <?php
+                                                                        $doc_nombre = get_the_title($docente_id);
+                                                                        if (function_exists('dp_render_docente_lista')) {
+                                                                            echo dp_render_docente_lista(['docId' => $docente_id]);
+                                                                        } else {
+                                                                            $doc_avatar = get_the_post_thumbnail_url($docente_id, 'medium');
+                                                                            $doc_prefijo = get_post_meta($docente_id, 'prefijo_abrev', true);
+                                                                            $doc_cv = get_post_meta($docente_id, 'cv', true);
+                                                                            if (empty($doc_cv)) {
+                                                                                $doc_cv = get_the_excerpt($docente_id);
+                                                                            }
+                                                                            ?>
+                                                                            <div class="card docentes-lista-card hover-lift mb-3">
+                                                                                <div class="card-body">
+                                                                                    <div class="d-sm-flex align-items-sm-center">
+                                                                                        <?php if ($doc_avatar) : ?>
+                                                                                            <img src="<?php echo esc_url($doc_avatar); ?>" class="rounded-circle mb-3 mb-sm-0 me-sm-4 docente-avatar" alt="<?php echo esc_attr($doc_nombre); ?>" style="width: 100px; height: 100px;">
+                                                                                        <?php endif; ?>
+                                                                                        <div>
+                                                                                            <?php if ($doc_prefijo) : ?>
+                                                                                                <p class="docentes-lista-card__prefix"><?php echo esc_html($doc_prefijo); ?></p>
+                                                                                            <?php endif; ?>
+                                                                                            <h3 class="docentes-lista-card__name mb-2"><?php echo esc_html($doc_nombre); ?></h3>
+                                                                                            <div class="docentes-lista-card__cv">
+                                                                                                <p><?php echo wp_trim_words(esc_html(wp_strip_all_tags($doc_cv)), 25); ?></p>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        <?php } ?>
+                                                                    <?php endforeach; ?>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             <?php endforeach; ?>
