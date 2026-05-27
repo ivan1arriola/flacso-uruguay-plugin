@@ -64,7 +64,12 @@ class Oferta_Rest_API
                 }
                 return true;
             },
-            'schema' => null,
+            'schema' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'integer'
+                ]
+            ],
         ]);
 
         // Registrar campo para taxonomías simplificadas (mantenemos compatibilidad con el frontend)
@@ -82,7 +87,32 @@ class Oferta_Rest_API
                 }
                 return $tax_simplified;
             },
-            'schema' => null,
+            'update_callback' => function ($value, $post_obj) {
+                if (is_array($value)) {
+                    if (isset($value['tipo-oferta-academica'])) {
+                        $ids = array_map('intval', (array) $value['tipo-oferta-academica']);
+                        wp_set_object_terms($post_obj->ID, $ids, 'tipo-oferta-academica');
+                    }
+                    if (isset($value['area_tematica'])) {
+                        $ids = array_map('intval', (array) $value['area_tematica']);
+                        wp_set_object_terms($post_obj->ID, $ids, 'area_tematica');
+                    }
+                }
+                return true;
+            },
+            'schema' => [
+                'type' => 'object',
+                'properties' => [
+                    'tipo-oferta-academica' => [
+                        'type' => 'array',
+                        'items' => ['type' => 'integer']
+                    ],
+                    'area_tematica' => [
+                        'type' => 'array',
+                        'items' => ['type' => 'integer']
+                    ]
+                ]
+            ],
         ]);
 
         // Registrar campo para la imagen destacada enriquecida

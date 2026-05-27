@@ -1,3 +1,21 @@
+## Version 4.4.5 - 27 de mayo de 2026
+
+### Resumen
+- Se agrega el campo de metadatos `cohorte` a la Oferta Académica para poder especificar y visualizar qué cohorte va a iniciar junto a la fecha.
+- Se integra la visualización de la cohorte en los listados del Editor Académico en vista de lista y vista de tarjetas.
+- Se incrementan las versiones del plugin unificado a `4.4.5`, el editor a `0.2.4` y el sidebar a `Premium Editor v3.1`.
+
+### Cambios detallados
+- Backend (`flacso-uruguay-plugin`):
+  - `modules/oferta-academica/includes/class-oferta-data-schema.php`: Registro de metadato `cohorte`, sanitización y soporte REST API.
+  - `modules/oferta-academica/includes/class-oferta-data-metabox.php`: Integración del campo de cohorte en el panel metabox de WordPress.
+- Frontend (`flacso-editor`):
+  - `src/lib/api/ofertas/normalizers.js`: Normalización del campo `cohorte` al recibir y enviar datos a la REST API de WordPress.
+  - `src/components/OfertaEdit.jsx`: Campo de texto en la interfaz del editor para rellenar la cohorte de inicio de la oferta.
+  - `src/components/OfertaList.jsx` y `src/components/OfertaCard.jsx`: Visualización premium de la cohorte mediante una etiqueta / badge dedicada junto a la fecha de inicio.
+
+---
+
 ## Version 4.4.4 - 25 de mayo de 2026
 
 ### Resumen

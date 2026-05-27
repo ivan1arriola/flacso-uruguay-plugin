@@ -150,6 +150,19 @@ class Oferta_Data_Schema {
             ],
         ]);
 
+        register_post_meta('oferta-academica', 'cohorte', [
+            'type' => 'string',
+            'single' => true,
+            'sanitize_callback' => 'sanitize_text_field',
+            'auth_callback' => [self::class, 'user_can_edit_meta'],
+            'show_in_rest' => [
+                'schema' => [
+                    'description' => __('Cohorte que va a iniciar', 'flacso-oferta-academica'),
+                    'type' => 'string',
+                ],
+            ],
+        ]);
+
         register_post_meta('oferta-academica', 'proximo_inicio_precision', [
             'type' => 'string',
             'single' => true,
@@ -428,6 +441,7 @@ class Oferta_Data_Schema {
             'abreviacion' => self::get_meta_value($post_id, 'abreviacion'),
             'correo' => self::get_meta_value($post_id, 'correo'),
             'inscripciones_abiertas' => self::get_meta_boolean($post_id, 'inscripciones_abiertas'),
+            'cohorte' => self::get_meta_value($post_id, 'cohorte'),
         ];
 
         foreach (self::HTML_FIELDS as $field) {
@@ -494,6 +508,7 @@ class Oferta_Data_Schema {
             'abreviacion' => fn($value) => self::sanitize_abreviacion($value),
             'correo' => fn($value) => self::sanitize_email($value),
             'inscripciones_abiertas' => fn($value) => self::sanitize_boolean($value),
+            'cohorte' => fn($value) => sanitize_text_field($value),
         ];
 
         foreach ($meta_map as $key => $sanitizer) {

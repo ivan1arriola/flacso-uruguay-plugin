@@ -74,6 +74,10 @@ class Oferta_Data_MetaBox {
                         <td><input type="text" id="oferta_data_proximo_inicio" name="oferta_data[proximo_inicio]" value="<?php echo esc_attr($values['proximo_inicio']); ?>" class="regular-text" /></td>
                     </tr>
                     <tr>
+                        <th><label for="oferta_data_cohorte"><?php esc_html_e('Cohorte', 'flacso-oferta-academica'); ?></label></th>
+                        <td><input type="text" id="oferta_data_cohorte" name="oferta_data[cohorte]" value="<?php echo esc_attr($values['cohorte']); ?>" class="regular-text" placeholder="Ej. Cohorte 15 o Cohorte 2026" /></td>
+                    </tr>
+                    <tr>
                         <th><label for="oferta_data_calendario"><?php esc_html_e('Calendario (PDF URL)', 'flacso-oferta-academica'); ?></label></th>
                         <td>
                             <input type="url" id="oferta_data_calendario" name="oferta_data[calendario]" value="<?php echo esc_attr($values['calendario']); ?>" class="regular-text" placeholder="https://..." />
@@ -162,6 +166,7 @@ class Oferta_Data_MetaBox {
         self::save_simple_field($post_id, 'correo', $data['correo'] ?? '');
         self::save_simple_field($post_id, 'duracion_meses', $data['duracion_meses'] ?? '');
         self::save_simple_field($post_id, 'proximo_inicio', $data['proximo_inicio'] ?? '');
+        self::save_simple_field($post_id, 'cohorte', $data['cohorte'] ?? '');
         self::save_simple_field($post_id, 'calendario', $data['calendario'] ?? '');
         self::save_simple_field($post_id, 'malla_curricular', $data['malla_curricular'] ?? '');
         self::save_simple_field($post_id, 'proximo_inicio_precision', $data['proximo_inicio_precision'] ?? '');
@@ -204,6 +209,9 @@ class Oferta_Data_MetaBox {
                 break;
             case 'correo':
                 $value = Oferta_Data_Schema::sanitize_email($raw_value);
+                break;
+            case 'cohorte':
+                $value = sanitize_text_field($raw_value);
                 break;
             case 'inscripciones_abiertas':
                 $value = Oferta_Data_Schema::sanitize_boolean($raw_value);
@@ -270,6 +278,7 @@ class Oferta_Data_MetaBox {
             'correo' => get_post_meta($post_id, 'correo', true),
             'duracion_meses' => get_post_meta($post_id, 'duracion_meses', true),
             'proximo_inicio' => get_post_meta($post_id, 'proximo_inicio', true),
+            'cohorte' => get_post_meta($post_id, 'cohorte', true),
             'calendario' => get_post_meta($post_id, 'calendario', true),
             'malla_curricular' => get_post_meta($post_id, 'malla_curricular', true),
             'precision' => get_post_meta($post_id, 'proximo_inicio_precision', true),
