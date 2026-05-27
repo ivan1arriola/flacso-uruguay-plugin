@@ -1,7 +1,6 @@
 <?php
 /**
- * Template para la página individual de una Oferta Académica.
- * Replicando fielmente el diseño de flacso.edu.uy
+ * Template responsive para la página individual de una Oferta Académica.
  */
 
 if (!defined('ABSPATH')) {
@@ -9,8 +8,18 @@ if (!defined('ABSPATH')) {
 }
 
 $post_id = get_the_ID();
-$data = Oferta_Data_Schema::get_schema($post_id);
+
+$data = class_exists('Oferta_Data_Schema')
+    ? Oferta_Data_Schema::get_schema($post_id)
+    : [];
+
+if (!is_array($data)) {
+    $data = [];
+}
+
 $thumbnail_url = get_the_post_thumbnail_url($post_id, 'full');
+$logo_url = 'https://flacso.edu.uy/wp-content/uploads/2026/05/logo_flacso_uruguay_20anos_blanco.png';
+
 $tipo_oferta = '';
 $tipo_terms = get_the_terms($post_id, 'tipo-oferta-academica');
 
@@ -19,29 +28,42 @@ if (!is_wp_error($tipo_terms) && !empty($tipo_terms)) {
 }
 
 $inscripciones_abiertas = !empty($data['inscripciones_abiertas']);
-$hero_tag = $inscripciones_abiertas ? __('Inscripciones 2026', 'flacso-uruguay') : __('Próximamente', 'flacso-uruguay');
-$hero_cta = $inscripciones_abiertas
-    ? __('Descuentos especiales disponibles. Solicitá información e inscribite hoy.', 'flacso-uruguay')
-    : __('Solicitá información y te avisaremos cuando abra la próxima cohorte.', 'flacso-uruguay');
-$hero_cta_markup = esc_html($hero_cta);
-$logo_url = 'https://flacso.edu.uy/wp-content/uploads/2026/05/logo_flacso_uruguay_20anos_blanco.png';
+$preinscripcion_url = trailingslashit(get_permalink($post_id)) . 'preinscripcion/';
 
-if ($inscripciones_abiertas) {
-    $preinscripcion_url = trailingslashit(get_permalink($post_id)) . 'preinscripcion/';
-    $hero_cta_markup = sprintf(
+$hero_tag = $inscripciones_abiertas
+    ? __('Inscripciones 2026', 'flacso-uruguay')
+    : __('Próximamente', 'flacso-uruguay');
+
+$hero_cta_markup = $inscripciones_abiertas
+    ? sprintf(
         '%s <a href="%s">%s</a>',
         esc_html__('Descuentos especiales disponibles.', 'flacso-uruguay'),
         esc_url($preinscripcion_url),
         esc_html__('Solicitá información e inscribite hoy.', 'flacso-uruguay')
-    );
-}
+    )
+    : esc_html__('Solicitá información y te avisaremos cuando abra la próxima cohorte.', 'flacso-uruguay');
 
 $programa_meta = array_filter([
     !empty($data['cohorte']) ? (string) $data['cohorte'] : '',
     !empty($data['abreviacion']) ? strtoupper((string) $data['abreviacion']) : '',
 ]);
 
-// Cargar estilos de la oferta
+$render_info_card = static function ($title, $body, $extra_class = '') {
+    if (trim((string) $body) === '') {
+        return;
+    }
+    ?>
+    <section class="flacso-oa-info-card <?php echo esc_attr($extra_class); ?>">
+        <header class="flacso-oa-info-card__header">
+            <h3><?php echo esc_html($title); ?></h3>
+        </header>
+        <div class="flacso-oa-info-card__body">
+            <?php echo wp_kses_post($body); ?>
+        </div>
+    </section>
+    <?php
+};
+
 if (class_exists('Oferta_Renderer')) {
     Oferta_Renderer::enqueue_styles();
 }
@@ -49,573 +71,1211 @@ if (class_exists('Oferta_Renderer')) {
 get_header();
 ?>
 
-<div id="inner-wrap" class="wrap kt-clear flacso-oferta-academica-premium">
-
+<div id="inner-wrap" class="wrap kt-clear flacso-oferta-responsive">
     <div id="primary" class="content-area">
-        <div class="content-container site-container">
-            <div id="main" class="site-main">
-                <div class="content-wrap">
-                    <article id="post-<?php echo $post_id; ?>" class="entry content-bg single-entry">
-                        <div class="entry-content-wrap">
-                            <div class="entry-content single-content">
-                                
-                                <!-- Banner Superior -->
-                                <section class="flacso-oa-single-hero mb-4" aria-label="<?php esc_attr_e('Hero de inscripciones', 'flacso-uruguay'); ?>">
-                                    <div class="kt-inside-inner-col">
-                                        <?php
-                                        if (class_exists('Flacso_Inscripciones_Banner_Block')) {
-                                            echo Flacso_Inscripciones_Banner_Block::get_instance()->render_block([]);
-                                        } else {
-                                        ?>
-                                            <div class="flacso-inscripciones-banner">
-                                                <?php if ($thumbnail_url) : ?>
-                                                    <img decoding="async" class="flacso-inscripciones-banner__img" src="<?php echo esc_url($thumbnail_url); ?>" alt="<?php the_title_attribute(); ?>">
-                                                <?php else : ?>
-                                                    <div class="flacso-inscripciones-banner__img flacso-inscripciones-banner__img--placeholder" aria-hidden="true"></div>
-                                                <?php endif; ?>
-                                                <div class="flacso-inscripciones-banner__overlay">
-                                                    <div class="flacso-inscripciones-banner__top">
-                                                        <div class="flacso-inscripciones-banner__tag">
-                                                            <?php echo esc_html($hero_tag); ?>
-                                                        </div>
-                                                        <img decoding="async" src="<?php echo esc_url($logo_url); ?>" alt="FLACSO Uruguay" class="flacso-inscripciones-banner__logo">
-                                                    </div>
-                                                    <div class="flacso-inscripciones-banner__bottom">
-                                                        <div class="flacso-inscripciones-banner__cta">
-                                                            <?php echo wp_kses_post($hero_cta_markup); ?>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        <?php } ?>
-                                    </div>
-                                </section>
+        <div class="content-container">
+            <main id="main" class="site-main">
+                <article id="post-<?php echo esc_attr($post_id); ?>" <?php post_class('entry content-bg single-entry flacso-oa-article'); ?>>
 
-                                <header class="flacso-oa-single-intro mb-5">
-                                    <?php if ($tipo_oferta !== '') : ?>
-                                        <p class="flacso-oa-single-intro__eyebrow"><?php echo esc_html($tipo_oferta); ?></p>
-                                    <?php endif; ?>
-                                    <h1 class="wp-block-heading flacso-oa-single-intro__title"><?php the_title(); ?></h1>
-                                    <?php if (!empty($programa_meta)) : ?>
-                                        <p class="flacso-oa-single-intro__meta">
-                                            <?php foreach ($programa_meta as $meta_item) : ?>
-                                                <span><?php echo esc_html($meta_item); ?></span>
-                                            <?php endforeach; ?>
-                                        </p>
-                                    <?php endif; ?>
-                                </header>
-
-                                <!-- Grid Principal (Descripción + Formulario) -->
-                                <div class="kb-row-layout-wrap wp-block-kadence-rowlayout mb-5">
-                                    <div class="kt-row-column-wrap kt-has-2-columns kt-row-layout-left-golden kt-mobile-layout-row">
-                                        
-                                        <!-- Columna Izquierda: Contenido -->
-                                        <div class="wp-block-kadence-column inner-column-1">
-                                            <div class="kt-inside-inner-col">
-                                                <?php if (!empty($data['duracion_meses'])) : ?>
-                                                    <h2 class="wp-block-heading mb-4"><?php printf(__('Duración: %s meses', 'flacso-uruguay'), $data['duracion_meses']); ?></h2>
-                                                <?php endif; ?>
-
-                                                <div class="entry-content-text" style="font-size: 1.1rem; line-height: 1.7; color: #444;">
-                                                    <?php the_content(); ?>
-                                                </div>
-                                            </div>
-
-                                <!-- Próximo Inicio -->
-                                <?php if (class_exists('Oferta_Blocks')) : ?>
-                                    <div class="mb-5">
-                                        <?php echo Oferta_Blocks::render_dato_proximo_inicio(['ofertaId' => $post_id]); ?>
-                                    </div>
+                    <section class="flacso-oa-hero-section">
+                        <div class="flacso-oa-container">
+                            <div class="flacso-oa-hero">
+                                <?php if ($thumbnail_url) : ?>
+                                    <img
+                                        class="flacso-oa-hero__image"
+                                        src="<?php echo esc_url($thumbnail_url); ?>"
+                                        alt="<?php echo esc_attr(get_the_title($post_id)); ?>"
+                                        decoding="async"
+                                    >
+                                <?php else : ?>
+                                    <div class="flacso-oa-hero__image flacso-oa-hero__image--placeholder" aria-hidden="true"></div>
                                 <?php endif; ?>
 
-                                <!-- Acordeones de Información -->
-                                <div class="mt-5">
-                                                <div class="flacso-oferta-cards-container flacso-oferta-cards-grid">
-                                                    
-                                                    <!-- MODALIDAD -->
-                                                    <div class="card flacso-oferta-info-card mb-4 border-0 shadow-sm rounded-4 overflow-hidden" style="background-color: #f8fafc;">
-                                                        <div class="card-header bg-white border-0 py-3 px-4" style="border-left: 5px solid #fcd116 !important;">
-                                                            <h3 class="card-title m-0" style="color: #163970; font-weight: 800; font-size: 1.1rem; text-transform: uppercase;"><?php _e('MODALIDAD', 'flacso-uruguay'); ?></h3>
-                                                        </div>
-                                                        <div class="card-body px-4 py-3" style="font-size: 1.05rem; line-height: 1.6; color: #444;">
-                                                            <?php echo !empty($data['modalidad_html']) ? $data['modalidad_html'] : __('Virtual.', 'flacso-uruguay'); ?>
-                                                        </div>
-                                                    </div>
+                                <div class="flacso-oa-hero__overlay">
+                                    <div class="flacso-oa-hero__top">
+                                        <span class="flacso-oa-hero__tag">
+                                            <?php echo esc_html($hero_tag); ?>
+                                        </span>
 
-                                                    <!-- OBJETIVOS -->
-                                                    <?php if (!empty($data['objetivos_html'])) : ?>
-                                                    <div class="card flacso-oferta-info-card mb-4 border-0 shadow-sm rounded-4 overflow-hidden" style="background-color: #f8fafc;">
-                                                        <div class="card-header bg-white border-0 py-3 px-4" style="border-left: 5px solid #fcd116 !important;">
-                                                            <h3 class="card-title m-0" style="color: #163970; font-weight: 800; font-size: 1.1rem; text-transform: uppercase;"><?php _e('OBJETIVOS', 'flacso-uruguay'); ?></h3>
-                                                        </div>
-                                                        <div class="card-body px-4 py-3" style="font-size: 1.05rem; line-height: 1.6; color: #444;">
-                                                            <?php echo $data['objetivos_html']; ?>
-                                                        </div>
-                                                    </div>
-                                                    <?php endif; ?>
+                                        <img
+                                            class="flacso-oa-hero__logo"
+                                            src="<?php echo esc_url($logo_url); ?>"
+                                            alt="<?php esc_attr_e('FLACSO Uruguay', 'flacso-uruguay'); ?>"
+                                            decoding="async"
+                                        >
+                                    </div>
 
-                                                    <!-- MALLA CURRICULAR -->
-                                                    <div class="card flacso-oferta-info-card flacso-oferta-info-card--span-2 mb-4 border-0 shadow-sm rounded-4 overflow-hidden" style="background-color: #f8fafc;">
-                                                        <div class="card-header bg-white border-0 py-3 px-4" style="border-left: 5px solid #fcd116 !important;">
-                                                            <h3 class="card-title m-0" style="color: #163970; font-weight: 800; font-size: 1.1rem; text-transform: uppercase;"><?php _e('MALLA CURRICULAR', 'flacso-uruguay'); ?></h3>
-                                                        </div>
-                                                        <div class="card-body px-4 py-3" style="font-size: 1.05rem; line-height: 1.6; color: #444;">
-                                                            <?php 
-                                                            $html = !empty($data['malla_curricular_html']) ? $data['malla_curricular_html'] : '';
-                                                            $pdf_url = !empty($data['malla_curricular']) ? $data['malla_curricular'] : '';
-                                                            
-                                                            if ($pdf_url && $html) {
-                                                                $html = preg_replace('/<p>(<strong[^>]*>)?\s*<a[^>]+>Malla curricular<\/a>\s*(<\/strong>)?<\/p>/i', '', $html);
-                                                                $html = preg_replace('/<a[^>]+>Malla curricular<\/a>/i', '', $html);
-                                                                $html = trim($html);
-                                                            }
-                                                            
-                                                            if ($html) {
-                                                                echo wp_kses_post($html);
-                                                            }
-                                                            
-                                                            if (class_exists('Oferta_Blocks') && $pdf_url) {
-                                                                echo Oferta_Blocks::render_dato_malla_curricular(['ofertaId' => $post_id]);
-                                                            }
-                                                            ?>
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- CALENDARIO -->
-                                                    <div class="card flacso-oferta-info-card flacso-oferta-info-card--span-2 mb-4 border-0 shadow-sm rounded-4 overflow-hidden" style="background-color: #f8fafc;">
-                                                        <div class="card-header bg-white border-0 py-3 px-4" style="border-left: 5px solid #fcd116 !important;">
-                                                            <h3 class="card-title m-0" style="color: #163970; font-weight: 800; font-size: 1.1rem; text-transform: uppercase;"><?php _e('CALENDARIO', 'flacso-uruguay'); ?></h3>
-                                                        </div>
-                                                        <div class="card-body px-4 py-3" style="font-size: 1.05rem; line-height: 1.6; color: #444;">
-                                                            <?php 
-                                                            $html_cal = !empty($data['calendario_html']) ? $data['calendario_html'] : '';
-                                                            $pdf_cal = !empty($data['calendario']) ? $data['calendario'] : '';
-                                                            
-                                                            if ($pdf_cal && $html_cal) {
-                                                                $html_cal = preg_replace('/<p>(<strong[^>]*>)?\s*<a[^>]+>(Calendario|Cronograma)<\/a>\s*(<\/strong>)?<\/p>/i', '', $html_cal);
-                                                                $html_cal = preg_replace('/<a[^>]+>(Calendario|Cronograma)<\/a>/i', '', $html_cal);
-                                                                $html_cal = trim($html_cal);
-                                                            }
-                                                            
-                                                            if ($html_cal) {
-                                                                echo wp_kses_post($html_cal);
-                                                            }
-                                                            
-                                                            if (class_exists('Oferta_Blocks') && $pdf_cal) {
-                                                                echo Oferta_Blocks::render_dato_calendario(['ofertaId' => $post_id]); 
-                                                            }
-                                                            ?>
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- FINANCIACION -->
-                                                    <div class="card flacso-oferta-info-card flacso-oferta-info-card--span-2 mb-4 border-0 shadow-sm rounded-4 overflow-hidden" style="background-color: #f8fafc;">
-                                                        <div class="card-header bg-white border-0 py-3 px-4" style="border-left: 5px solid #fcd116 !important;">
-                                                            <h3 class="card-title m-0" style="color: #163970; font-weight: 800; font-size: 1.1rem; text-transform: uppercase;"><?php _e('FINANCIACIÓN Y BECAS', 'flacso-uruguay'); ?></h3>
-                                                        </div>
-                                                        <div class="card-body px-4 py-3" style="font-size: 1.05rem; line-height: 1.6; color: #444;">
-                                                            <?php 
-                                                            $financiacion_html = !empty($data['financiacion_html']) ? $data['financiacion_html'] : '';
-                                                            if (empty($financiacion_html)) {
-                                                                $financiacion_html = '<p>' . __('FLACSO ofrece financiación flexible, el monto de las cuotas puede variar dependiendo de las promociones que haya aprovechado, o el plan de pagos que se coordine con la Institución. Todos los posgrados pueden abonarse en cuotas, siguiendo un plan mensual de pagos que acompañan la cursada. No obstante, es posible extender los planes de pago en forma flexible, con valores de cuota a su alcance.', 'flacso-uruguay') . '</p>';
-                                                                $financiacion_html .= '<p>' . __('Quienes cursen desde fuera de Uruguay pueden pagar de forma segura a través de la plataforma de pago de la institución, mientras las personas que cursan en el país, disponen de otras vías para pagar.', 'flacso-uruguay') . '</p>';
-                                                                $financiacion_html .= '<p>' . __('Las becas para cursar en FLACSO Uruguay están sujetas a convenios inter institucionales y son limitadas por cohorte. Para obtener más información sobre las posibles becas disponibles puede comunicarse con la asistente académica.', 'flacso-uruguay') . '</p>';
-                                                            }
-                                                            echo wp_kses_post($financiacion_html); 
-                                                            ?>
-                                                        </div>
-                                                    </div>
-
-                                                </div>
-                                            </div>
+                                    <div class="flacso-oa-hero__bottom">
+                                        <div class="flacso-oa-hero__cta">
+                                            <?php echo wp_kses_post($hero_cta_markup); ?>
                                         </div>
-                                        <!-- FIN Columna Izquierda -->
-
-                                        <!-- Columna Derecha: Formulario -->
-                                        <div class="wp-block-kadence-column inner-column-2">
-                                            <div class="kt-inside-inner-col" style="position: sticky; top: 2rem;">
-                                                <div class="flacso-consultas-formulario-wrapper">
-                                                    <?php 
-                                                    if (function_exists('flacso_consultas_render_form')) {
-                                                        echo flacso_consultas_render_form(['mostrar_preinscripcion' => true]);
-                                                    } else {
-                                                    ?>
-                                                        <div class="flacso-consultas-formulario">
-                                                            <h3 class="mb-2" style="font-weight: 800;"><?php _e('Solicitá información', 'flacso-uruguay'); ?></h3>
-                                                            <p class="mb-4 small text-muted"><?php _e('Llená el formulario y recibí toda la información de cursada 2026.', 'flacso-uruguay'); ?></p>
-                                                            
-                                                            <?php 
-                                                            if (class_exists('Oferta_Consulta_Form')) {
-                                                                echo Oferta_Consulta_Form::render_inline_form($post_id);
-                                                            }
-                                                            ?>
-                                                        </div>
-
-                                                        <?php if (!empty($data['inscripciones_abiertas'])) : ?>
-                                                            <div class="mt-4">
-                                                                <a href="<?php echo trailingslashit(get_permalink($post_id)) . 'preinscripcion'; ?>" class="flacso-btn-preinsc">
-                                                                    <?php _e('Preinscripción 2026', 'flacso-uruguay'); ?>
-                                                                </a>
-                                                            </div>
-                                                        <?php endif; ?>
-                                                    <?php } ?>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <!-- FIN Columna Derecha -->
-
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </section>
 
-                                <!-- CTA Intermedio -->
-                                <div class="kb-row-layout-wrap wp-block-kadence-rowlayout alignfull mb-5" style="background-color: #163970; color: white; padding: 40px 0;">
-                                    <div class="site-container">
-                                        <p class="text-center m-0" style="font-size: 1.1rem;"><?php _e('Para realizar las postulaciones puede completar el formulario y en breve el personal de asistencia académica se pondrá en contacto.', 'flacso-uruguay'); ?></p>
-                                    </div>
-                                </div>
+                    <section class="flacso-oa-intro-section">
+                        <div class="flacso-oa-container">
+                            <div class="flacso-oa-intro">
+                                <?php if ($tipo_oferta !== '') : ?>
+                                    <p class="flacso-oa-intro__eyebrow">
+                                        <?php echo esc_html($tipo_oferta); ?>
+                                    </p>
+                                <?php endif; ?>
 
-                                <!-- Equipo Académico -->
-                                <div class="kb-row-layout-wrap wp-block-kadence-rowlayout alignfull" style="background-color: #f8fafc; padding: 80px 0;">
-                                    <div class="site-container">
-                                        <h2 class="wp-block-heading text-center mb-5" style="text-transform:uppercase; font-weight: 800; color: #163970;"><?php _e('Equipo Académico', 'flacso-uruguay'); ?></h2>
-                                        
-                                        <?php if (!empty($data['coordinacion_academica'])) : ?>
-                                            <?php foreach ($data['coordinacion_academica'] as $coord) : ?>
-                                                <div class="mb-5">
-                                                    <div class="row justify-content-center">
-                                                        <?php foreach ($coord['docentes'] as $docente_id) : ?>
-                                                            <div class="col-12 col-lg-10 mb-4">
-                                                                <?php 
-                                                                if (function_exists('dp_docente_destacado')) {
-                                                                    echo dp_docentes_wrap_output(dp_docente_destacado(['docId' => $docente_id, 'rol' => $coord['rol']]));
-                                                                }
-                                                                ?>
-                                                            </div>
-                                                        <?php endforeach; ?>
-                                                    </div>
-                                                </div>
-                                            <?php endforeach; ?>
-                                        <?php endif; ?>
+                                <h1 class="flacso-oa-intro__title">
+                                    <?php the_title(); ?>
+                                </h1>
 
-                                        <?php if (!empty($data['equipos'])) : ?>
-                                            <?php foreach ($data['equipos'] as $grupo) : ?>
-                                                <div class="mb-5">
-                                                    <div class="row justify-content-center">
-                                                        <div class="col-12 col-lg-10">
-                                                            <?php 
-                                                            if (function_exists('dp_docentes_grupo_block_render')) {
-                                                                echo dp_docentes_grupo_block_render([
-                                                                    'title' => $grupo['nombre'],
-                                                                    'level' => 'h3',
-                                                                    'docenteIds' => $grupo['docentes']
-                                                                ]);
-                                                            } else {
-                                                                // Fallback if plugin is disabled
-                                                                echo '<h3 class="wp-block-heading text-center mb-4">' . esc_html($grupo['nombre']) . '</h3>';
-                                                            }
-                                                            ?>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            <?php endforeach; ?>
+                                <?php if (!empty($programa_meta) || !empty($data['duracion_meses'])) : ?>
+                                    <div class="flacso-oa-intro__meta" aria-label="<?php esc_attr_e('Datos del programa', 'flacso-uruguay'); ?>">
+                                        <?php foreach ($programa_meta as $meta_item) : ?>
+                                            <span><?php echo esc_html($meta_item); ?></span>
+                                        <?php endforeach; ?>
+
+                                        <?php if (!empty($data['duracion_meses'])) : ?>
+                                            <span>
+                                                <?php
+                                                printf(
+                                                    esc_html__('Duración: %s meses', 'flacso-uruguay'),
+                                                    esc_html($data['duracion_meses'])
+                                                );
+                                                ?>
+                                            </span>
                                         <?php endif; ?>
                                     </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="flacso-oa-main-section">
+                        <div class="flacso-oa-container">
+                            <div class="flacso-oa-main-grid">
+
+                                <div class="flacso-oa-main-content">
+                                    <section class="flacso-oa-content-card">
+                                        <div class="flacso-oa-content-card__body">
+                                            <?php the_content(); ?>
+                                        </div>
+                                    </section>
+
+                                    <?php if (class_exists('Oferta_Blocks')) : ?>
+                                        <section class="flacso-oa-next-start">
+                                            <?php echo Oferta_Blocks::render_dato_proximo_inicio(['ofertaId' => $post_id]); ?>
+                                        </section>
+                                    <?php endif; ?>
+
+                                    <div class="flacso-oa-info-grid">
+                                        <?php
+                                        $modalidad_html = !empty($data['modalidad_html'])
+                                            ? $data['modalidad_html']
+                                            : '<p>' . esc_html__('Virtual.', 'flacso-uruguay') . '</p>';
+
+                                        $render_info_card(
+                                            __('Modalidad', 'flacso-uruguay'),
+                                            $modalidad_html
+                                        );
+
+                                        if (!empty($data['objetivos_html'])) {
+                                            $render_info_card(
+                                                __('Objetivos', 'flacso-uruguay'),
+                                                $data['objetivos_html']
+                                            );
+                                        }
+
+                                        $malla_html = !empty($data['malla_curricular_html'])
+                                            ? (string) $data['malla_curricular_html']
+                                            : '';
+
+                                        $malla_pdf_url = !empty($data['malla_curricular'])
+                                            ? (string) $data['malla_curricular']
+                                            : '';
+
+                                        if ($malla_pdf_url && $malla_html) {
+                                            $malla_html = preg_replace('/<p>(<strong[^>]*>)?\s*<a[^>]+>Malla curricular<\/a>\s*(<\/strong>)?<\/p>/i', '', $malla_html);
+                                            $malla_html = preg_replace('/<a[^>]+>Malla curricular<\/a>/i', '', $malla_html);
+                                            $malla_html = trim($malla_html);
+                                        }
+
+                                        ob_start();
+
+                                        if ($malla_html) {
+                                            echo wp_kses_post($malla_html);
+                                        }
+
+                                        if (class_exists('Oferta_Blocks') && $malla_pdf_url) {
+                                            echo Oferta_Blocks::render_dato_malla_curricular(['ofertaId' => $post_id]);
+                                        }
+
+                                        $malla_body = ob_get_clean();
+
+                                        $render_info_card(
+                                            __('Malla curricular', 'flacso-uruguay'),
+                                            $malla_body,
+                                            'flacso-oa-info-card--wide'
+                                        );
+
+                                        $calendario_html = !empty($data['calendario_html'])
+                                            ? (string) $data['calendario_html']
+                                            : '';
+
+                                        $calendario_pdf_url = !empty($data['calendario'])
+                                            ? (string) $data['calendario']
+                                            : '';
+
+                                        if ($calendario_pdf_url && $calendario_html) {
+                                            $calendario_html = preg_replace('/<p>(<strong[^>]*>)?\s*<a[^>]+>(Calendario|Cronograma)<\/a>\s*(<\/strong>)?<\/p>/i', '', $calendario_html);
+                                            $calendario_html = preg_replace('/<a[^>]+>(Calendario|Cronograma)<\/a>/i', '', $calendario_html);
+                                            $calendario_html = trim($calendario_html);
+                                        }
+
+                                        ob_start();
+
+                                        if ($calendario_html) {
+                                            echo wp_kses_post($calendario_html);
+                                        }
+
+                                        if (class_exists('Oferta_Blocks') && $calendario_pdf_url) {
+                                            echo Oferta_Blocks::render_dato_calendario(['ofertaId' => $post_id]);
+                                        }
+
+                                        $calendario_body = ob_get_clean();
+
+                                        $render_info_card(
+                                            __('Calendario', 'flacso-uruguay'),
+                                            $calendario_body,
+                                            'flacso-oa-info-card--wide'
+                                        );
+
+                                        $financiacion_html = !empty($data['financiacion_html'])
+                                            ? (string) $data['financiacion_html']
+                                            : '';
+
+                                        if ($financiacion_html === '') {
+                                            $financiacion_html  = '<p>' . esc_html__('FLACSO ofrece financiación flexible, el monto de las cuotas puede variar dependiendo de las promociones que haya aprovechado, o el plan de pagos que se coordine con la Institución. Todos los posgrados pueden abonarse en cuotas, siguiendo un plan mensual de pagos que acompañan la cursada. No obstante, es posible extender los planes de pago en forma flexible, con valores de cuota a su alcance.', 'flacso-uruguay') . '</p>';
+                                            $financiacion_html .= '<p>' . esc_html__('Quienes cursen desde fuera de Uruguay pueden pagar de forma segura a través de la plataforma de pago de la institución, mientras las personas que cursan en el país, disponen de otras vías para pagar.', 'flacso-uruguay') . '</p>';
+                                            $financiacion_html .= '<p>' . esc_html__('Las becas para cursar en FLACSO Uruguay están sujetas a convenios inter institucionales y son limitadas por cohorte. Para obtener más información sobre las posibles becas disponibles puede comunicarse con la asistente académica.', 'flacso-uruguay') . '</p>';
+                                        }
+
+                                        $render_info_card(
+                                            __('Financiación y becas', 'flacso-uruguay'),
+                                            $financiacion_html,
+                                            'flacso-oa-info-card--wide'
+                                        );
+                                        ?>
+                                    </div>
                                 </div>
 
-                                <!-- Seminarios Vinculados -->
-                                <?php
-                                if (class_exists('Oferta_Seminarios_Integration')) {
-                                    $seminarios_all = Oferta_Seminarios_Integration::get_programa_seminarios_data($post_id);
-                                    $seminarios = array();
-                                    $hoy = new DateTimeImmutable('today', wp_timezone());
-                                    foreach ($seminarios_all as $s) {
-                                        if (empty($s['fecha_inicio'])) {
-                                            continue;
-                                        }
-                                        $inicio_obj = DateTimeImmutable::createFromFormat('Y-m-d|', $s['fecha_inicio'], wp_timezone());
-                                        if (!$inicio_obj) {
-                                            continue;
-                                        }
-                                        $dias_hasta_inicio = (int) floor(($inicio_obj->getTimestamp() - $hoy->getTimestamp()) / DAY_IN_SECONDS);
-                                        $is_upcoming = $dias_hasta_inicio >= 0;
-                                        $is_started_recent = $dias_hasta_inicio < 0 && $dias_hasta_inicio >= -7;
-                                        if ($is_upcoming || $is_started_recent) {
-                                            $seminarios[] = $s;
-                                        }
-                                    }
-                                    if (!empty($seminarios)) :
-                                ?>
-                                    <div class="site-container my-5 py-5">
-                                        <div class="d-flex justify-content-between align-items-center mb-4">
-                                            <h2 class="wp-block-heading m-0" style="color: #163970; font-weight: 800;"><?php _e('Seminarios Vinculados', 'flacso-uruguay'); ?></h2>
-                                            <a href="<?php echo trailingslashit(get_permalink($post_id)) . 'seminarios/'; ?>" class="btn btn-primary rounded-pill px-4">
-                                                <?php _e('Ver todos', 'flacso-uruguay'); ?> <i class="bi bi-arrow-right ms-2"></i>
-                                            </a>
-                                        </div>
-                                        <div class="row g-4">
-                                            <?php foreach (array_slice($seminarios, 0, 3) as $seminario) : ?>
-                                                <div class="col-md-4">
-                                                    <div class="card h-100 border-0 shadow-sm p-4" style="border-radius: 15px; border-left: 4px solid #fcd116;">
-                                                        <h5 class="fw-bold mb-3" style="line-height: 1.4;">
-                                                            <a href="<?php echo esc_url($seminario['permalink']); ?>" class="text-dark text-decoration-none">
-                                                                <?php echo esc_html($seminario['titulo']); ?>
-                                                            </a>
-                                                        </h5>
-                                                        <div class="text-muted small mt-auto">
-                                                            <i class="bi bi-calendar3 me-2" style="color: #163970;"></i> <?php echo esc_html($seminario['fecha_inicio']); ?>
-                                                        </div>
-                                                    </div>
+                                <aside class="flacso-oa-aside" aria-label="<?php esc_attr_e('Formulario de consulta', 'flacso-uruguay'); ?>">
+                                    <div class="flacso-oa-aside__sticky">
+                                        <div class="flacso-oa-form-panel">
+                                            <div class="flacso-oa-form-panel__header">
+                                                <h2><?php esc_html_e('Solicitá información', 'flacso-uruguay'); ?></h2>
+                                                <p><?php esc_html_e('Completá el formulario y recibí información sobre cursada, inscripción y financiación.', 'flacso-uruguay'); ?></p>
+                                            </div>
+
+                                            <div class="flacso-oa-form-panel__body">
+                                                <?php
+                                                if (function_exists('flacso_consultas_render_form')) {
+                                                    echo flacso_consultas_render_form(['mostrar_preinscripcion' => true]);
+                                                } else {
+                                                    if (class_exists('Oferta_Consulta_Form')) {
+                                                        echo Oferta_Consulta_Form::render_inline_form($post_id);
+                                                    }
+                                                }
+                                                ?>
+                                            </div>
+
+                                            <?php if ($inscripciones_abiertas) : ?>
+                                                <div class="flacso-oa-form-panel__footer">
+                                                    <a href="<?php echo esc_url($preinscripcion_url); ?>" class="flacso-oa-preinscripcion-btn">
+                                                        <?php esc_html_e('Preinscripción 2026', 'flacso-uruguay'); ?>
+                                                    </a>
                                                 </div>
-                                            <?php endforeach; ?>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
-                                <?php 
-                                    endif;
-                                } 
-                                ?>
+                                </aside>
 
                             </div>
                         </div>
-                    </article>
-                </div>
-            </div>
+                    </section>
+
+                    <section class="flacso-oa-cta-section">
+                        <div class="flacso-oa-container">
+                            <div class="flacso-oa-cta">
+                                <p>
+                                    <?php esc_html_e('Para realizar las postulaciones puede completar el formulario y en breve el personal de asistencia académica se pondrá en contacto.', 'flacso-uruguay'); ?>
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <?php
+                    $has_coordinacion = !empty($data['coordinacion_academica']) && is_array($data['coordinacion_academica']);
+                    $has_equipos = !empty($data['equipos']) && is_array($data['equipos']);
+                    ?>
+
+                    <?php if ($has_coordinacion || $has_equipos) : ?>
+                        <section class="flacso-oa-team-section">
+                            <div class="flacso-oa-container">
+                                <header class="flacso-oa-section-header">
+                                    <h2><?php esc_html_e('Equipo Académico', 'flacso-uruguay'); ?></h2>
+                                </header>
+
+                                <div class="flacso-oa-team-layout">
+                                    <?php if ($has_coordinacion) : ?>
+                                        <?php foreach ($data['coordinacion_academica'] as $coord) : ?>
+                                            <?php
+                                            if (empty($coord['docentes']) || !is_array($coord['docentes'])) {
+                                                continue;
+                                            }
+                                            ?>
+                                            <div class="flacso-oa-team-group">
+                                                <?php foreach ($coord['docentes'] as $docente_id) : ?>
+                                                    <div class="flacso-oa-team-item">
+                                                        <?php
+                                                        if (function_exists('dp_docente_destacado')) {
+                                                            $rol = !empty($coord['rol']) ? $coord['rol'] : '';
+                                                            echo dp_docentes_wrap_output(dp_docente_destacado([
+                                                                'docId' => $docente_id,
+                                                                'rol' => $rol,
+                                                            ]));
+                                                        }
+                                                        ?>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+
+                                    <?php if ($has_equipos) : ?>
+                                        <?php foreach ($data['equipos'] as $grupo) : ?>
+                                            <?php
+                                            if (empty($grupo['docentes']) || !is_array($grupo['docentes'])) {
+                                                continue;
+                                            }
+
+                                            $grupo_nombre = !empty($grupo['nombre']) ? $grupo['nombre'] : __('Equipo docente', 'flacso-uruguay');
+                                            ?>
+                                            <div class="flacso-oa-team-group">
+                                                <?php
+                                                if (function_exists('dp_docentes_grupo_block_render')) {
+                                                    echo dp_docentes_grupo_block_render([
+                                                        'title' => $grupo_nombre,
+                                                        'level' => 'h3',
+                                                        'docenteIds' => $grupo['docentes'],
+                                                    ]);
+                                                } else {
+                                                    echo '<h3 class="flacso-oa-team-group__title">' . esc_html($grupo_nombre) . '</h3>';
+                                                }
+                                                ?>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </section>
+                    <?php endif; ?>
+
+                    <?php
+                    if (class_exists('Oferta_Seminarios_Integration')) :
+                        $seminarios_all = Oferta_Seminarios_Integration::get_programa_seminarios_data($post_id);
+                        $seminarios = [];
+                        $hoy = new DateTimeImmutable('today', wp_timezone());
+
+                        if (is_array($seminarios_all)) {
+                            foreach ($seminarios_all as $seminario) {
+                                if (empty($seminario['fecha_inicio'])) {
+                                    continue;
+                                }
+
+                                $inicio_obj = DateTimeImmutable::createFromFormat('Y-m-d|', $seminario['fecha_inicio'], wp_timezone());
+
+                                if (!$inicio_obj) {
+                                    continue;
+                                }
+
+                                $dias_hasta_inicio = (int) floor(($inicio_obj->getTimestamp() - $hoy->getTimestamp()) / DAY_IN_SECONDS);
+                                $is_upcoming = $dias_hasta_inicio >= 0;
+                                $is_started_recent = $dias_hasta_inicio < 0 && $dias_hasta_inicio >= -7;
+
+                                if ($is_upcoming || $is_started_recent) {
+                                    $seminarios[] = $seminario;
+                                }
+                            }
+                        }
+
+                        usort($seminarios, static function ($a, $b) {
+                            return strcmp($a['fecha_inicio'] ?? '', $b['fecha_inicio'] ?? '');
+                        });
+                        ?>
+
+                        <?php if (!empty($seminarios)) : ?>
+                            <section class="flacso-oa-seminarios-section">
+                                <div class="flacso-oa-container">
+                                    <div class="flacso-oa-seminarios-heading">
+                                        <h2><?php esc_html_e('Seminarios Vinculados', 'flacso-uruguay'); ?></h2>
+
+                                        <a href="<?php echo esc_url(trailingslashit(get_permalink($post_id)) . 'seminarios/'); ?>" class="flacso-oa-link-btn">
+                                            <?php esc_html_e('Ver todos', 'flacso-uruguay'); ?>
+                                        </a>
+                                    </div>
+
+                                    <div class="flacso-oa-seminarios-grid">
+                                        <?php foreach (array_slice($seminarios, 0, 3) as $seminario) : ?>
+                                            <?php
+                                            $seminario_url = !empty($seminario['permalink']) ? $seminario['permalink'] : '#';
+                                            $seminario_titulo = !empty($seminario['titulo']) ? $seminario['titulo'] : __('Seminario', 'flacso-uruguay');
+                                            $fecha_inicio = !empty($seminario['fecha_inicio']) ? $seminario['fecha_inicio'] : '';
+                                            $fecha_legible = $fecha_inicio
+                                                ? date_i18n(get_option('date_format'), strtotime($fecha_inicio))
+                                                : '';
+                                            ?>
+                                            <article class="flacso-oa-seminario-card">
+                                                <h3>
+                                                    <a href="<?php echo esc_url($seminario_url); ?>">
+                                                        <?php echo esc_html($seminario_titulo); ?>
+                                                    </a>
+                                                </h3>
+
+                                                <?php if ($fecha_legible) : ?>
+                                                    <p class="flacso-oa-seminario-card__date">
+                                                        <?php echo esc_html($fecha_legible); ?>
+                                                    </p>
+                                                <?php endif; ?>
+                                            </article>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            </section>
+                        <?php endif; ?>
+                    <?php endif; ?>
+
+                </article>
+            </main>
         </div>
     </div>
 </div>
 
 <script>
-jQuery(document).ready(function($) {
-    // Acordeón funcional (si no hay Kadence activo)
-    $('.kt-blocks-accordion-header').on('click', function() {
-        const $pane = $(this).closest('.kt-accordion-pane');
-        const $panel = $pane.find('.kt-accordion-panel');
-        const $wrap = $(this).closest('.kt-accordion-inner-wrap');
-        
-        $wrap.find('.kt-accordion-pane').not($pane).removeClass('kt-accordion-pane-active').find('.kt-accordion-panel').slideUp();
-        $panel.slideToggle();
-        $pane.toggleClass('kt-accordion-pane-active');
+(function () {
+    document.addEventListener('click', function (event) {
+        const header = event.target.closest('.flacso-oferta-responsive .kt-blocks-accordion-header');
+
+        if (!header) {
+            return;
+        }
+
+        const pane = header.closest('.kt-accordion-pane');
+        const wrapper = header.closest('.kt-accordion-inner-wrap');
+
+        if (!pane || !wrapper) {
+            return;
+        }
+
+        const panel = pane.querySelector('.kt-accordion-panel');
+        const isActive = pane.classList.contains('kt-accordion-pane-active');
+
+        wrapper.querySelectorAll('.kt-accordion-pane').forEach(function (item) {
+            item.classList.remove('kt-accordion-pane-active');
+
+            const itemPanel = item.querySelector('.kt-accordion-panel');
+
+            if (itemPanel) {
+                itemPanel.style.display = 'none';
+            }
+        });
+
+        if (!isActive) {
+            pane.classList.add('kt-accordion-pane-active');
+
+            if (panel) {
+                panel.style.display = 'block';
+            }
+        }
     });
-});
+})();
 </script>
 
 <style>
-/* Estilos Base para emular el diseño exacto de flacso.edu.uy */
-:root {
+.flacso-oferta-responsive {
     --flacso-blue-dark: #051938;
-    --flacso-blue-light: #163970;
+    --flacso-blue: #163970;
+    --flacso-blue-soft: #244f94;
     --flacso-yellow: #fcd116;
-    --flacso-gray-bg: #f8fafc;
+    --flacso-yellow-dark: #e1b900;
+    --flacso-bg: #f8fafc;
+    --flacso-text: #1f2937;
+    --flacso-muted: #64748b;
+    --flacso-border: rgba(15, 23, 42, 0.10);
+    --flacso-shadow-sm: 0 8px 22px rgba(15, 23, 42, 0.07);
+    --flacso-shadow-md: 0 18px 45px rgba(15, 23, 42, 0.11);
+    --flacso-radius-sm: 14px;
+    --flacso-radius-md: 22px;
+    --flacso-radius-lg: 30px;
+    background: #ffffff;
+    color: var(--flacso-text);
 }
 
-.flacso-oferta-academica-premium .entry-hero {
-    background: var(--flacso-blue-dark);
-    padding: 80px 0;
-    text-align: center;
-    color: white;
-    position: relative;
+.flacso-oferta-responsive,
+.flacso-oferta-responsive * {
+    box-sizing: border-box;
+}
+
+.flacso-oferta-responsive .content-bg,
+.flacso-oferta-responsive .single-entry,
+.flacso-oferta-responsive .entry-content-wrap,
+.flacso-oferta-responsive .entry {
+    background: transparent;
+    box-shadow: none;
+}
+
+.flacso-oferta-responsive .entry-content-wrap {
+    padding: 0;
+}
+
+.flacso-oa-container {
+    width: min(100% - 32px, 1180px);
+    margin-inline: auto;
+}
+
+.flacso-oa-article {
     overflow: hidden;
 }
-.flacso-oferta-academica-premium .hero-section-overlay {
+
+.flacso-oa-hero-section {
+    padding: clamp(18px, 3vw, 38px) 0 clamp(18px, 3vw, 34px);
+}
+
+.flacso-oa-hero {
+    position: relative;
+    min-height: clamp(300px, 42vw, 520px);
+    border-radius: var(--flacso-radius-lg);
+    overflow: hidden;
+    background: var(--flacso-blue-dark);
+    box-shadow: var(--flacso-shadow-md);
+    isolation: isolate;
+}
+
+.flacso-oa-hero__image {
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(5, 25, 56, 0.9) 0%, rgba(22, 57, 112, 0.5) 100%);
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.flacso-oa-hero__image--placeholder {
+    background:
+        radial-gradient(circle at 20% 20%, rgba(252, 209, 22, 0.35), transparent 32%),
+        linear-gradient(135deg, var(--flacso-blue-dark), var(--flacso-blue));
+}
+
+.flacso-oa-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(90deg, rgba(5, 25, 56, 0.84) 0%, rgba(5, 25, 56, 0.58) 46%, rgba(5, 25, 56, 0.18) 100%),
+        linear-gradient(180deg, rgba(5, 25, 56, 0.30) 0%, rgba(5, 25, 56, 0.78) 100%);
     z-index: 1;
 }
-.flacso-oferta-academica-premium .hero-container {
+
+.flacso-oa-hero__overlay {
     position: relative;
     z-index: 2;
+    min-height: inherit;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: clamp(22px, 4vw, 46px);
 }
-.flacso-oferta-academica-premium .entry-title {
-    font-size: clamp(2.5rem, 5vw, 4rem);
+
+.flacso-oa-hero__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.flacso-oa-hero__tag {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    max-width: 100%;
+    padding: 9px 18px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--flacso-blue-dark);
+    font-size: clamp(0.78rem, 1.3vw, 0.92rem);
+    font-weight: 850;
+    line-height: 1.2;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.flacso-oa-hero__logo {
+    width: clamp(132px, 18vw, 220px);
+    height: auto;
+    max-height: 82px;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.22));
+}
+
+.flacso-oa-hero__bottom {
+    width: min(100%, 660px);
+}
+
+.flacso-oa-hero__cta {
+    color: #ffffff;
+    font-size: clamp(1.1rem, 2vw, 1.45rem);
+    font-weight: 750;
+    line-height: 1.35;
+    text-wrap: balance;
+}
+
+.flacso-oa-hero__cta a {
+    color: #ffffff;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 5px;
+}
+
+.flacso-oa-intro-section {
+    padding: clamp(12px, 2vw, 22px) 0 clamp(28px, 5vw, 58px);
+}
+
+.flacso-oa-intro {
+    width: min(100%, 980px);
+}
+
+.flacso-oa-intro__eyebrow {
+    margin: 0 0 12px;
+    color: var(--flacso-blue);
+    font-size: 0.92rem;
+    font-weight: 850;
+    letter-spacing: 0.08em;
+    line-height: 1.3;
+    text-transform: uppercase;
+}
+
+.flacso-oa-intro__title {
+    margin: 0;
+    color: var(--flacso-blue-dark);
+    font-size: clamp(2rem, 5vw, 4.5rem);
+    font-weight: 900;
+    letter-spacing: -0.045em;
+    line-height: 0.98;
+    text-wrap: balance;
+}
+
+.flacso-oa-intro__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: clamp(18px, 3vw, 28px);
+}
+
+.flacso-oa-intro__meta span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 8px 14px;
+    border: 1px solid var(--flacso-border);
+    border-radius: 999px;
+    background: #ffffff;
+    color: var(--flacso-blue);
+    font-size: 0.92rem;
+    font-weight: 750;
+    line-height: 1.2;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+}
+
+.flacso-oa-main-section {
+    padding: 0 0 clamp(46px, 7vw, 92px);
+}
+
+.flacso-oa-main-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(26px, 5vw, 56px);
+    align-items: start;
+}
+
+.flacso-oa-main-content {
+    min-width: 0;
+}
+
+.flacso-oa-content-card {
+    border: 1px solid var(--flacso-border);
+    border-radius: var(--flacso-radius-md);
+    background: #ffffff;
+    box-shadow: var(--flacso-shadow-sm);
+    overflow: hidden;
+}
+
+.flacso-oa-content-card__body {
+    padding: clamp(22px, 4vw, 42px);
+    font-size: clamp(1rem, 1.3vw, 1.12rem);
+    line-height: 1.72;
+    color: #334155;
+}
+
+.flacso-oa-content-card__body > *:first-child {
+    margin-top: 0;
+}
+
+.flacso-oa-content-card__body > *:last-child {
+    margin-bottom: 0;
+}
+
+.flacso-oa-content-card__body img,
+.flacso-oa-info-card__body img,
+.flacso-oa-team-section img {
+    max-width: 100%;
+    height: auto;
+}
+
+.flacso-oa-content-card__body table,
+.flacso-oa-info-card__body table {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+}
+
+.flacso-oa-content-card__body iframe,
+.flacso-oa-info-card__body iframe {
+    max-width: 100%;
+}
+
+.flacso-oa-next-start {
+    margin-top: clamp(20px, 3vw, 34px);
+}
+
+.flacso-oa-info-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(18px, 2.4vw, 26px);
+    margin-top: clamp(24px, 4vw, 42px);
+}
+
+.flacso-oa-info-card {
+    min-width: 0;
+    border: 1px solid var(--flacso-border);
+    border-radius: var(--flacso-radius-md);
+    background: #ffffff;
+    box-shadow: var(--flacso-shadow-sm);
+    overflow: hidden;
+}
+
+.flacso-oa-info-card__header {
+    position: relative;
+    padding: 18px clamp(20px, 3vw, 28px);
+    border-bottom: 1px solid var(--flacso-border);
+    background:
+        linear-gradient(90deg, rgba(252, 209, 22, 0.20), transparent 52%),
+        #ffffff;
+}
+
+.flacso-oa-info-card__header::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 6px;
+    background: var(--flacso-yellow);
+}
+
+.flacso-oa-info-card__header h3 {
+    margin: 0;
+    color: var(--flacso-blue);
+    font-size: clamp(1rem, 1.5vw, 1.17rem);
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    line-height: 1.25;
+    text-transform: uppercase;
+}
+
+.flacso-oa-info-card__body {
+    padding: clamp(20px, 3vw, 30px);
+    color: #334155;
+    font-size: clamp(0.98rem, 1.2vw, 1.06rem);
+    line-height: 1.7;
+}
+
+.flacso-oa-info-card__body > *:first-child {
+    margin-top: 0;
+}
+
+.flacso-oa-info-card__body > *:last-child {
+    margin-bottom: 0;
+}
+
+.flacso-oa-aside {
+    min-width: 0;
+}
+
+.flacso-oa-form-panel {
+    border-radius: var(--flacso-radius-md);
+    background:
+        radial-gradient(circle at top right, rgba(255, 255, 255, 0.60), transparent 34%),
+        var(--flacso-yellow);
+    color: var(--flacso-blue-dark);
+    box-shadow: var(--flacso-shadow-md);
+    overflow: hidden;
+}
+
+.flacso-oa-form-panel__header {
+    padding: clamp(22px, 3vw, 32px) clamp(20px, 3vw, 30px) 16px;
+}
+
+.flacso-oa-form-panel__header h2 {
+    margin: 0 0 8px;
+    color: var(--flacso-blue-dark);
+    font-size: clamp(1.45rem, 2.4vw, 2rem);
+    font-weight: 900;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
+}
+
+.flacso-oa-form-panel__header p {
+    margin: 0;
+    color: rgba(5, 25, 56, 0.78);
+    font-size: 0.97rem;
+    line-height: 1.45;
+}
+
+.flacso-oa-form-panel__body {
+    padding: 0 clamp(20px, 3vw, 30px) clamp(22px, 3vw, 30px);
+}
+
+.flacso-oa-form-panel__footer {
+    padding: 0 clamp(20px, 3vw, 30px) clamp(22px, 3vw, 30px);
+}
+
+.flacso-oferta-responsive .flacso-consultas-formulario {
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+    color: var(--flacso-blue-dark);
+}
+
+.flacso-oferta-responsive .flacso-oa-consulta__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+}
+
+.flacso-oferta-responsive .flacso-oa-consulta__field {
+    margin-bottom: 14px;
+    text-align: left;
+}
+
+.flacso-oferta-responsive .flacso-oa-consulta__field label {
+    display: block;
+    margin-bottom: 7px;
+    color: rgba(5, 25, 56, 0.86);
+    font-size: 0.84rem;
     font-weight: 800;
-    margin-bottom: 20px;
+    line-height: 1.25;
+}
+
+.flacso-oferta-responsive .flacso-oa-consulta__field input,
+.flacso-oferta-responsive .flacso-oa-consulta__field textarea,
+.flacso-oferta-responsive .flacso-oa-consulta__field select,
+.flacso-oferta-responsive .flacso-consultas-formulario input,
+.flacso-oferta-responsive .flacso-consultas-formulario textarea,
+.flacso-oferta-responsive .flacso-consultas-formulario select {
+    width: 100%;
+    min-height: 46px;
+    padding: 12px 14px;
+    border: 1px solid rgba(5, 25, 56, 0.12);
+    border-radius: 12px;
+    background: #ffffff;
+    color: var(--flacso-text);
+    font-size: 1rem;
+    line-height: 1.35;
+    box-shadow: 0 5px 14px rgba(5, 25, 56, 0.08);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.flacso-oferta-responsive .flacso-oa-consulta__field textarea,
+.flacso-oferta-responsive .flacso-consultas-formulario textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.flacso-oferta-responsive .flacso-oa-consulta__field input:focus,
+.flacso-oferta-responsive .flacso-oa-consulta__field textarea:focus,
+.flacso-oferta-responsive .flacso-oa-consulta__field select:focus,
+.flacso-oferta-responsive .flacso-consultas-formulario input:focus,
+.flacso-oferta-responsive .flacso-consultas-formulario textarea:focus,
+.flacso-oferta-responsive .flacso-consultas-formulario select:focus {
+    outline: none;
+    border-color: var(--flacso-blue);
+    box-shadow: 0 0 0 4px rgba(22, 57, 112, 0.15), 0 8px 20px rgba(5, 25, 56, 0.10);
+}
+
+.flacso-oferta-responsive .flacso-oa-consulta__submit,
+.flacso-oferta-responsive .flacso-consultas-formulario button[type="submit"],
+.flacso-oferta-responsive .flacso-consultas-formulario input[type="submit"] {
+    width: 100%;
+    min-height: 50px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--flacso-blue);
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+    text-transform: uppercase;
+    box-shadow: 0 10px 24px rgba(5, 25, 56, 0.18);
+    cursor: pointer;
+    transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.flacso-oferta-responsive .flacso-oa-consulta__submit:hover,
+.flacso-oferta-responsive .flacso-consultas-formulario button[type="submit"]:hover,
+.flacso-oferta-responsive .flacso-consultas-formulario input[type="submit"]:hover {
+    background: var(--flacso-blue-dark);
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 14px 30px rgba(5, 25, 56, 0.24);
+}
+
+.flacso-oa-preinscripcion-btn,
+.flacso-oa-link-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    padding: 12px 20px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-size: 0.92rem;
+    font-weight: 900;
+    line-height: 1.2;
+    letter-spacing: 0.035em;
+    text-transform: uppercase;
+    transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.flacso-oa-preinscripcion-btn {
+    width: 100%;
+    background: var(--flacso-blue-dark);
+    color: #ffffff;
+    box-shadow: 0 10px 24px rgba(5, 25, 56, 0.18);
+}
+
+.flacso-oa-preinscripcion-btn:hover {
+    background: var(--flacso-blue);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.flacso-oa-cta-section {
+    padding: clamp(38px, 5vw, 68px) 0;
+    background: var(--flacso-blue);
+    color: #ffffff;
+}
+
+.flacso-oa-cta {
+    width: min(100%, 900px);
+    margin-inline: auto;
+    text-align: center;
+}
+
+.flacso-oa-cta p {
+    margin: 0;
+    color: #ffffff;
+    font-size: clamp(1.06rem, 2vw, 1.35rem);
+    font-weight: 650;
+    line-height: 1.55;
+    text-wrap: balance;
+}
+
+.flacso-oa-team-section {
+    padding: clamp(54px, 7vw, 96px) 0;
+    background: var(--flacso-bg);
+}
+
+.flacso-oa-section-header {
+    margin-bottom: clamp(28px, 5vw, 54px);
+    text-align: center;
+}
+
+.flacso-oa-section-header h2 {
+    margin: 0;
+    color: var(--flacso-blue);
+    font-size: clamp(1.75rem, 4vw, 3rem);
+    font-weight: 900;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
+    text-transform: uppercase;
+}
+
+.flacso-oa-team-layout {
+    display: grid;
+    gap: clamp(24px, 4vw, 42px);
+}
+
+.flacso-oa-team-group {
+    min-width: 0;
+}
+
+.flacso-oa-team-group__title {
+    margin: 0 0 22px;
+    color: var(--flacso-blue);
+    font-size: clamp(1.25rem, 2.5vw, 1.7rem);
+    font-weight: 850;
+    text-align: center;
+}
+
+.flacso-oa-team-item {
+    width: min(100%, 960px);
+    margin-inline: auto;
+}
+
+.flacso-oa-team-item + .flacso-oa-team-item {
+    margin-top: 22px;
+}
+
+.flacso-oa-seminarios-section {
+    padding: clamp(52px, 7vw, 90px) 0;
+    background: #ffffff;
+}
+
+.flacso-oa-seminarios-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: clamp(22px, 4vw, 34px);
+}
+
+.flacso-oa-seminarios-heading h2 {
+    margin: 0;
+    color: var(--flacso-blue);
+    font-size: clamp(1.65rem, 3.5vw, 2.6rem);
+    font-weight: 900;
+    letter-spacing: -0.035em;
     line-height: 1.1;
 }
 
-/* Breadcrumbs */
-.flacso-oferta-academica-premium .kadence-breadcrumbs {
-    font-size: 0.9rem;
-    opacity: 0.8;
+.flacso-oa-link-btn {
+    flex: 0 0 auto;
+    background: var(--flacso-blue);
+    color: #ffffff;
+    box-shadow: 0 10px 24px rgba(22, 57, 112, 0.18);
 }
-.flacso-oferta-academica-premium .kadence-breadcrumbs a {
-    color: white;
+
+.flacso-oa-link-btn:hover {
+    background: var(--flacso-blue-dark);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.flacso-oa-seminarios-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(18px, 2.6vw, 28px);
+}
+
+.flacso-oa-seminario-card {
+    display: flex;
+    min-height: 190px;
+    flex-direction: column;
+    justify-content: space-between;
+    border: 1px solid var(--flacso-border);
+    border-left: 6px solid var(--flacso-yellow);
+    border-radius: var(--flacso-radius-md);
+    background: #ffffff;
+    padding: clamp(20px, 3vw, 28px);
+    box-shadow: var(--flacso-shadow-sm);
+}
+
+.flacso-oa-seminario-card h3 {
+    margin: 0 0 18px;
+    font-size: clamp(1.05rem, 1.7vw, 1.25rem);
+    font-weight: 850;
+    line-height: 1.35;
+}
+
+.flacso-oa-seminario-card h3 a {
+    color: var(--flacso-blue-dark);
     text-decoration: none;
 }
 
-/* Formulario */
-.flacso-consultas-formulario {
-    background: white;
-    padding: 35px;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    border-top: 6px solid var(--flacso-yellow);
+.flacso-oa-seminario-card h3 a:hover {
+    color: var(--flacso-blue);
+    text-decoration: underline;
+    text-underline-offset: 4px;
 }
-.flacso-oa-consulta__field {
-    margin-bottom: 20px;
+
+.flacso-oa-seminario-card__date {
+    margin: auto 0 0;
+    color: var(--flacso-muted);
+    font-size: 0.94rem;
+    font-weight: 700;
+}
+
+.flacso-oferta-responsive .kt-accordion-pane {
+    border: 1px solid var(--flacso-border);
+    margin-bottom: 12px;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+    overflow: hidden;
+}
+
+.flacso-oferta-responsive .kt-blocks-accordion-header {
+    width: 100%;
+    border: 0;
+    background: var(--flacso-blue);
+    color: #ffffff;
+    padding: 18px 22px;
+    font-size: 1rem;
+    font-weight: 850;
+    line-height: 1.25;
     text-align: left;
 }
-.flacso-oa-consulta__field label {
-    display: block;
-    font-weight: 700;
-    margin-bottom: 8px;
-    color: var(--flacso-blue-light);
-    font-size: 0.9rem;
-}
-.flacso-oa-consulta__field input,
-.flacso-oa-consulta__field textarea {
-    width: 100%;
-    padding: 12px 15px;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    background: #f8fafc;
-    transition: all 0.3s;
-}
-.flacso-oa-consulta__field input:focus,
-.flacso-oa-consulta__field textarea:focus {
-    border-color: var(--flacso-blue-light);
-    background: white;
-    box-shadow: 0 0 0 3px rgba(22, 57, 112, 0.1);
-    outline: none;
-}
-.flacso-oa-consulta__grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-}
-.flacso-oa-consulta__submit {
-    width: 100%;
+
+.flacso-oferta-responsive .kt-accordion-pane-active .kt-blocks-accordion-header {
     background: var(--flacso-yellow);
-    color: var(--flacso-blue-light);
-    border: none;
-    padding: 15px;
-    border-radius: 50px;
-    font-weight: 800;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-.flacso-oa-consulta__submit:hover {
-    background: #e5bd14;
-    transform: translateY(-2px);
-}
-.flacso-btn-preinsc {
-    display: block;
-    width: 100%;
-    text-align: center;
-    background: var(--flacso-blue-light);
-    color: white;
-    padding: 15px;
-    border-radius: 50px;
-    font-weight: 800;
-    text-decoration: none;
-    text-transform: uppercase;
-    transition: all 0.3s;
-}
-.flacso-btn-preinsc:hover {
-    background: #0d254a;
-    color: white;
-    transform: translateY(-2px);
+    color: var(--flacso-blue-dark);
 }
 
-/* Banner */
-.flacso-inscripciones-banner {
-    border-radius: 15px;
-    overflow: hidden;
-    height: 380px;
-    position: relative;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-.flacso-inscripciones-banner__img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-.flacso-inscripciones-banner__overlay {
-    position: absolute;
-    inset: 0;
-    padding: 30px;
-    background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
-}
-.flacso-inscripciones-banner__tag {
-    background: var(--flacso-yellow);
-    color: black;
-    padding: 10px 25px;
-    border-radius: 50px;
-    font-weight: 800;
-    display: inline-block;
-    text-transform: uppercase;
-}
-.flacso-inscripciones-banner__logo {
-    height: 60px;
-    float: right;
+@media (min-width: 700px) {
+    .flacso-oa-info-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .flacso-oa-info-card--wide {
+        grid-column: 1 / -1;
+    }
+
+    .flacso-oferta-responsive .flacso-oa-consulta__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
-/* Docente Card */
-.flacso-docente-card {
-    background: white;
-    padding: 25px;
-    border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    height: 100%;
-}
-.flacso-docente-card__avatar {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    overflow: hidden;
-    background: #e2e8f0;
-    margin-bottom: 20px;
-}
-.flacso-docente-card__avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-.flacso-docente-card__avatar i {
-    font-size: 4rem;
-    line-height: 120px;
-    color: #cbd5e1;
-}
-.flacso-docente-card__info h4 {
-    margin: 0 0 5px 0;
-    font-weight: 800;
-    color: var(--flacso-blue-light);
-}
-.flacso-docente-card__title {
-    color: #64748b;
-    font-size: 0.85rem;
-    margin-bottom: 10px;
-    font-weight: 600;
+@media (min-width: 992px) {
+    .flacso-oa-main-grid {
+        grid-template-columns: minmax(0, 1fr) minmax(320px, 390px);
+    }
+
+    .flacso-oa-aside__sticky {
+        position: sticky;
+        top: calc(var(--wp-admin--admin-bar--height, 0px) + 24px);
+    }
 }
 
-/* Acordeones */
-.flacso-oferta-academica-premium .kt-accordion-pane {
-    border: none;
-    margin-bottom: 12px;
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+@media (min-width: 1200px) {
+    .flacso-oa-main-grid {
+        grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
+    }
 }
-.flacso-oferta-academica-premium .kt-blocks-accordion-header {
-    width: 100%;
-    background: var(--flacso-blue-light);
-    color: white;
-    padding: 20px 25px;
-    font-weight: 700;
-    font-size: 1.1rem;
-    border: none;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+
+@media (max-width: 991.98px) {
+    .flacso-oa-aside {
+        order: -1;
+    }
+
+    .flacso-oa-form-panel {
+        max-width: 760px;
+        margin-inline: auto;
+    }
+
+    .flacso-oa-seminarios-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
-.flacso-oferta-academica-premium .kt-accordion-pane-active .kt-blocks-accordion-header {
-    background: var(--flacso-yellow);
-    color: var(--flacso-blue-light);
+
+@media (max-width: 767.98px) {
+    .flacso-oa-container {
+        width: min(100% - 24px, 1180px);
+    }
+
+    .flacso-oa-hero {
+        min-height: 420px;
+        border-radius: 22px;
+    }
+
+    .flacso-oa-hero::after {
+        background:
+            linear-gradient(180deg, rgba(5, 25, 56, 0.88) 0%, rgba(5, 25, 56, 0.56) 45%, rgba(5, 25, 56, 0.88) 100%);
+    }
+
+    .flacso-oa-hero__top {
+        align-items: flex-start;
+        flex-direction: column-reverse;
+    }
+
+    .flacso-oa-hero__logo {
+        width: min(190px, 72vw);
+    }
+
+    .flacso-oa-intro__title {
+        letter-spacing: -0.035em;
+    }
+
+    .flacso-oa-seminarios-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .flacso-oa-link-btn {
+        width: 100%;
+    }
+
+    .flacso-oa-seminarios-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 575.98px) {
+    .flacso-oa-hero {
+        min-height: 460px;
+        border-radius: 18px;
+    }
+
+    .flacso-oa-hero__overlay {
+        padding: 20px;
+    }
+
+    .flacso-oa-intro__meta {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .flacso-oa-intro__meta span {
+        justify-content: center;
+        text-align: center;
+    }
+
+    .flacso-oa-content-card,
+    .flacso-oa-info-card,
+    .flacso-oa-form-panel,
+    .flacso-oa-seminario-card {
+        border-radius: 18px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .flacso-oferta-responsive *,
+    .flacso-oferta-responsive *::before,
+    .flacso-oferta-responsive *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
 }
 </style>
 
