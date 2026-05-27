@@ -84,23 +84,53 @@ $render_info_card = static function ($title, $body, $extra_class = '') {
 };
 
 $render_docente_item = static function ($docente_id, $rol = '') {
-    if (!function_exists('dp_docente_destacado')) {
+    $post = get_post($docente_id);
+    if (!$post || $post->post_type !== 'docente') {
         return;
     }
 
-    echo '<div class="flacso-oa-docente-item">';
-
-    $output = dp_docente_destacado([
-        'docId' => $docente_id,
-        'rol' => $rol,
-    ]);
-
-    if (function_exists('dp_docentes_wrap_output')) {
-        echo dp_docentes_wrap_output($output);
-    } else {
-        echo $output;
+    $titulo = function_exists('dp_nombre_completo') ? dp_nombre_completo($docente_id) : get_the_title($docente_id);
+    $pref_abrev = trim((string) get_post_meta($docente_id, 'prefijo_abrev', true));
+    $tit_acad   = trim((string) get_post_meta($docente_id, 'titulo_academico', true));
+    
+    $academic_label = $tit_acad ? $tit_acad : $pref_abrev;
+    if ($academic_label !== '' && strpos($titulo, $academic_label) !== false) {
+        $academic_label = '';
     }
 
+    $cv_raw = (string) get_post_meta($docente_id, 'cv', true);
+    $cv_short = wp_trim_words(wp_strip_all_tags($cv_raw), 16, '...');
+    $permalink = get_permalink($docente_id);
+
+    echo '<div class="flacso-oa-docente-item">';
+    echo '<article class="flacso-oa-person-card">';
+    
+    echo '<div class="flacso-oa-person-card__avatar-wrap">';
+    if (function_exists('dp_avatar_markup')) {
+        echo dp_avatar_markup($docente_id, $titulo, 160, 'flacso-oa-person-card__avatar');
+    } else {
+        echo get_the_post_thumbnail($docente_id, 'thumbnail', ['class' => 'flacso-oa-person-card__avatar']);
+    }
+    echo '</div>';
+
+    echo '<div class="flacso-oa-person-card__content">';
+    if ($rol) {
+        echo '<span class="flacso-oa-person-card__role">' . esc_html($rol) . '</span>';
+    }
+    echo '<h4 class="flacso-oa-person-card__name"><a href="' . esc_url($permalink) . '">' . esc_html($titulo) . '</a></h4>';
+    
+    if ($academic_label) {
+        echo '<p class="flacso-oa-person-card__academic">' . esc_html($academic_label) . '</p>';
+    }
+    
+    if ($cv_short) {
+        echo '<p class="flacso-oa-person-card__cv">' . esc_html($cv_short) . '</p>';
+    }
+    
+    echo '<a href="' . esc_url($permalink) . '" class="flacso-oa-person-card__link">Ver perfil &rarr;</a>';
+    
+    echo '</div>';
+    echo '</article>';
     echo '</div>';
 };
 
@@ -1219,6 +1249,102 @@ get_header();
     word-break: normal !important;
     overflow-wrap: break-word !important;
     min-width: 0;
+}
+
+.flacso-oa-person-card {
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    height: 100%;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.flacso-oa-person-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.1);
+    border-color: #cbd5e1;
+}
+
+.flacso-oa-person-card__avatar-wrap {
+    width: 100%;
+    aspect-ratio: 1.25 / 1;
+    background: #f1f5f9;
+    position: relative;
+    overflow: hidden;
+}
+
+.flacso-oa-person-card__avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.flacso-oa-person-card__content {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.flacso-oa-person-card__role {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 800;
+    color: var(--flacso-yellow-dark, #b58900);
+    margin-bottom: 0.5rem;
+}
+
+.flacso-oa-person-card__name {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--flacso-blue-dark);
+    margin: 0 0 0.25rem;
+    line-height: 1.2;
+}
+
+.flacso-oa-person-card__name a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.flacso-oa-person-card__name a:hover {
+    color: var(--flacso-blue);
+}
+
+.flacso-oa-person-card__academic {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin: 0 0 1rem;
+    font-weight: 500;
+}
+
+.flacso-oa-person-card__cv {
+    font-size: 0.9rem;
+    color: #475569;
+    line-height: 1.5;
+    margin: 0 0 1.25rem;
+    flex: 1;
+}
+
+.flacso-oa-person-card__link {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--flacso-blue);
+    text-decoration: none;
+    margin-top: auto;
+    display: inline-block;
+    transition: color 0.2s;
+}
+
+.flacso-oa-person-card__link:hover {
+    color: var(--flacso-blue-dark);
+    text-decoration: underline;
 }
 
 .flacso-oa-seminarios-section {

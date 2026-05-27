@@ -262,20 +262,6 @@ class Flacso_Main_Page_Blocks {
                 'icon'        => 'megaphone',
                 'keywords'    => ['convenios', 'mobile', 'responsive'],
             ],
-            'flacso-uruguay/formulario-consulta-ofertas' => [
-                'title'       => __('Formulario “Solicita Información” (Oferta Académica)', 'flacso-main-page'),
-                'description' => __('Bloque específico para las páginas de oferta académica: captura la consulta, envía confirmación automática y permite botón opcional de preinscripción. Usa el shortcode [Consultas_Fase_1].', 'flacso-main-page'),
-                'shortcode'   => 'Consultas_Fase_1',
-                'icon'        => 'email',
-                'keywords'    => ['solicita', 'información', 'oferta', 'consulta', 'preinscripción'],
-                'attributes'  => [
-                    'mostrar_preinscripcion' => [
-                        'type'    => 'boolean',
-                        'default' => true,
-                        'label'   => __('Mostrar botón de Preinscripción', 'flacso-main-page'),
-                    ],
-                ],
-            ],
         ];
     }
 
