@@ -154,6 +154,21 @@ $seminarios_query = new WP_Query(array(
     'meta_key'       => '_seminario_periodo_inicio',
     'orderby'        => 'meta_value',
     'order'          => 'ASC',
+    'meta_query'     => array(
+        'relation' => 'AND',
+        array(
+            'relation' => 'OR',
+            array(
+                'key'     => '_seminario_abierto_publico',
+                'compare' => 'NOT EXISTS',
+            ),
+            array(
+                'key'     => '_seminario_abierto_publico',
+                'value'   => '1',
+                'compare' => '=',
+            ),
+        ),
+    ),
 ));
 
 if ($seminarios_query->have_posts()) {

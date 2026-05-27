@@ -32,6 +32,7 @@ class Seminario_Helpers
             'descripcion_horas',
             'mostrar_en_formulario',
             'es_asincronico',
+            'abierto_publico',
         );
     }
 

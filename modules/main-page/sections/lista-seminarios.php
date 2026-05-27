@@ -353,6 +353,20 @@ if (!function_exists('flacso_generar_seminarios_combinados_html')) {
             $meta_query[] = $date_meta_query;
         }
 
+        // Excluir seminarios privados (no abiertos al público)
+        $meta_query[] = [
+            'relation' => 'OR',
+            [
+                'key'     => '_seminario_abierto_publico',
+                'compare' => 'NOT EXISTS',
+            ],
+            [
+                'key'     => '_seminario_abierto_publico',
+                'value'   => '1',
+                'compare' => '=',
+            ],
+        ];
+
         $post_type = flacso_get_seminario_post_type_slug();
 
         $query_args = [

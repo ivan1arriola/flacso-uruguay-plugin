@@ -34,6 +34,7 @@ function format_fecha_es($fecha) {
 while (have_posts()) : the_post();
     $post_id = get_the_ID();
     $meta = class_exists('Seminario_Meta') ? Seminario_Meta::get_meta($post_id) : array();
+    $abierto_publico = isset($meta['abierto_publico']) && $meta['abierto_publico'] !== '' ? (bool) $meta['abierto_publico'] : true;
     $posgrados = class_exists('Seminario_Taxonomies')
         ? Seminario_Taxonomies::get_related_ofertas($post_id)
         : array();
@@ -646,11 +647,16 @@ while (have_posts()) : the_post();
             </h1>
             
             <!-- CTA Button -->
-            <?php if (!empty($preinscripcion_url)) : ?>
+            <?php if ($abierto_publico && !empty($preinscripcion_url)) : ?>
                 <div class="mt-4">
                     <a href="<?php echo esc_url($preinscripcion_url); ?>" class="btn btn-inscripcion btn-lg">
                         Inscríbete Ahora <i class="bi bi-arrow-right ms-2"></i>
                     </a>
+                </div>
+            <?php elseif (!$abierto_publico) : ?>
+                <div class="mt-4 alert alert-info py-3 px-4 border-info shadow-sm" style="border-radius: 12px; max-width: 500px; background-color: #f0f9ff; color: #1d3a72;">
+                    <i class="bi bi-info-circle-fill text-info me-2"></i>
+                    Este seminario es exclusivo de una formación. Solo se puede acceder al inscribirse a la oferta académica correspondiente.
                 </div>
             <?php endif; ?>
         </div>
@@ -839,7 +845,7 @@ while (have_posts()) : the_post();
         </div>
     </section>
 
-    <?php if ($has_inversion) : ?>
+    <?php if ($abierto_publico && $has_inversion) : ?>
         <section class="py-5">
             <div class="section-header">
                 <h2 class="fw-bold">Inversión</h2>
@@ -1059,7 +1065,7 @@ while (have_posts()) : the_post();
     <?php endif; ?>
     
     <!-- Final CTA -->
-    <?php if (!empty($preinscripcion_url)) : ?>
+    <?php if ($abierto_publico && !empty($preinscripcion_url)) : ?>
         <section class="py-5">
             <div class="final-cta text-center py-5 px-4 rounded-4 shadow-lg">
                 <h2 class="fw-bold mb-3">¿Querés Comenzar?</h2>
@@ -1069,6 +1075,15 @@ while (have_posts()) : the_post();
                 <a href="<?php echo esc_url($preinscripcion_url); ?>" class="btn btn-inscripcion btn-lg px-5 py-3 fw-bold">
                     Inscribirse Ahora <i class="bi bi-arrow-right ms-2"></i>
                 </a>
+            </div>
+        </section>
+    <?php elseif (!$abierto_publico) : ?>
+        <section class="py-5">
+            <div class="final-cta text-center py-5 px-4 rounded-4 shadow-lg" style="background: linear-gradient(135deg, #1d3a72 0%, #3b82f6 100%);">
+                <h2 class="fw-bold mb-3 text-white">Seminario Exclusivo</h2>
+                <p class="lead mb-0 opacity-90 text-white">
+                    Este seminario es de cursada exclusiva y no admite inscripciones individuales externas.
+                </p>
             </div>
         </section>
     <?php endif; ?>
