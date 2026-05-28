@@ -83,7 +83,7 @@ $render_info_card = static function ($title, $body, $extra_class = '') {
     <?php
 };
 
-$render_docente_item = static function ($docente_id, $rol = '') {
+$render_docente_item = static function ($docente_id, $rol = '', $nivel = '3') {
     $post = get_post($docente_id);
     if (!$post || $post->post_type !== 'docente') {
         return;
@@ -100,35 +100,107 @@ $render_docente_item = static function ($docente_id, $rol = '') {
 
     $cv_raw = (string) get_post_meta($docente_id, 'cv', true);
 
-    echo '<div class="flacso-oa-docente-item">';
-    echo '<article class="flacso-oa-person-card">';
-    
-    if ($rol) {
-        echo '<div class="flacso-oa-person-card__role-header"><span class="flacso-oa-person-card__role">' . esc_html($rol) . '</span></div>';
-    }
-    
-    echo '<div class="flacso-oa-person-card__avatar-wrap">';
-    if (function_exists('dp_avatar_markup')) {
-        echo dp_avatar_markup($docente_id, $titulo, 320, 'flacso-oa-person-card__avatar');
-    } else {
-        echo get_the_post_thumbnail($docente_id, 'medium', ['class' => 'flacso-oa-person-card__avatar']);
-    }
-    echo '</div>';
+    if ($nivel === '1') {
+        // Nivel 1: Tarjeta vertical grande con banner de rol (Estilo original)
+        echo '<div class="flacso-oa-docente-item">';
+        echo '<article class="flacso-oa-person-card">';
+        
+        if ($rol) {
+            echo '<div class="flacso-oa-person-card__role-header"><span class="flacso-oa-person-card__role">' . esc_html($rol) . '</span></div>';
+        }
+        
+        echo '<div class="flacso-oa-person-card__avatar-wrap">';
+        if (function_exists('dp_avatar_markup')) {
+            echo dp_avatar_markup($docente_id, $titulo, 320, 'flacso-oa-person-card__avatar');
+        } else {
+            echo get_the_post_thumbnail($docente_id, 'medium', ['class' => 'flacso-oa-person-card__avatar']);
+        }
+        echo '</div>';
 
-    echo '<div class="flacso-oa-person-card__content">';
-    echo '<h4 class="flacso-oa-person-card__name">' . esc_html($titulo) . '</h4>';
-    
-    if ($academic_label) {
-        echo '<p class="flacso-oa-person-card__academic">' . esc_html($academic_label) . '</p>';
+        echo '<div class="flacso-oa-person-card__content">';
+        echo '<h4 class="flacso-oa-person-card__name">' . esc_html($titulo) . '</h4>';
+        
+        if ($academic_label) {
+            echo '<p class="flacso-oa-person-card__academic">' . esc_html($academic_label) . '</p>';
+        }
+        
+        if ($cv_raw) {
+            echo '<div class="flacso-oa-person-card__cv">' . wp_kses_post($cv_raw) . '</div>';
+        }
+        
+        echo '</div>';
+        echo '</article>';
+        echo '</div>';
+
+    } elseif ($nivel === '2') {
+        // Nivel 2: Tarjeta horizontal apilada ocupando el 100% del ancho (Estilo Seminario)
+        // Se inyecta la etiqueta del rol debajo de la información académica
+        echo '<div class="flacso-oa-docente-item">';
+        echo '<article class="flacso-oa-person-card flacso-oa-person-card--horizontal">';
+        
+        echo '<div class="flacso-oa-person-card__header">';
+        echo '<div class="flacso-oa-person-card__avatar-circle" style="width: 100px; height: 100px;">';
+        if (function_exists('dp_avatar_markup')) {
+            echo dp_avatar_markup($docente_id, $titulo, 120, 'flacso-oa-person-card__avatar-round');
+        } else {
+            echo get_the_post_thumbnail($docente_id, 'thumbnail', ['class' => 'flacso-oa-person-card__avatar-round']);
+        }
+        echo '</div>';
+        
+        echo '<div class="flacso-oa-person-card__header-info">';
+        echo '<h3 class="flacso-oa-person-card__name" style="font-size: 1.3rem;">' . esc_html($titulo) . '</h3>';
+        if ($academic_label) {
+            echo '<p class="flacso-oa-person-card__academic">' . esc_html($academic_label) . '</p>';
+        }
+        if ($rol) {
+            echo '<span style="display: inline-block; margin-top: 6px; padding: 4px 10px; background: var(--flacso-blue-dark); color: var(--flacso-yellow); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; border-radius: 4px;">' . esc_html($rol) . '</span>';
+        }
+        echo '</div>';
+        echo '</div>'; // .flacso-oa-person-card__header
+
+        if ($cv_raw) {
+            echo '<div class="flacso-oa-person-card__content">';
+            echo '<div class="flacso-oa-person-card__cv" style="max-height: none;">' . wp_kses_post($cv_raw) . '</div>';
+            echo '</div>';
+        }
+        
+        echo '</article>';
+        echo '</div>';
+
+    } else {
+        // Nivel 3: Tarjeta horizontal más compacta (Grid)
+        echo '<div class="flacso-oa-docente-item">';
+        echo '<article class="flacso-oa-person-card flacso-oa-person-card--horizontal">';
+        
+        echo '<div class="flacso-oa-person-card__header">';
+        echo '<div class="flacso-oa-person-card__avatar-circle">';
+        if (function_exists('dp_avatar_markup')) {
+            echo dp_avatar_markup($docente_id, $titulo, 90, 'flacso-oa-person-card__avatar-round');
+        } else {
+            echo get_the_post_thumbnail($docente_id, 'thumbnail', ['class' => 'flacso-oa-person-card__avatar-round']);
+        }
+        echo '</div>';
+        
+        echo '<div class="flacso-oa-person-card__header-info">';
+        echo '<h4 class="flacso-oa-person-card__name">' . esc_html($titulo) . '</h4>';
+        if ($academic_label) {
+            echo '<p class="flacso-oa-person-card__academic">' . esc_html($academic_label) . '</p>';
+        }
+        if ($rol) {
+            echo '<span style="display: inline-block; margin-top: 4px; color: var(--flacso-blue-dark); font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">' . esc_html($rol) . '</span>';
+        }
+        echo '</div>';
+        echo '</div>'; // .flacso-oa-person-card__header
+
+        if ($cv_raw) {
+            echo '<div class="flacso-oa-person-card__content">';
+            echo '<div class="flacso-oa-person-card__cv">' . wp_kses_post($cv_raw) . '</div>';
+            echo '</div>';
+        }
+        
+        echo '</article>';
+        echo '</div>';
     }
-    
-    if ($cv_raw) {
-        echo '<div class="flacso-oa-person-card__cv">' . wp_kses_post($cv_raw) . '</div>';
-    }
-    
-    echo '</div>';
-    echo '</article>';
-    echo '</div>';
 };
 
 if (class_exists('Oferta_Renderer')) {
@@ -374,91 +446,76 @@ get_header();
                     </section>
 
                     <?php
-                    $has_coordinacion = !empty($data['coordinacion_academica']) && is_array($data['coordinacion_academica']);
-                    $has_equipos = !empty($data['equipos']) && is_array($data['equipos']);
+                    // Recolectar y fusionar equipos para mantener retrocompatibilidad
+                    $merged_equipos = [];
+                    
+                    if (!empty($data['coordinacion_academica']) && is_array($data['coordinacion_academica'])) {
+                        foreach ($data['coordinacion_academica'] as $coord) {
+                            if (!empty($coord['docentes']) && is_array($coord['docentes'])) {
+                                $merged_equipos[] = [
+                                    'nombre' => !empty($coord['rol']) ? $coord['rol'] : __('Coordinación académica', 'flacso-uruguay'),
+                                    'docentes' => $coord['docentes'],
+                                    'importancia' => '1' // Por defecto Nivel 1
+                                ];
+                            }
+                        }
+                    }
+
+                    if (!empty($data['equipos']) && is_array($data['equipos'])) {
+                        foreach ($data['equipos'] as $eq) {
+                            if (!empty($eq['docentes']) && is_array($eq['docentes'])) {
+                                $merged_equipos[] = [
+                                    'nombre' => $eq['nombre'] ?? '',
+                                    'docentes' => $eq['docentes'],
+                                    'importancia' => strval($eq['importancia'] ?? '3')
+                                ];
+                            }
+                        }
+                    }
                     ?>
 
-                    <?php if ($has_coordinacion || $has_equipos) : ?>
+                    <?php if (!empty($merged_equipos)) : ?>
                         <section class="flacso-oa-team-section">
                             <div class="flacso-oa-container">
                                 <header class="flacso-oa-section-header">
                                     <h2><?php esc_html_e('Equipo Académico', 'flacso-uruguay'); ?></h2>
                                 </header>
 
-                                <div class="flacso-oa-team-grid">
-                                    <?php if ($has_coordinacion) : ?>
-                                        <?php foreach ($data['coordinacion_academica'] as $coord) : ?>
-                                            <?php
-                                            if (empty($coord['docentes']) || !is_array($coord['docentes'])) {
-                                                continue;
-                                            }
+                                <div class="flacso-oa-team-subgroups">
+                                    <?php foreach ($merged_equipos as $grupo) : ?>
+                                        <?php $nivel = $grupo['importancia'] ?? '3'; ?>
+                                        <div class="flacso-oa-team-subgroup" style="margin-bottom: 3rem;">
+                                            <?php if (!empty($grupo['nombre'])) : ?>
+                                                <h4 class="flacso-oa-team-subgroup__title" style="margin-bottom: 1.5rem;">
+                                                    <?php echo esc_html($grupo['nombre']); ?>
+                                                </h4>
+                                            <?php endif; ?>
 
-                                            $rol = !empty($coord['rol'])
-                                                ? (string) $coord['rol']
-                                                : __('Coordinación académica', 'flacso-uruguay');
-                                            ?>
-                                            <section class="flacso-oa-team-group-card">
-                                                <h3 class="flacso-oa-team-group-card__title">
-                                                    <?php echo esc_html($rol); ?>
-                                                </h3>
-
-                                                <div class="flacso-oa-docentes-grid">
-                                                    <?php foreach ($coord['docentes'] as $docente_item) : ?>
-                                                        <?php 
-                                                        if (is_array($docente_item)) {
-                                                            $docente_id = $docente_item['id'] ?? 0;
-                                                            $rol_especifico = !empty($docente_item['rol']) ? $docente_item['rol'] : $rol;
-                                                            $render_docente_item($docente_id, $rol_especifico);
-                                                        } else {
-                                                            $render_docente_item($docente_item, $rol);
-                                                        }
+                                            <?php if ($nivel === '2') : ?>
+                                                <!-- Nivel 2: Stacked vertical list of horizontal cards (Seminario style) -->
+                                                <div class="flacso-oa-docentes-list" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                                                    <?php foreach ($grupo['docentes'] as $docente_item) : ?>
+                                                        <?php
+                                                        $docente_id = is_array($docente_item) ? ($docente_item['id'] ?? 0) : $docente_item;
+                                                        $rol_especifico = is_array($docente_item) ? ($docente_item['rol'] ?? '') : '';
+                                                        $render_docente_item($docente_id, $rol_especifico, $nivel);
                                                         ?>
                                                     <?php endforeach; ?>
                                                 </div>
-                                            </section>
-                                        <?php endforeach; ?>
-                                    <?php endif; ?>
-
-                                    <?php if ($has_equipos) : ?>
-                                        <?php
-                                        $equipos_validos = array_filter($data['equipos'], function ($g) {
-                                            return !empty($g['docentes']) && is_array($g['docentes']);
-                                        });
-                                        ?>
-                                        <?php if (!empty($equipos_validos)) : ?>
-                                            <section class="flacso-oa-team-group-card">
-                                                <h3 class="flacso-oa-team-group-card__title">
-                                                    <?php esc_html_e('Equipo docente', 'flacso-uruguay'); ?>
-                                                </h3>
-
-                                                <div class="flacso-oa-team-subgroups">
-                                                    <?php foreach ($equipos_validos as $grupo) : ?>
-                                                        <div class="flacso-oa-team-subgroup">
-                                                            <?php if (!empty($grupo['nombre'])) : ?>
-                                                                <h4 class="flacso-oa-team-subgroup__title">
-                                                                    <?php echo esc_html($grupo['nombre']); ?>
-                                                                </h4>
-                                                            <?php endif; ?>
-
-                                                            <div class="flacso-oa-docentes-grid">
-                                                                <?php foreach ($grupo['docentes'] as $docente_item) : ?>
-                                                                    <?php
-                                                                    if (is_array($docente_item)) {
-                                                                        $docente_id = $docente_item['id'] ?? 0;
-                                                                        $rol_especifico = $docente_item['rol'] ?? '';
-                                                                        $render_docente_item($docente_id, $rol_especifico);
-                                                                    } else {
-                                                                        $render_docente_item($docente_item, '');
-                                                                    }
-                                                                    ?>
-                                                                <?php endforeach; ?>
-                                                            </div>
-                                                        </div>
+                                            <?php else : ?>
+                                                <!-- Nivel 1 y 3: Grid normal -->
+                                                <div class="flacso-oa-docentes-grid">
+                                                    <?php foreach ($grupo['docentes'] as $docente_item) : ?>
+                                                        <?php
+                                                        $docente_id = is_array($docente_item) ? ($docente_item['id'] ?? 0) : $docente_item;
+                                                        $rol_especifico = is_array($docente_item) ? ($docente_item['rol'] ?? '') : '';
+                                                        $render_docente_item($docente_id, $rol_especifico, $nivel);
+                                                        ?>
                                                     <?php endforeach; ?>
                                                 </div>
-                                            </section>
-                                        <?php endif; ?>
-                                    <?php endif; ?>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endforeach; ?>
                                 </div>
                             </div>
                         </section>
@@ -1238,6 +1295,116 @@ get_header();
     word-break: normal !important;
     overflow-wrap: break-word !important;
     min-width: 0;
+}
+
+/* Estilos Premium para Docentes sin Rol (Horizontal) */
+.flacso-oa-person-card--horizontal {
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    height: 100%;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.flacso-oa-person-card--horizontal:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.1);
+    border-color: #cbd5e1;
+}
+
+.flacso-oa-person-card--horizontal .flacso-oa-person-card__header {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+.flacso-oa-person-card--horizontal .flacso-oa-person-card__avatar-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 3px solid #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    position: relative;
+    background: #f1f5f9;
+}
+
+.flacso-oa-person-card--horizontal .flacso-oa-person-card__avatar-circle > div,
+.flacso-oa-person-card--horizontal .flacso-oa-person-card__avatar-circle .dp-docente-avatar,
+.flacso-oa-person-card--horizontal .flacso-oa-person-card__avatar-circle img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block;
+    margin: 0 !important;
+    border-radius: 50% !important;
+}
+
+.flacso-oa-person-card--horizontal .flacso-oa-person-card__avatar-circle .flacso-docente-card__initials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: #ffffff;
+}
+
+.flacso-oa-person-card--horizontal .flacso-oa-person-card__header-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.flacso-oa-person-card--horizontal .flacso-oa-person-card__name {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--flacso-blue-dark);
+    margin: 0 0 0.2rem;
+    line-height: 1.2;
+}
+
+.flacso-oa-person-card--horizontal .flacso-oa-person-card__academic {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin: 0;
+    font-weight: 500;
+}
+
+.flacso-oa-person-card--horizontal .flacso-oa-person-card__content {
+    padding: 0;
+    margin-top: 0.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.flacso-oa-person-card--horizontal .flacso-oa-person-card__cv {
+    font-size: 0.90rem;
+    color: #475569;
+    line-height: 1.5;
+    margin: 0;
+    max-height: 180px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.flacso-oa-person-card--horizontal .flacso-oa-person-card__cv::-webkit-scrollbar {
+    width: 4px;
+}
+
+.flacso-oa-person-card--horizontal .flacso-oa-person-card__cv::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.flacso-oa-person-card--horizontal .flacso-oa-person-card__cv::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
 }
 
 .flacso-oa-person-card {
