@@ -1661,4 +1661,51 @@ table.calendar-table {
   table.calendar-table {
     min-width: 0;
   }
+  table.tabla-calendario {
+    min-width: 0;
+  }
 }
+
+/* TABLA DE CALENDARIO (Nueva Estructura) */
+table.tabla-calendario {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--papel, #ffffff);
+  border: 2px solid var(--borde, #111827);
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+}
+
+table.tabla-calendario th,
+table.tabla-calendario td {
+  border: 1px solid var(--borde, #111827);
+  padding: 12px 10px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+table.tabla-calendario thead th {
+  background: var(--azul, #004f9f);
+  color: #ffffff;
+  font-family: var(--mono, "Courier New", Courier, monospace);
+  font-size: 0.95rem;
+  font-weight: bold;
+}
+
+table.tabla-calendario tbody td {
+  font-size: 0.9rem;
+  color: var(--tinta, #1e293b);
+}
+
+table.tabla-calendario td strong {
+  color: var(--azul-oscuro, #1d3a72);
+  font-weight: 900;
+  display: block;
+  margin-bottom: 4px;
+}
+
+table.tabla-calendario .modulo { width: 40%; }
+table.tabla-calendario .semanas { width: 15%; }
+table.tabla-calendario .periodo { width: 15%; }
+table.tabla-calendario .fecha { width: 15%; }
+table.tabla-calendario .hora { width: 15%; }
