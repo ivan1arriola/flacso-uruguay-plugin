@@ -205,7 +205,7 @@ class Seminario_Meta
         }
 
         if ($key === 'acredita_maestria' || $key === 'acredita_doctorado' || $key === 'mostrar_en_formulario' || $key === 'es_asincronico' || $key === 'abierto_publico') {
-            return $value ? '1' : '0';
+            return (bool) $value;
         }
 
         if ($key === 'creditos') {

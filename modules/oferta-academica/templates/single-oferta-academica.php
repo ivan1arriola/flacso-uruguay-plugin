@@ -352,14 +352,6 @@ get_header();
                                                 }
                                                 ?>
                                             </div>
-
-                                            <?php if ($inscripciones_abiertas) : ?>
-                                                <div class="flacso-oa-form-panel__footer">
-                                                    <a href="<?php echo esc_url($preinscripcion_url); ?>" class="flacso-oa-preinscripcion-btn">
-                                                        <?php esc_html_e('Preinscripción 2026', 'flacso-uruguay'); ?>
-                                                    </a>
-                                                </div>
-                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </aside>

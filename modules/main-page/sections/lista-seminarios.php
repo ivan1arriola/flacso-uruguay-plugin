@@ -362,8 +362,8 @@ if (!function_exists('flacso_generar_seminarios_combinados_html')) {
             ],
             [
                 'key'     => '_seminario_abierto_publico',
-                'value'   => '1',
-                'compare' => '=',
+                'value'   => '0',
+                'compare' => '!=',
             ],
         ];
 

@@ -29,7 +29,7 @@ $valor_usd_15_descuento = get_post_meta($post->ID, '_seminario_valor_usd_15_desc
         <tr>
             <th><label for="<?php echo esc_attr($meta_key); ?>"><?php echo esc_html($label); ?></label></th>
             <td>
-                <?php if ($key === 'acredita_maestria' || $key === 'acredita_doctorado') : ?>
+                <?php if ($key === 'acredita_maestria' || $key === 'acredita_doctorado' || $key === 'abierto_publico' || $key === 'mostrar_en_formulario' || $key === 'es_asincronico') : ?>
                     <label>
                         <input type="checkbox" name="<?php echo esc_attr($meta_key); ?>" value="1" <?php checked($value, true); ?>>
                         <?php esc_html_e('Si'); ?>

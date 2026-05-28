@@ -151,11 +151,14 @@ $seminarios_query = new WP_Query(array(
     'post_type'      => 'seminario',
     'post_status'    => 'publish',
     'posts_per_page' => -1,
-    'meta_key'       => '_seminario_periodo_inicio',
-    'orderby'        => 'meta_value',
+    'orderby'        => 'fecha_inicio',
     'order'          => 'ASC',
     'meta_query'     => array(
         'relation' => 'AND',
+        'fecha_inicio' => array(
+            'key'     => '_seminario_periodo_inicio',
+            'compare' => 'EXISTS',
+        ),
         array(
             'relation' => 'OR',
             array(
@@ -164,8 +167,8 @@ $seminarios_query = new WP_Query(array(
             ),
             array(
                 'key'     => '_seminario_abierto_publico',
-                'value'   => '1',
-                'compare' => '=',
+                'value'   => '0',
+                'compare' => '!=',
             ),
         ),
     ),

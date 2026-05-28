@@ -34,7 +34,7 @@ function format_fecha_es($fecha) {
 while (have_posts()) : the_post();
     $post_id = get_the_ID();
     $meta = class_exists('Seminario_Meta') ? Seminario_Meta::get_meta($post_id) : array();
-    $abierto_publico = isset($meta['abierto_publico']) && $meta['abierto_publico'] === '0' ? false : true;
+    $abierto_publico = isset($meta['abierto_publico']) && $meta['abierto_publico'] !== '' ? (bool) $meta['abierto_publico'] : true;
     $posgrados = class_exists('Seminario_Taxonomies')
         ? Seminario_Taxonomies::get_related_ofertas($post_id)
         : array();

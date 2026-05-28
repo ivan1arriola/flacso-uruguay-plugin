@@ -1,0 +1,7 @@
+--- class-seminario-admin.php
++++ class-seminario-admin.php
+@@ -436,3 +439,3 @@
+ 
+-            if ($key === 'acredita_maestria' || $key === 'acredita_doctorado') {
++            if ($key === 'acredita_maestria' || $key === 'acredita_doctorado' || $key === 'abierto_publico' || $key === 'mostrar_en_formulario' || $key === 'es_asincronico') {
+                 $meta_input[$key] = isset($_POST[$meta_key]);

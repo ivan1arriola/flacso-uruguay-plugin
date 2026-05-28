@@ -375,9 +375,6 @@ class Seminario_Admin
             'acredita_doctorado' => 'Acredita doctorado',
             'forma_aprobacion' => 'Forma de aprobacion',
             'modalidad' => 'Modalidad',
-            'abierto_publico' => 'Abierto al público',
-            'mostrar_en_formulario' => 'Mostrar en formulario',
-            'es_asincronico' => 'Es asincrónico',
             'objetivo_general' => 'Objetivo general',
             'presentacion_seminario' => 'Presentacion del seminario (max 250 palabras)',
         );
@@ -434,7 +431,7 @@ class Seminario_Admin
         foreach (Seminario_Helpers::meta_keys() as $key) {
             $meta_key = '_seminario_' . $key;
 
-            if ($key === 'acredita_maestria' || $key === 'acredita_doctorado' || $key === 'abierto_publico' || $key === 'mostrar_en_formulario' || $key === 'es_asincronico') {
+            if ($key === 'acredita_maestria' || $key === 'acredita_doctorado') {
                 $meta_input[$key] = isset($_POST[$meta_key]);
                 continue;
             }

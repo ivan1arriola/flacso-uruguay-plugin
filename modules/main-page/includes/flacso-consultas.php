@@ -464,6 +464,9 @@ function flacso_consultas_render_form( $attributes = array() ) {
 		color: #fff !important;
 		box-shadow: 0 10px 20px rgba(36,129,56,.25);
 		transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+		position: sticky;
+		bottom: 1.5rem;
+		z-index: 100;
 	}
 	.btn-preinsc:hover {
 		background: var(--global-palette-btn-bg-hover, var(--global-palette-btn-bg)) !important;
