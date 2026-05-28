@@ -72,7 +72,7 @@ class CPT_Oferta_Academica {
             'hierarchical'          => false,
             'menu_position'         => 5,
             'menu_icon'             => 'dashicons-welcome-learn-more',
-            'supports'              => ['title', 'thumbnail'],
+            'supports'              => ['title', 'thumbnail', 'revisions'],
             'taxonomies'            => ['tipo-oferta-academica', 'area_tematica'],
         ];
 

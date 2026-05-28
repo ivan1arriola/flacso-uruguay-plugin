@@ -71,12 +71,13 @@ class Flacso_Custom_404 {
 					post_name LIKE %s
 				 OR SOUNDEX(post_name) = SOUNDEX(%s)
 				 OR LOCATE(%s, post_name) > 0
+				 OR LOCATE(post_name, %s) > 0
 			  )
-			LIMIT 20
+			LIMIT 50
 		";
 
 		$raw_results = $wpdb->get_results(
-			$wpdb->prepare( $sql, $like, $slug, $slug )
+			$wpdb->prepare( $sql, $like, $slug, $slug, $slug )
 		);
 
 		if ( empty( $raw_results ) ) {

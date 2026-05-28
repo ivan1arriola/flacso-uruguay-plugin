@@ -32,7 +32,7 @@ class CPT_Docente {
             'show_in_rest' => true,
             'has_archive' => 'docentes',
             'rewrite' => ['slug' => 'docente'],
-            'supports' => ['title', 'thumbnail', 'excerpt', 'custom-fields'],
+            'supports' => ['title', 'thumbnail', 'excerpt', 'custom-fields', 'revisions'],
             'menu_icon' => 'dashicons-welcome-learn-more',
             'menu_position' => 5,
         ];
