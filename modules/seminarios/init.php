@@ -36,7 +36,7 @@ flacso_safe_require('modules/seminarios/blocks/seminarios-lista/render.php');
 // Inicializar módulo
 class Seminario_Plugin {
     public function __construct() {
-        add_action('init', ['Seminario_CPT', 'register']);
+        add_action('init', ['Seminario_CPT', 'register'], 4);
         add_action('init', ['Seminario_Taxonomies', 'register']);
         add_action('init', ['Seminario_Taxonomies', 'register_term_meta']);
         add_action('init', ['Seminario_Meta', 'register']);
