@@ -26,7 +26,7 @@ class Seminario_CPT
             'labels' => $labels,
             'public' => true,
             // Archive and singles under /formacion/seminarios/
-            'has_archive' => 'formacion/seminarios',
+            'has_archive' => true,
             'rewrite' => array(
                 'slug' => 'formacion/seminarios',
                 'with_front' => false,
