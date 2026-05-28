@@ -301,13 +301,19 @@ get_header();
                                             <div class="flacso-oa-form-panel__body">
                                                 <?php
                                                 if (function_exists('flacso_consultas_render_form')) {
-                                                    echo flacso_consultas_render_form(['mostrar_preinscripcion' => true]);
+                                                    echo flacso_consultas_render_form(['mostrar_preinscripcion' => false]);
                                                 } elseif (class_exists('Oferta_Consulta_Form')) {
                                                     echo Oferta_Consulta_Form::render_inline_form($post_id);
                                                 }
                                                 ?>
                                             </div>
                                         </div>
+
+                                        <?php if ($inscripciones_abiertas && function_exists('flacso_consultas_render_preinscripcion_button')) : ?>
+                                            <div class="flacso-oa-preinsc-wrapper" style="margin-top: 0.75rem; padding: 0 clamp(20px, 3vw, 30px);">
+                                                <?php echo flacso_consultas_render_preinscripcion_button(); ?>
+                                            </div>
+                                        <?php endif; ?>
                                     </div>
                                 </aside>
 
