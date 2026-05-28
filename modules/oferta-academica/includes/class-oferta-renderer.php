@@ -811,12 +811,17 @@ class Oferta_Renderer {
         $thumbnail = get_the_post_thumbnail_url($post_id, 'large');
 
         $page_id = absint(get_post_meta($post_id, '_oferta_page_id', true));
+        $excerpt   = wp_trim_words(get_the_excerpt($post_id), 22);
+        $permalink = get_permalink($post_id);
+        $thumbnail = get_the_post_thumbnail_url($post_id, 'large');
+
+        $page_id = absint(get_post_meta($post_id, '_oferta_page_id', true));
         $is_private = self::is_private_program($post_id, $page_id);
         if ($is_private && !self::should_include_private_programs()) {
             return false;
         }
 
-        $link    = $page_id ? get_permalink($page_id) : $permalink;
+        $link    = $permalink;
         if (!$thumbnail && $page_id) {
             $thumbnail = get_the_post_thumbnail_url($page_id, 'large');
         }
@@ -974,7 +979,6 @@ class Oferta_Renderer {
         if (!post_type_exists('seminario')) {
             return '<div class="alert alert-warning">El plugin CPT Seminarios no está activo.</div>';
         }
-
         $query_args = [
             'post_type'      => 'seminario',
             'post_status'    => 'publish',
@@ -1019,9 +1023,8 @@ class Oferta_Renderer {
         $permalink = get_permalink($post_id);
         $thumbnail = get_the_post_thumbnail_url($post_id, 'medium');
         
-        // Obtener página asociada si existe
         $page_id = get_post_meta($post_id, '_oferta_page_id', true);
-        $link = $page_id ? get_permalink($page_id) : $permalink;
+        $link = $permalink;
         
         ?>
         <a href="<?php echo esc_url($link); ?>" class="oferta-card">
@@ -1045,7 +1048,7 @@ class Oferta_Renderer {
         $thumbnail = get_the_post_thumbnail_url($post_id, 'medium');
 
         $page_id = get_post_meta($post_id, '_oferta_page_id', true);
-        $link = $page_id ? get_permalink($page_id) : $permalink;
+        $link = $permalink;
         if (!$thumbnail && $page_id) {
             $thumbnail = get_the_post_thumbnail_url($page_id, 'medium');
         }
