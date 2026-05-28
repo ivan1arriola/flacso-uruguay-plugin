@@ -62,9 +62,26 @@ $hero_primary_url = $inscripciones_abiertas
     ? $preinscripcion_url
     : '#flacso-oa-consulta';
 
+$format_duracion = function($meses_str) {
+    if (empty($meses_str)) return '';
+    $val = (float) $meses_str;
+    $entero = floor($val);
+    $fraccion = $val - $entero;
+    
+    if ($fraccion == 0.5) {
+        if ($entero > 0) {
+            return $entero . ' ' . _n('mes', 'meses', $entero, 'flacso-uruguay') . ' y medio';
+        } else {
+            return 'Medio mes';
+        }
+    } else {
+        return $val . ' ' . _n('mes', 'meses', $val, 'flacso-uruguay');
+    }
+};
+
 $programa_meta = array_filter([
     !empty($data['abreviacion']) ? strtoupper((string) $data['abreviacion']) : '',
-    !empty($data['duracion_meses']) ? sprintf(__('Duración: %s meses', 'flacso-uruguay'), $data['duracion_meses']) : '',
+    !empty($data['duracion_meses']) ? sprintf(__('Duración: %s', 'flacso-uruguay'), $format_duracion($data['duracion_meses'])) : '',
 ]);
 
 $render_info_card = static function ($title, $body, $extra_class = '') {
@@ -251,6 +268,16 @@ get_header();
                                             <?php the_excerpt(); ?>
                                         </div>
                                     <?php endif; ?>
+
+                                    <?php if (!empty($programa_meta)) : ?>
+                                        <div class="flacso-inscripciones-banner__meta" style="margin-top: 24px; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center;">
+                                            <?php foreach ($programa_meta as $meta_item) : ?>
+                                                <span style="background: rgba(255,255,255,0.15); backdrop-filter: blur(8px); padding: 6px 16px; border-radius: 20px; color: white; font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; border: 1px solid rgba(255,255,255,0.2);">
+                                                    <?php echo esc_html($meta_item); ?>
+                                                </span>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
 
                                 <div class="flacso-inscripciones-banner__bottom" style="margin-top: auto;">
@@ -264,9 +291,89 @@ get_header();
 
                     <section id="flacso-oa-contenido" class="flacso-oa-main-section">
                         <div class="flacso-oa-container">
-                            <?php if (class_exists('Oferta_Blocks')) : ?>
-                                <section class="flacso-oa-next-start flacso-oa-next-start--fullwidth" style="margin-bottom: 3rem;">
-                                    <?php echo Oferta_Blocks::render_dato_proximo_inicio(['ofertaId' => $post_id]); ?>
+                            <?php
+                            $raw_proximo = get_post_meta($post_id, 'proximo_inicio', true);
+                            if ($raw_proximo) :
+                                $precision = get_post_meta($post_id, 'proximo_inicio_precision', true);
+                                
+                                $detect_precision = function($value, $stored) {
+                                    if (preg_match('/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}$/', $value) || preg_match('/^\d{1,2}[-\/]\d{1,2}[-\/]\d{4}$/', $value)) return 'day';
+                                    if (preg_match('/^\d{4}[-\/]\d{1,2}$/', $value) || preg_match('/^\d{1,2}[-\/]\d{4}$/', $value)) return 'month';
+                                    if (preg_match('/^\d{4}$/', $value)) return 'year';
+                                    $stored = is_string($stored) ? trim(strtolower($stored)) : '';
+                                    if (in_array($stored, ['day', 'month', 'year'], true)) return $stored;
+                                    return 'year';
+                                };
+                                
+                                $mb_ucfirst = function($text) {
+                                    if ($text === '') return '';
+                                    if (function_exists('mb_convert_case')) return mb_convert_case($text, MB_CASE_TITLE, 'UTF-8');
+                                    return ucfirst($text);
+                                };
+
+                                $format_proximo = function($value, $stored_precision) use ($detect_precision, $mb_ucfirst) {
+                                    $value = trim((string) $value);
+                                    if ($value === '') return '';
+                                    $precision = $detect_precision($value, $stored_precision);
+
+                                    if ($precision === 'year' && preg_match('/^\d{4}$/', $value)) return 'en ' . $value;
+
+                                    if ($precision === 'month') {
+                                        if (preg_match('/^(\d{4})[-\/](\d{1,2})$/', $value, $matches) || preg_match('/^(\d{1,2})[-\/](\d{4})$/', $value, $matches)) {
+                                            $year = strlen($matches[1]) === 4 ? $matches[1] : $matches[2];
+                                            $month_number = (int) (strlen($matches[1]) === 4 ? $matches[2] : $matches[1]);
+                                            if ($month_number >= 1 && $month_number <= 12) {
+                                                return $mb_ucfirst(date_i18n('F', mktime(0, 0, 0, $month_number, 1, (int) $year))) . ' del ' . $year;
+                                            }
+                                        }
+                                        $timestamp = strtotime(preg_replace('/[-\/]/', '-', $value) . '-01');
+                                        if (!$timestamp) $timestamp = strtotime('01-' . preg_replace('/[-\/]/', '-', $value));
+                                        if ($timestamp) return $mb_ucfirst(date_i18n('F', $timestamp)) . ' del ' . date_i18n('Y', $timestamp);
+                                    }
+
+                                    if ($precision === 'day') {
+                                        if (preg_match('/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/', $value, $matches)) {
+                                            $year = (int) $matches[1]; $month_number = (int) $matches[2]; $day_number = (int) $matches[3];
+                                        } elseif (preg_match('/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/', $value, $matches)) {
+                                            $day_number = (int) $matches[1]; $month_number = (int) $matches[2]; $year = (int) $matches[3];
+                                        } else {
+                                            $year = $month_number = $day_number = 0;
+                                        }
+
+                                        if ($year > 0 && checkdate($month_number, $day_number, $year)) {
+                                            return $day_number . ' ' . $mb_ucfirst(date_i18n('F', mktime(0, 0, 0, $month_number, 1, $year))) . ' del ' . $year;
+                                        }
+
+                                        $timestamp = strtotime(str_replace('/', '-', $value));
+                                        if ($timestamp) {
+                                            $formatted = date_i18n('j F Y', $timestamp);
+                                            $parts = preg_split('/\\s+/', trim($formatted));
+                                            if (count($parts) >= 3) return $parts[0] . ' ' . $mb_ucfirst($parts[1]) . ' del ' . $parts[2];
+                                            return $mb_ucfirst($formatted);
+                                        }
+                                    }
+                                    return $value;
+                                };
+
+                                $formatted = $format_proximo($raw_proximo, $precision);
+                                if ($formatted === '') $formatted = __('A definir', 'flacso-oferta-academica');
+
+                                $cohorte = trim((string) get_post_meta($post_id, 'cohorte', true));
+                                $label = esc_html__('Próximo inicio', 'flacso-oferta-academica');
+                                if ($cohorte !== '') {
+                                    $label .= ' (' . esc_html($cohorte) . ')';
+                                }
+                            ?>
+                                <section class="flacso-oa-next-start flacso-oa-next-start--fullwidth" style="margin-top: -1rem; margin-bottom: 2rem;">
+                                    <div class="flacso-oferta-proximo-inicio" role="status" aria-live="polite">
+                                        <p class="flacso-oferta-proximo-inicio__pill">
+                                            <span class="flacso-oferta-proximo-inicio__icon" aria-hidden="true"><i class="bi bi-calendar-event"></i></span>
+                                            <span class="flacso-oferta-proximo-inicio__content">
+                                                <span class="flacso-oferta-proximo-inicio__label"><?php echo $label; ?></span>
+                                                <strong class="flacso-oferta-proximo-inicio__value"><?php echo esc_html($formatted); ?></strong>
+                                            </span>
+                                        </p>
+                                    </div>
                                 </section>
                             <?php endif; ?>
                             
@@ -361,12 +468,6 @@ get_header();
 
                                 $malla_body = ob_get_clean();
 
-                                $render_info_card(
-                                    __('Malla curricular', 'flacso-uruguay'),
-                                    $malla_body,
-                                    'flacso-oa-info-card--wide'
-                                );
-
                                 $calendario_html = !empty($data['calendario_html'])
                                     ? trim((string) $data['calendario_html'])
                                     : '';
@@ -391,11 +492,32 @@ get_header();
 
                                 $calendario_body = ob_get_clean();
 
-                                $render_info_card(
-                                    __('Calendario', 'flacso-uruguay'),
-                                    $calendario_body,
-                                    'flacso-oa-info-card--wide'
-                                );
+                                $malla_is_pdf = ($malla_modo === 'pdf' && $malla_pdf_url);
+                                $calendario_is_pdf = ($calendario_modo === 'pdf' && $calendario_pdf_url);
+
+                                if ($malla_body && $calendario_body && $malla_is_pdf && $calendario_is_pdf) {
+                                    $combined_body = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">' . $malla_body . $calendario_body . '</div>';
+                                    $render_info_card(
+                                        __('Malla y Calendario Académico', 'flacso-uruguay'),
+                                        $combined_body,
+                                        'flacso-oa-info-card--wide'
+                                    );
+                                } else {
+                                    if ($malla_body) {
+                                        $render_info_card(
+                                            __('Malla curricular', 'flacso-uruguay'),
+                                            $malla_body,
+                                            'flacso-oa-info-card--wide'
+                                        );
+                                    }
+                                    if ($calendario_body) {
+                                        $render_info_card(
+                                            __('Calendario', 'flacso-uruguay'),
+                                            $calendario_body,
+                                            'flacso-oa-info-card--wide'
+                                        );
+                                    }
+                                }
 
                                 $financiacion_html = !empty($data['financiacion_html'])
                                     ? (string) $data['financiacion_html']

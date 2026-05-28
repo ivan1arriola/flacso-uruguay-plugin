@@ -59,25 +59,6 @@ class Oferta_Blocks {
             true
         );
 
-        // Bloque dato: próximo inicio
-        register_block_type('flacso-uruguay/dato-proximo-inicio', [
-            'api_version'     => 2,
-            'title'           => __('Oferta Académica: Próximo inicio', 'flacso-oferta-academica'),
-            'description'     => __('Muestra el próximo inicio de la oferta académica seleccionada.', 'flacso-oferta-academica'),
-            'category'        => 'flacso-uruguay',
-            'icon'            => 'calendar',
-            'supports'        => [
-                'html' => false,
-            ],
-            'attributes'      => [
-                'ofertaId' => [
-                    'type'    => 'integer',
-                    'default' => 0,
-                ],
-            ],
-            'editor_script'   => 'flacso-oferta-dato-proximo-inicio-block',
-            'render_callback' => [__CLASS__, 'render_dato_proximo_inicio'],
-        ]);
 
         // Bloque dato: calendario (PDF o HTML)
         register_block_type('flacso-uruguay/dato-calendario', [
@@ -214,42 +195,6 @@ class Oferta_Blocks {
         return Oferta_Renderer::render_seminarios();
     }
 
-    public static function render_dato_proximo_inicio($attributes, $content = ''): string {
-        self::ensure_styles();
-
-        $oferta_id = self::resolve_oferta_id((array) $attributes);
-
-        $is_editor_preview = self::is_editor_preview_context();
-
-        if (!$oferta_id) {
-            return $is_editor_preview
-                ? '<p>' . esc_html__('Selecciona una oferta académica.', 'flacso-oferta-academica') . '</p>'
-                : '';
-        }
-
-        $raw_value = get_post_meta($oferta_id, 'proximo_inicio', true);
-        $precision = get_post_meta($oferta_id, 'proximo_inicio_precision', true);
-        $formatted = self::format_proximo_inicio($raw_value, $precision);
-        if ($formatted === '') {
-            $formatted = __('A definir', 'flacso-oferta-academica');
-        }
-
-        $cohorte = trim((string) get_post_meta($oferta_id, 'cohorte', true));
-        $label = esc_html__('Próximo inicio', 'flacso-oferta-academica');
-        if ($cohorte !== '') {
-            $label .= ' (' . esc_html($cohorte) . ')';
-        }
-
-        return '<div class="flacso-oferta-proximo-inicio" role="status" aria-live="polite">' .
-            '<p class="flacso-oferta-proximo-inicio__pill">' .
-            '<span class="flacso-oferta-proximo-inicio__icon" aria-hidden="true"><i class="bi bi-calendar-event"></i></span>' .
-            '<span class="flacso-oferta-proximo-inicio__content">' .
-            '<span class="flacso-oferta-proximo-inicio__label">' . $label . '</span>' .
-            '<strong class="flacso-oferta-proximo-inicio__value">' . esc_html($formatted) . '</strong>' .
-            '</span>' .
-            '</p>' .
-            '</div>';
-    }
 
     public static function render_dato_calendario($attributes, $content = ''): string {
         return self::render_dato_documento_pdf((array) $attributes, 'calendario', __('Calendario', 'flacso-oferta-academica'));
@@ -421,104 +366,5 @@ class Oferta_Blocks {
         return false;
     }
 
-    private static function format_proximo_inicio($value, $stored_precision = ''): string {
-        $value = trim((string) $value);
-        if ($value === '') {
-            return '';
-        }
 
-        $precision = self::detect_proximo_inicio_precision($value, $stored_precision);
-
-        if ($precision === 'year' && preg_match('/^\d{4}$/', $value)) {
-            return 'en ' . $value;
-        }
-
-        if ($precision === 'month') {
-            if (preg_match('/^(\d{4})[-\/](\d{1,2})$/', $value, $matches) || preg_match('/^(\d{1,2})[-\/](\d{4})$/', $value, $matches)) {
-                // Determine which is year and which is month
-                $year = strlen($matches[1]) === 4 ? $matches[1] : $matches[2];
-                $month_number = (int) (strlen($matches[1]) === 4 ? $matches[2] : $matches[1]);
-                if ($month_number >= 1 && $month_number <= 12) {
-                    $month_name = self::mb_ucfirst(date_i18n('F', mktime(0, 0, 0, $month_number, 1, (int) $year)));
-                    return $month_name . ' del ' . $year;
-                }
-            }
-
-            // Fallback para month
-            $timestamp = strtotime(preg_replace('/[-\/]/', '-', $value) . '-01');
-            if (!$timestamp) {
-                $timestamp = strtotime('01-' . preg_replace('/[-\/]/', '-', $value));
-            }
-            if ($timestamp) {
-                return self::mb_ucfirst(date_i18n('F', $timestamp)) . ' del ' . date_i18n('Y', $timestamp);
-            }
-        }
-
-        if ($precision === 'day') {
-            if (preg_match('/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/', $value, $matches)) {
-                $year = (int) $matches[1];
-                $month_number = (int) $matches[2];
-                $day_number = (int) $matches[3];
-            } elseif (preg_match('/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/', $value, $matches)) {
-                $day_number = (int) $matches[1];
-                $month_number = (int) $matches[2];
-                $year = (int) $matches[3];
-            } else {
-                $year = $month_number = $day_number = 0;
-            }
-
-            if ($year > 0 && checkdate($month_number, $day_number, $year)) {
-                $month_name = self::mb_ucfirst(date_i18n('F', mktime(0, 0, 0, $month_number, 1, $year)));
-                return $day_number . ' ' . $month_name . ' del ' . $year;
-            }
-
-            $timestamp = strtotime(str_replace('/', '-', $value));
-            if ($timestamp) {
-                $formatted = date_i18n('j F Y', $timestamp);
-                $parts = preg_split('/\\s+/', trim($formatted));
-                if (count($parts) >= 3) {
-                    $day = $parts[0];
-                    $month = self::mb_ucfirst($parts[1]);
-                    $year = $parts[2];
-                    return $day . ' ' . $month . ' del ' . $year;
-                }
-                return self::mb_ucfirst($formatted);
-            }
-        }
-
-        return $value;
-    }
-
-    private static function detect_proximo_inicio_precision(string $value, $stored = ''): string {
-        if (preg_match('/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}$/', $value) || preg_match('/^\d{1,2}[-\/]\d{1,2}[-\/]\d{4}$/', $value)) {
-            return 'day';
-        }
-
-        if (preg_match('/^\d{4}[-\/]\d{1,2}$/', $value) || preg_match('/^\d{1,2}[-\/]\d{4}$/', $value)) {
-            return 'month';
-        }
-
-        if (preg_match('/^\d{4}$/', $value)) {
-            return 'year';
-        }
-
-        $stored = is_string($stored) ? trim(strtolower($stored)) : '';
-        if (in_array($stored, ['day', 'month', 'year'], true)) {
-            return $stored;
-        }
-
-        return 'year';
-    }
-
-    private static function mb_ucfirst(string $text): string {
-        if ($text === '') {
-            return '';
-        }
-
-        if (function_exists('mb_convert_case')) {
-            return mb_convert_case($text, MB_CASE_TITLE, 'UTF-8');
-        }
-
-        return ucfirst($text);
-    }
 }
