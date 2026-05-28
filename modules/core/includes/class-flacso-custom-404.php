@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 if ( ! class_exists( 'Flacso_Custom_404' ) ) {
 	class Flacso_Custom_404 {
 		public static function init(): void {
-			add_action( 'template_redirect', [ __CLASS__, 'maybe_render' ], 1 );
+			add_action( 'template_redirect', [ __CLASS__, 'maybe_render' ], 99 );
 		}
 
 		public static function maybe_render(): void {

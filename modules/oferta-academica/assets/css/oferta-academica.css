@@ -1540,3 +1540,125 @@ body.flacso-oa-consulta-open {
         line-height: 1.24;
     }
 }
+
+/* TABLA DE CALENDARIO Y MALLA CURRICULAR */
+.calendar-table-wrap {
+  overflow: auto;
+  border: 2px solid var(--borde, #111827);
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+}
+
+table.calendar-table {
+  width: 100%;
+  min-width: 1280px;
+  border-collapse: collapse;
+  table-layout: fixed;
+  background: var(--papel, #ffffff);
+}
+
+.calendar-table th {
+  padding: 12px 8px;
+  border-right: 2px solid var(--borde, #111827);
+  border-bottom: 2px solid var(--borde, #111827);
+  color: #ffffff;
+  background: var(--azul, #004f9f);
+  font-family: var(--mono, "Courier New", Courier, monospace);
+  font-size: clamp(0.88rem, 1.05vw, 1.08rem);
+  line-height: 1.08;
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+
+.calendar-table th:last-child,
+.calendar-table td:last-child {
+  border-right: 0;
+}
+
+.calendar-table td {
+  padding: 10px 8px;
+  border-right: 2px solid var(--borde, #111827);
+  border-bottom: 2px solid var(--borde, #111827);
+  vertical-align: middle;
+  text-align: center;
+  font-size: clamp(0.76rem, 0.88vw, 0.94rem);
+  line-height: 1.28;
+  word-break: normal;
+}
+
+.calendar-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.calendar-table .group-cell {
+  width: 12%;
+  font-weight: 900;
+  background: #f8fafc;
+  text-transform: none;
+}
+
+.calendar-table .sequence-cell {
+  width: 7%;
+  font-weight: 800;
+}
+
+.calendar-table .seminar-cell {
+  width: 22%;
+  font-weight: 800;
+}
+
+.calendar-table .content-cell {
+  width: 20%;
+  text-align: left;
+}
+
+.calendar-table .teacher-cell {
+  width: 13%;
+}
+
+.calendar-table .date-cell {
+  width: 13%;
+}
+
+.calendar-table .schedule-cell {
+  width: 10%;
+}
+
+.calendar-table .credits-cell {
+  width: 6%;
+}
+
+.calendar-table .evaluation-cell {
+  width: 8%;
+}
+
+.line-list {
+  display: grid;
+  gap: 4px;
+}
+
+.content-list {
+  display: grid;
+  gap: 5px;
+  text-align: left;
+}
+
+.content-list strong {
+  font-weight: 900;
+}
+
+.mini-label {
+  display: block;
+  color: #475569;
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 3px;
+}
+
+@media print {
+  table.calendar-table {
+    min-width: 0;
+  }
+}

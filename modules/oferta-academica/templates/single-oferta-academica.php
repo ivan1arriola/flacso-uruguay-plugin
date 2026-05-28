@@ -338,27 +338,25 @@ get_header();
                                 }
 
                                 $malla_html = !empty($data['malla_curricular_html'])
-                                    ? (string) $data['malla_curricular_html']
+                                    ? trim((string) $data['malla_curricular_html'])
                                     : '';
 
                                 $malla_pdf_url = !empty($data['malla_curricular'])
-                                    ? (string) $data['malla_curricular']
+                                    ? trim((string) $data['malla_curricular'])
                                     : '';
 
-                                if ($malla_pdf_url && $malla_html) {
-                                    $malla_html = preg_replace('/<p>(<strong[^>]*>)?\s*<a[^>]+>Malla curricular<\/a>\s*(<\/strong>)?<\/p>/i', '', $malla_html);
-                                    $malla_html = preg_replace('/<a[^>]+>Malla curricular<\/a>/i', '', $malla_html);
-                                    $malla_html = trim($malla_html);
-                                }
+                                $malla_modo = get_post_meta($post_id, 'malla_curricular_modo', true) ?: ($malla_pdf_url ? 'pdf' : 'html');
 
                                 ob_start();
 
-                                if ($malla_html) {
+                                if ($malla_modo === 'pdf' && $malla_pdf_url) {
+                                    if (class_exists('Oferta_Blocks')) {
+                                        echo Oferta_Blocks::render_dato_malla_curricular(['ofertaId' => $post_id]);
+                                    } else {
+                                        echo '<a href="' . esc_url($malla_pdf_url) . '" target="_blank" class="flacso-oa-link-btn">' . esc_html__('Descargar Malla Curricular (PDF)', 'flacso-uruguay') . '</a>';
+                                    }
+                                } elseif ($malla_modo === 'html' && $malla_html) {
                                     echo wp_kses_post($malla_html);
-                                }
-
-                                if (class_exists('Oferta_Blocks') && $malla_pdf_url) {
-                                    echo Oferta_Blocks::render_dato_malla_curricular(['ofertaId' => $post_id]);
                                 }
 
                                 $malla_body = ob_get_clean();
@@ -370,27 +368,25 @@ get_header();
                                 );
 
                                 $calendario_html = !empty($data['calendario_html'])
-                                    ? (string) $data['calendario_html']
+                                    ? trim((string) $data['calendario_html'])
                                     : '';
 
                                 $calendario_pdf_url = !empty($data['calendario'])
-                                    ? (string) $data['calendario']
+                                    ? trim((string) $data['calendario'])
                                     : '';
 
-                                if ($calendario_pdf_url && $calendario_html) {
-                                    $calendario_html = preg_replace('/<p>(<strong[^>]*>)?\s*<a[^>]+>(Calendario|Cronograma)<\/a>\s*(<\/strong>)?<\/p>/i', '', $calendario_html);
-                                    $calendario_html = preg_replace('/<a[^>]+>(Calendario|Cronograma)<\/a>/i', '', $calendario_html);
-                                    $calendario_html = trim($calendario_html);
-                                }
+                                $calendario_modo = get_post_meta($post_id, 'calendario_modo', true) ?: ($calendario_pdf_url ? 'pdf' : 'html');
 
                                 ob_start();
 
-                                if ($calendario_html) {
+                                if ($calendario_modo === 'pdf' && $calendario_pdf_url) {
+                                    if (class_exists('Oferta_Blocks')) {
+                                        echo Oferta_Blocks::render_dato_calendario(['ofertaId' => $post_id]);
+                                    } else {
+                                        echo '<a href="' . esc_url($calendario_pdf_url) . '" target="_blank" class="flacso-oa-link-btn">' . esc_html__('Descargar Calendario (PDF)', 'flacso-uruguay') . '</a>';
+                                    }
+                                } elseif ($calendario_modo === 'html' && $calendario_html) {
                                     echo wp_kses_post($calendario_html);
-                                }
-
-                                if (class_exists('Oferta_Blocks') && $calendario_pdf_url) {
-                                    echo Oferta_Blocks::render_dato_calendario(['ofertaId' => $post_id]);
                                 }
 
                                 $calendario_body = ob_get_clean();

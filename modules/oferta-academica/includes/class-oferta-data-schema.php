@@ -113,6 +113,32 @@ class Oferta_Data_Schema {
             ],
         ]);
 
+        register_post_meta('oferta-academica', 'calendario_modo', [
+            'type' => 'string',
+            'single' => true,
+            'sanitize_callback' => 'sanitize_text_field',
+            'auth_callback' => [self::class, 'user_can_edit_meta'],
+            'show_in_rest' => [
+                'schema' => [
+                    'description' => __('Modo de calendario (pdf o html)', 'flacso-oferta-academica'),
+                    'type' => 'string',
+                ],
+            ],
+        ]);
+
+        register_post_meta('oferta-academica', 'malla_curricular_modo', [
+            'type' => 'string',
+            'single' => true,
+            'sanitize_callback' => 'sanitize_text_field',
+            'auth_callback' => [self::class, 'user_can_edit_meta'],
+            'show_in_rest' => [
+                'schema' => [
+                    'description' => __('Modo de malla curricular (pdf o html)', 'flacso-oferta-academica'),
+                    'type' => 'string',
+                ],
+            ],
+        ]);
+
         register_post_meta('oferta-academica', 'abreviacion', [
             'type' => 'string',
             'single' => true,
@@ -516,6 +542,8 @@ class Oferta_Data_Schema {
             'proximo_inicio_precision' => fn($value) => self::sanitize_precision($value),
             'calendario' => fn($value) => self::sanitize_url($value),
             'malla_curricular' => fn($value) => self::sanitize_url($value),
+            'calendario_modo' => fn($value) => sanitize_text_field($value),
+            'malla_curricular_modo' => fn($value) => sanitize_text_field($value),
             'abreviacion' => fn($value) => self::sanitize_abreviacion($value),
             'correo' => fn($value) => self::sanitize_email($value),
             'inscripciones_abiertas' => fn($value) => self::sanitize_boolean($value),
