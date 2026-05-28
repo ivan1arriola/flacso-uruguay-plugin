@@ -29,37 +29,21 @@ get_header();
 ?>
 
 <div id="inner-wrap" class="wrap kt-clear flacso-oferta-academica-premium">
-    <!-- Hero Section -->
-    <section class="entry-hero page-hero-section entry-hero-layout-standard">
-        <div class="entry-hero-container-inner">
-            <div class="hero-section-overlay"></div>
-            <div class="hero-container site-container">
-                <header class="entry-header page-title title-align-center">
-                    <h1 class="entry-title"><?php echo esc_html($taxonomy_name); ?></h1>
-                    <nav id="kadence-breadcrumbs" aria-label="Migas de pan" class="kadence-breadcrumbs">
-                        <div class="kadence-breadcrumb-container">
-                            <span><a href="<?php echo esc_url(home_url()); ?>">Inicio</a></span> 
-                            <span class="bc-delimiter">/</span> 
-                            <span><a href="<?php echo esc_url(home_url('/formacion/')); ?>">Formación</a></span> 
-                            <span class="bc-delimiter">/</span> 
-                            <span class="kadence-bread-current"><?php echo esc_html($taxonomy_name); ?></span>
-                        </div>
-                    </nav>
-                    <?php 
-                    $term_desc = term_description();
-                    if (!empty($term_desc)) : ?>
-                        <div class="taxonomy-description" style="margin-top: 1.5rem; font-size: clamp(1rem, 1.2vw, 1.15rem); line-height: 1.6; max-width: 850px; margin-inline: auto; color: rgba(255, 255, 255, 0.9);">
-                            <?php echo wp_kses_post($term_desc); ?>
-                        </div>
-                    <?php endif; ?>
-                </header>
-            </div>
-        </div>
-    </section>
-
     <div id="primary" class="content-area">
-        <div class="content-container site-container" style="padding-top: 40px; padding-bottom: 60px;">
-            <div class="row g-4 justify-content-center">
+        <div class="content-container site-container" style="padding-top: 60px; padding-bottom: 60px;">
+            
+            <header class="entry-header page-title" style="margin-bottom: 40px;">
+                <h1 class="entry-title" style="color: var(--flacso-blue-dark); font-weight: 800; font-size: clamp(2.5rem, 5vw, 3.5rem); margin-bottom: 1rem;"><?php echo esc_html($taxonomy_name); ?></h1>
+                <?php 
+                $term_desc = term_description();
+                if (!empty($term_desc)) : ?>
+                    <div class="taxonomy-description" style="font-size: 1.15rem; line-height: 1.6; max-width: 900px; color: #475569;">
+                        <?php echo wp_kses_post($term_desc); ?>
+                    </div>
+                <?php endif; ?>
+            </header>
+
+            <div class="flacso-ofertas-carousel">
                 <?php if (have_posts()) : ?>
                     <?php while (have_posts()) : the_post(); 
                         $post_id = get_the_ID();
@@ -68,16 +52,9 @@ get_header();
                         $is_open = ($inscripciones_abiertas === '1' || $inscripciones_abiertas === 'true' || $inscripciones_abiertas === true || $inscripciones_abiertas === 1);
                         
                         $data = class_exists('Oferta_Data_Schema') ? Oferta_Data_Schema::get_schema($post_id) : [];
-                        $modalidad = !empty($data['modalidad_html']) ? wp_strip_all_tags($data['modalidad_html']) : '';
                         $duracion = !empty($data['duracion_meses']) ? $data['duracion_meses'] . ' meses' : '';
-                        
-                        // Extract just the first few words of modality for the badge
-                        $modalidad_short = $modalidad;
-                        if (stripos($modalidad, 'virtual') !== false) $modalidad_short = 'Virtual';
-                        elseif (stripos($modalidad, 'presencial') !== false) $modalidad_short = 'Presencial';
-                        elseif (stripos($modalidad, 'híbrida') !== false || stripos($modalidad, 'hibrida') !== false) $modalidad_short = 'Híbrida';
                     ?>
-                        <div class="col-md-6 col-lg-4 d-flex align-items-stretch">
+                        <div class="carousel-item-wrap">
                             <article class="flacso-premium-card h-100 w-100">
                                 <div class="flacso-premium-card__image-wrap">
                                     <?php if ($thumbnail_url) : ?>
@@ -103,12 +80,6 @@ get_header();
                                             <span class="flacso-meta-item">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/></svg>
                                                 <?php echo esc_html($duracion); ?>
-                                            </span>
-                                        <?php endif; ?>
-                                        <?php if ($modalidad_short) : ?>
-                                            <span class="flacso-meta-item">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>
-                                                <?php echo esc_html($modalidad_short); ?>
                                             </span>
                                         <?php endif; ?>
                                     </div>
@@ -158,37 +129,31 @@ get_header();
     --flacso-gray-bg: #f8fafc;
 }
 
-.flacso-oferta-academica-premium .entry-hero {
-    background: var(--flacso-blue-dark);
-    padding: 80px 0;
-    text-align: center;
-    color: white;
-    position: relative;
-    overflow: hidden;
+.flacso-ofertas-carousel {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 1.5rem;
+    padding-bottom: 2rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--flacso-yellow) #f1f5f9;
 }
-.flacso-oferta-academica-premium .hero-section-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(5, 25, 56, 0.9) 0%, rgba(22, 57, 112, 0.5) 100%);
-    z-index: 1;
+.flacso-ofertas-carousel::-webkit-scrollbar {
+    height: 8px;
 }
-.flacso-oferta-academica-premium .hero-container {
-    position: relative;
-    z-index: 2;
+.flacso-ofertas-carousel::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
 }
-.flacso-oferta-academica-premium .entry-title {
-    font-size: clamp(2.5rem, 5vw, 4rem);
-    font-weight: 800;
-    margin-bottom: 20px;
-    line-height: 1.1;
+.flacso-ofertas-carousel::-webkit-scrollbar-thumb {
+    background: var(--flacso-yellow);
+    border-radius: 4px;
 }
-.flacso-oferta-academica-premium .kadence-breadcrumbs {
-    font-size: 0.9rem;
-    opacity: 0.8;
-}
-.flacso-oferta-academica-premium .kadence-breadcrumbs a {
-    color: white;
-    text-decoration: none;
+.flacso-ofertas-carousel .carousel-item-wrap {
+    flex: 0 0 350px;
+    scroll-snap-align: start;
+    max-width: 85vw;
 }
 
 /* Premium Card Styles */

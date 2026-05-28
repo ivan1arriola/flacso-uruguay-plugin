@@ -1265,11 +1265,15 @@ get_header();
     overflow: hidden;
 }
 
-.flacso-oa-person-card__avatar {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.flacso-oa-person-card__avatar-wrap > div,
+.flacso-oa-person-card__avatar-wrap .dp-docente-avatar,
+.flacso-oa-person-card__avatar-wrap img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
     display: block;
+    margin: 0 !important;
+    border-radius: 0 !important;
 }
 
 .flacso-oa-person-card__content {
@@ -1280,9 +1284,9 @@ get_header();
 }
 
 .flacso-oa-person-card__role-header {
-    background: #f8fafc;
+    background: var(--flacso-blue-dark);
     padding: 0.8rem 1.5rem;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--flacso-blue-dark);
 }
 
 .flacso-oa-person-card__role {
@@ -1290,7 +1294,7 @@ get_header();
     text-transform: uppercase;
     letter-spacing: 0.08em;
     font-weight: 800;
-    color: var(--flacso-yellow-dark, #b58900);
+    color: var(--flacso-yellow);
     display: block;
 }
 
