@@ -267,7 +267,7 @@ class Oferta_Data_Schema {
     }
 
     public static function sanitize_duration($value): string {
-        return preg_replace('/[^0-9]/', '', (string) $value);
+        return preg_replace('/[^0-9.,]/', '', (string) $value);
     }
 
     public static function sanitize_proximo_inicio($value): string {
