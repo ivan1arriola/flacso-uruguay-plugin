@@ -99,35 +99,32 @@ $render_docente_item = static function ($docente_id, $rol = '') {
     }
 
     $cv_raw = (string) get_post_meta($docente_id, 'cv', true);
-    $cv_short = wp_trim_words(wp_strip_all_tags($cv_raw), 16, '...');
-    $permalink = get_permalink($docente_id);
 
     echo '<div class="flacso-oa-docente-item">';
     echo '<article class="flacso-oa-person-card">';
     
+    if ($rol) {
+        echo '<div class="flacso-oa-person-card__role-header"><span class="flacso-oa-person-card__role">' . esc_html($rol) . '</span></div>';
+    }
+    
     echo '<div class="flacso-oa-person-card__avatar-wrap">';
     if (function_exists('dp_avatar_markup')) {
-        echo dp_avatar_markup($docente_id, $titulo, 160, 'flacso-oa-person-card__avatar');
+        echo dp_avatar_markup($docente_id, $titulo, 320, 'flacso-oa-person-card__avatar');
     } else {
-        echo get_the_post_thumbnail($docente_id, 'thumbnail', ['class' => 'flacso-oa-person-card__avatar']);
+        echo get_the_post_thumbnail($docente_id, 'medium', ['class' => 'flacso-oa-person-card__avatar']);
     }
     echo '</div>';
 
     echo '<div class="flacso-oa-person-card__content">';
-    if ($rol) {
-        echo '<span class="flacso-oa-person-card__role">' . esc_html($rol) . '</span>';
-    }
-    echo '<h4 class="flacso-oa-person-card__name"><a href="' . esc_url($permalink) . '">' . esc_html($titulo) . '</a></h4>';
+    echo '<h4 class="flacso-oa-person-card__name">' . esc_html($titulo) . '</h4>';
     
     if ($academic_label) {
         echo '<p class="flacso-oa-person-card__academic">' . esc_html($academic_label) . '</p>';
     }
     
-    if ($cv_short) {
-        echo '<p class="flacso-oa-person-card__cv">' . esc_html($cv_short) . '</p>';
+    if ($cv_raw) {
+        echo '<div class="flacso-oa-person-card__cv">' . wp_kses_post($cv_raw) . '</div>';
     }
-    
-    echo '<a href="' . esc_url($permalink) . '" class="flacso-oa-person-card__link">Ver perfil &rarr;</a>';
     
     echo '</div>';
     echo '</article>';
@@ -197,6 +194,11 @@ get_header();
                                     <h1 class="flacso-inscripciones-banner__title" style="margin: 0; color: #ffffff; font-size: clamp(2rem, 4vw, 3.8rem); font-weight: 900; letter-spacing: -0.025em; line-height: 1.15; text-wrap: balance; text-shadow: 0 4px 16px rgba(0,0,0,0.6);">
                                         <?php the_title(); ?>
                                     </h1>
+                                    <?php if (has_excerpt()) : ?>
+                                        <div class="flacso-inscripciones-banner__excerpt" style="margin: 20px 0 0 0; color: rgba(255,255,255,0.95); font-size: clamp(1.05rem, 1.4vw, 1.25rem); font-weight: 500; line-height: 1.5; text-wrap: balance; text-shadow: 0 2px 8px rgba(0,0,0,0.5); max-width: 900px;">
+                                            <?php the_excerpt(); ?>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
 
                                 <div class="flacso-inscripciones-banner__bottom" style="margin-top: auto;">
@@ -1257,7 +1259,7 @@ get_header();
 
 .flacso-oa-person-card__avatar-wrap {
     width: 100%;
-    aspect-ratio: 1.25 / 1;
+    aspect-ratio: 1 / 1;
     background: #f1f5f9;
     position: relative;
     overflow: hidden;
@@ -1277,13 +1279,19 @@ get_header();
     flex: 1;
 }
 
+.flacso-oa-person-card__role-header {
+    background: #f8fafc;
+    padding: 0.8rem 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
 .flacso-oa-person-card__role {
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     font-weight: 800;
     color: var(--flacso-yellow-dark, #b58900);
-    margin-bottom: 0.5rem;
+    display: block;
 }
 
 .flacso-oa-person-card__name {
@@ -1292,15 +1300,6 @@ get_header();
     color: var(--flacso-blue-dark);
     margin: 0 0 0.25rem;
     line-height: 1.2;
-}
-
-.flacso-oa-person-card__name a {
-    color: inherit;
-    text-decoration: none;
-}
-
-.flacso-oa-person-card__name a:hover {
-    color: var(--flacso-blue);
 }
 
 .flacso-oa-person-card__academic {
@@ -1316,21 +1315,6 @@ get_header();
     line-height: 1.5;
     margin: 0 0 1.25rem;
     flex: 1;
-}
-
-.flacso-oa-person-card__link {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--flacso-blue);
-    text-decoration: none;
-    margin-top: auto;
-    display: inline-block;
-    transition: color 0.2s;
-}
-
-.flacso-oa-person-card__link:hover {
-    color: var(--flacso-blue-dark);
-    text-decoration: underline;
 }
 
 .flacso-oa-seminarios-section {
