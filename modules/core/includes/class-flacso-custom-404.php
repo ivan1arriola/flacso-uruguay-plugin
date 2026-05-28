@@ -66,7 +66,7 @@ class Flacso_Custom_404 {
 			SELECT ID, post_title, post_name, post_type
 			FROM {$wpdb->posts}
 			WHERE post_status = 'publish'
-			  AND post_type IN ('page','post')
+			  AND post_type IN ('page','post','oferta-academica','seminario')
 			  AND (
 					post_name LIKE %s
 				 OR SOUNDEX(post_name) = SOUNDEX(%s)
@@ -185,7 +185,17 @@ class Flacso_Custom_404 {
 												</span>
 												<span class="flacso-404-suggestion-meta">
 													/<?php echo esc_html( $post->post_name ); ?>
-													<?php echo ( 'page' === $post->post_type ) ? ' · ' . esc_html__( 'Página', 'flacso-uruguay' ) : ' · ' . esc_html__( 'Entrada', 'flacso-uruguay' ); ?>
+													<?php 
+													if ( 'page' === $post->post_type ) {
+														echo ' · ' . esc_html__( 'Página', 'flacso-uruguay' );
+													} elseif ( 'oferta-academica' === $post->post_type ) {
+														echo ' · ' . esc_html__( 'Oferta Académica', 'flacso-uruguay' );
+													} elseif ( 'seminario' === $post->post_type ) {
+														echo ' · ' . esc_html__( 'Seminario', 'flacso-uruguay' );
+													} else {
+														echo ' · ' . esc_html__( 'Entrada', 'flacso-uruguay' );
+													}
+													?>
 												</span>
 											</span>
 										</a>
