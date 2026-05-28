@@ -234,7 +234,11 @@ class Oferta_Blocks {
             $formatted = __('A definir', 'flacso-oferta-academica');
         }
 
+        $cohorte = trim((string) get_post_meta($oferta_id, 'cohorte', true));
         $label = esc_html__('Próximo inicio', 'flacso-oferta-academica');
+        if ($cohorte !== '') {
+            $label .= ' (' . esc_html($cohorte) . ')';
+        }
 
         return '<div class="flacso-oferta-proximo-inicio" role="status" aria-live="polite">' .
             '<p class="flacso-oferta-proximo-inicio__pill">' .
