@@ -89,111 +89,98 @@ $render_docente_item = static function ($docente_id, $rol = '', $nivel = '3') {
         return;
     }
 
+    $nivel = in_array((string) $nivel, ['1', '2', '3'], true) ? (string) $nivel : '3';
+
     $titulo = function_exists('dp_nombre_completo') ? dp_nombre_completo($docente_id) : get_the_title($docente_id);
     $pref_abrev = trim((string) get_post_meta($docente_id, 'prefijo_abrev', true));
     $tit_acad   = trim((string) get_post_meta($docente_id, 'titulo_academico', true));
-    
+
     $academic_label = $tit_acad ? $tit_acad : $pref_abrev;
-    if ($academic_label !== '' && strpos($titulo, $academic_label) !== false) {
+    if ($academic_label !== '' && stripos($titulo, $academic_label) !== false) {
         $academic_label = '';
     }
 
     $cv_raw = (string) get_post_meta($docente_id, 'cv', true);
+    $has_cv = trim(wp_strip_all_tags($cv_raw)) !== '';
+
+    $avatar_size = [
+        '1' => 260,
+        '2' => 120,
+        '3' => 88,
+    ][$nivel];
+
+    $avatar_class = $nivel === '1'
+        ? 'flacso-oa-person-card__avatar'
+        : 'flacso-oa-person-card__avatar-round';
+
+    $card_classes = sprintf(
+        'flacso-oa-person-card flacso-oa-person-card--nivel-%s%s',
+        esc_attr($nivel),
+        $has_cv ? ' flacso-oa-person-card--has-cv' : ' flacso-oa-person-card--no-cv'
+    );
+
+    echo '<div class="flacso-oa-docente-item flacso-oa-docente-item--nivel-' . esc_attr($nivel) . '">';
+    echo '<article class="' . esc_attr($card_classes) . '" aria-label="' . esc_attr(sprintf(__('Docente: %s', 'flacso-uruguay'), $titulo)) . '">';
 
     if ($nivel === '1') {
-        // Nivel 1: Tarjeta vertical grande con banner de rol (Estilo original)
-        echo '<div class="flacso-oa-docente-item">';
-        echo '<article class="flacso-oa-person-card">';
-        
-        if ($rol) {
-            echo '<div class="flacso-oa-person-card__role-header"><span class="flacso-oa-person-card__role">' . esc_html($rol) . '</span></div>';
-        }
-        
+        echo '<div class="flacso-oa-person-card__media">';
         echo '<div class="flacso-oa-person-card__avatar-wrap">';
         if (function_exists('dp_avatar_markup')) {
-            echo dp_avatar_markup($docente_id, $titulo, 320, 'flacso-oa-person-card__avatar');
+            echo dp_avatar_markup($docente_id, $titulo, $avatar_size, $avatar_class);
         } else {
-            echo get_the_post_thumbnail($docente_id, 'medium', ['class' => 'flacso-oa-person-card__avatar']);
+            echo get_the_post_thumbnail($docente_id, 'medium_large', ['class' => $avatar_class]);
         }
+        echo '</div>';
         echo '</div>';
 
         echo '<div class="flacso-oa-person-card__content">';
+        if ($rol) {
+            echo '<div class="flacso-oa-person-card__meta-row">';
+            echo '<span class="flacso-oa-person-card__role-pill">' . esc_html($rol) . '</span>';
+            echo '</div>';
+        }
+
         echo '<h4 class="flacso-oa-person-card__name">' . esc_html($titulo) . '</h4>';
-        
+
         if ($academic_label) {
             echo '<p class="flacso-oa-person-card__academic">' . esc_html($academic_label) . '</p>';
         }
-        
-        if ($cv_raw) {
+
+        if ($has_cv) {
             echo '<div class="flacso-oa-person-card__cv">' . wp_kses_post($cv_raw) . '</div>';
         }
-        
-        echo '</div>';
-        echo '</article>';
-        echo '</div>';
 
-    } elseif ($nivel === '2') {
-        // Nivel 2: Tarjeta horizontal compacta (Grid) CON CV
-        echo '<div class="flacso-oa-docente-item">';
-        echo '<article class="flacso-oa-person-card flacso-oa-person-card--horizontal">';
-        
+        echo '</div>';
+    } else {
         echo '<div class="flacso-oa-person-card__header">';
         echo '<div class="flacso-oa-person-card__avatar-circle">';
         if (function_exists('dp_avatar_markup')) {
-            echo dp_avatar_markup($docente_id, $titulo, 90, 'flacso-oa-person-card__avatar-round');
+            echo dp_avatar_markup($docente_id, $titulo, $avatar_size, $avatar_class);
         } else {
-            echo get_the_post_thumbnail($docente_id, 'thumbnail', ['class' => 'flacso-oa-person-card__avatar-round']);
+            echo get_the_post_thumbnail($docente_id, 'thumbnail', ['class' => $avatar_class]);
         }
         echo '</div>';
-        
+
         echo '<div class="flacso-oa-person-card__header-info">';
+        if ($rol) {
+            echo '<span class="flacso-oa-person-card__role-pill">' . esc_html($rol) . '</span>';
+        }
         echo '<h4 class="flacso-oa-person-card__name">' . esc_html($titulo) . '</h4>';
         if ($academic_label) {
             echo '<p class="flacso-oa-person-card__academic">' . esc_html($academic_label) . '</p>';
         }
-        if ($rol) {
-            echo '<span style="display: inline-block; margin-top: 4px; color: var(--flacso-blue-dark); font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">' . esc_html($rol) . '</span>';
-        }
         echo '</div>';
-        echo '</div>'; // .flacso-oa-person-card__header
+        echo '</div>';
 
-        if ($cv_raw) {
+        if ($nivel === '2' && $has_cv) {
             echo '<div class="flacso-oa-person-card__content">';
             echo '<div class="flacso-oa-person-card__cv">' . wp_kses_post($cv_raw) . '</div>';
             echo '</div>';
         }
-        
-        echo '</article>';
-        echo '</div>';
-
-    } else {
-        // Nivel 3: Tarjeta horizontal más compacta (Grid) SIN CV
-        echo '<div class="flacso-oa-docente-item">';
-        echo '<article class="flacso-oa-person-card flacso-oa-person-card--horizontal" style="padding-bottom: 1.5rem; justify-content: center;">';
-        
-        echo '<div class="flacso-oa-person-card__header" style="margin-bottom: 0;">';
-        echo '<div class="flacso-oa-person-card__avatar-circle">';
-        if (function_exists('dp_avatar_markup')) {
-            echo dp_avatar_markup($docente_id, $titulo, 75, 'flacso-oa-person-card__avatar-round');
-        } else {
-            echo get_the_post_thumbnail($docente_id, 'thumbnail', ['class' => 'flacso-oa-person-card__avatar-round']);
-        }
-        echo '</div>';
-        
-        echo '<div class="flacso-oa-person-card__header-info">';
-        echo '<h4 class="flacso-oa-person-card__name" style="font-size: 1.05rem;">' . esc_html($titulo) . '</h4>';
-        if ($academic_label) {
-            echo '<p class="flacso-oa-person-card__academic">' . esc_html($academic_label) . '</p>';
-        }
-        if ($rol) {
-            echo '<span style="display: inline-block; margin-top: 4px; color: var(--flacso-blue-dark); font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">' . esc_html($rol) . '</span>';
-        }
-        echo '</div>';
-        echo '</div>'; // .flacso-oa-person-card__header
-        
-        echo '</article>';
-        echo '</div>';
     }
+
+    echo '</article>';
+    echo '</div>';
 };
 
 if (class_exists('Oferta_Renderer')) {
@@ -476,15 +463,19 @@ get_header();
 
                                 <div class="flacso-oa-team-subgroups">
                                     <?php foreach ($merged_equipos as $grupo) : ?>
-                                        <?php $nivel = $grupo['importancia'] ?? '3'; ?>
-                                        <div class="flacso-oa-team-subgroup" style="margin-bottom: 3rem;">
+                                        <?php
+                                        $nivel = in_array((string) ($grupo['importancia'] ?? '3'), ['1', '2', '3'], true)
+                                            ? (string) ($grupo['importancia'] ?? '3')
+                                            : '3';
+                                        ?>
+                                        <div class="flacso-oa-team-subgroup flacso-oa-team-subgroup--nivel-<?php echo esc_attr($nivel); ?>">
                                             <?php if (!empty($grupo['nombre'])) : ?>
-                                                <h4 class="flacso-oa-team-subgroup__title" style="margin-bottom: 1.5rem;">
+                                                <h4 class="flacso-oa-team-subgroup__title">
                                                     <?php echo esc_html($grupo['nombre']); ?>
                                                 </h4>
                                             <?php endif; ?>
 
-                                            <div class="flacso-oa-docentes-grid">
+                                            <div class="flacso-oa-docentes-grid flacso-oa-docentes-grid--nivel-<?php echo esc_attr($nivel); ?>">
                                                 <?php foreach ($grupo['docentes'] as $docente_item) : ?>
                                                     <?php
                                                     $docente_id = is_array($docente_item) ? ($docente_item['id'] ?? 0) : $docente_item;
@@ -1195,12 +1186,16 @@ get_header();
 }
 
 .flacso-oa-team-section {
+    position: relative;
     padding: clamp(54px, 7vw, 96px) 0;
-    background: var(--flacso-bg);
+    background:
+        radial-gradient(circle at 8% 0%, rgba(252, 209, 22, 0.16), transparent 30%),
+        linear-gradient(180deg, #f8fafc 0%, #eef3f8 100%);
 }
 
 .flacso-oa-section-header {
-    margin-bottom: clamp(28px, 5vw, 54px);
+    width: min(100%, 760px);
+    margin: 0 auto clamp(30px, 5vw, 58px);
     text-align: center;
 }
 
@@ -1208,16 +1203,17 @@ get_header();
     margin: 0;
     color: var(--flacso-blue);
     font-size: clamp(1.75rem, 4vw, 3rem);
-    font-weight: 900;
-    letter-spacing: -0.035em;
+    font-weight: 920;
+    letter-spacing: -0.04em;
     line-height: 1.05;
     text-transform: uppercase;
 }
 
-.flacso-oa-team-grid {
+.flacso-oa-team-grid,
+.flacso-oa-team-subgroups {
     display: flex;
     flex-direction: column;
-    gap: clamp(40px, 5vw, 56px);
+    gap: clamp(38px, 5vw, 58px);
 }
 
 .flacso-oa-team-group-card {
@@ -1235,26 +1231,48 @@ get_header();
 }
 
 .flacso-oa-team-subgroup {
-    margin-bottom: 32px;
-}
-
-.flacso-oa-team-subgroup:last-child {
-    margin-bottom: 0;
+    min-width: 0;
 }
 
 .flacso-oa-team-subgroup__title {
-    margin: 0 0 20px;
-    font-size: 1.15rem;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 0 0 clamp(18px, 2.6vw, 28px);
     color: var(--flacso-blue-dark);
-    font-weight: 750;
-    line-height: 1.3;
+    font-size: clamp(1.05rem, 1.8vw, 1.34rem);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1.18;
+}
+
+.flacso-oa-team-subgroup__title::before {
+    content: "";
+    width: 42px;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--flacso-yellow);
+    flex: 0 0 auto;
 }
 
 .flacso-oa-docentes-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
-    gap: clamp(24px, 3vw, 32px);
+    gap: clamp(18px, 2.4vw, 30px);
     align-items: stretch;
+}
+
+.flacso-oa-docentes-grid--nivel-1 {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr));
+}
+
+.flacso-oa-docentes-grid--nivel-2 {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+}
+
+.flacso-oa-docentes-grid--nivel-3 {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    gap: clamp(14px, 2vw, 22px);
 }
 
 .flacso-oa-docente-item {
@@ -1271,202 +1289,334 @@ get_header();
 .flacso-oa-docente-item .card {
     height: 100%;
     max-width: 100%;
+    min-width: 0;
     word-break: normal !important;
     overflow-wrap: break-word !important;
-    min-width: 0;
-}
-
-/* Estilos Premium para Docentes sin Rol (Horizontal) */
-.flacso-oa-person-card--horizontal {
-    display: flex;
-    flex-direction: column;
-    padding: 1.5rem;
-    background: #ffffff;
-    border-radius: 16px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-    height: 100%;
-    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-}
-
-.flacso-oa-person-card--horizontal:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.1);
-    border-color: #cbd5e1;
-}
-
-.flacso-oa-person-card--horizontal .flacso-oa-person-card__header {
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-    margin-bottom: 1.25rem;
-}
-
-.flacso-oa-person-card--horizontal .flacso-oa-person-card__avatar-circle {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    overflow: hidden;
-    flex-shrink: 0;
-    border: 3px solid #ffffff;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    position: relative;
-    background: #f1f5f9;
-}
-
-.flacso-oa-person-card--horizontal .flacso-oa-person-card__avatar-circle > div,
-.flacso-oa-person-card--horizontal .flacso-oa-person-card__avatar-circle .dp-docente-avatar,
-.flacso-oa-person-card--horizontal .flacso-oa-person-card__avatar-circle img {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-    display: block;
-    margin: 0 !important;
-    border-radius: 50% !important;
-}
-
-.flacso-oa-person-card--horizontal .flacso-oa-person-card__avatar-circle .flacso-docente-card__initials {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: 1.5rem;
-    color: #ffffff;
-}
-
-.flacso-oa-person-card--horizontal .flacso-oa-person-card__header-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.flacso-oa-person-card--horizontal .flacso-oa-person-card__name {
-    font-size: 1.15rem;
-    font-weight: 800;
-    color: var(--flacso-blue-dark);
-    margin: 0 0 0.2rem;
-    line-height: 1.2;
-}
-
-.flacso-oa-person-card--horizontal .flacso-oa-person-card__academic {
-    font-size: 0.85rem;
-    color: #64748b;
-    margin: 0;
-    font-weight: 500;
-}
-
-.flacso-oa-person-card--horizontal .flacso-oa-person-card__content {
-    padding: 0;
-    margin-top: 0.5rem;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.flacso-oa-person-card--horizontal .flacso-oa-person-card__cv {
-    font-size: 0.90rem;
-    color: #475569;
-    line-height: 1.5;
-    margin: 0;
-    max-height: 180px;
-    overflow-y: auto;
-    padding-right: 8px;
-}
-
-.flacso-oa-person-card--horizontal .flacso-oa-person-card__cv::-webkit-scrollbar {
-    width: 4px;
-}
-
-.flacso-oa-person-card--horizontal .flacso-oa-person-card__cv::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 4px;
-}
-
-.flacso-oa-person-card--horizontal .flacso-oa-person-card__cv::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 4px;
 }
 
 .flacso-oa-person-card {
+    position: relative;
     display: flex;
     flex-direction: column;
-    background: #ffffff;
-    border-radius: 16px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    min-width: 0;
     height: 100%;
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    border-radius: 24px;
+    background: #ffffff;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
     overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    isolation: isolate;
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.flacso-oa-person-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 100% 0%, rgba(252, 209, 22, 0.16), transparent 34%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96));
 }
 
 .flacso-oa-person-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.1);
-    border-color: #cbd5e1;
+    transform: translateY(-3px);
+    border-color: rgba(22, 57, 112, 0.22);
+    box-shadow: 0 22px 48px rgba(15, 23, 42, 0.13);
 }
 
-.flacso-oa-person-card__avatar-wrap {
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    background: #f1f5f9;
+.flacso-oa-person-card__media,
+.flacso-oa-person-card__header,
+.flacso-oa-person-card__content,
+.flacso-oa-person-card__header-info {
+    min-width: 0;
+}
+
+.flacso-oa-person-card__header {
+    display: flex;
+    align-items: center;
+    gap: clamp(14px, 2vw, 20px);
+}
+
+.flacso-oa-person-card__avatar-wrap,
+.flacso-oa-person-card__avatar-circle {
     position: relative;
+    flex: 0 0 auto;
     overflow: hidden;
+    background:
+        radial-gradient(circle at 30% 25%, rgba(252, 209, 22, 0.22), transparent 38%),
+        #e8eef7;
 }
 
 .flacso-oa-person-card__avatar-wrap > div,
 .flacso-oa-person-card__avatar-wrap .dp-docente-avatar,
-.flacso-oa-person-card__avatar-wrap img {
+.flacso-oa-person-card__avatar-wrap img,
+.flacso-oa-person-card__avatar-circle > div,
+.flacso-oa-person-card__avatar-circle .dp-docente-avatar,
+.flacso-oa-person-card__avatar-circle img {
     width: 100% !important;
     height: 100% !important;
-    object-fit: cover !important;
     display: block;
     margin: 0 !important;
-    border-radius: 0 !important;
+    object-fit: cover !important;
 }
 
-.flacso-oa-person-card__content {
-    padding: 1.5rem;
+.flacso-oa-person-card__avatar-wrap .flacso-docente-card__initials,
+.flacso-oa-person-card__avatar-circle .flacso-docente-card__initials {
     display: flex;
-    flex-direction: column;
-    flex: 1;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    background: var(--flacso-blue);
+    font-weight: 900;
+    letter-spacing: -0.04em;
 }
 
-.flacso-oa-person-card__role-header {
-    background: var(--flacso-blue-dark);
-    padding: 0.8rem 1.5rem;
-    border-bottom: 1px solid var(--flacso-blue-dark);
-}
-
-.flacso-oa-person-card__role {
-    font-size: 0.75rem;
+.flacso-oa-person-card__role-pill {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    max-width: 100%;
+    min-height: 24px;
+    margin: 0 0 8px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: rgba(252, 209, 22, 0.26);
+    color: var(--flacso-blue-dark);
+    font-size: 0.72rem;
+    font-weight: 900;
+    line-height: 1.15;
+    letter-spacing: 0.055em;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-weight: 800;
-    color: var(--flacso-yellow);
-    display: block;
 }
 
 .flacso-oa-person-card__name {
-    font-size: 1.2rem;
-    font-weight: 800;
+    margin: 0;
     color: var(--flacso-blue-dark);
-    margin: 0 0 0.25rem;
-    line-height: 1.2;
+    font-weight: 900;
+    line-height: 1.13;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
 }
 
 .flacso-oa-person-card__academic {
-    font-size: 0.85rem;
+    margin: 8px 0 0;
     color: #64748b;
-    margin: 0 0 1rem;
-    font-weight: 500;
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.35;
 }
 
 .flacso-oa-person-card__cv {
-    font-size: 0.9rem;
     color: #475569;
-    line-height: 1.5;
-    margin: 0 0 1.25rem;
+    font-size: 0.94rem;
+    line-height: 1.62;
+}
+
+.flacso-oa-person-card__cv > *:first-child {
+    margin-top: 0;
+}
+
+.flacso-oa-person-card__cv > *:last-child {
+    margin-bottom: 0;
+}
+
+.flacso-oa-person-card__cv a {
+    color: var(--flacso-blue);
+    font-weight: 800;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+}
+
+.flacso-oa-person-card--nivel-1 {
+    display: grid;
+    grid-template-columns: minmax(180px, 230px) minmax(0, 1fr);
+    min-height: 310px;
+    border-radius: 28px;
+    border-left: 7px solid var(--flacso-yellow);
+}
+
+.flacso-oa-person-card--nivel-1 .flacso-oa-person-card__media {
+    padding: 20px 0 20px 20px;
+}
+
+.flacso-oa-person-card--nivel-1 .flacso-oa-person-card__avatar-wrap {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 22px;
+    box-shadow: 0 14px 30px rgba(5, 25, 56, 0.15);
+}
+
+.flacso-oa-person-card--nivel-1 .flacso-oa-person-card__avatar-wrap > div,
+.flacso-oa-person-card--nivel-1 .flacso-oa-person-card__avatar-wrap .dp-docente-avatar,
+.flacso-oa-person-card--nivel-1 .flacso-oa-person-card__avatar-wrap img {
+    border-radius: 22px !important;
+}
+
+.flacso-oa-person-card--nivel-1 .flacso-oa-person-card__content {
+    display: flex;
+    flex-direction: column;
+    padding: clamp(22px, 3vw, 34px);
+}
+
+.flacso-oa-person-card--nivel-1 .flacso-oa-person-card__name {
+    font-size: clamp(1.32rem, 2vw, 1.75rem);
+}
+
+.flacso-oa-person-card--nivel-1 .flacso-oa-person-card__cv {
+    margin-top: 18px;
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.flacso-oa-person-card--nivel-2 {
+    padding: clamp(20px, 2.4vw, 26px);
+}
+
+.flacso-oa-person-card--nivel-2 .flacso-oa-person-card__header {
+    align-items: flex-start;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.flacso-oa-person-card--nivel-2 .flacso-oa-person-card__avatar-circle {
+    width: 86px;
+    height: 86px;
+    border: 4px solid #ffffff;
+    border-radius: 22px;
+    box-shadow: 0 10px 24px rgba(5, 25, 56, 0.12);
+}
+
+.flacso-oa-person-card--nivel-2 .flacso-oa-person-card__avatar-circle > div,
+.flacso-oa-person-card--nivel-2 .flacso-oa-person-card__avatar-circle .dp-docente-avatar,
+.flacso-oa-person-card--nivel-2 .flacso-oa-person-card__avatar-circle img {
+    border-radius: 18px !important;
+}
+
+.flacso-oa-person-card--nivel-2 .flacso-oa-person-card__name {
+    font-size: clamp(1.08rem, 1.35vw, 1.24rem);
+}
+
+.flacso-oa-person-card--nivel-2 .flacso-oa-person-card__content {
+    margin-top: 16px;
     flex: 1;
 }
+
+.flacso-oa-person-card--nivel-2 .flacso-oa-person-card__cv {
+    max-height: 165px;
+    overflow-y: auto;
+    padding-right: 8px;
+    font-size: 0.91rem;
+}
+
+.flacso-oa-person-card--nivel-3 {
+    justify-content: center;
+    padding: clamp(16px, 2vw, 20px);
+    border-radius: 20px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.065);
+}
+
+.flacso-oa-person-card--nivel-3::before {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(22, 57, 112, 0.07), transparent 34%),
+        #ffffff;
+}
+
+.flacso-oa-person-card--nivel-3 .flacso-oa-person-card__header {
+    gap: 14px;
+}
+
+.flacso-oa-person-card--nivel-3 .flacso-oa-person-card__avatar-circle {
+    width: 62px;
+    height: 62px;
+    border: 3px solid #ffffff;
+    border-radius: 18px;
+    box-shadow: 0 8px 18px rgba(5, 25, 56, 0.10);
+}
+
+.flacso-oa-person-card--nivel-3 .flacso-oa-person-card__avatar-circle > div,
+.flacso-oa-person-card--nivel-3 .flacso-oa-person-card__avatar-circle .dp-docente-avatar,
+.flacso-oa-person-card--nivel-3 .flacso-oa-person-card__avatar-circle img {
+    border-radius: 15px !important;
+}
+
+.flacso-oa-person-card--nivel-3 .flacso-oa-person-card__name {
+    font-size: clamp(1rem, 1.2vw, 1.12rem);
+}
+
+.flacso-oa-person-card--nivel-3 .flacso-oa-person-card__academic {
+    font-size: 0.82rem;
+}
+
+.flacso-oa-person-card--nivel-3 .flacso-oa-person-card__role-pill {
+    margin-bottom: 6px;
+    padding: 4px 8px;
+    font-size: 0.66rem;
+}
+
+.flacso-oa-person-card__cv::-webkit-scrollbar {
+    width: 6px;
+}
+
+.flacso-oa-person-card__cv::-webkit-scrollbar-track {
+    background: rgba(226, 232, 240, 0.78);
+    border-radius: 999px;
+}
+
+.flacso-oa-person-card__cv::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.48);
+    border-radius: 999px;
+}
+
+@media (max-width: 991.98px) {
+    .flacso-oa-docentes-grid--nivel-1,
+    .flacso-oa-docentes-grid--nivel-2 {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .flacso-oa-docentes-grid--nivel-3 {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+    }
+}
+
+@media (max-width: 675.98px) {
+    .flacso-oa-docentes-grid,
+    .flacso-oa-docentes-grid--nivel-1,
+    .flacso-oa-docentes-grid--nivel-2,
+    .flacso-oa-docentes-grid--nivel-3 {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .flacso-oa-team-subgroup__title {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .flacso-oa-person-card--nivel-1 {
+        display: flex;
+        min-height: 0;
+    }
+
+    .flacso-oa-person-card--nivel-1 .flacso-oa-person-card__media {
+        padding: 18px 18px 0;
+    }
+
+    .flacso-oa-person-card--nivel-1 .flacso-oa-person-card__avatar-wrap {
+        aspect-ratio: 1 / 1;
+        min-height: 0;
+    }
+
+    .flacso-oa-person-card--nivel-1 .flacso-oa-person-card__cv,
+    .flacso-oa-person-card--nivel-2 .flacso-oa-person-card__cv {
+        max-height: none;
+        overflow: visible;
+        padding-right: 0;
+    }
+}
+
 
 .flacso-oa-seminarios-section {
     padding: clamp(52px, 7vw, 90px) 0;
