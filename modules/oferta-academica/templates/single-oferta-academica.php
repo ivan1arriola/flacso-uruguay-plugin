@@ -169,7 +169,7 @@ $render_docente_item = static function ($docente_id, $rol = '', $nivel = '3') {
     } else {
         // Nivel 3: Tarjeta horizontal más compacta (Grid) SIN CV
         echo '<div class="flacso-oa-docente-item">';
-        echo '<article class="flacso-oa-person-card flacso-oa-person-card--horizontal" style="padding-bottom: 1.5rem; display: flex; align-items: center;">';
+        echo '<article class="flacso-oa-person-card flacso-oa-person-card--horizontal" style="padding-bottom: 1.5rem; justify-content: center;">';
         
         echo '<div class="flacso-oa-person-card__header" style="margin-bottom: 0;">';
         echo '<div class="flacso-oa-person-card__avatar-circle">';
@@ -277,6 +277,12 @@ get_header();
 
                     <section id="flacso-oa-contenido" class="flacso-oa-main-section">
                         <div class="flacso-oa-container">
+                            <?php if (class_exists('Oferta_Blocks')) : ?>
+                                <section class="flacso-oa-next-start flacso-oa-next-start--fullwidth" style="margin-bottom: 3rem;">
+                                    <?php echo Oferta_Blocks::render_dato_proximo_inicio(['ofertaId' => $post_id]); ?>
+                                </section>
+                            <?php endif; ?>
+                            
                             <div class="flacso-oa-main-grid">
 
                                 <div class="flacso-oa-main-content">
@@ -292,12 +298,6 @@ get_header();
                                                 the_content(); 
                                                 ?>
                                             </div>
-                                        </section>
-                                    <?php endif; ?>
-
-                                    <?php if (class_exists('Oferta_Blocks')) : ?>
-                                        <section class="flacso-oa-next-start <?php echo !$has_main_content ? 'flacso-oa-next-start--first' : ''; ?>">
-                                            <?php echo Oferta_Blocks::render_dato_proximo_inicio(['ofertaId' => $post_id]); ?>
                                         </section>
                                     <?php endif; ?>
 

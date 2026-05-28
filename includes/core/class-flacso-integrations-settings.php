@@ -18,6 +18,7 @@ class FLACSO_Integrations_Settings {
     private const OPTION_TELEGRAM_CHAT_ID = 'fc_telegram_chat_id';
     private const OPTION_RECAPTCHA_SITE_KEY = 'fc_recaptcha_site_key';
     private const OPTION_RECAPTCHA_SECRET_KEY = 'fc_recaptcha_secret_key';
+    private const OPTION_EXTERNAL_EDITOR_URL = 'flacso_external_editor_url';
 
     public static function init(): void {
         if (!is_admin()) {
@@ -140,6 +141,16 @@ class FLACSO_Integrations_Settings {
                 'default' => '',
             ]
         );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_EXTERNAL_EDITOR_URL,
+            [
+                'type' => 'string',
+                'sanitize_callback' => 'esc_url_raw',
+                'default' => 'https://editor-flacso-uy.vercel.app',
+            ]
+        );
     }
 
     public static function sanitize_charlas_webhook_url($value): string {
@@ -229,6 +240,7 @@ class FLACSO_Integrations_Settings {
                         <?php self::render_charlas_card(); ?>
                         <?php self::render_oferta_flotante_card(); ?>
                         <?php self::render_preinscripciones_card(); ?>
+                        <?php self::render_external_editor_card(); ?>
                         <?php self::render_services_card(); ?>
                     </div>
 
@@ -964,6 +976,32 @@ class FLACSO_Integrations_Settings {
                     'url',
                     'https://script.google.com/macros/s/.../exec',
                     __('Se guarda sobre la misma opción usada por el panel de Preinscripciones.', 'flacso-uruguay')
+                );
+                ?>
+            </div>
+        </section>
+        <?php
+    }
+
+    private static function render_external_editor_card(): void {
+        ?>
+        <section class="flacso-integrations-card card-external-editor">
+            <div class="flacso-card-header">
+                <div class="flacso-card-icon-title">
+                    <span class="flacso-card-icon" style="background: #e0f2fe; color: #0ea5e9;">✏️</span>
+                    <h2><?php esc_html_e('Editor Externo (React)', 'flacso-uruguay'); ?></h2>
+                </div>
+                <p class="flacso-integrations-lead"><?php esc_html_e('Configura la URL base del editor externo (React/Next.js) que se utilizará para crear y editar páginas de Oferta Académica.', 'flacso-uruguay'); ?></p>
+            </div>
+
+            <div class="flacso-card-body">
+                <?php
+                self::render_input_field(
+                    self::OPTION_EXTERNAL_EDITOR_URL,
+                    __('URL Base del Editor', 'flacso-uruguay'),
+                    'url',
+                    'https://editor-flacso-uy.vercel.app',
+                    __('Las páginas reedirigirán a esta URL (ej: https://editor-flacso-uy.vercel.app/ofertas/ID).', 'flacso-uruguay')
                 );
                 ?>
             </div>
