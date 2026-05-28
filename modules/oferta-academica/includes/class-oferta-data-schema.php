@@ -196,6 +196,9 @@ class Oferta_Data_Schema {
                                 $label => [
                                     'type' => 'string',
                                 ],
+                                'importancia' => [
+                                    'type' => 'string',
+                                ],
                                 'docentes' => [
                                     'type' => 'array',
                                 ],
@@ -294,6 +297,7 @@ class Oferta_Data_Schema {
                 continue;
             }
             $label = isset($item[$name_key]) ? sanitize_text_field($item[$name_key]) : '';
+            $importancia = isset($item['importancia']) ? sanitize_text_field($item['importancia']) : '3';
             $docentes = [];
             if (isset($item['docentes']) && is_array($item['docentes'])) {
                 foreach ($item['docentes'] as $docente) {
@@ -312,7 +316,7 @@ class Oferta_Data_Schema {
                 }
             }
             // Remove array_unique since we may have arrays
-            $out[] = [$name_key => $label, 'docentes' => $docentes];
+            $out[] = [$name_key => $label, 'importancia' => $importancia, 'docentes' => $docentes];
         }
         return $out;
     }

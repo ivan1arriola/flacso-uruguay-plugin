@@ -133,42 +133,7 @@ $render_docente_item = static function ($docente_id, $rol = '', $nivel = '3') {
         echo '</div>';
 
     } elseif ($nivel === '2') {
-        // Nivel 2: Tarjeta horizontal apilada ocupando el 100% del ancho (Estilo Seminario)
-        // Se inyecta la etiqueta del rol debajo de la información académica
-        echo '<div class="flacso-oa-docente-item">';
-        echo '<article class="flacso-oa-person-card flacso-oa-person-card--horizontal">';
-        
-        echo '<div class="flacso-oa-person-card__header">';
-        echo '<div class="flacso-oa-person-card__avatar-circle" style="width: 100px; height: 100px;">';
-        if (function_exists('dp_avatar_markup')) {
-            echo dp_avatar_markup($docente_id, $titulo, 120, 'flacso-oa-person-card__avatar-round');
-        } else {
-            echo get_the_post_thumbnail($docente_id, 'thumbnail', ['class' => 'flacso-oa-person-card__avatar-round']);
-        }
-        echo '</div>';
-        
-        echo '<div class="flacso-oa-person-card__header-info">';
-        echo '<h3 class="flacso-oa-person-card__name" style="font-size: 1.3rem;">' . esc_html($titulo) . '</h3>';
-        if ($academic_label) {
-            echo '<p class="flacso-oa-person-card__academic">' . esc_html($academic_label) . '</p>';
-        }
-        if ($rol) {
-            echo '<span style="display: inline-block; margin-top: 6px; padding: 4px 10px; background: var(--flacso-blue-dark); color: var(--flacso-yellow); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; border-radius: 4px;">' . esc_html($rol) . '</span>';
-        }
-        echo '</div>';
-        echo '</div>'; // .flacso-oa-person-card__header
-
-        if ($cv_raw) {
-            echo '<div class="flacso-oa-person-card__content">';
-            echo '<div class="flacso-oa-person-card__cv" style="max-height: none;">' . wp_kses_post($cv_raw) . '</div>';
-            echo '</div>';
-        }
-        
-        echo '</article>';
-        echo '</div>';
-
-    } else {
-        // Nivel 3: Tarjeta horizontal más compacta (Grid)
+        // Nivel 2: Tarjeta horizontal compacta (Grid) CON CV
         echo '<div class="flacso-oa-docente-item">';
         echo '<article class="flacso-oa-person-card flacso-oa-person-card--horizontal">';
         
@@ -197,6 +162,34 @@ $render_docente_item = static function ($docente_id, $rol = '', $nivel = '3') {
             echo '<div class="flacso-oa-person-card__cv">' . wp_kses_post($cv_raw) . '</div>';
             echo '</div>';
         }
+        
+        echo '</article>';
+        echo '</div>';
+
+    } else {
+        // Nivel 3: Tarjeta horizontal más compacta (Grid) SIN CV
+        echo '<div class="flacso-oa-docente-item">';
+        echo '<article class="flacso-oa-person-card flacso-oa-person-card--horizontal" style="padding-bottom: 1.5rem; display: flex; align-items: center;">';
+        
+        echo '<div class="flacso-oa-person-card__header" style="margin-bottom: 0;">';
+        echo '<div class="flacso-oa-person-card__avatar-circle">';
+        if (function_exists('dp_avatar_markup')) {
+            echo dp_avatar_markup($docente_id, $titulo, 75, 'flacso-oa-person-card__avatar-round');
+        } else {
+            echo get_the_post_thumbnail($docente_id, 'thumbnail', ['class' => 'flacso-oa-person-card__avatar-round']);
+        }
+        echo '</div>';
+        
+        echo '<div class="flacso-oa-person-card__header-info">';
+        echo '<h4 class="flacso-oa-person-card__name" style="font-size: 1.05rem;">' . esc_html($titulo) . '</h4>';
+        if ($academic_label) {
+            echo '<p class="flacso-oa-person-card__academic">' . esc_html($academic_label) . '</p>';
+        }
+        if ($rol) {
+            echo '<span style="display: inline-block; margin-top: 4px; color: var(--flacso-blue-dark); font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">' . esc_html($rol) . '</span>';
+        }
+        echo '</div>';
+        echo '</div>'; // .flacso-oa-person-card__header
         
         echo '</article>';
         echo '</div>';
@@ -491,29 +484,15 @@ get_header();
                                                 </h4>
                                             <?php endif; ?>
 
-                                            <?php if ($nivel === '2') : ?>
-                                                <!-- Nivel 2: Stacked vertical list of horizontal cards (Seminario style) -->
-                                                <div class="flacso-oa-docentes-list" style="display: flex; flex-direction: column; gap: 1.5rem;">
-                                                    <?php foreach ($grupo['docentes'] as $docente_item) : ?>
-                                                        <?php
-                                                        $docente_id = is_array($docente_item) ? ($docente_item['id'] ?? 0) : $docente_item;
-                                                        $rol_especifico = is_array($docente_item) ? ($docente_item['rol'] ?? '') : '';
-                                                        $render_docente_item($docente_id, $rol_especifico, $nivel);
-                                                        ?>
-                                                    <?php endforeach; ?>
-                                                </div>
-                                            <?php else : ?>
-                                                <!-- Nivel 1 y 3: Grid normal -->
-                                                <div class="flacso-oa-docentes-grid">
-                                                    <?php foreach ($grupo['docentes'] as $docente_item) : ?>
-                                                        <?php
-                                                        $docente_id = is_array($docente_item) ? ($docente_item['id'] ?? 0) : $docente_item;
-                                                        $rol_especifico = is_array($docente_item) ? ($docente_item['rol'] ?? '') : '';
-                                                        $render_docente_item($docente_id, $rol_especifico, $nivel);
-                                                        ?>
-                                                    <?php endforeach; ?>
-                                                </div>
-                                            <?php endif; ?>
+                                            <div class="flacso-oa-docentes-grid">
+                                                <?php foreach ($grupo['docentes'] as $docente_item) : ?>
+                                                    <?php
+                                                    $docente_id = is_array($docente_item) ? ($docente_item['id'] ?? 0) : $docente_item;
+                                                    $rol_especifico = is_array($docente_item) ? ($docente_item['rol'] ?? '') : '';
+                                                    $render_docente_item($docente_id, $rol_especifico, $nivel);
+                                                    ?>
+                                                <?php endforeach; ?>
+                                            </div>
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
