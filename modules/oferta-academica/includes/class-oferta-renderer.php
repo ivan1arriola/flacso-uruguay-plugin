@@ -119,6 +119,12 @@ class Oferta_Renderer {
             $terms = [];
         }
 
+        $link_maestria = !is_wp_error(get_term_link('maestria', 'tipo-oferta-academica')) ? get_term_link('maestria', 'tipo-oferta-academica') : home_url('/formacion/maestrias/');
+        $link_especializacion = !is_wp_error(get_term_link('especializacion', 'tipo-oferta-academica')) ? get_term_link('especializacion', 'tipo-oferta-academica') : home_url('/formacion/especializaciones/');
+        $link_diplomado = !is_wp_error(get_term_link('diplomado', 'tipo-oferta-academica')) ? get_term_link('diplomado', 'tipo-oferta-academica') : home_url('/formacion/diplomados/');
+        $link_diploma = !is_wp_error(get_term_link('diploma', 'tipo-oferta-academica')) ? get_term_link('diploma', 'tipo-oferta-academica') : home_url('/formacion/diplomas/');
+        $link_seminarios = home_url('/seminarios/');
+
         ob_start();
         ?>
         <section class="flacso-oferta-hero flacso-oferta-hero--full" style="--flacso-oferta-hero-image: <?php echo $hero_image ? 'url(' . esc_url($hero_image) . ')' : 'none'; ?>;">
@@ -127,21 +133,21 @@ class Oferta_Renderer {
                     <h1 class="flacso-oferta-hero__title mb-3"><?php echo esc_html($hero_title); ?></h1>
                     <p class="flacso-oferta-hero__subtitle mb-4"><?php echo esc_html($hero_subtitle); ?></p>
                     <div class="flacso-oferta-hero__actions" role="navigation" aria-label="<?php esc_attr_e('Navegación de la oferta académica', 'flacso-oferta-academica'); ?>">
-                        <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url(home_url('/formacion/maestrias/')); ?>">
+                        <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url($link_maestria); ?>">
                             <?php esc_html_e('Maestría', 'flacso-oferta-academica'); ?>
                         </a>
-                        <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url(home_url('/formacion/especializaciones/')); ?>">
+                        <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url($link_especializacion); ?>">
                             <?php esc_html_e('Especialización', 'flacso-oferta-academica'); ?>
                         </a>
-                        <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url(home_url('/formacion/diplomados/')); ?>">
+                        <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url($link_diplomado); ?>">
                             <?php esc_html_e('Diplomado', 'flacso-oferta-academica'); ?>
                         </a>
-                        <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url(home_url('/formacion/diplomas/')); ?>">
+                        <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url($link_diploma); ?>">
                             <?php esc_html_e('Diploma', 'flacso-oferta-academica'); ?>
                         </a>
-                        <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url(home_url('/formacion/seminarios/')); ?>">
+                        <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url($link_seminarios); ?>">
                             <?php esc_html_e('Seminarios', 'flacso-oferta-academica'); ?>
-                        </a>
+                        </a>       </a>
                         <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--convenios" href="https://flacso.edu.uy/convenios/">
                             <?php esc_html_e('Convenios', 'flacso-oferta-academica'); ?>
                         </a>
@@ -215,7 +221,7 @@ class Oferta_Renderer {
                     </div>
                     <?php echo self::render_seminarios_bootstrap(); ?>
                     <div class="flacso-oferta-section__actions">
-                        <a class="flacso-oferta-section__btn flacso-oferta-section__btn--primary" href="https://flacso.edu.uy/formacion/seminarios/">
+                        <a class="flacso-oferta-section__btn flacso-oferta-section__btn--primary" href="<?php echo esc_url(home_url('/seminarios/')); ?>">
                             <?php esc_html_e('Ver todos los seminarios abiertos', 'flacso-oferta-academica'); ?>
                         </a>
                         <a class="flacso-oferta-section__btn flacso-oferta-section__btn--outline" href="https://flacso.edu.uy/preguntas-frecuentes/">

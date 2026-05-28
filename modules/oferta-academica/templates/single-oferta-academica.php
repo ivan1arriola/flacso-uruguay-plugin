@@ -182,7 +182,7 @@ get_header();
                                     <img
                                         src="<?php echo esc_url($logo_url); ?>"
                                         alt="FLACSO Uruguay"
-                                        class="flacso-inscripciones-banner__logo" style="flex-shrink: 0; max-width: 150px; height: auto;">
+                                        class="flacso-inscripciones-banner__logo" style="flex-shrink: 0; max-width: 250px; height: auto;">
                                 </div>
 
                                 <div class="flacso-inscripciones-banner__middle" style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; max-width: 1100px; margin: clamp(1.5rem, 3vw, 3rem) 0;">
@@ -236,105 +236,6 @@ get_header();
                                         </section>
                                     <?php endif; ?>
 
-                                    <div class="flacso-oa-info-grid">
-                                        <?php
-                                        $modalidad_html = !empty($data['modalidad_html'])
-                                            ? $data['modalidad_html']
-                                            : '<p>' . esc_html__('Virtual.', 'flacso-uruguay') . '</p>';
-
-                                        $render_info_card(
-                                            __('Modalidad', 'flacso-uruguay'),
-                                            $modalidad_html
-                                        );
-
-                                        if (!empty($data['objetivos_html'])) {
-                                            $render_info_card(
-                                                __('Objetivos', 'flacso-uruguay'),
-                                                $data['objetivos_html']
-                                            );
-                                        }
-
-                                        $malla_html = !empty($data['malla_curricular_html'])
-                                            ? (string) $data['malla_curricular_html']
-                                            : '';
-
-                                        $malla_pdf_url = !empty($data['malla_curricular'])
-                                            ? (string) $data['malla_curricular']
-                                            : '';
-
-                                        if ($malla_pdf_url && $malla_html) {
-                                            $malla_html = preg_replace('/<p>(<strong[^>]*>)?\s*<a[^>]+>Malla curricular<\/a>\s*(<\/strong>)?<\/p>/i', '', $malla_html);
-                                            $malla_html = preg_replace('/<a[^>]+>Malla curricular<\/a>/i', '', $malla_html);
-                                            $malla_html = trim($malla_html);
-                                        }
-
-                                        ob_start();
-
-                                        if ($malla_html) {
-                                            echo wp_kses_post($malla_html);
-                                        }
-
-                                        if (class_exists('Oferta_Blocks') && $malla_pdf_url) {
-                                            echo Oferta_Blocks::render_dato_malla_curricular(['ofertaId' => $post_id]);
-                                        }
-
-                                        $malla_body = ob_get_clean();
-
-                                        $render_info_card(
-                                            __('Malla curricular', 'flacso-uruguay'),
-                                            $malla_body,
-                                            'flacso-oa-info-card--wide'
-                                        );
-
-                                        $calendario_html = !empty($data['calendario_html'])
-                                            ? (string) $data['calendario_html']
-                                            : '';
-
-                                        $calendario_pdf_url = !empty($data['calendario'])
-                                            ? (string) $data['calendario']
-                                            : '';
-
-                                        if ($calendario_pdf_url && $calendario_html) {
-                                            $calendario_html = preg_replace('/<p>(<strong[^>]*>)?\s*<a[^>]+>(Calendario|Cronograma)<\/a>\s*(<\/strong>)?<\/p>/i', '', $calendario_html);
-                                            $calendario_html = preg_replace('/<a[^>]+>(Calendario|Cronograma)<\/a>/i', '', $calendario_html);
-                                            $calendario_html = trim($calendario_html);
-                                        }
-
-                                        ob_start();
-
-                                        if ($calendario_html) {
-                                            echo wp_kses_post($calendario_html);
-                                        }
-
-                                        if (class_exists('Oferta_Blocks') && $calendario_pdf_url) {
-                                            echo Oferta_Blocks::render_dato_calendario(['ofertaId' => $post_id]);
-                                        }
-
-                                        $calendario_body = ob_get_clean();
-
-                                        $render_info_card(
-                                            __('Calendario', 'flacso-uruguay'),
-                                            $calendario_body,
-                                            'flacso-oa-info-card--wide'
-                                        );
-
-                                        $financiacion_html = !empty($data['financiacion_html'])
-                                            ? (string) $data['financiacion_html']
-                                            : '';
-
-                                        if ($financiacion_html === '') {
-                                            $financiacion_html  = '<p>' . esc_html__('FLACSO ofrece financiación flexible, el monto de las cuotas puede variar dependiendo de las promociones que haya aprovechado, o el plan de pagos que se coordine con la Institución. Todos los posgrados pueden abonarse en cuotas, siguiendo un plan mensual de pagos que acompañan la cursada. No obstante, es posible extender los planes de pago en forma flexible, con valores de cuota a su alcance.', 'flacso-uruguay') . '</p>';
-                                            $financiacion_html .= '<p>' . esc_html__('Quienes cursen desde fuera de Uruguay pueden pagar de forma segura a través de la plataforma de pago de la institución, mientras las personas que cursan en el país, disponen de otras vías para pagar.', 'flacso-uruguay') . '</p>';
-                                            $financiacion_html .= '<p>' . esc_html__('Las becas para cursar en FLACSO Uruguay están sujetas a convenios inter institucionales y son limitadas por cohorte. Para obtener más información sobre las posibles becas disponibles puede comunicarse con la asistente académica.', 'flacso-uruguay') . '</p>';
-                                        }
-
-                                        $render_info_card(
-                                            __('Financiación y becas', 'flacso-uruguay'),
-                                            $financiacion_html,
-                                            'flacso-oa-info-card--wide'
-                                        );
-                                        ?>
-                                    </div>
                                 </div>
 
                                 <aside id="flacso-oa-consulta" class="flacso-oa-aside" aria-label="<?php esc_attr_e('Formulario de consulta', 'flacso-uruguay'); ?>">
@@ -358,6 +259,106 @@ get_header();
                                     </div>
                                 </aside>
 
+                            </div>
+
+                            <div class="flacso-oa-info-grid" style="margin-top: 3rem;">
+                                <?php
+                                $modalidad_html = !empty($data['modalidad_html'])
+                                    ? $data['modalidad_html']
+                                    : '<p>' . esc_html__('Virtual.', 'flacso-uruguay') . '</p>';
+
+                                $render_info_card(
+                                    __('Modalidad', 'flacso-uruguay'),
+                                    $modalidad_html
+                                );
+
+                                if (!empty($data['objetivos_html'])) {
+                                    $render_info_card(
+                                        __('Objetivos', 'flacso-uruguay'),
+                                        $data['objetivos_html']
+                                    );
+                                }
+
+                                $malla_html = !empty($data['malla_curricular_html'])
+                                    ? (string) $data['malla_curricular_html']
+                                    : '';
+
+                                $malla_pdf_url = !empty($data['malla_curricular'])
+                                    ? (string) $data['malla_curricular']
+                                    : '';
+
+                                if ($malla_pdf_url && $malla_html) {
+                                    $malla_html = preg_replace('/<p>(<strong[^>]*>)?\s*<a[^>]+>Malla curricular<\/a>\s*(<\/strong>)?<\/p>/i', '', $malla_html);
+                                    $malla_html = preg_replace('/<a[^>]+>Malla curricular<\/a>/i', '', $malla_html);
+                                    $malla_html = trim($malla_html);
+                                }
+
+                                ob_start();
+
+                                if ($malla_html) {
+                                    echo wp_kses_post($malla_html);
+                                }
+
+                                if (class_exists('Oferta_Blocks') && $malla_pdf_url) {
+                                    echo Oferta_Blocks::render_dato_malla_curricular(['ofertaId' => $post_id]);
+                                }
+
+                                $malla_body = ob_get_clean();
+
+                                $render_info_card(
+                                    __('Malla curricular', 'flacso-uruguay'),
+                                    $malla_body,
+                                    'flacso-oa-info-card--wide'
+                                );
+
+                                $calendario_html = !empty($data['calendario_html'])
+                                    ? (string) $data['calendario_html']
+                                    : '';
+
+                                $calendario_pdf_url = !empty($data['calendario'])
+                                    ? (string) $data['calendario']
+                                    : '';
+
+                                if ($calendario_pdf_url && $calendario_html) {
+                                    $calendario_html = preg_replace('/<p>(<strong[^>]*>)?\s*<a[^>]+>(Calendario|Cronograma)<\/a>\s*(<\/strong>)?<\/p>/i', '', $calendario_html);
+                                    $calendario_html = preg_replace('/<a[^>]+>(Calendario|Cronograma)<\/a>/i', '', $calendario_html);
+                                    $calendario_html = trim($calendario_html);
+                                }
+
+                                ob_start();
+
+                                if ($calendario_html) {
+                                    echo wp_kses_post($calendario_html);
+                                }
+
+                                if (class_exists('Oferta_Blocks') && $calendario_pdf_url) {
+                                    echo Oferta_Blocks::render_dato_calendario(['ofertaId' => $post_id]);
+                                }
+
+                                $calendario_body = ob_get_clean();
+
+                                $render_info_card(
+                                    __('Calendario', 'flacso-uruguay'),
+                                    $calendario_body,
+                                    'flacso-oa-info-card--wide'
+                                );
+
+                                $financiacion_html = !empty($data['financiacion_html'])
+                                    ? (string) $data['financiacion_html']
+                                    : '';
+
+                                if ($financiacion_html === '') {
+                                    $financiacion_html  = '<p>' . esc_html__('FLACSO ofrece financiación flexible, el monto de las cuotas puede variar dependiendo de las promociones que haya aprovechado, o el plan de pagos que se coordine con la Institución. Todos los posgrados pueden abonarse en cuotas, siguiendo un plan mensual de pagos que acompañan la cursada. No obstante, es posible extender los planes de pago en forma flexible, con valores de cuota a su alcance.', 'flacso-uruguay') . '</p>';
+                                    $financiacion_html .= '<p>' . esc_html__('Quienes cursen desde fuera de Uruguay pueden pagar de forma segura a través de la plataforma de pago de la institución, mientras las personas que cursan en el país, disponen de otras vías para pagar.', 'flacso-uruguay') . '</p>';
+                                    $financiacion_html .= '<p>' . esc_html__('Las becas para cursar en FLACSO Uruguay están sujetas a convenios inter institucionales y son limitadas por cohorte. Para obtener más información sobre las posibles becas disponibles puede comunicarse con la asistente académica.', 'flacso-uruguay') . '</p>';
+                                }
+
+                                $render_info_card(
+                                    __('Financiación y becas', 'flacso-uruguay'),
+                                    $financiacion_html,
+                                    'flacso-oa-info-card--wide'
+                                );
+                                ?>
                             </div>
                         </div>
                     </section>
