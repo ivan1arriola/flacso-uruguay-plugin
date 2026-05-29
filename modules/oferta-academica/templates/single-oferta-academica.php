@@ -790,8 +790,12 @@ get_header();
 }
 
 .flacso-oa-container {
-    width: min(100% - 32px, 1180px);
+    width: 100%;
+    max-width: 1180px;
     margin-inline: auto;
+    padding-left: clamp(24px, 5vw, 40px);
+    padding-right: clamp(24px, 5vw, 40px);
+    box-sizing: border-box;
 }
 
 .flacso-oa-article {
@@ -1921,9 +1925,6 @@ get_header();
 }
 
 @media (max-width: 767.98px) {
-    .flacso-oa-container {
-        width: min(100% - 24px, 1180px);
-    }
 
     .flacso-oa-hero-v3 {
         padding-top: 34px;
@@ -2160,10 +2161,6 @@ get_header();
 }
 
 @media (max-width: 600px) {
-    .flacso-oferta-responsive .flacso-oa-container {
-        width: min(100% - 36px, 1180px);
-    }
-
     .flacso-oferta-responsive .flacso-oa-container[style] {
         padding-top: 14px !important;
         padding-bottom: 12px !important;
