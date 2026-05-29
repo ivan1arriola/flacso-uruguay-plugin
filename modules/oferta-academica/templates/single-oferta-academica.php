@@ -236,7 +236,7 @@ get_header();
                     ?>
 
                     <div class="flacso-oa-container" style="padding-top: clamp(24px, 4vw, 48px); padding-bottom: clamp(16px, 3vw, 32px);">
-                        <section class="flacso-inscripciones-banner" style="margin-bottom: 0; min-height: clamp(400px, 40vw, 600px); position: relative; overflow: hidden; display: flex; flex-direction: column;">
+                        <section class="flacso-inscripciones-banner" style="margin-bottom: 0; min-height: clamp(400px, 40vw, 600px); position: relative; overflow: hidden; display: flex; flex-direction: column; border-radius: clamp(16px, 3vw, 28px);">
                             <img
                                 class="flacso-inscripciones-banner__img"
                                 src="<?php echo esc_url($banner_featured_url); ?>"
@@ -361,15 +361,15 @@ get_header();
                                 $cohorte = trim((string) get_post_meta($post_id, 'cohorte', true));
                                 $label = esc_html__('Próximo inicio', 'flacso-oferta-academica');
                                 if ($cohorte !== '') {
-                                    $label .= ' (' . esc_html($cohorte) . ')';
+                                    $label .= '<span style="display: block; font-size: 0.88em; opacity: 0.85; font-weight: 500; margin-top: 3px;">(' . esc_html($cohorte) . ')</span>';
                                 }
                             ?>
                                 <section class="flacso-oa-next-start flacso-oa-next-start--fullwidth" style="margin-top: -1rem; margin-bottom: 2rem;">
                                     <div class="flacso-oferta-proximo-inicio" role="status" aria-live="polite">
-                                        <p class="flacso-oferta-proximo-inicio__pill">
+                                        <p class="flacso-oferta-proximo-inicio__pill" style="align-items: center;">
                                             <span class="flacso-oferta-proximo-inicio__icon" aria-hidden="true"><i class="bi bi-calendar-event"></i></span>
-                                            <span class="flacso-oferta-proximo-inicio__content">
-                                                <span class="flacso-oferta-proximo-inicio__label"><?php echo $label; ?></span>
+                                            <span class="flacso-oferta-proximo-inicio__content" style="display: flex; flex-direction: column; justify-content: center;">
+                                                <span class="flacso-oferta-proximo-inicio__label" style="line-height: 1.2;"><?php echo $label; ?></span>
                                                 <strong class="flacso-oferta-proximo-inicio__value"><?php echo esc_html($formatted); ?></strong>
                                             </span>
                                         </p>
@@ -1365,7 +1365,7 @@ get_header();
     gap: 14px;
     margin: 0 0 clamp(18px, 2.6vw, 28px);
     color: var(--flacso-blue-dark);
-    font-size: clamp(1.05rem, 1.8vw, 1.34rem);
+    font-size: clamp(1.2rem, 3vw, 1.45rem);
     font-weight: 900;
     letter-spacing: -0.02em;
     line-height: 1.18;

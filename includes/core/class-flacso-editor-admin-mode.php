@@ -55,7 +55,7 @@ class FLACSO_Editor_Admin_Mode {
     }
 
     public static function is_enabled(): bool {
-        return (bool) apply_filters('flacso_editor_admin_mode_enabled', true);
+        return (bool) apply_filters('flacso_editor_admin_mode_enabled', false);
     }
 
     /**
