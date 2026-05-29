@@ -230,9 +230,14 @@ get_header();
                         $banner_featured_url = 'data:image/svg+xml;base64,' . base64_encode($svg);
                     }
 
-                    $banner_cta_text = $inscripciones_abiertas
-                        ? 'Descuentos especiales disponibles. Solicitá información e inscribite hoy.'
-                        : 'Mantente atento a nuestras próximas aperturas.';
+                    $custom_mensaje = get_post_meta($post_id, 'inscripciones_mensaje', true);
+                    if (!empty($custom_mensaje)) {
+                        $banner_cta_text = $custom_mensaje;
+                    } else {
+                        $banner_cta_text = $inscripciones_abiertas
+                            ? 'Descuentos especiales disponibles. Solicitá información e inscribite hoy.'
+                            : 'Mantente atento a nuestras próximas aperturas.';
+                    }
                     ?>
 
                     <div class="flacso-oa-container" style="padding-top: clamp(24px, 4vw, 48px); padding-bottom: clamp(16px, 3vw, 32px);">
@@ -765,6 +770,19 @@ get_header();
 .flacso-oferta-responsive .entry {
     background: transparent;
     box-shadow: none;
+}
+
+.flacso-oferta-responsive h1,
+.flacso-oferta-responsive h2,
+.flacso-oferta-responsive h3,
+.flacso-oferta-responsive h4,
+.flacso-oferta-responsive h5,
+.flacso-oferta-responsive h6,
+.flacso-oferta-responsive p,
+.flacso-oferta-responsive span,
+.flacso-oferta-responsive div {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
 }
 
 .flacso-oferta-responsive .entry-content-wrap {
@@ -1721,15 +1739,17 @@ get_header();
 
     .flacso-oa-person-card--nivel-1 {
         display: flex;
+        flex-direction: column;
         min-height: 0;
     }
 
     .flacso-oa-person-card--nivel-1 .flacso-oa-person-card__media {
-        padding: 18px 18px 0;
+        padding: 24px 24px 0;
     }
 
     .flacso-oa-person-card--nivel-1 .flacso-oa-person-card__avatar-wrap {
         aspect-ratio: 1 / 1;
+        width: 100%;
         min-height: 0;
     }
 
@@ -2106,6 +2126,198 @@ get_header();
             font-size: 0.9rem;
         }
     }
+
+
+/* Ajustes mínimos para mejorar conversión y lectura en teléfonos */
+.flacso-inscripciones-banner__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    min-height: 48px;
+    max-width: 100%;
+    padding: 12px 20px;
+    border-radius: 999px;
+    background: var(--flacso-yellow);
+    color: var(--flacso-blue-dark);
+    font-size: 0.92rem;
+    font-weight: 900;
+    line-height: 1.15;
+    letter-spacing: 0.035em;
+    text-align: center;
+    text-decoration: none;
+    text-shadow: none;
+    text-transform: uppercase;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
+    transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.flacso-inscripciones-banner__button:hover,
+.flacso-inscripciones-banner__button:focus {
+    background: #ffffff;
+    color: var(--flacso-blue-dark);
+    transform: translateY(-1px);
+}
+
+@media (max-width: 600px) {
+    .flacso-oferta-responsive .flacso-oa-container {
+        width: min(100% - 36px, 1180px);
+    }
+
+    .flacso-oferta-responsive .flacso-oa-container[style] {
+        padding-top: 14px !important;
+        padding-bottom: 12px !important;
+    }
+
+    .flacso-inscripciones-banner {
+        min-height: min(540px, 86svh) !important;
+        border-radius: 18px !important;
+    }
+
+    .flacso-inscripciones-banner::before {
+        background:
+            linear-gradient(180deg, rgba(5, 25, 56, 0.58) 0%, rgba(5, 25, 56, 0.88) 100%) !important;
+    }
+
+    .flacso-inscripciones-banner__overlay {
+        padding: 1rem !important;
+        gap: 0.85rem !important;
+    }
+
+    .flacso-inscripciones-banner__top {
+        align-items: center !important;
+        gap: 0.65rem !important;
+    }
+
+    .flacso-inscripciones-banner__tag {
+        padding: 4px 9px !important;
+        font-size: 0.72rem !important;
+        line-height: 1.1 !important;
+        letter-spacing: 0.045em !important;
+    }
+
+    .flacso-inscripciones-banner__logo {
+        max-width: 128px !important;
+    }
+
+    .flacso-inscripciones-banner__middle {
+        justify-content: flex-end !important;
+        margin: 0.9rem 0 !important;
+    }
+
+    .flacso-inscripciones-banner__eyebrow {
+        margin-bottom: 8px !important;
+        font-size: 0.78rem !important;
+        line-height: 1.2 !important;
+        letter-spacing: 0.055em !important;
+    }
+
+    .flacso-inscripciones-banner__title {
+        font-size: clamp(1.55rem, 8vw, 2.15rem) !important;
+        line-height: 1.08 !important;
+        letter-spacing: -0.03em !important;
+    }
+
+    .flacso-inscripciones-banner__excerpt {
+        display: none !important;
+    }
+
+    .flacso-inscripciones-banner__meta {
+        width: 100%;
+        gap: 0.5rem !important;
+        margin-top: 14px !important;
+    }
+
+    .flacso-inscripciones-banner__meta span {
+        width: 100%;
+        justify-content: center;
+        padding: 5px 10px !important;
+        font-size: 0.82rem !important;
+        line-height: 1.2 !important;
+        text-align: center;
+    }
+
+    .flacso-inscripciones-banner__bottom {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.75rem !important;
+        align-items: stretch !important;
+        margin-bottom: 0 !important;
+        text-align: left !important;
+    }
+
+    .flacso-inscripciones-banner__cta {
+        font-size: 0.92rem !important;
+        line-height: 1.25 !important;
+        white-space: normal !important;
+    }
+
+    .flacso-inscripciones-banner__button {
+        width: 100%;
+        min-height: 50px;
+        padding-inline: 14px;
+        font-size: 0.88rem;
+    }
+
+    .flacso-oa-main-section {
+        padding-top: 24px;
+        padding-bottom: 42px;
+    }
+
+    .flacso-oa-next-start--fullwidth {
+        margin-top: 0 !important;
+        margin-bottom: 1.25rem !important;
+    }
+
+    .flacso-oa-form-panel__header {
+        padding: 20px 16px 12px;
+    }
+
+    .flacso-oa-form-panel__body {
+        padding: 0 16px 18px;
+    }
+
+    .flacso-oferta-responsive .flacso-oa-consulta__field,
+    .flacso-oferta-responsive .flacso-consultas-formulario .form-group {
+        margin-bottom: 12px;
+    }
+
+    .flacso-oferta-responsive .flacso-oa-consulta__field input,
+    .flacso-oferta-responsive .flacso-oa-consulta__field textarea,
+    .flacso-oferta-responsive .flacso-oa-consulta__field select,
+    .flacso-oferta-responsive .flacso-consultas-formulario input,
+    .flacso-oferta-responsive .flacso-consultas-formulario textarea,
+    .flacso-oferta-responsive .flacso-consultas-formulario select {
+        min-height: 48px;
+        font-size: 16px;
+    }
+
+    .flacso-oa-content-card__body,
+    .flacso-oa-info-card__body {
+        padding: 18px 16px;
+        line-height: 1.62;
+    }
+
+    .flacso-oa-team-section,
+    .flacso-oa-seminarios-section {
+        padding: 40px 0;
+    }
+}
+
+@media (max-width: 420px) {
+    .flacso-inscripciones-banner {
+        min-height: min(510px, 88svh) !important;
+    }
+
+    .flacso-inscripciones-banner__logo {
+        max-width: 116px !important;
+    }
+
+    .flacso-inscripciones-banner__title {
+        font-size: clamp(1.42rem, 8.5vw, 1.95rem) !important;
+    }
+}
+
 
 @media (prefers-reduced-motion: reduce) {
     .flacso-oferta-responsive *,
