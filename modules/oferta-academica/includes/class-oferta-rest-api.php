@@ -23,7 +23,8 @@ class Oferta_Rest_API
             'objetivos_html', 'perfil_ingreso_html', 'requisitos_ingreso_html', 
             'malla_curricular_html', 'calendario_html', 'perfil_egreso_html', 
             'requisitos_egreso_html', 'titulos_certificaciones_html', 'financiacion_html',
-            'menciones', 'orientaciones', 'coordinacion_academica', 'equipos'
+            'menciones', 'orientaciones', 'coordinacion_academica', 'equipos',
+            'inscripciones_mensaje_abierto_default', 'inscripciones_mensaje_cerrado_default'
         ];
 
         foreach ($meta_keys as $key) {
@@ -32,11 +33,23 @@ class Oferta_Rest_API
                     if ($key === 'financiacion_html') {
                         return get_option('flacso_financiacion_html', '');
                     }
+                    if ($key === 'inscripciones_mensaje_abierto_default') {
+                        return get_option('flacso_inscripciones_mensaje_abierto_default', 'Descuentos especiales disponibles. Solicitá información e inscribite hoy.');
+                    }
+                    if ($key === 'inscripciones_mensaje_cerrado_default') {
+                        return get_option('flacso_inscripciones_mensaje_cerrado_default', 'Mantente atento a nuestras próximas aperturas.');
+                    }
                     return get_post_meta($post_array['id'], $key, true);
                 },
                 'update_callback' => function ($value, $post_obj) use ($key) {
                     if ($key === 'financiacion_html') {
                         return update_option('flacso_financiacion_html', $value);
+                    }
+                    if ($key === 'inscripciones_mensaje_abierto_default') {
+                        return update_option('flacso_inscripciones_mensaje_abierto_default', $value);
+                    }
+                    if ($key === 'inscripciones_mensaje_cerrado_default') {
+                        return update_option('flacso_inscripciones_mensaje_cerrado_default', $value);
                     }
                     return update_post_meta($post_obj->ID, $key, $value);
                 },

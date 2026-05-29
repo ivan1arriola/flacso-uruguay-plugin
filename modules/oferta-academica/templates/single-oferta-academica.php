@@ -231,12 +231,14 @@ get_header();
                     }
 
                     $custom_mensaje = get_post_meta($post_id, 'inscripciones_mensaje', true);
-                    if (!empty($custom_mensaje)) {
-                        $banner_cta_text = $custom_mensaje;
+                    $custom_mensaje_cerrado = get_post_meta($post_id, 'inscripciones_mensaje_cerrado', true);
+                    $default_mensaje_abierto = get_option('flacso_inscripciones_mensaje_abierto_default', 'Descuentos especiales disponibles. Solicitá información e inscribite hoy.');
+                    $default_mensaje_cerrado = get_option('flacso_inscripciones_mensaje_cerrado_default', 'Mantente atento a nuestras próximas aperturas.');
+
+                    if ($inscripciones_abiertas) {
+                        $banner_cta_text = !empty($custom_mensaje) ? $custom_mensaje : $default_mensaje_abierto;
                     } else {
-                        $banner_cta_text = $inscripciones_abiertas
-                            ? 'Descuentos especiales disponibles. Solicitá información e inscribite hoy.'
-                            : 'Mantente atento a nuestras próximas aperturas.';
+                        $banner_cta_text = !empty($custom_mensaje_cerrado) ? $custom_mensaje_cerrado : $default_mensaje_cerrado;
                     }
                     ?>
 
