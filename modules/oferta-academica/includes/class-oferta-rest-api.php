@@ -8,6 +8,56 @@ class Oferta_Rest_API
     public static function init()
     {
         add_action('rest_api_init', [self::class, 'register_meta_fields']);
+        add_action('rest_api_init', [self::class, 'register_settings_routes']);
+    }
+
+    public static function register_settings_routes()
+    {
+        register_rest_route('flacso/v1', '/ofertas/settings', [
+            [
+                'methods' => WP_REST_Server::READABLE,
+                'callback' => [self::class, 'get_settings'],
+                'permission_callback' => [self::class, 'can_manage_settings']
+            ],
+            [
+                'methods' => WP_REST_Server::EDITABLE,
+                'callback' => [self::class, 'update_settings'],
+                'permission_callback' => [self::class, 'can_manage_settings']
+            ]
+        ]);
+    }
+
+    public static function can_manage_settings()
+    {
+        return current_user_can('manage_options');
+    }
+
+    public static function get_settings()
+    {
+        return rest_ensure_response([
+            'ok' => true,
+            'data' => [
+                'financiacion_html' => get_option('flacso_financiacion_html', ''),
+                'inscripciones_mensaje_abierto_default' => get_option('flacso_inscripciones_mensaje_abierto_default', 'Descuentos especiales disponibles. Solicitá información e inscribite hoy.'),
+                'inscripciones_mensaje_cerrado_default' => get_option('flacso_inscripciones_mensaje_cerrado_default', 'Mantente atento a nuestras próximas aperturas.')
+            ]
+        ]);
+    }
+
+    public static function update_settings(WP_REST_Request $request)
+    {
+        $payload = $request->get_json_params();
+        if (isset($payload['financiacion_html'])) {
+            update_option('flacso_financiacion_html', wp_kses_post($payload['financiacion_html']));
+        }
+        if (isset($payload['inscripciones_mensaje_abierto_default'])) {
+            update_option('flacso_inscripciones_mensaje_abierto_default', sanitize_text_field($payload['inscripciones_mensaje_abierto_default']));
+        }
+        if (isset($payload['inscripciones_mensaje_cerrado_default'])) {
+            update_option('flacso_inscripciones_mensaje_cerrado_default', sanitize_text_field($payload['inscripciones_mensaje_cerrado_default']));
+        }
+
+        return self::get_settings();
     }
 
     /**
