@@ -82,21 +82,22 @@ add_shortcode('flacso_autoridades', function () {
 
         $out = '<article class="flacso-autoridad-card">';
         if ($cargo) {
-            $out .= '<span class="flacso-autoridad__kicker">' . $cargo . '</span>';
-        }
-        $out .= '<div class="flacso-autoridad__avatar">' . $avatar_html . '</div>';
-        $out .= '<h3 class="flacso-autoridad__name">' . esc_html($nombre_completo) . '</h3>';
-
-        if ($titulo_academico) {
-            $out .= '<p class="flacso-autoridad__title">' . esc_html($titulo_academico) . '</p>';
+            $out .= '<span class="flacso-autoridad__kicker" style="margin-bottom: 0.75rem;">' . $cargo . '</span>';
         }
 
         if ($programa) {
             if ($enlace) {
-                $out .= '<a href="' . $enlace . '" target="_blank" rel="noopener" class="flacso-autoridad__programa"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:middle;"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 58h14M6 12h14"/></svg> ' . $programa . '</a>';
+                $out .= '<a href="' . $enlace . '" target="_blank" rel="noopener" class="flacso-autoridad__programa" style="margin-bottom: 1.5rem;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:middle;"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 58h14M6 12h14"/></svg> ' . $programa . '</a>';
             } else {
-                $out .= '<div class="flacso-autoridad__programa"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:middle;"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> ' . $programa . '</div>';
+                $out .= '<div class="flacso-autoridad__programa" style="margin-bottom: 1.5rem;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:middle;"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> ' . $programa . '</div>';
             }
+        }
+
+        $out .= '<div class="flacso-autoridad__avatar">' . $avatar_html . '</div>';
+        $out .= '<h3 class="flacso-autoridad__name">' . esc_html($nombre_completo) . '</h3>';
+
+        if ($titulo_academico) {
+            $out .= '<p class="flacso-autoridad__title" style="margin-bottom: 0;">' . esc_html($titulo_academico) . '</p>';
         }
 
         if ($cv_raw !== '') {
