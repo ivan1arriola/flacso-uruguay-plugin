@@ -170,7 +170,24 @@ $asistente_nombre = '';
 $asistente_correo = 'inscripciones@flacso.edu.uy';
 $asistente_titulo = 'Asistente Académica';
 
-if (!empty($data['equipos']) && is_array($data['equipos'])) {
+$override_docente_id = !empty($data['asistente_academica_docente_id']) ? (int) $data['asistente_academica_docente_id'] : 0;
+$override_rol = !empty($data['asistente_academica_rol']) ? $data['asistente_academica_rol'] : '';
+$override_correo = !empty($data['asistente_academica_correo']) ? $data['asistente_academica_correo'] : '';
+
+if ($override_docente_id > 0) {
+    $asistente_post = get_post($override_docente_id);
+
+    if ($asistente_post) {
+        $asistente_slug = $asistente_post->post_name;
+        $asistente_nombre = get_the_title($asistente_post->ID);
+        $asistente_titulo = $override_rol ?: 'Asistente Académica';
+
+        $correo_meta = get_post_meta($override_docente_id, 'correo', true);
+        $asistente_correo = $override_correo ?: ($correo_meta ?: 'inscripciones@flacso.edu.uy');
+    }
+}
+
+if (!$asistente_slug && !empty($data['equipos']) && is_array($data['equipos'])) {
     foreach ($data['equipos'] as $eq) {
         if (!empty($eq['nombre']) && stripos($eq['nombre'], 'asistente') !== false && !empty($eq['docentes'])) {
             $docente_id = $eq['docentes'][0];
@@ -681,7 +698,7 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                 <div>
                     <span>Preinscripciones <?php echo esc_html($anio); ?></span>
                     <h2>Comenzá el año cursando un posgrado en FLACSO Uruguay</h2>
-                    <p>Formación flexible, con acompañamiento académico y modalidad pensada para estudiantes de distintos lugares.</p>
+                    <p><strong>Formación 100% a distancia</strong></p>
                 </div>
 
                 <a href="<?php echo esc_url($url_inscripcion); ?>">

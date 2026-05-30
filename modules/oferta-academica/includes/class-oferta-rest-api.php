@@ -96,7 +96,8 @@ class Oferta_Rest_API
             'reconocido_mec', 'reconocimiento_internacional', 'mostrar_expedicion_titulo',
             'tabla_precios_tipo', 'carta_presentacion_html', 'precios_filas', 'precios_nota',
             'titulos_intermedios', 'convenio_iin_oea', 'mostrar_costos_envio', 'modalidad_resumen',
-            'acreditaciones_html'
+            'acreditaciones_html', 'asistente_academica_docente_id', 'asistente_academica_rol',
+            'asistente_academica_correo'
         ];
 
         foreach ($meta_keys as $key) {
