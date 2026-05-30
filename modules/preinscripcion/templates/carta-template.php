@@ -40,14 +40,20 @@ $abreviacion = esc_attr($data['abreviacion'] ?? '');
 $cohorte = esc_attr(get_post_meta($post_id, 'cohorte', true) ?: '');
 $anio = date('Y');
 
+$proximo_inicio_val = $data['proximo_inicio'] ?? '';
+if (is_array($proximo_inicio_val)) {
+    $proximo_inicio_val = !empty($proximo_inicio_val) ? $proximo_inicio_val[0] : '';
+}
+
 $proximo_inicio = 'A definir';
-if (!empty($data['proximo_inicio'])) {
-    if (preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/', $data['proximo_inicio'])) {
-        $proximo_inicio = wp_date('j \d\e F \d\e Y', strtotime($data['proximo_inicio']));
-    } elseif (preg_match('/^[0-9]{4}-[0-9]{2}$/', $data['proximo_inicio'])) {
-        $proximo_inicio = wp_date('F Y', strtotime($data['proximo_inicio'] . '-01'));
+if (!empty($proximo_inicio_val)) {
+    $proximo_inicio_str = (string) $proximo_inicio_val;
+    if (preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/', $proximo_inicio_str)) {
+        $proximo_inicio = wp_date('j \d\e F \d\e Y', strtotime($proximo_inicio_str));
+    } elseif (preg_match('/^[0-9]{4}-[0-9]{2}$/', $proximo_inicio_str)) {
+        $proximo_inicio = wp_date('F Y', strtotime($proximo_inicio_str . '-01'));
     } else {
-        $proximo_inicio = esc_attr($data['proximo_inicio']);
+        $proximo_inicio = esc_attr($proximo_inicio_str);
     }
 }
 $duracion = !empty($data['duracion_meses']) ? esc_attr($data['duracion_meses'] . ' meses') : '12 meses';
