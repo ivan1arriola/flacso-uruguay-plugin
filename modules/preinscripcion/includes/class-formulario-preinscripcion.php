@@ -93,25 +93,11 @@ class FLACSO_Formulario_Preinscripcion_Final {
             'index.php?oferta-academica=$matches[1]&es_preinscripcion=1',
             'top'
         );
-        
-        // Captura /formacion/tipo/slug/carta/ para el CPT
-        add_rewrite_rule(
-            '^formacion/[^/]+/([^/]+)/carta/?$',
-            'index.php?oferta-academica=$matches[1]&es_carta=1',
-            'top'
-        );
 
         // Captura /cualquier-pagina/preinscripcion/ como página virtual (Legacy)
         add_rewrite_rule(
             '^(.+?)/preinscripcion/?$',
             'index.php?pagename=$matches[1]&es_preinscripcion=1',
-            'top'
-        );
-        
-        // Captura /cualquier-pagina/carta/ como página virtual (Legacy)
-        add_rewrite_rule(
-            '^(.+?)/carta/?$',
-            'index.php?pagename=$matches[1]&es_carta=1',
             'top'
         );
     }
@@ -121,7 +107,6 @@ class FLACSO_Formulario_Preinscripcion_Final {
      */
     public function agregar_query_vars($vars) {
         $vars[] = 'es_preinscripcion';
-        $vars[] = 'es_carta';
         return $vars;
     }
 
