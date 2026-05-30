@@ -95,7 +95,8 @@ class Oferta_Rest_API
             'inscripciones_mensaje_abierto_default', 'inscripciones_mensaje_cerrado_default',
             'reconocido_mec', 'reconocimiento_internacional', 'mostrar_expedicion_titulo',
             'tabla_precios_tipo', 'carta_presentacion_html', 'precios_filas', 'precios_nota',
-            'titulos_intermedios', 'convenio_iin_oea', 'mostrar_costos_envio'
+            'titulos_intermedios', 'convenio_iin_oea', 'mostrar_costos_envio', 'modalidad_resumen',
+            'acreditaciones_html'
         ];
 
         foreach ($meta_keys as $key) {

@@ -40,9 +40,18 @@ $abreviacion = esc_attr($data['abreviacion'] ?? '');
 $cohorte = esc_attr(get_post_meta($post_id, 'cohorte', true) ?: '');
 $anio = date('Y');
 
-$proximo_inicio = esc_attr(get_post_meta($post_id, 'proximo_inicio_precision', true) ?: ($data['proximo_inicio'] ?? 'A definir'));
-$duracion = esc_attr(get_post_meta($post_id, 'duracion_html', true) ?: (($data['duracion_meses'] ?? '') . ' meses'));
-$modalidad = esc_attr(get_post_meta($post_id, 'modalidad_html', true) ?: 'Virtual');
+$proximo_inicio = 'A definir';
+if (!empty($data['proximo_inicio'])) {
+    if (preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/', $data['proximo_inicio'])) {
+        $proximo_inicio = wp_date('j \d\e F \d\e Y', strtotime($data['proximo_inicio']));
+    } elseif (preg_match('/^[0-9]{4}-[0-9]{2}$/', $data['proximo_inicio'])) {
+        $proximo_inicio = wp_date('F Y', strtotime($data['proximo_inicio'] . '-01'));
+    } else {
+        $proximo_inicio = esc_attr($data['proximo_inicio']);
+    }
+}
+$duracion = !empty($data['duracion_meses']) ? esc_attr($data['duracion_meses'] . ' meses') : '12 meses';
+$modalidad = !empty($data['modalidad_resumen']) ? esc_attr($data['modalidad_resumen']) : 'Virtual';
 
 // Menciones y Orientaciones
 $menciones = is_array($data['menciones'] ?? null) ? implode('|', $data['menciones']) : ($data['menciones'] ?? '');
@@ -236,51 +245,78 @@ if (!$asistente_slug) {
                     echo wp_kses_post($mensaje_bienvenida);
                     echo '</div>';
                 }
+                $bloques_html = [
+                    'descripcion_html' => 'Información General',
+                    'acreditaciones_html' => 'Acreditaciones y Validez Oficial',
+                    'perfil_ingreso_html' => 'Perfil de Ingreso',
+                    'objetivos_html' => 'Objetivos del Programa',
+                    'modalidad_html' => 'Modalidad de Cursada',
+                    'duracion_html' => 'Duración y Carga Horaria',
+                    'perfil_egreso_html' => 'Perfil del Egresado',
+                    'requisitos_egreso_html' => 'Requisitos para Titulación',
+                    'titulos_certificaciones_html' => 'Títulos y Certificaciones',
+                ];
+
+                foreach ($bloques_html as $meta_key => $titulo_bloque) {
+                    if (!empty($data[$meta_key])) {
+                        echo '<div class="gc-carta-bloque-rico" style="margin-bottom: 2.5rem;">';
+                        echo '<h3 style="color:var(--global-palette1);font-weight:700;margin-top:0;margin-bottom:1rem;font-size:1.5rem;">' . esc_html($titulo_bloque) . '</h3>';
+                        echo wp_kses_post($data[$meta_key]);
+                        echo '</div>';
+                    }
+                }
                 echo $child_content; 
                 ?>
             </div>
             
             <?php 
-            // CALENDARIO Y MALLA CURRICULAR (Reemplazo nativo)
-            if (($url_malla || $url_calendario) && strpos($child_content, 'flacso-uruguay/dato-malla-curricular') === false) {
-                echo '<div style="margin:2.5rem 0;">';
-                echo '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;">';
-                if (!empty($url_calendario)) {
-                    echo '<div style="display:flex;align-items:flex-start;gap:1.5rem;background:var(--global-palette8);border-radius:1rem;padding:1.5rem;">';
-                    echo '<div style="width:50px;height:50px;background:var(--global-palette1);color:white;border-radius:0.5rem;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;"><i class="bi bi-calendar-check"></i></div>';
-                    echo '<div><h3 style="color:var(--global-palette1);font-weight:700;margin:0 0 .5rem 0;font-size:1.2rem;">Calendario</h3><p style="color:var(--global-palette4);margin-bottom:1rem;">Consulta las fechas importantes</p>';
-                    echo '<a href="' . esc_url($url_calendario) . '" target="_blank" style="display:inline-flex;align-items:center;gap:0.5rem;background:var(--global-palette1);color:white;padding:0.75rem 1.5rem;border-radius:0.5rem;text-decoration:none;font-weight:600;"><i class="bi bi-file-earmark-text"></i>Ver Calendario</a></div></div>';
+            // CALENDARIO Y MALLA CURRICULAR (Diseño exacto de Oferta Académica)
+            if (class_exists('Oferta_Blocks') && strpos($child_content, 'flacso-uruguay/dato-malla-curricular') === false) {
+                $calendario_html = Oferta_Blocks::render_dato_calendario(['ofertaId' => $post_id]);
+                $malla_html = Oferta_Blocks::render_dato_malla_curricular(['ofertaId' => $post_id]);
+                
+                if (trim($calendario_html) !== '' || trim($malla_html) !== '') {
+                    echo '<div style="margin:2.5rem 0;">';
+                    echo '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;">';
+                    if (trim($calendario_html) !== '') {
+                        echo $calendario_html;
+                    }
+                    if (trim($malla_html) !== '') {
+                        echo $malla_html;
+                    }
+                    echo '</div></div>';
                 }
-                if (!empty($url_malla)) {
-                    echo '<div style="display:flex;align-items:flex-start;gap:1.5rem;background:var(--global-palette8);border-radius:1rem;padding:1.5rem;">';
-                    echo '<div style="width:50px;height:50px;background:var(--global-palette1);color:white;border-radius:0.5rem;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;"><i class="bi bi-diagram-3"></i></div>';
-                    echo '<div><h3 style="color:var(--global-palette1);font-weight:700;margin:0 0 .5rem 0;font-size:1.2rem;">Malla Curricular</h3><p style="color:var(--global-palette4);margin-bottom:1rem;">Estructura del programa</p>';
-                    echo '<a href="' . esc_url($url_malla) . '" target="_blank" style="display:inline-flex;align-items:center;gap:0.5rem;background:var(--global-palette1);color:white;padding:0.75rem 1.5rem;border-radius:0.5rem;text-decoration:none;font-weight:600;"><i class="bi bi-file-earmark-text"></i>Ver Malla</a></div></div>';
-                }
-                echo '</div></div>';
             }
             ?>
 
             <?php 
-            // REQUISITOS DE ADMISIÓN (Reemplazo nativo)
-            echo '<div style="margin:3rem 0;">';
-            echo '<h2 style="color:var(--global-palette1);font-weight:700;margin-bottom:1.5rem;font-size:1.75rem;">Requisitos de Postulación y Admisión</h2>';
-            echo '<div style="display:flex;flex-direction:column;gap:1rem;margin-bottom:2rem;">';
-            
-            echo '<div style="display:flex;gap:1rem;background:var(--global-palette8);border-radius:0.5rem;padding:1rem;align-items:center;"><div style="width:40px;height:40px;background:var(--global-palette1);color:white;border-radius:0.25rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="bi bi-pencil-square"></i></div><div style="color:var(--global-palette4);font-weight:500;">Completar el formulario de preinscripción online</div></div>';
-            
-            if ($is_maestria) {
-                echo '<div style="display:flex;gap:1rem;background:var(--global-palette8);border-radius:0.5rem;padding:1rem;align-items:flex-start;"><div style="width:40px;height:40px;background:var(--global-palette1);color:white;border-radius:0.25rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="bi bi-paperclip"></i></div><div style="color:var(--global-palette4);"><div style="font-weight:500;margin-bottom:0.5rem;">Añadir en el formulario, de forma escaneada:</div><ul style="margin:0;padding-left:1.5rem;"><li>Documento que acredite estudios de grado con copia legalizada</li><li>Documento de identidad vigente</li><li>Curriculum Vitae</li><li>Carta de motivación</li><li>Dos cartas de referencia</li></ul></div></div>';
-                echo '<div style="display:flex;gap:1rem;background:var(--global-palette8);border-radius:0.5rem;padding:1rem;align-items:center;"><div style="width:40px;height:40px;background:var(--global-palette1);color:white;border-radius:0.25rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="bi bi-people"></i></div><div style="color:var(--global-palette4);font-weight:500;">Asistir a una entrevista de admisión con la coordinación académica</div></div>';
+            // REQUISITOS DE ADMISIÓN
+            if (!empty($data['requisitos_ingreso_html'])) {
+                echo '<div style="margin:3rem 0;">';
+                echo '<h2 style="color:var(--global-palette1);font-weight:700;margin-bottom:1.5rem;font-size:1.75rem;">Requisitos de Postulación y Admisión</h2>';
+                echo '<div class="gc-carta-bloque-rico" style="font-size: 1.1rem; line-height: 1.7; color: var(--global-palette4); margin-bottom: 2rem;">';
+                echo wp_kses_post($data['requisitos_ingreso_html']);
+                echo '</div></div>';
             } else {
-                echo '<div style="display:flex;gap:1rem;background:var(--global-palette8);border-radius:0.5rem;padding:1rem;align-items:flex-start;"><div style="width:40px;height:40px;background:var(--global-palette1);color:white;border-radius:0.25rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="bi bi-paperclip"></i></div><div style="color:var(--global-palette4);"><div style="font-weight:500;margin-bottom:0.5rem;">Añadir en el formulario, de forma escaneada:</div><ul style="margin:0;padding-left:1.5rem;"><li>Documento que acredite estudios previos</li><li>Documento de identidad vigente</li><li>Carta de motivación</li></ul></div></div>';
+                echo '<div style="margin:3rem 0;">';
+                echo '<h2 style="color:var(--global-palette1);font-weight:700;margin-bottom:1.5rem;font-size:1.75rem;">Requisitos de Postulación y Admisión</h2>';
+                echo '<div style="display:flex;flex-direction:column;gap:1rem;margin-bottom:2rem;">';
+                
+                echo '<div style="display:flex;gap:1rem;background:var(--global-palette8);border-radius:0.5rem;padding:1rem;align-items:center;"><div style="width:40px;height:40px;background:var(--global-palette1);color:white;border-radius:0.25rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="bi bi-pencil-square"></i></div><div style="color:var(--global-palette4);font-weight:500;">Completar el formulario de preinscripción online</div></div>';
+                
+                if ($is_maestria) {
+                    echo '<div style="display:flex;gap:1rem;background:var(--global-palette8);border-radius:0.5rem;padding:1rem;align-items:flex-start;"><div style="width:40px;height:40px;background:var(--global-palette1);color:white;border-radius:0.25rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="bi bi-paperclip"></i></div><div style="color:var(--global-palette4);"><div style="font-weight:500;margin-bottom:0.5rem;">Añadir en el formulario, de forma escaneada:</div><ul style="margin:0;padding-left:1.5rem;"><li>Documento que acredite estudios de grado con copia legalizada</li><li>Documento de identidad vigente</li><li>Curriculum Vitae</li><li>Carta de motivación</li><li>Dos cartas de referencia</li></ul></div></div>';
+                    echo '<div style="display:flex;gap:1rem;background:var(--global-palette8);border-radius:0.5rem;padding:1rem;align-items:center;"><div style="width:40px;height:40px;background:var(--global-palette1);color:white;border-radius:0.25rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="bi bi-people"></i></div><div style="color:var(--global-palette4);font-weight:500;">Asistir a una entrevista de admisión con la coordinación académica</div></div>';
+                } else {
+                    echo '<div style="display:flex;gap:1rem;background:var(--global-palette8);border-radius:0.5rem;padding:1rem;align-items:flex-start;"><div style="width:40px;height:40px;background:var(--global-palette1);color:white;border-radius:0.25rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="bi bi-paperclip"></i></div><div style="color:var(--global-palette4);"><div style="font-weight:500;margin-bottom:0.5rem;">Añadir en el formulario, de forma escaneada:</div><ul style="margin:0;padding-left:1.5rem;"><li>Documento que acredite estudios previos</li><li>Documento de identidad vigente</li><li>Carta de motivación</li></ul></div></div>';
+                }
+                
+                echo '<div style="display:flex;gap:1rem;background:var(--global-palette8);border-radius:0.5rem;padding:1rem;align-items:center;"><div style="width:40px;height:40px;background:var(--global-palette1);color:white;border-radius:0.25rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="bi bi-award"></i></div><div style="color:var(--global-palette4);font-weight:500;">La admisión está sujeta a cupos y selección académica</div></div>';
+                echo '</div>';
+                
+                echo '<div style="background:var(--global-palette1);border-radius:0.5rem;padding:1.5rem;color:white;"><h3 style="color:white;font-weight:700;margin:0 0 0.5rem 0;font-size:1.1rem;">Atención</h3><p style="margin:0;opacity:0.9;">Todos los documentos deben adjuntarse en el formulario de preinscripción.</p></div>';
+                echo '</div>';
             }
-            
-            echo '<div style="display:flex;gap:1rem;background:var(--global-palette8);border-radius:0.5rem;padding:1rem;align-items:center;"><div style="width:40px;height:40px;background:var(--global-palette1);color:white;border-radius:0.25rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="bi bi-award"></i></div><div style="color:var(--global-palette4);font-weight:500;">La admisión está sujeta a cupos y selección académica</div></div>';
-            echo '</div>';
-            
-            echo '<div style="background:var(--global-palette1);border-radius:0.5rem;padding:1.5rem;color:white;"><h3 style="color:white;font-weight:700;margin:0 0 0.5rem 0;font-size:1.1rem;">Atención</h3><p style="margin:0;opacity:0.9;">Todos los documentos deben adjuntarse en el formulario de preinscripción.</p></div>';
-            echo '</div>';
             
             // PRECIOS
             $precios_filas = !empty($data['precios_filas']) ? json_decode($data['precios_filas'], true) : [];
@@ -401,8 +437,8 @@ if (!$asistente_slug) {
             $url_inscripcion = get_permalink($post_id) . 'preinscripcion';
             echo '<div style="margin:3rem 0;background:var(--global-palette8);border:1px solid var(--global-palette7);border-top:4px solid var(--global-palette1);border-radius:0.75rem;padding:2rem;text-align:center;box-shadow:0 8px 24px rgba(15,26,45,.08);">';
             echo '<h2 style="color:var(--global-palette1);font-weight:700;margin-bottom:1rem;font-size:1.75rem;">Formulario de Preinscripciones ' . esc_html($anio) . '</h2>';
-            echo '<p style="color:var(--global-palette4);font-size:1.1rem;margin-bottom:1.5rem;">Comenzá a cursar tu posgrado en FLACSO Uruguay. Modalidad de cursada: <strong>' . esc_html(wp_strip_all_tags($modalidad)) . '</strong>.</p>';
-            echo '<a href="' . esc_url($url_inscripcion) . '" style="display:inline-flex;align-items:center;gap:0.5rem;background:var(--global-palette1);color:white;padding:1rem 1.5rem;border-radius:0.5rem;font-weight:700;text-decoration:none;transition:all 0.2s;"><i class="bi bi-pencil-square"></i>Formulario de Preinscripción</a>';
+            echo '<p style="color:var(--global-palette4);font-size:1.1rem;margin-bottom:1.5rem;">Comenzá el año cursando un posgrado en FLACSO Uruguay. <strong>Formación 100% a distancia</strong>.</p>';
+            echo '<a href="' . esc_url($url_inscripcion) . '" style="display:inline-flex;align-items:center;gap:0.5rem;background:#27823b;color:white;padding:1rem 1.5rem;border-radius:0.5rem;font-weight:700;text-decoration:none;transition:all 0.2s;"><i class="bi bi-pencil-square"></i>Formulario de Preinscripción</a>';
             echo '</div>';
             
             // NOTA: Se eliminó explícitamente el shortcode de Breadcrumb por solicitud.
