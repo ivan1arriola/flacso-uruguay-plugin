@@ -34,12 +34,17 @@ class Oferta_Rest_API
 
     public static function get_settings()
     {
+        $token = get_option('flacso_webhook_token', '');
+        $masked_token = !empty($token) ? '********' : '';
+
         return rest_ensure_response([
             'ok' => true,
             'data' => [
                 'financiacion_html' => get_option('flacso_financiacion_html', ''),
                 'inscripciones_mensaje_abierto_default' => get_option('flacso_inscripciones_mensaje_abierto_default', 'Descuentos especiales disponibles. Solicitá información e inscribite hoy.'),
-                'inscripciones_mensaje_cerrado_default' => get_option('flacso_inscripciones_mensaje_cerrado_default', 'Mantente atento a nuestras próximas aperturas.')
+                'inscripciones_mensaje_cerrado_default' => get_option('flacso_inscripciones_mensaje_cerrado_default', 'Mantente atento a nuestras próximas aperturas.'),
+                'flacso_webhook_token' => $masked_token,
+                'flacso_google_drive_folder_id' => get_option('flacso_google_drive_folder_id', '')
             ]
         ]);
     }
@@ -55,6 +60,15 @@ class Oferta_Rest_API
         }
         if (isset($payload['inscripciones_mensaje_cerrado_default'])) {
             update_option('flacso_inscripciones_mensaje_cerrado_default', sanitize_text_field($payload['inscripciones_mensaje_cerrado_default']));
+        }
+        if (isset($payload['flacso_webhook_token'])) {
+            $new_token = sanitize_text_field($payload['flacso_webhook_token']);
+            if ($new_token !== '********') {
+                update_option('flacso_webhook_token', $new_token);
+            }
+        }
+        if (isset($payload['flacso_google_drive_folder_id'])) {
+            update_option('flacso_google_drive_folder_id', sanitize_text_field($payload['flacso_google_drive_folder_id']));
         }
 
         return self::get_settings();
