@@ -790,17 +790,22 @@ function flacso_render_gracias_virtual() {
 						</p>
 					</div>
 
-					<div class="flacso-gracias-buttons d-grid gap-2 gap-sm-3 d-sm-flex justify-content-center align-items-stretch">
-						<a class="btn btn-primary btn-lg rounded-pill mb-2 flacso-gracias-btn"
-						   href="<?php echo esc_url( $volver_href ); ?>" aria-label="Volver al posgrado seleccionado">
-							<i class="bi bi-arrow-left-circle me-2" aria-hidden="true"></i>
-							Volver a «<?php echo esc_html( $titulo_programa ?: 'posgrado' ); ?>»
-						</a>
-						<a class="btn btn-outline-secondary btn-lg rounded-pill mb-2 flacso-gracias-btn"
-						   href="<?php echo esc_url( home_url( '/formacion/' ) ); ?>" target="_self" rel="noopener">
-							<i class="bi bi-layers me-2" aria-hidden="true"></i>
-							Ver resto de la oferta
-						</a>
+					<div class="flacso-gracias-buttons mt-4 mx-auto" style="max-width: 420px;">
+						<div class="d-flex flex-column gap-3">
+							<a class="btn btn-primary btn-lg py-3 px-4 shadow-sm d-flex align-items-center text-start text-decoration-none border-0"
+							   href="<?php echo esc_url( $volver_href ); ?>" aria-label="Volver al posgrado seleccionado">
+								<i class="bi bi-arrow-left-circle fs-2 me-3" style="opacity: 0.8;" aria-hidden="true"></i>
+								<div style="flex: 1; min-width: 0;">
+									<span class="d-block fw-bold text-white mb-1" style="font-size: 1.05rem; line-height: 1.2;">Volver al programa</span>
+									<span class="d-block text-white" style="font-size: 0.85rem; line-height: 1.3; opacity: 0.8; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal;"><?php echo esc_html( $titulo_programa ?: 'posgrado' ); ?></span>
+								</div>
+							</a>
+							<a class="btn btn-outline-secondary btn-lg py-3 px-4 d-flex align-items-center justify-content-center text-decoration-none rounded-pill"
+							   href="<?php echo esc_url( home_url( '/formacion/' ) ); ?>" target="_self" rel="noopener">
+								<i class="bi bi-layers fs-5 me-2" aria-hidden="true"></i>
+								<span class="fw-semibold" style="font-size: 1rem;">Ver resto de la oferta</span>
+							</a>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -853,18 +858,20 @@ function flacso_render_gracias_virtual() {
 
 		<style>
 		.flacso-gracias-container { min-height: 80vh; background: var(--global-palette7); }
-		.flacso-gracias-buttons .flacso-gracias-btn {
-			flex: 1 1 0;
-			min-width: 240px;
-			max-width: 360px;
-			display: inline-flex;
-			align-items: center;
-			justify-content: center;
-			text-align: center;
-			white-space: normal;
+		.flacso-gracias-buttons .btn-primary {
+			border-radius: 16px !important;
+			transition: transform 0.2s ease, box-shadow 0.2s ease;
 		}
-		@media (max-width: 575.98px) {
-			.flacso-gracias-buttons .flacso-gracias-btn { width: 100%; }
+		.flacso-gracias-buttons .btn-primary:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 8px 20px rgba(22, 57, 111, 0.25) !important;
+		}
+		.flacso-gracias-buttons .btn-outline-secondary {
+			transition: background-color 0.2s ease, transform 0.2s ease;
+		}
+		.flacso-gracias-buttons .btn-outline-secondary:hover {
+			background-color: var(--global-palette8);
+			transform: translateY(-1px);
 		}
                 </style>
                 <?php
