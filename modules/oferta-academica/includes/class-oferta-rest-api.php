@@ -43,6 +43,7 @@ class Oferta_Rest_API
                 'financiacion_html' => get_option('flacso_financiacion_html', ''),
                 'inscripciones_mensaje_abierto_default' => get_option('flacso_inscripciones_mensaje_abierto_default', 'Descuentos especiales disponibles. Solicitá información e inscribite hoy.'),
                 'inscripciones_mensaje_cerrado_default' => get_option('flacso_inscripciones_mensaje_cerrado_default', 'Mantente atento a nuestras próximas aperturas.'),
+                'mensaje_bienvenida' => get_option('flacso_mensaje_bienvenida', ''),
                 'flacso_webhook_token' => $masked_token,
                 'flacso_google_drive_folder_id' => get_option('flacso_google_drive_folder_id', '')
             ]
@@ -60,6 +61,9 @@ class Oferta_Rest_API
         }
         if (isset($payload['inscripciones_mensaje_cerrado_default'])) {
             update_option('flacso_inscripciones_mensaje_cerrado_default', sanitize_text_field($payload['inscripciones_mensaje_cerrado_default']));
+        }
+        if (isset($payload['mensaje_bienvenida'])) {
+            update_option('flacso_mensaje_bienvenida', wp_kses_post($payload['mensaje_bienvenida']));
         }
         if (isset($payload['flacso_webhook_token'])) {
             $new_token = sanitize_text_field($payload['flacso_webhook_token']);
@@ -88,7 +92,10 @@ class Oferta_Rest_API
             'malla_curricular_html', 'calendario_html', 'perfil_egreso_html', 
             'requisitos_egreso_html', 'titulos_certificaciones_html', 'financiacion_html',
             'menciones', 'orientaciones', 'coordinacion_academica', 'equipos',
-            'inscripciones_mensaje_abierto_default', 'inscripciones_mensaje_cerrado_default'
+            'inscripciones_mensaje_abierto_default', 'inscripciones_mensaje_cerrado_default',
+            'reconocido_mec', 'reconocimiento_internacional', 'mostrar_expedicion_titulo',
+            'tabla_precios_tipo', 'carta_presentacion_html', 'precios_filas', 'precios_nota',
+            'titulos_intermedios', 'convenio_iin_oea', 'mostrar_costos_envio'
         ];
 
         foreach ($meta_keys as $key) {

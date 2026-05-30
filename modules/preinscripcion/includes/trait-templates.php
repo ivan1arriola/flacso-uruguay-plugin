@@ -58,39 +58,46 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
     }
     
     /**
-     * Carga el template para páginas de preinscripción (virtuales)
+     * Carga el template para páginas virtuales (preinscripción y carta)
      */
     public function cargar_template_preinscripcion($template) {
         global $post, $wp_query;
         
         // Verificar si es una URL virtual de preinscripción
         $es_preinscripcion = get_query_var('es_preinscripcion');
+        $es_carta = get_query_var('es_carta');
         
-        if ($es_preinscripcion && (is_singular('page') || is_singular('oferta-academica')) && $post) {
-            // Verificar si esta página tiene preinscripción activa
-            $activa = false;
-            if (is_singular('page')) {
-                $activa = $this->es_pagina_preinscripcion_activa($post->ID);
-            } else {
-                $abiertas = get_post_meta($post->ID, 'inscripciones_abiertas', true);
-                $activa = ($abiertas === '1' || $abiertas === 'true' || $abiertas === true || $abiertas === 1);
-            }
+        if (($es_preinscripcion || $es_carta) && (is_singular('page') || is_singular('oferta-academica')) && $post) {
+            if ($es_preinscripcion) {
+                // Lógica de preinscripción
+                $activa = false;
+                if (is_singular('page')) {
+                    $activa = $this->es_pagina_preinscripcion_activa($post->ID);
+                } else {
+                    $abiertas = get_post_meta($post->ID, 'inscripciones_abiertas', true);
+                    $activa = ($abiertas === '1' || $abiertas === 'true' || $abiertas === true || $abiertas === 1);
+                }
 
-            if ($activa) {
-                $custom_template = $this->obtener_ruta_template();
-                
+                if ($activa) {
+                    $custom_template = plugin_dir_path(dirname(__FILE__)) . 'templates/preinscripcion-template.php';
+                    if (file_exists($custom_template)) {
+                        add_filter('wp_title', array($this, 'modificar_titulo_preinscripcion'), 10, 3);
+                        add_filter('document_title_parts', array($this, 'modificar_titulo_parts_preinscripcion'));
+                        return $custom_template;
+                    }
+                } else {
+                    $wp_query->set_404();
+                    status_header(404);
+                    return get_404_template();
+                }
+            } elseif ($es_carta) {
+                // Lógica de carta de presentación
+                $custom_template = plugin_dir_path(dirname(__FILE__)) . 'templates/carta-template.php';
                 if (file_exists($custom_template)) {
-                    // Modificar el título de la página para SEO
-                    add_filter('wp_title', array($this, 'modificar_titulo_preinscripcion'), 10, 3);
-                    add_filter('document_title_parts', array($this, 'modificar_titulo_parts_preinscripcion'));
-                    
+                    add_filter('wp_title', array($this, 'modificar_titulo_carta'), 10, 3);
+                    add_filter('document_title_parts', array($this, 'modificar_titulo_parts_carta'));
                     return $custom_template;
                 }
-            } else {
-                // Página no tiene preinscripción activa, mostrar 404
-                $wp_query->set_404();
-                status_header(404);
-                return get_404_template();
             }
         }
         
@@ -107,6 +114,14 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
         }
         return $title;
     }
+
+    public function modificar_titulo_carta($title, $sep = '', $seplocation = '') {
+        global $post;
+        if ($post) {
+            return 'Carta de Presentación - ' . get_the_title($post->ID) . ' ' . $sep . ' ' . get_bloginfo('name');
+        }
+        return $title;
+    }
     
     /**
      * Modifica las partes del título del documento
@@ -115,6 +130,14 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
         global $post;
         if ($post) {
             $title_parts['title'] = 'Preinscripción - ' . get_the_title($post->ID);
+        }
+        return $title_parts;
+    }
+
+    public function modificar_titulo_parts_carta($title_parts) {
+        global $post;
+        if ($post) {
+            $title_parts['title'] = 'Carta de Presentación - ' . get_the_title($post->ID);
         }
         return $title_parts;
     }
