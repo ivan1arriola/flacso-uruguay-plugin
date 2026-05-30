@@ -444,10 +444,52 @@ get_header();
                                     $modalidad_html
                                 );
 
+                                if (!empty($data['duracion_html'])) {
+                                    $render_info_card(
+                                        __('Duración', 'flacso-uruguay'),
+                                        $data['duracion_html']
+                                    );
+                                }
+
                                 if (!empty($data['objetivos_html'])) {
                                     $render_info_card(
                                         __('Objetivos', 'flacso-uruguay'),
                                         $data['objetivos_html']
+                                    );
+                                }
+
+                                if (!empty($data['perfil_ingreso_html'])) {
+                                    $render_info_card(
+                                        __('Perfil de ingreso', 'flacso-uruguay'),
+                                        $data['perfil_ingreso_html']
+                                    );
+                                }
+
+                                if (!empty($data['requisitos_ingreso_html'])) {
+                                    $render_info_card(
+                                        __('Requisitos de ingreso', 'flacso-uruguay'),
+                                        $data['requisitos_ingreso_html']
+                                    );
+                                }
+
+                                if (!empty($data['perfil_egreso_html'])) {
+                                    $render_info_card(
+                                        __('Perfil de egreso', 'flacso-uruguay'),
+                                        $data['perfil_egreso_html']
+                                    );
+                                }
+
+                                if (!empty($data['requisitos_egreso_html'])) {
+                                    $render_info_card(
+                                        __('Requisitos de egreso', 'flacso-uruguay'),
+                                        $data['requisitos_egreso_html']
+                                    );
+                                }
+
+                                if (!empty($data['titulos_certificaciones_html'])) {
+                                    $render_info_card(
+                                        __('Títulos y Certificaciones', 'flacso-uruguay'),
+                                        $data['titulos_certificaciones_html']
                                     );
                                 }
 

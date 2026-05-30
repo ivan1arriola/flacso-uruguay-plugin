@@ -101,11 +101,15 @@ if (function_exists('flacso_global_styles')) {
 
             <div class="site-container seminarios-hero__inner">
                 <div class="seminarios-hero__content">
-                    <p class="seminarios-hero__kicker"><?php echo esc_html(get_the_title($oferta_id)); ?></p>
-                    <h1 class="seminarios-hero__title"><?php _e('Seminarios del Programa', 'flacso-uruguay'); ?></h1>
-                    <p class="seminarios-hero__subtitle">
-                        <?php _e('Explora los seminarios específicos asociados a esta propuesta académica. Aquí encontrarás fechas, modalidades y detalles de inscripción.', 'flacso-uruguay'); ?>
-                    </p>
+                    <p class="seminarios-hero__kicker"><?php _e('Seminarios Exclusivos', 'flacso-uruguay'); ?></p>
+                    <h1 class="seminarios-hero__title" style="font-size: 2.2rem; line-height: 1.3; margin-bottom: 1rem;"><?php echo esc_html(get_the_title($oferta_id)); ?></h1>
+                    
+                    <div style="background: rgba(255, 255, 255, 0.1); padding: 1.25rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid rgba(255,255,255,0.2);">
+                        <p class="seminarios-hero__subtitle" style="margin-bottom: 0; font-size: 1.05rem;">
+                            <i class="bi bi-info-circle me-2" style="opacity: 0.9;"></i>
+                            <?php _e('Estás viendo los seminarios <strong>específicos de esta propuesta académica</strong>. Si buscás la oferta abierta al público, podés visitar el catálogo general.', 'flacso-uruguay'); ?>
+                        </p>
+                    </div>
 
                     <?php 
                     $volver_url = get_permalink($oferta_id);
@@ -116,11 +120,14 @@ if (function_exists('flacso_global_styles')) {
                         }
                     }
                     ?>
-                    <div class="seminarios-hero__actions">
+                    <div class="seminarios-hero__actions d-flex flex-wrap gap-3">
                         <a class="seminarios-btn seminarios-btn--primary" href="#listado">
-                            <?php _e('Ver seminarios', 'flacso-uruguay'); ?>
+                            <i class="bi bi-card-list me-2"></i> <?php _e('Ver seminarios del programa', 'flacso-uruguay'); ?>
                         </a>
-                        <a class="seminarios-btn seminarios-btn--ghost" href="<?php echo esc_url($volver_url); ?>">
+                        <a class="seminarios-btn seminarios-btn--ghost" href="<?php echo esc_url(home_url('/formacion/seminarios/')); ?>" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.3);">
+                            <i class="bi bi-grid me-2"></i> <?php _e('Ver todos los seminarios', 'flacso-uruguay'); ?>
+                        </a>
+                        <a class="seminarios-btn seminarios-btn--ghost text-white-50" href="<?php echo esc_url($volver_url); ?>" style="border: none; padding-left: 0;">
                             <i class="bi bi-arrow-left me-2"></i> <?php _e('Volver al programa', 'flacso-uruguay'); ?>
                         </a>
                     </div>
