@@ -13,7 +13,7 @@ class Flacso_Mailing_Subscription {
     private const FORM_QUERY_ARG = 'flacso_mailing_form';
     private const NONCE_ACTION = 'flacso_mailing_subscribe';
     private const NONCE_FIELD = 'flacso_mailing_nonce';
-    private const EMAIL_LOGO_URL = 'https://flacso.edu.uy/wp-content/uploads/2026/04/cropped-flacso_20_anos_horizontal_azul.png';
+    private const EMAIL_LOGO_URL = 'https://flacso.edu.uy/wp-content/uploads/2026/05/logo_flacso_uruguay_20anos_blanco.png';
     private const CONTACT_PROPERTY_DEFINITIONS = [
         'nombre' => [
             'Datatype' => 'str',
