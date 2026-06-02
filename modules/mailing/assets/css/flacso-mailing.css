@@ -1,0 +1,191 @@
+.flacso-mailing-home-section {
+    padding: clamp(2rem, 4vw, 4rem) 0;
+}
+
+.flacso-mailing-home-card {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    gap: 1.75rem;
+    padding: clamp(1.5rem, 4vw, 3rem);
+    border-radius: 28px;
+    background:
+        radial-gradient(circle at top right, rgba(80, 210, 170, 0.18), transparent 30%),
+        linear-gradient(135deg, #0f1a2d 0%, #1d3a72 100%);
+    color: #ffffff;
+    box-shadow: 0 28px 60px rgba(15, 26, 45, 0.18);
+}
+
+.flacso-mailing-home-card::after {
+    content: "";
+    position: absolute;
+    inset: auto -5% -35% auto;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    pointer-events: none;
+}
+
+.flacso-mailing-home-copy {
+    position: relative;
+    z-index: 1;
+}
+
+.flacso-mailing-home-title {
+    margin: 0 0 0.75rem;
+    font-family: "Sora", sans-serif;
+    font-size: clamp(1.85rem, 4vw, 2.85rem);
+    font-weight: 700;
+    line-height: 1.1;
+    color: #ffffff;
+}
+
+.flacso-mailing-home-subtitle {
+    margin: 0;
+    max-width: 42rem;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.82);
+}
+
+.flacso-mailing-form-shell {
+    position: relative;
+    z-index: 1;
+    padding: 1.5rem;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.98);
+    color: #0f1a2d;
+    box-shadow: 0 18px 40px rgba(15, 26, 45, 0.16);
+}
+
+.flacso-mailing-form {
+    display: grid;
+    gap: 1rem;
+}
+
+.flacso-mailing-form-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.flacso-mailing-field label {
+    display: block;
+    margin-bottom: 0.45rem;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #203251;
+}
+
+.flacso-mailing-field input {
+    width: 100%;
+    min-height: 52px;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(29, 58, 114, 0.18);
+    border-radius: 16px;
+    background: #f8fbff;
+    color: #0f1a2d;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.flacso-mailing-field input:focus {
+    outline: none;
+    background: #ffffff;
+    border-color: #1d3a72;
+    box-shadow: 0 0 0 4px rgba(29, 58, 114, 0.12);
+}
+
+.flacso-mailing-consent {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+    font-size: 0.94rem;
+    line-height: 1.55;
+    color: #334155;
+}
+
+.flacso-mailing-consent input {
+    margin-top: 0.2rem;
+    accent-color: #1d3a72;
+}
+
+.flacso-mailing-actions {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.flacso-mailing-submit {
+    width: 100%;
+    justify-content: center;
+    min-height: 54px;
+    padding: 0.95rem 1.4rem;
+    border: 0;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #50d2aa 0%, #38bdf8 100%);
+    color: #0f1a2d;
+    font-weight: 800;
+    line-height: 1.1;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    box-shadow: 0 12px 30px rgba(56, 189, 248, 0.24);
+}
+
+.flacso-mailing-submit:hover,
+.flacso-mailing-submit:focus-visible {
+    transform: translateY(-1px);
+    filter: brightness(1.03);
+    box-shadow: 0 18px 34px rgba(56, 189, 248, 0.28);
+}
+
+.flacso-mailing-notice {
+    margin-bottom: 1rem;
+    padding: 0.9rem 1rem;
+    border-radius: 16px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+.flacso-mailing-notice.is-success {
+    background: #ecfdf5;
+    color: #166534;
+}
+
+.flacso-mailing-notice.is-error {
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.flacso-mailing-notice.is-warning {
+    background: #fff7ed;
+    color: #9a3412;
+}
+
+.flacso-mailing-honeypot {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+@media (min-width: 900px) {
+    .flacso-mailing-home-card {
+        grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+        align-items: center;
+    }
+
+    .flacso-mailing-form-grid.has-name-field {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 767px) {
+    .flacso-mailing-form-shell {
+        padding: 1.15rem;
+    }
+
+    .flacso-mailing-submit {
+        width: 100%;
+    }
+}

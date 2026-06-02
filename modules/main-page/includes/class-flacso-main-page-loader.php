@@ -235,6 +235,7 @@ class Flacso_Main_Page_Loader {
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/quienes-somos.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/instagram.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/posgrados.php';
+        require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/mailing.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/congreso.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/contacto.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/landing-page.php';
@@ -243,4 +244,3 @@ class Flacso_Main_Page_Loader {
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/listar-categoria.php';
     }
 }
-

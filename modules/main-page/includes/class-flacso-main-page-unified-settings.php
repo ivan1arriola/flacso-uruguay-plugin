@@ -38,6 +38,10 @@ class Flacso_Main_Page_Unified_Settings {
             'label' => 'Quiénes somos',
             'icon' => 'dashicons-groups',
         ],
+        'mailing' => [
+            'label' => 'Mailing',
+            'icon' => 'dashicons-email-alt2',
+        ],
         'contacto' => [
             'label' => 'Contacto',
             'icon' => 'dashicons-email-alt',
@@ -188,6 +192,9 @@ class Flacso_Main_Page_Unified_Settings {
                 break;
             case 'quienes':
                 self::render_quienes_section($settings);
+                break;
+            case 'mailing':
+                self::render_mailing_section($settings);
                 break;
             case 'contacto':
                 self::render_contacto_section($settings);
@@ -788,6 +795,54 @@ class Flacso_Main_Page_Unified_Settings {
                 name="quienes[highlight_color]" 
                 value="<?php echo esc_attr($settings['quienes']['highlight_color'] ?? '#1d3a72'); ?>">
         </div>
+        <?php
+    }
+
+    private static function render_mailing_section(array $settings): void {
+        $mailing = $settings['mailing'] ?? [];
+        ?>
+        <h3><?php esc_html_e('Sección Mailing', 'flacso-main-page'); ?></h3>
+        <div class="flacso-form-group">
+            <label for="mailing_title"><?php esc_html_e('Título', 'flacso-main-page'); ?></label>
+            <input
+                type="text"
+                id="mailing_title"
+                name="mailing[title]"
+                class="regular-text"
+                value="<?php echo esc_attr($mailing['title'] ?? ''); ?>">
+        </div>
+
+        <div class="flacso-form-group">
+            <label for="mailing_subtitle"><?php esc_html_e('Subtítulo', 'flacso-main-page'); ?></label>
+            <textarea
+                id="mailing_subtitle"
+                name="mailing[subtitle]"
+                rows="4"
+                class="regular-text"><?php echo esc_textarea($mailing['subtitle'] ?? ''); ?></textarea>
+        </div>
+
+        <div class="flacso-form-group">
+            <label for="mailing_button_label"><?php esc_html_e('Texto del botón', 'flacso-main-page'); ?></label>
+            <input
+                type="text"
+                id="mailing_button_label"
+                name="mailing[button_label]"
+                class="regular-text"
+                value="<?php echo esc_attr($mailing['button_label'] ?? ''); ?>">
+        </div>
+
+        <div class="flacso-form-group">
+            <label for="mailing_consent_text"><?php esc_html_e('Texto de consentimiento', 'flacso-main-page'); ?></label>
+            <textarea
+                id="mailing_consent_text"
+                name="mailing[consent_text]"
+                rows="3"
+                class="regular-text"><?php echo esc_textarea($mailing['consent_text'] ?? ''); ?></textarea>
+        </div>
+
+        <p class="description">
+            <?php esc_html_e('Las credenciales y la lista de destino se configuran en Ajustes > Integraciones FLACSO > Mailjet Mailing.', 'flacso-main-page'); ?>
+        </p>
         <?php
     }
 

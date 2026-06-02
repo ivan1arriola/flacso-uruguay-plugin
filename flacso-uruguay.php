@@ -3,7 +3,7 @@
  * Plugin Name: FLACSO Uruguay - Plataforma Integrada
  * Plugin URI: https://flacso.edu.uy
  * Description: Plataforma integrada de FLACSO Uruguay con gestion de docentes, seminarios, eventos, oferta academica y formularios. Consolida multiples plugins en una arquitectura modular.
- * Version: 5.1.16
+ * Version: 5.1.17
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: FLACSO Uruguay
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 // ============================================
 // Constantes Globales
 // ============================================
-define('FLACSO_URUGUAY_VERSION', '5.1.16');
+define('FLACSO_URUGUAY_VERSION', '5.1.17');
 define('FLACSO_URUGUAY_FILE', __FILE__);
 define('FLACSO_URUGUAY_PATH', plugin_dir_path(__FILE__));
 define('FLACSO_URUGUAY_URL', plugin_dir_url(__FILE__));
@@ -130,6 +130,7 @@ class FLACSO_Uruguay_Plugin {
         $loader->load_module('charlas-abiertas'); // Charlas Abiertas
         $loader->load_module('posgrados');  // Posgrados
         $loader->load_module('shortcodes'); // Shortcodes
+        $loader->load_module('mailing'); // Suscripciones al mailing
         $loader->load_module('main-page');  // Landing Page y Secciones
         $loader->load_module('preinscripcion'); // Formularios de Preinscripcion
     }

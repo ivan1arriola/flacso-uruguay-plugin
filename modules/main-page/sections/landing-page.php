@@ -49,6 +49,10 @@ if (!function_exists('flacso_homepage_builder_render')) {
                 'function' => 'flacso_section_oferta_educativa_render',
             ],
             [
+                'key' => 'mailing',
+                'function' => 'flacso_section_mailing_render',
+            ],
+            [
                 'key' => 'congreso',
                 'function' => 'flacso_section_congreso_render',
             ],

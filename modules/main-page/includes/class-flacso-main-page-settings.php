@@ -16,6 +16,7 @@ class Flacso_Main_Page_Settings {
         'quienes',
         'instagram',
         'posgrados',
+        'mailing',
         // REMOVED: 'oferta_academica' - Movido a plugin separado flacso-formacion
         'congreso',
         'contacto',
@@ -30,6 +31,7 @@ class Flacso_Main_Page_Settings {
         'quienes',
         'instagram',
         'posgrados',
+        'mailing',
         'congreso',
         'contacto',
     ];
@@ -182,6 +184,12 @@ class Flacso_Main_Page_Settings {
                 'background_overlay_opacity' => 0.78,
                 'background_overlay_opacity_secondary' => 0.45,
                 'background_overlay_angle' => 180,
+            ],
+            'mailing' => [
+                'title' => 'Suscribite al mailing de FLACSO Uruguay',
+                'subtitle' => 'Recibí novedades, actividades y avisos importantes directamente en tu correo.',
+                'button_label' => 'Quiero suscribirme',
+                'consent_text' => 'Acepto recibir novedades y comunicaciones institucionales de FLACSO Uruguay.',
             ],
             'quienes' => [
                 'title' => '¿Qué es FLACSO Uruguay?',
@@ -381,6 +389,7 @@ class Flacso_Main_Page_Settings {
             'quienes' => __('Quiénes somos', 'flacso-main-page'),
             'instagram' => __('Instagram', 'flacso-main-page'),
             'posgrados' => __('Nuestra Oferta Educativa', 'flacso-main-page'),
+            'mailing' => __('Mailing', 'flacso-main-page'),
             'congreso' => __('Congreso', 'flacso-main-page'),
             'contacto' => __('Contacto', 'flacso-main-page'),
         ];
@@ -399,6 +408,7 @@ class Flacso_Main_Page_Settings {
             'quienes',
             'instagram',
             'posgrados',
+            'mailing',
             'contacto',
             'congreso',
         ];
@@ -667,6 +677,14 @@ class Flacso_Main_Page_Settings {
 
             $overlay_angle_input = $contacto['background_overlay_angle'] ?? $defaults['contacto']['background_overlay_angle'];
             $output['contacto']['background_overlay_angle'] = self::sanitize_angle_value($overlay_angle_input, (int) $defaults['contacto']['background_overlay_angle']);
+        }
+
+        if (isset($input['mailing']) && is_array($input['mailing'])) {
+            $mailing = $input['mailing'];
+            $output['mailing']['title'] = wp_kses_post($mailing['title'] ?? $defaults['mailing']['title']);
+            $output['mailing']['subtitle'] = wp_kses_post($mailing['subtitle'] ?? $defaults['mailing']['subtitle']);
+            $output['mailing']['button_label'] = wp_kses_post($mailing['button_label'] ?? $defaults['mailing']['button_label']);
+            $output['mailing']['consent_text'] = wp_kses_post($mailing['consent_text'] ?? $defaults['mailing']['consent_text']);
         }
 
         if (isset($input['quienes']) && is_array($input['quienes'])) {

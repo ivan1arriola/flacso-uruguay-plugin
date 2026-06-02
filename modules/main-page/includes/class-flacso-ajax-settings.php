@@ -106,6 +106,9 @@ class Flacso_AJAX_Settings {
             case 'quienes':
                 $sanitized = self::sanitize_quienes($data);
                 break;
+            case 'mailing':
+                $sanitized = self::sanitize_mailing($data);
+                break;
             case 'contacto':
                 $sanitized = self::sanitize_contacto($data);
                 break;
@@ -267,6 +270,28 @@ class Flacso_AJAX_Settings {
     private static function sanitize_quienes(array $data): array {
         // Placeholder para futuras sanitizaciones de quiénes somos
         return $data;
+    }
+
+    private static function sanitize_mailing(array $data): array {
+        $sanitized = [];
+
+        if (isset($data['title'])) {
+            $sanitized['title'] = sanitize_text_field($data['title']);
+        }
+
+        if (isset($data['subtitle'])) {
+            $sanitized['subtitle'] = sanitize_textarea_field($data['subtitle']);
+        }
+
+        if (isset($data['button_label'])) {
+            $sanitized['button_label'] = sanitize_text_field($data['button_label']);
+        }
+
+        if (isset($data['consent_text'])) {
+            $sanitized['consent_text'] = sanitize_textarea_field($data['consent_text']);
+        }
+
+        return $sanitized;
     }
 
     private static function sanitize_contacto(array $data): array {

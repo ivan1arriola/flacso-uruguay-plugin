@@ -19,6 +19,9 @@ class FLACSO_Integrations_Settings {
     private const OPTION_RECAPTCHA_SITE_KEY = 'fc_recaptcha_site_key';
     private const OPTION_RECAPTCHA_SECRET_KEY = 'fc_recaptcha_secret_key';
     private const OPTION_EXTERNAL_EDITOR_URL = 'flacso_external_editor_url';
+    private const OPTION_MAILJET_API_KEY = 'flacso_mailjet_api_key';
+    private const OPTION_MAILJET_SECRET_KEY = 'flacso_mailjet_secret_key';
+    private const OPTION_MAILJET_LIST_ID = 'flacso_mailjet_list_id';
 
     public static function init(): void {
         if (!is_admin()) {
@@ -151,6 +154,36 @@ class FLACSO_Integrations_Settings {
                 'default' => 'https://editor-flacso-uy.vercel.app',
             ]
         );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_MAILJET_API_KEY,
+            [
+                'type' => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+                'default' => '',
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_MAILJET_SECRET_KEY,
+            [
+                'type' => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+                'default' => '',
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_MAILJET_LIST_ID,
+            [
+                'type' => 'string',
+                'sanitize_callback' => [self::class, 'sanitize_mailjet_list_id'],
+                'default' => '',
+            ]
+        );
     }
 
     public static function sanitize_charlas_webhook_url($value): string {
@@ -175,6 +208,96 @@ class FLACSO_Integrations_Settings {
         }
 
         return (string) esc_url_raw($value);
+    }
+
+    public static function sanitize_mailjet_list_id($value): string {
+        return preg_replace('/[^0-9]/', '', (string) $value) ?: '';
+    }
+
+    public static function get_mailjet_settings(): array {
+        return [
+            'api_key' => trim((string) get_option(self::OPTION_MAILJET_API_KEY, '')),
+            'secret_key' => trim((string) get_option(self::OPTION_MAILJET_SECRET_KEY, '')),
+            'list_id' => trim((string) get_option(self::OPTION_MAILJET_LIST_ID, '')),
+        ];
+    }
+
+    public static function is_mailjet_configured(): bool {
+        $settings = self::get_mailjet_settings();
+
+        return $settings['api_key'] !== ''
+            && $settings['secret_key'] !== ''
+            && $settings['list_id'] !== '';
+    }
+
+    public static function get_mailjet_contact_lists(bool $force_refresh = false): array {
+        $settings = self::get_mailjet_settings();
+        if ($settings['api_key'] === '' || $settings['secret_key'] === '') {
+            return [];
+        }
+
+        $cache_key = 'flacso_mailjet_lists_' . md5($settings['api_key'] . '|' . $settings['secret_key']);
+        if (!$force_refresh) {
+            $cached = get_transient($cache_key);
+            if (is_array($cached)) {
+                return $cached;
+            }
+        }
+
+        $response = wp_remote_get(
+            'https://api.mailjet.com/v3/REST/contactslist',
+            [
+                'timeout' => 15,
+                'headers' => [
+                    'Authorization' => 'Basic ' . base64_encode($settings['api_key'] . ':' . $settings['secret_key']),
+                    'Accept' => 'application/json',
+                ],
+            ]
+        );
+
+        if (is_wp_error($response)) {
+            return [];
+        }
+
+        $status_code = (int) wp_remote_retrieve_response_code($response);
+        if ($status_code < 200 || $status_code >= 300) {
+            return [];
+        }
+
+        $body = wp_remote_retrieve_body($response);
+        $decoded = json_decode($body, true);
+        $items = isset($decoded['Data']) && is_array($decoded['Data']) ? $decoded['Data'] : [];
+        $lists = [];
+
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $list_id = preg_replace('/[^0-9]/', '', (string) ($item['ID'] ?? ''));
+            if ($list_id === '') {
+                continue;
+            }
+
+            if (!empty($item['IsDeleted'])) {
+                continue;
+            }
+
+            $lists[] = [
+                'id' => $list_id,
+                'name' => sanitize_text_field((string) ($item['Name'] ?? 'Lista sin nombre')),
+                'subscribers' => absint($item['SubscriberCount'] ?? 0),
+                'address' => sanitize_text_field((string) ($item['Address'] ?? '')),
+            ];
+        }
+
+        usort($lists, static function (array $a, array $b): int {
+            return strcasecmp($a['name'], $b['name']);
+        });
+
+        set_transient($cache_key, $lists, 5 * MINUTE_IN_SECONDS);
+
+        return $lists;
     }
 
     public static function get_page_url(array $args = []): string {
@@ -241,6 +364,7 @@ class FLACSO_Integrations_Settings {
                         <?php self::render_oferta_flotante_card(); ?>
                         <?php self::render_preinscripciones_card(); ?>
                         <?php self::render_external_editor_card(); ?>
+                        <?php self::render_mailjet_card(); ?>
                         <?php self::render_services_card(); ?>
                     </div>
 
@@ -481,6 +605,7 @@ class FLACSO_Integrations_Settings {
             .card-charlas .flacso-card-icon { background: #faf5ff; color: #a855f7; }
             .card-flotante .flacso-card-icon { background: #fef2f2; color: #ef4444; }
             .card-preinscripciones .flacso-card-icon { background: #ecfdf5; color: #10b981; }
+            .card-mailjet .flacso-card-icon { background: #effcf6; color: #16a34a; }
             .card-servicios .flacso-card-icon { background: #fff7ed; color: #f97316; }
 
             .flacso-integrations-card p.flacso-integrations-lead {
@@ -503,7 +628,8 @@ class FLACSO_Integrations_Settings {
                 margin-bottom: 6px;
             }
 
-            .flacso-integrations-field input {
+            .flacso-integrations-field input,
+            .flacso-integrations-field select {
                 width: 100%;
                 max-width: none;
                 border: 1px solid #cbd5e1;
@@ -515,7 +641,8 @@ class FLACSO_Integrations_Settings {
                 transition: all 0.2s ease-in-out;
             }
 
-            .flacso-integrations-field input:focus {
+            .flacso-integrations-field input:focus,
+            .flacso-integrations-field select:focus {
                 border-color: #3b82f6;
                 background: #ffffff;
                 box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
@@ -1009,6 +1136,105 @@ class FLACSO_Integrations_Settings {
         <?php
     }
 
+    private static function render_mailjet_card(): void {
+        ?>
+        <section class="flacso-integrations-card card-mailjet">
+            <div class="flacso-card-header">
+                <div class="flacso-card-icon-title">
+                    <span class="flacso-card-icon">✉️</span>
+                    <h2><?php esc_html_e('Mailjet Mailing', 'flacso-uruguay'); ?></h2>
+                </div>
+                <p class="flacso-integrations-lead"><?php esc_html_e('Credenciales para el formulario de suscripción al mailing. Se usan para dar de alta contactos en una lista de Mailjet desde WordPress.', 'flacso-uruguay'); ?></p>
+            </div>
+
+            <div class="flacso-card-body">
+                <?php
+                self::render_input_field(
+                    self::OPTION_MAILJET_API_KEY,
+                    __('Mailjet API Key', 'flacso-uruguay'),
+                    'text',
+                    'xxxxxxxxxxxxxxxxxxxxxxxx',
+                    __('Clave pública de la API de Mailjet.', 'flacso-uruguay')
+                );
+                self::render_input_field(
+                    self::OPTION_MAILJET_SECRET_KEY,
+                    __('Mailjet Secret Key', 'flacso-uruguay'),
+                    'password',
+                    'xxxxxxxxxxxxxxxxxxxxxxxx',
+                    __('Clave privada asociada a la API Key anterior.', 'flacso-uruguay')
+                );
+                self::render_mailjet_list_field();
+                ?>
+            </div>
+
+            <span class="flacso-integrations-note"><?php esc_html_e('Usado por el nuevo bloque de suscripción de la portada', 'flacso-uruguay'); ?></span>
+        </section>
+        <?php
+    }
+
+    private static function render_mailjet_list_field(): void {
+        $value = trim((string) get_option(self::OPTION_MAILJET_LIST_ID, ''));
+        $lists = self::get_mailjet_contact_lists();
+
+        if (empty($lists)) {
+            self::render_input_field(
+                self::OPTION_MAILJET_LIST_ID,
+                __('Mailjet Contact List ID', 'flacso-uruguay'),
+                'text',
+                '123456789',
+                __('Guardá primero la API Key y la Secret Key para cargar listas automáticamente. Si lo preferís, podés pegar el ID manualmente.', 'flacso-uruguay')
+            );
+
+            return;
+        }
+
+        $selected_exists = false;
+        foreach ($lists as $list) {
+            if (($list['id'] ?? '') === $value) {
+                $selected_exists = true;
+                break;
+            }
+        }
+
+        ?>
+        <div class="flacso-integrations-field">
+            <label for="<?php echo esc_attr(self::OPTION_MAILJET_LIST_ID); ?>"><?php esc_html_e('Mailjet Contact List', 'flacso-uruguay'); ?></label>
+            <select
+                id="<?php echo esc_attr(self::OPTION_MAILJET_LIST_ID); ?>"
+                name="<?php echo esc_attr(self::OPTION_MAILJET_LIST_ID); ?>"
+                class="regular-text code">
+                <option value=""><?php esc_html_e('Seleccioná una lista de Mailjet', 'flacso-uruguay'); ?></option>
+                <?php if ($value !== '' && !$selected_exists): ?>
+                    <option value="<?php echo esc_attr($value); ?>" selected>
+                        <?php
+                        printf(
+                            /* translators: %s: list ID */
+                            esc_html__('Lista actual no encontrada (ID %s)', 'flacso-uruguay'),
+                            esc_html($value)
+                        );
+                        ?>
+                    </option>
+                <?php endif; ?>
+                <?php foreach ($lists as $list): ?>
+                    <option value="<?php echo esc_attr($list['id']); ?>" <?php selected($value, $list['id']); ?>>
+                        <?php
+                        printf(
+                            '%1$s (ID %2$s, %3$d)',
+                            esc_html($list['name']),
+                            esc_html($list['id']),
+                            absint($list['subscribers'])
+                        );
+                        ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <p class="flacso-integrations-help">
+                <?php esc_html_e('La lista se carga dinámicamente desde Mailjet usando las credenciales guardadas. El último número indica la cantidad de contactos registrados en la lista.', 'flacso-uruguay'); ?>
+            </p>
+        </div>
+        <?php
+    }
+
     private static function render_services_card(): void {
         ?>
         <section class="flacso-integrations-card card-servicios">
@@ -1058,6 +1284,7 @@ class FLACSO_Integrations_Settings {
 
     private static function render_input_field(string $option_name, string $label, string $type, string $placeholder, string $description): void {
         $value = get_option($option_name, '');
+        $value = is_scalar($value) ? (string) $value : '';
         ?>
         <div class="flacso-integrations-field">
             <label for="<?php echo esc_attr($option_name); ?>"><?php echo esc_html($label); ?></label>
@@ -1066,7 +1293,7 @@ class FLACSO_Integrations_Settings {
                 name="<?php echo esc_attr($option_name); ?>"
                 type="<?php echo esc_attr($type); ?>"
                 class="regular-text code"
-                value="<?php echo esc_attr(is_string($value) ? $value : ''); ?>"
+                value="<?php echo esc_attr($value); ?>"
                 placeholder="<?php echo esc_attr($placeholder); ?>"
                 autocomplete="<?php echo 'password' === $type ? 'new-password' : 'off'; ?>"
                 spellcheck="false"
