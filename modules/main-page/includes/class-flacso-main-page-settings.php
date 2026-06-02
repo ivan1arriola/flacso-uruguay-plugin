@@ -226,6 +226,17 @@ class Flacso_Main_Page_Settings {
     }
 
     private static function normalize_settings(array $settings): array {
+        if (isset($settings['mailing']) && is_array($settings['mailing'])) {
+            $mailing_title = trim((string) ($settings['mailing']['title'] ?? ''));
+            if (
+                $mailing_title === 'Suscribite al mailing de FLACSO Uruguay'
+                || $mailing_title === 'Suscribite al boletín de FLACSO Uruguay'
+                || $mailing_title === 'Suscribite a la lista de difusión de FLACSO Uruguay'
+            ) {
+                $settings['mailing']['title'] = 'Suscribite a la lista de difusión de FLACSO Uruguay';
+            }
+        }
+
         if (!isset($settings['posgrados']) || !is_array($settings['posgrados'])) {
             return $settings;
         }
@@ -278,7 +289,11 @@ class Flacso_Main_Page_Settings {
             if (
                 $section === 'mailing'
                 && isset($section_settings['title'])
-                && trim((string) $section_settings['title']) === 'Suscribite al mailing de FLACSO Uruguay'
+                && (
+                    trim((string) $section_settings['title']) === 'Suscribite al mailing de FLACSO Uruguay'
+                    || trim((string) $section_settings['title']) === 'Suscribite al boletín de FLACSO Uruguay'
+                    || trim((string) $section_settings['title']) === 'Suscribite a la lista de difusión de FLACSO Uruguay'
+                )
             ) {
                 $section_settings['title'] = 'Suscribite a la lista de difusión de FLACSO Uruguay';
             }

@@ -10,6 +10,10 @@
     content: none;
 }
 
+.flacso-main-page .flacso-home-block__surface--mailing.flacso-home-block__surface--card .flacso-content-shell {
+    padding-inline: 0;
+}
+
 .flacso-mailing-home-section {
     padding: clamp(0.45rem, 1vw, 0.9rem) 0;
 }

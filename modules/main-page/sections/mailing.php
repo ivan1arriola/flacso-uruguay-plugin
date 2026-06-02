@@ -27,7 +27,7 @@ if (!function_exists('flacso_section_mailing_render')) {
         $form_markup = Flacso_Mailing_Subscription::render_form([
             'form_id' => 'home',
             'anchor' => $anchor,
-            'form_title' => __('Alta rápida al boletín', 'flacso-uruguay'),
+            'form_title' => __('Alta rápida a la lista de difusión', 'flacso-uruguay'),
             'form_description' => __('Completá tus datos y empezá a recibir por correo la agenda institucional de FLACSO Uruguay.', 'flacso-uruguay'),
             'button_label' => $settings['button_label'] ?? '',
             'consent_text' => $settings['consent_text'] ?? '',
@@ -47,7 +47,7 @@ if (!function_exists('flacso_section_mailing_render')) {
             <div class="flacso-content-shell">
                 <div class="flacso-mailing-home-card">
                     <div class="flacso-mailing-home-copy">
-                        <p class="flacso-mailing-home-eyebrow"><?php esc_html_e('Boletín institucional', 'flacso-uruguay'); ?></p>
+                        <p class="flacso-mailing-home-eyebrow"><?php esc_html_e('Lista de difusión', 'flacso-uruguay'); ?></p>
                         <?php if ($title !== ''): ?>
                             <h2 class="flacso-mailing-home-title"><?php echo esc_html($title); ?></h2>
                         <?php endif; ?>
