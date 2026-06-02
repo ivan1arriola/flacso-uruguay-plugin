@@ -159,6 +159,9 @@ class Seminario_Templates
             $seminario_url = get_permalink();
             $imagen_url = get_the_post_thumbnail_url($seminario_id, 'full');
             $descripcion = get_the_excerpt();
+            if (empty($descripcion)) {
+                $descripcion = wp_trim_words(strip_shortcodes(get_post_field('post_content', $seminario_id)), 30, '...');
+            }
 
             echo '<meta property="og:type" content="article" />' . "\n";
             echo '<meta property="og:title" content="' . esc_attr($seminario_titulo) . '" />' . "\n";

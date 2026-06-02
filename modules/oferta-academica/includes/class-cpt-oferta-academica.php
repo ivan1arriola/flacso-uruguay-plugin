@@ -15,6 +15,7 @@ class CPT_Oferta_Academica {
         add_filter('get_edit_post_link', [self::class, 'filter_edit_post_link'], 10, 3);
         add_action('admin_bar_menu', [self::class, 'modify_admin_bar_edit_link'], 100);
         add_action('load-post-new.php', [self::class, 'redirect_add_new']);
+        add_action('wp_head', [self::class, 'add_og_meta_tags'], 5);
     }
 
     public static function disable_block_editor(bool $use_block_editor, string $post_type): bool {
@@ -56,6 +57,40 @@ class CPT_Oferta_Academica {
             $base_url = rtrim($base_url, '/');
             wp_redirect($base_url . '/ofertas/new');
             exit;
+        }
+    }
+
+    public static function add_og_meta_tags(): void {
+        if (is_singular('oferta-academica') && !has_action('wp_head', 'jetpack_og_tags')) {
+            $post_id = get_the_ID();
+            $titulo = get_the_title();
+            $url = get_permalink();
+            $imagen_url = get_the_post_thumbnail_url($post_id, 'full');
+            $descripcion = get_the_excerpt();
+
+            if (empty($descripcion)) {
+                $descripcion = wp_trim_words(strip_shortcodes(get_post_field('post_content', $post_id)), 30, '...');
+            }
+
+            echo '<meta property="og:type" content="article" />' . "\n";
+            echo '<meta property="og:title" content="' . esc_attr($titulo) . '" />' . "\n";
+            if ($descripcion) {
+                echo '<meta property="og:description" content="' . esc_attr($descripcion) . '" />' . "\n";
+            }
+            echo '<meta property="og:url" content="' . esc_url($url) . '" />' . "\n";
+            if ($imagen_url) {
+                echo '<meta property="og:image" content="' . esc_url($imagen_url) . '" />' . "\n";
+                echo '<meta property="og:image:width" content="1200" />' . "\n";
+                echo '<meta property="og:image:height" content="630" />' . "\n";
+            }
+            echo '<meta name="twitter:card" content="summary_large_image" />' . "\n";
+            echo '<meta name="twitter:title" content="' . esc_attr($titulo) . '" />' . "\n";
+            if ($descripcion) {
+                echo '<meta name="twitter:description" content="' . esc_attr($descripcion) . '" />' . "\n";
+            }
+            if ($imagen_url) {
+                echo '<meta name="twitter:image" content="' . esc_url($imagen_url) . '" />' . "\n";
+            }
         }
     }
 
