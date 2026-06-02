@@ -23,7 +23,7 @@ class Flacso_Main_Page_REST_API {
         'quienes' => 'Contenido institucional del bloque “Quiénes somos”.',
         'instagram' => 'Datos del bloque social e integración con Instagram.',
         'posgrados' => 'Tarjetas y textos de la oferta educativa principal.',
-        'mailing' => 'Formulario de suscripción al mailing institucional conectado con Mailjet.',
+        'mailing' => 'Formulario de suscripción a la lista de difusión institucional conectado con Mailjet.',
         'congreso' => 'Hero y llamada a la acción del congreso.',
         'contacto' => 'Bloque de contacto y estilos de fondo.',
         'sections_visibility' => 'Activa u oculta bloques del home sin borrar su configuración.',

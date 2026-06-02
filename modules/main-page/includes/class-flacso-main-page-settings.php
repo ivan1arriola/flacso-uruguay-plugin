@@ -186,7 +186,7 @@ class Flacso_Main_Page_Settings {
                 'background_overlay_angle' => 180,
             ],
             'mailing' => [
-                'title' => 'Suscribite al mailing de FLACSO Uruguay',
+                'title' => 'Suscribite a la lista de difusión de FLACSO Uruguay',
                 'subtitle' => 'Recibí novedades, actividades y avisos importantes directamente en tu correo.',
                 'button_label' => 'Quiero suscribirme',
                 'consent_text' => 'Acepto recibir novedades y comunicaciones institucionales de FLACSO Uruguay.',
@@ -273,7 +273,17 @@ class Flacso_Main_Page_Settings {
         $defaults = self::get_defaults();
         
         if (isset($settings[$section]) && is_array($settings[$section])) {
-            return wp_parse_args($settings[$section], $defaults[$section] ?? []);
+            $section_settings = wp_parse_args($settings[$section], $defaults[$section] ?? []);
+
+            if (
+                $section === 'mailing'
+                && isset($section_settings['title'])
+                && trim((string) $section_settings['title']) === 'Suscribite al mailing de FLACSO Uruguay'
+            ) {
+                $section_settings['title'] = 'Suscribite a la lista de difusión de FLACSO Uruguay';
+            }
+
+            return $section_settings;
         }
         
         return $defaults[$section] ?? [];
@@ -389,7 +399,7 @@ class Flacso_Main_Page_Settings {
             'quienes' => __('Quiénes somos', 'flacso-main-page'),
             'instagram' => __('Instagram', 'flacso-main-page'),
             'posgrados' => __('Nuestra Oferta Educativa', 'flacso-main-page'),
-            'mailing' => __('Mailing', 'flacso-main-page'),
+            'mailing' => __('Lista de difusión', 'flacso-main-page'),
             'congreso' => __('Congreso', 'flacso-main-page'),
             'contacto' => __('Contacto', 'flacso-main-page'),
         ];

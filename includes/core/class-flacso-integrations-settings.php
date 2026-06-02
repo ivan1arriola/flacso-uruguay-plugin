@@ -1185,9 +1185,9 @@ class FLACSO_Integrations_Settings {
             <div class="flacso-card-header">
                 <div class="flacso-card-icon-title">
                     <span class="flacso-card-icon">✉️</span>
-                    <h2><?php esc_html_e('Mailjet Mailing', 'flacso-uruguay'); ?></h2>
+                    <h2><?php esc_html_e('Mailjet Lista de difusión', 'flacso-uruguay'); ?></h2>
                 </div>
-                <p class="flacso-integrations-lead"><?php esc_html_e('Credenciales para el formulario de suscripción al mailing. Se usan para dar de alta contactos en una lista de Mailjet y enviar el correo de confirmación desde WordPress.', 'flacso-uruguay'); ?></p>
+                <p class="flacso-integrations-lead"><?php esc_html_e('Credenciales para el formulario de suscripción a la lista de difusión. Se usan para dar de alta contactos en una lista de Mailjet y enviar el correo de confirmación desde WordPress.', 'flacso-uruguay'); ?></p>
             </div>
 
             <div class="flacso-card-body">

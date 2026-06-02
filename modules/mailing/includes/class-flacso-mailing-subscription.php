@@ -7,11 +7,13 @@ if (!defined('ABSPATH')) {
 class Flacso_Mailing_Subscription {
     private const SHORTCODE = 'flacso_mailing_form';
     private const FORM_ACTION = 'flacso_mailing_subscribe';
+    private const UNSUBSCRIBE_ACTION = 'flacso_mailing_unsubscribe';
     private const SCRIPT_HANDLE = 'flacso-mailing-form-script';
     private const STATUS_QUERY_ARG = 'flacso_mailing_status';
     private const FORM_QUERY_ARG = 'flacso_mailing_form';
     private const NONCE_ACTION = 'flacso_mailing_subscribe';
     private const NONCE_FIELD = 'flacso_mailing_nonce';
+    private const EMAIL_LOGO_URL = 'https://flacso.edu.uy/wp-content/uploads/2026/04/cropped-flacso_20_anos_horizontal_azul.png';
     private const CONTACT_PROPERTY_DEFINITIONS = [
         'nombre' => [
             'Datatype' => 'str',
@@ -40,6 +42,8 @@ class Flacso_Mailing_Subscription {
         add_action('wp_enqueue_scripts', [self::class, 'register_assets']);
         add_action('admin_post_' . self::FORM_ACTION, [self::class, 'handle_submission']);
         add_action('admin_post_nopriv_' . self::FORM_ACTION, [self::class, 'handle_submission']);
+        add_action('admin_post_' . self::UNSUBSCRIBE_ACTION, [self::class, 'handle_unsubscribe_request']);
+        add_action('admin_post_nopriv_' . self::UNSUBSCRIBE_ACTION, [self::class, 'handle_unsubscribe_request']);
         add_action('wp_ajax_' . self::FORM_ACTION, [self::class, 'handle_ajax_submission']);
         add_action('wp_ajax_nopriv_' . self::FORM_ACTION, [self::class, 'handle_ajax_submission']);
     }
@@ -334,6 +338,31 @@ class Flacso_Mailing_Subscription {
         wp_send_json_error($payload, 400);
     }
 
+    public static function handle_unsubscribe_request(): void {
+        $email = sanitize_email((string) wp_unslash($_GET['email'] ?? ''));
+        $token = sanitize_text_field((string) wp_unslash($_GET['token'] ?? ''));
+
+        if ($email === '' || !is_email($email) || !hash_equals(self::build_unsubscribe_token($email), $token)) {
+            self::render_unsubscribe_page(
+                'error',
+                __('No pudimos validar la solicitud de baja. Revisá el enlace o volvé a intentarlo desde el último correo recibido.', 'flacso-uruguay')
+            );
+        }
+
+        $result = self::unsubscribe_contact($email);
+        if (!empty($result['success'])) {
+            self::render_unsubscribe_page(
+                'success',
+                __('Tu baja de la lista de difusión quedó confirmada. Ya no vas a recibir nuevos envíos desde este canal.', 'flacso-uruguay')
+            );
+        }
+
+        self::render_unsubscribe_page(
+            'error',
+            __('No pudimos completar la baja en este momento. Probá nuevamente desde el enlace del correo o escribinos si el problema continúa.', 'flacso-uruguay')
+        );
+    }
+
     private static function process_submission_data(array $raw_post): array {
         $form_id = sanitize_key((string) wp_unslash($raw_post['flacso_mailing_form_id'] ?? 'general'));
         if ($form_id === '') {
@@ -518,10 +547,11 @@ class Flacso_Mailing_Subscription {
             $recipient['Name'] = $display_name;
         }
 
-        $subject = __('Confirmación de suscripción al mailing de FLACSO Uruguay', 'flacso-uruguay');
+        $subject = __('Confirmación de suscripción a la lista de difusión de FLACSO Uruguay', 'flacso-uruguay');
         $greeting_name = $first_name !== '' ? $first_name : $display_name;
-        $text_part = self::build_confirmation_text($greeting_name);
-        $html_part = self::build_confirmation_html($greeting_name);
+        $unsubscribe_url = self::build_unsubscribe_url($email);
+        $text_part = self::build_confirmation_text($greeting_name, $unsubscribe_url);
+        $html_part = self::build_confirmation_html($greeting_name, $unsubscribe_url);
 
         $response = wp_remote_post(
             'https://api.mailjet.com/v3.1/send',
@@ -560,16 +590,74 @@ class Flacso_Mailing_Subscription {
         return $status_code >= 200 && $status_code < 300;
     }
 
-    private static function build_confirmation_text(string $greeting_name = ''): string {
+    private static function unsubscribe_contact(string $email): array {
+        $settings = self::get_mailjet_settings();
+        $endpoint = sprintf(
+            'https://api.mailjet.com/v3/REST/contactslist/%s/managemanycontacts',
+            rawurlencode($settings['list_id'])
+        );
+
+        $response = wp_remote_post(
+            $endpoint,
+            [
+                'timeout' => 15,
+                'headers' => [
+                    'Authorization' => self::get_mailjet_auth_header($settings),
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                ],
+                'body' => wp_json_encode(
+                    [
+                        'Action' => 'unsub',
+                        'Contacts' => [
+                            [
+                                'Email' => $email,
+                            ],
+                        ],
+                    ]
+                ),
+            ]
+        );
+
+        if (is_wp_error($response)) {
+            return [
+                'success' => false,
+                'code' => 'network',
+            ];
+        }
+
+        $status_code = (int) wp_remote_retrieve_response_code($response);
+        if ($status_code >= 200 && $status_code < 300) {
+            return [
+                'success' => true,
+                'code' => 'success',
+            ];
+        }
+
+        if ($status_code === 401 || $status_code === 403) {
+            return ['success' => false, 'code' => 'auth'];
+        }
+
+        if ($status_code === 404) {
+            return ['success' => false, 'code' => 'list'];
+        }
+
+        return ['success' => false, 'code' => 'error'];
+    }
+
+    private static function build_confirmation_text(string $greeting_name = '', string $unsubscribe_url = ''): string {
         $lines = [];
         $lines[] = $greeting_name !== ''
             ? sprintf(__('Hola %s,', 'flacso-uruguay'), $greeting_name)
             : __('Hola,', 'flacso-uruguay');
         $lines[] = '';
-        $lines[] = __('Tu suscripción al mailing de FLACSO Uruguay quedó confirmada correctamente.', 'flacso-uruguay');
+        $lines[] = __('Tu suscripción a la lista de difusión de FLACSO Uruguay quedó confirmada correctamente.', 'flacso-uruguay');
         $lines[] = __('A partir de ahora vas a recibir novedades, actividades y comunicaciones institucionales en tu correo.', 'flacso-uruguay');
         $lines[] = '';
-        $lines[] = __('Si en algún momento querés dejar de recibir estos mensajes, vas a poder hacerlo desde el enlace de baja incluido en cada envío.', 'flacso-uruguay');
+        $lines[] = __('Si en algún momento querés darte de baja, podés hacerlo desde este enlace:', 'flacso-uruguay');
+        if ($unsubscribe_url !== '') {
+            $lines[] = $unsubscribe_url;
+        }
         $lines[] = '';
         $lines[] = __('Gracias por sumarte.', 'flacso-uruguay');
         $lines[] = __('FLACSO Uruguay', 'flacso-uruguay');
@@ -577,22 +665,28 @@ class Flacso_Mailing_Subscription {
         return implode("\n", $lines);
     }
 
-    private static function build_confirmation_html(string $greeting_name = ''): string {
+    private static function build_confirmation_html(string $greeting_name = '', string $unsubscribe_url = ''): string {
         $greeting = $greeting_name !== ''
             ? sprintf(__('Hola %s,', 'flacso-uruguay'), esc_html($greeting_name))
             : esc_html__('Hola,', 'flacso-uruguay');
 
-        $intro = esc_html__('Tu suscripción al mailing de FLACSO Uruguay quedó confirmada correctamente.', 'flacso-uruguay');
+        $intro = esc_html__('Tu suscripción a la lista de difusión de FLACSO Uruguay quedó confirmada correctamente.', 'flacso-uruguay');
         $body = esc_html__('A partir de ahora vas a recibir novedades, actividades y comunicaciones institucionales en tu correo.', 'flacso-uruguay');
-        $footer = esc_html__('Si en algún momento querés dejar de recibir estos mensajes, vas a poder hacerlo desde el enlace de baja incluido en cada envío.', 'flacso-uruguay');
+        $footer = esc_html__('Si en algún momento querés dejar de recibir estos mensajes, podés darte de baja desde el botón que aparece más abajo.', 'flacso-uruguay');
         $closing = esc_html__('Gracias por sumarte.', 'flacso-uruguay');
         $signature = esc_html__('FLACSO Uruguay', 'flacso-uruguay');
+        $unsubscribe_button = $unsubscribe_url !== ''
+            ? '<p style="margin:0 0 24px;"><a href="' . esc_url($unsubscribe_url) . '" style="display:inline-block;padding:14px 22px;border-radius:999px;background:#153e75;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;">' . esc_html__('Darme de baja de la lista de difusión', 'flacso-uruguay') . '</a></p>'
+            : '';
+        $unsubscribe_link = $unsubscribe_url !== ''
+            ? '<p style="margin:0;font-size:12px;line-height:1.6;color:#66758f;">' . esc_html__('Si el botón no funciona, copiá y pegá este enlace en tu navegador:', 'flacso-uruguay') . '<br><a href="' . esc_url($unsubscribe_url) . '" style="color:#153e75;word-break:break-all;">' . esc_html($unsubscribe_url) . '</a></p>'
+            : '';
 
         return '
             <div style="margin:0;padding:32px 20px;background:#f5f7fb;font-family:Arial,sans-serif;color:#10213a;">
                 <div style="max-width:620px;margin:0 auto;background:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #dbe5f1;">
                     <div style="padding:28px 32px;background:linear-gradient(135deg,#14233f 0%,#274b7a 100%);color:#ffffff;">
-                        <p style="margin:0 0 10px;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;opacity:0.78;">FLACSO Uruguay</p>
+                        <img src="' . esc_url(self::EMAIL_LOGO_URL) . '" alt="' . esc_attr__('FLACSO Uruguay 20 años', 'flacso-uruguay') . '" style="display:block;max-width:260px;width:100%;height:auto;margin:0 0 18px;">
                         <h1 style="margin:0;font-size:28px;line-height:1.15;">' . esc_html__('Suscripción confirmada', 'flacso-uruguay') . '</h1>
                     </div>
                     <div style="padding:30px 32px 34px;">
@@ -600,10 +694,71 @@ class Flacso_Mailing_Subscription {
                         <p style="margin:0 0 14px;font-size:16px;line-height:1.7;">' . $intro . '</p>
                         <p style="margin:0 0 14px;font-size:16px;line-height:1.7;">' . $body . '</p>
                         <p style="margin:0 0 24px;font-size:14px;line-height:1.7;color:#4a5b78;">' . $footer . '</p>
+                        ' . $unsubscribe_button . '
+                        ' . $unsubscribe_link . '
                         <p style="margin:0;font-size:16px;line-height:1.7;font-weight:700;">' . $closing . '<br>' . $signature . '</p>
                     </div>
                 </div>
             </div>';
+    }
+
+    private static function build_unsubscribe_url(string $email): string {
+        $normalized_email = strtolower(trim($email));
+
+        return add_query_arg(
+            [
+                'action' => self::UNSUBSCRIBE_ACTION,
+                'email' => $normalized_email,
+                'token' => self::build_unsubscribe_token($normalized_email),
+            ],
+            admin_url('admin-post.php')
+        );
+    }
+
+    private static function build_unsubscribe_token(string $email): string {
+        $normalized_email = strtolower(trim($email));
+        $settings = self::get_mailjet_settings();
+
+        return hash_hmac('sha256', $normalized_email . '|' . $settings['list_id'], wp_salt('auth'));
+    }
+
+    private static function render_unsubscribe_page(string $type, string $message): void {
+        $type = $type === 'success' ? 'success' : 'error';
+        $title = $type === 'success'
+            ? __('Baja confirmada', 'flacso-uruguay')
+            : __('No pudimos completar la baja', 'flacso-uruguay');
+        $accent = $type === 'success' ? '#166534' : '#991b1b';
+        $background = $type === 'success' ? '#ecfdf5' : '#fef2f2';
+        $border = $type === 'success' ? 'rgba(22, 101, 52, 0.12)' : 'rgba(153, 27, 27, 0.12)';
+
+        nocache_headers();
+        status_header($type === 'success' ? 200 : 400);
+        ?>
+        <!doctype html>
+        <html <?php language_attributes(); ?>>
+        <head>
+            <meta charset="<?php bloginfo('charset'); ?>">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title><?php echo esc_html($title); ?></title>
+        </head>
+        <body style="margin:0;padding:32px 20px;background:#f5f7fb;font-family:Arial,sans-serif;color:#10213a;">
+            <div style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #dbe5f1;">
+                <div style="padding:28px 32px;background:linear-gradient(135deg,#14233f 0%,#274b7a 100%);">
+                    <img src="<?php echo esc_url(self::EMAIL_LOGO_URL); ?>" alt="<?php esc_attr_e('FLACSO Uruguay 20 años', 'flacso-uruguay'); ?>" style="display:block;max-width:270px;width:100%;height:auto;">
+                </div>
+                <div style="padding:30px 32px 34px;">
+                    <div style="margin:0 0 18px;padding:16px 18px;border-radius:18px;background:<?php echo esc_attr($background); ?>;border:1px solid <?php echo esc_attr($border); ?>;color:<?php echo esc_attr($accent); ?>;font-size:15px;font-weight:700;line-height:1.6;">
+                        <?php echo esc_html($message); ?>
+                    </div>
+                    <h1 style="margin:0 0 14px;font-size:28px;line-height:1.18;"><?php echo esc_html($title); ?></h1>
+                    <p style="margin:0 0 18px;font-size:16px;line-height:1.7;color:#46546f;"><?php esc_html_e('Si querés volver a suscribirte más adelante, podés hacerlo directamente desde la portada de FLACSO Uruguay.', 'flacso-uruguay'); ?></p>
+                    <p style="margin:0;"><a href="<?php echo esc_url(home_url('/')); ?>" style="display:inline-block;padding:14px 22px;border-radius:999px;background:#153e75;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;"><?php esc_html_e('Volver al sitio', 'flacso-uruguay'); ?></a></p>
+                </div>
+            </div>
+        </body>
+        </html>
+        <?php
+        exit;
     }
 
     private static function ensure_contact_properties(array $property_names): bool {
@@ -914,11 +1069,11 @@ class Flacso_Mailing_Subscription {
         $message_map = [
             'success' => [
                 'type' => 'success',
-                'message' => __('Tu suscripción al mailing quedó registrada correctamente.', 'flacso-uruguay'),
+                'message' => __('Tu suscripción a la lista de difusión quedó registrada correctamente.', 'flacso-uruguay'),
             ],
             'success_confirmation_warning' => [
                 'type' => 'warning',
-                'message' => __('La suscripción quedó registrada, pero no pudimos enviarte el correo de confirmación en este momento.', 'flacso-uruguay'),
+                'message' => __('La suscripción a la lista de difusión quedó registrada, pero no pudimos enviarte el correo de confirmación en este momento.', 'flacso-uruguay'),
             ],
             'invalid' => [
                 'type' => 'error',

@@ -19,7 +19,7 @@ if (!function_exists('flacso_section_mailing_render')) {
             }
 
             return '<div class="flacso-content-shell"><div class="flacso-mailing-notice is-warning">' .
-                esc_html__('No se pudo cargar el módulo de suscripción al mailing.', 'flacso-uruguay') .
+                esc_html__('No se pudo cargar el módulo de suscripción a la lista de difusión.', 'flacso-uruguay') .
                 '</div></div>';
         }
 
@@ -54,7 +54,7 @@ if (!function_exists('flacso_section_mailing_render')) {
                         <?php if ($subtitle !== ''): ?>
                             <p class="flacso-mailing-home-subtitle"><?php echo esc_html($subtitle); ?></p>
                         <?php endif; ?>
-                        <ul class="flacso-mailing-home-points" aria-label="<?php esc_attr_e('Temas del mailing', 'flacso-uruguay'); ?>">
+                        <ul class="flacso-mailing-home-points" aria-label="<?php esc_attr_e('Temas de la lista de difusión', 'flacso-uruguay'); ?>">
                             <?php foreach ($benefits as $benefit): ?>
                                 <li><?php echo esc_html($benefit); ?></li>
                             <?php endforeach; ?>
