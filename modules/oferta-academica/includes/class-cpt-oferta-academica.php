@@ -13,6 +13,7 @@ class CPT_Oferta_Academica {
         self::register_post_type();
         add_filter('use_block_editor_for_post_type', [self::class, 'disable_block_editor'], 10, 2);
         add_filter('get_edit_post_link', [self::class, 'filter_edit_post_link'], 10, 3);
+        add_action('admin_bar_menu', [self::class, 'modify_admin_bar_edit_link'], 100);
         add_action('load-post-new.php', [self::class, 'redirect_add_new']);
     }
 
@@ -30,6 +31,23 @@ class CPT_Oferta_Academica {
             return esc_url($base_url . '/ofertas/' . $post_id);
         }
         return $link;
+    }
+
+    public static function modify_admin_bar_edit_link(WP_Admin_Bar $wp_admin_bar): void {
+        if (!is_singular('oferta-academica')) {
+            return;
+        }
+        
+        $post_id = get_the_ID();
+        $base_url = get_option('flacso_external_editor_url', 'https://editor-flacso-uy.vercel.app');
+        $base_url = rtrim($base_url, '/');
+        $edit_url = esc_url($base_url . '/ofertas/' . $post_id);
+
+        $node = $wp_admin_bar->get_node('edit');
+        if ($node) {
+            $node->href = $edit_url;
+            $wp_admin_bar->add_node($node);
+        }
     }
 
     public static function redirect_add_new() {

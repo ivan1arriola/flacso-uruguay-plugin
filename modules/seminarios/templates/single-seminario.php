@@ -1068,12 +1068,12 @@ while (have_posts()) : the_post();
     <?php if ($abierto_publico && !empty($preinscripcion_url)) : ?>
         <section class="py-5">
             <div class="final-cta text-center py-5 px-4 rounded-4 shadow-lg">
-                <h2 class="fw-bold mb-3">¿Querés Comenzar?</h2>
+                <h2 class="fw-bold mb-3">¿Querés comenzar?</h2>
                 <p class="lead mb-4 opacity-90">
-                    Únete a este seminario y forma parte de nuestra comunidad académica
+                    Unite a este seminario y formá parte de nuestra comunidad académica.
                 </p>
                 <a href="<?php echo esc_url($preinscripcion_url); ?>" class="btn btn-inscripcion btn-lg px-5 py-3 fw-bold">
-                    Inscribirse Ahora <i class="bi bi-arrow-right ms-2"></i>
+                    Inscribirse ahora <i class="bi bi-arrow-right ms-2"></i>
                 </a>
             </div>
         </section>
