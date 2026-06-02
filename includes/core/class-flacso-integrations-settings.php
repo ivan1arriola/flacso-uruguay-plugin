@@ -236,7 +236,7 @@ class FLACSO_Integrations_Settings {
             return [];
         }
 
-        $cache_key = 'flacso_mailjet_lists_' . md5($settings['api_key'] . '|' . $settings['secret_key']);
+        $cache_key = 'flacso_mailjet_lists_v2_' . md5($settings['api_key'] . '|' . $settings['secret_key']);
         if (!$force_refresh) {
             $cached = get_transient($cache_key);
             if (is_array($cached)) {
@@ -244,29 +244,48 @@ class FLACSO_Integrations_Settings {
             }
         }
 
-        $response = wp_remote_get(
-            'https://api.mailjet.com/v3/REST/contactslist',
-            [
-                'timeout' => 15,
-                'headers' => [
-                    'Authorization' => 'Basic ' . base64_encode($settings['api_key'] . ':' . $settings['secret_key']),
-                    'Accept' => 'application/json',
-                ],
-            ]
-        );
+        $auth_header = 'Basic ' . base64_encode($settings['api_key'] . ':' . $settings['secret_key']);
+        $limit = 1000;
+        $offset = 0;
+        $items = [];
 
-        if (is_wp_error($response)) {
-            return [];
-        }
+        do {
+            $response = wp_remote_get(
+                add_query_arg(
+                    [
+                        'Limit' => $limit,
+                        'Offset' => $offset,
+                    ],
+                    'https://api.mailjet.com/v3/REST/contactslist'
+                ),
+                [
+                    'timeout' => 15,
+                    'headers' => [
+                        'Authorization' => $auth_header,
+                        'Accept' => 'application/json',
+                    ],
+                ]
+            );
 
-        $status_code = (int) wp_remote_retrieve_response_code($response);
-        if ($status_code < 200 || $status_code >= 300) {
-            return [];
-        }
+            if (is_wp_error($response)) {
+                return [];
+            }
 
-        $body = wp_remote_retrieve_body($response);
-        $decoded = json_decode($body, true);
-        $items = isset($decoded['Data']) && is_array($decoded['Data']) ? $decoded['Data'] : [];
+            $status_code = (int) wp_remote_retrieve_response_code($response);
+            if ($status_code < 200 || $status_code >= 300) {
+                return [];
+            }
+
+            $body = wp_remote_retrieve_body($response);
+            $decoded = json_decode($body, true);
+            $page_items = isset($decoded['Data']) && is_array($decoded['Data']) ? $decoded['Data'] : [];
+            $items = array_merge($items, $page_items);
+
+            $page_count = count($page_items);
+            $total = isset($decoded['Total']) ? absint($decoded['Total']) : 0;
+            $offset += $page_count;
+        } while ($page_count === $limit || ($total > 0 && $offset < $total));
+
         $lists = [];
 
         foreach ($items as $item) {
