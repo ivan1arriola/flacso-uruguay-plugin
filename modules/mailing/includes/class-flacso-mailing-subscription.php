@@ -25,6 +25,14 @@ class Flacso_Mailing_Subscription {
             'Datatype' => 'str',
             'NameSpace' => 'static',
         ],
+        'institucion' => [
+            'Datatype' => 'str',
+            'NameSpace' => 'static',
+        ],
+        'pais' => [
+            'Datatype' => 'str',
+            'NameSpace' => 'static',
+        ],
     ];
 
     public static function init(): void {
@@ -77,6 +85,8 @@ class Flacso_Mailing_Subscription {
                 'last_name_placeholder' => __('Tu apellido', 'flacso-uruguay'),
                 'email_placeholder' => __('tu@email.com', 'flacso-uruguay'),
                 'profession_placeholder' => __('Tu profesión', 'flacso-uruguay'),
+                'institution_placeholder' => __('Tu institución', 'flacso-uruguay'),
+                'country_placeholder' => __('Tu país', 'flacso-uruguay'),
             ],
             $atts,
             self::SHORTCODE
@@ -116,10 +126,14 @@ class Flacso_Mailing_Subscription {
             'last_name_placeholder' => __('Tu apellido', 'flacso-uruguay'),
             'email_placeholder' => __('tu@email.com', 'flacso-uruguay'),
             'profession_placeholder' => __('Tu profesión', 'flacso-uruguay'),
+            'institution_placeholder' => __('Tu institución', 'flacso-uruguay'),
+            'country_placeholder' => __('Tu país', 'flacso-uruguay'),
             'extra_classes' => '',
             'show_name_field' => true,
             'show_last_name_field' => true,
             'show_profession_field' => true,
+            'show_institution_field' => true,
+            'show_country_field' => true,
         ];
         $args = wp_parse_args($args, $defaults);
         $args['button_label'] = trim((string) $args['button_label']) !== '' ? (string) $args['button_label'] : $defaults['button_label'];
@@ -128,6 +142,8 @@ class Flacso_Mailing_Subscription {
         $args['last_name_placeholder'] = trim((string) $args['last_name_placeholder']) !== '' ? (string) $args['last_name_placeholder'] : $defaults['last_name_placeholder'];
         $args['email_placeholder'] = trim((string) $args['email_placeholder']) !== '' ? (string) $args['email_placeholder'] : $defaults['email_placeholder'];
         $args['profession_placeholder'] = trim((string) $args['profession_placeholder']) !== '' ? (string) $args['profession_placeholder'] : $defaults['profession_placeholder'];
+        $args['institution_placeholder'] = trim((string) $args['institution_placeholder']) !== '' ? (string) $args['institution_placeholder'] : $defaults['institution_placeholder'];
+        $args['country_placeholder'] = trim((string) $args['country_placeholder']) !== '' ? (string) $args['country_placeholder'] : $defaults['country_placeholder'];
         $args['form_title'] = trim((string) $args['form_title']);
         $args['form_description'] = trim((string) $args['form_description']);
 
@@ -139,13 +155,12 @@ class Flacso_Mailing_Subscription {
         $show_first_name_field = !empty($args['show_name_field']);
         $show_last_name_field = !empty($args['show_last_name_field']);
         $show_profession_field = !empty($args['show_profession_field']);
+        $show_institution_field = !empty($args['show_institution_field']);
+        $show_country_field = !empty($args['show_country_field']);
 
         $grid_classes = [];
-        if ($show_first_name_field || $show_last_name_field) {
-            $grid_classes[] = 'has-name-fields';
-        }
-        if ($show_profession_field) {
-            $grid_classes[] = 'has-profession-field';
+        if ($show_first_name_field || $show_last_name_field || $show_profession_field || $show_institution_field || $show_country_field) {
+            $grid_classes[] = 'has-multiple-fields';
         }
         if (empty($grid_classes)) {
             $grid_classes[] = 'is-email-only';
@@ -231,7 +246,7 @@ class Flacso_Mailing_Subscription {
                     </div>
 
                     <?php if ($show_profession_field): ?>
-                        <div class="flacso-mailing-field flacso-mailing-field--wide">
+                        <div class="flacso-mailing-field">
                             <label for="<?php echo esc_attr($form_id . '-profession'); ?>"><?php esc_html_e('Profesión', 'flacso-uruguay'); ?></label>
                             <input
                                 id="<?php echo esc_attr($form_id . '-profession'); ?>"
@@ -239,6 +254,33 @@ class Flacso_Mailing_Subscription {
                                 name="flacso_mailing_profession"
                                 maxlength="160"
                                 placeholder="<?php echo esc_attr((string) $args['profession_placeholder']); ?>">
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if ($show_institution_field): ?>
+                        <div class="flacso-mailing-field">
+                            <label for="<?php echo esc_attr($form_id . '-institution'); ?>"><?php esc_html_e('Institución', 'flacso-uruguay'); ?></label>
+                            <input
+                                id="<?php echo esc_attr($form_id . '-institution'); ?>"
+                                type="text"
+                                name="flacso_mailing_institution"
+                                maxlength="180"
+                                placeholder="<?php echo esc_attr((string) $args['institution_placeholder']); ?>">
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if ($show_country_field): ?>
+                        <div class="flacso-mailing-field">
+                            <label for="<?php echo esc_attr($form_id . '-country'); ?>"><?php esc_html_e('País', 'flacso-uruguay'); ?></label>
+                            <select
+                                id="<?php echo esc_attr($form_id . '-country'); ?>"
+                                name="flacso_mailing_country"
+                                autocomplete="country-name">
+                                <option value=""><?php echo esc_html((string) $args['country_placeholder']); ?></option>
+                                <?php foreach (self::get_country_options() as $country_value => $country_label): ?>
+                                    <option value="<?php echo esc_attr($country_value); ?>"><?php echo esc_html($country_label); ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -311,6 +353,8 @@ class Flacso_Mailing_Subscription {
         $first_name = sanitize_text_field((string) wp_unslash($raw_post['flacso_mailing_name'] ?? ''));
         $last_name = sanitize_text_field((string) wp_unslash($raw_post['flacso_mailing_last_name'] ?? ''));
         $profession = sanitize_text_field((string) wp_unslash($raw_post['flacso_mailing_profession'] ?? ''));
+        $institution = sanitize_text_field((string) wp_unslash($raw_post['flacso_mailing_institution'] ?? ''));
+        $country = sanitize_text_field((string) wp_unslash($raw_post['flacso_mailing_country'] ?? ''));
         $has_consent = !empty($raw_post['flacso_mailing_consent']);
 
         if (!$has_consent || $email === '' || !is_email($email)) {
@@ -335,6 +379,12 @@ class Flacso_Mailing_Subscription {
         }
         if ($profession !== '') {
             $properties['profesion'] = $profession;
+        }
+        if ($institution !== '') {
+            $properties['institucion'] = $institution;
+        }
+        if ($country !== '') {
+            $properties['pais'] = $country;
         }
 
         $result = self::subscribe_contact($email, $display_name, $properties);
@@ -590,6 +640,32 @@ class Flacso_Mailing_Subscription {
 
     private static function clear_contact_properties_cache(): void {
         delete_transient(self::get_contact_properties_cache_key(self::get_mailjet_settings()));
+    }
+
+    private static function get_country_options(): array {
+        return [
+            'Uruguay' => 'Uruguay',
+            'Argentina' => 'Argentina',
+            'Bolivia' => 'Bolivia',
+            'Brasil' => 'Brasil',
+            'Chile' => 'Chile',
+            'Colombia' => 'Colombia',
+            'Costa Rica' => 'Costa Rica',
+            'Cuba' => 'Cuba',
+            'Ecuador' => 'Ecuador',
+            'El Salvador' => 'El Salvador',
+            'Guatemala' => 'Guatemala',
+            'Haití' => 'Haití',
+            'Honduras' => 'Honduras',
+            'México' => 'México',
+            'Nicaragua' => 'Nicaragua',
+            'Panamá' => 'Panamá',
+            'Paraguay' => 'Paraguay',
+            'Perú' => 'Perú',
+            'República Dominicana' => 'República Dominicana',
+            'Venezuela' => 'Venezuela',
+            'Otro' => __('Otro', 'flacso-uruguay'),
+        ];
     }
 
     private static function get_mailjet_settings(): array {

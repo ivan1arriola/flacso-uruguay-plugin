@@ -227,7 +227,8 @@
     color: #243b63;
 }
 
-.flacso-mailing-field input {
+.flacso-mailing-field input,
+.flacso-mailing-field select {
     width: 100%;
     min-height: 54px;
     padding: 0.95rem 1rem;
@@ -243,7 +244,23 @@
     color: #9ba9bf;
 }
 
-.flacso-mailing-field input:focus {
+.flacso-mailing-field select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding-right: 3rem;
+    background-image:
+        linear-gradient(45deg, transparent 50%, #4f6487 50%),
+        linear-gradient(135deg, #4f6487 50%, transparent 50%);
+    background-position:
+        calc(100% - 1.15rem) calc(50% - 0.14rem),
+        calc(100% - 0.8rem) calc(50% - 0.14rem);
+    background-size: 0.42rem 0.42rem, 0.42rem 0.42rem;
+    background-repeat: no-repeat;
+}
+
+.flacso-mailing-field input:focus,
+.flacso-mailing-field select:focus {
     outline: none;
     background: #ffffff;
     border-color: #2f5d8c;
@@ -345,12 +362,8 @@
         align-items: center;
     }
 
-    .flacso-mailing-form-grid.has-name-fields {
+    .flacso-mailing-form-grid.has-multiple-fields {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .flacso-mailing-form-grid.has-profession-field .flacso-mailing-field--wide {
-        grid-column: 1 / -1;
     }
 }
 
