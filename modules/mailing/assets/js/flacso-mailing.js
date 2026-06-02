@@ -26,73 +26,107 @@
 
         button.disabled = !!isSubmitting;
         form.classList.toggle('is-submitting', !!isSubmitting);
+        form.setAttribute('aria-busy', isSubmitting ? 'true' : 'false');
+        form.dataset.mailingSubmitting = isSubmitting ? '1' : '0';
         button.textContent = isSubmitting ? submittingLabel : defaultLabel;
     }
 
-    function initMailingForm(form) {
-        if (!form || form.dataset.mailingAjaxBound === '1') {
-            return;
-        }
-
-        form.dataset.mailingAjaxBound = '1';
-
+    function getMailingContext(form) {
         var button = form.querySelector('[data-mailing-submit]');
         var shell = form.closest('.flacso-mailing-form-shell');
         var noticeSlot = shell ? shell.querySelector('[data-mailing-notice]') : null;
-        var ajaxUrl = (window.flacsoMailingSettings && window.flacsoMailingSettings.ajaxUrl) || '';
+        var ajaxUrl = form.getAttribute('data-mailing-ajax-url') || (window.flacsoMailingSettings && window.flacsoMailingSettings.ajaxUrl) || '';
 
-        if (!button || !noticeSlot || !ajaxUrl) {
-            return;
+        if (!button || !noticeSlot || !ajaxUrl || typeof window.fetch !== 'function' || typeof window.FormData !== 'function') {
+            return null;
         }
 
-        form.addEventListener('submit', function (event) {
-            event.preventDefault();
+        return {
+            button: button,
+            noticeSlot: noticeSlot,
+            ajaxUrl: ajaxUrl
+        };
+    }
 
-            if (typeof form.reportValidity === 'function' && !form.reportValidity()) {
-                return;
+    function submitMailingForm(form, context) {
+        context = context || getMailingContext(form);
+        if (!context) {
+            return Promise.resolve();
+        }
+
+        var button = context.button;
+        var noticeSlot = context.noticeSlot;
+        var ajaxUrl = context.ajaxUrl;
+
+        if (form.dataset.mailingSubmitting === '1') {
+            return Promise.resolve();
+        }
+
+        if (typeof form.reportValidity === 'function' && !form.reportValidity()) {
+            return Promise.resolve();
+        }
+
+        toggleSubmitting(form, button, true);
+
+        var formData = new FormData(form);
+
+        return fetch(ajaxUrl, {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin',
+            headers: {
+                Accept: 'application/json'
             }
-
-            toggleSubmitting(form, button, true);
-
-            var formData = new FormData(form);
-
-            fetch(ajaxUrl, {
-                method: 'POST',
-                body: formData,
-                credentials: 'same-origin'
-            })
-                .then(function (response) {
-                    return response.json().catch(function () {
-                        return {
-                            success: false,
-                            data: {
-                                noticeHtml: '<div class="flacso-mailing-notice is-error" role="status">No pudimos procesar la respuesta del servidor.</div>'
-                            }
-                        };
-                    });
-                })
-                .then(function (payload) {
-                    var data = payload && payload.data ? payload.data : {};
-                    setNotice(noticeSlot, data.noticeHtml || '');
-
-                    if (payload && payload.success) {
-                        form.reset();
-                    }
-                })
-                .catch(function () {
-                    setNotice(
-                        noticeSlot,
-                        '<div class="flacso-mailing-notice is-error" role="status">No se pudo enviar el formulario en este momento. Probá nuevamente.</div>'
-                    );
-                })
-                .finally(function () {
-                    toggleSubmitting(form, button, false);
+        })
+            .then(function (response) {
+                return response.json().catch(function () {
+                    return {
+                        success: false,
+                        data: {
+                            noticeHtml: '<div class="flacso-mailing-notice is-error" role="status">No pudimos procesar la respuesta del servidor.</div>'
+                        }
+                    };
                 });
-        });
+            })
+            .then(function (payload) {
+                var data = payload && payload.data ? payload.data : {};
+                setNotice(noticeSlot, data.noticeHtml || '');
+
+                if (payload && payload.success) {
+                    form.reset();
+                }
+            })
+            .catch(function () {
+                setNotice(
+                    noticeSlot,
+                    '<div class="flacso-mailing-notice is-error" role="status">No se pudo enviar el formulario en este momento. Probá nuevamente.</div>'
+                );
+            })
+            .finally(function () {
+                toggleSubmitting(form, button, false);
+            });
     }
 
     ready(function () {
-        var forms = document.querySelectorAll('[data-mailing-form]');
-        Array.prototype.forEach.call(forms, initMailingForm);
+        document.addEventListener(
+            'submit',
+            function (event) {
+                var form = event.target;
+                var context;
+
+                if (!form || !form.matches || !form.matches('[data-mailing-form]')) {
+                    return;
+                }
+
+                context = getMailingContext(form);
+                if (!context) {
+                    return;
+                }
+
+                event.preventDefault();
+                submitMailingForm(form, context);
+            },
+            true
+        );
     });
 })();

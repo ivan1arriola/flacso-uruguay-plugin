@@ -61,8 +61,12 @@ class Flacso_Mailing_Subscription {
             FLACSO_MAILING_MODULE_URL . 'assets/js/flacso-mailing.js',
             [],
             self::asset_version('assets/js/flacso-mailing.js'),
-            true
+            false
         );
+
+        if (function_exists('wp_script_add_data')) {
+            wp_script_add_data(self::SCRIPT_HANDLE, 'strategy', 'defer');
+        }
 
         wp_localize_script(
             self::SCRIPT_HANDLE,
@@ -190,6 +194,7 @@ class Flacso_Mailing_Subscription {
                 action="<?php echo esc_url(admin_url('admin-post.php')); ?>"
                 method="post"
                 data-mailing-form
+                data-mailing-ajax-url="<?php echo esc_url(admin_url('admin-ajax.php')); ?>"
                 novalidate>
                 <input type="hidden" name="action" value="<?php echo esc_attr(self::FORM_ACTION); ?>">
                 <input type="hidden" name="redirect_to" value="<?php echo esc_attr($redirect_url); ?>">
@@ -388,9 +393,14 @@ class Flacso_Mailing_Subscription {
         }
 
         $result = self::subscribe_contact($email, $display_name, $properties);
-        $status = !empty($result['success']) ? 'success' : ($result['code'] ?? 'error');
+        if (!empty($result['success'])) {
+            $confirmation_sent = self::send_confirmation_email($email, $display_name, $first_name);
+            $status = $confirmation_sent ? 'success' : 'success_confirmation_warning';
 
-        return self::build_submission_result($status, $form_id, $redirect_url, !empty($result['success']));
+            return self::build_submission_result($status, $form_id, $redirect_url, true);
+        }
+
+        return self::build_submission_result($result['code'] ?? 'error', $form_id, $redirect_url, false);
     }
 
     public static function is_configured(): bool {
@@ -478,6 +488,122 @@ class Flacso_Mailing_Subscription {
         }
 
         return ['success' => false, 'code' => 'error'];
+    }
+
+    private static function send_confirmation_email(string $email, string $display_name = '', string $first_name = ''): bool {
+        $settings = self::get_mailjet_settings();
+        if ($settings['api_key'] === '' || $settings['secret_key'] === '') {
+            return false;
+        }
+
+        $sender_email = sanitize_email((string) ($settings['sender_email'] ?? ''));
+        if ($sender_email === '') {
+            $sender_email = sanitize_email((string) get_option('admin_email'));
+        }
+
+        if ($sender_email === '') {
+            return false;
+        }
+
+        $sender_name = trim((string) ($settings['sender_name'] ?? ''));
+        if ($sender_name === '') {
+            $sender_name = wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES);
+        }
+
+        $recipient = [
+            'Email' => $email,
+        ];
+
+        if ($display_name !== '') {
+            $recipient['Name'] = $display_name;
+        }
+
+        $subject = __('Confirmación de suscripción al mailing de FLACSO Uruguay', 'flacso-uruguay');
+        $greeting_name = $first_name !== '' ? $first_name : $display_name;
+        $text_part = self::build_confirmation_text($greeting_name);
+        $html_part = self::build_confirmation_html($greeting_name);
+
+        $response = wp_remote_post(
+            'https://api.mailjet.com/v3.1/send',
+            [
+                'timeout' => 15,
+                'headers' => [
+                    'Authorization' => self::get_mailjet_auth_header($settings),
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                ],
+                'body' => wp_json_encode(
+                    [
+                        'Messages' => [
+                            [
+                                'From' => [
+                                    'Email' => $sender_email,
+                                    'Name' => $sender_name,
+                                ],
+                                'To' => [$recipient],
+                                'Subject' => $subject,
+                                'TextPart' => $text_part,
+                                'HTMLPart' => $html_part,
+                            ],
+                        ],
+                    ]
+                ),
+            ]
+        );
+
+        if (is_wp_error($response)) {
+            return false;
+        }
+
+        $status_code = (int) wp_remote_retrieve_response_code($response);
+
+        return $status_code >= 200 && $status_code < 300;
+    }
+
+    private static function build_confirmation_text(string $greeting_name = ''): string {
+        $lines = [];
+        $lines[] = $greeting_name !== ''
+            ? sprintf(__('Hola %s,', 'flacso-uruguay'), $greeting_name)
+            : __('Hola,', 'flacso-uruguay');
+        $lines[] = '';
+        $lines[] = __('Tu suscripción al mailing de FLACSO Uruguay quedó confirmada correctamente.', 'flacso-uruguay');
+        $lines[] = __('A partir de ahora vas a recibir novedades, actividades y comunicaciones institucionales en tu correo.', 'flacso-uruguay');
+        $lines[] = '';
+        $lines[] = __('Si en algún momento querés dejar de recibir estos mensajes, vas a poder hacerlo desde el enlace de baja incluido en cada envío.', 'flacso-uruguay');
+        $lines[] = '';
+        $lines[] = __('Gracias por sumarte.', 'flacso-uruguay');
+        $lines[] = __('FLACSO Uruguay', 'flacso-uruguay');
+
+        return implode("\n", $lines);
+    }
+
+    private static function build_confirmation_html(string $greeting_name = ''): string {
+        $greeting = $greeting_name !== ''
+            ? sprintf(__('Hola %s,', 'flacso-uruguay'), esc_html($greeting_name))
+            : esc_html__('Hola,', 'flacso-uruguay');
+
+        $intro = esc_html__('Tu suscripción al mailing de FLACSO Uruguay quedó confirmada correctamente.', 'flacso-uruguay');
+        $body = esc_html__('A partir de ahora vas a recibir novedades, actividades y comunicaciones institucionales en tu correo.', 'flacso-uruguay');
+        $footer = esc_html__('Si en algún momento querés dejar de recibir estos mensajes, vas a poder hacerlo desde el enlace de baja incluido en cada envío.', 'flacso-uruguay');
+        $closing = esc_html__('Gracias por sumarte.', 'flacso-uruguay');
+        $signature = esc_html__('FLACSO Uruguay', 'flacso-uruguay');
+
+        return '
+            <div style="margin:0;padding:32px 20px;background:#f5f7fb;font-family:Arial,sans-serif;color:#10213a;">
+                <div style="max-width:620px;margin:0 auto;background:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #dbe5f1;">
+                    <div style="padding:28px 32px;background:linear-gradient(135deg,#14233f 0%,#274b7a 100%);color:#ffffff;">
+                        <p style="margin:0 0 10px;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;opacity:0.78;">FLACSO Uruguay</p>
+                        <h1 style="margin:0;font-size:28px;line-height:1.15;">' . esc_html__('Suscripción confirmada', 'flacso-uruguay') . '</h1>
+                    </div>
+                    <div style="padding:30px 32px 34px;">
+                        <p style="margin:0 0 16px;font-size:17px;line-height:1.6;">' . $greeting . '</p>
+                        <p style="margin:0 0 14px;font-size:16px;line-height:1.7;">' . $intro . '</p>
+                        <p style="margin:0 0 14px;font-size:16px;line-height:1.7;">' . $body . '</p>
+                        <p style="margin:0 0 24px;font-size:14px;line-height:1.7;color:#4a5b78;">' . $footer . '</p>
+                        <p style="margin:0;font-size:16px;line-height:1.7;font-weight:700;">' . $closing . '<br>' . $signature . '</p>
+                    </div>
+                </div>
+            </div>';
     }
 
     private static function ensure_contact_properties(array $property_names): bool {
@@ -677,6 +803,8 @@ class Flacso_Mailing_Subscription {
             'api_key' => trim((string) get_option('flacso_mailjet_api_key', '')),
             'secret_key' => trim((string) get_option('flacso_mailjet_secret_key', '')),
             'list_id' => trim((string) get_option('flacso_mailjet_list_id', '')),
+            'sender_email' => sanitize_email((string) get_option('flacso_mailjet_sender_email', get_option('admin_email'))),
+            'sender_name' => trim((string) get_option('flacso_mailjet_sender_name', wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES))),
         ];
     }
 
@@ -787,6 +915,10 @@ class Flacso_Mailing_Subscription {
             'success' => [
                 'type' => 'success',
                 'message' => __('Tu suscripción al mailing quedó registrada correctamente.', 'flacso-uruguay'),
+            ],
+            'success_confirmation_warning' => [
+                'type' => 'warning',
+                'message' => __('La suscripción quedó registrada, pero no pudimos enviarte el correo de confirmación en este momento.', 'flacso-uruguay'),
             ],
             'invalid' => [
                 'type' => 'error',

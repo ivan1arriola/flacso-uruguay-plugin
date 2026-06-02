@@ -22,6 +22,8 @@ class FLACSO_Integrations_Settings {
     private const OPTION_MAILJET_API_KEY = 'flacso_mailjet_api_key';
     private const OPTION_MAILJET_SECRET_KEY = 'flacso_mailjet_secret_key';
     private const OPTION_MAILJET_LIST_ID = 'flacso_mailjet_list_id';
+    private const OPTION_MAILJET_SENDER_EMAIL = 'flacso_mailjet_sender_email';
+    private const OPTION_MAILJET_SENDER_NAME = 'flacso_mailjet_sender_name';
 
     public static function init(): void {
         if (!is_admin()) {
@@ -184,6 +186,26 @@ class FLACSO_Integrations_Settings {
                 'default' => '',
             ]
         );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_MAILJET_SENDER_EMAIL,
+            [
+                'type' => 'string',
+                'sanitize_callback' => 'sanitize_email',
+                'default' => get_option('admin_email'),
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_MAILJET_SENDER_NAME,
+            [
+                'type' => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+                'default' => wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES),
+            ]
+        );
     }
 
     public static function sanitize_charlas_webhook_url($value): string {
@@ -219,6 +241,8 @@ class FLACSO_Integrations_Settings {
             'api_key' => trim((string) get_option(self::OPTION_MAILJET_API_KEY, '')),
             'secret_key' => trim((string) get_option(self::OPTION_MAILJET_SECRET_KEY, '')),
             'list_id' => trim((string) get_option(self::OPTION_MAILJET_LIST_ID, '')),
+            'sender_email' => sanitize_email((string) get_option(self::OPTION_MAILJET_SENDER_EMAIL, get_option('admin_email'))),
+            'sender_name' => trim((string) get_option(self::OPTION_MAILJET_SENDER_NAME, wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES))),
         ];
     }
 
@@ -1163,7 +1187,7 @@ class FLACSO_Integrations_Settings {
                     <span class="flacso-card-icon">✉️</span>
                     <h2><?php esc_html_e('Mailjet Mailing', 'flacso-uruguay'); ?></h2>
                 </div>
-                <p class="flacso-integrations-lead"><?php esc_html_e('Credenciales para el formulario de suscripción al mailing. Se usan para dar de alta contactos en una lista de Mailjet desde WordPress.', 'flacso-uruguay'); ?></p>
+                <p class="flacso-integrations-lead"><?php esc_html_e('Credenciales para el formulario de suscripción al mailing. Se usan para dar de alta contactos en una lista de Mailjet y enviar el correo de confirmación desde WordPress.', 'flacso-uruguay'); ?></p>
             </div>
 
             <div class="flacso-card-body">
@@ -1181,6 +1205,20 @@ class FLACSO_Integrations_Settings {
                     'password',
                     'xxxxxxxxxxxxxxxxxxxxxxxx',
                     __('Clave privada asociada a la API Key anterior.', 'flacso-uruguay')
+                );
+                self::render_input_field(
+                    self::OPTION_MAILJET_SENDER_EMAIL,
+                    __('Mailjet Sender Email', 'flacso-uruguay'),
+                    'email',
+                    'noreply@flacso.edu.uy',
+                    __('Remitente validado en Mailjet que se usará para el correo de confirmación al suscriptor.', 'flacso-uruguay')
+                );
+                self::render_input_field(
+                    self::OPTION_MAILJET_SENDER_NAME,
+                    __('Mailjet Sender Name', 'flacso-uruguay'),
+                    'text',
+                    'FLACSO Uruguay',
+                    __('Nombre visible del remitente para ese correo de confirmación.', 'flacso-uruguay')
                 );
                 self::render_mailjet_list_field();
                 ?>
