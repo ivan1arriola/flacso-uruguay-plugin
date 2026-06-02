@@ -155,6 +155,7 @@ if (!function_exists('dp_rest_build_docente_payload')) {
             // Compatibilidad
             'prefijo_abrev' => get_post_meta($post->ID, 'prefijo_abrev', true),
             'prefijo_full' => get_post_meta($post->ID, 'prefijo_full', true),
+            'titulo_academico' => get_post_meta($post->ID, 'titulo_academico', true),
             'nombre' => get_post_meta($post->ID, 'nombre', true),
             'apellido' => get_post_meta($post->ID, 'apellido', true),
             'cv' => get_post_meta($post->ID, 'cv', true),
