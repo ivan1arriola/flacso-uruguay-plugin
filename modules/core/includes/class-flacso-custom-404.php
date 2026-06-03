@@ -32,6 +32,9 @@ if ( ! class_exists( 'Flacso_Custom_404' ) ) {
 				$GLOBALS['wp_query']->set_404();
 			}
 
+			add_filter( 'pre_get_document_title', [ __CLASS__, 'filter_document_title' ], 99 );
+			add_filter( 'wp_title', [ __CLASS__, 'filter_document_title' ], 99 );
+
 			self::enqueue_assets();
 
 			$requested_path = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
@@ -46,6 +49,10 @@ if ( ! class_exists( 'Flacso_Custom_404' ) ) {
 			get_footer();
 
 			exit;
+		}
+
+		public static function filter_document_title( string $title ): string {
+			return __( 'Página no encontrada | FLACSO Uruguay', 'flacso-uruguay' );
 		}
 
 		private static function enqueue_assets(): void {
@@ -358,7 +365,7 @@ if ( ! class_exists( 'Flacso_Custom_404' ) ) {
 						<div class="flacso-404-hero__content">
 							<p class="flacso-404-eyebrow">
 								<i class="bi bi-exclamation-circle" aria-hidden="true"></i>
-								<?php esc_html_e( 'Error', 'flacso-uruguay' ); ?>
+								<?php esc_html_e( 'Te ayudamos a seguir navegando', 'flacso-uruguay' ); ?>
 							</p>
 
 							<h1 id="flacso-404-title" class="flacso-404-title">
@@ -366,7 +373,7 @@ if ( ! class_exists( 'Flacso_Custom_404' ) ) {
 							</h1>
 
 							<p class="flacso-404-lead">
-								<?php esc_html_e( 'Es posible que el enlace haya cambiado, que la dirección tenga un error o que el contenido ya no esté disponible.', 'flacso-uruguay' ); ?>
+								<?php esc_html_e( 'Es posible que el enlace haya cambiado, que la dirección tenga un error o que el contenido ya no esté disponible. Desde acá podés retomar el recorrido sin volver a empezar.', 'flacso-uruguay' ); ?>
 							</p>
 
 							<?php if ( $path ) : ?>
