@@ -122,6 +122,20 @@ class Oferta_Data_MetaBox {
                             </label>
                         </td>
                     </tr>
+                    <tr>
+                        <th><label for="oferta_data_carta_cta_titulo"><?php esc_html_e('Título CTA carta/preinscripción', 'flacso-oferta-academica'); ?></label></th>
+                        <td>
+                            <input
+                                type="text"
+                                id="oferta_data_carta_cta_titulo"
+                                name="oferta_data[carta_cta_titulo]"
+                                value="<?php echo esc_attr($values['carta_cta_titulo']); ?>"
+                                class="regular-text"
+                                placeholder="<?php echo esc_attr__('Comenzá el año cursando un posgrado en FLACSO Uruguay', 'flacso-oferta-academica'); ?>"
+                            />
+                            <p class="description"><?php esc_html_e('Se usa en el bloque final de llamada a la acción de la carta/preinscripción.', 'flacso-oferta-academica'); ?></p>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
 
@@ -207,6 +221,7 @@ class Oferta_Data_MetaBox {
         self::save_simple_field($post_id, 'malla_curricular', $data['malla_curricular'] ?? '');
         self::save_simple_field($post_id, 'proximo_inicio_precision', $data['proximo_inicio_precision'] ?? '');
         self::save_simple_field($post_id, 'inscripciones_abiertas', $data['inscripciones_abiertas'] ?? '', 'boolean');
+        self::save_simple_field($post_id, 'carta_cta_titulo', $data['carta_cta_titulo'] ?? '');
 
         foreach (self::HTML_FIELDS as $field) {
             self::save_simple_field($post_id, $field, $data[$field] ?? '', 'html');
@@ -247,6 +262,7 @@ class Oferta_Data_MetaBox {
                 $value = Oferta_Data_Schema::sanitize_email($raw_value);
                 break;
             case 'cohorte':
+            case 'carta_cta_titulo':
                 $value = sanitize_text_field($raw_value);
                 break;
             case 'inscripciones_abiertas':
@@ -319,6 +335,7 @@ class Oferta_Data_MetaBox {
             'malla_curricular' => get_post_meta($post_id, 'malla_curricular', true),
             'precision' => get_post_meta($post_id, 'proximo_inicio_precision', true),
             'inscripciones_abiertas' => get_post_meta($post_id, 'inscripciones_abiertas', true) ? '1' : '',
+            'carta_cta_titulo' => get_post_meta($post_id, 'carta_cta_titulo', true),
         ];
 
         foreach (self::HTML_FIELDS as $field) {

@@ -39,6 +39,7 @@ class Oferta_Data_Schema {
     private const TEXT_FIELDS = [
         'tabla_precios_tipo',
         'modalidad_resumen',
+        'carta_cta_titulo',
         'asistente_academica_rol',
     ];
 
@@ -830,6 +831,7 @@ class Oferta_Data_Schema {
             'cohorte' => fn($value) => sanitize_text_field($value),
             'tabla_precios_tipo' => fn($value) => sanitize_text_field($value),
             'modalidad_resumen' => fn($value) => sanitize_text_field($value),
+            'carta_cta_titulo' => fn($value) => sanitize_text_field($value),
             'asistente_academica_rol' => fn($value) => sanitize_text_field($value),
             'asistente_academica_correo' => fn($value) => self::sanitize_email($value),
             'asistente_academica_docente_id' => fn($value) => self::sanitize_integer($value),

@@ -28,8 +28,9 @@ if (!is_wp_error($tipo_terms) && !empty($tipo_terms)) {
 }
 
 $raw_content = get_post_field('post_content', $post_id);
+$filtered_main_content = trim((string) apply_filters('the_content', $raw_content));
 $descripcion_html = !empty($data['descripcion_html']) ? $data['descripcion_html'] : '';
-$has_main_content = trim(wp_strip_all_tags(apply_filters('the_content', $raw_content))) !== '' || trim(wp_strip_all_tags($descripcion_html)) !== '';
+$has_main_content = trim(wp_strip_all_tags($filtered_main_content)) !== '' || trim(wp_strip_all_tags($descripcion_html)) !== '';
 
 $inscripciones_meta = get_post_meta($post_id, 'inscripciones_abiertas', true);
 
@@ -99,6 +100,119 @@ $render_info_card = static function ($title, $body, $extra_class = '') {
     </section>
     <?php
 };
+
+$build_main_content_cards = static function ($html) {
+    $html = trim((string) $html);
+
+    if ($html === '') {
+        return [];
+    }
+
+    $make_card = static function ($title, $body) {
+        $body = trim((string) $body);
+
+        if ($body === '') {
+            return null;
+        }
+
+        $classes = [];
+
+        if (preg_match('/<(table|iframe)\b/i', $body)) {
+            $classes[] = 'flacso-oa-content-card--wide';
+        }
+
+        return [
+            'title' => trim((string) $title),
+            'body' => $body,
+            'class' => implode(' ', $classes),
+        ];
+    };
+
+    if (!class_exists('DOMDocument')) {
+        $fallback = $make_card(__('Información general', 'flacso-uruguay'), $html);
+        return $fallback ? [$fallback] : [];
+    }
+
+    $internal_errors = libxml_use_internal_errors(true);
+    $document = new DOMDocument('1.0', 'UTF-8');
+    $loaded = $document->loadHTML(
+        '<?xml encoding="utf-8" ?><div id="flacso-oa-content-root">' . $html . '</div>',
+        LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
+    );
+    libxml_clear_errors();
+    libxml_use_internal_errors($internal_errors);
+
+    if (!$loaded) {
+        $fallback = $make_card(__('Información general', 'flacso-uruguay'), $html);
+        return $fallback ? [$fallback] : [];
+    }
+
+    $root = $document->getElementById('flacso-oa-content-root');
+
+    if (!$root) {
+        $fallback = $make_card(__('Información general', 'flacso-uruguay'), $html);
+        return $fallback ? [$fallback] : [];
+    }
+
+    $sections = [];
+    $current = [
+        'title' => '',
+        'body' => '',
+    ];
+    $nodes = [];
+
+    foreach ($root->childNodes as $child) {
+        $nodes[] = $child;
+    }
+
+    foreach ($nodes as $node) {
+        if ($node->nodeType === XML_COMMENT_NODE) {
+            continue;
+        }
+
+        if ($node->nodeType === XML_TEXT_NODE && trim((string) $node->textContent) === '') {
+            continue;
+        }
+
+        $tag = $node instanceof DOMElement ? strtolower($node->tagName) : '';
+
+        if (in_array($tag, ['h2', 'h3', 'h4', 'h5', 'h6'], true)) {
+            $card = $make_card($current['title'], $current['body']);
+
+            if ($card) {
+                $sections[] = $card;
+            }
+
+            $current = [
+                'title' => trim(wp_strip_all_tags($document->saveHTML($node))),
+                'body' => '',
+            ];
+            continue;
+        }
+
+        $current['body'] .= $document->saveHTML($node);
+    }
+
+    $card = $make_card($current['title'], $current['body']);
+
+    if ($card) {
+        $sections[] = $card;
+    }
+
+    if (empty($sections)) {
+        $fallback = $make_card(__('Información general', 'flacso-uruguay'), $html);
+        return $fallback ? [$fallback] : [];
+    }
+
+    if ($sections[0]['title'] === '') {
+        $sections[0]['title'] = __('Información general', 'flacso-uruguay');
+    }
+
+    return $sections;
+};
+
+$main_content_html = trim($descripcion_html . $filtered_main_content);
+$main_content_cards = $build_main_content_cards($main_content_html);
 
 $render_docente_item = static function ($docente_id, $rol = '', $nivel = '3') {
     $post = get_post($docente_id);
@@ -390,16 +504,21 @@ get_header();
 
 
                                     <?php if ($has_main_content) : ?>
-                                        <section class="flacso-oa-content-card">
-                                            <div class="flacso-oa-content-card__body">
-                                                <?php 
-                                                if (!empty($descripcion_html)) {
-                                                    echo wp_kses_post($descripcion_html);
-                                                }
-                                                the_content(); 
-                                                ?>
-                                            </div>
-                                        </section>
+                                        <div class="flacso-oa-content-grid">
+                                            <?php foreach ($main_content_cards as $content_card) : ?>
+                                                <section class="flacso-oa-content-card <?php echo esc_attr($content_card['class']); ?>">
+                                                    <?php if (!empty($content_card['title'])) : ?>
+                                                        <header class="flacso-oa-content-card__header">
+                                                            <h2><?php echo esc_html($content_card['title']); ?></h2>
+                                                        </header>
+                                                    <?php endif; ?>
+
+                                                    <div class="flacso-oa-content-card__body">
+                                                        <?php echo wp_kses_post($content_card['body']); ?>
+                                                    </div>
+                                                </section>
+                                            <?php endforeach; ?>
+                                        </div>
                                     <?php endif; ?>
 
                                 </div>
@@ -1063,12 +1182,55 @@ get_header();
     min-width: 0;
 }
 
+.flacso-oa-content-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: clamp(18px, 2.4vw, 26px);
+    align-items: start;
+}
+
+.flacso-oa-content-grid > .flacso-oa-content-card {
+    grid-column: span 6;
+    min-width: 0;
+}
+
+.flacso-oa-content-grid > .flacso-oa-content-card--wide {
+    grid-column: 1 / -1;
+}
+
 .flacso-oa-content-card {
     border: 1px solid var(--flacso-border);
     border-radius: var(--flacso-radius-md);
     background: #ffffff;
     box-shadow: var(--flacso-shadow-sm);
     overflow: hidden;
+}
+
+.flacso-oa-content-card__header {
+    position: relative;
+    padding: 18px clamp(20px, 3vw, 28px);
+    border-bottom: 1px solid var(--flacso-border);
+    background:
+        linear-gradient(90deg, rgba(252, 209, 22, 0.20), transparent 52%),
+        #ffffff;
+}
+
+.flacso-oa-content-card__header::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 6px;
+    background: var(--flacso-blue);
+}
+
+.flacso-oa-content-card__header h2 {
+    margin: 0;
+    color: var(--flacso-blue);
+    font-size: clamp(1rem, 1.5vw, 1.17rem);
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    line-height: 1.25;
+    text-transform: uppercase;
 }
 
 .flacso-oa-content-card__body {
@@ -1948,6 +2110,15 @@ get_header();
     .flacso-oa-hero-v3__intro {
         grid-template-columns: minmax(0, 1fr);
         align-items: start;
+    }
+
+    .flacso-oa-content-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .flacso-oa-content-grid > .flacso-oa-content-card,
+    .flacso-oa-content-grid > .flacso-oa-content-card--wide {
+        grid-column: 1 / -1;
     }
 
     .flacso-oa-hero-v3__summary {

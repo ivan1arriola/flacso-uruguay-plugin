@@ -114,6 +114,9 @@ $titulo = get_the_title($post_id);
 $abreviacion = $data['abreviacion'] ?? '';
 $cohorte = get_post_meta($post_id, 'cohorte', true) ?: '';
 $anio = date('Y');
+$carta_cta_titulo = !empty($data['carta_cta_titulo'])
+    ? $data['carta_cta_titulo']
+    : 'Comenzá el año cursando un posgrado en FLACSO Uruguay';
 
 $proximo_inicio_val = $data['proximo_inicio'] ?? '';
 
@@ -697,7 +700,7 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
             <section class="fc-final-cta">
                 <div>
                     <span>Preinscripciones <?php echo esc_html($anio); ?></span>
-                    <h2>Comenzá el año cursando un posgrado en FLACSO Uruguay</h2>
+                    <h2><?php echo esc_html($carta_cta_titulo); ?></h2>
                     <p><strong>Formación 100% a distancia</strong></p>
                 </div>
 

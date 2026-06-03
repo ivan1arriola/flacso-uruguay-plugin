@@ -101,7 +101,7 @@ class Oferta_Rest_API
             'reconocido_mec', 'reconocimiento_internacional', 'mostrar_expedicion_titulo',
             'tabla_precios_tipo', 'carta_presentacion_html', 'precios_filas', 'precios_nota',
             'titulos_intermedios', 'convenio_iin_oea', 'mostrar_costos_envio', 'modalidad_resumen',
-            'asistente_academica_docente_id', 'asistente_academica_rol', 'tabla_precio_id',
+            'carta_cta_titulo', 'asistente_academica_docente_id', 'asistente_academica_rol', 'tabla_precio_id',
             'asistente_academica_correo'
         ];
 
