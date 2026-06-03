@@ -627,7 +627,7 @@ function fc_render_consultas_overview() {
 		<?php if ( empty( $posts ) ) : ?>
 			<p><?php esc_html_e( 'No se encontraron consultas.', 'flacso-flacso-formulario-consultas' ); ?></p>
 		<?php else : ?>
-			<div class="fc-consultas-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;margin-top:16px;">
+			<div class="fc-consultas-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%, 320px),1fr));gap:12px;margin-top:16px;">
 				<?php foreach ( $posts as $p ) :
 					$nombre = get_post_meta( $p->ID, 'fc_nombre', true );
 					$apellido = get_post_meta( $p->ID, 'fc_apellido', true );

@@ -217,7 +217,7 @@
 
 .dp-program-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
     gap: 1.5rem;
 }
 
@@ -701,7 +701,7 @@
 
 .flacso-docentes-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
     gap: clamp(1.25rem, 2vw, 1.75rem);
 }
 
@@ -817,18 +817,6 @@
 }
 
 .flacso-docentes-card__excerpt {
-    margin: 0.35rem 0 0;
-    color: var(--docentes-text);
-    font-size: 0.95rem;
-    line-height: 1.55;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    max-width: 40ch;
-}
-
-.flacso-docentes-card__meta {
     list-style: none;
     padding: 0;
     margin: 0;
