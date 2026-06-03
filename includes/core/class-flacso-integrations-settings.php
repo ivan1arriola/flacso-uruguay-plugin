@@ -24,6 +24,7 @@ class FLACSO_Integrations_Settings {
     private const OPTION_MAILJET_LIST_ID = 'flacso_mailjet_list_id';
     private const OPTION_MAILJET_SENDER_EMAIL = 'flacso_mailjet_sender_email';
     private const OPTION_MAILJET_SENDER_NAME = 'flacso_mailjet_sender_name';
+    private const OPTION_CARTA_CTA_TITULO_DEFAULT = 'flacso_carta_cta_titulo_default';
 
     public static function init(): void {
         if (!is_admin()) {
@@ -204,6 +205,16 @@ class FLACSO_Integrations_Settings {
                 'type' => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
                 'default' => wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES),
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_CARTA_CTA_TITULO_DEFAULT,
+            [
+                'type' => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+                'default' => 'Comenzá el año cursando un posgrado en FLACSO Uruguay',
             ]
         );
     }
@@ -403,6 +414,7 @@ class FLACSO_Integrations_Settings {
 
                     <div class="flacso-integrations-grid">
                         <?php self::render_consultas_card(); ?>
+                        <?php self::render_ofertas_card(); ?>
                         <?php self::render_charlas_card(); ?>
                         <?php self::render_oferta_flotante_card(); ?>
                         <?php self::render_preinscripciones_card(); ?>
@@ -645,6 +657,7 @@ class FLACSO_Integrations_Settings {
 
             /* Card custom colors based on service type */
             .card-consultas .flacso-card-icon { background: #eff6ff; color: #3b82f6; }
+            .card-ofertas .flacso-card-icon { background: #eef2ff; color: #4338ca; }
             .card-charlas .flacso-card-icon { background: #faf5ff; color: #a855f7; }
             .card-flotante .flacso-card-icon { background: #fef2f2; color: #ef4444; }
             .card-preinscripciones .flacso-card-icon { background: #ecfdf5; color: #10b981; }
@@ -1067,6 +1080,32 @@ class FLACSO_Integrations_Settings {
             </div>
 
             <span class="flacso-integrations-note">🔒 <?php esc_html_e('Usa el Token Global superior', 'flacso-uruguay'); ?></span>
+        </section>
+        <?php
+    }
+
+    private static function render_ofertas_card(): void {
+        ?>
+        <section class="flacso-integrations-card card-ofertas">
+            <div class="flacso-card-header">
+                <div class="flacso-card-icon-title">
+                    <span class="flacso-card-icon">🎓</span>
+                    <h2><?php esc_html_e('Ofertas académicas', 'flacso-uruguay'); ?></h2>
+                </div>
+                <p class="flacso-integrations-lead"><?php esc_html_e('Ajustes globales compartidos por todas las cartas y páginas de oferta académica.', 'flacso-uruguay'); ?></p>
+            </div>
+
+            <div class="flacso-card-body">
+                <?php
+                self::render_input_field(
+                    self::OPTION_CARTA_CTA_TITULO_DEFAULT,
+                    __('Título CTA final de la carta', 'flacso-uruguay'),
+                    'text',
+                    'Comenzá el año cursando un posgrado en FLACSO Uruguay',
+                    __('Se usa en el bloque final de la carta/preinscripción para todas las ofertas académicas.', 'flacso-uruguay')
+                );
+                ?>
+            </div>
         </section>
         <?php
     }

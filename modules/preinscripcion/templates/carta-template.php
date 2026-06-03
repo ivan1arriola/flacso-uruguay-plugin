@@ -114,9 +114,12 @@ $titulo = get_the_title($post_id);
 $abreviacion = $data['abreviacion'] ?? '';
 $cohorte = get_post_meta($post_id, 'cohorte', true) ?: '';
 $anio = date('Y');
-$carta_cta_titulo = !empty($data['carta_cta_titulo'])
-    ? $data['carta_cta_titulo']
-    : 'Comenzá el año cursando un posgrado en FLACSO Uruguay';
+$carta_cta_titulo_global = trim((string) get_option('flacso_carta_cta_titulo_default', ''));
+$carta_cta_titulo = $carta_cta_titulo_global !== ''
+    ? $carta_cta_titulo_global
+    : (!empty($data['carta_cta_titulo'])
+        ? $data['carta_cta_titulo']
+        : 'Comenzá el año cursando un posgrado en FLACSO Uruguay');
 
 $proximo_inicio_val = $data['proximo_inicio'] ?? '';
 

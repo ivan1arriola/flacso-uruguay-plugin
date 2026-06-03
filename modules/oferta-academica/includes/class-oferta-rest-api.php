@@ -43,6 +43,7 @@ class Oferta_Rest_API
                 'financiacion_html' => get_option('flacso_financiacion_html', ''),
                 'inscripciones_mensaje_abierto_default' => get_option('flacso_inscripciones_mensaje_abierto_default', 'Descuentos especiales disponibles. Solicitá información e inscribite hoy.'),
                 'inscripciones_mensaje_cerrado_default' => get_option('flacso_inscripciones_mensaje_cerrado_default', 'Mantente atento a nuestras próximas aperturas.'),
+                'carta_cta_titulo_default' => get_option('flacso_carta_cta_titulo_default', 'Comenzá el año cursando un posgrado en FLACSO Uruguay'),
                 'mensaje_bienvenida' => get_option('flacso_mensaje_bienvenida', ''),
                 'flacso_webhook_token' => $masked_token,
                 'flacso_google_drive_folder_id' => get_option('flacso_google_drive_folder_id', ''),
@@ -62,6 +63,9 @@ class Oferta_Rest_API
         }
         if (isset($payload['inscripciones_mensaje_cerrado_default'])) {
             update_option('flacso_inscripciones_mensaje_cerrado_default', sanitize_text_field($payload['inscripciones_mensaje_cerrado_default']));
+        }
+        if (isset($payload['carta_cta_titulo_default'])) {
+            update_option('flacso_carta_cta_titulo_default', sanitize_text_field($payload['carta_cta_titulo_default']));
         }
         if (isset($payload['mensaje_bienvenida'])) {
             update_option('flacso_mensaje_bienvenida', wp_kses_post($payload['mensaje_bienvenida']));
