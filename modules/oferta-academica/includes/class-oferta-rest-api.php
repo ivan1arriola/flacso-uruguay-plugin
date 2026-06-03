@@ -101,7 +101,7 @@ class Oferta_Rest_API
             'reconocido_mec', 'reconocimiento_internacional', 'mostrar_expedicion_titulo',
             'tabla_precios_tipo', 'carta_presentacion_html', 'precios_filas', 'precios_nota',
             'titulos_intermedios', 'convenio_iin_oea', 'mostrar_costos_envio', 'modalidad_resumen',
-            'asistente_academica_docente_id', 'asistente_academica_rol',
+            'asistente_academica_docente_id', 'asistente_academica_rol', 'tabla_precio_id',
             'asistente_academica_correo'
         ];
 
@@ -167,6 +167,21 @@ class Oferta_Rest_API
                     'type' => 'integer'
                 ]
             ],
+        ]);
+
+        register_rest_field('oferta-academica', 'tabla_precio', [
+            'get_callback' => function ($post_array) {
+                $tabla_precio_id = (int) get_post_meta($post_array['id'], 'tabla_precio_id', true);
+
+                if ($tabla_precio_id <= 0 || !class_exists('Tabla_Precio_Schema')) {
+                    return null;
+                }
+
+                $tabla_precio = Tabla_Precio_Schema::get_table_data($tabla_precio_id);
+
+                return !empty($tabla_precio) ? $tabla_precio : null;
+            },
+            'schema' => null,
         ]);
 
         // Registrar campo para taxonomías simplificadas (mantenemos compatibilidad con el frontend)

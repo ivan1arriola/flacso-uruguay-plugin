@@ -56,6 +56,7 @@ class Oferta_Data_Schema {
 
     private const INTEGER_FIELDS = [
         'asistente_academica_docente_id',
+        'tabla_precio_id',
     ];
 
     private const JSON_STRING_FIELDS = [
@@ -749,6 +750,20 @@ class Oferta_Data_Schema {
 
         foreach (self::JSON_STRING_FIELDS as $field) {
             $schema[$field] = self::get_meta_value($post_id, $field);
+        }
+
+        $schema['tabla_precio'] = null;
+
+        $tabla_precio_id = isset($schema['tabla_precio_id']) ? intval($schema['tabla_precio_id']) : 0;
+        if ($tabla_precio_id > 0 && class_exists('Tabla_Precio_Schema')) {
+            $tabla_precio = Tabla_Precio_Schema::get_table_data($tabla_precio_id);
+
+            if (!empty($tabla_precio)) {
+                $schema['tabla_precio'] = $tabla_precio;
+                $schema['tabla_precios_tipo'] = $tabla_precio['tabla_precios_tipo'] ?? '';
+                $schema['precios_filas'] = $tabla_precio['precios_filas'] ?? '';
+                $schema['precios_nota'] = $tabla_precio['precios_nota'] ?? '';
+            }
         }
 
         return $schema;
