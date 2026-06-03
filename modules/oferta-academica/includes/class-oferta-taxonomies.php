@@ -13,6 +13,8 @@ class Oferta_Taxonomies {
         self::register_taxonomies();
         add_action('init', [__CLASS__, 'create_default_terms'], 20);
         add_action('init', [__CLASS__, 'register_rewrite_rules'], 10);
+        add_filter('term_link', [__CLASS__, 'filter_term_link'], 10, 3);
+        add_action('template_redirect', [__CLASS__, 'redirect_old_taxonomy_urls']);
     }
 
     public static function register_taxonomies(): void {
@@ -72,14 +74,19 @@ class Oferta_Taxonomies {
     public static function create_default_terms(): void {
         // Términos de tipo-oferta-academica
         $tipos = [
-            'Maestría' => 'maestria',
-            'Especialización' => 'especializacion',
-            'Diplomado' => 'diplomado',
-            'Diploma' => 'diploma',
+            'Maestrías' => 'maestria',
+            'Especializaciones' => 'especializacion',
+            'Diplomados' => 'diplomado',
+            'Diplomas' => 'diploma',
         ];
 
         foreach ($tipos as $name => $slug) {
-            if (!term_exists($slug, 'tipo-oferta-academica')) {
+            $term = get_term_by('slug', $slug, 'tipo-oferta-academica');
+            if ($term && !is_wp_error($term)) {
+                if ($term->name !== $name) {
+                    wp_update_term($term->term_id, 'tipo-oferta-academica', ['name' => $name]);
+                }
+            } else {
                 wp_insert_term($name, 'tipo-oferta-academica', ['slug' => $slug]);
             }
         }
@@ -121,6 +128,49 @@ class Oferta_Taxonomies {
                 'index.php?tipo-oferta-academica=' . $singular,
                 'top'
             );
+        }
+    }
+
+    public static function filter_term_link(string $url, $term, string $taxonomy): string {
+        if ($taxonomy !== 'tipo-oferta-academica') {
+            return $url;
+        }
+
+        $tipos = [
+            'maestria' => 'maestrias',
+            'especializacion' => 'especializaciones',
+            'diplomado' => 'diplomados',
+            'diploma' => 'diplomas'
+        ];
+
+        if (isset($tipos[$term->slug])) {
+            $plural = $tipos[$term->slug];
+            return home_url('/formacion/' . $plural . '/');
+        }
+
+        return $url;
+    }
+
+    public static function redirect_old_taxonomy_urls(): void {
+        if (is_tax('tipo-oferta-academica')) {
+            $term = get_queried_object();
+            if ($term && isset($term->slug)) {
+                $tipos = [
+                    'maestria' => 'maestrias',
+                    'especializacion' => 'especializaciones',
+                    'diplomado' => 'diplomados',
+                    'diploma' => 'diplomas'
+                ];
+                
+                if (isset($tipos[$term->slug])) {
+                    $current_url = wp_unslash($_SERVER['REQUEST_URI'] ?? '');
+                    if (strpos($current_url, '/tipo-oferta/') !== false) {
+                        $plural = $tipos[$term->slug];
+                        wp_safe_redirect(home_url('/formacion/' . $plural . '/'), 301);
+                        exit;
+                    }
+                }
+            }
         }
     }
 }

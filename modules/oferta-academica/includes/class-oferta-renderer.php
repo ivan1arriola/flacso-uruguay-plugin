@@ -134,16 +134,16 @@ class Oferta_Renderer {
                     <p class="flacso-oferta-hero__subtitle mb-4"><?php echo esc_html($hero_subtitle); ?></p>
                     <div class="flacso-oferta-hero__actions" role="navigation" aria-label="<?php esc_attr_e('Navegación de la oferta académica', 'flacso-oferta-academica'); ?>">
                         <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url($link_maestria); ?>">
-                            <?php esc_html_e('Maestría', 'flacso-oferta-academica'); ?>
+                            <?php esc_html_e('Maestrías', 'flacso-oferta-academica'); ?>
                         </a>
                         <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url($link_especializacion); ?>">
-                            <?php esc_html_e('Especialización', 'flacso-oferta-academica'); ?>
+                            <?php esc_html_e('Especializaciones', 'flacso-oferta-academica'); ?>
                         </a>
                         <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url($link_diplomado); ?>">
-                            <?php esc_html_e('Diplomado', 'flacso-oferta-academica'); ?>
+                            <?php esc_html_e('Diplomados', 'flacso-oferta-academica'); ?>
                         </a>
                         <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url($link_diploma); ?>">
-                            <?php esc_html_e('Diploma', 'flacso-oferta-academica'); ?>
+                            <?php esc_html_e('Diplomas', 'flacso-oferta-academica'); ?>
                         </a>
                         <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url($link_seminarios); ?>">
                             <?php esc_html_e('Seminarios', 'flacso-oferta-academica'); ?>
