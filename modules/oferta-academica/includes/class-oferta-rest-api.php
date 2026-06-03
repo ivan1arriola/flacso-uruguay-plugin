@@ -45,7 +45,8 @@ class Oferta_Rest_API
                 'inscripciones_mensaje_cerrado_default' => get_option('flacso_inscripciones_mensaje_cerrado_default', 'Mantente atento a nuestras próximas aperturas.'),
                 'mensaje_bienvenida' => get_option('flacso_mensaje_bienvenida', ''),
                 'flacso_webhook_token' => $masked_token,
-                'flacso_google_drive_folder_id' => get_option('flacso_google_drive_folder_id', '')
+                'flacso_google_drive_folder_id' => get_option('flacso_google_drive_folder_id', ''),
+                'correos_excluidos' => get_option('flacso_correos_excluidos', '')
             ]
         ]);
     }
@@ -73,6 +74,9 @@ class Oferta_Rest_API
         }
         if (isset($payload['flacso_google_drive_folder_id'])) {
             update_option('flacso_google_drive_folder_id', sanitize_text_field($payload['flacso_google_drive_folder_id']));
+        }
+        if (isset($payload['correos_excluidos'])) {
+            update_option('flacso_correos_excluidos', sanitize_textarea_field($payload['correos_excluidos']));
         }
 
         return self::get_settings();
