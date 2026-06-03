@@ -1096,8 +1096,8 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 }
 
 .fc-content-wrapper {
-    max-width: 900px;
-    margin: 0 auto 2.75rem;
+    width: 100%;
+    margin: 0 0 2.75rem;
     padding: clamp(1.25rem, 3vw, 2rem);
     border: 1px solid var(--fc-border);
     border-radius: 1.25rem;
