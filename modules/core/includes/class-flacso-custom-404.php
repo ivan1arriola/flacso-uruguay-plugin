@@ -358,7 +358,7 @@ if ( ! class_exists( 'Flacso_Custom_404' ) ) {
 						<div class="flacso-404-hero__content">
 							<p class="flacso-404-eyebrow">
 								<i class="bi bi-exclamation-circle" aria-hidden="true"></i>
-								<?php esc_html_e( 'Error 404', 'flacso-uruguay' ); ?>
+								<?php esc_html_e( 'Error', 'flacso-uruguay' ); ?>
 							</p>
 
 							<h1 id="flacso-404-title" class="flacso-404-title">
@@ -409,7 +409,6 @@ if ( ! class_exists( 'Flacso_Custom_404' ) ) {
 						</div>
 
 						<div class="flacso-404-hero__visual" aria-hidden="true">
-							<div class="flacso-404-number">404</div>
 							<div class="flacso-404-compass">
 								<i class="bi bi-compass"></i>
 							</div>

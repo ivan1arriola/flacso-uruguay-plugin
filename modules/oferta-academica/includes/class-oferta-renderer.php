@@ -825,10 +825,29 @@ class Oferta_Renderer {
         if (!$thumbnail && $page_id) {
             $thumbnail = get_the_post_thumbnail_url($page_id, 'large');
         }
-
         $proximo_raw = get_post_meta($post_id, 'proximo_inicio', true);
-        $proximo_ts  = $proximo_raw ? strtotime($proximo_raw) : 0;
-        $proximo_fmt = $proximo_ts ? date_i18n('j \\d\\e F Y', $proximo_ts) : '';
+        if (is_array($proximo_raw)) {
+            $proximo_raw = reset($proximo_raw);
+        }
+        $proximo_raw = (string) $proximo_raw;
+
+        $proximo_fmt = '';
+        $is_exact_date = false;
+        $proximo_ts = 0;
+
+        if (!empty($proximo_raw)) {
+            if (preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/', $proximo_raw)) {
+                $proximo_ts = strtotime($proximo_raw);
+                $proximo_fmt = date_i18n('j \d\e F Y', $proximo_ts);
+                $is_exact_date = true;
+            } elseif (preg_match('/^[0-9]{4}-[0-9]{2}$/', $proximo_raw)) {
+                $proximo_fmt = 'próximo inicio en ' . date_i18n('F Y', strtotime($proximo_raw . '-01'));
+            } elseif (preg_match('/^[0-9]{4}$/', $proximo_raw)) {
+                $proximo_fmt = 'próximo inicio en ' . $proximo_raw;
+            } else {
+                $proximo_fmt = 'próximo inicio: ' . $proximo_raw;
+            }
+        }
 
         ?>
         <div class="col-md-6 col-lg-4">
@@ -862,12 +881,18 @@ class Oferta_Renderer {
                     <?php if ($proximo_fmt) : ?>
                         <div class="flacso-oa-card__meta mb-2">
                             <i class="bi bi-calendar3 text-primary" aria-hidden="true"></i>
-                            <time datetime="<?php echo esc_attr(date('Y-m-d', $proximo_ts)); ?>"><?php echo esc_html($proximo_fmt); ?></time>
+                            <?php if ($is_exact_date) : ?>
+                                <time datetime="<?php echo esc_attr(date('Y-m-d', $proximo_ts)); ?>"><?php echo esc_html($proximo_fmt); ?></time>
+                            <?php else : ?>
+                                <span><?php echo esc_html(ucfirst($proximo_fmt)); ?></span>
+                            <?php endif; ?>
                         </div>
+                        <?php if ($is_exact_date) : ?>
                         <div class="flacso-oferta-countdown" data-countdown="<?php echo esc_attr(date('Y-m-d', $proximo_ts)); ?>" aria-live="polite">
                             <i class="bi bi-clock" aria-hidden="true"></i>
                             <span class="flacso-oferta-countdown__text"><?php esc_html_e('Cargando', 'flacso-oferta-academica'); ?></span>
                         </div>
+                        <?php endif; ?>
                     <?php endif; ?>
                     <div class="flacso-oa-card__footer mt-2">
                         <span class="flacso-oa-card__cta fw-semibold">
@@ -982,7 +1007,7 @@ class Oferta_Renderer {
         $query_args = [
             'post_type'      => 'seminario',
             'post_status'    => 'publish',
-            'posts_per_page' => 12,
+            'posts_per_page' => 40,
             'meta_key'       => '_seminario_periodo_inicio',
             'orderby'        => 'meta_value',
             'meta_type'      => 'DATE',
@@ -990,6 +1015,9 @@ class Oferta_Renderer {
         ];
 
         $query = new WP_Query($query_args);
+        
+        $eight_days_ago_ts = strtotime('-8 days');
+        $eight_days_ago_ts = mktime(0, 0, 0, (int) date('m', $eight_days_ago_ts), (int) date('d', $eight_days_ago_ts), (int) date('Y', $eight_days_ago_ts));
 
         ob_start();
         if ($query->have_posts()) :
@@ -999,7 +1027,18 @@ class Oferta_Renderer {
                 $index = 0;
                 while ($query->have_posts()) {
                     $query->the_post();
+                    
+                    $fecha_raw = get_post_meta(get_the_ID(), '_seminario_periodo_inicio', true) ?: get_post_meta(get_the_ID(), 'periodo_inicio', true);
+                    $ts = $fecha_raw ? strtotime($fecha_raw) : 0;
+                    
+                    if ($ts > 0 && $ts < $eight_days_ago_ts) {
+                        continue;
+                    }
+
                     $index++;
+                    if ($index > 12) {
+                        break;
+                    }
                     self::render_seminario_card_bootstrap(get_the_ID(), $index);
                 }
                 wp_reset_postdata();
@@ -1130,7 +1169,21 @@ class Oferta_Renderer {
         $creditos    = get_post_meta($post_id, 'creditos', true);
 
         $ts          = $fecha_raw ? strtotime($fecha_raw) : 0;
-        $fecha_fmt   = $ts ? date_i18n('l j \d\e F Y', $ts) : '';
+        $is_exact_date = $fecha_raw ? (bool) preg_match('/^\d{4}-\d{2}-\d{2}$/', trim($fecha_raw)) : false;
+        
+        if ($ts && !$is_exact_date) {
+            $parts = explode('-', trim($fecha_raw));
+            if (count($parts) === 2) {
+                $fecha_fmt = date_i18n('F Y', $ts);
+            } elseif (count($parts) === 1) {
+                $fecha_fmt = date_i18n('Y', $ts);
+            } else {
+                $fecha_fmt = date_i18n('F Y', $ts);
+            }
+        } else {
+            $fecha_fmt   = $ts ? date_i18n('l j \d\e F Y', $ts) : '';
+        }
+        
         $fecha_iso   = $ts ? date('Y-m-d', $ts) : '';
         $faltan_dias = $ts ? floor(($ts - current_time('timestamp')) / DAY_IN_SECONDS) : null;
         $faltan_txt  = is_int($faltan_dias) && $faltan_dias >= 0
@@ -1154,7 +1207,11 @@ class Oferta_Renderer {
                     <?php if ($fecha_fmt) : ?>
                         <div class="flacso-oa-card__meta mb-2">
                             <i class="bi bi-calendar3 text-primary" aria-hidden="true"></i>
-                            <time datetime="<?php echo esc_attr($fecha_iso); ?>"><?php echo esc_html($fecha_fmt); ?></time>
+                            <?php if ($is_exact_date) : ?>
+                                <time datetime="<?php echo esc_attr($fecha_iso); ?>"><?php echo esc_html($fecha_fmt); ?></time>
+                            <?php else : ?>
+                                <span><?php echo esc_html(ucfirst($fecha_fmt)); ?></span>
+                            <?php endif; ?>
                         </div>
                     <?php endif; ?>
                     <?php if ($modalidad) : ?>
