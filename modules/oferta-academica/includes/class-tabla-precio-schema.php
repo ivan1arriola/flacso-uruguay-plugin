@@ -74,6 +74,25 @@ class Tabla_Precio_Schema {
     }
 
     public static function register_rest_fields(): void {
+        foreach (array_merge(self::HTML_FIELDS, self::TEXT_FIELDS, self::JSON_STRING_FIELDS) as $field) {
+            register_rest_field('tabla-precio', $field, [
+                'get_callback' => function ($post_array) use ($field) {
+                    return self::get_meta_value((int) $post_array['id'], $field);
+                },
+                'update_callback' => function ($value, $post_obj) use ($field) {
+                    $sanitized_value = self::sanitize_rest_field_value($field, $value);
+
+                    if ($sanitized_value === '') {
+                        delete_post_meta($post_obj->ID, $field);
+                        return true;
+                    }
+
+                    return update_post_meta($post_obj->ID, $field, $sanitized_value);
+                },
+                'schema' => null,
+            ]);
+        }
+
         register_rest_field('tabla-precio', 'linked_offers', [
             'get_callback' => function ($post_array) {
                 return self::get_linked_offers_summary((int) $post_array['id']);
@@ -155,6 +174,22 @@ class Tabla_Precio_Schema {
 
     public static function user_can_edit_meta($allowed, $meta_key, $post_id, $user_id = null): bool {
         return current_user_can('edit_post', $post_id);
+    }
+
+    private static function sanitize_rest_field_value(string $field, $value): string {
+        if (in_array($field, self::HTML_FIELDS, true)) {
+            return self::sanitize_html($value);
+        }
+
+        if (in_array($field, self::TEXT_FIELDS, true)) {
+            return sanitize_text_field((string) $value);
+        }
+
+        if (in_array($field, self::JSON_STRING_FIELDS, true)) {
+            return self::sanitize_prices_rows($value);
+        }
+
+        return is_scalar($value) ? (string) $value : '';
     }
 
     public static function get_table_data(int $post_id): array {

@@ -71,7 +71,7 @@ class CPT_Tabla_Precio {
             'has_archive' => false,
             'hierarchical' => false,
             'menu_icon' => 'dashicons-money-alt',
-            'supports' => ['title', 'revisions'],
+            'supports' => ['title', 'custom-fields', 'revisions'],
             'exclude_from_search' => true,
         ];
 
