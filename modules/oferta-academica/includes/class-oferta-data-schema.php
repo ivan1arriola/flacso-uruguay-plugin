@@ -21,6 +21,9 @@ class Oferta_Data_Schema {
         'requisitos_egreso_html',
         'financiacion_html',
         'titulos_certificaciones_html',
+        'acreditaciones_html',
+        'carta_presentacion_html',
+        'precios_nota',
     ];
 
     private const PERSONNEL_GROUPS = [
@@ -31,6 +34,36 @@ class Oferta_Data_Schema {
     private const STRING_ARRAYS = [
         'menciones',
         'orientaciones',
+    ];
+
+    private const TEXT_FIELDS = [
+        'tabla_precios_tipo',
+        'modalidad_resumen',
+        'asistente_academica_rol',
+    ];
+
+    private const EMAIL_FIELDS = [
+        'asistente_academica_correo',
+    ];
+
+    private const BOOLEAN_FIELDS = [
+        'reconocido_mec',
+        'reconocimiento_internacional',
+        'mostrar_expedicion_titulo',
+        'convenio_iin_oea',
+        'mostrar_costos_envio',
+    ];
+
+    private const INTEGER_FIELDS = [
+        'asistente_academica_docente_id',
+    ];
+
+    private const JSON_STRING_FIELDS = [
+        'precios_filas',
+    ];
+
+    private const INTEGER_ARRAYS = [
+        'titulos_intermedios',
     ];
 
     private const FALLBACK_USER_HEADER = 'x-flacso-app-user';
@@ -276,6 +309,97 @@ class Oferta_Data_Schema {
                 ],
             ]);
         }
+
+        foreach (self::TEXT_FIELDS as $field) {
+            register_post_meta('oferta-academica', $field, [
+                'type' => 'string',
+                'single' => true,
+                'sanitize_callback' => 'sanitize_text_field',
+                'auth_callback' => [self::class, 'user_can_edit_meta'],
+                'show_in_rest' => [
+                    'schema' => [
+                        'description' => ucfirst(str_replace('_', ' ', $field)),
+                        'type' => 'string',
+                    ],
+                ],
+            ]);
+        }
+
+        foreach (self::EMAIL_FIELDS as $field) {
+            register_post_meta('oferta-academica', $field, [
+                'type' => 'string',
+                'single' => true,
+                'sanitize_callback' => [self::class, 'sanitize_email'],
+                'auth_callback' => [self::class, 'user_can_edit_meta'],
+                'show_in_rest' => [
+                    'schema' => [
+                        'description' => ucfirst(str_replace('_', ' ', $field)),
+                        'type' => 'string',
+                    ],
+                ],
+            ]);
+        }
+
+        foreach (self::BOOLEAN_FIELDS as $field) {
+            register_post_meta('oferta-academica', $field, [
+                'type' => 'boolean',
+                'single' => true,
+                'sanitize_callback' => [self::class, 'sanitize_boolean'],
+                'auth_callback' => [self::class, 'user_can_edit_meta'],
+                'show_in_rest' => [
+                    'schema' => [
+                        'description' => ucfirst(str_replace('_', ' ', $field)),
+                        'type' => 'boolean',
+                    ],
+                ],
+            ]);
+        }
+
+        foreach (self::INTEGER_FIELDS as $field) {
+            register_post_meta('oferta-academica', $field, [
+                'type' => 'integer',
+                'single' => true,
+                'sanitize_callback' => [self::class, 'sanitize_integer'],
+                'auth_callback' => [self::class, 'user_can_edit_meta'],
+                'show_in_rest' => [
+                    'schema' => [
+                        'description' => ucfirst(str_replace('_', ' ', $field)),
+                        'type' => 'integer',
+                    ],
+                ],
+            ]);
+        }
+
+        foreach (self::JSON_STRING_FIELDS as $field) {
+            register_post_meta('oferta-academica', $field, [
+                'type' => 'string',
+                'single' => true,
+                'sanitize_callback' => [self::class, 'sanitize_prices_rows'],
+                'auth_callback' => [self::class, 'user_can_edit_meta'],
+                'show_in_rest' => [
+                    'schema' => [
+                        'description' => ucfirst(str_replace('_', ' ', $field)),
+                        'type' => 'string',
+                    ],
+                ],
+            ]);
+        }
+
+        foreach (self::INTEGER_ARRAYS as $field) {
+            register_post_meta('oferta-academica', $field, [
+                'type' => 'array',
+                'single' => true,
+                'sanitize_callback' => [self::class, 'sanitize_integer_array'],
+                'auth_callback' => [self::class, 'user_can_edit_meta'],
+                'show_in_rest' => [
+                    'schema' => [
+                        'description' => ucfirst(str_replace('_', ' ', $field)),
+                        'type' => 'array',
+                        'items' => ['type' => 'integer'],
+                    ],
+                ],
+            ]);
+        }
     }
 
     public static function sanitize_html($value): string {
@@ -287,6 +411,10 @@ class Oferta_Data_Schema {
 
         if (!isset($allowed['br'])) {
             $allowed['br'] = [];
+        }
+
+        if (!isset($allowed['small'])) {
+            $allowed['small'] = [];
         }
 
         return wp_kses((string) $value, $allowed);
@@ -320,6 +448,10 @@ class Oferta_Data_Schema {
         return sanitize_email((string) $value);
     }
 
+    public static function sanitize_integer($value): int {
+        return max(0, intval($value));
+    }
+
     public static function sanitize_boolean($value): bool {
         return filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
     }
@@ -337,6 +469,80 @@ class Oferta_Data_Schema {
             $out[] = sanitize_text_field($item);
         }
         return array_values(array_unique($out));
+    }
+
+    public static function sanitize_integer_array($value): array {
+        if (!is_array($value)) {
+            $value = preg_split('/[\s,|]+/', trim((string) $value), -1, PREG_SPLIT_NO_EMPTY);
+        }
+
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $out = [];
+
+        foreach ($value as $item) {
+            $id = intval($item);
+            if ($id > 0) {
+                $out[] = $id;
+            }
+        }
+
+        return array_values(array_unique($out));
+    }
+
+    public static function sanitize_prices_rows($value): string {
+        if (is_string($value)) {
+            $value = trim($value);
+
+            if ($value === '') {
+                return '';
+            }
+
+            $decoded = json_decode(wp_unslash($value), true);
+            if (!is_array($decoded)) {
+                return '';
+            }
+
+            $value = $decoded;
+        }
+
+        if (!is_array($value)) {
+            return '';
+        }
+
+        $rows = [];
+
+        foreach ($value as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+
+            $sanitized_row = [
+                'concept' => self::sanitize_html($row['concept'] ?? ''),
+                'uy' => self::sanitize_html($row['uy'] ?? ''),
+                'us' => self::sanitize_html($row['us'] ?? ''),
+                'highlight' => self::sanitize_boolean($row['highlight'] ?? false),
+            ];
+
+            if (
+                $sanitized_row['concept'] === ''
+                && $sanitized_row['uy'] === ''
+                && $sanitized_row['us'] === ''
+                && $sanitized_row['highlight'] === false
+            ) {
+                continue;
+            }
+
+            $rows[] = $sanitized_row;
+        }
+
+        if (empty($rows)) {
+            return '';
+        }
+
+        return wp_json_encode($rows, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
     private static function sanitize_personnel_groups($value, string $name_key): array {
@@ -521,6 +727,30 @@ class Oferta_Data_Schema {
             $schema[$key] = self::normalize_string_array(get_post_meta($post_id, $key, true));
         }
 
+        foreach (self::INTEGER_ARRAYS as $key) {
+            $schema[$key] = self::normalize_integer_array(get_post_meta($post_id, $key, true));
+        }
+
+        foreach (self::TEXT_FIELDS as $field) {
+            $schema[$field] = self::get_meta_value($post_id, $field);
+        }
+
+        foreach (self::EMAIL_FIELDS as $field) {
+            $schema[$field] = self::get_meta_value($post_id, $field);
+        }
+
+        foreach (self::BOOLEAN_FIELDS as $field) {
+            $schema[$field] = self::get_meta_value($post_id, $field);
+        }
+
+        foreach (self::INTEGER_FIELDS as $field) {
+            $schema[$field] = self::get_meta_int($post_id, $field);
+        }
+
+        foreach (self::JSON_STRING_FIELDS as $field) {
+            $schema[$field] = self::get_meta_value($post_id, $field);
+        }
+
         return $schema;
     }
 
@@ -539,6 +769,11 @@ class Oferta_Data_Schema {
         }
         if (!is_array($data)) {
             $data = [];
+        }
+
+        if (isset($data['meta']) && is_array($data['meta'])) {
+            $data = array_merge($data['meta'], $data);
+            unset($data['meta']);
         }
 
         $post_update = ['ID' => $post_id];
@@ -578,6 +813,12 @@ class Oferta_Data_Schema {
             'inscripciones_mensaje' => fn($value) => sanitize_text_field($value),
             'inscripciones_mensaje_cerrado' => fn($value) => sanitize_text_field($value),
             'cohorte' => fn($value) => sanitize_text_field($value),
+            'tabla_precios_tipo' => fn($value) => sanitize_text_field($value),
+            'modalidad_resumen' => fn($value) => sanitize_text_field($value),
+            'asistente_academica_rol' => fn($value) => sanitize_text_field($value),
+            'asistente_academica_correo' => fn($value) => self::sanitize_email($value),
+            'asistente_academica_docente_id' => fn($value) => self::sanitize_integer($value),
+            'precios_filas' => fn($value) => self::sanitize_prices_rows($value),
         ];
 
         foreach ($meta_map as $key => $sanitizer) {
@@ -599,6 +840,20 @@ class Oferta_Data_Schema {
             }
             $value = is_array($data[$key]) ? $data[$key] : preg_split('/\r?\n/', strval($data[$key]));
             self::update_meta_value($post_id, $key, self::sanitize_string_array($value));
+        }
+
+        foreach (self::INTEGER_ARRAYS as $key) {
+            if (!array_key_exists($key, $data)) {
+                continue;
+            }
+            self::update_meta_value($post_id, $key, self::sanitize_integer_array($data[$key]));
+        }
+
+        foreach (self::BOOLEAN_FIELDS as $key) {
+            if (!array_key_exists($key, $data)) {
+                continue;
+            }
+            self::update_meta_value($post_id, $key, self::sanitize_boolean($data[$key]));
         }
 
         foreach (self::PERSONNEL_GROUPS as $key => $label_key) {
@@ -715,6 +970,14 @@ class Oferta_Data_Schema {
         return filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
     }
 
+    private static function get_meta_int(int $post_id, string $key): int {
+        $value = get_post_meta($post_id, $key, true);
+        if ($value === '' || $value === null) {
+            return 0;
+        }
+        return max(0, intval($value));
+    }
+
     private static function build_proximo_inicio(int $post_id): array {
         $valor = self::get_meta_value($post_id, 'proximo_inicio');
         $precision = get_post_meta($post_id, 'proximo_inicio_precision', true);
@@ -756,5 +1019,12 @@ class Oferta_Data_Schema {
             return [];
         }
         return self::sanitize_string_array($value);
+    }
+
+    private static function normalize_integer_array($value): array {
+        if (!is_array($value)) {
+            return [];
+        }
+        return self::sanitize_integer_array($value);
     }
 }

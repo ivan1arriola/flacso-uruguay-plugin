@@ -95,12 +95,13 @@ class Oferta_Rest_API
             'objetivos_html', 'perfil_ingreso_html', 'requisitos_ingreso_html', 
             'malla_curricular_html', 'calendario_html', 'perfil_egreso_html', 
             'requisitos_egreso_html', 'titulos_certificaciones_html', 'financiacion_html',
+            'acreditaciones_html',
             'menciones', 'orientaciones', 'coordinacion_academica', 'equipos',
             'inscripciones_mensaje_abierto_default', 'inscripciones_mensaje_cerrado_default',
             'reconocido_mec', 'reconocimiento_internacional', 'mostrar_expedicion_titulo',
             'tabla_precios_tipo', 'carta_presentacion_html', 'precios_filas', 'precios_nota',
             'titulos_intermedios', 'convenio_iin_oea', 'mostrar_costos_envio', 'modalidad_resumen',
-            'acreditaciones_html', 'asistente_academica_docente_id', 'asistente_academica_rol',
+            'asistente_academica_docente_id', 'asistente_academica_rol',
             'asistente_academica_correo'
         ];
 
