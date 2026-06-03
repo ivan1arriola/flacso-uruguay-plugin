@@ -43,7 +43,7 @@ get_header();
                 <?php endif; ?>
             </header>
 
-            <div class="flacso-ofertas-carousel">
+            <div class="flacso-ofertas-grid">
                 <?php if (have_posts()) : ?>
                     <?php while (have_posts()) : the_post(); 
                         $post_id = get_the_ID();
@@ -54,7 +54,7 @@ get_header();
                         $data = class_exists('Oferta_Data_Schema') ? Oferta_Data_Schema::get_schema($post_id) : [];
                         $duracion = !empty($data['duracion_meses']) ? $data['duracion_meses'] . ' meses' : '';
                     ?>
-                        <div class="carousel-item-wrap">
+                        <div class="grid-item-wrap">
                             <article class="flacso-premium-card h-100 w-100">
                                 <div class="flacso-premium-card__image-wrap">
                                     <?php if ($thumbnail_url) : ?>
@@ -129,31 +129,15 @@ get_header();
     --flacso-gray-bg: #f8fafc;
 }
 
-.flacso-ofertas-carousel {
-    display: flex;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    gap: 1.5rem;
+.flacso-ofertas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
     padding-bottom: 2rem;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-    scrollbar-color: var(--flacso-yellow) #f1f5f9;
 }
-.flacso-ofertas-carousel::-webkit-scrollbar {
-    height: 8px;
-}
-.flacso-ofertas-carousel::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 4px;
-}
-.flacso-ofertas-carousel::-webkit-scrollbar-thumb {
-    background: var(--flacso-yellow);
-    border-radius: 4px;
-}
-.flacso-ofertas-carousel .carousel-item-wrap {
-    flex: 0 0 350px;
-    scroll-snap-align: start;
-    max-width: 85vw;
+
+.flacso-ofertas-grid .grid-item-wrap {
+    width: 100%;
 }
 
 /* Premium Card Styles */
