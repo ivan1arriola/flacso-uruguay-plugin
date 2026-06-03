@@ -23,14 +23,7 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
         // Cargar solo en la URL virtual /.../preinscripcion/.
         if (!get_query_var('es_preinscripcion')) return;
 
-        // Verificar si es una página u oferta con preinscripción activa.
-        if (is_singular('page') && !$this->es_pagina_preinscripcion_activa($post->ID)) return;
-        if (is_singular('oferta-academica')) {
-            $abiertas = get_post_meta($post->ID, 'inscripciones_abiertas', true);
-            if ($abiertas !== '1' && $abiertas !== 'true' && $abiertas !== true && $abiertas !== 1) {
-                return;
-            }
-        }
+
         
         // Bootstrap e íconos solo para el template virtual.
         $this->enqueue_assets();
@@ -70,25 +63,12 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
         if (($es_preinscripcion || $es_carta) && (is_singular('page') || is_singular('oferta-academica')) && $post) {
             if ($es_preinscripcion) {
                 // Lógica de preinscripción
-                $activa = false;
-                if (is_singular('page')) {
-                    $activa = $this->es_pagina_preinscripcion_activa($post->ID);
-                } else {
-                    $abiertas = get_post_meta($post->ID, 'inscripciones_abiertas', true);
-                    $activa = ($abiertas === '1' || $abiertas === 'true' || $abiertas === true || $abiertas === 1);
-                }
-
-                if ($activa) {
-                    $custom_template = plugin_dir_path(dirname(__FILE__)) . 'templates/preinscripcion-template.php';
-                    if (file_exists($custom_template)) {
-                        add_filter('wp_title', array($this, 'modificar_titulo_preinscripcion'), 10, 3);
-                        add_filter('document_title_parts', array($this, 'modificar_titulo_parts_preinscripcion'));
-                        return $custom_template;
-                    }
-                } else {
-                    $wp_query->set_404();
-                    status_header(404);
-                    return get_404_template();
+                // Always load the template; the template will handle displaying the closed message if not active
+                $custom_template = plugin_dir_path(dirname(__FILE__)) . 'templates/preinscripcion-template.php';
+                if (file_exists($custom_template)) {
+                    add_filter('wp_title', array($this, 'modificar_titulo_preinscripcion'), 10, 3);
+                    add_filter('document_title_parts', array($this, 'modificar_titulo_parts_preinscripcion'));
+                    return $custom_template;
                 }
             } elseif ($es_carta) {
                 // Lógica de carta de presentación
