@@ -2492,35 +2492,53 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
     overflow-wrap: anywhere;
 }
 
+@keyframes fc-pulse-button {
+    0% {
+        box-shadow: 0 0 0 0 rgba(226, 218, 0, 0.6);
+    }
+    70% {
+        box-shadow: 0 0 0 20px rgba(226, 218, 0, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(226, 218, 0, 0);
+    }
+}
+
 .fc-floating-preinscripcion {
     position: fixed;
-    right: max(1rem, env(safe-area-inset-right));
-    bottom: max(1rem, env(safe-area-inset-bottom));
+    right: max(1.5rem, env(safe-area-inset-right));
+    bottom: max(1.5rem, env(safe-area-inset-bottom));
     z-index: 9999;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: .55rem;
-    padding: .95rem 1.15rem;
-    border: 1px solid rgba(255, 255, 255, .38);
+    gap: .75rem;
+    padding: 1.25rem 2.25rem;
+    border: 2px solid rgba(255, 255, 255, .6);
     border-radius: 999px;
     background: var(--fc-secondary);
     color: var(--fc-primary-dark);
-    font-size: 1rem;
+    font-size: 1.15rem;
     font-weight: 900;
     line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
     text-decoration: none;
-    box-shadow: 0 18px 40px rgba(15, 26, 45, .25);
+    box-shadow: 0 15px 35px rgba(15, 26, 45, .35);
     opacity: 1;
     visibility: visible;
     transform: translateY(0) scale(1);
     pointer-events: auto;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: fc-pulse-button 2.5s infinite;
 }
 
 .fc-floating-preinscripcion:hover {
     color: var(--fc-primary-dark);
-    transform: translateY(-2px) scale(1.01);
-    filter: brightness(.98);
+    transform: translateY(-4px) scale(1.03);
+    filter: brightness(.97);
+    box-shadow: 0 20px 45px rgba(15, 26, 45, .45);
+    animation: none;
 }
 
 .fc-floating-preinscripcion.is-hidden {
