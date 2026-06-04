@@ -197,7 +197,11 @@ class Oferta_Blocks {
 
 
     public static function render_dato_calendario($attributes, $content = ''): string {
-        return self::render_dato_documento_pdf((array) $attributes, 'calendario', __('Calendario', 'flacso-oferta-academica'));
+        return self::render_dato_documento_pdf((array) $attributes, 'calendario', __('Calendario Academico', 'flacso-oferta-academica'));
+    }
+
+    public static function render_dato_unificado_calendario_malla($attributes, $content = ''): string {
+        return self::render_dato_documento_pdf((array) $attributes, 'calendario', __('Calendario y Malla Curricular', 'flacso-oferta-academica'));
     }
 
     public static function render_dato_malla_curricular($attributes, $content = ''): string {
@@ -310,6 +314,14 @@ class Oferta_Blocks {
     }
 
     private static function get_documento_card_config(string $meta_key, string $label): array {
+        if ($label === 'Calendario y Malla Curricular') {
+            return [
+                'icon' => 'bi-journal-check',
+                'title' => __('Calendario y Malla Curricular', 'flacso-oferta-academica'),
+                'description' => '',
+            ];
+        }
+
         if ($meta_key === 'calendario') {
             return [
                 'icon' => 'bi-calendar2-check',

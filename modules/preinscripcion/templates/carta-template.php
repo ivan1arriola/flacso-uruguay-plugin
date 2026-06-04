@@ -496,8 +496,17 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 
             <?php
             if (class_exists('Oferta_Blocks') && strpos($child_content, 'flacso-uruguay/dato-malla-curricular') === false) {
-                $calendario_html = Oferta_Blocks::render_dato_calendario(['ofertaId' => $post_id]);
-                $malla_html = Oferta_Blocks::render_dato_malla_curricular(['ofertaId' => $post_id]);
+                $cal_url = trim((string) get_post_meta($post_id, 'calendario', true));
+                $malla_url = trim((string) get_post_meta($post_id, 'malla_curricular', true));
+                $malla_modo = trim((string) get_post_meta($post_id, 'malla_curricular_modo', true));
+
+                if (($cal_url !== '' && $cal_url === $malla_url) || $malla_modo === 'same_as_calendar') {
+                    $calendario_html = Oferta_Blocks::render_dato_unificado_calendario_malla(['ofertaId' => $post_id]);
+                    $malla_html = '';
+                } else {
+                    $calendario_html = Oferta_Blocks::render_dato_calendario(['ofertaId' => $post_id]);
+                    $malla_html = Oferta_Blocks::render_dato_malla_curricular(['ofertaId' => $post_id]);
+                }
 
                 if (trim($calendario_html) !== '' || trim($malla_html) !== '') {
                     ?>
