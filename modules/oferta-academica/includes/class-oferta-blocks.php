@@ -249,23 +249,24 @@ class Oferta_Blocks {
 
         $config = self::get_documento_card_config($meta_key, $label);
 
+        $source_url_for_date = $raw_url !== '' ? $raw_url : $final_url;
+        $last_updated_ts = 0;
+        $updated_at_str = get_post_meta($oferta_id, $meta_key . '_updated_at', true);
+        
+        if (!empty($updated_at_str)) {
+            $last_updated_ts = strtotime($updated_at_str);
+        }
+
+        if ($last_updated_ts <= 0 && $source_url_for_date !== '' && function_exists('attachment_url_to_postid')) {
+            $attachment_id = (int) attachment_url_to_postid($source_url_for_date);
+            if ($attachment_id > 0) {
+                $last_updated_ts = (int) get_post_modified_time('U', true, $attachment_id);
+            }
+        }
+
+        $updated_line = self::build_updated_line($last_updated_ts);
+
         if ($can_render_pdf) {
-            $source_url_for_date = $raw_url !== '' ? $raw_url : $final_url;
-            $last_updated_ts = 0;
-
-            if (function_exists('attachment_url_to_postid')) {
-                $attachment_id = (int) attachment_url_to_postid($source_url_for_date);
-                if ($attachment_id > 0) {
-                    $last_updated_ts = (int) get_post_modified_time('U', true, $attachment_id);
-                }
-            }
-
-            if ($last_updated_ts <= 0) {
-                $last_updated_ts = (int) get_post_modified_time('U', true, $oferta_id);
-            }
-
-            $updated_line = self::build_updated_line($last_updated_ts);
-
             return '<article class="flacso-oferta-documento-card-wrapper">' .
                 '<div class="flacso-oferta-documento-card" role="region" aria-label="' . esc_attr($config['title']) . '">' .
                 '<div class="flacso-oferta-documento-card__icon" aria-hidden="true"><i class="bi ' . esc_attr($config['icon']) . '"></i></div>' .
@@ -280,7 +281,6 @@ class Oferta_Blocks {
                 '</article>';
         }
 
-        $updated_line = self::build_updated_line((int) get_post_modified_time('U', true, $oferta_id));
         $optional_pdf_button = '';
 
         if ($final_url !== '') {
