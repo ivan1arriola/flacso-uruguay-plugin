@@ -41,9 +41,20 @@ $inscripciones_abiertas = !empty($data['inscripciones_abiertas'])
     || $inscripciones_meta === 1;
 
 $preinscripcion_url = trailingslashit(get_permalink($post_id)) . 'preinscripcion/';
+$inscripciones_year = class_exists('Oferta_Data_Schema')
+    ? Oferta_Data_Schema::resolve_inscripciones_year($data['proximo_inicio'] ?? '', $data['cohorte'] ?? '')
+    : '';
+
+if ($inscripciones_year === '') {
+    $inscripciones_year = wp_date('Y');
+}
 
 $hero_tag = $inscripciones_abiertas
-    ? __('Inscripciones 2026', 'flacso-uruguay')
+    ? sprintf(
+        /* translators: %s: academic year */
+        __('Inscripciones %s', 'flacso-uruguay'),
+        $inscripciones_year
+    )
     : __('Próximamente', 'flacso-uruguay');
 
 $hero_cta_markup = $inscripciones_abiertas
@@ -56,7 +67,11 @@ $hero_cta_markup = $inscripciones_abiertas
     : esc_html__('Solicitá información y te avisaremos cuando abra la próxima cohorte.', 'flacso-uruguay');
 
 $hero_primary_label = $inscripciones_abiertas
-    ? __('Preinscripción 2026', 'flacso-uruguay')
+    ? sprintf(
+        /* translators: %s: academic year */
+        __('Preinscripción %s', 'flacso-uruguay'),
+        $inscripciones_year
+    )
     : __('Solicitar información', 'flacso-uruguay');
 
 $hero_primary_url = $inscripciones_abiertas

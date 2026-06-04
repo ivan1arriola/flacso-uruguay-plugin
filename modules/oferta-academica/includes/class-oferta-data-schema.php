@@ -458,6 +458,25 @@ class Oferta_Data_Schema {
         return filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
     }
 
+    public static function resolve_inscripciones_year($proximo_inicio, $cohorte = ''): string {
+        $year = '';
+
+        if (is_array($proximo_inicio)) {
+            $year = self::extract_year_from_value(
+                (string) ($proximo_inicio['valor'] ?? ''),
+                (string) ($proximo_inicio['precision'] ?? '')
+            );
+        } else {
+            $year = self::extract_year_from_value((string) $proximo_inicio);
+        }
+
+        if ($year !== '') {
+            return $year;
+        }
+
+        return self::extract_year_from_value((string) $cohorte);
+    }
+
     public static function sanitize_string_array($value): array {
         if (!is_array($value)) {
             return [];
@@ -1022,6 +1041,37 @@ class Oferta_Data_Schema {
             return 'year';
         }
         return 'year';
+    }
+
+    private static function extract_year_from_value(string $value, string $precision = ''): string {
+        $value = trim($value);
+        $precision = self::sanitize_precision($precision);
+
+        if ($value === '') {
+            return '';
+        }
+
+        if ($precision === 'year' && preg_match('/^\d{4}$/', $value, $matches)) {
+            return $matches[0];
+        }
+
+        if (preg_match('/^(\d{4})[-\/]\d{1,2}(?:[-\/]\d{1,2})?$/', $value, $matches)) {
+            return $matches[1];
+        }
+
+        if (preg_match('/^\d{1,2}[-\/](\d{4})$/', $value, $matches)) {
+            return $matches[1];
+        }
+
+        if (preg_match('/^\d{1,2}[-\/]\d{1,2}[-\/](\d{4})$/', $value, $matches)) {
+            return $matches[1];
+        }
+
+        if (preg_match('/\b(\d{4})\b/', $value, $matches)) {
+            return $matches[1];
+        }
+
+        return '';
     }
 
     private static function normalize_personnel_data($value, string $name_key): array {

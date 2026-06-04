@@ -632,26 +632,36 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                 </div>
             </section>
 
+            <?php
+            $carta_mas_info_section_title = trim((string) get_option('flacso_carta_mas_info_section_title', 'Más información'));
+            $carta_mas_info_trayectoria_title = trim((string) get_option('flacso_carta_mas_info_trayectoria_title', 'Trayectoria Académica'));
+            $carta_mas_info_trayectoria_html = (string) get_option('flacso_carta_mas_info_trayectoria_html', '<p>Nuestra <strong>Facultad de Posgrados</strong> busca formar a sus estudiantes a nivel <strong>académico, profesional y laboral</strong>. Nos distinguen <strong>19 años de trayectoria</strong> a nivel nacional y más de <strong>65 años a nivel internacional</strong>. Además, más de <strong>7000 personas egresadas</strong> de FLACSO Uruguay trabajan en el ámbito público y privado.</p>');
+            $carta_mas_info_gestion_title = trim((string) get_option('flacso_carta_mas_info_gestion_title', 'Gestión Académica'));
+            $carta_mas_info_gestion_html = (string) get_option('flacso_carta_mas_info_gestion_html', '<p>Nos distingue un sistema de <strong>gestión académica eficiente y cercano</strong>, que acompaña de forma <strong>personalizada</strong> a cada estudiante y garantiza <strong>altos niveles de egreso, superiores al 90%</strong>.</p>');
+            $carta_mas_info_financiacion_title = trim((string) get_option('flacso_carta_mas_info_financiacion_title', 'Financiamiento Flexible'));
+            $carta_mas_info_financiacion_html = (string) get_option('flacso_carta_mas_info_financiacion_html', '<p>Puedes abonar el posgrado en <strong>cuotas sin recargo</strong> a lo largo de la cursada. Contamos con <strong>múltiples convenios, descuentos de hasta el 25%</strong> y la posibilidad de acceder a <strong>becas</strong>.</p>');
+            ?>
+
             <section class="fc-section">
-                <h2 class="fc-section-title">Más información</h2>
+                <h2 class="fc-section-title"><?php echo esc_html($carta_mas_info_section_title); ?></h2>
 
                 <div class="fc-more-grid">
                     <article class="fc-more-card">
                         <div class="fc-more-icon"><i class="bi bi-award"></i></div>
-                        <h3>Trayectoria Académica</h3>
-                        <p>Nuestra <strong>Facultad de Posgrados</strong> busca formar a sus estudiantes a nivel <strong>académico, profesional y laboral</strong>. Nos distinguen <strong>19 años de trayectoria</strong> a nivel nacional y más de <strong>65 años a nivel internacional</strong>. Además, más de <strong>7000 personas egresadas</strong> de FLACSO Uruguay trabajan en el ámbito público y privado.</p>
+                        <h3><?php echo esc_html($carta_mas_info_trayectoria_title); ?></h3>
+                        <?php echo wp_kses_post($carta_mas_info_trayectoria_html); ?>
                     </article>
 
                     <article class="fc-more-card">
                         <div class="fc-more-icon"><i class="bi bi-gear"></i></div>
-                        <h3>Gestión Académica</h3>
-                        <p>Nos distingue un sistema de <strong>gestión académica eficiente y cercano</strong>, que acompaña de forma <strong>personalizada</strong> a cada estudiante y garantiza <strong>altos niveles de egreso, superiores al 90%</strong>.</p>
+                        <h3><?php echo esc_html($carta_mas_info_gestion_title); ?></h3>
+                        <?php echo wp_kses_post($carta_mas_info_gestion_html); ?>
                     </article>
 
                     <article class="fc-more-card">
                         <div class="fc-more-icon"><i class="bi bi-currency-dollar"></i></div>
-                        <h3>Financiamiento Flexible</h3>
-                        <p>Puedes abonar el posgrado en <strong>cuotas sin recargo</strong> a lo largo de la cursada. Contamos con <strong>múltiples convenios, descuentos de hasta el 25%</strong> y la posibilidad de acceder a <strong>becas</strong>.</p>
+                        <h3><?php echo esc_html($carta_mas_info_financiacion_title); ?></h3>
+                        <?php echo wp_kses_post($carta_mas_info_financiacion_html); ?>
                     </article>
                 </div>
             </section>
