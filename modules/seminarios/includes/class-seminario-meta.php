@@ -275,11 +275,30 @@ class Seminario_Meta
 
     public static function get_meta($post_id)
     {
+        $definitions = self::definitions();
         $meta = array();
         foreach (Seminario_Helpers::meta_keys() as $key) {
-            $meta[$key] = get_post_meta($post_id, '_seminario_' . $key, true);
+            $value = get_post_meta($post_id, '_seminario_' . $key, true);
+            $type = isset($definitions[$key]['type']) ? $definitions[$key]['type'] : 'string';
+            $meta[$key] = self::normalize_stored_value_for_response($value, $type);
         }
         return $meta;
+    }
+
+    private static function normalize_stored_value_for_response($value, $type)
+    {
+        switch ($type) {
+            case 'boolean':
+                return in_array($value, array(true, 1, '1', 'true', 'yes'), true);
+            case 'integer':
+                return $value === '' || $value === null ? '' : (int) $value;
+            case 'number':
+                return $value === '' || $value === null ? '' : (float) $value;
+            case 'array':
+                return is_array($value) ? $value : array();
+            default:
+                return $value;
+        }
     }
 
     public static function update_from_request($post_id, $meta)
