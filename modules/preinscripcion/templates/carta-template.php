@@ -52,7 +52,7 @@ if (!function_exists('flacso_carta_render_feature_card')) {
         ?>
         <article class="fc-feature-card">
             <div class="fc-feature-icon">
-                <i class="bi <?php echo esc_attr($icon); ?>"></i>
+                <i class="bi <?php echo esc_attr($icon); ?>" aria-hidden="true"></i>
             </div>
             <h3><?php echo esc_html($title); ?></h3>
             <p><?php echo esc_html(wp_strip_all_tags($value)); ?></p>
@@ -66,7 +66,7 @@ if (!function_exists('flacso_carta_render_requirement')) {
         ?>
         <div class="fc-requirement">
             <div class="fc-requirement-icon">
-                <i class="bi <?php echo esc_attr($icon); ?>"></i>
+                <i class="bi <?php echo esc_attr($icon); ?>" aria-hidden="true"></i>
             </div>
             <div class="fc-requirement-content">
                 <?php
@@ -275,6 +275,7 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 ?>
 
 <div id="primary" class="content-area flacso-carta-virtual">
+    <a class="fc-skip-link" href="#fc-info-clave">Saltar a la información principal</a>
     <main id="main" class="site-main">
 
         <section class="fc-hero">
@@ -282,7 +283,7 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 
                 <div class="fc-hero-copy">
                     <div class="fc-eyebrow">
-                        <i class="bi bi-stars"></i>
+                        <i class="bi bi-stars" aria-hidden="true"></i>
                         <span>Formación de excelencia, estés donde estés</span>
                     </div>
 
@@ -306,14 +307,14 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                         <div class="fc-certifications">
                             <?php if ($reconocido_mec) : ?>
                                 <div class="fc-certification">
-                                    <i class="bi bi-award"></i>
+                                    <i class="bi bi-award" aria-hidden="true"></i>
                                     <span>Reconocida por el M.E.C</span>
                                 </div>
                             <?php endif; ?>
 
                             <?php if ($reconocimiento_int) : ?>
                                 <div class="fc-certification">
-                                    <i class="bi bi-globe-americas"></i>
+                                    <i class="bi bi-globe-americas" aria-hidden="true"></i>
                                     <span>Apostillado de La Haya</span>
                                 </div>
                             <?php endif; ?>
@@ -343,13 +344,13 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                     <?php endif; ?>
 
                     <div class="fc-hero-actions">
-                        <a class="fc-primary-button" href="<?php echo esc_url($url_inscripcion); ?>">
-                            <i class="bi bi-pencil-square"></i>
+                        <a class="fc-primary-button" href="<?php echo esc_url($url_inscripcion); ?>" aria-label="Preinscribirme a <?php echo esc_attr($titulo); ?>">
+                            <i class="bi bi-pencil-square" aria-hidden="true"></i>
                             Preinscribirme
                         </a>
 
-                        <a class="fc-secondary-button" href="#fc-info-clave">
-                            <i class="bi bi-arrow-down-circle"></i>
+                        <a class="fc-secondary-button" href="#fc-info-clave" aria-label="Ver información clave de <?php echo esc_attr($titulo); ?>">
+                            <i class="bi bi-arrow-down-circle" aria-hidden="true"></i>
                             Ver información
                         </a>
                     </div>
@@ -358,7 +359,7 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                 <div class="fc-hero-visual">
                     <?php if ($mostrar_banner_convenio) : ?>
                         <div class="fc-convenio-pill">
-                            <i class="bi bi-handshake"></i>
+                            <i class="bi bi-handshake" aria-hidden="true"></i>
                             <span>En convenio con el <strong>IIN-OEA</strong></span>
                         </div>
                     <?php endif; ?>
@@ -369,7 +370,7 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                         </div>
                     <?php else : ?>
                         <div class="fc-cover-card fc-cover-placeholder">
-                            <i class="bi bi-mortarboard"></i>
+                            <i class="bi bi-mortarboard" aria-hidden="true"></i>
                             <span><?php echo esc_html($tipo_oferta ?: 'Posgrado'); ?></span>
                         </div>
                     <?php endif; ?>
@@ -394,7 +395,7 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                             ?>
                             <article class="fc-intermediate-card">
                                 <div class="fc-intermediate-icon">
-                                    <i class="bi bi-mortarboard"></i>
+                                    <i class="bi bi-mortarboard" aria-hidden="true"></i>
                                 </div>
 
                                 <div>
@@ -526,6 +527,7 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 
                         <div class="fc-table-wrap">
                             <table class="fc-pricing-table">
+                                <caption class="fc-sr-only">Beneficios, descuentos y valores de la oferta académica</caption>
                                 <thead>
                                     <tr>
                                         <th>Concepto</th>
@@ -554,7 +556,7 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                     </div>
                 <?php else : ?>
                     <div class="fc-empty-pricing">
-                        <i class="bi bi-currency-dollar"></i>
+                        <i class="bi bi-currency-dollar" aria-hidden="true"></i>
                         <p>
                             Para consultar los costos, planes de financiación y políticas de becas, ponte en contacto con
                             <a href="mailto:inscripciones@flacso.edu.uy">inscripciones@flacso.edu.uy</a>.
@@ -568,30 +570,30 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 
                 <div class="fc-info-list">
                     <div class="fc-info-row">
-                        <div class="fc-info-icon"><i class="bi bi-currency-dollar"></i></div>
+                        <div class="fc-info-icon"><i class="bi bi-currency-dollar" aria-hidden="true"></i></div>
                         <div>Para pagos en <strong>dólares</strong>, las cuotas se mantendrán fijas durante toda la cursada.</div>
                     </div>
 
                     <div class="fc-info-row">
-                        <div class="fc-info-icon"><i class="bi bi-currency-exchange"></i></div>
+                        <div class="fc-info-icon"><i class="bi bi-currency-exchange" aria-hidden="true"></i></div>
                         <div>Para pagos en <strong>pesos</strong>, las cuotas permanecerán fijas durante todo 2026, y a partir de 2027 se ajustarán en enero de cada año, por debajo de la inflación interanual.</div>
                     </div>
 
                     <div class="fc-info-row">
-                        <div class="fc-info-icon"><i class="bi bi-calendar-check"></i></div>
+                        <div class="fc-info-icon"><i class="bi bi-calendar-check" aria-hidden="true"></i></div>
                         <div>Las cuotas vencen el día <strong>15 de cada mes</strong>.</div>
                     </div>
 
                     <?php if ($mostrar_expedicion) : ?>
                         <div class="fc-info-row">
-                            <div class="fc-info-icon"><i class="bi bi-award"></i></div>
+                            <div class="fc-info-icon"><i class="bi bi-award" aria-hidden="true"></i></div>
                             <div>El título se expide en el exterior y tiene un costo asociado de <strong>USD 150</strong>, que incluye el envío y el trámite de Apostilla de La Haya.</div>
                         </div>
                     <?php endif; ?>
 
                     <?php if ($mostrar_costos_envio) : ?>
                         <div class="fc-info-row">
-                            <div class="fc-info-icon"><i class="bi bi-truck"></i></div>
+                            <div class="fc-info-icon"><i class="bi bi-truck" aria-hidden="true"></i></div>
                             <div>
                                 <strong>Los certificados tienen costos de envío al exterior:</strong>
                                 <ul class="fc-envios-list">
@@ -605,13 +607,13 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 
                     <?php if ($mostrar_convenio_iin) : ?>
                         <div class="fc-info-row">
-                            <div class="fc-info-icon"><i class="bi bi-globe"></i></div>
+                            <div class="fc-info-icon"><i class="bi bi-globe" aria-hidden="true"></i></div>
                             <div><strong>Convenio IIN-OEA:</strong> los funcionarios o referentes de los Estados Miembros que cuenten con aval institucional acceden a bonificaciones especiales para cursar este programa.</div>
                         </div>
                     <?php endif; ?>
 
                     <div class="fc-info-row">
-                        <div class="fc-info-icon"><i class="bi bi-envelope"></i></div>
+                        <div class="fc-info-icon"><i class="bi bi-envelope" aria-hidden="true"></i></div>
                         <div>
                             <strong>Consultá por otros planes de financiación en</strong>
                             <a href="mailto:inscripciones@flacso.edu.uy">inscripciones@flacso.edu.uy</a>
@@ -620,13 +622,13 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                 </div>
 
                 <div class="fc-action-buttons">
-                    <a href="https://flacso.edu.uy/convenios/" target="_blank" rel="noopener">
-                        <i class="bi bi-file-earmark-text"></i>
+                    <a href="https://flacso.edu.uy/convenios/" target="_blank" rel="noopener" aria-label="Ver convenios de FLACSO Uruguay en una nueva pestaña">
+                        <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
                         Ver convenios
                     </a>
 
-                    <a href="https://flacso.edu.uy/formas-de-pago/" target="_blank" rel="noopener">
-                        <i class="bi bi-credit-card"></i>
+                    <a href="https://flacso.edu.uy/formas-de-pago/" target="_blank" rel="noopener" aria-label="Ver formas de pago de FLACSO Uruguay en una nueva pestaña">
+                        <i class="bi bi-credit-card" aria-hidden="true"></i>
                         Ver formas de pago
                     </a>
                 </div>
@@ -647,19 +649,19 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 
                 <div class="fc-more-grid">
                     <article class="fc-more-card">
-                        <div class="fc-more-icon"><i class="bi bi-award"></i></div>
+                        <div class="fc-more-icon"><i class="bi bi-award" aria-hidden="true"></i></div>
                         <h3><?php echo esc_html($carta_mas_info_trayectoria_title); ?></h3>
                         <?php echo wp_kses_post($carta_mas_info_trayectoria_html); ?>
                     </article>
 
                     <article class="fc-more-card">
-                        <div class="fc-more-icon"><i class="bi bi-gear"></i></div>
+                        <div class="fc-more-icon"><i class="bi bi-gear" aria-hidden="true"></i></div>
                         <h3><?php echo esc_html($carta_mas_info_gestion_title); ?></h3>
                         <?php echo wp_kses_post($carta_mas_info_gestion_html); ?>
                     </article>
 
                     <article class="fc-more-card">
-                        <div class="fc-more-icon"><i class="bi bi-currency-dollar"></i></div>
+                        <div class="fc-more-icon"><i class="bi bi-currency-dollar" aria-hidden="true"></i></div>
                         <h3><?php echo esc_html($carta_mas_info_financiacion_title); ?></h3>
                         <?php echo wp_kses_post($carta_mas_info_financiacion_html); ?>
                     </article>
@@ -717,11 +719,16 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                     <p><strong>Formación 100% a distancia</strong></p>
                 </div>
 
-                <a href="<?php echo esc_url($url_inscripcion); ?>">
-                    <i class="bi bi-pencil-square"></i>
+                <a href="<?php echo esc_url($url_inscripcion); ?>" aria-label="Abrir formulario de preinscripción para <?php echo esc_attr($titulo); ?>">
+                    <i class="bi bi-pencil-square" aria-hidden="true"></i>
                     Formulario de Preinscripción
                 </a>
             </section>
+
+            <a class="fc-floating-preinscripcion is-hidden" href="<?php echo esc_url($url_inscripcion); ?>" aria-label="Preinscribirme a <?php echo esc_attr($titulo); ?>" aria-hidden="true" tabindex="-1">
+                <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                <span>Preinscribirme</span>
+            </a>
 
         </div>
     </main>
@@ -1762,7 +1769,722 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
         margin-right: -1rem;
     }
 }
+
+.flacso-carta-virtual {
+    --fc-radius-sm: .85rem;
+    --fc-radius-md: 1.15rem;
+    --fc-radius-lg: 1.45rem;
+    --fc-ring: 0 0 0 4px rgba(233, 229, 15, .34);
+    --fc-gradient-primary: linear-gradient(135deg, var(--fc-primary) 0%, #123264 48%, var(--fc-primary-dark) 100%);
+    --fc-card-bg: rgba(255, 255, 255, .94);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+}
+
+.flacso-carta-virtual::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at top left, rgba(22, 57, 111, .07), transparent 26rem),
+        radial-gradient(circle at bottom right, rgba(233, 229, 15, .12), transparent 24rem);
+}
+
+.flacso-carta-virtual a:focus-visible,
+.flacso-carta-virtual button:focus-visible {
+    outline: none;
+    box-shadow: var(--fc-ring);
+}
+
+#fc-info-clave {
+    scroll-margin-top: 5rem;
+}
+
+.fc-hero-inner {
+    isolation: isolate;
+    border: 1px solid rgba(255, 255, 255, .16);
+    background:
+        radial-gradient(circle at 12% 18%, rgba(233, 229, 15, .30), transparent 24rem),
+        radial-gradient(circle at 86% 12%, rgba(255, 255, 255, .18), transparent 18rem),
+        radial-gradient(circle at 68% 92%, rgba(255, 255, 255, .10), transparent 20rem),
+        var(--fc-gradient-primary);
+}
+
+.fc-hero-inner::before,
+.fc-hero-inner::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+    border-radius: 999px;
+    z-index: 1;
+}
+
+.fc-hero-inner::before {
+    width: 18rem;
+    height: 18rem;
+    right: -7rem;
+    bottom: -9rem;
+    border: 1px solid rgba(255, 255, 255, .18);
+    background: rgba(255, 255, 255, .06);
+}
+
+.fc-hero-inner::after {
+    width: 8rem;
+    height: 8rem;
+    left: 46%;
+    top: -3rem;
+    background: rgba(233, 229, 15, .16);
+    filter: blur(1px);
+}
+
+.fc-eyebrow,
+.fc-hero-meta span,
+.fc-chip-grid span,
+.fc-secondary-button {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16);
+}
+
+.fc-hero h1 {
+    text-wrap: balance;
+    text-shadow: 0 2px 18px rgba(0, 0, 0, .16);
+}
+
+.fc-certification {
+    border: 1px solid rgba(255, 255, 255, .6);
+}
+
+.fc-primary-button,
+.fc-final-cta a {
+    border: 1px solid rgba(255, 255, 255, .28);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, .22), inset 0 1px 0 rgba(255, 255, 255, .32);
+}
+
+.fc-primary-button:hover,
+.fc-final-cta a:hover,
+.fc-action-buttons a:hover {
+    box-shadow: 0 18px 38px rgba(15, 26, 45, .18);
+}
+
+.fc-cover-card {
+    position: relative;
+}
+
+.fc-cover-card::before {
+    content: "";
+    position: absolute;
+    inset: -.45rem;
+    z-index: -1;
+    border-radius: 1.65rem;
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, .24), rgba(255, 255, 255, .04)),
+        rgba(255, 255, 255, .06);
+}
+
+.fc-cover-card img {
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .2);
+}
+
+.fc-convenio-pill {
+    border: 1px solid rgba(255, 255, 255, .32);
+}
+
+.fc-page-container {
+    position: relative;
+}
+
+.fc-intermediate-strip,
+.fc-feature-card,
+.fc-content-wrapper,
+.fc-requirement,
+.fc-card,
+.fc-info-important,
+.fc-more-card,
+.fc-assistant-card,
+.fc-final-cta,
+.fc-empty-pricing {
+    backdrop-filter: blur(10px);
+}
+
+.fc-feature-card,
+.fc-intermediate-card,
+.fc-requirement,
+.fc-more-card,
+.fc-empty-pricing {
+    transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease, background-color .22s ease;
+}
+
+.fc-feature-card:hover,
+.fc-intermediate-card:hover,
+.fc-requirement:hover,
+.fc-more-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(22, 57, 111, .22);
+    box-shadow: 0 16px 36px rgba(15, 26, 45, .11);
+}
+
+.fc-feature-card::before,
+.fc-more-card::before {
+    content: "";
+    display: block;
+    width: 3rem;
+    height: .25rem;
+    margin-bottom: 1rem;
+    border-radius: 999px;
+    background: var(--fc-secondary);
+}
+
+.fc-feature-card .fc-feature-icon,
+.fc-more-card .fc-more-icon {
+    margin-top: 0;
+}
+
+.fc-feature-icon,
+.fc-info-icon,
+.fc-more-icon,
+.fc-requirement-icon,
+.fc-intermediate-icon {
+    border: 1px solid rgba(22, 57, 111, .10);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .75);
+}
+
+.fc-content-wrapper,
+.fc-info-important,
+.fc-card,
+.fc-assistant-card {
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, .98), rgba(255, 255, 255, .90)),
+        var(--fc-white);
+}
+
+.fc-content-wrapper > *:last-child,
+.fc-rich-block > *:last-child,
+.fc-more-card > *:last-child,
+.fc-info-row > div:last-child > *:last-child {
+    margin-bottom: 0;
+}
+
+.fc-content-wrapper h2,
+.fc-rich-block h2,
+.fc-section-title {
+    text-wrap: balance;
+}
+
+.fc-content-wrapper h2,
+.fc-rich-block h2 {
+    position: relative;
+    padding-bottom: .65rem;
+}
+
+.fc-content-wrapper h2::after,
+.fc-rich-block h2::after,
+.fc-section-title::after {
+    content: "";
+    display: block;
+    width: 4rem;
+    height: .28rem;
+    margin-top: .7rem;
+    border-radius: 999px;
+    background: var(--fc-secondary);
+}
+
+.fc-content-wrapper h3 {
+    padding-left: .85rem;
+    border-left: 4px solid var(--fc-secondary);
+}
+
+.fc-content-wrapper blockquote {
+    margin: 1.4rem 0;
+    padding: 1rem 1.25rem;
+    border-left: 5px solid var(--fc-primary);
+    border-radius: .95rem;
+    background: var(--fc-soft);
+    color: var(--fc-text);
+}
+
+.fc-content-wrapper table {
+    width: 100%;
+    margin: 1.35rem 0;
+    border-collapse: collapse;
+    overflow: hidden;
+    border: 1px solid var(--fc-border);
+    border-radius: 1rem;
+    background: var(--fc-white);
+}
+
+.fc-content-wrapper th,
+.fc-content-wrapper td {
+    padding: .9rem 1rem;
+    border-bottom: 1px solid var(--fc-border);
+    text-align: left;
+    vertical-align: top;
+}
+
+.fc-content-wrapper th {
+    color: var(--fc-primary);
+    background: var(--fc-soft);
+    font-weight: 850;
+}
+
+.fc-content-wrapper tr:last-child td {
+    border-bottom: 0;
+}
+
+.fc-message-box {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .65);
+}
+
+.fc-native-blocks > * {
+    min-width: 0;
+    border-radius: var(--fc-radius-md);
+}
+
+.fc-section {
+    scroll-margin-top: 5rem;
+}
+
+.fc-section-title {
+    position: relative;
+}
+
+.fc-requirement {
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, .98), rgba(247, 249, 252, .88)),
+        var(--fc-white);
+}
+
+.fc-alert-box {
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 100% 0%, rgba(233, 229, 15, .20), transparent 12rem),
+        var(--fc-gradient-primary);
+}
+
+.fc-alert-box::after {
+    content: "";
+    position: absolute;
+    right: -2.25rem;
+    bottom: -2.25rem;
+    width: 7rem;
+    height: 7rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .08);
+}
+
+.fc-card {
+    position: relative;
+}
+
+.fc-card-header {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(233, 229, 15, .24), transparent 16rem),
+        var(--fc-gradient-primary);
+}
+
+.fc-table-wrap {
+    background:
+        linear-gradient(90deg, rgba(22, 57, 111, .05), transparent 1.2rem) left center / 1.2rem 100% no-repeat,
+        var(--fc-white);
+}
+
+.fc-pricing-table tbody tr:nth-child(even) td {
+    background: rgba(237, 242, 246, .38);
+}
+
+.fc-pricing-table tbody tr:hover td {
+    background: rgba(22, 57, 111, .045);
+}
+
+.fc-pricing-table tr.is-highlighted td,
+.fc-pricing-table tr.is-highlighted:hover td {
+    background: rgba(233, 229, 15, .22);
+}
+
+.fc-pricing-note {
+    border-top: 1px solid var(--fc-border);
+}
+
+.fc-info-important {
+    position: relative;
+    overflow: hidden;
+}
+
+.fc-info-important::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: .35rem;
+    background: var(--fc-primary);
+}
+
+.fc-info-list {
+    position: relative;
+    z-index: 1;
+}
+
+.fc-info-row {
+    padding: .9rem;
+    border-radius: 1rem;
+    background: rgba(237, 242, 246, .52);
+}
+
+.fc-info-row + .fc-info-row {
+    margin-top: .05rem;
+}
+
+.fc-action-buttons a {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .75);
+}
+
+.fc-more-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.fc-more-card::after {
+    content: "";
+    position: absolute;
+    right: -2rem;
+    bottom: -2rem;
+    width: 6.5rem;
+    height: 6.5rem;
+    border-radius: 999px;
+    background: rgba(22, 57, 111, .045);
+}
+
+.fc-more-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+.fc-assistant-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.fc-assistant-card::before {
+    content: "";
+    position: absolute;
+    right: -4rem;
+    top: -4rem;
+    width: 13rem;
+    height: 13rem;
+    border-radius: 999px;
+    background: rgba(233, 229, 15, .16);
+}
+
+.fc-assistant-photo,
+.fc-assistant-copy {
+    position: relative;
+    z-index: 1;
+}
+
+.fc-assistant-photo img,
+.fc-assistant-placeholder {
+    border: 5px solid var(--fc-white);
+}
+
+.fc-final-cta {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, .18);
+    background:
+        radial-gradient(circle at 100% 0%, rgba(233, 229, 15, .32), transparent 18rem),
+        radial-gradient(circle at 0% 100%, rgba(255, 255, 255, .11), transparent 18rem),
+        var(--fc-gradient-primary);
+}
+
+.fc-final-cta::after {
+    content: "";
+    position: absolute;
+    right: -3rem;
+    bottom: -5rem;
+    width: 16rem;
+    height: 16rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .08);
+}
+
+.fc-final-cta > * {
+    position: relative;
+    z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .flacso-carta-virtual *,
+    .flacso-carta-virtual a {
+        transition: none !important;
+        scroll-behavior: auto !important;
+    }
+
+    .fc-primary-button:hover,
+    .fc-final-cta a:hover,
+    .fc-action-buttons a:hover,
+    .fc-feature-card:hover,
+    .fc-intermediate-card:hover,
+    .fc-requirement:hover,
+    .fc-more-card:hover {
+        transform: none;
+    }
+}
+
+@media (max-width: 980px) {
+    .fc-hero-inner::after {
+        left: auto;
+        right: 2rem;
+    }
+
+    .fc-feature-card:hover,
+    .fc-intermediate-card:hover,
+    .fc-requirement:hover,
+    .fc-more-card:hover {
+        transform: none;
+    }
+}
+
+@media (max-width: 700px) {
+    .fc-feature-card::before,
+    .fc-more-card::before {
+        margin-bottom: .85rem;
+    }
+
+    .fc-info-important::before {
+        width: .25rem;
+    }
+
+    .fc-info-row {
+        padding: .85rem;
+    }
+
+    .fc-content-wrapper table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .fc-hero-inner::before,
+    .fc-hero-inner::after,
+    .fc-final-cta::after {
+        opacity: .55;
+    }
+
+    .fc-info-row {
+        flex-direction: column;
+    }
+
+    .fc-info-icon {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+
+/* Accesibilidad y CTA flotante inteligente */
+.fc-sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+.fc-skip-link {
+    position: fixed;
+    top: .75rem;
+    left: .75rem;
+    z-index: 100000;
+    transform: translateY(-140%);
+    padding: .85rem 1rem;
+    border-radius: .75rem;
+    background: var(--fc-primary-dark);
+    color: var(--fc-white);
+    font-weight: 850;
+    text-decoration: none;
+    box-shadow: var(--fc-shadow);
+}
+
+.fc-skip-link:focus,
+.fc-skip-link:focus-visible {
+    transform: translateY(0);
+    color: var(--fc-white);
+    outline: 3px solid var(--fc-secondary);
+    outline-offset: 3px;
+}
+
+.flacso-carta-virtual a:focus-visible,
+.flacso-carta-virtual button:focus-visible,
+.flacso-carta-virtual [tabindex]:focus-visible {
+    outline: 3px solid var(--fc-secondary);
+    outline-offset: 4px;
+    box-shadow: 0 0 0 6px rgba(22, 57, 111, .28);
+}
+
+.fc-primary-button,
+.fc-secondary-button,
+.fc-final-cta a,
+.fc-action-buttons a,
+.fc-floating-preinscripcion {
+    min-height: 44px;
+}
+
+.fc-content-wrapper :where(p, li),
+.fc-requirement-content,
+.fc-info-row,
+.fc-more-card p,
+.fc-assistant-copy p,
+.fc-pricing-note,
+.fc-pricing-table td {
+    text-wrap: pretty;
+}
+
+.fc-content-wrapper a:not(.fc-primary-button):not(.fc-secondary-button),
+.fc-pricing-note a,
+.fc-empty-pricing a,
+.fc-info-row a,
+.fc-assistant-copy a {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
+
+.fc-content-wrapper a:hover,
+.fc-pricing-note a:hover,
+.fc-empty-pricing a:hover,
+.fc-info-row a:hover,
+.fc-assistant-copy a:hover {
+    text-decoration-thickness: 3px;
+}
+
+.fc-pricing-table th {
+    line-height: 1.25;
+}
+
+.fc-pricing-table th,
+.fc-pricing-table td {
+    word-break: normal;
+    overflow-wrap: anywhere;
+}
+
+.fc-floating-preinscripcion {
+    position: fixed;
+    right: max(1rem, env(safe-area-inset-right));
+    bottom: max(1rem, env(safe-area-inset-bottom));
+    z-index: 9999;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .55rem;
+    padding: .95rem 1.15rem;
+    border: 1px solid rgba(255, 255, 255, .38);
+    border-radius: 999px;
+    background: var(--fc-secondary);
+    color: var(--fc-primary-dark);
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1;
+    text-decoration: none;
+    box-shadow: 0 18px 40px rgba(15, 26, 45, .25);
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+.fc-floating-preinscripcion:hover {
+    color: var(--fc-primary-dark);
+    transform: translateY(-2px) scale(1.01);
+    filter: brightness(.98);
+}
+
+.fc-floating-preinscripcion.is-hidden {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(1rem) scale(.96);
+    pointer-events: none;
+}
+
+@media (max-width: 700px) {
+    .fc-floating-preinscripcion {
+        right: .85rem;
+        bottom: .85rem;
+        left: .85rem;
+        width: auto;
+        border-radius: .95rem;
+        padding: 1rem 1.15rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fc-floating-preinscripcion,
+    .fc-skip-link {
+        transition: none !important;
+    }
+}
+
 </style>
+
+
+<script>
+(function () {
+    const floatingButton = document.querySelector('.fc-floating-preinscripcion');
+
+    if (!floatingButton || !('IntersectionObserver' in window)) {
+        return;
+    }
+
+    const preinscriptionButtons = Array.from(document.querySelectorAll('.fc-primary-button, .fc-final-cta a, a[href*="/preinscripcion"]'))
+        .filter((button) => button !== floatingButton);
+
+    if (!preinscriptionButtons.length) {
+        floatingButton.classList.remove('is-hidden');
+        floatingButton.removeAttribute('aria-hidden');
+        floatingButton.removeAttribute('tabindex');
+        return;
+    }
+
+    const visibleButtons = new Set();
+
+    const setFloatingVisibility = () => {
+        const shouldHide = visibleButtons.size > 0;
+
+        floatingButton.classList.toggle('is-hidden', shouldHide);
+
+        if (shouldHide) {
+            floatingButton.setAttribute('aria-hidden', 'true');
+            floatingButton.setAttribute('tabindex', '-1');
+        } else {
+            floatingButton.removeAttribute('aria-hidden');
+            floatingButton.removeAttribute('tabindex');
+        }
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting && entry.intersectionRatio >= 0.35) {
+                visibleButtons.add(entry.target);
+            } else {
+                visibleButtons.delete(entry.target);
+            }
+        });
+
+        setFloatingVisibility();
+    }, {
+        threshold: [0, 0.35, 0.65],
+        rootMargin: '0px 0px -8% 0px'
+    });
+
+    preinscriptionButtons.forEach((button) => observer.observe(button));
+    setFloatingVisibility();
+}());
+</script>
 
 <?php
 get_footer();
