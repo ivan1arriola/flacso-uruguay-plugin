@@ -154,6 +154,8 @@ $reconocido_mec = isset($data['reconocido_mec'])
     ? flacso_carta_bool($data['reconocido_mec'])
     : $is_maestria;
 
+$ocultar_carta = isset($data['ocultar_carta']) ? flacso_carta_bool($data['ocultar_carta']) : false;
+
 $reconocimiento_int = isset($data['reconocimiento_internacional'])
     ? flacso_carta_bool($data['reconocimiento_internacional'])
     : ($is_maestria || (int) $post_id === 12316);
@@ -344,10 +346,12 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                     <?php endif; ?>
 
                     <div class="fc-hero-actions">
+                        <?php if (!$ocultar_carta) : ?>
                         <a class="fc-primary-button" href="<?php echo esc_url($url_inscripcion); ?>" aria-label="Preinscribirme a <?php echo esc_attr($titulo); ?>">
                             <i class="bi bi-pencil-square" aria-hidden="true"></i>
                             Preinscribirme
                         </a>
+                        <?php endif; ?>
 
                         <a class="fc-secondary-button" href="#fc-info-clave" aria-label="Ver información clave de <?php echo esc_attr($titulo); ?>">
                             <i class="bi bi-arrow-down-circle" aria-hidden="true"></i>
@@ -419,6 +423,14 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
         </section>
 
         <div class="fc-page-container">
+
+            <?php if ($ocultar_carta) : ?>
+                <div class="fc-message-box fc-message-box-standalone" style="text-align:center; padding: 4rem 2rem; margin-top: 2rem; border-color: #fecdd3; background: #fff1f2; border-radius: 12px;">
+                    <i class="bi bi-info-circle" style="font-size: 3rem; color: #be123c; margin-bottom: 1rem; display: block;"></i>
+                    <h2 style="color: #be123c; margin-bottom: 1rem;">Inscripciones Cerradas</h2>
+                    <p style="color: #881337; font-size: 1.15rem; max-width: 600px; margin: 0 auto;">En este momento no estamos recibiendo inscripciones para esta cursada.</p>
+                </div>
+            <?php else : ?>
 
             <section id="fc-info-clave" class="fc-feature-grid">
                 <?php
@@ -708,7 +720,7 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                     $enlace_correo = '<a href="mailto:' . esc_attr($asistente_correo) . '">' . esc_html($asistente_correo) . '</a>';
 
                     $presentacion_final = sprintf(
-                        'Mi nombre es %s y soy %s %s %s. Si tienes dudas o consultas puedes contactarme al mail %s.',
+                        'Mi nombre es %s y soy %s %s %s. Si tienes dudas o consultas puedes contactarme al correo electrónico %s.',
                         $asist_nombre_completo,
                         esc_html($asistente_titulo),
                         esc_html($prep_posgrado),
@@ -728,9 +740,8 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                         </div>
 
                         <div class="fc-assistant-copy">
-                            <span class="fc-assistant-label">Contacto académico</span>
+                            <span class="fc-assistant-label"><?php echo esc_html($asistente_titulo); ?></span>
                             <h2><?php echo $asist_nombre_completo; ?></h2>
-                            <p class="fc-assistant-role"><?php echo esc_html($asistente_titulo); ?></p>
                             <p><?php echo wp_kses_post($presentacion_final); ?></p>
                         </div>
                     </section>
@@ -756,6 +767,8 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                 <i class="bi bi-pencil-square" aria-hidden="true"></i>
                 <span>Preinscribirme</span>
             </a>
+
+            <?php endif; ?>
 
         </div>
     </main>

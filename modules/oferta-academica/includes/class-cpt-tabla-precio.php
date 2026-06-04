@@ -23,6 +23,9 @@ class CPT_Tabla_Precio {
     public static function filter_edit_post_link($link, $post_id, $context) {
         if (get_post_type($post_id) === 'tabla-precio') {
             $base_url = get_option('flacso_external_editor_url', 'https://editor-flacso-uy.vercel.app');
+            if (empty($base_url) || strpos($base_url, 'flacso.edu.uy') !== false) {
+                $base_url = 'https://editor-flacso-uy.vercel.app';
+            }
             $base_url = rtrim($base_url, '/');
 
             return esc_url($base_url . '/tablas-precios/' . $post_id);
@@ -34,6 +37,9 @@ class CPT_Tabla_Precio {
     public static function redirect_add_new(): void {
         if (isset($_GET['post_type']) && $_GET['post_type'] === 'tabla-precio') {
             $base_url = get_option('flacso_external_editor_url', 'https://editor-flacso-uy.vercel.app');
+            if (empty($base_url) || strpos($base_url, 'flacso.edu.uy') !== false) {
+                $base_url = 'https://editor-flacso-uy.vercel.app';
+            }
             $base_url = rtrim($base_url, '/');
 
             wp_redirect($base_url . '/tablas-precios/nuevo');
