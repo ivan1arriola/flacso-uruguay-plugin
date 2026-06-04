@@ -201,7 +201,12 @@ class Oferta_Blocks {
     }
 
     public static function render_dato_unificado_calendario_malla($attributes, $content = ''): string {
-        return self::render_dato_documento_pdf((array) $attributes, 'calendario', __('Calendario y Malla Curricular', 'flacso-oferta-academica'));
+        $oferta_id = self::resolve_oferta_id($attributes);
+        $documentos_json = get_post_meta($oferta_id, 'documentos', true);
+        $documentos = is_string($documentos_json) && !empty($documentos_json) ? json_decode($documentos_json, true) : [];
+        $meta_key = isset($documentos['cartamalla']) && !empty($documentos['cartamalla']['link']) ? 'cartamalla' : 'calendario';
+        
+        return self::render_dato_documento_pdf((array) $attributes, $meta_key, __('Calendario y Malla Curricular', 'flacso-oferta-academica'));
     }
 
     public static function render_dato_malla_curricular($attributes, $content = ''): string {
@@ -220,7 +225,24 @@ class Oferta_Blocks {
                 : '';
         }
 
-        $raw_url = trim((string) get_post_meta($oferta_id, $meta_key, true));
+        $raw_url = '';
+        $updated_at_str = '';
+        
+        $documentos_json = get_post_meta($oferta_id, 'documentos', true);
+        $documentos = is_string($documentos_json) && !empty($documentos_json) ? json_decode($documentos_json, true) : [];
+        
+        $doc_key = $meta_key;
+        if ($doc_key === 'malla_curricular') $doc_key = 'malla';
+        
+        if (isset($documentos[$doc_key]) && !empty($documentos[$doc_key]['link'])) {
+            $raw_url = trim((string) $documentos[$doc_key]['link']);
+            $updated_at_str = isset($documentos[$doc_key]['fecha']) ? trim((string) $documentos[$doc_key]['fecha']) : '';
+        } else {
+            // Retrocompatibilidad
+            $raw_url = trim((string) get_post_meta($oferta_id, $meta_key, true));
+            $updated_at_str = get_post_meta($oferta_id, $meta_key . '_updated_at', true);
+        }
+
         $raw_html = trim((string) get_post_meta($oferta_id, $meta_key . '_html', true));
         $fallback = isset($attributes['pdfUrlFallback']) ? trim((string) $attributes['pdfUrlFallback']) : '';
         $final_url = $raw_url !== '' ? $raw_url : $fallback;
@@ -251,7 +273,6 @@ class Oferta_Blocks {
 
         $source_url_for_date = $raw_url !== '' ? $raw_url : $final_url;
         $last_updated_ts = 0;
-        $updated_at_str = get_post_meta($oferta_id, $meta_key . '_updated_at', true);
         
         if (!empty($updated_at_str)) {
             $last_updated_ts = strtotime($updated_at_str);
