@@ -109,6 +109,7 @@ $build_main_content_cards = static function ($html) {
     }
 
     $make_card = static function ($title, $body) {
+        $title = trim((string) $title);
         $body = trim((string) $body);
 
         if ($body === '') {
@@ -117,19 +118,19 @@ $build_main_content_cards = static function ($html) {
 
         $classes = [];
 
-        if (preg_match('/<(table|iframe)\b/i', $body)) {
+        if ($title === '' || preg_match('/<(table|iframe)\b/i', $body)) {
             $classes[] = 'flacso-oa-content-card--wide';
         }
 
         return [
-            'title' => trim((string) $title),
+            'title' => $title,
             'body' => $body,
             'class' => implode(' ', $classes),
         ];
     };
 
     if (!class_exists('DOMDocument')) {
-        $fallback = $make_card(__('Información general', 'flacso-uruguay'), $html);
+        $fallback = $make_card('', $html);
         return $fallback ? [$fallback] : [];
     }
 
@@ -143,14 +144,14 @@ $build_main_content_cards = static function ($html) {
     libxml_use_internal_errors($internal_errors);
 
     if (!$loaded) {
-        $fallback = $make_card(__('Información general', 'flacso-uruguay'), $html);
+        $fallback = $make_card('', $html);
         return $fallback ? [$fallback] : [];
     }
 
     $root = $document->getElementById('flacso-oa-content-root');
 
     if (!$root) {
-        $fallback = $make_card(__('Información general', 'flacso-uruguay'), $html);
+        $fallback = $make_card('', $html);
         return $fallback ? [$fallback] : [];
     }
 
@@ -200,12 +201,8 @@ $build_main_content_cards = static function ($html) {
     }
 
     if (empty($sections)) {
-        $fallback = $make_card(__('Información general', 'flacso-uruguay'), $html);
+        $fallback = $make_card('', $html);
         return $fallback ? [$fallback] : [];
-    }
-
-    if ($sections[0]['title'] === '') {
-        $sections[0]['title'] = __('Información general', 'flacso-uruguay');
     }
 
     return $sections;
