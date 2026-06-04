@@ -8,6 +8,12 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Prevenir la indexación de las cartas de presentación en buscadores (ej. Google)
+header('X-Robots-Tag: noindex, nofollow', true);
+add_action('wp_head', function() {
+    echo '<meta name="robots" content="noindex, nofollow">' . "\n";
+});
+
 get_header();
 
 global $post;
@@ -495,32 +501,50 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
             </section>
 
             <?php
-            if (class_exists('Oferta_Blocks') && strpos($child_content, 'flacso-uruguay/dato-malla-curricular') === false) {
+            if (strpos($child_content, 'flacso-uruguay/dato-malla-curricular') === false) {
                 $documentos_json = get_post_meta($post_id, 'documentos', true);
                 $documentos = is_string($documentos_json) && !empty($documentos_json) ? json_decode($documentos_json, true) : [];
-                $cartamalla = isset($documentos['cartamalla']) && !empty($documentos['cartamalla']['link']);
+                $cartamalla = !empty($documentos['cartamalla']['link']) ? trim($documentos['cartamalla']['link']) : '';
+                $malla_pdf = !empty($documentos['malla']['link']) ? trim($documentos['malla']['link']) : '';
+                $calendario_pdf = !empty($documentos['calendario']['link']) ? trim($documentos['calendario']['link']) : '';
 
-                // Comprobar si existe el documento unificado (prioridad 1)
-                if ($cartamalla) {
-                    $calendario_html = Oferta_Blocks::render_dato_unificado_calendario_malla(['ofertaId' => $post_id]);
-                    $malla_html = '';
-                } else {
-                    $calendario_html = Oferta_Blocks::render_dato_calendario(['ofertaId' => $post_id]);
-                    $malla_html = Oferta_Blocks::render_dato_malla_curricular(['ofertaId' => $post_id]);
-                }
-
-                if (trim($calendario_html) !== '' || trim($malla_html) !== '') {
+                if ($cartamalla || $malla_pdf || $calendario_pdf) {
                     ?>
-                    <section class="fc-native-blocks">
-                        <?php
-                        if (trim($calendario_html) !== '') {
-                            echo $calendario_html;
-                        }
-
-                        if (trim($malla_html) !== '') {
-                            echo $malla_html;
-                        }
-                        ?>
+                    <section class="fc-section">
+                        <h2 class="fc-section-title">Calendario y Malla Curricular</h2>
+                        <div class="fc-more-grid">
+                            <?php if ($cartamalla) : ?>
+                                <article class="fc-more-card" style="text-align: center; padding: 2rem;">
+                                    <div class="fc-more-icon" style="margin: 0 auto 1rem;"><i class="bi bi-journal-check" aria-hidden="true"></i></div>
+                                    <h3>Documento Unificado</h3>
+                                    <p style="margin-bottom: 1.5rem;">Contiene el calendario de cursada y la malla curricular completa.</p>
+                                    <a href="<?php echo esc_url($cartamalla); ?>" target="_blank" class="fc-secondary-button" style="display: inline-flex; width: auto; justify-content: center; border: 1px solid var(--fc-border);">
+                                        <i class="bi bi-file-earmark-pdf"></i> Ver Documento
+                                    </a>
+                                </article>
+                            <?php else : ?>
+                                <?php if ($calendario_pdf) : ?>
+                                    <article class="fc-more-card" style="text-align: center; padding: 2rem;">
+                                        <div class="fc-more-icon" style="margin: 0 auto 1rem;"><i class="bi bi-calendar2-check" aria-hidden="true"></i></div>
+                                        <h3>Calendario Académico</h3>
+                                        <p style="margin-bottom: 1.5rem;">Fechas clave, inicios y recesos de la cursada.</p>
+                                        <a href="<?php echo esc_url($calendario_pdf); ?>" target="_blank" class="fc-secondary-button" style="display: inline-flex; width: auto; justify-content: center; border: 1px solid var(--fc-border);">
+                                            <i class="bi bi-file-earmark-pdf"></i> Ver Calendario
+                                        </a>
+                                    </article>
+                                <?php endif; ?>
+                                <?php if ($malla_pdf) : ?>
+                                    <article class="fc-more-card" style="text-align: center; padding: 2rem;">
+                                        <div class="fc-more-icon" style="margin: 0 auto 1rem;"><i class="bi bi-journal-bookmark" aria-hidden="true"></i></div>
+                                        <h3>Malla Curricular</h3>
+                                        <p style="margin-bottom: 1.5rem;">Programa completo y asignaturas del posgrado.</p>
+                                        <a href="<?php echo esc_url($malla_pdf); ?>" target="_blank" class="fc-secondary-button" style="display: inline-flex; width: auto; justify-content: center; border: 1px solid var(--fc-border);">
+                                            <i class="bi bi-file-earmark-pdf"></i> Ver Malla
+                                        </a>
+                                    </article>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                        </div>
                     </section>
                     <?php
                 }

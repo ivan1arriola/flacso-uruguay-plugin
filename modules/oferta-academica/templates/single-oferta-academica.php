@@ -629,13 +629,13 @@ get_header();
                                 $cartamalla_pdf_url = !empty($documentos['cartamalla']['link']) ? trim((string) $documentos['cartamalla']['link']) : '';
                                 
                                 if ($cartamalla_pdf_url) {
-                                    ob_start();
-                                    if (class_exists('Oferta_Blocks')) {
-                                        echo Oferta_Blocks::render_dato_unificado_calendario_malla(['ofertaId' => $post_id]);
-                                    } else {
-                                        echo '<a href="' . esc_url($cartamalla_pdf_url) . '" target="_blank" class="flacso-oa-link-btn">' . esc_html__('Descargar Calendario y Malla (PDF)', 'flacso-uruguay') . '</a>';
+                                    if (function_exists('flacso_get_pdf_proxy_url')) {
+                                        $proxied = flacso_get_pdf_proxy_url($cartamalla_pdf_url, 'Calendario y Malla Curricular');
+                                        if ($proxied) $cartamalla_pdf_url = $proxied;
                                     }
-                                    $combined_body = ob_get_clean();
+                                    $combined_body = '<p style="margin-bottom:1rem;">' . esc_html__('Podés descargar el documento unificado con el calendario de cursada y la malla curricular.', 'flacso-uruguay') . '</p>' .
+                                                     '<a href="' . esc_url($cartamalla_pdf_url) . '" target="_blank" class="flacso-oa-link-btn" style="display:inline-flex; align-items:center; gap:0.5rem;"><i class="bi bi-file-earmark-pdf"></i> ' . esc_html__('Ver Documento Unificado (PDF)', 'flacso-uruguay') . '</a>';
+                                    
                                     $render_info_card(
                                         __('Malla y Calendario Académico', 'flacso-uruguay'),
                                         $combined_body,
@@ -645,15 +645,14 @@ get_header();
                                     $malla_pdf_url = !empty($documentos['malla']['link']) ? trim((string) $documentos['malla']['link']) : (!empty($data['malla_curricular']) ? trim((string) $data['malla_curricular']) : '');
                                     
                                     if ($malla_pdf_url) {
-                                        ob_start();
-                                        if (class_exists('Oferta_Blocks')) {
-                                            echo Oferta_Blocks::render_dato_malla_curricular(['ofertaId' => $post_id]);
-                                        } else {
-                                            echo '<a href="' . esc_url($malla_pdf_url) . '" target="_blank" class="flacso-oa-link-btn">' . esc_html__('Descargar Malla Curricular (PDF)', 'flacso-uruguay') . '</a>';
+                                        if (function_exists('flacso_get_pdf_proxy_url')) {
+                                            $proxied = flacso_get_pdf_proxy_url($malla_pdf_url, 'Malla curricular');
+                                            if ($proxied) $malla_pdf_url = $proxied;
                                         }
-                                        $malla_body = ob_get_clean();
+                                        $malla_body = '<a href="' . esc_url($malla_pdf_url) . '" target="_blank" class="flacso-oa-link-btn" style="display:inline-flex; align-items:center; gap:0.5rem;"><i class="bi bi-file-earmark-pdf"></i> ' . esc_html__('Ver Malla Curricular (PDF)', 'flacso-uruguay') . '</a>';
+                                        
                                         $render_info_card(
-                                            __('Malla curricular', 'flacso-uruguay'),
+                                            __('Malla Curricular', 'flacso-uruguay'),
                                             $malla_body,
                                             'flacso-oa-info-card--wide'
                                         );
@@ -662,15 +661,14 @@ get_header();
                                     $calendario_pdf_url = !empty($documentos['calendario']['link']) ? trim((string) $documentos['calendario']['link']) : (!empty($data['calendario']) ? trim((string) $data['calendario']) : '');
                                     
                                     if ($calendario_pdf_url) {
-                                        ob_start();
-                                        if (class_exists('Oferta_Blocks')) {
-                                            echo Oferta_Blocks::render_dato_calendario(['ofertaId' => $post_id]);
-                                        } else {
-                                            echo '<a href="' . esc_url($calendario_pdf_url) . '" target="_blank" class="flacso-oa-link-btn">' . esc_html__('Descargar Calendario (PDF)', 'flacso-uruguay') . '</a>';
+                                        if (function_exists('flacso_get_pdf_proxy_url')) {
+                                            $proxied = flacso_get_pdf_proxy_url($calendario_pdf_url, 'Calendario Academico');
+                                            if ($proxied) $calendario_pdf_url = $proxied;
                                         }
-                                        $calendario_body = ob_get_clean();
+                                        $calendario_body = '<a href="' . esc_url($calendario_pdf_url) . '" target="_blank" class="flacso-oa-link-btn" style="display:inline-flex; align-items:center; gap:0.5rem;"><i class="bi bi-file-earmark-pdf"></i> ' . esc_html__('Ver Calendario (PDF)', 'flacso-uruguay') . '</a>';
+                                        
                                         $render_info_card(
-                                            __('Calendario', 'flacso-uruguay'),
+                                            __('Calendario Académico', 'flacso-uruguay'),
                                             $calendario_body,
                                             'flacso-oa-info-card--wide'
                                         );
