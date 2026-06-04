@@ -1172,6 +1172,8 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 
 .fc-content-panel.fc-content-wrapper {
     margin-bottom: 0;
+    padding: 0;
+    overflow: hidden;
     transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease, background-color .22s ease;
 }
 
@@ -1179,6 +1181,39 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
     transform: translateY(-3px);
     border-color: rgba(22, 57, 111, .22);
     box-shadow: 0 16px 36px rgba(15, 26, 45, .11);
+}
+
+.fc-content-panel.fc-content-wrapper > h2 {
+    margin: 0;
+    padding: 1.35rem 1.5rem 1.25rem;
+    background:
+        radial-gradient(circle at 100% 0%, rgba(233, 229, 15, .18), transparent 14rem),
+        linear-gradient(135deg, var(--fc-primary) 0%, var(--fc-primary-dark) 100%);
+    color: var(--fc-white);
+    font-size: clamp(1.4rem, 2.6vw, 2rem);
+    line-height: 1.1;
+    font-weight: 900;
+    letter-spacing: -.03em;
+}
+
+.fc-content-panel.fc-content-wrapper > h2::before {
+    content: "Información";
+    display: block;
+    margin-bottom: .6rem;
+    color: var(--fc-secondary);
+    font-size: .78rem;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+
+.fc-content-panel.fc-content-wrapper > h2::after {
+    display: none;
+}
+
+.fc-content-panel-body {
+    padding: 1.4rem 1.5rem 1.5rem;
 }
 
 .fc-content-panel-body > *:last-child,
@@ -1751,6 +1786,14 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 @media (max-width: 700px) {
     .fc-hero {
         padding: 0 .75rem;
+    }
+
+    .fc-content-panel.fc-content-wrapper > h2 {
+        padding: 1.1rem 1.15rem 1rem;
+    }
+
+    .fc-content-panel-body {
+        padding: 1.1rem 1.15rem 1.2rem;
     }
 
     .fc-hero-inner {
