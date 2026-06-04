@@ -52,7 +52,9 @@ get_header();
                         $is_open = ($inscripciones_abiertas === '1' || $inscripciones_abiertas === 'true' || $inscripciones_abiertas === true || $inscripciones_abiertas === 1);
                         
                         $data = class_exists('Oferta_Data_Schema') ? Oferta_Data_Schema::get_schema($post_id) : [];
-                        $duracion = !empty($data['duracion_meses']) ? $data['duracion_meses'] . ' meses' : '';
+                        $duracion = !empty($data['duracion_meses']) && class_exists('Oferta_Renderer')
+                            ? Oferta_Renderer::format_duration_months((string) $data['duracion_meses'], 'flacso-uruguay')
+                            : '';
                     ?>
                         <div class="grid-item-wrap">
                             <article class="flacso-premium-card h-100 w-100">

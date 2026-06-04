@@ -79,20 +79,19 @@ $hero_primary_url = $inscripciones_abiertas
     : '#flacso-oa-consulta';
 
 $format_duracion = function($meses_str) {
-    if (empty($meses_str)) return '';
-    $val = (float) $meses_str;
-    $entero = floor($val);
-    $fraccion = $val - $entero;
-    
-    if ($fraccion == 0.5) {
-        if ($entero > 0) {
-            return $entero . ' ' . _n('mes', 'meses', $entero, 'flacso-uruguay') . ' y medio';
-        } else {
-            return 'Medio mes';
-        }
-    } else {
-        return $val . ' ' . _n('mes', 'meses', $val, 'flacso-uruguay');
+    if (class_exists('Oferta_Renderer') && method_exists('Oferta_Renderer', 'format_duration_months')) {
+        return Oferta_Renderer::format_duration_months((string) $meses_str, 'flacso-uruguay');
     }
+
+    return '';
+};
+
+$normalize_duracion_html = function($html, $meses_str = '') {
+    if (class_exists('Oferta_Renderer') && method_exists('Oferta_Renderer', 'normalize_duration_html')) {
+        return Oferta_Renderer::normalize_duration_html((string) $html, (string) $meses_str, 'flacso-uruguay');
+    }
+
+    return (string) $html;
 };
 
 $programa_meta = array_filter([
@@ -575,10 +574,11 @@ get_header();
                                     $modalidad_html
                                 );
 
-                                if (!empty($data['duracion_html'])) {
+                                $duracion_html = $normalize_duracion_html($data['duracion_html'] ?? '', $data['duracion_meses'] ?? '');
+                                if (!empty($duracion_html)) {
                                     $render_info_card(
                                         __('Duración', 'flacso-uruguay'),
-                                        $data['duracion_html']
+                                        $duracion_html
                                     );
                                 }
 

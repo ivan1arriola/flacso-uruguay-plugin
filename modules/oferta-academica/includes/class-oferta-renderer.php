@@ -73,6 +73,64 @@ class Oferta_Renderer {
         return false;
     }
 
+    public static function format_duration_months(string $months_str, string $textdomain = 'flacso-oferta-academica'): string {
+        $raw_value = trim(str_replace(',', '.', $months_str));
+        if ($raw_value === '' || !is_numeric($raw_value)) {
+            return '';
+        }
+
+        $value = (float) $raw_value;
+        $integer = (int) floor($value);
+        $fraction = round($value - $integer, 2);
+
+        if (abs($fraction - 0.5) < 0.001) {
+            if ($integer > 0) {
+                return sprintf(
+                    '%1$d %2$s y medio',
+                    $integer,
+                    1 === $integer ? __('mes', $textdomain) : __('meses', $textdomain)
+                );
+            }
+
+            return __('Medio mes', $textdomain);
+        }
+
+        $display_value = abs($value - round($value)) < 0.001
+            ? (string) ((int) round($value))
+            : rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
+
+        return sprintf(
+            '%1$s %2$s',
+            $display_value,
+            (abs($value - 1.0) < 0.001) ? __('mes', $textdomain) : __('meses', $textdomain)
+        );
+    }
+
+    public static function normalize_duration_html(string $html, string $months_str = '', string $textdomain = 'flacso-oferta-academica'): string {
+        $html = trim($html);
+        $formatted_months = self::format_duration_months($months_str, $textdomain);
+
+        if ($html === '') {
+            return $formatted_months !== '' ? '<p>' . esc_html($formatted_months) . '</p>' : '';
+        }
+
+        $text = html_entity_decode(wp_strip_all_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = trim((string) preg_replace('/\s+/u', ' ', $text));
+
+        if ($text === '') {
+            return $formatted_months !== '' ? '<p>' . esc_html($formatted_months) . '</p>' : '';
+        }
+
+        if (preg_match('/^(\d+(?:[.,]\d+)?)\s*mes(?:es)?$/iu', $text, $matches) || preg_match('/^(\d+(?:[.,]\d+)?)$/u', $text, $matches)) {
+            $formatted_text = self::format_duration_months((string) $matches[1], $textdomain);
+            if ($formatted_text !== '') {
+                return '<p>' . esc_html($formatted_text) . '</p>';
+            }
+        }
+
+        return $html;
+    }
+
     /**
      * Render de página completa (hero + categorías + secciones + seminarios)
      */
@@ -547,8 +605,12 @@ class Oferta_Renderer {
         ];
 
         $sections = [];
+        $duration_months = (string) get_post_meta($oferta_id, 'duracion_meses', true);
         foreach ($map as $label => $meta_key) {
             $html = trim((string) get_post_meta($oferta_id, $meta_key, true));
+            if ('duracion_html' === $meta_key) {
+                $html = self::normalize_duration_html($html, $duration_months);
+            }
             if ($html === '') {
                 continue;
             }

@@ -518,7 +518,7 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                                     <div class="fc-more-icon" style="margin: 0 auto 1rem;"><i class="bi bi-journal-check" aria-hidden="true"></i></div>
                                     <h3>Calendario y Malla</h3>
                                     <p style="margin-bottom: 1.5rem;">Incluye el calendario de cursada y la malla curricular completa.</p>
-                                    <a href="<?php echo esc_url($cartamalla); ?>" target="_blank" class="fc-secondary-button" style="display: inline-flex; width: auto; justify-content: center; border: 1px solid var(--fc-border);">
+                                    <a href="<?php echo esc_url($cartamalla); ?>" target="_blank" rel="noopener noreferrer" class="fc-secondary-button fc-card-button" style="display: inline-flex; width: auto; justify-content: center;">
                                         <i class="bi bi-file-earmark-pdf"></i> Ver Documento
                                     </a>
                                 </article>
@@ -528,7 +528,7 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                                         <div class="fc-more-icon" style="margin: 0 auto 1rem;"><i class="bi bi-calendar2-check" aria-hidden="true"></i></div>
                                         <h3>Calendario Académico</h3>
                                         <p style="margin-bottom: 1.5rem;">Fechas clave, inicios y recesos de la cursada.</p>
-                                        <a href="<?php echo esc_url($calendario_pdf); ?>" target="_blank" class="fc-secondary-button" style="display: inline-flex; width: auto; justify-content: center; border: 1px solid var(--fc-border);">
+                                        <a href="<?php echo esc_url($calendario_pdf); ?>" target="_blank" rel="noopener noreferrer" class="fc-secondary-button fc-card-button" style="display: inline-flex; width: auto; justify-content: center;">
                                             <i class="bi bi-file-earmark-pdf"></i> Ver Calendario
                                         </a>
                                     </article>
@@ -538,7 +538,7 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                                         <div class="fc-more-icon" style="margin: 0 auto 1rem;"><i class="bi bi-journal-bookmark" aria-hidden="true"></i></div>
                                         <h3>Malla Curricular</h3>
                                         <p style="margin-bottom: 1.5rem;">Programa completo y asignaturas del posgrado.</p>
-                                        <a href="<?php echo esc_url($malla_pdf); ?>" target="_blank" class="fc-secondary-button" style="display: inline-flex; width: auto; justify-content: center; border: 1px solid var(--fc-border);">
+                                        <a href="<?php echo esc_url($malla_pdf); ?>" target="_blank" rel="noopener noreferrer" class="fc-secondary-button fc-card-button" style="display: inline-flex; width: auto; justify-content: center;">
                                             <i class="bi bi-file-earmark-pdf"></i> Ver Malla
                                         </a>
                                     </article>
@@ -996,6 +996,21 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 .fc-secondary-button:hover {
     color: var(--fc-white);
     background: rgba(255, 255, 255, .16);
+}
+
+.fc-card-button {
+    color: var(--fc-primary);
+    border: 1px solid var(--fc-border);
+    background: var(--fc-soft);
+    box-shadow: 0 10px 24px rgba(15, 26, 45, .08), inset 0 1px 0 rgba(255, 255, 255, .82);
+    white-space: normal;
+    text-align: center;
+}
+
+.fc-card-button:hover {
+    color: var(--fc-white);
+    background: var(--fc-primary);
+    border-color: var(--fc-primary);
 }
 
 .fc-hero-visual {
