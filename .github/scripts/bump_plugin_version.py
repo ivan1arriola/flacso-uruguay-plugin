@@ -22,9 +22,24 @@ def fail(message: str) -> int:
     return 1
 
 
+def normalize_version(version_match: tuple[str, str, str]) -> tuple[int, int, int]:
+    major, minor, patch = (int(part) for part in version_match)
+
+    if patch >= 10:
+        minor += patch // 10
+        patch %= 10
+
+    if minor >= 10:
+        major += minor // 10
+        minor %= 10
+
+    return major, minor, patch
+
+
 def bump_patch(version_match: tuple[str, str, str]) -> tuple[int, int, int]:
-    major, minor, patch = version_match
-    return int(major), int(minor), int(patch) + 1
+    major, minor, patch = normalize_version(version_match)
+    patch += 1
+    return normalize_version((str(major), str(minor), str(patch)))
 
 
 def main() -> int:
@@ -48,6 +63,17 @@ def main() -> int:
         print(
             "[pre-commit] WARNING: Versiones desincronizadas detectadas "
             f"(header={current_header_version}, define={current_define_version})."
+        )
+
+    normalized_major, normalized_minor, normalized_patch = normalize_version(
+        header_match.group(2, 3, 4)
+    )
+    normalized_version = f"{normalized_major}.{normalized_minor}.{normalized_patch}"
+
+    if normalized_version != current_header_version:
+        print(
+            "[pre-commit] INFO: Version normalizada con acarreo "
+            f"({current_header_version} -> {normalized_version})."
         )
 
     next_major, next_minor, next_patch = bump_patch(header_match.group(2, 3, 4))
