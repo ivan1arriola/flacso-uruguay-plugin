@@ -24,8 +24,6 @@ class Oferta_Data_Migration {
         'objetivos_html',
         'perfil_ingreso_html',
         'requisitos_ingreso_html',
-        'malla_curricular_html',
-        'calendario_html',
         'perfil_egreso_html',
         'requisitos_egreso_html',
         'titulos_certificaciones_html',
@@ -42,8 +40,6 @@ class Oferta_Data_Migration {
         'objetivos_html' => 'Objetivos',
         'perfil_ingreso_html' => 'Perfil de ingreso',
         'requisitos_ingreso_html' => 'Requisitos de ingreso',
-        'malla_curricular_html' => 'Malla curricular',
-        'calendario_html' => 'Calendario',
         'perfil_egreso_html' => 'Perfil de egreso',
         'requisitos_egreso_html' => 'Requisitos de egreso',
         'titulos_certificaciones_html' => 'Titulos y certificaciones',
@@ -498,8 +494,6 @@ class Oferta_Data_Migration {
             'objetivos_html' => '',
             'perfil_ingreso_html' => '',
             'requisitos_ingreso_html' => '',
-            'malla_curricular_html' => '',
-            'calendario_html' => '',
             'perfil_egreso_html' => '',
             'requisitos_egreso_html' => '',
             'titulos_certificaciones_html' => '',
@@ -515,7 +509,12 @@ class Oferta_Data_Migration {
             if (!$field) {
                 continue;
             }
-            $data[$field] = wp_kses_post(trim((string) ($pane['content'] ?? '')));
+            $content = trim((string) ($pane['content'] ?? ''));
+            if ($field === 'malla_curricular' || $field === 'calendario') {
+                $data[$field] = self::extract_first_url($content);
+                continue;
+            }
+            $data[$field] = wp_kses_post($content);
         }
 
         if (empty($data['perfil_egreso_html'])) {
@@ -529,13 +528,6 @@ class Oferta_Data_Migration {
             if (empty($data['titulos_certificaciones_html'])) {
                 $data['titulos_certificaciones_html'] = self::extract_field_by_keyword($panes, ['CERTIFICACIONES']);
             }
-        }
-
-        if (!empty($data['malla_curricular_html'])) {
-            $data['malla_curricular'] = self::extract_first_url($data['malla_curricular_html']);
-        }
-        if (!empty($data['calendario_html'])) {
-            $data['calendario'] = self::extract_first_url($data['calendario_html']);
         }
 
         // Las menciones se cargan manualmente: no inferir desde contenido HTML.
@@ -606,8 +598,6 @@ class Oferta_Data_Migration {
             'objetivos_html',
             'perfil_ingreso_html',
             'requisitos_ingreso_html',
-            'malla_curricular_html',
-            'calendario_html',
             'perfil_egreso_html',
             'requisitos_egreso_html',
             'titulos_certificaciones_html',
@@ -754,8 +744,8 @@ class Oferta_Data_Migration {
             'objetivos_html' => ['OBJETIVOS'],
             'perfil_ingreso_html' => ['PERFIL DE INGRESO'],
             'requisitos_ingreso_html' => ['REQUISITOS DE INGRESO'],
-            'malla_curricular_html' => ['MALLA CURRICULAR'],
-            'calendario_html' => ['CALENDARIO'],
+            'malla_curricular' => ['MALLA CURRICULAR'],
+            'calendario' => ['CALENDARIO'],
             'perfil_egreso_html' => ['PERFIL DE EGRESO', 'PERFIL EGRESO', 'PERFIL DEL EGRESO'],
             'requisitos_egreso_html' => ['REQUISITOS DE EGRESO', 'REQUISITOS EGRESO'],
             'titulos_certificaciones_html' => ['TITULOS Y CERTIFICACIONES', 'TITULOS', 'CERTIFICACIONES', 'TITULOS CERTIFICACIONES'],

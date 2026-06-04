@@ -15,8 +15,6 @@ class Oferta_Data_Schema {
         'objetivos_html',
         'perfil_ingreso_html',
         'requisitos_ingreso_html',
-        'malla_curricular_html',
-        'calendario_html',
         'perfil_egreso_html',
         'requisitos_egreso_html',
         'financiacion_html',
@@ -205,7 +203,7 @@ class Oferta_Data_Schema {
         register_post_meta('oferta-academica', 'inscripciones_abiertas', [
             'type' => 'boolean',
             'single' => true,
-            'sanitize_callback' => [self::class, 'sanitize_boolean'],
+            'sanitize_callback' => [self::class, 'sanitize_meta_boolean'],
             'auth_callback' => [self::class, 'user_can_edit_meta'],
             'show_in_rest' => [
                 'schema' => [
@@ -348,7 +346,7 @@ class Oferta_Data_Schema {
             register_post_meta('oferta-academica', $field, [
                 'type' => 'boolean',
                 'single' => true,
-                'sanitize_callback' => [self::class, 'sanitize_boolean'],
+                'sanitize_callback' => [self::class, 'sanitize_meta_boolean'],
                 'auth_callback' => [self::class, 'user_can_edit_meta'],
                 'show_in_rest' => [
                     'schema' => [
@@ -462,6 +460,10 @@ class Oferta_Data_Schema {
 
     public static function sanitize_boolean($value): bool {
         return filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
+    }
+
+    public static function sanitize_meta_boolean($value): string {
+        return self::sanitize_boolean($value) ? '1' : '0';
     }
 
     public static function resolve_inscripciones_year($proximo_inicio, $cohorte = ''): string {
@@ -868,8 +870,8 @@ class Oferta_Data_Schema {
             'malla_curricular_modo' => fn($value) => sanitize_text_field($value),
             'abreviacion' => fn($value) => self::sanitize_abreviacion($value),
             'correo' => fn($value) => self::sanitize_email($value),
-            'inscripciones_abiertas' => fn($value) => self::sanitize_boolean($value),
-            'inscripciones_mensaje' => fn($value) => sanitize_text_field($value),
+            'inscripciones_abiertas' => fn($value) => self::sanitize_meta_boolean($value),
+            'inscripciones_mensaje' => fn($value) => sanitize_textarea_field($value),
             'inscripciones_mensaje_cerrado' => fn($value) => sanitize_text_field($value),
             'cohorte' => fn($value) => sanitize_text_field($value),
             'tabla_precios_tipo' => fn($value) => sanitize_text_field($value),
@@ -910,10 +912,9 @@ class Oferta_Data_Schema {
         }
 
         foreach (self::BOOLEAN_FIELDS as $key) {
-            if (!array_key_exists($key, $data)) {
-                continue;
+            if (isset($data[$key])) {
+                self::update_meta_value($post_id, $key, self::sanitize_meta_boolean($data[$key]));
             }
-            self::update_meta_value($post_id, $key, self::sanitize_boolean($data[$key]));
         }
 
         foreach (self::PERSONNEL_GROUPS as $key => $label_key) {
