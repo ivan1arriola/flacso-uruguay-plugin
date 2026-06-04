@@ -781,7 +781,11 @@ class Oferta_Data_Schema {
         }
 
         foreach (self::BOOLEAN_FIELDS as $field) {
-            $schema[$field] = self::get_meta_value($post_id, $field);
+            if (metadata_exists('post', $post_id, $field)) {
+                $schema[$field] = get_post_meta($post_id, $field, true) ? '1' : '0';
+            } else {
+                $schema[$field] = '';
+            }
         }
 
         foreach (self::INTEGER_FIELDS as $field) {
