@@ -237,30 +237,19 @@ class Oferta_Blocks {
         if (isset($documentos[$doc_key]) && !empty($documentos[$doc_key]['link'])) {
             $raw_url = trim((string) $documentos[$doc_key]['link']);
             $updated_at_str = isset($documentos[$doc_key]['fecha']) ? trim((string) $documentos[$doc_key]['fecha']) : '';
-        } else {
-            // Retrocompatibilidad
-            $raw_url = trim((string) get_post_meta($oferta_id, $meta_key, true));
-            $updated_at_str = get_post_meta($oferta_id, $meta_key . '_updated_at', true);
         }
 
-        $raw_html = trim((string) get_post_meta($oferta_id, $meta_key . '_html', true));
         $fallback = isset($attributes['pdfUrlFallback']) ? trim((string) $attributes['pdfUrlFallback']) : '';
         $final_url = $raw_url !== '' ? $raw_url : $fallback;
         $final_url = esc_url_raw($final_url);
 
-        $display_mode = isset($attributes['displayMode']) ? sanitize_key((string) $attributes['displayMode']) : 'auto';
-        if (!in_array($display_mode, ['auto', 'pdf', 'html'], true)) {
-            $display_mode = 'auto';
-        }
-
-        $can_render_pdf = $final_url !== '' && ($display_mode === 'auto' || $display_mode === 'pdf');
-        $can_render_html = $raw_html !== '' && ($display_mode === 'auto' || $display_mode === 'html');
-
-        if (!$can_render_pdf && !$can_render_html) {
+        if ($final_url === '') {
             return $is_editor_preview
-                ? '<p>' . esc_html(sprintf(__('La oferta seleccionada no tiene PDF ni contenido HTML para %s.', 'flacso-oferta-academica'), strtolower($label))) . '</p>'
+                ? '<p>' . esc_html(sprintf(__('La oferta seleccionada no tiene PDF para %s.', 'flacso-oferta-academica'), strtolower($label))) . '</p>'
                 : '';
         }
+
+        $can_render_pdf = true;
 
         if ($can_render_pdf && function_exists('flacso_get_pdf_proxy_url')) {
             $proxied = flacso_get_pdf_proxy_url($final_url, $label);
@@ -287,38 +276,16 @@ class Oferta_Blocks {
 
         $updated_line = self::build_updated_line($last_updated_ts);
 
-        if ($can_render_pdf) {
-            return '<article class="flacso-oferta-documento-card-wrapper">' .
-                '<div class="flacso-oferta-documento-card" role="region" aria-label="' . esc_attr($config['title']) . '">' .
-                '<div class="flacso-oferta-documento-card__icon" aria-hidden="true"><i class="bi ' . esc_attr($config['icon']) . '"></i></div>' .
-                '<h3 class="flacso-oferta-documento-card__title">' . esc_html($config['title']) . '</h3>' .
-                '<p class="flacso-oferta-documento-card__desc">' . esc_html($config['description']) . '</p>' .
-                $updated_line .
-                '<a class="flacso-oferta-documento-card__button" href="' . esc_url($final_url) . '" target="_blank" rel="noopener" aria-label="' . esc_attr(sprintf(__('Abrir PDF de %s', 'flacso-oferta-academica'), $config['title'])) . '">' .
-                '<i class="bi bi-filetype-pdf" aria-hidden="true"></i>' .
-                '<span>' . esc_html__('Ver PDF', 'flacso-oferta-academica') . '</span>' .
-                '</a>' .
-                '</div>' .
-                '</article>';
-        }
-
-        $optional_pdf_button = '';
-
-        if ($final_url !== '') {
-            $optional_pdf_button = '<a class="flacso-oferta-documento-card__button flacso-oferta-documento-card__button--secondary" href="' . esc_url($final_url) . '" target="_blank" rel="noopener">' .
-                '<i class="bi bi-filetype-pdf" aria-hidden="true"></i>' .
-                '<span>' . esc_html__('Ver version PDF', 'flacso-oferta-academica') . '</span>' .
-                '</a>';
-        }
-
         return '<article class="flacso-oferta-documento-card-wrapper">' .
-            '<div class="flacso-oferta-documento-card flacso-oferta-documento-card--html" role="region" aria-label="' . esc_attr($config['title']) . '">' .
+            '<div class="flacso-oferta-documento-card" role="region" aria-label="' . esc_attr($config['title']) . '">' .
             '<div class="flacso-oferta-documento-card__icon" aria-hidden="true"><i class="bi ' . esc_attr($config['icon']) . '"></i></div>' .
             '<h3 class="flacso-oferta-documento-card__title">' . esc_html($config['title']) . '</h3>' .
             '<p class="flacso-oferta-documento-card__desc">' . esc_html($config['description']) . '</p>' .
             $updated_line .
-            '<div class="flacso-oferta-documento-card__html">' . wp_kses_post($raw_html) . '</div>' .
-            $optional_pdf_button .
+            '<a class="flacso-oferta-documento-card__button" href="' . esc_url($final_url) . '" target="_blank" rel="noopener" aria-label="' . esc_attr(sprintf(__('Abrir PDF de %s', 'flacso-oferta-academica'), $config['title'])) . '">' .
+            '<i class="bi bi-filetype-pdf" aria-hidden="true"></i>' .
+            '<span>' . esc_html__('Ver PDF', 'flacso-oferta-academica') . '</span>' .
+            '</a>' .
             '</div>' .
             '</article>';
     }

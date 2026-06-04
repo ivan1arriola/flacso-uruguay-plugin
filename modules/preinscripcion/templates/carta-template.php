@@ -154,8 +154,12 @@ $reconocido_mec = isset($data['reconocido_mec'])
     ? flacso_carta_bool($data['reconocido_mec'])
     : $is_maestria;
 
-$ocultar_carta = isset($data['ocultar_carta']) ? flacso_carta_bool($data['ocultar_carta']) : false;
-
+$visibilidad_carta = true;
+if (isset($data['visibilidad_carta']) && $data['visibilidad_carta'] !== '') {
+    $visibilidad_carta = flacso_carta_bool($data['visibilidad_carta']);
+} elseif (isset($data['ocultar_carta']) && $data['ocultar_carta'] !== '') {
+    $visibilidad_carta = !flacso_carta_bool($data['ocultar_carta']);
+}
 $reconocimiento_int = isset($data['reconocimiento_internacional'])
     ? flacso_carta_bool($data['reconocimiento_internacional'])
     : ($is_maestria || (int) $post_id === 12316);
@@ -342,8 +346,8 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                     <?php endif; ?>
 
                     <div class="fc-hero-actions">
-                        <?php if (!$ocultar_carta) : ?>
-                        <a class="fc-primary-button" href="<?php echo esc_url($url_inscripcion); ?>" aria-label="Preinscribirme a <?php echo esc_attr($titulo); ?>">
+                        <?php if ($visibilidad_carta) : ?>
+                            <a class="fc-primary-button" href="<?php echo esc_url($url_inscripcion); ?>" aria-label="Preinscribirme a <?php echo esc_attr($titulo); ?>">
                             <i class="bi bi-pencil-square" aria-hidden="true"></i>
                             Preinscribirme
                         </a>
@@ -420,7 +424,7 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 
         <div class="fc-page-container">
 
-            <?php if ($ocultar_carta) : ?>
+            <?php if (!$visibilidad_carta) : ?>
                 <div class="fc-message-box fc-message-box-standalone" style="text-align:center; padding: 4rem 2rem; margin-top: 2rem; border-color: #fecdd3; background: #fff1f2; border-radius: 12px;">
                     <i class="bi bi-info-circle" style="font-size: 3rem; color: #be123c; margin-bottom: 1rem; display: block;"></i>
                     <h2 style="color: #be123c; margin-bottom: 1rem;">Inscripciones Cerradas</h2>
@@ -496,12 +500,8 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                 $documentos = is_string($documentos_json) && !empty($documentos_json) ? json_decode($documentos_json, true) : [];
                 $cartamalla = isset($documentos['cartamalla']) && !empty($documentos['cartamalla']['link']);
 
-                // Retrocompatibilidad
-                $cal_url = trim((string) get_post_meta($post_id, 'calendario', true));
-                $malla_url = trim((string) get_post_meta($post_id, 'malla_curricular', true));
-                $malla_modo = trim((string) get_post_meta($post_id, 'malla_curricular_modo', true));
-
-                if ($cartamalla || ($cal_url !== '' && $cal_url === $malla_url) || $malla_modo === 'same_as_calendar') {
+                // Comprobar si existe el documento unificado (prioridad 1)
+                if ($cartamalla) {
                     $calendario_html = Oferta_Blocks::render_dato_unificado_calendario_malla(['ofertaId' => $post_id]);
                     $malla_html = '';
                 } else {

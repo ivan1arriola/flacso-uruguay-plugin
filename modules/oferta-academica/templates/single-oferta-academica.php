@@ -624,73 +624,51 @@ get_header();
                                     );
                                 }
 
-                                $malla_html = !empty($data['malla_curricular_html'])
-                                    ? trim((string) $data['malla_curricular_html'])
-                                    : '';
-
-                                $malla_pdf_url = !empty($data['malla_curricular'])
-                                    ? trim((string) $data['malla_curricular'])
-                                    : '';
-
-                                $malla_modo = get_post_meta($post_id, 'malla_curricular_modo', true) ?: ($malla_pdf_url ? 'pdf' : 'html');
-
-                                ob_start();
-
-                                if ($malla_modo === 'pdf' && $malla_pdf_url) {
+                                $documentos = !empty($data['documentos']) && is_string($data['documentos']) ? json_decode($data['documentos'], true) : [];
+                                
+                                $cartamalla_pdf_url = !empty($documentos['cartamalla']['link']) ? trim((string) $documentos['cartamalla']['link']) : '';
+                                
+                                if ($cartamalla_pdf_url) {
+                                    ob_start();
                                     if (class_exists('Oferta_Blocks')) {
-                                        echo Oferta_Blocks::render_dato_malla_curricular(['ofertaId' => $post_id]);
+                                        echo Oferta_Blocks::render_dato_unificado_calendario_malla(['ofertaId' => $post_id]);
                                     } else {
-                                        echo '<a href="' . esc_url($malla_pdf_url) . '" target="_blank" class="flacso-oa-link-btn">' . esc_html__('Descargar Malla Curricular (PDF)', 'flacso-uruguay') . '</a>';
+                                        echo '<a href="' . esc_url($cartamalla_pdf_url) . '" target="_blank" class="flacso-oa-link-btn">' . esc_html__('Descargar Calendario y Malla (PDF)', 'flacso-uruguay') . '</a>';
                                     }
-                                } elseif ($malla_modo === 'html' && $malla_html) {
-                                    echo wp_kses_post($malla_html);
-                                }
-
-                                $malla_body = ob_get_clean();
-
-                                $calendario_html = !empty($data['calendario_html'])
-                                    ? trim((string) $data['calendario_html'])
-                                    : '';
-
-                                $calendario_pdf_url = !empty($data['calendario'])
-                                    ? trim((string) $data['calendario'])
-                                    : '';
-
-                                $calendario_modo = get_post_meta($post_id, 'calendario_modo', true) ?: ($calendario_pdf_url ? 'pdf' : 'html');
-
-                                ob_start();
-
-                                if ($calendario_modo === 'pdf' && $calendario_pdf_url) {
-                                    if (class_exists('Oferta_Blocks')) {
-                                        echo Oferta_Blocks::render_dato_calendario(['ofertaId' => $post_id]);
-                                    } else {
-                                        echo '<a href="' . esc_url($calendario_pdf_url) . '" target="_blank" class="flacso-oa-link-btn">' . esc_html__('Descargar Calendario (PDF)', 'flacso-uruguay') . '</a>';
-                                    }
-                                } elseif ($calendario_modo === 'html' && $calendario_html) {
-                                    echo wp_kses_post($calendario_html);
-                                }
-
-                                $calendario_body = ob_get_clean();
-
-                                $malla_is_pdf = ($malla_modo === 'pdf' && $malla_pdf_url);
-                                $calendario_is_pdf = ($calendario_modo === 'pdf' && $calendario_pdf_url);
-
-                                if ($malla_body && $calendario_body && $malla_is_pdf && $calendario_is_pdf) {
-                                    $combined_body = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">' . $malla_body . $calendario_body . '</div>';
+                                    $combined_body = ob_get_clean();
                                     $render_info_card(
                                         __('Malla y Calendario Académico', 'flacso-uruguay'),
                                         $combined_body,
                                         'flacso-oa-info-card--wide'
                                     );
                                 } else {
-                                    if ($malla_body) {
+                                    $malla_pdf_url = !empty($documentos['malla']['link']) ? trim((string) $documentos['malla']['link']) : (!empty($data['malla_curricular']) ? trim((string) $data['malla_curricular']) : '');
+                                    
+                                    if ($malla_pdf_url) {
+                                        ob_start();
+                                        if (class_exists('Oferta_Blocks')) {
+                                            echo Oferta_Blocks::render_dato_malla_curricular(['ofertaId' => $post_id]);
+                                        } else {
+                                            echo '<a href="' . esc_url($malla_pdf_url) . '" target="_blank" class="flacso-oa-link-btn">' . esc_html__('Descargar Malla Curricular (PDF)', 'flacso-uruguay') . '</a>';
+                                        }
+                                        $malla_body = ob_get_clean();
                                         $render_info_card(
                                             __('Malla curricular', 'flacso-uruguay'),
                                             $malla_body,
                                             'flacso-oa-info-card--wide'
                                         );
                                     }
-                                    if ($calendario_body) {
+                                    
+                                    $calendario_pdf_url = !empty($documentos['calendario']['link']) ? trim((string) $documentos['calendario']['link']) : (!empty($data['calendario']) ? trim((string) $data['calendario']) : '');
+                                    
+                                    if ($calendario_pdf_url) {
+                                        ob_start();
+                                        if (class_exists('Oferta_Blocks')) {
+                                            echo Oferta_Blocks::render_dato_calendario(['ofertaId' => $post_id]);
+                                        } else {
+                                            echo '<a href="' . esc_url($calendario_pdf_url) . '" target="_blank" class="flacso-oa-link-btn">' . esc_html__('Descargar Calendario (PDF)', 'flacso-uruguay') . '</a>';
+                                        }
+                                        $calendario_body = ob_get_clean();
                                         $render_info_card(
                                             __('Calendario', 'flacso-uruguay'),
                                             $calendario_body,

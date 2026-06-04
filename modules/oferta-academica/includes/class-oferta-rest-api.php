@@ -130,19 +130,19 @@ class Oferta_Rest_API
     {
         $meta_keys = [
             'abreviacion', 'correo', 'duracion_meses', 'proximo_inicio', 
-            'calendario', 'malla_curricular', 'proximo_inicio_precision', 
-            'inscripciones_abiertas', 'modalidad_html', 'duracion_html', 
-            'objetivos_html', 'perfil_ingreso_html', 'requisitos_ingreso_html', 
-            'malla_curricular_html', 'calendario_html', 'perfil_egreso_html', 
-            'requisitos_egreso_html', 'titulos_certificaciones_html', 'financiacion_html',
-            'acreditaciones_html',
-            'menciones', 'orientaciones', 'coordinacion_academica', 'equipos',
+            'proximo_inicio_precision', 'inscripciones_abiertas', 
+            'modalidad_html', 'duracion_html', 'objetivos_html', 
+            'perfil_ingreso_html', 'requisitos_ingreso_html', 
+            'perfil_egreso_html', 'requisitos_egreso_html', 
+            'titulos_certificaciones_html', 'financiacion_html',
+            'acreditaciones_html', 'menciones', 'orientaciones', 
+            'coordinacion_academica', 'equipos',
             'inscripciones_mensaje_abierto_default', 'inscripciones_mensaje_cerrado_default',
             'reconocido_mec', 'reconocimiento_internacional', 'mostrar_expedicion_titulo',
             'tabla_precios_tipo', 'carta_presentacion_html', 'precios_filas', 'precios_nota',
             'titulos_intermedios', 'convenio_iin_oea', 'mostrar_costos_envio', 'modalidad_resumen',
             'carta_cta_titulo', 'asistente_academica_docente_id', 'asistente_academica_rol', 'tabla_precio_id',
-            'asistente_academica_correo', 'documentos'
+            'asistente_academica_correo', 'documentos', 'visibilidad_carta'
         ];
 
         foreach ($meta_keys as $key) {
