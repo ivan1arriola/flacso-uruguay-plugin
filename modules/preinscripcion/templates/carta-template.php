@@ -428,30 +428,57 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                 ?>
             </section>
 
-            <section class="fc-content-wrapper">
+            <section class="fc-content-sections" aria-label="Información detallada del programa">
                 <?php
                 $mensaje_bienvenida = get_option('flacso_mensaje_bienvenida', '');
+                $hay_bloques_detallados = false;
+
+                foreach ($bloques_html as $meta_key => $titulo_bloque) {
+                    if (!empty($data[$meta_key])) {
+                        $hay_bloques_detallados = true;
+                        break;
+                    }
+                }
 
                 if (!empty($mensaje_bienvenida)) {
                     ?>
-                    <div class="fc-message-box">
+                    <div class="fc-message-box fc-message-box-standalone">
                         <?php echo wp_kses_post($mensaje_bienvenida); ?>
                     </div>
                     <?php
                 }
 
-                foreach ($bloques_html as $meta_key => $titulo_bloque) {
-                    if (!empty($data[$meta_key])) {
-                        ?>
-                        <article class="fc-rich-block">
-                            <h2><?php echo esc_html($titulo_bloque); ?></h2>
-                            <?php echo wp_kses_post($data[$meta_key]); ?>
-                        </article>
+                if ($hay_bloques_detallados) {
+                    ?>
+                    <div class="fc-rich-grid">
                         <?php
-                    }
+                        foreach ($bloques_html as $meta_key => $titulo_bloque) {
+                            if (!empty($data[$meta_key])) {
+                                $panel_id = 'fc-panel-' . sanitize_title($meta_key);
+                                ?>
+                                <article class="fc-content-panel fc-content-wrapper fc-content-wrapper-compact fc-rich-block" aria-labelledby="<?php echo esc_attr($panel_id); ?>">
+                                    <h2 id="<?php echo esc_attr($panel_id); ?>"><?php echo esc_html($titulo_bloque); ?></h2>
+                                    <div class="fc-content-panel-body">
+                                        <?php echo wp_kses_post($data[$meta_key]); ?>
+                                    </div>
+                                </article>
+                                <?php
+                            }
+                        }
+                        ?>
+                    </div>
+                    <?php
                 }
 
-                echo wp_kses_post($child_content);
+                if (trim((string) $child_content) !== '') {
+                    ?>
+                    <article class="fc-content-panel fc-content-wrapper fc-content-wrapper-compact fc-child-content" aria-label="Contenido adicional del programa">
+                        <div class="fc-content-panel-body">
+                            <?php echo wp_kses_post($child_content); ?>
+                        </div>
+                    </article>
+                    <?php
+                }
                 ?>
             </section>
 
@@ -1118,6 +1145,51 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
     line-height: 1.35;
 }
 
+
+.fc-content-sections {
+    display: grid;
+    gap: 1.25rem;
+    margin: 0 0 2.75rem;
+}
+
+.fc-rich-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+    align-items: start;
+}
+
+.fc-content-sections > .fc-content-panel,
+.fc-rich-grid > .fc-content-panel,
+.fc-message-box-standalone {
+    margin: 0;
+}
+
+.fc-content-panel {
+    min-width: 0;
+    height: 100%;
+}
+
+.fc-content-panel.fc-content-wrapper {
+    margin-bottom: 0;
+    transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease, background-color .22s ease;
+}
+
+.fc-content-panel.fc-content-wrapper:hover {
+    transform: translateY(-3px);
+    border-color: rgba(22, 57, 111, .22);
+    box-shadow: 0 16px 36px rgba(15, 26, 45, .11);
+}
+
+.fc-content-panel-body > *:last-child,
+.fc-content-panel > *:last-child {
+    margin-bottom: 0;
+}
+
+.fc-child-content {
+    width: 100%;
+}
+
 .fc-content-wrapper {
     width: 100%;
     margin: 0 0 2.75rem;
@@ -1646,6 +1718,10 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 
 @media (max-width: 980px) {
     .fc-hero-inner {
+        grid-template-columns: 1fr;
+    }
+
+    .fc-rich-grid {
         grid-template-columns: 1fr;
     }
 
