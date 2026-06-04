@@ -53,6 +53,7 @@ class Oferta_Data_Schema {
         'mostrar_expedicion_titulo',
         'convenio_iin_oea',
         'mostrar_costos_envio',
+        'visibilidad_carta',
     ];
 
     private const INTEGER_FIELDS = [
@@ -62,6 +63,7 @@ class Oferta_Data_Schema {
 
     private const JSON_STRING_FIELDS = [
         'precios_filas',
+        'documentos',
     ];
 
     private const INTEGER_ARRAYS = [
@@ -373,10 +375,14 @@ class Oferta_Data_Schema {
         }
 
         foreach (self::JSON_STRING_FIELDS as $field) {
+            $sanitize_callback = $field === 'precios_filas' 
+                ? [self::class, 'sanitize_prices_rows'] 
+                : [self::class, 'sanitize_generic_json_string'];
+                
             register_post_meta('oferta-academica', $field, [
                 'type' => 'string',
                 'single' => true,
-                'sanitize_callback' => [self::class, 'sanitize_prices_rows'],
+                'sanitize_callback' => $sanitize_callback,
                 'auth_callback' => [self::class, 'user_can_edit_meta'],
                 'show_in_rest' => [
                     'schema' => [
@@ -564,6 +570,20 @@ class Oferta_Data_Schema {
         }
 
         return wp_json_encode($rows, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    public static function sanitize_generic_json_string($value): string {
+        if (is_string($value)) {
+            $value = trim($value);
+            if ($value === '') return '';
+            $decoded = json_decode(wp_unslash($value), true);
+            if (!is_array($decoded)) return '';
+            return wp_json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
+        if (is_array($value)) {
+            return wp_json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
+        return '';
     }
 
     private static function sanitize_personnel_groups($value, string $name_key): array {
