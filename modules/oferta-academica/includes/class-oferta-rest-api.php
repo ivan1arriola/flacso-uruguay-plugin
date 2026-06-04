@@ -142,7 +142,7 @@ class Oferta_Rest_API
             'tabla_precios_tipo', 'carta_presentacion_html', 'precios_filas', 'precios_nota',
             'titulos_intermedios', 'convenio_iin_oea', 'mostrar_costos_envio', 'modalidad_resumen',
             'carta_cta_titulo', 'asistente_academica_docente_id', 'asistente_academica_rol', 'tabla_precio_id',
-            'asistente_academica_correo'
+            'asistente_academica_correo', 'documentos'
         ];
 
         foreach ($meta_keys as $key) {
