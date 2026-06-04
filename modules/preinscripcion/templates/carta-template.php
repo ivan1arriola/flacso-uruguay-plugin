@@ -278,9 +278,9 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 
 <div id="primary" class="content-area flacso-carta-virtual">
     <a class="fc-skip-link" href="#fc-info-clave">Saltar a la información principal</a>
-    <main id="main" class="site-main">
+    <main id="main" class="site-main" aria-labelledby="fc-carta-title">
 
-        <section class="fc-hero">
+        <section class="fc-hero" aria-labelledby="fc-carta-title">
             <div class="fc-hero-inner">
 
                 <div class="fc-hero-copy">
@@ -289,13 +289,9 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                         <span>Formación de excelencia, estés donde estés</span>
                     </div>
 
-                    <h1><?php echo esc_html($titulo); ?></h1>
+                    <h1 id="fc-carta-title"><?php echo esc_html($titulo); ?></h1>
 
                     <div class="fc-hero-meta">
-                        <?php if (!empty($tipo_oferta)) : ?>
-                            <span><?php echo esc_html($tipo_oferta); ?></span>
-                        <?php endif; ?>
-
                         <?php if (!empty($abreviacion)) : ?>
                             <span><?php echo esc_html($abreviacion . ' ' . $anio); ?></span>
                         <?php endif; ?>
@@ -567,10 +563,10 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 
             <section class="fc-section">
                 <?php if (!empty($precios_filas) && is_array($precios_filas)) : ?>
-                    <div class="fc-card">
+                    <div class="fc-card" aria-labelledby="fc-inversion-title">
                         <div class="fc-card-header">
                             <span class="fc-card-kicker">Inversión</span>
-                            <h2>Beneficios y descuentos acumulables</h2>
+                            <h2 id="fc-inversion-title">Beneficios y descuentos acumulables</h2>
                         </div>
 
                         <div class="fc-table-wrap">
@@ -578,18 +574,18 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                                 <caption class="fc-sr-only">Beneficios, descuentos y valores de la oferta académica</caption>
                                 <thead>
                                     <tr>
-                                        <th>Concepto</th>
-                                        <th>Valor en $ <span>residentes en Uruguay</span></th>
-                                        <th>Valor en U$S <span>residentes en el exterior</span></th>
+                                        <th scope="col">Concepto</th>
+                                        <th scope="col">Valor en $ <span>residentes en Uruguay</span></th>
+                                        <th scope="col">Valor en U$S <span>residentes en el exterior</span></th>
                                     </tr>
                                 </thead>
 
                                 <tbody>
                                     <?php foreach ($precios_filas as $row) : ?>
                                         <tr class="<?php echo !empty($row['highlight']) ? 'is-highlighted' : ''; ?>">
-                                            <td><?php echo wp_kses_post($row['concept'] ?? ''); ?></td>
-                                            <td><?php echo wp_kses_post($row['uy'] ?? ''); ?></td>
-                                            <td><?php echo wp_kses_post($row['us'] ?? ''); ?></td>
+                                            <td data-label="Concepto"><?php echo wp_kses_post($row['concept'] ?? ''); ?></td>
+                                            <td data-label="Valor en pesos para residentes en Uruguay"><?php echo wp_kses_post($row['uy'] ?? ''); ?></td>
+                                            <td data-label="Valor en dólares para residentes en el exterior"><?php echo wp_kses_post($row['us'] ?? ''); ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
@@ -2585,6 +2581,332 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
     .fc-floating-preinscripcion,
     .fc-skip-link {
         transition: none !important;
+    }
+}
+
+
+/* =========================================================
+   Ajustes finales: accesibilidad, ancho uniforme, cards y tabla móvil
+   ========================================================= */
+.flacso-carta-virtual {
+    --fc-page-width: 1060px;
+    --fc-page-gutter: 2rem;
+    --fc-card-radius: 1.15rem;
+    --fc-card-padding: 1.25rem;
+}
+
+.fc-hero,
+.fc-page-container {
+    width: min(100% - var(--fc-page-gutter), var(--fc-page-width));
+    max-width: var(--fc-page-width);
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.fc-hero {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.fc-page-container {
+    padding-inline: 0;
+}
+
+.fc-hero-inner,
+.fc-intermediate-strip,
+.fc-feature-card,
+.fc-content-wrapper,
+.fc-requirement,
+.fc-card,
+.fc-info-important,
+.fc-more-card,
+.fc-assistant-card,
+.fc-final-cta,
+.fc-empty-pricing {
+    max-width: 100%;
+}
+
+.fc-feature-grid,
+.fc-more-grid,
+.fc-intermediate-grid,
+.fc-rich-grid {
+    align-items: stretch;
+}
+
+.fc-feature-grid,
+.fc-more-grid {
+    grid-auto-rows: 1fr;
+}
+
+.fc-feature-card,
+.fc-more-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-width: 0;
+    border-radius: var(--fc-card-radius);
+}
+
+.fc-feature-card,
+.fc-more-card,
+.fc-requirement,
+.fc-intermediate-card {
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+.fc-feature-card {
+    min-height: 210px;
+}
+
+.fc-more-card {
+    min-height: 235px;
+    padding: var(--fc-card-padding);
+}
+
+.fc-feature-icon,
+.fc-more-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 1rem;
+}
+
+.fc-feature-card h3,
+.fc-more-card h3 {
+    min-height: 2.35em;
+    text-wrap: balance;
+}
+
+.fc-feature-card p,
+.fc-more-card p {
+    line-height: 1.6;
+}
+
+.fc-more-card p {
+    flex: 1;
+}
+
+.fc-content-panel.fc-content-wrapper,
+.fc-rich-block {
+    height: 100%;
+}
+
+.fc-primary-button,
+.fc-secondary-button,
+.fc-final-cta a,
+.fc-action-buttons a,
+.fc-floating-preinscripcion {
+    min-height: 44px;
+}
+
+.fc-primary-button:focus-visible,
+.fc-secondary-button:focus-visible,
+.fc-final-cta a:focus-visible,
+.fc-action-buttons a:focus-visible,
+.fc-floating-preinscripcion:focus-visible {
+    outline: 3px solid var(--fc-secondary);
+    outline-offset: 4px;
+    box-shadow: 0 0 0 6px rgba(16, 43, 86, .32);
+}
+
+.fc-table-wrap {
+    overflow-x: visible;
+}
+
+.fc-pricing-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+}
+
+.fc-pricing-table th,
+.fc-pricing-table td {
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+.fc-pricing-table th:first-child,
+.fc-pricing-table td:first-child {
+    width: 42%;
+}
+
+.fc-pricing-table th:nth-child(2),
+.fc-pricing-table td:nth-child(2),
+.fc-pricing-table th:nth-child(3),
+.fc-pricing-table td:nth-child(3) {
+    width: 29%;
+}
+
+@media (prefers-contrast: more) {
+    .flacso-carta-virtual {
+        --fc-muted: #243044;
+        --fc-border: rgba(16, 43, 86, .42);
+    }
+
+    .fc-card,
+    .fc-feature-card,
+    .fc-more-card,
+    .fc-content-wrapper,
+    .fc-info-important,
+    .fc-requirement {
+        border-width: 2px;
+    }
+}
+
+@media (max-width: 980px) {
+    .fc-feature-grid,
+    .fc-more-grid {
+        grid-auto-rows: auto;
+    }
+
+    .fc-feature-card,
+    .fc-more-card {
+        min-height: 0;
+    }
+}
+
+@media (max-width: 700px) {
+    .flacso-carta-virtual {
+        --fc-page-gutter: 1.5rem;
+    }
+
+    .fc-hero,
+    .fc-page-container {
+        width: min(100% - var(--fc-page-gutter), var(--fc-page-width));
+    }
+
+    .fc-card-header,
+    .fc-pricing-note {
+        padding-inline: 1.1rem;
+    }
+
+    .fc-table-wrap {
+        margin-left: 0;
+        margin-right: 0;
+        overflow: visible;
+        background: var(--fc-white);
+    }
+
+    .fc-pricing-table {
+        display: block;
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: auto;
+    }
+
+    .fc-pricing-table thead {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        padding: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0, 0, 0, 0) !important;
+        white-space: nowrap !important;
+        border: 0 !important;
+    }
+
+    .fc-pricing-table tbody {
+        display: grid;
+        gap: .9rem;
+        padding: 1rem;
+    }
+
+    .fc-pricing-table tr {
+        display: block;
+        overflow: hidden;
+        border: 1px solid var(--fc-border);
+        border-radius: 1rem;
+        background: var(--fc-white);
+        box-shadow: var(--fc-shadow-soft);
+    }
+
+    .fc-pricing-table th,
+    .fc-pricing-table td,
+    .fc-pricing-table th:first-child,
+    .fc-pricing-table td:first-child,
+    .fc-pricing-table th:nth-child(2),
+    .fc-pricing-table td:nth-child(2),
+    .fc-pricing-table th:nth-child(3),
+    .fc-pricing-table td:nth-child(3) {
+        width: 100%;
+    }
+
+    .fc-pricing-table td {
+        display: grid;
+        grid-template-columns: minmax(7.25rem, 42%) minmax(0, 1fr);
+        gap: .75rem;
+        align-items: start;
+        padding: .9rem 1rem;
+        border-bottom: 1px solid var(--fc-border);
+        background: var(--fc-white) !important;
+        color: var(--fc-text);
+        font-size: .98rem;
+    }
+
+    .fc-pricing-table td:last-child {
+        border-bottom: 0;
+    }
+
+    .fc-pricing-table td::before {
+        content: attr(data-label);
+        color: var(--fc-primary);
+        font-size: .78rem;
+        font-weight: 900;
+        line-height: 1.25;
+        letter-spacing: .045em;
+        text-transform: uppercase;
+    }
+
+    .fc-pricing-table td:first-child {
+        display: block;
+        background: rgba(237, 242, 246, .72) !important;
+        color: var(--fc-primary);
+        font-weight: 900;
+    }
+
+    .fc-pricing-table td:first-child::before {
+        display: block;
+        margin-bottom: .25rem;
+    }
+
+    .fc-pricing-table tr.is-highlighted {
+        border-color: rgba(22, 57, 111, .32);
+        box-shadow: 0 0 0 3px rgba(233, 229, 15, .22), var(--fc-shadow-soft);
+    }
+
+    .fc-pricing-table tr.is-highlighted td:first-child {
+        background: rgba(233, 229, 15, .32) !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .flacso-carta-virtual {
+        --fc-page-gutter: 1rem;
+    }
+
+    .fc-hero,
+    .fc-page-container {
+        width: min(100% - var(--fc-page-gutter), var(--fc-page-width));
+    }
+
+    .fc-pricing-table tbody {
+        padding: .75rem;
+    }
+
+    .fc-pricing-table td {
+        grid-template-columns: 1fr;
+        gap: .25rem;
+    }
+
+    .fc-pricing-table td::before {
+        margin-bottom: .1rem;
+    }
+
+    .fc-feature-card h3,
+    .fc-more-card h3 {
+        min-height: 0;
     }
 }
 
