@@ -516,8 +516,8 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                             <?php if ($cartamalla) : ?>
                                 <article class="fc-more-card" style="text-align: center; padding: 2rem;">
                                     <div class="fc-more-icon" style="margin: 0 auto 1rem;"><i class="bi bi-journal-check" aria-hidden="true"></i></div>
-                                    <h3>Documento Unificado</h3>
-                                    <p style="margin-bottom: 1.5rem;">Contiene el calendario de cursada y la malla curricular completa.</p>
+                                    <h3>Calendario y Malla</h3>
+                                    <p style="margin-bottom: 1.5rem;">Incluye el calendario de cursada y la malla curricular completa.</p>
                                     <a href="<?php echo esc_url($cartamalla); ?>" target="_blank" class="fc-secondary-button" style="display: inline-flex; width: auto; justify-content: center; border: 1px solid var(--fc-border);">
                                         <i class="bi bi-file-earmark-pdf"></i> Ver Documento
                                     </a>

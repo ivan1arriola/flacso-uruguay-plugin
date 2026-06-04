@@ -633,8 +633,8 @@ get_header();
                                         $proxied = flacso_get_pdf_proxy_url($cartamalla_pdf_url, 'Calendario y Malla Curricular');
                                         if ($proxied) $cartamalla_pdf_url = $proxied;
                                     }
-                                    $combined_body = '<p style="margin-bottom:1rem;">' . esc_html__('Podés descargar el documento unificado con el calendario de cursada y la malla curricular.', 'flacso-uruguay') . '</p>' .
-                                                     '<a href="' . esc_url($cartamalla_pdf_url) . '" target="_blank" class="flacso-oa-link-btn" style="display:inline-flex; align-items:center; gap:0.5rem;"><i class="bi bi-file-earmark-pdf"></i> ' . esc_html__('Ver Documento Unificado (PDF)', 'flacso-uruguay') . '</a>';
+                                    $combined_body = '<p style="margin-bottom:1rem;">' . esc_html__('Podés descargar el calendario de cursada y la malla curricular.', 'flacso-uruguay') . '</p>' .
+                                                     '<a href="' . esc_url($cartamalla_pdf_url) . '" target="_blank" class="flacso-oa-link-btn" style="display:inline-flex; align-items:center; gap:0.5rem;"><i class="bi bi-file-earmark-pdf"></i> ' . esc_html__('Ver Calendario y Malla (PDF)', 'flacso-uruguay') . '</a>';
                                     
                                     $render_info_card(
                                         __('Malla y Calendario Académico', 'flacso-uruguay'),
@@ -1290,7 +1290,7 @@ get_header();
     padding: 18px clamp(20px, 3vw, 28px);
     border-bottom: 1px solid var(--flacso-border);
     background:
-        linear-gradient(90deg, rgba(252, 209, 22, 0.20), transparent 52%),
+        linear-gradient(90deg, rgba(20, 56, 114, 0.08), transparent 52%),
         #ffffff;
 }
 
@@ -1299,7 +1299,7 @@ get_header();
     position: absolute;
     inset: 0 auto 0 0;
     width: 6px;
-    background: var(--flacso-yellow);
+    background: var(--flacso-blue);
 }
 
 .flacso-oa-info-card__header h3 {
