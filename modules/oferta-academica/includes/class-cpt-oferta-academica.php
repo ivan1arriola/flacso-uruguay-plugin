@@ -93,8 +93,13 @@ class CPT_Oferta_Academica {
 
         $node = $wp_admin_bar->get_node('edit');
         if ($node) {
-            $node->href = $edit_url;
-            $wp_admin_bar->add_node($node);
+            $args = (array) $node;
+            $args['href'] = $edit_url;
+            if (!isset($args['meta']) || !is_array($args['meta'])) {
+                $args['meta'] = [];
+            }
+            $args['meta']['target'] = '_blank';
+            $wp_admin_bar->add_node($args);
         }
     }
 
