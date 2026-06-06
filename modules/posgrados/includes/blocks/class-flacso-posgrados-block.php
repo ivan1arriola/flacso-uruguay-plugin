@@ -648,9 +648,23 @@ if (!class_exists('FLACSO_Posgrados_Block')) {
         }
 
         private static function format_date($value, string $format): string {
-            $value = (string) $value;
+            $value = trim((string) $value);
             if ($value === '') {
                 return '';
+            }
+
+            $timezone = wp_timezone();
+
+            // Las fechas sin hora deben interpretarse en la zona horaria del sitio,
+            // no como UTC, para evitar corrimientos al día anterior.
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+                $date = DateTimeImmutable::createFromFormat('Y-m-d|', $value, $timezone);
+                return $date ? wp_date($format, $date->getTimestamp(), $timezone) : $value;
+            }
+
+            if (preg_match('/^\d{4}-\d{2}$/', $value)) {
+                $date = DateTimeImmutable::createFromFormat('Y-m|', $value, $timezone);
+                return $date ? wp_date($format, $date->getTimestamp(), $timezone) : $value;
             }
 
             $timestamp = strtotime($value);

@@ -131,6 +131,118 @@ class Oferta_Renderer {
         return $html;
     }
 
+    private static function create_site_date(string $value, string $precision = 'day'): ?DateTimeImmutable {
+        $value = trim($value);
+        if ($value === '') {
+            return null;
+        }
+
+        $timezone = wp_timezone();
+
+        if ($precision === 'day' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            $date = DateTimeImmutable::createFromFormat('Y-m-d|', $value, $timezone);
+            return $date ?: null;
+        }
+
+        if ($precision === 'month' && preg_match('/^\d{4}-\d{2}$/', $value)) {
+            $date = DateTimeImmutable::createFromFormat('Y-m|', $value, $timezone);
+            return $date ?: null;
+        }
+
+        return null;
+    }
+
+    private static function format_site_date(string $value, string $format, string $precision = 'day'): string {
+        $date = self::create_site_date($value, $precision);
+        if (!$date) {
+            return '';
+        }
+
+        return wp_date($format, $date->getTimestamp(), wp_timezone());
+    }
+
+    private static function detect_proximo_inicio_precision(string $value, string $stored_precision = ''): string {
+        $value = trim($value);
+        $stored_precision = strtolower(trim($stored_precision));
+
+        if (in_array($stored_precision, ['day', 'month', 'year'], true)) {
+            return $stored_precision;
+        }
+
+        if (preg_match('/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}$/', $value) || preg_match('/^\d{1,2}[-\/]\d{1,2}[-\/]\d{4}$/', $value)) {
+            return 'day';
+        }
+
+        if (preg_match('/^\d{4}[-\/]\d{1,2}$/', $value) || preg_match('/^\d{1,2}[-\/]\d{4}$/', $value)) {
+            return 'month';
+        }
+
+        if (preg_match('/^\d{4}$/', $value)) {
+            return 'year';
+        }
+
+        return 'year';
+    }
+
+    private static function mb_ucfirst(string $text): string {
+        if ($text === '') {
+            return '';
+        }
+
+        if (function_exists('mb_convert_case')) {
+            return mb_convert_case($text, MB_CASE_TITLE, 'UTF-8');
+        }
+
+        return ucfirst($text);
+    }
+
+    public static function format_proximo_inicio_text(string $value, string $stored_precision = ''): string {
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+
+        $precision = self::detect_proximo_inicio_precision($value, $stored_precision);
+
+        if ($precision === 'year' && preg_match('/^\d{4}$/', $value)) {
+            return 'en ' . $value;
+        }
+
+        if ($precision === 'month') {
+            if (preg_match('/^(\d{4})[-\/](\d{1,2})$/', $value, $matches) || preg_match('/^(\d{1,2})[-\/](\d{4})$/', $value, $matches)) {
+                $year = strlen($matches[1]) === 4 ? (int) $matches[1] : (int) $matches[2];
+                $month = strlen($matches[1]) === 4 ? (int) $matches[2] : (int) $matches[1];
+                $month_name = self::format_site_date(sprintf('%04d-%02d', $year, $month), 'F', 'month');
+                if ($month_name !== '') {
+                    return self::mb_ucfirst($month_name) . ' del ' . $year;
+                }
+            }
+        }
+
+        if ($precision === 'day') {
+            if (preg_match('/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/', $value, $matches)) {
+                $year = (int) $matches[1];
+                $month = (int) $matches[2];
+                $day = (int) $matches[3];
+            } elseif (preg_match('/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/', $value, $matches)) {
+                $day = (int) $matches[1];
+                $month = (int) $matches[2];
+                $year = (int) $matches[3];
+            } else {
+                $year = $month = $day = 0;
+            }
+
+            if ($year > 0 && checkdate($month, $day, $year)) {
+                $month_name = self::format_site_date(sprintf('%04d-%02d', $year, $month), 'F', 'month');
+                if ($month_name !== '') {
+                    return $day . ' ' . self::mb_ucfirst($month_name) . ' del ' . $year;
+                }
+            }
+        }
+
+        return $value;
+    }
+
     /**
      * Render de página completa (hero + categorías + secciones + seminarios)
      */
@@ -313,7 +425,8 @@ class Oferta_Renderer {
             const countdowns = document.querySelectorAll('[data-countdown]');
             countdowns.forEach(el => {
                 const dateStr = el.getAttribute('data-countdown');
-                const target = new Date(dateStr);
+                const normalizedDateStr = /^\d{4}-\d{2}-\d{2}$/.test(dateStr) ? `${dateStr}T00:00:00` : dateStr;
+                const target = new Date(normalizedDateStr);
                 if (!target.getTime()) return;
                 const today = new Date();
                 today.setHours(0,0,0,0);
@@ -888,6 +1001,7 @@ class Oferta_Renderer {
             $thumbnail = get_the_post_thumbnail_url($page_id, 'large');
         }
         $proximo_raw = get_post_meta($post_id, 'proximo_inicio', true);
+        $proximo_precision = (string) get_post_meta($post_id, 'proximo_inicio_precision', true);
         if (is_array($proximo_raw)) {
             $proximo_raw = reset($proximo_raw);
         }
@@ -895,17 +1009,18 @@ class Oferta_Renderer {
 
         $proximo_fmt = '';
         $is_exact_date = false;
-        $proximo_ts = 0;
+        $proximo_iso = '';
 
         if (!empty($proximo_raw)) {
-            if (preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/', $proximo_raw)) {
-                $proximo_ts = strtotime($proximo_raw);
-                $proximo_fmt = date_i18n('j \d\e F Y', $proximo_ts);
+            $precision = self::detect_proximo_inicio_precision($proximo_raw, $proximo_precision);
+            $formatted = self::format_proximo_inicio_text($proximo_raw, $proximo_precision);
+
+            if ($precision === 'day' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $proximo_raw)) {
+                $proximo_fmt = $formatted;
+                $proximo_iso = $proximo_raw;
                 $is_exact_date = true;
-            } elseif (preg_match('/^[0-9]{4}-[0-9]{2}$/', $proximo_raw)) {
-                $proximo_fmt = 'próximo inicio en ' . date_i18n('F Y', strtotime($proximo_raw . '-01'));
-            } elseif (preg_match('/^[0-9]{4}$/', $proximo_raw)) {
-                $proximo_fmt = 'próximo inicio en ' . $proximo_raw;
+            } elseif ($formatted !== '') {
+                $proximo_fmt = 'próximo inicio ' . $formatted;
             } else {
                 $proximo_fmt = 'próximo inicio: ' . $proximo_raw;
             }
@@ -944,13 +1059,13 @@ class Oferta_Renderer {
                         <div class="flacso-oa-card__meta mb-2">
                             <i class="bi bi-calendar3 text-primary" aria-hidden="true"></i>
                             <?php if ($is_exact_date) : ?>
-                                <time datetime="<?php echo esc_attr(date('Y-m-d', $proximo_ts)); ?>"><?php echo esc_html($proximo_fmt); ?></time>
+                                <time datetime="<?php echo esc_attr($proximo_iso); ?>"><?php echo esc_html($proximo_fmt); ?></time>
                             <?php else : ?>
                                 <span><?php echo esc_html(ucfirst($proximo_fmt)); ?></span>
                             <?php endif; ?>
                         </div>
                         <?php if ($is_exact_date) : ?>
-                        <div class="flacso-oferta-countdown" data-countdown="<?php echo esc_attr(date('Y-m-d', $proximo_ts)); ?>" aria-live="polite">
+                        <div class="flacso-oferta-countdown" data-countdown="<?php echo esc_attr($proximo_iso); ?>" aria-live="polite">
                             <i class="bi bi-clock" aria-hidden="true"></i>
                             <span class="flacso-oferta-countdown__text"><?php esc_html_e('Cargando', 'flacso-oferta-academica'); ?></span>
                         </div>
