@@ -284,14 +284,15 @@ foreach ($seminarios_catalogo as $item) {
     $seminarios_agrupados[$key]['items'][] = $item;
 }
 
-$modalidades_unicas = array();
+$seminarios_abiertos = 0;
 foreach ($seminarios_catalogo as $seminario) {
-    $modalidades_unicas[$seminario['modality']] = true;
+    if ($seminario['is_upcoming']) {
+        $seminarios_abiertos++;
+    }
 }
 
 $seminarios_total = count($seminarios_catalogo);
 $meses_total = count($seminarios_agrupados);
-$modalidades_total = count($modalidades_unicas);
 ?>
 
 <div class="content-area flacso-seminarios-page">
@@ -332,18 +333,13 @@ $modalidades_total = count($modalidades_unicas);
                 <div class="seminarios-hero__stats" aria-hidden="true">
                     <article class="seminarios-stat">
                         <span class="seminarios-stat__label"><?php esc_html_e('Seminarios', 'flacso-uruguay'); ?></span>
-                        <strong class="seminarios-stat__value"><?php echo esc_html($seminarios_total); ?>+</strong>
+                        <strong class="seminarios-stat__value"><?php echo esc_html($seminarios_abiertos); ?></strong>
                         <span class="seminarios-stat__meta"><?php esc_html_e('disponibles', 'flacso-uruguay'); ?></span>
                     </article>
                     <article class="seminarios-stat">
                         <span class="seminarios-stat__label"><?php esc_html_e('Meses activos', 'flacso-uruguay'); ?></span>
                         <strong class="seminarios-stat__value"><?php echo esc_html($meses_total); ?></strong>
                         <span class="seminarios-stat__meta"><?php esc_html_e('con oferta vigente', 'flacso-uruguay'); ?></span>
-                    </article>
-                    <article class="seminarios-stat">
-                        <span class="seminarios-stat__label"><?php esc_html_e('Modalidades', 'flacso-uruguay'); ?></span>
-                        <strong class="seminarios-stat__value"><?php echo esc_html(max(1, $modalidades_total)); ?></strong>
-                        <span class="seminarios-stat__meta"><?php esc_html_e('datos en tiempo real', 'flacso-uruguay'); ?></span>
                     </article>
                 </div>
             </div>
