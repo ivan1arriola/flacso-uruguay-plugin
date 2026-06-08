@@ -127,7 +127,11 @@ class Tabla_Precio_Schema {
                 return '';
             }
 
-            $decoded = json_decode(wp_unslash($value), true);
+            $decoded = json_decode($value, true);
+            if (!is_array($decoded)) {
+                $decoded = json_decode(wp_unslash($value), true);
+            }
+
             if (!is_array($decoded)) {
                 return '';
             }
