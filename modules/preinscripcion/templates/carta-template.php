@@ -138,12 +138,22 @@ $proximo_inicio = 'A definir';
 if (!empty($proximo_inicio_val)) {
     $proximo_inicio_str = (string) $proximo_inicio_val;
 
-    if (preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/', $proximo_inicio_str)) {
-        $proximo_inicio = wp_date('j \d\e F \d\e Y', strtotime($proximo_inicio_str));
-    } elseif (preg_match('/^[0-9]{4}-[0-9]{2}$/', $proximo_inicio_str)) {
-        $proximo_inicio = wp_date('F Y', strtotime($proximo_inicio_str . '-01'));
+    if (class_exists('Oferta_Renderer')) {
+        $precision = get_post_meta($post_id, 'proximo_inicio_precision', true);
+        $formatted = Oferta_Renderer::format_proximo_inicio_text($proximo_inicio_str, (string) $precision);
+        if ($formatted !== '') {
+            $proximo_inicio = $formatted;
+        }
     } else {
-        $proximo_inicio = $proximo_inicio_str;
+        if (preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/', $proximo_inicio_str)) {
+            $date = DateTimeImmutable::createFromFormat('Y-m-d|', $proximo_inicio_str, wp_timezone());
+            $proximo_inicio = $date ? wp_date('j \d\e F \d\e Y', $date->getTimestamp(), wp_timezone()) : $proximo_inicio_str;
+        } elseif (preg_match('/^[0-9]{4}-[0-9]{2}$/', $proximo_inicio_str)) {
+            $date = DateTimeImmutable::createFromFormat('Y-m|', $proximo_inicio_str, wp_timezone());
+            $proximo_inicio = $date ? wp_date('F Y', $date->getTimestamp(), wp_timezone()) : $proximo_inicio_str;
+        } else {
+            $proximo_inicio = $proximo_inicio_str;
+        }
     }
 }
 
