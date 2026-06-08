@@ -120,6 +120,28 @@ class Oferta_Data_MetaBox {
                             </label>
                         </td>
                     </tr>
+                    <tr>
+                        <th><label for="oferta_data_tabla_precio_id"><?php esc_html_e('Tabla de Precios Vinculada', 'flacso-oferta-academica'); ?></label></th>
+                        <td>
+                            <select id="oferta_data_tabla_precio_id" name="oferta_data[tabla_precio_id]">
+                                <option value="0"><?php esc_html_e('Ninguna', 'flacso-oferta-academica'); ?></option>
+                                <?php
+                                $tablas = get_posts([
+                                    'post_type' => 'tabla-precio',
+                                    'posts_per_page' => -1,
+                                    'post_status' => ['publish', 'draft', 'private'],
+                                    'orderby' => 'title',
+                                    'order' => 'ASC',
+                                ]);
+                                foreach ($tablas as $tabla) {
+                                    $selected = selected($values['tabla_precio_id'], $tabla->ID, false);
+                                    echo '<option value="' . esc_attr($tabla->ID) . '" ' . $selected . '>' . esc_html($tabla->post_title) . '</option>';
+                                }
+                                ?>
+                            </select>
+                            <p class="description"><?php esc_html_e('Selecciona la tabla de precios que se mostrará en esta oferta.', 'flacso-oferta-academica'); ?></p>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
 
@@ -205,6 +227,7 @@ class Oferta_Data_MetaBox {
         self::save_simple_field($post_id, 'malla_curricular', $data['malla_curricular'] ?? '');
         self::save_simple_field($post_id, 'proximo_inicio_precision', $data['proximo_inicio_precision'] ?? '');
         self::save_simple_field($post_id, 'inscripciones_abiertas', $data['inscripciones_abiertas'] ?? '', 'boolean');
+        self::save_simple_field($post_id, 'tabla_precio_id', $data['tabla_precio_id'] ?? '', 'integer');
         foreach (self::HTML_FIELDS as $field) {
             self::save_simple_field($post_id, $field, $data[$field] ?? '', 'html');
         }
@@ -249,6 +272,9 @@ class Oferta_Data_MetaBox {
                 break;
             case 'inscripciones_abiertas':
                 $value = Oferta_Data_Schema::sanitize_boolean($raw_value);
+                break;
+            case 'tabla_precio_id':
+                $value = Oferta_Data_Schema::sanitize_integer($raw_value);
                 break;
             default:
                 if ($type === 'html') {
@@ -317,6 +343,7 @@ class Oferta_Data_MetaBox {
             'malla_curricular' => get_post_meta($post_id, 'malla_curricular', true),
             'precision' => get_post_meta($post_id, 'proximo_inicio_precision', true),
             'inscripciones_abiertas' => get_post_meta($post_id, 'inscripciones_abiertas', true) ? '1' : '',
+            'tabla_precio_id' => get_post_meta($post_id, 'tabla_precio_id', true),
             'carta_cta_titulo' => get_post_meta($post_id, 'carta_cta_titulo', true),
         ];
 
