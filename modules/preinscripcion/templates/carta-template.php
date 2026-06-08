@@ -280,6 +280,8 @@ $titulos_intermedios_ids = !empty($data['titulos_intermedios']) && is_array($dat
     ? $data['titulos_intermedios']
     : [];
 
+echo "<!-- DEBUG TABLA PRECIO: tabla_precio_id=" . (isset($data['tabla_precio_id']) ? esc_html($data['tabla_precio_id']) : 'NOT_SET') . " -->\n";
+
 $precios_filas = [];
 
 if (!empty($data['precios_filas'])) {
