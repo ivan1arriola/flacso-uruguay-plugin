@@ -270,8 +270,13 @@ $precios_filas = [];
 
 if (!empty($data['precios_filas'])) {
     if (is_string($data['precios_filas'])) {
-        $decoded = json_decode($data['precios_filas'], true);
+        $raw = wp_unslash($data['precios_filas']);
+        $decoded = json_decode($raw, true);
+        if ($decoded === null) {
+            $decoded = json_decode(html_entity_decode($raw), true);
+        }
         $precios_filas = is_array($decoded) ? $decoded : [];
+        echo '<!-- DEBUG PRECIOS: raw=' . esc_html($raw) . ' json_last_error=' . json_last_error_msg() . ' count=' . count($precios_filas) . ' -->';
     } elseif (is_array($data['precios_filas'])) {
         $precios_filas = $data['precios_filas'];
     }
@@ -519,10 +524,17 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                 $calendario_pdf = !empty($documentos['calendario']['link']) ? trim($documentos['calendario']['link']) : '';
 
                 if ($cartamalla || $malla_pdf || $calendario_pdf) {
+                    $fc_cards_count = 0;
+                    if ($cartamalla) {
+                        $fc_cards_count = 1;
+                    } else {
+                        if ($calendario_pdf) $fc_cards_count++;
+                        if ($malla_pdf) $fc_cards_count++;
+                    }
                     ?>
                     <section class="fc-section">
                         <h2 class="fc-section-title">Calendario y Malla Curricular</h2>
-                        <div class="fc-more-grid">
+                        <div class="fc-more-grid" style="--fc-grid-cols: <?php echo $fc_cards_count; ?>;">
                             <?php if ($cartamalla) : ?>
                                 <article class="fc-more-card" style="text-align: center; padding: 2rem;">
                                     <div class="fc-more-icon" style="margin: 0 auto 1rem;"><i class="bi bi-journal-check" aria-hidden="true"></i></div>
@@ -1660,7 +1672,7 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 
 .fc-more-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(var(--fc-grid-cols, 3), minmax(0, 1fr));
     gap: 1rem;
 }
 
