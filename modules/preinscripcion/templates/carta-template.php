@@ -18,7 +18,21 @@ get_header();
 
 global $post;
 
-$post_id = $post->ID;
+$current_post = $post instanceof WP_Post ? $post : null;
+$current_post_id = $current_post ? (int) $current_post->ID : 0;
+$legacy_page_id = ($current_post && $current_post->post_type === 'page') ? $current_post_id : 0;
+$post_id = $current_post_id;
+
+if ($legacy_page_id > 0 && class_exists('Oferta_Page_Adapter') && method_exists('Oferta_Page_Adapter', 'get_oferta_id_by_page_id')) {
+    $resolved_oferta_id = Oferta_Page_Adapter::get_oferta_id_by_page_id($legacy_page_id);
+
+    if (!empty($resolved_oferta_id)) {
+        $post_id = (int) $resolved_oferta_id;
+    }
+}
+
+$source_post = get_post($post_id);
+$source_post_slug = $source_post ? (string) $source_post->post_name : '';
 $data = class_exists('Oferta_Data_Schema') ? Oferta_Data_Schema::get_schema($post_id) : [];
 
 if (!function_exists('flacso_carta_bool')) {
@@ -97,8 +111,8 @@ if (!function_exists('flacso_carta_determinante')) {
 
 $child_content = !empty($data['carta_presentacion_html']) ? $data['carta_presentacion_html'] : '';
 
-if (empty($child_content)) {
-    $child_page = get_page_by_path($post->post_name . '/carta', OBJECT, 'page');
+if (empty($child_content) && $legacy_page_id > 0 && $current_post) {
+    $child_page = get_page_by_path($current_post->post_name . '/carta', OBJECT, 'page');
 
     if ($child_page) {
         $child_content = apply_filters('the_content', $child_page->post_content);
@@ -239,11 +253,11 @@ if (!$asistente_slug && !empty($data['equipos']) && is_array($data['equipos'])) 
 }
 
 if (!$asistente_slug) {
-    if ($is_maestria && stripos($post->post_name, 'educacion-innovacion-tecnologias') !== false) {
+    if ($is_maestria && stripos($source_post_slug, 'educacion-innovacion-tecnologias') !== false) {
         $asistente_slug = 'analia-bombau';
         $asistente_nombre = 'Analía Bombau';
         $asistente_correo = 'edutic@flacso.edu.uy';
-    } elseif ($is_diplomado && stripos($post->post_name, 'genero') !== false) {
+    } elseif ($is_diplomado && stripos($source_post_slug, 'genero') !== false) {
         $asistente_slug = 'florencia-quartino';
         $asistente_nombre = 'Florencia Quartino';
         $asistente_correo = 'genero@flacso.edu.uy';
@@ -280,6 +294,14 @@ if (!empty($data['precios_filas'])) {
     } elseif (is_array($data['precios_filas'])) {
         $precios_filas = $data['precios_filas'];
     }
+}
+
+if (!empty($precios_filas) && is_string($child_content) && $child_content !== '') {
+    $child_content = preg_replace(
+        '/\[(?:programa_precios|maestria_precios|egccyd_precios|diplomado_especializacion_precios|eapet_precios|diplomas_precios|iape_precios|subjetividad_precios)(?:\s+[^\]]*)?\]/i',
+        '',
+        $child_content
+    );
 }
 
 $precios_nota = !empty($data['precios_nota'])

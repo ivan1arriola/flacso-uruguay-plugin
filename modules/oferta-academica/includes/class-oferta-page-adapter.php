@@ -83,6 +83,31 @@ class Oferta_Page_Adapter {
     }
 
     /**
+     * Obtener la oferta academica asociada a una pagina legacy.
+     */
+    public static function get_oferta_id_by_page_id(int $page_id): ?int {
+        $page_id = absint($page_id);
+
+        if ($page_id <= 0) {
+            return null;
+        }
+
+        $ids = get_posts([
+            'post_type' => 'oferta-academica',
+            'post_status' => ['publish', 'draft', 'future', 'pending', 'private'],
+            'posts_per_page' => 1,
+            'fields' => 'ids',
+            'meta_key' => '_oferta_page_id',
+            'meta_value' => $page_id,
+            'orderby' => 'ID',
+            'order' => 'DESC',
+            'no_found_rows' => true,
+        ]);
+
+        return !empty($ids) ? (int) $ids[0] : null;
+    }
+
+    /**
      * Sincronizar la imagen destacada desde la página asociada
      */
     public static function sync_featured_image($post_id, $post): void {
