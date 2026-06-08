@@ -880,7 +880,9 @@ class Oferta_Data_Schema {
             'asistente_academica_rol' => fn($value) => sanitize_text_field($value),
             'asistente_academica_correo' => fn($value) => self::sanitize_email($value),
             'asistente_academica_docente_id' => fn($value) => self::sanitize_integer($value),
+            'tabla_precio_id' => fn($value) => self::sanitize_integer($value),
             'precios_filas' => fn($value) => self::sanitize_prices_rows($value),
+            'documentos' => fn($value) => self::sanitize_generic_json_string($value),
         ];
 
         foreach ($meta_map as $key => $sanitizer) {
