@@ -586,35 +586,54 @@ get_header();
                                     );
                                 } else {
                                     $malla_pdf_url = !empty($documentos['malla']['link']) ? trim((string) $documentos['malla']['link']) : (!empty($data['malla_curricular']) ? trim((string) $data['malla_curricular']) : '');
-                                    
-                                    if ($malla_pdf_url) {
-                                        if (function_exists('flacso_get_pdf_proxy_url')) {
-                                            $proxied = flacso_get_pdf_proxy_url($malla_pdf_url, 'Malla curricular');
-                                            if ($proxied) $malla_pdf_url = $proxied;
-                                        }
-                                        $malla_body = '<a href="' . esc_url($malla_pdf_url) . '" target="_blank" class="flacso-oa-link-btn" style="display:inline-flex; align-items:center; gap:0.5rem;"><i class="bi bi-file-earmark-pdf"></i> ' . esc_html__('Ver Malla Curricular (PDF)', 'flacso-uruguay') . '</a>';
-                                        
-                                        $render_info_card(
-                                            __('Malla Curricular', 'flacso-uruguay'),
-                                            $malla_body,
-                                            'flacso-oa-info-card--wide'
-                                        );
-                                    }
-                                    
                                     $calendario_pdf_url = !empty($documentos['calendario']['link']) ? trim((string) $documentos['calendario']['link']) : (!empty($data['calendario']) ? trim((string) $data['calendario']) : '');
                                     
-                                    if ($calendario_pdf_url) {
+                                    if ($malla_pdf_url && $calendario_pdf_url) {
                                         if (function_exists('flacso_get_pdf_proxy_url')) {
-                                            $proxied = flacso_get_pdf_proxy_url($calendario_pdf_url, 'Calendario Academico');
-                                            if ($proxied) $calendario_pdf_url = $proxied;
+                                            $proxied_malla = flacso_get_pdf_proxy_url($malla_pdf_url, 'Malla curricular');
+                                            if ($proxied_malla) $malla_pdf_url = $proxied_malla;
+                                            
+                                            $proxied_cal = flacso_get_pdf_proxy_url($calendario_pdf_url, 'Calendario Academico');
+                                            if ($proxied_cal) $calendario_pdf_url = $proxied_cal;
                                         }
-                                        $calendario_body = '<a href="' . esc_url($calendario_pdf_url) . '" target="_blank" class="flacso-oa-link-btn" style="display:inline-flex; align-items:center; gap:0.5rem;"><i class="bi bi-file-earmark-pdf"></i> ' . esc_html__('Ver Calendario (PDF)', 'flacso-uruguay') . '</a>';
+                                        $combined_body = '<div style="display:flex; flex-wrap:wrap; gap:1rem;">' .
+                                                         '<a href="' . esc_url($malla_pdf_url) . '" target="_blank" class="flacso-oa-link-btn" style="display:inline-flex; align-items:center; gap:0.5rem;"><i class="bi bi-file-earmark-pdf"></i> ' . esc_html__('Ver Malla Curricular (PDF)', 'flacso-uruguay') . '</a>' .
+                                                         '<a href="' . esc_url($calendario_pdf_url) . '" target="_blank" class="flacso-oa-link-btn" style="display:inline-flex; align-items:center; gap:0.5rem;"><i class="bi bi-file-earmark-pdf"></i> ' . esc_html__('Ver Calendario (PDF)', 'flacso-uruguay') . '</a>' .
+                                                         '</div>';
                                         
                                         $render_info_card(
-                                            __('Calendario Académico', 'flacso-uruguay'),
-                                            $calendario_body,
+                                            __('Malla y Calendario Académico', 'flacso-uruguay'),
+                                            $combined_body,
                                             'flacso-oa-info-card--wide'
                                         );
+                                    } else {
+                                        if ($malla_pdf_url) {
+                                            if (function_exists('flacso_get_pdf_proxy_url')) {
+                                                $proxied = flacso_get_pdf_proxy_url($malla_pdf_url, 'Malla curricular');
+                                                if ($proxied) $malla_pdf_url = $proxied;
+                                            }
+                                            $malla_body = '<a href="' . esc_url($malla_pdf_url) . '" target="_blank" class="flacso-oa-link-btn" style="display:inline-flex; align-items:center; gap:0.5rem;"><i class="bi bi-file-earmark-pdf"></i> ' . esc_html__('Ver Malla Curricular (PDF)', 'flacso-uruguay') . '</a>';
+                                            
+                                            $render_info_card(
+                                                __('Malla Curricular', 'flacso-uruguay'),
+                                                $malla_body,
+                                                'flacso-oa-info-card--wide'
+                                            );
+                                        }
+                                        
+                                        if ($calendario_pdf_url) {
+                                            if (function_exists('flacso_get_pdf_proxy_url')) {
+                                                $proxied = flacso_get_pdf_proxy_url($calendario_pdf_url, 'Calendario Academico');
+                                                if ($proxied) $calendario_pdf_url = $proxied;
+                                            }
+                                            $calendario_body = '<a href="' . esc_url($calendario_pdf_url) . '" target="_blank" class="flacso-oa-link-btn" style="display:inline-flex; align-items:center; gap:0.5rem;"><i class="bi bi-file-earmark-pdf"></i> ' . esc_html__('Ver Calendario (PDF)', 'flacso-uruguay') . '</a>';
+                                            
+                                            $render_info_card(
+                                                __('Calendario Académico', 'flacso-uruguay'),
+                                                $calendario_body,
+                                                'flacso-oa-info-card--wide'
+                                            );
+                                        }
                                     }
                                 }
 
