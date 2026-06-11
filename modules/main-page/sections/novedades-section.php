@@ -352,7 +352,12 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
             }
 
             .flacso-main-page .flacso-home-block--novedades_destacadas {
-                padding-block: clamp(1.25rem, 2.4vw, 2rem);
+                padding-top: clamp(1.25rem, 2.4vw, 2rem);
+                padding-bottom: 0;
+            }
+
+            .flacso-main-page .flacso-home-block--novedades {
+                padding-top: 0;
             }
 
             .flacso-novedades-3d .text-center {
@@ -558,7 +563,8 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
 
             @media (max-width: 767.98px) {
                 .flacso-main-page .flacso-home-block--novedades_destacadas {
-                    padding-block: 1rem;
+                    padding-top: 1rem;
+                    padding-bottom: 0;
                 }
 
                 .flacso-novedades-3d__viewport {
