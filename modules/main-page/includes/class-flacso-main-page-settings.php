@@ -91,7 +91,8 @@ class Flacso_Main_Page_Settings {
 
         self::$defaults_cache = [
             'hero' => [
-                'title' => 'Inscripciones 2026 Abiertas: Maestrías, Especializaciones, Diplomados y Diplomas',
+                'kicker' => '',
+                'title' => 'Inscripciones Abiertas: Maestrías, Especializaciones, Diplomados y Diplomas',
                 'subtitle' => 'Sumate a los posgrados de FLACSO Uruguay.',
                 'background_image' => 'https://flacso.edu.uy/wp-content/uploads/2025/11/primer-plano-de-ejecutivos-de-negocios-en-la-oficina-scaled.jpg',
                 'primary_label' => 'Ver Oferta Académica',
@@ -503,6 +504,7 @@ class Flacso_Main_Page_Settings {
 
         if (isset($input['hero']) && is_array($input['hero'])) {
             $hero = $input['hero'];
+            $output['hero']['kicker'] = wp_kses_post($hero['kicker'] ?? $defaults['hero']['kicker']);
             $output['hero']['title'] = wp_kses_post($hero['title'] ?? $defaults['hero']['title']);
             $output['hero']['subtitle'] = wp_kses_post($hero['subtitle'] ?? $defaults['hero']['subtitle']);
             $output['hero']['background_image'] = esc_url_raw($hero['background_image'] ?? $defaults['hero']['background_image']);

@@ -43,13 +43,18 @@ if (!function_exists('flacso_section_hero_render')) {
                 1
             );
         }
-        if ($hero_year !== '') {
-            $kicker_text = sprintf(
-                esc_html__('Postulaciones %s - FLACSO Uruguay', 'flacso-main-page'),
-                $hero_year
-            );
+        $kicker_setting = trim((string) ($settings['kicker'] ?? ($hero_defaults['kicker'] ?? '')));
+        if ($kicker_setting !== '') {
+            $kicker_text = esc_html($kicker_setting);
         } else {
-            $kicker_text = esc_html__('Postulaciones abiertas - FLACSO Uruguay', 'flacso-main-page');
+            if ($hero_year !== '') {
+                $kicker_text = sprintf(
+                    esc_html__('Postulaciones %s - FLACSO Uruguay', 'flacso-main-page'),
+                    $hero_year
+                );
+            } else {
+                $kicker_text = esc_html__('Postulaciones abiertas - FLACSO Uruguay', 'flacso-main-page');
+            }
         }
 
         $buttons_config = isset($settings['buttons']) && is_array($settings['buttons']) ? $settings['buttons'] : [];

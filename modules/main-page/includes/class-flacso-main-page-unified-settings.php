@@ -205,6 +205,17 @@ class Flacso_Main_Page_Unified_Settings {
     private static function render_hero_section(array $settings): void {
         ?>
         <div class="flacso-form-group">
+            <label for="hero_kicker"><?php esc_html_e('Antetítulo (Kicker)', 'flacso-main-page'); ?></label>
+            <input 
+                type="text" 
+                id="hero_kicker" 
+                name="hero[kicker]" 
+                class="regular-text" 
+                value="<?php echo esc_attr($settings['hero']['kicker'] ?? ''); ?>"
+                placeholder="<?php esc_attr_e('Ej: Postulaciones 2026 - FLACSO Uruguay', 'flacso-main-page'); ?>">
+        </div>
+
+        <div class="flacso-form-group">
             <label for="hero_title"><?php esc_html_e('Título', 'flacso-main-page'); ?></label>
             <input 
                 type="text" 
