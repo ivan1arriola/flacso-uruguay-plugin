@@ -455,6 +455,13 @@ class FLACSO_Integrations_Settings {
                             __('Probar charlas abiertas', 'flacso-uruguay'),
                             __('Valida el webhook de inscripciones de charlas abiertas.', 'flacso-uruguay')
                         ); ?>
+                        <?php self::render_test_form(
+                            'flacso_preinscripciones_test_webhook',
+                            'flacso_preinscripciones_test_webhook_nonce',
+                            'flacso_preinscripciones_test_webhook',
+                            __('Probar preinscripciones', 'flacso-uruguay'),
+                            __('Valida el webhook de preinscripciones académicas.', 'flacso-uruguay')
+                        ); ?>
                     </div>
                 </div>
 
@@ -981,6 +988,11 @@ class FLACSO_Integrations_Settings {
                                 status = finalUrl.searchParams.get('flacso_charlas_webhook_test');
                                 code = finalUrl.searchParams.get('flacso_charlas_webhook_code') || '';
                                 message = finalUrl.searchParams.get('flacso_charlas_webhook_message') || '';
+                                tokenVar = 'FLACSO_WEBHOOK_TOKEN';
+                            } else if (finalUrl.searchParams.has('flacso_preinscripciones_webhook_test')) {
+                                status = finalUrl.searchParams.get('flacso_preinscripciones_webhook_test');
+                                code = finalUrl.searchParams.get('flacso_preinscripciones_webhook_code') || '';
+                                message = finalUrl.searchParams.get('flacso_preinscripciones_webhook_message') || '';
                                 tokenVar = 'FLACSO_WEBHOOK_TOKEN';
                             }
 

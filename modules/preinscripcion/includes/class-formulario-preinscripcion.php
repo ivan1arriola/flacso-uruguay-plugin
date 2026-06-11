@@ -9,14 +9,12 @@ if (!defined('ABSPATH')) {
 
 require_once __DIR__ . '/trait-assets.php';
 require_once __DIR__ . '/trait-render.php';
-require_once __DIR__ . '/trait-admin.php';
 require_once __DIR__ . '/trait-templates.php';
 require_once __DIR__ . '/trait-migracion.php';
 
 class FLACSO_Formulario_Preinscripcion_Final {
     use FLACSO_Formulario_Preinscripcion_Assets, 
         FLACSO_Formulario_Preinscripcion_Render,
-        FLACSO_Formulario_Preinscripcion_Admin,
         FLACSO_Formulario_Preinscripcion_Templates,
         FLACSO_Formulario_Preinscripcion_Migracion;
 
@@ -33,13 +31,14 @@ class FLACSO_Formulario_Preinscripcion_Final {
         add_action('wp_ajax_flacso_enviar_preinscripcion', array($this, 'procesar_formulario'));
         add_action('wp_ajax_nopriv_flacso_enviar_preinscripcion', array($this, 'procesar_formulario'));
 
-        // Admin panel
-        add_action('admin_menu', array($this, 'registrar_menu_admin'));
-        
+
         // Template system y rewrite rules
         add_action('init', array($this, 'registrar_templates'));
         add_action('init', array($this, 'registrar_rewrite_rules'));
         add_filter('query_vars', array($this, 'agregar_query_vars'));
+
+        // Test webhook
+        add_action('admin_post_flacso_preinscripciones_test_webhook', array($this, 'procesar_test_webhook'));
     }
 
     private function flush_output_buffers() {
@@ -320,7 +319,14 @@ class FLACSO_Formulario_Preinscripcion_Final {
         ini_set('max_execution_time', 300);
 
         // Obtener webhook URL desde la configuración
-        $webhook_url = get_option('flacso_preinscripciones_webhook_url', '');
+        $webhook_url = trim((string) get_option('flacso_preinscripciones_webhook_url', ''));
+        if (empty($webhook_url)) {
+            $webhook_url = trim((string) get_option('fc_oferta_webhook_url', ''));
+        }
+        if (empty($webhook_url) && defined('FLACSO_WEBHOOK_URL')) {
+            $webhook_url = trim((string) FLACSO_WEBHOOK_URL);
+        }
+
         $webhook_token = sanitize_text_field((string) get_option('flacso_webhook_token', ''));
         if (empty($webhook_url)) {
             $this->send_json_error('Error de configuración: No se ha configurado la URL del webhook. Contacte al administrador.');
@@ -470,12 +476,28 @@ class FLACSO_Formulario_Preinscripcion_Final {
             $webhook_headers['Authorization'] = 'Bearer ' . $webhook_token;
         }
 
-        $result = $this->tester_pre_manual_post_to_gas($webhook_url, $body_json, $webhook_headers, 45);
-        if (isset($result['error'])) { error_log('Error en webhook: ' . $result['error']); $this->send_json_error('Error de conexión con el servidor. Por favor, intente nuevamente.'); }
+        $result = wp_remote_post($webhook_url, array(
+            'headers' => array_merge(array(
+                'Content-Type' => 'application/json; charset=utf-8',
+                'Accept'       => 'application/json',
+                'User-Agent'   => 'FLACSO-Uruguay-Form/1.0',
+            ), $webhook_headers),
+            'body' => $body_json,
+            'timeout' => 100,
+            'redirection' => 3,
+            'blocking' => true,
+            'httpversion' => '1.1',
+            'data_format' => 'body',
+        ));
 
-        $status = $result['code']; $body = $this->remove_utf8_bom($result['body']);
-        if (isset($result['step1'])) { $status = $result['code']; $body = $this->remove_utf8_bom($result['body']); }
-        error_log("Respuesta webhook - Status: $status, Body: " . substr($body, 0, 500));
+        if (is_wp_error($result)) {
+            error_log('Error en webhook preinscripciones: ' . $result->get_error_message());
+            $this->send_json_error('Error de conexión con el servidor. Por favor, intente nuevamente.');
+        }
+
+        $status = wp_remote_retrieve_response_code($result);
+        $body = wp_remote_retrieve_body($result);
+        error_log("Respuesta webhook preinscripciones - Status: $status, Body: " . substr($body, 0, 500));
 
         $json = json_decode($body, true);
         if ($status === 200 && is_array($json) && ($json['ok'] ?? false)) {
@@ -496,44 +518,101 @@ class FLACSO_Formulario_Preinscripcion_Final {
         $this->send_json_error($error_msg);
     }
     
-    private function tester_pre_manual_post_to_gas($endpoint, $payload_json, $headers = array(), $timeout = 45) {
-        $args1 = array(
-            'headers' => array_merge(array(
-                'Content-Type' => 'application/json; charset=utf-8',
-                'Accept'       => 'application/json, text/plain, */*',
-                'Expect'       => '',
-                'User-Agent'   => 'FLACSO-Uruguay-Form/1.0',
-            ), $headers),
-            'body' => $payload_json, 'timeout'=>$timeout, 'redirection'=>0, 'httpversion'=>'1.1', 'data_format'=>'body',
-        );
-        $res1 = wp_remote_post($endpoint, $args1);
-        if (is_wp_error($res1)) { return array('error' => $res1->get_error_message(), 'step' => 1); }
 
-        $code1 = intval(wp_remote_retrieve_response_code($res1));
-        $hdrs1 = wp_remote_retrieve_headers($res1);
-        $body1 = $this->remove_utf8_bom(wp_remote_retrieve_body($res1));
-        $loc = null;
-        if (is_array($hdrs1)) { $loc = $hdrs1['location'] ?? $hdrs1['Location'] ?? null; }
-        elseif (is_object($hdrs1) && method_exists($hdrs1, 'offsetGet')) { $loc = $hdrs1->offsetGet('location') ?: $hdrs1->offsetGet('Location'); }
 
-        if ($code1 < 300 || $code1 > 399 || empty($loc)) {
-            return array('step'=>1,'code'=>$code1,'headers'=>$hdrs1,'body'=>$body1,'note'=>'Sin redirect; respuesta directa del Web App');
+    public function procesar_test_webhook() {
+        if (!current_user_can('manage_options')) {
+            wp_die(esc_html__('No tienes permisos suficientes.', 'flacso-uruguay'));
+        }
+        if (!isset($_POST['flacso_preinscripciones_test_webhook_nonce']) || !wp_verify_nonce(wp_unslash($_POST['flacso_preinscripciones_test_webhook_nonce']), 'flacso_preinscripciones_test_webhook')) {
+            wp_die(esc_html__('Solicitud no válida.', 'flacso-uruguay'));
         }
 
-        $args2 = array(
-            'headers'=>array_merge(array('Accept'=>'application/json, text/plain, */*','User-Agent'=>'FLACSO-Uruguay-Form/1.0'), $headers),
-            'timeout'=>$timeout,'redirection'=>0,'httpversion'=>'1.1',
-        );
-        $res2 = wp_remote_get($loc, $args2);
-        if (is_wp_error($res2)) {
-            return array('step1'=>array('code'=>$code1,'headers'=>$hdrs1,'body'=>$body1,'location'=>$loc),'error'=>$res2->get_error_message(),'step'=>2);
+        $webhook_url = trim((string) get_option('flacso_preinscripciones_webhook_url', ''));
+        if (empty($webhook_url)) {
+            $webhook_url = trim((string) get_option('fc_oferta_webhook_url', ''));
         }
-        $body2 = $this->remove_utf8_bom(wp_remote_retrieve_body($res2));
-        return array(
-            'step1'=>array('code'=>$code1,'headers'=>$hdrs1,'body'=>$body1,'location'=>$loc),
-            'step'=>2,'code'=>intval(wp_remote_retrieve_response_code($res2)),
-            'headers'=>wp_remote_retrieve_headers($res2),'body'=>$body2,
+        if (empty($webhook_url) && defined('FLACSO_WEBHOOK_URL')) {
+            $webhook_url = trim((string) FLACSO_WEBHOOK_URL);
+        }
+
+        $result = array('ok' => false, 'code' => 0, 'error' => '', 'message' => '');
+
+        if (empty($webhook_url)) {
+            $result['error'] = 'No se ha configurado la URL del webhook.';
+        } else {
+            $webhook_token = sanitize_text_field((string) get_option('flacso_webhook_token', ''));
+            $webhook_headers = array();
+            if ($webhook_token !== '') {
+                $webhook_headers['X-FLACSO-Webhook-Token'] = $webhook_token;
+                $webhook_headers['Authorization'] = 'Bearer ' . $webhook_token;
+            }
+
+            $payload = array(
+                'test' => true,
+                'origen' => 'wp_preinscripciones_test',
+                'timestamp' => current_time('mysql')
+            );
+            $body_json = wp_json_encode($payload);
+
+            $response = wp_remote_post($webhook_url, array(
+                'headers' => array_merge(array(
+                    'Content-Type' => 'application/json; charset=utf-8',
+                    'Accept'       => 'application/json',
+                    'User-Agent'   => 'FLACSO-Uruguay-Form/1.0',
+                ), $webhook_headers),
+                'body' => $body_json,
+                'timeout' => 15,
+                'blocking' => true,
+            ));
+
+            if (is_wp_error($response)) {
+                $result['error'] = 'Error de conexión: ' . $response->get_error_message();
+            } else {
+                $status = wp_remote_retrieve_response_code($response);
+                $body = wp_remote_retrieve_body($response);
+                $json = json_decode($body, true);
+                
+                $result['code'] = $status;
+                if ($status >= 200 && $status < 300) {
+                    $result['ok'] = true;
+                } else {
+                    $result['message'] = 'El servidor respondió HTTP ' . $status . '.';
+                    if (is_array($json) && !empty($json['error'])) {
+                        $result['message'] .= ' ' . (is_string($json['error']) ? $json['error'] : wp_json_encode($json['error']));
+                    }
+                }
+            }
+        }
+
+        $args = array(
+            'flacso_preinscripciones_webhook_test' => $result['ok'] ? 'success' : 'fail',
         );
+
+        if (!empty($result['code'])) {
+            $args['flacso_preinscripciones_webhook_code'] = (int) $result['code'];
+        }
+
+        $message = '';
+        if (!empty($result['message'])) {
+            $message = sanitize_text_field((string) $result['message']);
+        } elseif (!empty($result['error'])) {
+            $message = sanitize_text_field((string) $result['error']);
+        }
+
+        if ('' !== $message) {
+            $args['flacso_preinscripciones_webhook_message'] = $message;
+        }
+
+        $redirect_url = admin_url('options-general.php?page=flacso-integraciones');
+        if (class_exists('FLACSO_Integrations_Settings')) {
+            $redirect_url = FLACSO_Integrations_Settings::get_redirect_url_from_request($args, $redirect_url);
+        } else {
+            $redirect_url = add_query_arg($args, $redirect_url);
+        }
+
+        wp_safe_redirect($redirect_url);
+        exit;
     }
 
     public function validar_cedula_uruguaya($ci) {
