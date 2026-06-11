@@ -66,10 +66,6 @@ class Oferta_Renderer {
             return true;
         }
 
-        if ($page_id > 0 && 'private' === get_post_status($page_id)) {
-            return true;
-        }
-
         return false;
     }
 
