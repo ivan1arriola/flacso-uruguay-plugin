@@ -20,6 +20,7 @@ class FLACSO_Formulario_Preinscripcion_Final {
         FLACSO_Formulario_Preinscripcion_Templates,
         FLACSO_Formulario_Preinscripcion_Migracion;
 
+    private const MAESTRIA_TIPO_OFERTA_TERM_ID = 265;
 
     private static $instance = null;
     public static function get_instance() {
@@ -148,6 +149,43 @@ class FLACSO_Formulario_Preinscripcion_Final {
         return !empty($ids) ? (int) $ids[0] : 0;
     }
 
+    private function resolver_oferta_id_desde_programa($programa_id) {
+        $programa_id = (int) $programa_id;
+        if ($programa_id <= 0) {
+            return 0;
+        }
+
+        if (get_post_type($programa_id) === 'oferta-academica') {
+            return $programa_id;
+        }
+
+        return $this->obtener_oferta_id_por_pagina($programa_id);
+    }
+
+    private function oferta_tiene_tipo_term_id($oferta_id, $term_id) {
+        $oferta_id = (int) $oferta_id;
+        $term_id = (int) $term_id;
+
+        if ($oferta_id <= 0 || $term_id <= 0) {
+            return false;
+        }
+
+        $term_ids = wp_get_post_terms($oferta_id, 'tipo-oferta-academica', array(
+            'fields' => 'ids',
+        ));
+
+        if (is_wp_error($term_ids) || empty($term_ids)) {
+            return false;
+        }
+
+        return in_array($term_id, array_map('intval', $term_ids), true);
+    }
+
+    private function es_oferta_maestria($programa_id) {
+        $oferta_id = $this->resolver_oferta_id_desde_programa($programa_id);
+        return $this->oferta_tiene_tipo_term_id($oferta_id, self::MAESTRIA_TIPO_OFERTA_TERM_ID);
+    }
+
     public function es_pagina_preinscripcion_activa($page_id) {
         $page_id = (int)$page_id;
 
@@ -230,14 +268,15 @@ class FLACSO_Formulario_Preinscripcion_Final {
         $page_id = get_the_ID();
         $parent_page_id = wp_get_post_parent_id($page_id);
         $id_posgrado = $parent_page_id ? (int)$parent_page_id : (int)$page_id;
-        $maestrias = array_map('intval', array(12330, 12336, 12343));
+        $offer_id = $this->resolver_oferta_id_desde_programa($id_posgrado);
 
         $info = array(
             'page_id' => (int)$page_id,
             'parent_page_id' => $parent_page_id ? (int)$parent_page_id : 0,
             'id_posgrado' => $id_posgrado,
+            'offer_id' => $offer_id,
             'titulo_posgrado' => $id_posgrado ? get_the_title($id_posgrado) : '',
-            'es_maestria' => in_array($id_posgrado, $maestrias, true),
+            'es_maestria' => $this->es_oferta_maestria($id_posgrado),
             'preinscripcion_cerrada' => $this->formulario_preinscripcion_esta_cerrado($id_posgrado),
             'imagen_destacada' => '',
             'convenios_validos' => $this->obtener_convenios_validos(),
@@ -282,6 +321,7 @@ class FLACSO_Formulario_Preinscripcion_Final {
 
         // Obtener webhook URL desde la configuración
         $webhook_url = get_option('flacso_preinscripciones_webhook_url', '');
+        $webhook_token = sanitize_text_field((string) get_option('flacso_webhook_token', ''));
         if (empty($webhook_url)) {
             $this->send_json_error('Error de configuración: No se ha configurado la URL del webhook. Contacte al administrador.');
         }
@@ -291,8 +331,10 @@ class FLACSO_Formulario_Preinscripcion_Final {
 
         $id_pagina       = (int)($_POST['id_pagina'] ?? 0);
         $titulo_posgrado = sanitize_text_field($_POST['titulo_posgrado'] ?? '');
-        $es_maestria     = (($_POST['es_maestria'] ?? '') === 'si');
+        $oferta_id       = $this->resolver_oferta_id_desde_programa($id_pagina);
+        $es_maestria     = $this->es_oferta_maestria($id_pagina);
         if (!$id_pagina || !$titulo_posgrado) { $this->send_json_error('Datos incompletos del formulario.'); }
+        if ($oferta_id <= 0) { $this->send_json_error('No se pudo resolver la oferta académica asociada al formulario.'); }
         if ($this->formulario_preinscripcion_esta_cerrado($id_pagina)) {
             $this->send_json_error($this->obtener_mensaje_preinscripciones_cerradas(), 403);
         }
@@ -367,7 +409,7 @@ class FLACSO_Formulario_Preinscripcion_Final {
 
         $payload = array(
             'posgrado' => array(
-                'id' => $id_pagina,
+                'id' => $oferta_id,
                 'titulo' => $titulo_posgrado,
                 'es_maestria' => $es_maestria ? 'si' : 'no'
             ),
@@ -412,16 +454,23 @@ class FLACSO_Formulario_Preinscripcion_Final {
             ),
             'archivos' => $archivos,
             'meta' => array(
-                'timestamp' => current_time('mysql'),
-                'ip' => $ip_address,
-                'ua' => $user_agent,
+                'timestamp_client' => current_time('c'),
+                'ip_address' => $ip_address,
+                'user_agent' => $user_agent,
+                'host_post_id' => $id_pagina,
                 'origen' => 'wordpress_formulario_preinscripcion'
             )
         );
         $body_json = wp_json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         if ($body_json === false) { $this->send_json_error('Error codificando los datos del formulario.'); }
 
-        $result = $this->tester_pre_manual_post_to_gas($webhook_url, $body_json, array(), 45);
+        $webhook_headers = array();
+        if ($webhook_token !== '') {
+            $webhook_headers['X-FLACSO-Webhook-Token'] = $webhook_token;
+            $webhook_headers['Authorization'] = 'Bearer ' . $webhook_token;
+        }
+
+        $result = $this->tester_pre_manual_post_to_gas($webhook_url, $body_json, $webhook_headers, 45);
         if (isset($result['error'])) { error_log('Error en webhook: ' . $result['error']); $this->send_json_error('Error de conexión con el servidor. Por favor, intente nuevamente.'); }
 
         $status = $result['code']; $body = $this->remove_utf8_bom($result['body']);
@@ -429,13 +478,21 @@ class FLACSO_Formulario_Preinscripcion_Final {
         error_log("Respuesta webhook - Status: $status, Body: " . substr($body, 0, 500));
 
         $json = json_decode($body, true);
-        if ($status === 200 && is_array($json) && ($json['success'] ?? false)) {
-            $this->send_json_success(array('message' => 'Preinscripción enviada correctamente.'));
+        if ($status === 200 && is_array($json) && ($json['ok'] ?? false)) {
+            $this->send_json_success(array(
+                'message' => 'Preinscripción enviada correctamente.',
+                'editor_response' => $json,
+            ));
         }
 
         $error_msg = 'Error del servidor. Por favor, contacte a inscripciones@flacso.edu.uy';
-        if (is_array($json) && isset($json['error'])) { $error_msg = $json['error']; }
-        elseif ($body) { $error_msg = "Error: $body"; }
+        if (is_array($json) && is_array($json['error'] ?? null) && !empty($json['error']['message'])) {
+            $error_msg = (string) $json['error']['message'];
+        } elseif (is_array($json) && is_string($json['message'] ?? null) && $json['message'] !== '') {
+            $error_msg = $json['message'];
+        } elseif ($body) {
+            $error_msg = "Error: $body";
+        }
         $this->send_json_error($error_msg);
     }
     
@@ -498,8 +555,6 @@ class FLACSO_Formulario_Preinscripcion_Final {
         return $verificador === $esperado;
     }
 }
-
-
 
 
 

@@ -249,16 +249,15 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
     private function obtener_info_posgrado_para_template($pagina_padre_id) {
         $page_id = get_the_ID();
         $id_posgrado = (int)$pagina_padre_id;
-        
-        // IDs de maestrías
-        $maestrias = array_map('intval', array(12330, 12336, 12343));
+        $offer_id = $this->resolver_oferta_id_desde_programa($id_posgrado);
 
         $info = array(
             'page_id' => (int)$page_id,
             'parent_page_id' => $id_posgrado,
             'id_posgrado' => $id_posgrado,
+            'offer_id' => $offer_id,
             'titulo_posgrado' => get_the_title($id_posgrado),
-            'es_maestria' => in_array($id_posgrado, $maestrias, true),
+            'es_maestria' => $this->es_oferta_maestria($id_posgrado),
             'preinscripcion_cerrada' => $this->formulario_preinscripcion_esta_cerrado($id_posgrado),
             'imagen_destacada' => '',
             'convenios_validos' => $this->obtener_convenios_validos(),
