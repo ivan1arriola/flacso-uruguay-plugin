@@ -11,10 +11,6 @@ class CPT_Oferta_Academica {
     
     public static function init(): void {
         self::register_post_type();
-        add_filter('use_block_editor_for_post_type', [self::class, 'disable_block_editor'], 10, 2);
-        add_filter('get_edit_post_link', [self::class, 'filter_edit_post_link'], 10, 3);
-        add_action('admin_bar_menu', [self::class, 'modify_admin_bar_edit_link'], 100);
-        add_action('load-post-new.php', [self::class, 'redirect_add_new']);
         add_action('wp_head', [self::class, 'add_og_meta_tags'], 5);
         add_action('template_redirect', [self::class, 'maybe_render_formacion_virtual_page'], 1);
     }
@@ -65,61 +61,7 @@ class CPT_Oferta_Academica {
         }
     }
 
-    public static function disable_block_editor(bool $use_block_editor, string $post_type): bool {
-        if ('oferta-academica' === $post_type) {
-            return false;
-        }
-        return $use_block_editor;
-    }
 
-    public static function filter_edit_post_link($link, $post_id, $context) {
-        if (get_post_type($post_id) === 'oferta-academica') {
-            $base_url = get_option('flacso_external_editor_url', 'https://editor-flacso-uy.vercel.app');
-            if (empty($base_url) || strpos($base_url, 'flacso.edu.uy') !== false) {
-                $base_url = 'https://editor-flacso-uy.vercel.app';
-            }
-            $base_url = rtrim($base_url, '/');
-            return esc_url($base_url . '/ofertas/' . $post_id);
-        }
-        return $link;
-    }
-
-    public static function modify_admin_bar_edit_link(WP_Admin_Bar $wp_admin_bar): void {
-        if (!is_singular('oferta-academica')) {
-            return;
-        }
-        
-        $post_id = get_the_ID();
-        $base_url = get_option('flacso_external_editor_url', 'https://editor-flacso-uy.vercel.app');
-        if (empty($base_url) || strpos($base_url, 'flacso.edu.uy') !== false) {
-            $base_url = 'https://editor-flacso-uy.vercel.app';
-        }
-        $base_url = rtrim($base_url, '/');
-        $edit_url = esc_url($base_url . '/ofertas/' . $post_id);
-
-        $node = $wp_admin_bar->get_node('edit');
-        if ($node) {
-            $args = (array) $node;
-            $args['href'] = $edit_url;
-            if (!isset($args['meta']) || !is_array($args['meta'])) {
-                $args['meta'] = [];
-            }
-            $args['meta']['target'] = '_blank';
-            $wp_admin_bar->add_node($args);
-        }
-    }
-
-    public static function redirect_add_new() {
-        if (isset($_GET['post_type']) && $_GET['post_type'] === 'oferta-academica') {
-            $base_url = get_option('flacso_external_editor_url', 'https://editor-flacso-uy.vercel.app');
-            if (empty($base_url) || strpos($base_url, 'flacso.edu.uy') !== false) {
-                $base_url = 'https://editor-flacso-uy.vercel.app';
-            }
-            $base_url = rtrim($base_url, '/');
-            wp_redirect($base_url . '/ofertas/nuevo');
-            exit;
-        }
-    }
 
     public static function add_og_meta_tags(): void {
         if (is_singular('oferta-academica') && !has_action('wp_head', 'jetpack_og_tags')) {
@@ -186,7 +128,7 @@ class CPT_Oferta_Academica {
             'hierarchical'          => false,
             'menu_position'         => 5,
             'menu_icon'             => 'dashicons-welcome-learn-more',
-            'supports'              => ['title', 'thumbnail', 'revisions'],
+            'supports'              => ['title', 'editor', 'thumbnail', 'revisions'],
             'taxonomies'            => ['tipo-oferta-academica', 'area_tematica'],
         ];
 

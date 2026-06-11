@@ -44,6 +44,33 @@ class Oferta_Data_MetaBox {
             'normal',
             'high'
         );
+        add_meta_box(
+            'oferta_react_editor_link',
+            __('Gestor FLACSO (App Externa)', 'flacso-oferta-academica'),
+            [self::class, 'render_react_editor_link_meta_box'],
+            'oferta-academica',
+            'side',
+            'high'
+        );
+    }
+
+    public static function render_react_editor_link_meta_box(\WP_Post $post): void {
+        $base_url = get_option('flacso_external_editor_url', 'https://editor-flacso-uy.vercel.app');
+        if (empty($base_url) || strpos($base_url, 'flacso.edu.uy') !== false) {
+            $base_url = 'https://editor-flacso-uy.vercel.app';
+        }
+        $base_url = rtrim($base_url, '/');
+        $edit_url = esc_url($base_url . '/ofertas/' . $post->ID);
+        
+        ?>
+        <p><?php esc_html_e('También puedes administrar los módulos de esta oferta desde la aplicación moderna.', 'flacso-oferta-academica'); ?></p>
+        <p>
+            <a href="<?php echo $edit_url; ?>" target="_blank" class="button button-primary button-large" style="width: 100%; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 5px;">
+                <?php esc_html_e('Abrir Gestor FLACSO', 'flacso-oferta-academica'); ?>
+                <span class="dashicons dashicons-external" style="font-size: 16px; width: 16px; height: 16px;"></span>
+            </a>
+        </p>
+        <?php
     }
 
     public static function render_meta_box(\WP_Post $post): void {

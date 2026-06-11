@@ -8,7 +8,6 @@ class FLACSO_Editor_Admin_Mode {
     private const MANAGED_POST_TYPES = [
         'docente',
         'seminario',
-        'oferta-academica',
         'charla_abierta',
         'fc_consulta',
         'fc_info_request',
