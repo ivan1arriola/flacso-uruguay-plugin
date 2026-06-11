@@ -222,7 +222,13 @@ class Flacso_Main_Page_Settings {
 
         $saved = get_option(self::OPTION_KEY, []);
         $defaults = self::get_defaults();
-        self::$settings_cache = self::normalize_settings(wp_parse_args($saved, $defaults));
+        $merged = wp_parse_args($saved, $defaults);
+        foreach ($defaults as $key => $val) {
+            if (is_array($val) && isset($saved[$key]) && is_array($saved[$key])) {
+                $merged[$key] = wp_parse_args($saved[$key], $val);
+            }
+        }
+        self::$settings_cache = self::normalize_settings($merged);
         return self::$settings_cache;
     }
 
