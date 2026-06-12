@@ -40,10 +40,17 @@ class Oferta_Rest_API
         return current_user_can('manage_options');
     }
 
-    public static function get_settings()
+    public static function get_settings(WP_REST_Request $request = null)
     {
+        $include_secrets = false;
+        if ($request instanceof WP_REST_Request) {
+            $include_secrets = rest_sanitize_boolean($request->get_param('include_secrets'));
+        }
+
         $token = get_option('flacso_webhook_token', '');
-        $masked_token = !empty($token) ? '********' : '';
+        $telegram_bot_token = get_option('flacso_preinscripciones_telegram_bot_token', '');
+        $masked_token = !empty($token) && !$include_secrets ? '********' : $token;
+        $masked_telegram_bot_token = !empty($telegram_bot_token) && !$include_secrets ? '********' : $telegram_bot_token;
 
         return rest_ensure_response([
             'ok' => true,
@@ -55,6 +62,8 @@ class Oferta_Rest_API
                 'mensaje_bienvenida' => get_option('flacso_mensaje_bienvenida', ''),
                 'flacso_webhook_token' => $masked_token,
                 'flacso_google_drive_folder_id' => get_option('flacso_google_drive_folder_id', ''),
+                'flacso_preinscripciones_telegram_bot_token' => $masked_telegram_bot_token,
+                'flacso_preinscripciones_telegram_chat_id' => get_option('flacso_preinscripciones_telegram_chat_id', ''),
                 'correos_excluidos' => get_option('flacso_correos_excluidos', ''),
                 'carta_mas_info_section_title' => get_option('flacso_carta_mas_info_section_title', self::DEFAULT_CARTA_MAS_INFO_SECTION_TITLE),
                 'carta_mas_info_trayectoria_title' => get_option('flacso_carta_mas_info_trayectoria_title', self::DEFAULT_CARTA_MAS_INFO_TRAYECTORIA_TITLE),
@@ -93,6 +102,15 @@ class Oferta_Rest_API
         }
         if (isset($payload['flacso_google_drive_folder_id'])) {
             update_option('flacso_google_drive_folder_id', sanitize_text_field($payload['flacso_google_drive_folder_id']));
+        }
+        if (isset($payload['flacso_preinscripciones_telegram_bot_token'])) {
+            $new_telegram_bot_token = sanitize_text_field($payload['flacso_preinscripciones_telegram_bot_token']);
+            if ($new_telegram_bot_token !== '********') {
+                update_option('flacso_preinscripciones_telegram_bot_token', $new_telegram_bot_token);
+            }
+        }
+        if (isset($payload['flacso_preinscripciones_telegram_chat_id'])) {
+            update_option('flacso_preinscripciones_telegram_chat_id', sanitize_text_field($payload['flacso_preinscripciones_telegram_chat_id']));
         }
         if (isset($payload['correos_excluidos'])) {
             update_option('flacso_correos_excluidos', sanitize_textarea_field($payload['correos_excluidos']));
