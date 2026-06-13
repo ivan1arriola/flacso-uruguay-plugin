@@ -140,7 +140,7 @@ $build_main_content_cards = static function ($html) use ($has_visible_html) {
         return [];
     }
 
-    $make_card = static function ($title, $body) {
+    $make_card = static function ($title, $body) use ($has_visible_html) {
         $title = trim((string) $title);
         $body = trim((string) $body);
 
