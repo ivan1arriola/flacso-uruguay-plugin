@@ -238,6 +238,15 @@ class FLACSO_Formulario_Preinscripcion_Final {
      * Evalua cierre global o cierre puntual por programa.
      */
     public function formulario_preinscripcion_esta_cerrado($programa_id = 0) {
+        $programa_id = (int) $programa_id;
+        $oferta_id = $this->resolver_oferta_id_desde_programa($programa_id);
+
+        // Cuando existe una oferta academica asociada, la app pasa a ser la
+        // unica fuente de verdad para abrir/cerrar preinscripciones.
+        if ($oferta_id > 0) {
+            return $this->preinscripcion_programa_esta_cerrada($oferta_id);
+        }
+
         if ($this->preinscripciones_estan_cerradas()) {
             return true;
         }
@@ -634,7 +643,6 @@ class FLACSO_Formulario_Preinscripcion_Final {
         return $verificador === $esperado;
     }
 }
-
 
 
 

@@ -790,6 +790,8 @@ class Oferta_Data_Schema {
             }
         }
 
+        $schema['visibilidad_carta'] = !empty($schema['inscripciones_abiertas']) ? '1' : '0';
+
         foreach (self::INTEGER_FIELDS as $field) {
             $schema[$field] = self::get_meta_int($post_id, $field);
         }
@@ -917,6 +919,14 @@ class Oferta_Data_Schema {
             if (isset($data[$key])) {
                 self::update_meta_value($post_id, $key, self::sanitize_meta_boolean($data[$key]));
             }
+        }
+
+        if (array_key_exists('inscripciones_abiertas', $data)) {
+            self::update_meta_value(
+                $post_id,
+                'visibilidad_carta',
+                self::sanitize_meta_boolean($data['inscripciones_abiertas'])
+            );
         }
 
         foreach (self::PERSONNEL_GROUPS as $key => $label_key) {

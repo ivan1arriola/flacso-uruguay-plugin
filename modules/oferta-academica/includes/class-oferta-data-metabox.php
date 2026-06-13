@@ -254,6 +254,7 @@ class Oferta_Data_MetaBox {
         self::save_simple_field($post_id, 'malla_curricular', $data['malla_curricular'] ?? '');
         self::save_simple_field($post_id, 'proximo_inicio_precision', $data['proximo_inicio_precision'] ?? '');
         self::save_simple_field($post_id, 'inscripciones_abiertas', $data['inscripciones_abiertas'] ?? '', 'boolean');
+        self::save_simple_field($post_id, 'visibilidad_carta', $data['inscripciones_abiertas'] ?? '', 'boolean');
         self::save_simple_field($post_id, 'tabla_precio_id', $data['tabla_precio_id'] ?? '', 'integer');
         foreach (self::HTML_FIELDS as $field) {
             self::save_simple_field($post_id, $field, $data[$field] ?? '', 'html');
