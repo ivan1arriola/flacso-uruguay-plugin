@@ -30,7 +30,25 @@ if (!is_wp_error($tipo_terms) && !empty($tipo_terms)) {
 $raw_content = get_post_field('post_content', $post_id);
 $filtered_main_content = trim((string) apply_filters('the_content', $raw_content));
 $descripcion_html = !empty($data['descripcion_html']) ? $data['descripcion_html'] : '';
-$has_main_content = trim(wp_strip_all_tags($filtered_main_content)) !== '' || trim(wp_strip_all_tags($descripcion_html)) !== '';
+
+$has_visible_html = static function ($html): bool {
+    $html = trim((string) $html);
+    if ($html === '') {
+        return false;
+    }
+
+    if (preg_match('/<(img|iframe|video|audio|object|embed|svg|canvas|table)\b/i', $html)) {
+        return true;
+    }
+
+    $text = html_entity_decode(wp_strip_all_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $text = str_replace("\xc2\xa0", ' ', $text);
+    $text = preg_replace('/\s+/u', ' ', $text);
+
+    return trim((string) $text) !== '';
+};
+
+$has_main_content = $has_visible_html($filtered_main_content) || $has_visible_html($descripcion_html);
 
 $inscripciones_meta = get_post_meta($post_id, 'inscripciones_abiertas', true);
 
@@ -99,8 +117,8 @@ $programa_meta = array_filter([
     !empty($data['duracion_meses']) ? sprintf(__('Duración: %s', 'flacso-uruguay'), $format_duracion($data['duracion_meses'])) : '',
 ]);
 
-$render_info_card = static function ($title, $body, $extra_class = '') {
-    if (trim((string) $body) === '') {
+$render_info_card = static function ($title, $body, $extra_class = '') use ($has_visible_html) {
+    if (!$has_visible_html($body)) {
         return;
     }
     ?>
@@ -115,10 +133,10 @@ $render_info_card = static function ($title, $body, $extra_class = '') {
     <?php
 };
 
-$build_main_content_cards = static function ($html) {
+$build_main_content_cards = static function ($html) use ($has_visible_html) {
     $html = trim((string) $html);
 
-    if ($html === '') {
+    if (!$has_visible_html($html)) {
         return [];
     }
 
@@ -126,7 +144,7 @@ $build_main_content_cards = static function ($html) {
         $title = trim((string) $title);
         $body = trim((string) $body);
 
-        if ($body === '') {
+        if (!$has_visible_html($body)) {
             return null;
         }
 

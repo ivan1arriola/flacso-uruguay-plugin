@@ -15,6 +15,7 @@ class Oferta_Taxonomies {
         add_action('init', [__CLASS__, 'register_rewrite_rules'], 10);
         add_filter('term_link', [__CLASS__, 'filter_term_link'], 10, 3);
         add_action('template_redirect', [__CLASS__, 'redirect_old_taxonomy_urls']);
+        add_action('pre_get_posts', [__CLASS__, 'exclude_password_protected_offers_from_public_lists']);
     }
 
     public static function register_taxonomies(): void {
@@ -172,5 +173,21 @@ class Oferta_Taxonomies {
                 }
             }
         }
+    }
+
+    /**
+     * Oculta las ofertas protegidas con contraseña en los listados públicos
+     * por taxonomía. Deben seguir siendo accesibles solo por URL directa.
+     */
+    public static function exclude_password_protected_offers_from_public_lists($query): void {
+        if (!($query instanceof WP_Query) || is_admin() || !$query->is_main_query()) {
+            return;
+        }
+
+        if (!$query->is_tax('tipo-oferta-academica')) {
+            return;
+        }
+
+        $query->set('has_password', false);
     }
 }

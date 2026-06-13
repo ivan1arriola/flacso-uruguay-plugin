@@ -69,6 +69,32 @@ class Oferta_Renderer {
         return false;
     }
 
+    private static function is_password_protected_program(int $post_id): bool {
+        return trim((string) get_post_field('post_password', $post_id)) !== '';
+    }
+
+    private static function exclude_password_protected_from_query_args(array $query_args): array {
+        $query_args['has_password'] = false;
+        return $query_args;
+    }
+
+    private static function has_visible_html_content(string $html): bool {
+        $html = trim($html);
+        if ($html === '') {
+            return false;
+        }
+
+        if (preg_match('/<(img|iframe|video|audio|object|embed|svg|canvas|table)\b/i', $html)) {
+            return true;
+        }
+
+        $text = html_entity_decode(wp_strip_all_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = str_replace("\xc2\xa0", ' ', $text);
+        $text = preg_replace('/\s+/u', ' ', $text);
+
+        return trim((string) $text) !== '';
+    }
+
     public static function format_duration_months(string $months_str, string $textdomain = 'flacso-oferta-academica'): string {
         $raw_value = trim(str_replace(',', '.', $months_str));
         if ($raw_value === '' || !is_numeric($raw_value)) {
@@ -340,7 +366,7 @@ class Oferta_Renderer {
                             ],
                         ],
                     ];
-                    $query = new WP_Query($query_args);
+                    $query = new WP_Query(self::exclude_password_protected_from_query_args($query_args));
                     ?>
                     <div class="flacso-oferta-section" id="<?php echo esc_attr($term->slug); ?>">
                         <div class="d-flex justify-content-between align-items-center mb-3 gap-3">
@@ -720,7 +746,7 @@ class Oferta_Renderer {
             if ('duracion_html' === $meta_key) {
                 $html = self::normalize_duration_html($html, $duration_months);
             }
-            if ($html === '') {
+            if (!self::has_visible_html_content($html)) {
                 continue;
             }
             $sections[$label] = $html;
@@ -976,6 +1002,10 @@ class Oferta_Renderer {
     }
 
     private static function render_program_card(int $post_id, $term): bool {
+        if (self::is_password_protected_program($post_id)) {
+            return false;
+        }
+
         $title     = get_the_title($post_id);
         $excerpt   = wp_trim_words(get_the_excerpt($post_id), 22);
         $permalink = get_permalink($post_id);
@@ -1104,7 +1134,7 @@ class Oferta_Renderer {
             ],
         ];
 
-        $query = new WP_Query($query_args);
+        $query = new WP_Query(self::exclude_password_protected_from_query_args($query_args));
 
         ob_start();
         ?>
@@ -1230,6 +1260,10 @@ class Oferta_Renderer {
      * Renderizar card de programa
      */
     private static function render_card($post_id): void {
+        if (self::is_password_protected_program($post_id)) {
+            return;
+        }
+
         $title = get_the_title($post_id);
         $excerpt = get_the_excerpt($post_id);
         $permalink = get_permalink($post_id);
@@ -1254,6 +1288,10 @@ class Oferta_Renderer {
     }
 
     private static function render_card_bootstrap($post_id, $categoria = '', $index = 0): void {
+        if (self::is_password_protected_program($post_id)) {
+            return;
+        }
+
         $title = get_the_title($post_id);
         $excerpt = get_the_excerpt($post_id);
         $permalink = get_permalink($post_id);
