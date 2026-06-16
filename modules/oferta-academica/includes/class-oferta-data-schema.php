@@ -601,7 +601,7 @@ class Oferta_Data_Schema {
                 continue;
             }
             $label = isset($item[$name_key]) ? sanitize_text_field($item[$name_key]) : '';
-            $descripcion = isset($item['descripcion']) ? sanitize_textarea_field($item['descripcion']) : '';
+            $descripcion = isset($item['descripcion']) ? self::sanitize_html($item['descripcion']) : '';
             $importancia = isset($item['importancia']) ? sanitize_text_field($item['importancia']) : '3';
             $docentes = [];
             if (isset($item['docentes']) && is_array($item['docentes'])) {

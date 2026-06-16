@@ -352,9 +352,9 @@ class Oferta_Data_MetaBox {
                 $ids = (string) array_pop($segments);
             }
 
-            $descripcion = trim(implode(' | ', array_filter($segments, static function ($segment) {
+            $descripcion = Oferta_Data_Schema::sanitize_html(trim(implode(' | ', array_filter($segments, static function ($segment) {
                 return $segment !== '';
-            })));
+            }))));
 
             $docentes = [];
             if ($ids !== '') {

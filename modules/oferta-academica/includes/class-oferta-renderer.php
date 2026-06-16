@@ -702,7 +702,7 @@ class Oferta_Renderer {
                 <h3 class="flacso-oa-coordinacion-group__title"><?php echo esc_html($group['label']); ?></h3>
                 <?php if (!empty($group['description'])) : ?>
                     <div class="flacso-oa-coordinacion-group__description">
-                        <?php echo wpautop(esc_html($group['description'])); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                        <?php echo wpautop(wp_kses_post($group['description'])); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
                     </div>
                 <?php endif; ?>
                 <div class="flacso-oa-programa-docentes-grid">
@@ -803,7 +803,7 @@ class Oferta_Renderer {
             }
 
             $label = isset($group[$label_key]) ? trim(sanitize_text_field((string) $group[$label_key])) : '';
-            $description = isset($group['descripcion']) ? trim(sanitize_textarea_field((string) $group['descripcion'])) : '';
+            $description = isset($group['descripcion']) ? trim((string) $group['descripcion']) : '';
             $docentes = isset($group['docentes']) && is_array($group['docentes']) ? $group['docentes'] : [];
             $docente_ids = self::normalize_docente_ids($docentes);
             if (empty($docente_ids)) {

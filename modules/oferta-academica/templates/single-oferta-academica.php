@@ -739,7 +739,7 @@ get_header();
 
                                             <?php if (!empty($grupo['descripcion'])) : ?>
                                                 <div class="flacso-oa-team-subgroup__description">
-                                                    <?php echo wpautop(esc_html($grupo['descripcion'])); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                                                    <?php echo wpautop(wp_kses_post($grupo['descripcion'])); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
                                                 </div>
                                             <?php endif; ?>
 
@@ -1586,7 +1586,6 @@ get_header();
 
 .flacso-oa-team-subgroup__description {
     margin: calc(clamp(18px, 2.6vw, 28px) * -0.55) 0 clamp(18px, 2vw, 24px) 56px;
-    max-width: 70ch;
     color: #44506b;
     font-size: 0.98rem;
     line-height: 1.72;
