@@ -1260,6 +1260,21 @@ body.flacso-oa-consulta-open {
     font-weight: 700;
 }
 
+.flacso-oa-coordinacion-group__description {
+    margin: -.05rem 0 .25rem;
+    max-width: 68ch;
+    color: #475569;
+    line-height: 1.65;
+}
+
+.flacso-oa-coordinacion-group__description p {
+    margin: 0;
+}
+
+.flacso-oa-coordinacion-group__description p + p {
+    margin-top: .75rem;
+}
+
 @media (max-width: 991px) {
     .flacso-oa-programa__hero {
         grid-template-columns: 1fr;

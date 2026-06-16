@@ -148,7 +148,7 @@ class Oferta_Data_Admin {
                 <li><code>proximo_inicio</code> tambien puede enviarse como objeto: <code>{"valor":"2026-04","precision":"month"}</code></li>
                 <li><?php esc_html_e('Secciones HTML como <code>modalidad_html</code>, <code>objetivos_html</code>, etc.', 'flacso-oferta-academica'); ?></li>
                 <li><code>menciones</code>, <code>orientaciones</code> (arrays de strings)</li>
-                <li><code>coordinacion_academica</code>, <code>equipos</code> (arrays de objetos con <code>rol</code>/<code>nombre</code> y <code>docentes</code> como lista de IDs)</li>
+                <li><code>coordinacion_academica</code>, <code>equipos</code> (arrays de objetos con <code>rol</code>/<code>nombre</code>, <code>descripcion</code> opcional y <code>docentes</code> como lista de IDs)</li>
             </ul>
 
             <h2><?php esc_html_e('Autenticacion con Password de aplicacion', 'flacso-oferta-academica'); ?></h2>

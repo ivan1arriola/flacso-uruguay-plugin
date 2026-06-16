@@ -190,7 +190,7 @@ class Oferta_Data_MetaBox {
             <?php endforeach; ?>
 
             <h4><?php esc_html_e('Personas y equipos', 'flacso-oferta-academica'); ?></h4>
-            <p class="description"><?php esc_html_e('Escribe cada línea usando "etiqueta|doc_id1,doc_id2".', 'flacso-oferta-academica'); ?></p>
+            <p class="description"><?php esc_html_e('Escribe cada línea usando "etiqueta|descripcion opcional|doc_id1,doc_id2". El editor externo sigue siendo la mejor opción para textos largos.', 'flacso-oferta-academica'); ?></p>
             <?php foreach (self::PERSONNEL_GROUPS as $key => $label) : ?>
                 <p><strong><?php echo esc_html($label); ?></strong></p>
                 <textarea name="oferta_data[<?php echo esc_attr($key); ?>]" rows="4" class="large-text"><?php echo esc_textarea($values[$key]); ?></textarea>
@@ -341,10 +341,21 @@ class Oferta_Data_MetaBox {
             if ($line === '') {
                 continue;
             }
-            [$label, $ids] = array_pad(array_map('trim', explode('|', $line, 2)), 2, '');
+            $segments = array_map('trim', explode('|', $line));
+            $label = array_shift($segments) ?: '';
             if ($label === '') {
                 continue;
             }
+
+            $ids = '';
+            if (!empty($segments) && self::looks_like_docente_list((string) end($segments))) {
+                $ids = (string) array_pop($segments);
+            }
+
+            $descripcion = trim(implode(' | ', array_filter($segments, static function ($segment) {
+                return $segment !== '';
+            })));
+
             $docentes = [];
             if ($ids !== '') {
                 $parts = preg_split('/[,\s]+/', $ids);
@@ -355,9 +366,13 @@ class Oferta_Data_MetaBox {
                     }
                 }
             }
-            $rows[] = [$label_key => $label, 'docentes' => $docentes];
+            $rows[] = [$label_key => $label, 'descripcion' => $descripcion, 'docentes' => $docentes];
         }
         return $rows;
+    }
+
+    private static function looks_like_docente_list(string $value): bool {
+        return (bool) preg_match('/^\d+(?:\s*,\s*\d+)*$/', trim($value));
     }
 
     private static function get_saved_values(int $post_id): array {
@@ -400,9 +415,19 @@ class Oferta_Data_MetaBox {
             if (empty($item[$label === 'Rol' ? 'rol' : 'nombre'])) {
                 continue;
             }
+            $descripcion = isset($item['descripcion'])
+                ? preg_replace('/\s*\r?\n\s*/', ' / ', (string) $item['descripcion'])
+                : '';
             $docentes = array_map('intval', $item['docentes'] ?? []);
             $docentes = array_filter($docentes, fn($id) => $id > 0);
-            $lines[] = $item[$label === 'Rol' ? 'rol' : 'nombre'] . (empty($docentes) ? '' : ' | ' . implode(', ', $docentes));
+            $parts = [$item[$label === 'Rol' ? 'rol' : 'nombre']];
+            if (!empty($descripcion)) {
+                $parts[] = trim((string) $descripcion);
+            }
+            if (!empty($docentes)) {
+                $parts[] = implode(', ', $docentes);
+            }
+            $lines[] = implode(' | ', $parts);
         }
         return implode("\n", $lines);
     }

@@ -694,6 +694,7 @@ get_header();
                             if (!empty($coord['docentes']) && is_array($coord['docentes'])) {
                                 $merged_equipos[] = [
                                     'nombre' => !empty($coord['rol']) ? $coord['rol'] : __('Coordinación académica', 'flacso-uruguay'),
+                                    'descripcion' => $coord['descripcion'] ?? '',
                                     'docentes' => $coord['docentes'],
                                     'importancia' => '1' // Por defecto Nivel 1
                                 ];
@@ -706,6 +707,7 @@ get_header();
                             if (!empty($eq['docentes']) && is_array($eq['docentes'])) {
                                 $merged_equipos[] = [
                                     'nombre' => $eq['nombre'] ?? '',
+                                    'descripcion' => $eq['descripcion'] ?? '',
                                     'docentes' => $eq['docentes'],
                                     'importancia' => strval($eq['importancia'] ?? '3')
                                 ];
@@ -733,6 +735,12 @@ get_header();
                                                 <h4 class="flacso-oa-team-subgroup__title">
                                                     <?php echo esc_html($grupo['nombre']); ?>
                                                 </h4>
+                                            <?php endif; ?>
+
+                                            <?php if (!empty($grupo['descripcion'])) : ?>
+                                                <div class="flacso-oa-team-subgroup__description">
+                                                    <?php echo wpautop(esc_html($grupo['descripcion'])); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                                                </div>
                                             <?php endif; ?>
 
                                             <div class="flacso-oa-docentes-grid flacso-oa-docentes-grid--nivel-<?php echo esc_attr($nivel); ?>">
@@ -1576,6 +1584,22 @@ get_header();
     flex: 0 0 auto;
 }
 
+.flacso-oa-team-subgroup__description {
+    margin: calc(clamp(18px, 2.6vw, 28px) * -0.55) 0 clamp(18px, 2vw, 24px) 56px;
+    max-width: 70ch;
+    color: #44506b;
+    font-size: 0.98rem;
+    line-height: 1.72;
+}
+
+.flacso-oa-team-subgroup__description p {
+    margin: 0;
+}
+
+.flacso-oa-team-subgroup__description p + p {
+    margin-top: 0.85rem;
+}
+
 .flacso-oa-docentes-grid {
     display: grid;
     gap: clamp(18px, 2.4vw, 30px);
@@ -1913,6 +1937,11 @@ get_header();
         align-items: flex-start;
         flex-direction: column;
         gap: 10px;
+    }
+
+    .flacso-oa-team-subgroup__description {
+        margin-left: 0;
+        font-size: 0.95rem;
     }
 
     .flacso-oa-person-card--nivel-1 {

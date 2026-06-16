@@ -700,6 +700,11 @@ class Oferta_Renderer {
             ?>
             <article class="flacso-oa-coordinacion-group">
                 <h3 class="flacso-oa-coordinacion-group__title"><?php echo esc_html($group['label']); ?></h3>
+                <?php if (!empty($group['description'])) : ?>
+                    <div class="flacso-oa-coordinacion-group__description">
+                        <?php echo wpautop(esc_html($group['description'])); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                    </div>
+                <?php endif; ?>
                 <div class="flacso-oa-programa-docentes-grid">
                     <?php echo $docentes_grid['html']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
                 </div>
@@ -779,7 +784,7 @@ class Oferta_Renderer {
     /**
      * Obtiene grupos de docentes para una meta de oferta, conservando la etiqueta de rol/nombre.
      *
-     * @return array<int, array{label:string, docentes:array<int, int>}>
+     * @return array<int, array{label:string, description:string, docentes:array<int, int>}>
      */
     private static function collect_docente_groups_by_role(int $oferta_id, string $meta_key, string $label_key): array {
         $groups = get_post_meta($oferta_id, $meta_key, true);
@@ -798,6 +803,7 @@ class Oferta_Renderer {
             }
 
             $label = isset($group[$label_key]) ? trim(sanitize_text_field((string) $group[$label_key])) : '';
+            $description = isset($group['descripcion']) ? trim(sanitize_textarea_field((string) $group['descripcion'])) : '';
             $docentes = isset($group['docentes']) && is_array($group['docentes']) ? $group['docentes'] : [];
             $docente_ids = self::normalize_docente_ids($docentes);
             if (empty($docente_ids)) {
@@ -806,6 +812,7 @@ class Oferta_Renderer {
 
             $normalized[] = [
                 'label' => $label !== '' ? $label : $default_label,
+                'description' => $description,
                 'docentes' => $docente_ids,
             ];
         }

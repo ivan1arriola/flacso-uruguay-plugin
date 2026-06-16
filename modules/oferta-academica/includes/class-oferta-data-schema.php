@@ -283,6 +283,9 @@ class Oferta_Data_Schema {
                                 $label => [
                                     'type' => 'string',
                                 ],
+                                'descripcion' => [
+                                    'type' => 'string',
+                                ],
                                 'importancia' => [
                                     'type' => 'string',
                                 ],
@@ -598,6 +601,7 @@ class Oferta_Data_Schema {
                 continue;
             }
             $label = isset($item[$name_key]) ? sanitize_text_field($item[$name_key]) : '';
+            $descripcion = isset($item['descripcion']) ? sanitize_textarea_field($item['descripcion']) : '';
             $importancia = isset($item['importancia']) ? sanitize_text_field($item['importancia']) : '3';
             $docentes = [];
             if (isset($item['docentes']) && is_array($item['docentes'])) {
@@ -616,8 +620,10 @@ class Oferta_Data_Schema {
                     }
                 }
             }
-            // Remove array_unique since we may have arrays
-            $out[] = [$name_key => $label, 'importancia' => $importancia, 'docentes' => $docentes];
+            if ($label === '' && $descripcion === '' && empty($docentes)) {
+                continue;
+            }
+            $out[] = [$name_key => $label, 'descripcion' => $descripcion, 'importancia' => $importancia, 'docentes' => $docentes];
         }
         return $out;
     }
