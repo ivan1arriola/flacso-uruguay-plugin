@@ -197,8 +197,19 @@ if (!function_exists('flacso_oferta_academica_shortcode')) {
                     opacity: 0;
                     font-size: 1.25rem;
                     margin-top: 1.1rem;
-                    margin-bottom: 2rem;
+                    margin-bottom: 1rem;
                     animation: fadeUp 0.8s ease forwards 0.45s;
+                }
+
+                .<?php echo esc_html($wrapper_class); ?> .hero-description {
+                    opacity: 0;
+                    font-size: 1.05rem;
+                    max-width: 860px;
+                    margin: 0 auto 2rem;
+                    line-height: 1.65;
+                    font-weight: 400;
+                    color: rgba(255, 255, 255, 0.9);
+                    animation: fadeUp 0.8s ease forwards 0.6s;
                 }
 
                 @keyframes fadeUp {
@@ -402,6 +413,9 @@ if (!function_exists('flacso_oferta_academica_shortcode')) {
                 <div class="container">
                     <h1 class="display-3"><?php esc_html_e('Oferta Académica', 'flacso-main-page'); ?></h1>
                     <p class="hero-subtitle"><?php esc_html_e('Formación con impacto para transformar la región', 'flacso-main-page'); ?></p>
+                    <p class="hero-description">
+                        <?php esc_html_e('FLACSO Uruguay brinda formaciones en diversos niveles: Cursos, Diplomas, Diplomados, Especializaciones y Maestrías. Todas las propuestas están pensadas desde el abordaje teórico y práctico de los problemas de las ciencias sociales. Todas las propuestas académicas poseen flexibilidad en la modalidad de enseñanza y seguimiento de profesionales especializados en los temas abordados.', 'flacso-main-page'); ?>
+                    </p>
 
                     <?php if ($mostrar_filtros) : ?>
                         <div class="nav-buttons">
