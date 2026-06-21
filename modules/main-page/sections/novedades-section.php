@@ -417,9 +417,7 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
                     box-shadow 520ms cubic-bezier(0.22, 1, 0.36, 1);
                 will-change: transform, opacity, filter;
                 backface-visibility: hidden;
-            }
-
-            .flacso-novedades-3d__image-link {
+            }            .flacso-novedades-3d__image-link {
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -435,6 +433,7 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
                 -webkit-user-drag: none;
                 user-select: none;
                 touch-action: pan-y;
+                padding: 1rem; /* Relleno alrededor de la imagen */
             }
 
             .flacso-novedades-3d__image {
@@ -443,9 +442,11 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
                 object-fit: contain;
                 object-position: center;
                 display: block;
-                transition: opacity 260ms ease;
-                padding: 0.4rem;
-                background: #f8fbff;
+                transition: opacity 260ms ease, transform 300ms ease;
+                background: #ffffff; /* Relleno de la imagen */
+                border-radius: 12px; /* Bordes curvos */
+                padding: 0.5rem; /* Margen interno para que no toque los bordes */
+                box-shadow: 0 4px 12px rgba(15, 26, 45, 0.08); /* Sombra suave */
                 -webkit-user-drag: none;
                 user-select: none;
                 pointer-events: none;
@@ -1485,7 +1486,8 @@ if (!function_exists('flacso_section_novedades_responsivas_render')) {
                 min-height: 0;
                 aspect-ratio: 1 / 1;
                 overflow: hidden;
-                background: #edf3fb;
+                background: linear-gradient(160deg, #edf3fb 0%, #dfe9f6 100%);
+                padding: 1rem; /* Relleno alrededor de la imagen */
             }
 
             .novedades-grid .card-img-link {
@@ -1497,10 +1499,14 @@ if (!function_exists('flacso_section_novedades_responsivas_render')) {
             .novedades-grid .card-img-container img {
                 width: 100%;
                 height: 100%;
-                object-fit: cover;
+                object-fit: contain;
                 object-position: center;
                 display: block;
                 transition: transform 0.35s ease;
+                background: #ffffff; /* Relleno de la imagen */
+                border-radius: 12px; /* Bordes curvos */
+                padding: 0.5rem; /* Margen interno */
+                box-shadow: 0 4px 12px rgba(15, 26, 45, 0.08); /* Sombra suave */
             }
 
             .novedades-grid .card:hover .card-img-container img {
