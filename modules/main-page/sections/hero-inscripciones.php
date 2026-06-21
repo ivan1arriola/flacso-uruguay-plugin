@@ -245,7 +245,7 @@ if (!function_exists('flacso_section_hero_render')) {
             margin-top: clamp(1.1rem, 2.6vw, 2rem);
             display: flex;
             flex-wrap: wrap;
-            gap: 0.66rem;
+            gap: 1.25rem; /* Separación horizontal aumentada */
             align-items: center;
         }
 
