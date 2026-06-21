@@ -425,7 +425,7 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
                 height: auto;
                 aspect-ratio: 1 / 1;
                 flex: 0 0 auto;
-                background: linear-gradient(160deg, #edf3fb 0%, #dfe9f6 100%);
+                background: #ffffff; /* Fondo integrado con la tarjeta */
                 overflow: hidden;
                 position: relative;
                 z-index: 1;
@@ -433,7 +433,8 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
                 -webkit-user-drag: none;
                 user-select: none;
                 touch-action: pan-y;
-                padding: 1rem; /* Relleno alrededor de la imagen */
+                padding: 0; /* Sin relleno extra */
+                border-bottom: 1px solid rgba(0,0,0,0.04); /* Sutil divisor con el texto */
             }
 
             .flacso-novedades-3d__image {
@@ -443,10 +444,10 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
                 object-position: center;
                 display: block;
                 transition: opacity 260ms ease, transform 300ms ease;
-                background: #ffffff; /* Relleno de la imagen */
-                border-radius: 12px; /* Bordes curvos */
-                padding: 0.5rem; /* Margen interno para que no toque los bordes */
-                box-shadow: 0 4px 12px rgba(15, 26, 45, 0.08); /* Sombra suave */
+                background: transparent;
+                border-radius: 0;
+                padding: 0;
+                box-shadow: none; /* Sin sombras cortadas */
                 -webkit-user-drag: none;
                 user-select: none;
                 pointer-events: none;
@@ -1486,8 +1487,9 @@ if (!function_exists('flacso_section_novedades_responsivas_render')) {
                 min-height: 0;
                 aspect-ratio: 1 / 1;
                 overflow: hidden;
-                background: linear-gradient(160deg, #edf3fb 0%, #dfe9f6 100%);
-                padding: 1rem; /* Relleno alrededor de la imagen */
+                background: #ffffff; /* Fondo integrado */
+                padding: 0; /* Sin relleno extra */
+                border-bottom: 1px solid rgba(0,0,0,0.04);
             }
 
             .novedades-grid .card-img-link {
@@ -1503,10 +1505,10 @@ if (!function_exists('flacso_section_novedades_responsivas_render')) {
                 object-position: center;
                 display: block;
                 transition: transform 0.35s ease;
-                background: #ffffff; /* Relleno de la imagen */
-                border-radius: 12px; /* Bordes curvos */
-                padding: 0.5rem; /* Margen interno */
-                box-shadow: 0 4px 12px rgba(15, 26, 45, 0.08); /* Sombra suave */
+                background: transparent;
+                border-radius: 0;
+                padding: 0;
+                box-shadow: none; /* Sin sombras cortadas */
             }
 
             .novedades-grid .card:hover .card-img-container img {
