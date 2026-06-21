@@ -348,9 +348,11 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
                 --card-height-mobile: clamp(24rem, 66dvh, 28rem);
 
                 padding-top: clamp(1.5rem, 3vw, 2.5rem);
-                padding-bottom: clamp(0.5rem, 1.5vw, 1rem);
+                padding-bottom: clamp(1.5rem, 3vw, 3rem); /* Aumentado ligeramente para dar aire a la sombra */
                 background: transparent;
                 font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                overflow-x: hidden;
+                overflow-y: visible;
             }
 
             .flacso-novedades-3d .text-center {
@@ -379,10 +381,10 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
 
             .flacso-novedades-3d__viewport {
                 position: relative;
-                min-height: calc(var(--card-height-desktop) + 1rem);
+                min-height: calc(var(--card-height-desktop) + 1.5rem);
                 perspective: 1800px;
                 transform-style: preserve-3d;
-                overflow: hidden;
+                overflow: visible; /* Evita que se corte la sombra */
                 touch-action: pan-y;
                 user-select: none;
             }
