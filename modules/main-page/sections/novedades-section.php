@@ -1591,11 +1591,28 @@ if (!function_exists('flacso_section_novedades_responsivas_render')) {
 
             @media (max-width: 767.98px) {
                 .novedades-grid {
+                    display: flex;
+                    flex-wrap: nowrap;
+                    overflow-x: auto;
+                    scroll-snap-type: x mandatory;
                     gap: 0.85rem;
+                    padding-bottom: 1rem;
+                    -webkit-overflow-scrolling: touch;
+                    scrollbar-width: none; /* Hide scrollbar for clean UI */
+                }
+
+                .novedades-grid::-webkit-scrollbar {
+                    display: none;
+                }
+
+                .novedades-grid > .novedad-item {
+                    flex: 0 0 85%;
+                    scroll-snap-align: center;
                 }
 
                 .novedades-grid .card {
                     border-radius: 16px;
+                    height: 100%;
                 }
 
                 .novedades-grid .card-body {
