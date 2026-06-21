@@ -1606,11 +1606,21 @@ if (!function_exists('flacso_section_novedades_responsivas_render')) {
                     gap: 0.85rem;
                     padding-bottom: 1rem;
                     -webkit-overflow-scrolling: touch;
-                    scrollbar-width: none; /* Hide scrollbar for clean UI */
+                    scrollbar-width: thin;
+                    scrollbar-color: rgba(19, 41, 75, 0.4) transparent;
                 }
 
                 .novedades-grid::-webkit-scrollbar {
-                    display: none;
+                    height: 4px;
+                }
+                .novedades-grid::-webkit-scrollbar-track {
+                    background: rgba(0,0,0,0.04);
+                    border-radius: 4px;
+                    margin: 0 2rem;
+                }
+                .novedades-grid::-webkit-scrollbar-thumb {
+                    background: rgba(19, 41, 75, 0.4);
+                    border-radius: 4px;
                 }
 
                 .novedades-grid > .novedad-item {

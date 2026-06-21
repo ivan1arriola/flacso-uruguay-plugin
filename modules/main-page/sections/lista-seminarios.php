@@ -1126,11 +1126,21 @@ if (!function_exists('flacso_section_seminarios_proximos_render')) {
                     scroll-snap-type: x mandatory;
                     padding-bottom: 1rem;
                     -webkit-overflow-scrolling: touch;
-                    scrollbar-width: none;
+                    scrollbar-width: thin;
+                    scrollbar-color: rgba(19, 41, 75, 0.4) transparent;
                 }
 
                 .flacso-seminarios-proximos .row::-webkit-scrollbar {
-                    display: none;
+                    height: 4px;
+                }
+                .flacso-seminarios-proximos .row::-webkit-scrollbar-track {
+                    background: rgba(0,0,0,0.04);
+                    border-radius: 4px;
+                    margin: 0 2rem;
+                }
+                .flacso-seminarios-proximos .row::-webkit-scrollbar-thumb {
+                    background: rgba(19, 41, 75, 0.4);
+                    border-radius: 4px;
                 }
 
                 .flacso-seminarios-proximos .col {

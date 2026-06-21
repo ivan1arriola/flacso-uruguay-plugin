@@ -1588,11 +1588,22 @@
         gap: 0.55rem;
         scroll-snap-type: x mandatory;
         -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(245, 165, 36, 0.6) transparent; /* Color acorde al diseño amarillo/naranja de FLACSO */
+        padding-bottom: 0.8rem;
     }
 
     .flc-eventos-react__list::-webkit-scrollbar {
-        display: none;
+        height: 4px;
+    }
+    .flc-eventos-react__list::-webkit-scrollbar-track {
+        background: rgba(0,0,0,0.04);
+        border-radius: 4px;
+        margin: 0 2rem;
+    }
+    .flc-eventos-react__list::-webkit-scrollbar-thumb {
+        background: rgba(245, 165, 36, 0.6);
+        border-radius: 4px;
     }
 
     .flc-eventos-react__list-item {
