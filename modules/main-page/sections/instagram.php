@@ -52,13 +52,13 @@ function flacso_section_instagram_render() {
                     </div>
                 </div>
                 <div class="flacso-instagram-embed">
-                    <iframe
-                        src="<?php echo esc_url($embed_url); ?>"
-                        loading="lazy"
-                        title="<?php esc_attr_e('Perfil de Instagram de FLACSO Uruguay', 'flacso-main-page'); ?>"
-                        referrerpolicy="strict-origin-when-cross-origin"
-                        allowtransparency="true">
-                    </iframe>
+                    <a href="<?php echo esc_url($profile_url); ?>" target="_blank" rel="noopener noreferrer" class="flacso-instagram-static-card">
+                        <div class="flacso-ig-static-icon">
+                            <i class="bi bi-instagram"></i>
+                        </div>
+                        <h3>@flacsouruguay</h3>
+                        <span class="flacso-ig-static-btn">Ver perfil &rarr;</span>
+                    </a>
                 </div>
             </div>
         </div>
