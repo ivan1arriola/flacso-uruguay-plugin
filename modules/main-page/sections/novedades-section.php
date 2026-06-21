@@ -37,7 +37,7 @@ if (!function_exists('flacso_section_novedades_render')) {
                 background: transparent;
                 color: var(--global-palette4);
                 border-radius: 0;
-                padding: clamp(0.8rem, 1.8vw, 1.2rem) 0;
+                padding: clamp(0.5rem, 1.5vw, 1rem) 0 clamp(1.5rem, 2.5vw, 2.5rem);
                 margin: 0; /* secciones pegadas */
                 position: relative;
                 overflow: visible;
@@ -50,11 +50,12 @@ if (!function_exists('flacso_section_novedades_render')) {
             .flacso-novedades-header h2 {
                 color: var(--global-palette1);
                 font-family: var(--global-heading-font-family);
+                font-size: clamp(1.5rem, 2vw, 1.8rem); /* Slightly smaller than main title */
             }
 
             @media (max-width: 768px) {
                 .flacso-novedades-section {
-                    padding: 0.7rem 0;
+                    padding: 0.5rem 0 1.5rem;
                 }
             }
         </style>
@@ -346,18 +347,10 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
                 --card-height-mobile: clamp(24rem, 66vh, 28rem);
                 --card-height-mobile: clamp(24rem, 66dvh, 28rem);
 
-                padding-block: clamp(1rem, 2vw, 1.75rem);
+                padding-top: clamp(1.5rem, 3vw, 2.5rem);
+                padding-bottom: clamp(0.5rem, 1.5vw, 1rem);
                 background: transparent;
                 font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            }
-
-            .flacso-main-page .flacso-home-block--novedades_destacadas {
-                padding-top: clamp(1.25rem, 2.4vw, 2rem);
-                padding-bottom: 0;
-            }
-
-            .flacso-main-page .flacso-home-block--novedades {
-                padding-top: 0;
             }
 
             .flacso-novedades-3d .text-center {
@@ -562,9 +555,8 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
             }
 
             @media (max-width: 767.98px) {
-                .flacso-main-page .flacso-home-block--novedades_destacadas {
-                    padding-top: 1rem;
-                    padding-bottom: 0;
+                .flacso-novedades-3d {
+                    padding-top: 1.5rem;
                 }
 
                 .flacso-novedades-3d__viewport {

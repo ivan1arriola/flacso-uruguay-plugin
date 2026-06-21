@@ -107,6 +107,18 @@ if (!function_exists('flacso_homepage_builder_render')) {
             }
         }
 
+        // --- COMBINAR NOVEDADES DESTACADAS Y NOVEDADES ---
+        $destacadas_idx = array_search('novedades_destacadas', array_column($ordered_blocks, 'key'));
+        $novedades_idx = array_search('novedades', array_column($ordered_blocks, 'key'));
+        
+        if ($destacadas_idx !== false && $novedades_idx !== false) {
+            // Append novedades content to novedades_destacadas
+            $ordered_blocks[$destacadas_idx]['content'] .= $ordered_blocks[$novedades_idx]['content'];
+            // Remove the stand-alone novedades block
+            array_splice($ordered_blocks, $novedades_idx, 1);
+        }
+        // -------------------------------------------------
+
         if (!$use_react) {
             return flacso_homepage_builder_render_markup($ordered_blocks);
         }
