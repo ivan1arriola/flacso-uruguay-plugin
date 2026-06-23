@@ -1354,6 +1354,45 @@ body.flacso-oa-consulta-open {
     gap: 1rem;
 }
 
+.flacso-oa-single-hero .flacso-inscripciones-banner--has-ribbon .flacso-inscripciones-banner__overlay {
+    padding-top: clamp(4rem, 5vw, 4.8rem);
+}
+
+.flacso-oa-single-hero .flacso-inscripciones-banner__ribbon {
+    position: absolute;
+    top: 0;
+    right: clamp(1rem, 3vw, 2rem);
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-width: min(100%, 220px);
+    padding: 0.9rem 1.1rem 1.2rem;
+    background: linear-gradient(135deg, #ffe76a 0%, #ffd24d 48%, #f5b800 100%);
+    color: #102b56;
+    font-size: 0.88rem;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    line-height: 1.15;
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 16px), 0 100%);
+    text-shadow: none;
+}
+
+.flacso-oa-single-hero .flacso-inscripciones-banner__ribbon::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    border-top: 12px solid rgba(16, 43, 86, 0.28);
+    border-left: 12px solid transparent;
+}
+
+.flacso-oa-single-hero .flacso-inscripciones-banner__ribbon i {
+    font-size: 0.95rem;
+    flex: 0 0 auto;
+}
+
 .flacso-oa-single-hero .flacso-inscripciones-banner__top {
     display: flex;
     justify-content: space-between;
@@ -1375,6 +1414,36 @@ body.flacso-oa-consulta-open {
     max-width: 42%;
     height: auto;
     flex: 0 0 auto;
+}
+
+.flacso-oa-single-hero .flacso-inscripciones-banner__highlights {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.flacso-oa-single-hero .flacso-inscripciones-banner__highlight {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-height: 2.7rem;
+    padding: 0.75rem 1rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+    font-size: 0.94rem;
+    font-weight: 850;
+    line-height: 1.15;
+    text-shadow: none;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+}
+
+.flacso-oa-single-hero .flacso-inscripciones-banner__highlight--accent {
+    background: linear-gradient(135deg, rgba(248, 178, 29, 0.98), rgba(255, 213, 79, 0.95));
+    border-color: rgba(255, 239, 190, 0.45);
+    color: #102b56;
 }
 
 .flacso-oa-single-hero .flacso-inscripciones-banner__bottom {
@@ -1494,6 +1563,10 @@ body.flacso-oa-consulta-open {
         gap: 0.85rem;
     }
 
+    .flacso-oa-single-hero .flacso-inscripciones-banner--has-ribbon .flacso-inscripciones-banner__overlay {
+        padding-top: 4.6rem;
+    }
+
     .flacso-oa-single-hero .flacso-inscripciones-banner__tag {
         max-width: 62%;
         font-size: 1.04rem;
@@ -1502,6 +1575,14 @@ body.flacso-oa-consulta-open {
     .flacso-oa-single-hero .flacso-inscripciones-banner__logo {
         width: 124px;
         max-width: 36%;
+    }
+
+    .flacso-oa-single-hero .flacso-inscripciones-banner__ribbon {
+        right: 1rem;
+        min-width: 0;
+        max-width: calc(100% - 2rem);
+        padding: 0.82rem 1rem 1.05rem;
+        font-size: 0.8rem;
     }
 
     .flacso-oa-single-hero .flacso-inscripciones-banner__bottom {
@@ -1513,6 +1594,10 @@ body.flacso-oa-consulta-open {
         max-width: 20rem;
         font-size: 1.02rem;
         text-align: center;
+    }
+
+    .flacso-oa-single-hero .flacso-inscripciones-banner__highlight {
+        font-size: 0.88rem;
     }
 
     .flacso-oa-single-intro {
@@ -1539,6 +1624,10 @@ body.flacso-oa-consulta-open {
         gap: 0.65rem;
     }
 
+    .flacso-oa-single-hero .flacso-inscripciones-banner--has-ribbon .flacso-inscripciones-banner__overlay {
+        padding-top: 4.25rem;
+    }
+
     .flacso-oa-single-hero .flacso-inscripciones-banner__tag {
         max-width: 58%;
         font-size: 0.98rem;
@@ -1552,6 +1641,18 @@ body.flacso-oa-consulta-open {
         max-width: 16rem;
         font-size: 0.94rem;
         line-height: 1.24;
+    }
+
+    .flacso-oa-single-hero .flacso-inscripciones-banner__highlights {
+        gap: 0.55rem;
+    }
+
+    .flacso-oa-single-hero .flacso-inscripciones-banner__highlight {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+        font-size: 0.84rem;
+        padding: 0.7rem 0.9rem;
     }
 }
 

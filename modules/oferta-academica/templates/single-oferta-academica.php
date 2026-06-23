@@ -117,6 +117,13 @@ $programa_meta = array_filter([
     !empty($data['duracion_meses']) ? sprintf(__('Duración: %s', 'flacso-uruguay'), $format_duracion($data['duracion_meses'])) : '',
 ]);
 
+$hero_badge_text = trim((string) ($data['carta_hero_etiqueta'] ?? get_post_meta($post_id, 'carta_hero_etiqueta', true)));
+$instancias_presenciales_meta = $data['carta_instancias_presenciales'] ?? get_post_meta($post_id, 'carta_instancias_presenciales', true);
+$mostrar_instancias_presenciales = $instancias_presenciales_meta === true
+    || $instancias_presenciales_meta === 1
+    || $instancias_presenciales_meta === '1'
+    || $instancias_presenciales_meta === 'true';
+
 $render_info_card = static function ($title, $body, $extra_class = '') use ($has_visible_html) {
     if (!$has_visible_html($body)) {
         return;
@@ -385,8 +392,14 @@ get_header();
                     }
                     ?>
 
-                    <div class="flacso-oa-container" style="padding-top: clamp(24px, 4vw, 48px); padding-bottom: clamp(16px, 3vw, 32px);">
-                        <section class="flacso-inscripciones-banner" style="margin-bottom: 0; min-height: clamp(400px, 40vw, 600px); position: relative; overflow: hidden; display: flex; flex-direction: column; border-radius: clamp(16px, 3vw, 28px);">
+                    <div class="flacso-oa-container flacso-oa-single-hero" style="padding-top: clamp(24px, 4vw, 48px); padding-bottom: clamp(16px, 3vw, 32px);">
+                        <section class="flacso-inscripciones-banner<?php echo $hero_badge_text !== '' ? ' flacso-inscripciones-banner--has-ribbon' : ''; ?>" style="margin-bottom: 0; min-height: clamp(400px, 40vw, 600px); position: relative; overflow: hidden; display: flex; flex-direction: column; border-radius: clamp(16px, 3vw, 28px);">
+                            <?php if ($hero_badge_text !== '') : ?>
+                                <div class="flacso-inscripciones-banner__ribbon">
+                                    <i class="bi bi-bookmark-star-fill" aria-hidden="true"></i>
+                                    <span><?php echo esc_html($hero_badge_text); ?></span>
+                                </div>
+                            <?php endif; ?>
                             <img
                                 class="flacso-inscripciones-banner__img"
                                 src="<?php echo esc_url($banner_featured_url); ?>"
@@ -426,6 +439,15 @@ get_header();
                                                     <?php echo esc_html($meta_item); ?>
                                                 </span>
                                             <?php endforeach; ?>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php if ($mostrar_instancias_presenciales) : ?>
+                                        <div class="flacso-inscripciones-banner__highlights">
+                                            <span class="flacso-inscripciones-banner__highlight flacso-inscripciones-banner__highlight--accent">
+                                                <i class="bi bi-geo-alt-fill" aria-hidden="true"></i>
+                                                <?php esc_html_e('Con instancias presenciales', 'flacso-uruguay'); ?>
+                                            </span>
                                         </div>
                                     <?php endif; ?>
                                 </div>
