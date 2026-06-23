@@ -388,6 +388,15 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                         <span>Formación de excelencia, estés donde estés</span>
                     </div>
 
+                    <?php if ($mostrar_instancias_presenciales) : ?>
+                        <div class="fc-hero-highlights fc-hero-highlights--top">
+                            <span class="fc-hero-badge fc-hero-badge--accent">
+                                <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                                Con instancias presenciales
+                            </span>
+                        </div>
+                    <?php endif; ?>
+
                     <h1 id="fc-carta-title"><?php echo esc_html($titulo); ?></h1>
 
                     <div class="fc-hero-meta">
@@ -399,15 +408,6 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                             <span><?php echo esc_html($cohorte); ?></span>
                         <?php endif; ?>
                     </div>
-
-                    <?php if ($mostrar_instancias_presenciales) : ?>
-                        <div class="fc-hero-highlights">
-                            <span class="fc-hero-badge fc-hero-badge--accent">
-                                <i class="bi bi-geo-alt" aria-hidden="true"></i>
-                                Con instancias presenciales
-                            </span>
-                        </div>
-                    <?php endif; ?>
 
                     <?php if ($reconocido_mec || $reconocimiento_int) : ?>
                         <div class="fc-certifications">
@@ -4034,6 +4034,178 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
     .flacso-carta-virtual .fc-hero-ribbon span {
         white-space: normal;
         text-align: center;
+    }
+}
+
+
+
+/* =========================================================
+   Ajuste final: badge de instancias + botones del hero
+========================================================= */
+.flacso-carta-virtual .fc-hero-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.flacso-carta-virtual .fc-hero-highlights--top {
+    margin: .95rem 0 1.1rem;
+}
+
+.flacso-carta-virtual .fc-hero-highlights--top .fc-hero-badge--accent {
+    min-height: 2.45rem;
+    padding: .62rem .95rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #fed222 0%, #ffe66f 100%);
+    border: 1px solid rgba(255, 245, 191, .46);
+    color: var(--fc-primary-dark);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, .14);
+}
+
+.flacso-carta-virtual .fc-hero-highlights--top .fc-hero-badge--accent i {
+    color: var(--fc-primary-dark);
+}
+
+.flacso-carta-virtual .fc-hero-actions {
+    display: grid !important;
+    grid-template-columns: max-content max-content;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: .75rem;
+    flex-wrap: nowrap !important;
+}
+
+.flacso-carta-virtual .fc-hero-actions .fc-primary-button,
+.flacso-carta-virtual .fc-hero-actions .fc-secondary-button {
+    width: auto;
+    min-width: 0;
+    white-space: nowrap;
+}
+
+.flacso-carta-virtual .fc-hero-actions .fc-primary-button {
+    min-width: 236px;
+}
+
+.flacso-carta-virtual .fc-hero-actions .fc-secondary-button {
+    min-width: 170px;
+}
+
+@media (max-width: 980px) {
+    .flacso-carta-virtual .fc-hero-actions {
+        grid-template-columns: max-content max-content;
+    }
+}
+
+@media (max-width: 640px) {
+    .flacso-carta-virtual .fc-hero-highlights--top {
+        margin: .85rem 0 1rem;
+    }
+
+    .flacso-carta-virtual .fc-hero-actions {
+        grid-template-columns: 1fr !important;
+    }
+
+    .flacso-carta-virtual .fc-hero-actions .fc-primary-button,
+    .flacso-carta-virtual .fc-hero-actions .fc-secondary-button {
+        width: 100%;
+        min-width: 0;
+        white-space: normal;
+    }
+}
+
+
+
+/* =========================================================
+   Ajuste final: restaurar etiqueta tipo cinta/colgante
+   Mantiene el efecto de cinta para textos como "Primera edición".
+========================================================= */
+.flacso-carta-virtual .fc-hero-inner.has-hero-ribbon {
+    padding-top: clamp(3.35rem, 5vw, 4.35rem) !important;
+}
+
+.flacso-carta-virtual .fc-hero-ribbon {
+    position: absolute !important;
+    top: 0 !important;
+    right: clamp(1.15rem, 3vw, 2rem) !important;
+    left: auto !important;
+    z-index: 8;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+
+    min-width: 180px !important;
+    max-width: min(280px, calc(100% - 2rem));
+    width: auto !important;
+    padding: .9rem 1rem 1.22rem !important;
+
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: linear-gradient(135deg, #ffe76a 0%, #fed222 48%, #f4bd00 100%) !important;
+    color: var(--fc-primary-dark) !important;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 15px), 0 100%) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+
+    box-shadow:
+        0 16px 34px rgba(0, 0, 0, .20),
+        inset 0 1px 0 rgba(255, 255, 255, .40) !important;
+
+    font-size: .85rem !important;
+    font-weight: 950;
+    line-height: 1.12;
+    letter-spacing: .01em;
+    text-align: center;
+}
+
+.flacso-carta-virtual .fc-hero-ribbon::after {
+    content: "" !important;
+    display: block !important;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 0;
+    height: 0;
+    border-top: 13px solid rgba(16, 43, 86, .24);
+    border-left: 13px solid transparent;
+}
+
+.flacso-carta-virtual .fc-hero-ribbon i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+
+    width: auto !important;
+    height: auto !important;
+    border-radius: 0 !important;
+
+    background: transparent !important;
+    color: var(--fc-primary-dark) !important;
+    font-size: .92rem !important;
+    box-shadow: none !important;
+}
+
+.flacso-carta-virtual .fc-hero-ribbon span {
+    display: block;
+    color: var(--fc-primary-dark) !important;
+    font-size: .85rem !important;
+    font-weight: 950;
+    white-space: normal !important;
+}
+
+@media (max-width: 640px) {
+    .flacso-carta-virtual .fc-hero-inner.has-hero-ribbon {
+        padding-top: 4.8rem !important;
+    }
+
+    .flacso-carta-virtual .fc-hero-ribbon {
+        right: .9rem !important;
+        left: auto !important;
+        min-width: 165px !important;
+        max-width: calc(100% - 1.8rem);
+        padding: .82rem .9rem 1.15rem !important;
     }
 }
 
