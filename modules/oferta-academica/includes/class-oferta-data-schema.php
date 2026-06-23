@@ -693,11 +693,18 @@ class Oferta_Data_Schema {
 
             if (!is_wp_error($terms) && is_array($terms)) {
                 foreach ($terms as $t) {
-                    $response[$tax][] = [
-                        'id'   => (int) $t->term_id,
-                        'name' => $t->name,
-                        'slug' => $t->slug,
-                    ];
+                    if (class_exists('Oferta_Taxonomies') && method_exists('Oferta_Taxonomies', 'serialize_term')) {
+                        $response[$tax][] = Oferta_Taxonomies::serialize_term($t);
+                    } else {
+                        $response[$tax][] = [
+                            'id' => (int) $t->term_id,
+                            'name' => $t->name,
+                            'slug' => $t->slug,
+                            'description' => (string) $t->description,
+                            'featured_image_id' => 0,
+                            'featured_image_data' => null,
+                        ];
+                    }
                 }
             }
         }

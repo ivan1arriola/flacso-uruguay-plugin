@@ -150,6 +150,11 @@ if ($term->slug === 'maestria') {
     $taxonomy_name = 'Diplomas';
 }
 
+$term_image_data = null;
+if (class_exists('Oferta_Taxonomies') && method_exists('Oferta_Taxonomies', 'get_term_featured_image_data')) {
+    $term_image_data = Oferta_Taxonomies::get_term_featured_image_data($term);
+}
+
 if (class_exists('Oferta_Renderer')) {
     Oferta_Renderer::enqueue_styles();
 }
@@ -242,14 +247,26 @@ get_header();
 <div id="inner-wrap" class="wrap kt-clear flacso-oferta-academica-premium">
     <div id="primary" class="content-area">
         <div class="content-container site-container" style="padding-top: 60px; padding-bottom: 60px;">
-            <header class="entry-header page-title" style="margin-bottom: 40px;">
-                <h1 class="entry-title" style="color: var(--flacso-blue-dark); font-weight: 800; font-size: clamp(2.5rem, 5vw, 3.5rem); margin-bottom: 1rem;"><?php echo esc_html($taxonomy_name); ?></h1>
-                <?php
-                $term_desc = term_description();
-                if (!empty($term_desc)) :
-                    ?>
-                    <div class="taxonomy-description" style="font-size: 1.15rem; line-height: 1.6; max-width: 900px; color: #475569;">
-                        <?php echo wp_kses_post($term_desc); ?>
+            <header class="entry-header page-title flacso-taxonomy-hero" style="margin-bottom: 40px;">
+                <div class="flacso-taxonomy-hero__content">
+                    <h1 class="entry-title" style="color: var(--flacso-blue-dark); font-weight: 800; font-size: clamp(2.5rem, 5vw, 3.5rem); margin-bottom: 1rem;"><?php echo esc_html($taxonomy_name); ?></h1>
+                    <?php
+                    $term_desc = term_description();
+                    if (!empty($term_desc)) :
+                        ?>
+                        <div class="taxonomy-description" style="font-size: 1.15rem; line-height: 1.6; max-width: 900px; color: #475569;">
+                            <?php echo wp_kses_post($term_desc); ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <?php if (!empty($term_image_data['large']) || !empty($term_image_data['url'])) : ?>
+                    <div class="flacso-taxonomy-hero__media">
+                        <img
+                            src="<?php echo esc_url((string) ($term_image_data['large'] ?? $term_image_data['url'] ?? '')); ?>"
+                            alt="<?php echo esc_attr((string) ($term_image_data['alt'] ?? $taxonomy_name)); ?>"
+                            class="flacso-taxonomy-hero__image"
+                        />
                     </div>
                 <?php endif; ?>
             </header>
@@ -347,6 +364,41 @@ get_header();
 
 .flacso-ofertas-group + .flacso-ofertas-group {
     margin-top: 1rem;
+}
+
+.flacso-taxonomy-hero {
+    display: grid;
+    gap: 1.75rem;
+    align-items: center;
+}
+
+.flacso-taxonomy-hero__content {
+    min-width: 0;
+}
+
+.flacso-taxonomy-hero__media {
+    max-width: 420px;
+    width: 100%;
+    justify-self: start;
+}
+
+.flacso-taxonomy-hero__image {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    border-radius: 20px;
+    box-shadow: 0 18px 44px rgba(5, 25, 56, 0.14);
+}
+
+@media (min-width: 980px) {
+    .flacso-taxonomy-hero {
+        grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
+    }
+
+    .flacso-taxonomy-hero__media {
+        justify-self: end;
+    }
 }
 
 .flacso-ofertas-group__title {
