@@ -627,11 +627,8 @@ class Oferta_Renderer {
         $proximo_inicio_html = class_exists('Oferta_Blocks')
             ? Oferta_Blocks::render_dato_proximo_inicio(['ofertaId' => $oferta_id])
             : '';
-        $calendario_markup = class_exists('Oferta_Blocks')
-            ? Oferta_Blocks::render_dato_calendario(['ofertaId' => $oferta_id, 'displayMode' => 'auto'])
-            : '';
-        $malla_markup = class_exists('Oferta_Blocks')
-            ? Oferta_Blocks::render_dato_malla_curricular(['ofertaId' => $oferta_id, 'displayMode' => 'auto'])
+        $documentos_markup = class_exists('Oferta_Blocks')
+            ? Oferta_Blocks::render_documentos_programa(['ofertaId' => $oferta_id, 'displayMode' => 'auto'])
             : '';
 
         $mostrar_preinscripcion = !array_key_exists('mostrarPreinscripcion', $attributes) || !empty($attributes['mostrarPreinscripcion']);
@@ -707,15 +704,10 @@ class Oferta_Renderer {
                 </div>
             </header>
 
-            <?php if ($calendario_markup !== '' || $malla_markup !== '') : ?>
+            <?php if ($documentos_markup !== '') : ?>
                 <section class="flacso-oa-programa__documents" aria-label="<?php esc_attr_e('Documentos del programa', 'flacso-oferta-academica'); ?>">
                     <div class="flacso-oa-programa__documents-grid">
-                        <?php if ($calendario_markup !== '') : ?>
-                            <?php echo $calendario_markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-                        <?php endif; ?>
-                        <?php if ($malla_markup !== '') : ?>
-                            <?php echo $malla_markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-                        <?php endif; ?>
+                        <?php echo $documentos_markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
                     </div>
                 </section>
             <?php endif; ?>

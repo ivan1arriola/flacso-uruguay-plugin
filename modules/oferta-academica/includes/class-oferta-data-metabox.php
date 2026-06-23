@@ -270,6 +270,10 @@ class Oferta_Data_MetaBox {
             $sanitized = Oferta_Data_Schema::sanitize_personnel_groups_data($parsed, $label_key);
             update_post_meta($post_id, $key, $sanitized);
         }
+
+        if (class_exists('Oferta_Data_Schema') && method_exists('Oferta_Data_Schema', 'sync_documentos_and_legacy_meta')) {
+            Oferta_Data_Schema::sync_documentos_and_legacy_meta($post_id, 'legacy');
+        }
     }
 
     private static function save_simple_field(int $post_id, string $key, $raw_value, string $type = 'string'): void {

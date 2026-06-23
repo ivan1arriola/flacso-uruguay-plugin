@@ -76,6 +76,7 @@ class Oferta_Data_Schema {
     public static function init(): void {
         add_action('init', [self::class, 'register_meta'], 12);
         add_action('rest_api_init', [self::class, 'register_rest_routes']);
+        add_action('rest_after_insert_oferta-academica', [self::class, 'sync_documentos_after_rest_insert'], 10, 3);
     }
 
     public static function register_meta(): void {
@@ -638,6 +639,58 @@ class Oferta_Data_Schema {
         return current_user_can('edit_post', $post_id);
     }
 
+    public static function sync_documentos_after_rest_insert(\WP_Post $post, \WP_REST_Request $request, bool $creating): void {
+        if ($post->post_type !== 'oferta-academica') {
+            return;
+        }
+
+        $payload = $request->get_json_params();
+        if (!is_array($payload) || empty($payload)) {
+            $payload = $request->get_body_params();
+        }
+        if (!is_array($payload)) {
+            $payload = [];
+        }
+
+        $meta = isset($payload['meta']) && is_array($payload['meta']) ? $payload['meta'] : [];
+        $uses_documentos = array_key_exists('documentos', $payload) || array_key_exists('documentos', $meta);
+        $touches_legacy = false;
+
+        foreach (['calendario', 'malla_curricular', 'calendario_modo', 'malla_curricular_modo'] as $key) {
+            if (array_key_exists($key, $payload) || array_key_exists($key, $meta)) {
+                $touches_legacy = true;
+                break;
+            }
+        }
+
+        if (!$uses_documentos && !$touches_legacy) {
+            return;
+        }
+
+        self::sync_documentos_and_legacy_meta($post->ID, $uses_documentos ? 'documentos' : 'legacy');
+    }
+
+    public static function sync_documentos_and_legacy_meta(int $post_id, string $source = 'documentos'): void {
+        $post = get_post($post_id);
+        if (!$post || $post->post_type !== 'oferta-academica') {
+            return;
+        }
+
+        $documentos = $source === 'legacy'
+            ? self::build_documentos_from_legacy_meta($post_id)
+            : self::normalize_documentos_array(
+                self::parse_documentos_meta(get_post_meta($post_id, 'documentos', true))
+            );
+
+        $documentos_json = self::sanitize_generic_json_string($documentos);
+        self::update_meta_value($post_id, 'documentos', $documentos_json);
+
+        $legacy_meta = self::build_legacy_meta_from_documentos($documentos);
+        foreach ($legacy_meta as $key => $value) {
+            self::update_meta_value($post_id, $key, $value);
+        }
+    }
+
     public static function register_rest_routes(): void {
         register_rest_route('flacso/v1', '/oferta-academica', [
             'methods' => \WP_REST_Server::READABLE,
@@ -958,6 +1011,19 @@ class Oferta_Data_Schema {
             self::update_meta_value($post_id, $key, $sanitized);
         }
 
+        $uses_documentos = array_key_exists('documentos', $data);
+        $touches_legacy = false;
+        foreach (['calendario', 'malla_curricular', 'calendario_modo', 'malla_curricular_modo'] as $key) {
+            if (array_key_exists($key, $data)) {
+                $touches_legacy = true;
+                break;
+            }
+        }
+
+        if ($uses_documentos || $touches_legacy) {
+            self::sync_documentos_and_legacy_meta($post_id, $uses_documentos ? 'documentos' : 'legacy');
+        }
+
         return rest_ensure_response(self::get_schema($post_id));
     }
 
@@ -1039,6 +1105,159 @@ class Oferta_Data_Schema {
         }
 
         update_post_meta($post_id, $key, $value);
+    }
+
+    private static function parse_documentos_meta($value): array {
+        if (is_array($value)) {
+            return $value;
+        }
+
+        if (!is_string($value)) {
+            return [];
+        }
+
+        $value = trim($value);
+        if ($value === '') {
+            return [];
+        }
+
+        $decoded = json_decode(wp_unslash($value), true);
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    private static function normalize_documento_entry($entry): array {
+        if (!is_array($entry)) {
+            return [];
+        }
+
+        $normalized = [];
+        $link = self::sanitize_url($entry['link'] ?? '');
+
+        if (array_key_exists('enabled', $entry)) {
+            $normalized['enabled'] = self::sanitize_boolean($entry['enabled']);
+        }
+
+        if ($link !== '' || array_key_exists('link', $entry)) {
+            $normalized['link'] = $link;
+        }
+
+        $fecha = trim((string) ($entry['fecha'] ?? ''));
+        if ($fecha !== '') {
+            $normalized['fecha'] = $fecha;
+        }
+
+        if (array_key_exists('historico', $entry)) {
+            $historico = self::sanitize_generic_json_string($entry['historico']);
+            if ($historico !== '') {
+                $normalized['historico'] = $historico;
+            }
+        }
+
+        return $normalized;
+    }
+
+    private static function normalize_documentos_array($documentos): array {
+        if (!is_array($documentos)) {
+            return [];
+        }
+
+        $normalized = [];
+        foreach (['cartamalla', 'calendario', 'malla'] as $key) {
+            $entry = self::normalize_documento_entry($documentos[$key] ?? null);
+            if (!empty($entry)) {
+                $normalized[$key] = $entry;
+            }
+        }
+
+        return $normalized;
+    }
+
+    private static function is_unified_document_selected(array $entry): bool {
+        $link = self::sanitize_url($entry['link'] ?? '');
+        if (array_key_exists('enabled', $entry) && !$entry['enabled']) {
+            return false;
+        }
+
+        return (!empty($entry['enabled']) && self::sanitize_boolean($entry['enabled'])) || $link !== '';
+    }
+
+    private static function build_documentos_from_legacy_meta(int $post_id): array {
+        $current = self::normalize_documentos_array(
+            self::parse_documentos_meta(get_post_meta($post_id, 'documentos', true))
+        );
+
+        $legacy_calendario = self::sanitize_url(get_post_meta($post_id, 'calendario', true));
+        $legacy_malla = self::sanitize_url(get_post_meta($post_id, 'malla_curricular', true));
+        $legacy_calendario_modo = sanitize_text_field((string) get_post_meta($post_id, 'calendario_modo', true));
+        $legacy_malla_modo = sanitize_text_field((string) get_post_meta($post_id, 'malla_curricular_modo', true));
+
+        $next = [];
+        $can_use_unified = $legacy_calendario !== ''
+            && $legacy_calendario === $legacy_malla
+            && $legacy_calendario_modo !== 'html'
+            && $legacy_malla_modo !== 'html';
+
+        if ($can_use_unified) {
+            $cartamalla = isset($current['cartamalla']) ? $current['cartamalla'] : [];
+            $cartamalla['link'] = $legacy_calendario;
+            $cartamalla['enabled'] = true;
+            $next['cartamalla'] = $cartamalla;
+
+            if (!empty($current['calendario'])) {
+                $calendario = $current['calendario'];
+                $calendario['link'] = '';
+                $next['calendario'] = $calendario;
+            }
+
+            if (!empty($current['malla'])) {
+                $malla = $current['malla'];
+                $malla['link'] = '';
+                $next['malla'] = $malla;
+            }
+        } else {
+            if (!empty($current['cartamalla'])) {
+                $cartamalla = $current['cartamalla'];
+                $cartamalla['link'] = '';
+                $cartamalla['enabled'] = false;
+                $next['cartamalla'] = $cartamalla;
+            }
+
+            $calendario = isset($current['calendario']) ? $current['calendario'] : [];
+            if ($legacy_calendario !== '' || !empty($calendario)) {
+                $calendario['link'] = $legacy_calendario;
+                $next['calendario'] = $calendario;
+            }
+
+            $malla = isset($current['malla']) ? $current['malla'] : [];
+            if ($legacy_malla !== '' || !empty($malla)) {
+                $malla['link'] = $legacy_malla;
+                $next['malla'] = $malla;
+            }
+        }
+
+        return self::normalize_documentos_array($next);
+    }
+
+    private static function build_legacy_meta_from_documentos(array $documentos): array {
+        $documentos = self::normalize_documentos_array($documentos);
+        $cartamalla = isset($documentos['cartamalla']) && is_array($documentos['cartamalla']) ? $documentos['cartamalla'] : [];
+        $cartamalla_link = self::is_unified_document_selected($cartamalla)
+            ? self::sanitize_url($cartamalla['link'] ?? '')
+            : '';
+
+        $calendario = $cartamalla_link !== ''
+            ? $cartamalla_link
+            : self::sanitize_url($documentos['calendario']['link'] ?? '');
+        $malla = $cartamalla_link !== ''
+            ? $cartamalla_link
+            : self::sanitize_url($documentos['malla']['link'] ?? '');
+
+        return [
+            'calendario' => $calendario,
+            'malla_curricular' => $malla,
+            'calendario_modo' => $calendario !== '' ? 'pdf' : '',
+            'malla_curricular_modo' => $malla !== '' ? 'pdf' : '',
+        ];
     }
 
     private static function get_meta_value(int $post_id, string $key): string {

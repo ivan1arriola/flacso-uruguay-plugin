@@ -23,6 +23,11 @@ class Oferta_Taxonomies {
         add_action('template_redirect', [__CLASS__, 'redirect_old_taxonomy_urls']);
         add_action('pre_get_posts', [__CLASS__, 'exclude_password_protected_offers_from_public_lists']);
         add_action('admin_footer-edit-tags.php', [__CLASS__, 'print_term_image_admin_assets']);
+        add_action('wp_head', [__CLASS__, 'add_taxonomy_meta_tags'], 5);
+        add_filter('wpseo_opengraph_image', [__CLASS__, 'filter_wpseo_opengraph_image']);
+        add_filter('wpseo_twitter_image', [__CLASS__, 'filter_wpseo_twitter_image']);
+        add_filter('rank_math/opengraph/facebook/image', [__CLASS__, 'filter_rank_math_facebook_image']);
+        add_filter('rank_math/opengraph/twitter/image', [__CLASS__, 'filter_rank_math_twitter_image']);
     }
 
     public static function register_taxonomies(): void {
@@ -261,6 +266,55 @@ class Oferta_Taxonomies {
         $query->set('nopaging', true);
     }
 
+    public static function add_taxonomy_meta_tags(): void {
+        if (!self::is_supported_taxonomy_archive()) {
+            return;
+        }
+
+        if (defined('WPSEO_VERSION') || defined('RANK_MATH_VERSION') || has_action('wp_head', 'jetpack_og_tags')) {
+            return;
+        }
+
+        $meta = self::get_current_taxonomy_meta_payload();
+        if (empty($meta['image_url'])) {
+            return;
+        }
+
+        echo '<meta property="og:type" content="website" />' . "\n";
+        echo '<meta property="og:title" content="' . esc_attr($meta['title']) . '" />' . "\n";
+
+        if ($meta['description'] !== '') {
+            echo '<meta property="og:description" content="' . esc_attr($meta['description']) . '" />' . "\n";
+        }
+
+        echo '<meta property="og:url" content="' . esc_url($meta['url']) . '" />' . "\n";
+        echo '<meta property="og:image" content="' . esc_url($meta['image_url']) . '" />' . "\n";
+
+        if (!empty($meta['image_width']) && !empty($meta['image_height'])) {
+            echo '<meta property="og:image:width" content="' . esc_attr((string) $meta['image_width']) . '" />' . "\n";
+            echo '<meta property="og:image:height" content="' . esc_attr((string) $meta['image_height']) . '" />' . "\n";
+        }
+
+        if ($meta['image_alt'] !== '') {
+            echo '<meta property="og:image:alt" content="' . esc_attr($meta['image_alt']) . '" />' . "\n";
+        }
+
+        echo '<meta name="twitter:card" content="summary_large_image" />' . "\n";
+        echo '<meta name="twitter:title" content="' . esc_attr($meta['title']) . '" />' . "\n";
+
+        if ($meta['description'] !== '') {
+            echo '<meta name="twitter:description" content="' . esc_attr($meta['description']) . '" />' . "\n";
+        }
+
+        echo '<meta name="twitter:image" content="' . esc_url($meta['image_url']) . '" />' . "\n";
+
+        if ($meta['image_alt'] !== '') {
+            echo '<meta name="twitter:image:alt" content="' . esc_attr($meta['image_alt']) . '" />' . "\n";
+        }
+
+        echo '<meta itemprop="image" content="' . esc_url($meta['image_url']) . '" />' . "\n";
+    }
+
     public static function serialize_term(WP_Term $term): array {
         return [
             'id' => (int) $term->term_id,
@@ -304,6 +358,26 @@ class Oferta_Taxonomies {
         return self::build_attachment_image_data($media_id);
     }
 
+    public static function filter_wpseo_opengraph_image($image) {
+        $taxonomy_image = self::get_current_taxonomy_meta_image_url();
+        return $taxonomy_image !== '' ? $taxonomy_image : $image;
+    }
+
+    public static function filter_wpseo_twitter_image($image) {
+        $taxonomy_image = self::get_current_taxonomy_meta_image_url();
+        return $taxonomy_image !== '' ? $taxonomy_image : $image;
+    }
+
+    public static function filter_rank_math_facebook_image($image) {
+        $taxonomy_image = self::get_current_taxonomy_meta_image_url();
+        return $taxonomy_image !== '' ? $taxonomy_image : $image;
+    }
+
+    public static function filter_rank_math_twitter_image($image) {
+        $taxonomy_image = self::get_current_taxonomy_meta_image_url();
+        return $taxonomy_image !== '' ? $taxonomy_image : $image;
+    }
+
     private static function build_external_image_data(string $url): ?array {
         $normalized_url = esc_url_raw($url);
         if ($normalized_url === '') {
@@ -345,6 +419,63 @@ class Oferta_Taxonomies {
             'width' => (int) ($full[1] ?? 0),
             'height' => (int) ($full[2] ?? 0),
             'source' => 'media',
+        ];
+    }
+
+    private static function is_supported_taxonomy_archive(): bool {
+        if (!is_tax()) {
+            return false;
+        }
+
+        $term = get_queried_object();
+        return $term instanceof WP_Term && self::is_supported_taxonomy($term->taxonomy);
+    }
+
+    private static function get_current_taxonomy_meta_image_url(): string {
+        $meta = self::get_current_taxonomy_meta_payload();
+        return (string) ($meta['image_url'] ?? '');
+    }
+
+    private static function get_current_taxonomy_meta_payload(): array {
+        $default = [
+            'title' => '',
+            'description' => '',
+            'url' => '',
+            'image_url' => '',
+            'image_alt' => '',
+            'image_width' => 0,
+            'image_height' => 0,
+        ];
+
+        if (!self::is_supported_taxonomy_archive()) {
+            return $default;
+        }
+
+        $term = get_queried_object();
+        if (!($term instanceof WP_Term)) {
+            return $default;
+        }
+
+        $image_data = self::get_term_featured_image_data($term);
+        $title = single_term_title('', false);
+        $description = trim(wp_strip_all_tags(term_description($term, $term->taxonomy)));
+        $term_link = get_term_link($term);
+
+        if ($description === '') {
+            $description = sprintf(
+                __('Explora la oferta académica de %s en FLACSO Uruguay.', 'flacso-oferta-academica'),
+                $title !== '' ? $title : $term->name
+            );
+        }
+
+        return [
+            'title' => $title !== '' ? $title : $term->name,
+            'description' => $description,
+            'url' => is_wp_error($term_link) ? '' : $term_link,
+            'image_url' => (string) ($image_data['large'] ?? $image_data['url'] ?? ''),
+            'image_alt' => trim((string) ($image_data['alt'] ?? '')) ?: $term->name,
+            'image_width' => (int) ($image_data['width'] ?? 0),
+            'image_height' => (int) ($image_data['height'] ?? 0),
         ];
     }
 
