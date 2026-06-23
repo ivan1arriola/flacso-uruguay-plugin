@@ -13,6 +13,10 @@ class Tabla_Precio_Schema {
         'tabla_precios_tipo',
     ];
 
+    private const BOOLEAN_FIELDS = [
+        'mostrar_precios_dolares',
+    ];
+
     private const JSON_STRING_FIELDS = [
         'precios_filas',
     ];
@@ -57,6 +61,21 @@ class Tabla_Precio_Schema {
             ]);
         }
 
+        foreach (self::BOOLEAN_FIELDS as $field) {
+            register_post_meta('tabla-precio', $field, [
+                'type' => 'boolean',
+                'single' => true,
+                'sanitize_callback' => [self::class, 'sanitize_meta_boolean'],
+                'auth_callback' => [self::class, 'user_can_edit_meta'],
+                'show_in_rest' => [
+                    'schema' => [
+                        'description' => ucfirst(str_replace('_', ' ', $field)),
+                        'type' => 'boolean',
+                    ],
+                ],
+            ]);
+        }
+
         foreach (self::JSON_STRING_FIELDS as $field) {
             register_post_meta('tabla-precio', $field, [
                 'type' => 'string',
@@ -74,9 +93,12 @@ class Tabla_Precio_Schema {
     }
 
     public static function register_rest_fields(): void {
-        foreach (array_merge(self::HTML_FIELDS, self::TEXT_FIELDS, self::JSON_STRING_FIELDS) as $field) {
+        foreach (array_merge(self::HTML_FIELDS, self::TEXT_FIELDS, self::BOOLEAN_FIELDS, self::JSON_STRING_FIELDS) as $field) {
             register_rest_field('tabla-precio', $field, [
                 'get_callback' => function ($post_array) use ($field) {
+                    if (in_array($field, self::BOOLEAN_FIELDS, true)) {
+                        return self::resolve_show_dollar_prices((int) $post_array['id']);
+                    }
                     return self::get_meta_value((int) $post_array['id'], $field);
                 },
                 'update_callback' => function ($value, $post_obj) use ($field) {
@@ -117,6 +139,14 @@ class Tabla_Precio_Schema {
         }
 
         return wp_kses((string) $value, $allowed);
+    }
+
+    public static function sanitize_boolean($value): bool {
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
+    }
+
+    public static function sanitize_meta_boolean($value): string {
+        return self::sanitize_boolean($value) ? '1' : '0';
     }
 
     public static function sanitize_prices_rows($value): string {
@@ -189,6 +219,10 @@ class Tabla_Precio_Schema {
             return sanitize_text_field((string) $value);
         }
 
+        if (in_array($field, self::BOOLEAN_FIELDS, true)) {
+            return self::sanitize_meta_boolean($value);
+        }
+
         if (in_array($field, self::JSON_STRING_FIELDS, true)) {
             return self::sanitize_prices_rows($value);
         }
@@ -211,6 +245,7 @@ class Tabla_Precio_Schema {
             'tabla_precios_tipo' => self::get_meta_value($post_id, 'tabla_precios_tipo'),
             'precios_filas' => self::get_meta_value($post_id, 'precios_filas'),
             'precios_nota' => self::get_meta_value($post_id, 'precios_nota'),
+            'mostrar_precios_dolares' => self::resolve_show_dollar_prices($post_id),
             'linked_offers' => self::get_linked_offers_summary($post_id),
         ];
     }
@@ -259,5 +294,41 @@ class Tabla_Precio_Schema {
         }
 
         return (string) $value;
+    }
+
+    private static function resolve_show_dollar_prices(int $post_id): string {
+        if (metadata_exists('post', $post_id, 'mostrar_precios_dolares')) {
+            return get_post_meta($post_id, 'mostrar_precios_dolares', true) ? '1' : '0';
+        }
+
+        $rows_value = self::get_meta_value($post_id, 'precios_filas');
+
+        if ($rows_value === '') {
+            return '1';
+        }
+
+        $decoded = json_decode($rows_value, true);
+
+        if (!is_array($decoded)) {
+            $decoded = json_decode(wp_unslash($rows_value), true);
+        }
+
+        if (!is_array($decoded)) {
+            return '1';
+        }
+
+        foreach ($decoded as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+
+            $us_value = trim(wp_strip_all_tags((string) ($row['us'] ?? '')));
+
+            if ($us_value !== '') {
+                return '1';
+            }
+        }
+
+        return '0';
     }
 }

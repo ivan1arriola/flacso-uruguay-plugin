@@ -81,6 +81,20 @@ if (!function_exists('flacso_carta_render_feature_card')) {
     }
 }
 
+if (!function_exists('flacso_carta_has_meaningful_html')) {
+    function flacso_carta_has_meaningful_html($value): bool {
+        if (!is_string($value)) {
+            return !empty($value);
+        }
+
+        $decoded = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $decoded = preg_replace('/\x{00a0}/u', ' ', $decoded);
+        $text = trim(preg_replace('/\s+/u', ' ', wp_strip_all_tags($decoded)));
+
+        return $text !== '';
+    }
+}
+
 if (!function_exists('flacso_carta_render_requirement')) {
     function flacso_carta_render_requirement(string $icon, string $content, bool $allow_html = false): void {
         ?>
@@ -99,6 +113,24 @@ if (!function_exists('flacso_carta_render_requirement')) {
             </div>
         </div>
         <?php
+    }
+}
+
+if (!function_exists('flacso_carta_rows_have_dollar_prices')) {
+    function flacso_carta_rows_have_dollar_prices(array $rows): bool {
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+
+            $value = trim(wp_strip_all_tags((string) ($row['us'] ?? '')));
+
+            if ($value !== '') {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 
@@ -179,6 +211,13 @@ $orientaciones = is_array($data['orientaciones'] ?? null) ? implode('|', $data['
 
 $arr_menciones = flacso_carta_array_from_value($menciones);
 $arr_orientaciones = flacso_carta_array_from_value($orientaciones);
+$hero_badge_text = trim((string) ($data['carta_hero_etiqueta'] ?? ''));
+$mostrar_instancias_presenciales = isset($data['carta_instancias_presenciales'])
+    ? flacso_carta_bool($data['carta_instancias_presenciales'])
+    : false;
+$data['acreditaciones_html'] = flacso_carta_has_meaningful_html($data['acreditaciones_html'] ?? null)
+    ? (string) $data['acreditaciones_html']
+    : '';
 
 $reconocido_mec = isset($data['reconocido_mec'])
     ? flacso_carta_bool($data['reconocido_mec'])
@@ -303,6 +342,14 @@ if (!empty($precios_filas) && is_string($child_content) && $child_content !== ''
     );
 }
 
+$mostrar_precios_dolares = true;
+
+if (!empty($data['tabla_precio']) && is_array($data['tabla_precio']) && array_key_exists('mostrar_precios_dolares', $data['tabla_precio'])) {
+    $mostrar_precios_dolares = flacso_carta_bool($data['tabla_precio']['mostrar_precios_dolares']);
+} elseif (!empty($precios_filas)) {
+    $mostrar_precios_dolares = flacso_carta_rows_have_dollar_prices($precios_filas);
+}
+
 $precios_nota = !empty($data['precios_nota'])
     ? $data['precios_nota']
     : 'Si no puedes adherir a ninguno de los beneficios descritos, podrás solicitar una beca FLACSO Uruguay de hasta un 20% escribiendo a: <a href="mailto:inscripciones@flacso.edu.uy">inscripciones@flacso.edu.uy</a><br><small>*Sujeto a aprobación por parte de la Comisión Académica FLACSO Uruguay</small>';
@@ -346,6 +393,24 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                             <span><?php echo esc_html($cohorte); ?></span>
                         <?php endif; ?>
                     </div>
+
+                    <?php if ($hero_badge_text !== '' || $mostrar_instancias_presenciales) : ?>
+                        <div class="fc-hero-highlights">
+                            <?php if ($hero_badge_text !== '') : ?>
+                                <span class="fc-hero-badge">
+                                    <i class="bi bi-bookmark-star" aria-hidden="true"></i>
+                                    <?php echo esc_html($hero_badge_text); ?>
+                                </span>
+                            <?php endif; ?>
+
+                            <?php if ($mostrar_instancias_presenciales) : ?>
+                                <span class="fc-hero-badge fc-hero-badge--accent">
+                                    <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                                    Con instancias presenciales
+                                </span>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
 
                     <?php if ($reconocido_mec || $reconocimiento_int) : ?>
                         <div class="fc-certifications">
@@ -479,6 +544,10 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                 flacso_carta_render_feature_card('bi-calendar-event', 'Próximo inicio', $proximo_inicio);
                 flacso_carta_render_feature_card('bi-clock', 'Duración', $duracion);
                 flacso_carta_render_feature_card('bi-laptop', 'Modalidad', $modalidad);
+
+                if ($mostrar_instancias_presenciales) {
+                    flacso_carta_render_feature_card('bi-geo-alt', 'Cursada', 'Con instancias presenciales');
+                }
                 ?>
             </section>
 
@@ -642,13 +711,15 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                         </div>
 
                         <div class="fc-table-wrap">
-                            <table class="fc-pricing-table">
+                            <table class="fc-pricing-table<?php echo $mostrar_precios_dolares ? '' : ' is-without-usd'; ?>">
                                 <caption class="fc-sr-only">Beneficios, descuentos y valores de la oferta académica</caption>
                                 <thead>
                                     <tr>
                                         <th scope="col">Concepto</th>
                                         <th scope="col">Valor en $ <span>residentes en Uruguay</span></th>
-                                        <th scope="col">Valor en U$S <span>residentes en el exterior</span></th>
+                                        <?php if ($mostrar_precios_dolares) : ?>
+                                            <th scope="col">Valor en U$S <span>residentes en el exterior</span></th>
+                                        <?php endif; ?>
                                     </tr>
                                 </thead>
 
@@ -657,7 +728,9 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                                         <tr class="<?php echo !empty($row['highlight']) ? 'is-highlighted' : ''; ?>">
                                             <td data-label="Concepto"><?php echo wp_kses_post($row['concept'] ?? ''); ?></td>
                                             <td data-label="Valor en pesos para residentes en Uruguay"><?php echo wp_kses_post($row['uy'] ?? ''); ?></td>
-                                            <td data-label="Valor en dólares para residentes en el exterior"><?php echo wp_kses_post($row['us'] ?? ''); ?></td>
+                                            <?php if ($mostrar_precios_dolares) : ?>
+                                                <td data-label="Valor en dólares para residentes en el exterior"><?php echo wp_kses_post($row['us'] ?? ''); ?></td>
+                                            <?php endif; ?>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
@@ -685,10 +758,12 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                 <h2 class="fc-section-title">Información importante</h2>
 
                 <div class="fc-info-list">
-                    <div class="fc-info-row">
-                        <div class="fc-info-icon"><i class="bi bi-currency-dollar" aria-hidden="true"></i></div>
-                        <div>Para pagos en <strong>dólares</strong>, las cuotas se mantendrán fijas durante toda la cursada.</div>
-                    </div>
+                    <?php if ($mostrar_precios_dolares) : ?>
+                        <div class="fc-info-row">
+                            <div class="fc-info-icon"><i class="bi bi-currency-dollar" aria-hidden="true"></i></div>
+                            <div>Para pagos en <strong>dólares</strong>, las cuotas se mantendrán fijas durante toda la cursada.</div>
+                        </div>
+                    <?php endif; ?>
 
                     <div class="fc-info-row">
                         <div class="fc-info-icon"><i class="bi bi-currency-exchange" aria-hidden="true"></i></div>
@@ -955,6 +1030,38 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
     line-height: 1.25;
 }
 
+.fc-hero-highlights {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    margin-top: 1.1rem;
+}
+
+.fc-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    min-height: 2.7rem;
+    padding: .75rem 1rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .16);
+    border: 1px solid rgba(255, 255, 255, .24);
+    color: var(--fc-white);
+    font-weight: 850;
+    line-height: 1.15;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, .12);
+}
+
+.fc-hero-badge i {
+    font-size: 1rem;
+}
+
+.fc-hero-badge--accent {
+    background: linear-gradient(135deg, rgba(248, 178, 29, .98), rgba(255, 213, 79, .95));
+    border-color: rgba(255, 239, 190, .45);
+    color: var(--fc-primary-dark);
+}
+
 .fc-certifications {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -1201,7 +1308,7 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 
 .fc-feature-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 1rem;
     margin-bottom: 2.5rem;
 }
@@ -1524,6 +1631,10 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
     width: 100%;
     min-width: 720px;
     border-collapse: collapse;
+}
+
+.fc-pricing-table.is-without-usd {
+    min-width: 560px;
 }
 
 .fc-pricing-table th,
@@ -2814,6 +2925,16 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 
 .fc-pricing-table th:first-child,
 .fc-pricing-table td:first-child {
+    width: 42%;
+}
+
+.fc-pricing-table.is-without-usd th:first-child,
+.fc-pricing-table.is-without-usd td:first-child {
+    width: 58%;
+}
+
+.fc-pricing-table.is-without-usd th:nth-child(2),
+.fc-pricing-table.is-without-usd td:nth-child(2) {
     width: 42%;
 }
 
