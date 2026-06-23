@@ -2839,11 +2839,11 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
     --fc-page-gutter: 2rem;
     --fc-card-radius: 1.15rem;
     --fc-card-padding: 1.25rem;
-    --fc-cta-warm-1: #fff200;
-    --fc-cta-warm-2: #ffc83a;
-    --fc-cta-warm-3: #ff9f1f;
-    --fc-cta-ring: rgba(255, 206, 56, .14);
-    --fc-cta-shadow: rgba(15, 26, 45, .26);
+    --fc-cta-warm-1: #fff682;
+    --fc-cta-warm-2: #fff200;
+    --fc-cta-warm-3: #ffd400;
+    --fc-cta-ring: rgba(255, 231, 92, .28);
+    --fc-cta-shadow: rgba(15, 26, 45, .24);
 }
 
 .fc-hero,
@@ -2954,12 +2954,20 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 .fc-final-cta a,
 .fc-floating-preinscripcion {
     position: relative;
-    border: 2px solid rgba(16, 43, 86, .16);
-    background: linear-gradient(135deg, var(--fc-cta-warm-1) 0%, var(--fc-cta-warm-2) 52%, var(--fc-cta-warm-3) 100%);
+    isolation: isolate;
+    border: 2px solid rgba(16, 43, 86, .74);
+    background: linear-gradient(180deg, var(--fc-cta-warm-1) 0%, var(--fc-cta-warm-2) 52%, var(--fc-cta-warm-3) 100%);
     color: var(--fc-primary-dark);
     box-shadow:
-        0 18px 38px var(--fc-cta-shadow),
+        0 10px 0 rgba(16, 43, 86, .16),
+        0 20px 34px var(--fc-cta-shadow),
         0 0 0 10px var(--fc-cta-ring);
+    transition:
+        transform .22s ease,
+        box-shadow .22s ease,
+        background .22s ease,
+        border-color .22s ease,
+        color .22s ease;
 }
 
 .fc-primary-button i,
@@ -2971,26 +2979,41 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
     width: 2.1rem;
     height: 2.1rem;
     border-radius: 999px;
-    background: rgba(16, 43, 86, .12);
+    background: rgba(16, 43, 86, .14);
     color: var(--fc-primary-dark);
     flex: 0 0 auto;
+    transition: transform .22s ease, background-color .22s ease, color .22s ease;
 }
 
 .fc-primary-button:hover,
 .fc-final-cta a:hover,
 .fc-floating-preinscripcion:hover {
     color: var(--fc-primary-dark);
-    transform: translateY(-3px);
-    filter: none;
+    border-color: rgba(16, 43, 86, .96);
+    background: linear-gradient(180deg, #fff9b5 0%, #ffe85b 48%, #ffcb05 100%);
+    transform: translateY(-5px);
     box-shadow:
-        0 22px 48px rgba(15, 26, 45, .3),
-        0 0 0 12px rgba(255, 206, 56, .12);
+        0 14px 0 rgba(16, 43, 86, .12),
+        0 28px 42px rgba(15, 26, 45, .28),
+        0 0 0 12px rgba(255, 231, 92, .36);
+}
+
+.fc-primary-button:hover i,
+.fc-final-cta a:hover i,
+.fc-floating-preinscripcion:hover i {
+    background: rgba(16, 43, 86, .92);
+    color: var(--fc-white);
+    transform: scale(1.06);
 }
 
 .fc-primary-button:active,
 .fc-final-cta a:active,
 .fc-floating-preinscripcion:active {
     transform: translateY(-1px);
+    box-shadow:
+        0 6px 0 rgba(16, 43, 86, .14),
+        0 12px 24px rgba(15, 26, 45, .22),
+        0 0 0 8px rgba(255, 231, 92, .22);
 }
 
 .fc-primary-button:focus-visible,
