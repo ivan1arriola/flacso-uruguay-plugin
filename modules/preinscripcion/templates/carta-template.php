@@ -451,10 +451,10 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 
                     <div class="fc-hero-actions">
                         <?php if ($mostrar_carta) : ?>
-                            <a class="fc-primary-button" href="<?php echo esc_url($url_inscripcion); ?>" aria-label="Preinscribirme a <?php echo esc_attr($titulo); ?>">
-                            <i class="bi bi-pencil-square" aria-hidden="true"></i>
-                            Preinscribirme
-                        </a>
+                            <a class="fc-primary-button" href="<?php echo esc_url($url_inscripcion); ?>" aria-label="Abrir formulario de preinscripción para <?php echo esc_attr($titulo); ?>">
+                                <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                                Formulario de preinscripción
+                            </a>
                         <?php endif; ?>
 
                         <a class="fc-secondary-button" href="#fc-info-clave" aria-label="Ver información clave de <?php echo esc_attr($titulo); ?>">
@@ -918,9 +918,12 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                 </a>
             </section>
 
-            <a class="fc-floating-preinscripcion is-hidden" href="<?php echo esc_url($url_inscripcion); ?>" aria-label="Preinscribirme a <?php echo esc_attr($titulo); ?>" aria-hidden="true" tabindex="-1">
+            <a class="fc-floating-preinscripcion is-hidden" href="<?php echo esc_url($url_inscripcion); ?>" aria-label="Abrir formulario de preinscripción para <?php echo esc_attr($titulo); ?>" aria-hidden="true" tabindex="-1">
                 <i class="bi bi-pencil-square" aria-hidden="true"></i>
-                <span>Preinscribirme</span>
+                <span class="fc-floating-copy">
+                    <strong>Formulario de preinscripción</strong>
+                    <small>Inscripciones abiertas</small>
+                </span>
             </a>
 
             <?php endif; ?>
@@ -3238,6 +3241,154 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
     .fc-feature-card h3,
     .fc-more-card h3 {
         min-height: 0;
+    }
+}
+
+
+
+/* =========================================================
+   Botón flotante de preinscripción: versión final
+   Este bloque debe quedar al final para no ser pisado por estilos previos.
+   ========================================================= */
+.flacso-carta-virtual .fc-floating-preinscripcion {
+    position: fixed !important;
+    right: max(1.25rem, env(safe-area-inset-right));
+    bottom: max(1.25rem, env(safe-area-inset-bottom));
+    left: auto;
+    z-index: 99999;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .85rem;
+
+    width: auto;
+    max-width: min(92vw, 360px);
+    min-height: 54px;
+    padding: .9rem 1.15rem .9rem .9rem;
+
+    border: 1px solid rgba(255, 255, 255, .22);
+    border-radius: 999px;
+    background:
+        radial-gradient(circle at 18% 20%, rgba(254, 210, 34, .22), transparent 38%),
+        linear-gradient(135deg, var(--fc-primary) 0%, var(--fc-primary-dark) 100%);
+
+    color: var(--fc-white);
+    text-decoration: none;
+    text-transform: none;
+    letter-spacing: 0;
+    line-height: 1.15;
+    isolation: isolate;
+
+    box-shadow:
+        0 18px 40px rgba(15, 26, 45, .32),
+        0 0 0 6px rgba(22, 57, 111, .10);
+
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+
+    transition:
+        transform .22s ease,
+        box-shadow .22s ease,
+        opacity .22s ease,
+        visibility .22s ease,
+        background .22s ease;
+}
+
+.flacso-carta-virtual .fc-floating-preinscripcion i {
+    width: 2.55rem;
+    height: 2.55rem;
+    border-radius: 999px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+
+    background: var(--fc-secondary);
+    color: var(--fc-primary-dark);
+    font-size: 1.15rem;
+    transform: none;
+}
+
+.flacso-carta-virtual .fc-floating-copy {
+    display: grid;
+    gap: .12rem;
+    min-width: 0;
+}
+
+.flacso-carta-virtual .fc-floating-copy strong {
+    display: block;
+    color: var(--fc-white);
+    font-size: .98rem;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.flacso-carta-virtual .fc-floating-copy small {
+    display: block;
+    color: rgba(255, 255, 255, .78);
+    font-size: .76rem;
+    font-weight: 750;
+    white-space: nowrap;
+}
+
+.flacso-carta-virtual .fc-floating-preinscripcion:hover {
+    color: var(--fc-white);
+    border-color: rgba(255, 255, 255, .30);
+    background:
+        radial-gradient(circle at 18% 20%, rgba(254, 210, 34, .28), transparent 38%),
+        linear-gradient(135deg, #1d3f7b 0%, var(--fc-primary-dark) 100%);
+    transform: translateY(-4px) scale(1.015);
+    box-shadow:
+        0 22px 48px rgba(15, 26, 45, .38),
+        0 0 0 8px rgba(254, 210, 34, .18);
+}
+
+.flacso-carta-virtual .fc-floating-preinscripcion:hover i {
+    background: #ffe76a;
+    color: var(--fc-primary-dark);
+    transform: none;
+}
+
+.flacso-carta-virtual .fc-floating-preinscripcion:active {
+    transform: translateY(-1px) scale(.995);
+}
+
+.flacso-carta-virtual .fc-floating-preinscripcion:focus-visible {
+    outline: 3px solid var(--fc-secondary);
+    outline-offset: 4px;
+    box-shadow:
+        0 0 0 6px rgba(16, 43, 86, .32),
+        0 18px 40px rgba(15, 26, 45, .32);
+}
+
+.flacso-carta-virtual .fc-floating-preinscripcion.is-hidden {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(1rem) scale(.96);
+    pointer-events: none;
+}
+
+@media (max-width: 700px) {
+    .flacso-carta-virtual .fc-floating-preinscripcion {
+        right: .85rem;
+        bottom: max(.85rem, env(safe-area-inset-bottom));
+        left: .85rem;
+        max-width: none;
+        width: auto;
+        border-radius: 1.1rem;
+        padding: .85rem 1rem;
+    }
+
+    .flacso-carta-virtual .fc-floating-copy strong {
+        font-size: .94rem;
+    }
+
+    .flacso-carta-virtual .fc-floating-copy small {
+        font-size: .73rem;
     }
 }
 
