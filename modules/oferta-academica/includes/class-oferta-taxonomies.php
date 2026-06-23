@@ -9,6 +9,7 @@ if (!defined('ABSPATH')) {
  */
 class Oferta_Taxonomies {
     private const TERM_IMAGE_META_KEY = 'featured_image_id';
+    private const TERM_IMAGE_URL_META_KEY = 'featured_image_url';
 
     public static function init(): void {
         self::register_taxonomies();
@@ -91,6 +92,20 @@ class Oferta_Taxonomies {
                     ],
                 ],
             ]);
+
+            register_term_meta($taxonomy, self::TERM_IMAGE_URL_META_KEY, [
+                'type' => 'string',
+                'single' => true,
+                'sanitize_callback' => 'esc_url_raw',
+                'auth_callback' => [__CLASS__, 'can_manage_term_media'],
+                'show_in_rest' => [
+                    'schema' => [
+                        'description' => __('URL externa de la imagen destacada del término', 'flacso-oferta-academica'),
+                        'type' => 'string',
+                        'default' => '',
+                    ],
+                ],
+            ]);
         }
     }
 
@@ -102,6 +117,16 @@ class Oferta_Taxonomies {
                 },
                 'schema' => [
                     'type' => 'integer',
+                    'context' => ['view', 'edit'],
+                ],
+            ]);
+
+            register_rest_field($taxonomy, 'featured_image_url', [
+                'get_callback' => static function ($term_array) {
+                    return self::get_term_featured_image_url((int) ($term_array['id'] ?? 0));
+                },
+                'schema' => [
+                    'type' => 'string',
                     'context' => ['view', 'edit'],
                 ],
             ]);
@@ -243,6 +268,7 @@ class Oferta_Taxonomies {
             'slug' => $term->slug,
             'description' => (string) $term->description,
             'featured_image_id' => self::get_term_featured_image_id((int) $term->term_id),
+            'featured_image_url' => self::get_term_featured_image_url((int) $term->term_id),
             'featured_image_data' => self::get_term_featured_image_data((int) $term->term_id),
         ];
     }
@@ -255,11 +281,45 @@ class Oferta_Taxonomies {
         return max(0, (int) get_term_meta($term_id, self::TERM_IMAGE_META_KEY, true));
     }
 
+    public static function get_term_featured_image_url(int $term_id): string {
+        if ($term_id <= 0) {
+            return '';
+        }
+
+        $url = get_term_meta($term_id, self::TERM_IMAGE_URL_META_KEY, true);
+
+        return is_string($url) ? esc_url_raw($url) : '';
+    }
+
     public static function get_term_featured_image_data($term): ?array {
         $term_id = $term instanceof WP_Term ? (int) $term->term_id : (int) $term;
+        $external_url = self::get_term_featured_image_url($term_id);
+
+        if ($external_url !== '') {
+            return self::build_external_image_data($external_url);
+        }
+
         $media_id = self::get_term_featured_image_id($term_id);
 
         return self::build_attachment_image_data($media_id);
+    }
+
+    private static function build_external_image_data(string $url): ?array {
+        $normalized_url = esc_url_raw($url);
+        if ($normalized_url === '') {
+            return null;
+        }
+
+        return [
+            'id' => 0,
+            'url' => $normalized_url,
+            'large' => $normalized_url,
+            'medium' => $normalized_url,
+            'alt' => '',
+            'width' => 0,
+            'height' => 0,
+            'source' => 'url',
+        ];
     }
 
     private static function build_attachment_image_data(int $media_id): ?array {
@@ -284,6 +344,7 @@ class Oferta_Taxonomies {
             'alt' => is_string($alt) ? $alt : '',
             'width' => (int) ($full[1] ?? 0),
             'height' => (int) ($full[2] ?? 0),
+            'source' => 'media',
         ];
     }
 
@@ -309,6 +370,7 @@ class Oferta_Taxonomies {
         }
 
         $image_id = self::get_term_featured_image_id((int) $term->term_id);
+        $image_url = self::get_term_featured_image_url((int) $term->term_id);
         wp_nonce_field('flacso_term_image_action', 'flacso_term_image_nonce');
         ?>
         <tr class="form-field term-group-wrap">
@@ -316,7 +378,7 @@ class Oferta_Taxonomies {
                 <label for="flacso-term-featured-image-id"><?php esc_html_e('Imagen destacada', 'flacso-oferta-academica'); ?></label>
             </th>
             <td>
-                <?php self::render_term_image_control($image_id); ?>
+                <?php self::render_term_image_control($image_id, $image_url); ?>
                 <p class="description"><?php esc_html_e('Esta imagen se puede usar en la página pública del tipo de oferta y en la app.', 'flacso-oferta-academica'); ?></p>
             </td>
         </tr>
@@ -338,6 +400,17 @@ class Oferta_Taxonomies {
         $image_id = isset($_POST['flacso_term_featured_image_id'])
             ? absint(wp_unslash($_POST['flacso_term_featured_image_id']))
             : 0;
+        $image_url = isset($_POST['flacso_term_featured_image_url'])
+            ? esc_url_raw(trim((string) wp_unslash($_POST['flacso_term_featured_image_url'])))
+            : '';
+
+        if ($image_url !== '') {
+            update_term_meta($term_id, self::TERM_IMAGE_URL_META_KEY, $image_url);
+            delete_term_meta($term_id, self::TERM_IMAGE_META_KEY);
+            return;
+        }
+
+        delete_term_meta($term_id, self::TERM_IMAGE_URL_META_KEY);
 
         if ($image_id > 0) {
             update_term_meta($term_id, self::TERM_IMAGE_META_KEY, $image_id);
@@ -398,6 +471,11 @@ class Oferta_Taxonomies {
                 gap: 8px;
                 flex-wrap: wrap;
             }
+
+            .flacso-term-image-control__url {
+                display: grid;
+                gap: 6px;
+            }
         </style>
         <script>
             (function ($) {
@@ -412,12 +490,19 @@ class Oferta_Taxonomies {
                     preview.html('<img src="' + url + '" alt="' + alt + '" />');
                 }
 
+                function getInputs(container) {
+                    return {
+                        mediaInput: container.find('.flacso-term-image-control__input'),
+                        urlInput: container.find('.flacso-term-image-control__url-input')
+                    };
+                }
+
                 $(document).on('click', '.flacso-term-image-select', function (event) {
                     event.preventDefault();
 
                     const button = $(this);
                     const container = button.closest('.flacso-term-image-control');
-                    const input = container.find('.flacso-term-image-control__input');
+                    const { mediaInput, urlInput } = getInputs(container);
 
                     const frame = wp.media({
                         title: '<?php echo esc_js(__('Seleccionar imagen destacada', 'flacso-oferta-academica')); ?>',
@@ -429,11 +514,22 @@ class Oferta_Taxonomies {
 
                     frame.on('select', function () {
                         const attachment = frame.state().get('selection').first().toJSON();
-                        input.val(attachment.id || '');
+                        mediaInput.val(attachment.id || '');
+                        urlInput.val('');
                         renderPreview(container, attachment.sizes?.medium?.url || attachment.sizes?.large?.url || attachment.url || '', attachment.alt || '');
                     });
 
                     frame.open();
+                });
+
+                $(document).on('input change', '.flacso-term-image-control__url-input', function () {
+                    const input = $(this);
+                    const container = input.closest('.flacso-term-image-control');
+                    const { mediaInput } = getInputs(container);
+                    const url = (input.val() || '').trim();
+
+                    mediaInput.val('');
+                    renderPreview(container, url, '');
                 });
 
                 $(document).on('click', '.flacso-term-image-remove', function (event) {
@@ -441,7 +537,9 @@ class Oferta_Taxonomies {
 
                     const button = $(this);
                     const container = button.closest('.flacso-term-image-control');
-                    container.find('.flacso-term-image-control__input').val('');
+                    const { mediaInput, urlInput } = getInputs(container);
+                    mediaInput.val('');
+                    urlInput.val('');
                     renderPreview(container, '', '');
                 });
             })(jQuery);
@@ -458,9 +556,11 @@ class Oferta_Taxonomies {
         }
     }
 
-    private static function render_term_image_control(int $image_id): void {
-        $image_data = self::build_attachment_image_data($image_id);
-        $image_url = $image_data['medium'] ?? ($image_data['large'] ?? ($image_data['url'] ?? ''));
+    private static function render_term_image_control(int $image_id, string $external_image_url = ''): void {
+        $image_data = $external_image_url !== ''
+            ? self::build_external_image_data($external_image_url)
+            : self::build_attachment_image_data($image_id);
+        $preview_image_url = $image_data['medium'] ?? ($image_data['large'] ?? ($image_data['url'] ?? ''));
         $image_alt = $image_data['alt'] ?? '';
         ?>
         <div class="flacso-term-image-control">
@@ -471,9 +571,20 @@ class Oferta_Taxonomies {
                 name="flacso_term_featured_image_id"
                 value="<?php echo esc_attr((string) $image_id); ?>"
             />
+            <div class="flacso-term-image-control__url">
+                <label for="flacso-term-featured-image-url"><?php esc_html_e('URL directa de la imagen', 'flacso-oferta-academica'); ?></label>
+                <input
+                    type="url"
+                    id="flacso-term-featured-image-url"
+                    class="regular-text flacso-term-image-control__url-input"
+                    name="flacso_term_featured_image_url"
+                    value="<?php echo esc_attr($external_image_url); ?>"
+                    placeholder="https://ejemplo.com/imagen-destacada.png"
+                />
+            </div>
             <div class="flacso-term-image-control__preview">
-                <?php if ($image_url) : ?>
-                    <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($image_alt); ?>" />
+                <?php if ($preview_image_url) : ?>
+                    <img src="<?php echo esc_url($preview_image_url); ?>" alt="<?php echo esc_attr($image_alt); ?>" />
                 <?php else : ?>
                     <div class="flacso-term-image-control__placeholder"><?php esc_html_e('Sin imagen seleccionada', 'flacso-oferta-academica'); ?></div>
                 <?php endif; ?>

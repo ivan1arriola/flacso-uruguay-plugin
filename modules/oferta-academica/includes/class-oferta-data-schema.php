@@ -702,6 +702,7 @@ class Oferta_Data_Schema {
                             'slug' => $t->slug,
                             'description' => (string) $t->description,
                             'featured_image_id' => 0,
+                            'featured_image_url' => '',
                             'featured_image_data' => null,
                         ];
                     }
