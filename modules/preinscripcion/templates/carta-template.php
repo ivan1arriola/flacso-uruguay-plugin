@@ -3938,6 +3938,105 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 }
 
 
+
+
+/* =========================================================
+   Ajuste final: etiqueta superior del hero (ej. Primera edición)
+   La versión anterior funcionaba como una cinta pesada. Esta versión
+   la convierte en un distintivo compacto, más integrado al hero.
+========================================================= */
+.flacso-carta-virtual .fc-hero-inner.has-hero-ribbon {
+    padding-top: clamp(2rem, 4vw, 3.05rem) !important;
+}
+
+.flacso-carta-virtual .fc-hero-ribbon {
+    position: absolute !important;
+    top: clamp(1rem, 2.2vw, 1.35rem) !important;
+    right: clamp(1rem, 2.2vw, 1.35rem) !important;
+    left: auto !important;
+    z-index: 6;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .48rem;
+
+    min-width: 0 !important;
+    max-width: calc(100% - 2rem);
+    padding: .48rem .82rem .48rem .52rem !important;
+
+    border: 1px solid rgba(255, 255, 255, .48);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .92) !important;
+    color: var(--fc-primary-dark) !important;
+    clip-path: none !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    box-shadow:
+        0 14px 32px rgba(0, 0, 0, .18),
+        inset 0 1px 0 rgba(255, 255, 255, .75) !important;
+
+    font-size: .83rem !important;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: .005em;
+}
+
+.flacso-carta-virtual .fc-hero-ribbon::after {
+    display: none !important;
+}
+
+.flacso-carta-virtual .fc-hero-ribbon i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+
+    width: 1.72rem;
+    height: 1.72rem;
+    border-radius: 999px;
+
+    background: var(--fc-secondary);
+    color: var(--fc-primary-dark);
+    font-size: .82rem !important;
+    box-shadow: 0 5px 12px rgba(22, 57, 111, .16);
+}
+
+.flacso-carta-virtual .fc-hero-ribbon span {
+    display: block;
+    color: var(--fc-primary-dark);
+    font-size: .83rem;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+@media (max-width: 980px) {
+    .flacso-carta-virtual .fc-hero-inner.has-hero-ribbon {
+        padding-top: 4rem !important;
+    }
+}
+
+@media (max-width: 640px) {
+    .flacso-carta-virtual .fc-hero-inner.has-hero-ribbon {
+        padding-top: 4.35rem !important;
+    }
+
+    .flacso-carta-virtual .fc-hero-ribbon {
+        top: 1rem !important;
+        right: 1rem !important;
+        left: 1rem !important;
+        width: auto;
+        max-width: none;
+        padding: .55rem .75rem !important;
+    }
+
+    .flacso-carta-virtual .fc-hero-ribbon span {
+        white-space: normal;
+        text-align: center;
+    }
+}
+
 </style>
 
 
