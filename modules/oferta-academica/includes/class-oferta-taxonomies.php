@@ -189,5 +189,7 @@ class Oferta_Taxonomies {
         }
 
         $query->set('has_password', false);
+        $query->set('posts_per_page', -1);
+        $query->set('nopaging', true);
     }
 }
