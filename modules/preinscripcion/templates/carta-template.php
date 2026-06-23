@@ -374,7 +374,13 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
     <main id="main" class="site-main" aria-labelledby="fc-carta-title">
 
         <section class="fc-hero" aria-labelledby="fc-carta-title">
-            <div class="fc-hero-inner">
+            <div class="fc-hero-inner<?php echo $hero_badge_text !== '' ? ' has-hero-ribbon' : ''; ?>">
+                <?php if ($hero_badge_text !== '') : ?>
+                    <div class="fc-hero-ribbon">
+                        <i class="bi bi-bookmark-star-fill" aria-hidden="true"></i>
+                        <span><?php echo esc_html($hero_badge_text); ?></span>
+                    </div>
+                <?php endif; ?>
 
                 <div class="fc-hero-copy">
                     <div class="fc-eyebrow">
@@ -394,21 +400,12 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
                         <?php endif; ?>
                     </div>
 
-                    <?php if ($hero_badge_text !== '' || $mostrar_instancias_presenciales) : ?>
+                    <?php if ($mostrar_instancias_presenciales) : ?>
                         <div class="fc-hero-highlights">
-                            <?php if ($hero_badge_text !== '') : ?>
-                                <span class="fc-hero-badge">
-                                    <i class="bi bi-bookmark-star" aria-hidden="true"></i>
-                                    <?php echo esc_html($hero_badge_text); ?>
-                                </span>
-                            <?php endif; ?>
-
-                            <?php if ($mostrar_instancias_presenciales) : ?>
-                                <span class="fc-hero-badge fc-hero-badge--accent">
-                                    <i class="bi bi-geo-alt" aria-hidden="true"></i>
-                                    Con instancias presenciales
-                                </span>
-                            <?php endif; ?>
+                            <span class="fc-hero-badge fc-hero-badge--accent">
+                                <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                                Con instancias presenciales
+                            </span>
                         </div>
                     <?php endif; ?>
 
@@ -865,15 +862,21 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 
                 if ($asist_docente) {
                     $asist_meta = get_post_meta($asist_docente->ID);
-                    $asist_prefijo = !empty($asist_meta['prefijo_abrev'][0]) ? esc_html($asist_meta['prefijo_abrev'][0]) . ' ' : '';
-                    $asist_nombre_completo = $asist_prefijo . esc_html(get_the_title($asist_docente->ID));
+                    $asist_prefijo_raw = !empty($asist_meta['prefijo_abrev'][0]) ? trim((string) $asist_meta['prefijo_abrev'][0]) : '';
+                    $asist_prefijo = $asist_prefijo_raw !== '' ? esc_html($asist_prefijo_raw) . ' ' : '';
+                    $asist_nombre_base = get_the_title($asist_docente->ID);
+                    if (function_exists('dp_strip_prefix_from_name')) {
+                        $asist_nombre_base = dp_strip_prefix_from_name($asist_nombre_base, $asist_prefijo_raw);
+                    }
+                    $asist_nombre_base = esc_html($asist_nombre_base);
+                    $asist_nombre_completo = $asist_prefijo . $asist_nombre_base;
                     $asist_imagen_url = get_the_post_thumbnail_url($asist_docente->ID, 'medium');
                     $prep_posgrado = flacso_carta_determinante(get_the_title($post_id));
                     $enlace_correo = '<a href="mailto:' . esc_attr($asistente_correo) . '">' . esc_html($asistente_correo) . '</a>';
 
                     $presentacion_final = sprintf(
                         'Mi nombre es %s y soy %s %s %s. Si tienes dudas o consultas puedes contactarme al correo electrónico %s.',
-                        $asist_nombre_completo,
+                        $asist_nombre_base,
                         esc_html($asistente_titulo),
                         esc_html($prep_posgrado),
                         esc_html(get_the_title($post_id)),
@@ -974,9 +977,51 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
     box-shadow: var(--fc-shadow);
 }
 
+.fc-hero-inner.has-hero-ribbon {
+    padding-top: clamp(4rem, 5vw, 4.6rem);
+}
+
 .fc-hero-copy {
     position: relative;
     z-index: 2;
+}
+
+.fc-hero-ribbon {
+    position: absolute;
+    top: 0;
+    right: clamp(1rem, 3vw, 2rem);
+    z-index: 4;
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    min-width: min(100%, 220px);
+    padding: .9rem 1.1rem 1.2rem;
+    background: linear-gradient(135deg, #ffe76a 0%, #ffd24d 48%, #f5b800 100%);
+    color: var(--fc-primary-dark);
+    font-size: .88rem;
+    font-weight: 900;
+    letter-spacing: .02em;
+    line-height: 1.15;
+    box-shadow: 0 18px 36px rgba(0, 0, 0, .22);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 16px), 0 100%);
+}
+
+.fc-hero-ribbon::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    border-top: 12px solid rgba(16, 43, 86, .28);
+    border-left: 12px solid transparent;
+}
+
+.fc-hero-ribbon i {
+    font-size: .95rem;
+    flex: 0 0 auto;
+}
+
+.fc-hero-ribbon span {
+    display: block;
 }
 
 .fc-eyebrow {
@@ -1972,6 +2017,10 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
         grid-template-columns: 1fr;
     }
 
+    .fc-hero-inner.has-hero-ribbon {
+        padding-top: 4.8rem;
+    }
+
     .fc-rich-grid {
         grid-template-columns: 1fr;
     }
@@ -2015,6 +2064,18 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
     .fc-hero-inner {
         border-radius: 1rem;
         padding: 1.25rem;
+    }
+
+    .fc-hero-inner.has-hero-ribbon {
+        padding-top: 4.5rem;
+    }
+
+    .fc-hero-ribbon {
+        right: 1rem;
+        min-width: 0;
+        max-width: calc(100% - 2rem);
+        padding: .82rem 1rem 1.05rem;
+        font-size: .8rem;
     }
 
     .fc-page-container {
@@ -2714,18 +2775,6 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
     overflow-wrap: anywhere;
 }
 
-@keyframes fc-pulse-button {
-    0% {
-        box-shadow: 0 0 0 0 rgba(226, 218, 0, 0.6);
-    }
-    70% {
-        box-shadow: 0 0 0 20px rgba(226, 218, 0, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(226, 218, 0, 0);
-    }
-}
-
 .fc-floating-preinscripcion {
     position: fixed;
     right: max(1.5rem, env(safe-area-inset-right));
@@ -2735,32 +2784,24 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
     align-items: center;
     justify-content: center;
     gap: .75rem;
-    padding: 1.25rem 2.25rem;
-    border: 2px solid rgba(255, 255, 255, .6);
+    padding: 1rem 1.6rem 1rem 1rem;
     border-radius: 999px;
-    background: var(--fc-secondary);
-    color: var(--fc-primary-dark);
-    font-size: 1.15rem;
+    font-size: 1.08rem;
     font-weight: 900;
     line-height: 1;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.03em;
     text-decoration: none;
-    box-shadow: 0 15px 35px rgba(15, 26, 45, .35);
     opacity: 1;
     visibility: visible;
     transform: translateY(0) scale(1);
     pointer-events: auto;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: fc-pulse-button 2.5s infinite;
+    transition: transform .24s ease, box-shadow .24s ease, opacity .24s ease, visibility .24s ease;
+    backdrop-filter: blur(10px);
 }
 
 .fc-floating-preinscripcion:hover {
-    color: var(--fc-primary-dark);
-    transform: translateY(-4px) scale(1.03);
-    filter: brightness(.97);
-    box-shadow: 0 20px 45px rgba(15, 26, 45, .45);
-    animation: none;
+    transform: translateY(-4px) scale(1.02);
 }
 
 .fc-floating-preinscripcion.is-hidden {
@@ -2776,7 +2817,8 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
         bottom: .85rem;
         left: .85rem;
         width: auto;
-        border-radius: .95rem;
+        justify-content: center;
+        border-radius: 1.05rem;
         padding: 1rem 1.15rem;
     }
 }
@@ -2797,6 +2839,11 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
     --fc-page-gutter: 2rem;
     --fc-card-radius: 1.15rem;
     --fc-card-padding: 1.25rem;
+    --fc-cta-warm-1: #fff200;
+    --fc-cta-warm-2: #ffc83a;
+    --fc-cta-warm-3: #ff9f1f;
+    --fc-cta-ring: rgba(255, 206, 56, .14);
+    --fc-cta-shadow: rgba(15, 26, 45, .26);
 }
 
 .fc-hero,
@@ -2901,6 +2948,49 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 .fc-action-buttons a,
 .fc-floating-preinscripcion {
     min-height: 44px;
+}
+
+.fc-primary-button,
+.fc-final-cta a,
+.fc-floating-preinscripcion {
+    position: relative;
+    border: 2px solid rgba(16, 43, 86, .16);
+    background: linear-gradient(135deg, var(--fc-cta-warm-1) 0%, var(--fc-cta-warm-2) 52%, var(--fc-cta-warm-3) 100%);
+    color: var(--fc-primary-dark);
+    box-shadow:
+        0 18px 38px var(--fc-cta-shadow),
+        0 0 0 10px var(--fc-cta-ring);
+}
+
+.fc-primary-button i,
+.fc-final-cta a i,
+.fc-floating-preinscripcion i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 999px;
+    background: rgba(16, 43, 86, .12);
+    color: var(--fc-primary-dark);
+    flex: 0 0 auto;
+}
+
+.fc-primary-button:hover,
+.fc-final-cta a:hover,
+.fc-floating-preinscripcion:hover {
+    color: var(--fc-primary-dark);
+    transform: translateY(-3px);
+    filter: none;
+    box-shadow:
+        0 22px 48px rgba(15, 26, 45, .3),
+        0 0 0 12px rgba(255, 206, 56, .12);
+}
+
+.fc-primary-button:active,
+.fc-final-cta a:active,
+.fc-floating-preinscripcion:active {
+    transform: translateY(-1px);
 }
 
 .fc-primary-button:focus-visible,
