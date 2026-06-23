@@ -206,6 +206,97 @@ class Oferta_Renderer {
         return 'year';
     }
 
+    private static function resolve_proximo_inicio_timestamp(string $value, string $stored_precision = ''): ?int {
+        $value = trim($value);
+        if ($value === '') {
+            return null;
+        }
+
+        $precision = self::detect_proximo_inicio_precision($value, $stored_precision);
+        $timezone = wp_timezone();
+        $year = 0;
+        $month = 1;
+        $day = 1;
+
+        if ($precision === 'day') {
+            if (preg_match('/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/', $value, $matches)) {
+                $year = (int) $matches[1];
+                $month = (int) $matches[2];
+                $day = (int) $matches[3];
+            } elseif (preg_match('/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/', $value, $matches)) {
+                $day = (int) $matches[1];
+                $month = (int) $matches[2];
+                $year = (int) $matches[3];
+            }
+        } elseif ($precision === 'month') {
+            if (preg_match('/^(\d{4})[-\/](\d{1,2})$/', $value, $matches)) {
+                $year = (int) $matches[1];
+                $month = (int) $matches[2];
+            } elseif (preg_match('/^(\d{1,2})[-\/](\d{4})$/', $value, $matches)) {
+                $month = (int) $matches[1];
+                $year = (int) $matches[2];
+            }
+        } elseif ($precision === 'year' && preg_match('/^\d{4}$/', $value)) {
+            $year = (int) $value;
+        }
+
+        if ($year <= 0 || $month < 1 || $month > 12 || !checkdate($month, $day, $year)) {
+            return null;
+        }
+
+        $date = DateTimeImmutable::createFromFormat('Y-m-d|', sprintf('%04d-%02d-%02d', $year, $month, $day), $timezone);
+
+        return $date ? $date->getTimestamp() : null;
+    }
+
+    private static function get_term_earliest_inicio_timestamp(int $term_id): ?int {
+        if ($term_id <= 0) {
+            return null;
+        }
+
+        $query_args = [
+            'post_type' => 'oferta-academica',
+            'post_status' => self::oferta_post_statuses(),
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'no_found_rows' => true,
+            'tax_query' => [
+                [
+                    'taxonomy' => 'tipo-oferta-academica',
+                    'field' => 'term_id',
+                    'terms' => $term_id,
+                ],
+            ],
+        ];
+        $post_ids = get_posts(self::exclude_password_protected_from_query_args($query_args));
+
+        if (empty($post_ids)) {
+            return null;
+        }
+
+        $earliest = null;
+
+        foreach ($post_ids as $post_id) {
+            $proximo_inicio = get_post_meta((int) $post_id, 'proximo_inicio', true);
+            $proximo_precision = (string) get_post_meta((int) $post_id, 'proximo_inicio_precision', true);
+
+            if (is_array($proximo_inicio)) {
+                $proximo_inicio = reset($proximo_inicio);
+            }
+
+            $timestamp = self::resolve_proximo_inicio_timestamp((string) $proximo_inicio, $proximo_precision);
+            if ($timestamp === null) {
+                continue;
+            }
+
+            if ($earliest === null || $timestamp < $earliest) {
+                $earliest = $timestamp;
+            }
+        }
+
+        return $earliest;
+    }
+
     private static function mb_ucfirst(string $text): string {
         if ($text === '') {
             return '';
@@ -299,7 +390,29 @@ class Oferta_Renderer {
 
         $order_preferida = ['maestria', 'especializacion', 'diplomado', 'diploma'];
         if (!is_wp_error($terms)) {
-            usort($terms, function($a, $b) use ($order_preferida) {
+            $term_start_dates = [];
+            foreach ($terms as $term) {
+                $term_start_dates[(int) $term->term_id] = self::get_term_earliest_inicio_timestamp((int) $term->term_id);
+            }
+
+            usort($terms, function($a, $b) use ($order_preferida, $term_start_dates) {
+                $a_start = $term_start_dates[(int) $a->term_id] ?? null;
+                $b_start = $term_start_dates[(int) $b->term_id] ?? null;
+
+                if ($a_start !== null || $b_start !== null) {
+                    if ($a_start === null) {
+                        return 1;
+                    }
+
+                    if ($b_start === null) {
+                        return -1;
+                    }
+
+                    if ($a_start !== $b_start) {
+                        return $a_start <=> $b_start;
+                    }
+                }
+
                 $ai = array_search($a->slug, $order_preferida, true);
                 $bi = array_search($b->slug, $order_preferida, true);
                 $ai = ($ai === false) ? 999 : $ai;
@@ -311,10 +424,6 @@ class Oferta_Renderer {
             $terms = [];
         }
 
-        $link_maestria = !is_wp_error(get_term_link('maestria', 'tipo-oferta-academica')) ? get_term_link('maestria', 'tipo-oferta-academica') : home_url('/formacion/maestrias/');
-        $link_especializacion = !is_wp_error(get_term_link('especializacion', 'tipo-oferta-academica')) ? get_term_link('especializacion', 'tipo-oferta-academica') : home_url('/formacion/especializaciones/');
-        $link_diplomado = !is_wp_error(get_term_link('diplomado', 'tipo-oferta-academica')) ? get_term_link('diplomado', 'tipo-oferta-academica') : home_url('/formacion/diplomados/');
-        $link_diploma = !is_wp_error(get_term_link('diploma', 'tipo-oferta-academica')) ? get_term_link('diploma', 'tipo-oferta-academica') : home_url('/formacion/diplomas/');
         $link_seminarios = home_url('/seminarios/');
 
         ob_start();
@@ -325,21 +434,20 @@ class Oferta_Renderer {
                     <h1 class="flacso-oferta-hero__title mb-3"><?php echo esc_html($hero_title); ?></h1>
                     <p class="flacso-oferta-hero__subtitle mb-4"><?php echo esc_html($hero_subtitle); ?></p>
                     <div class="flacso-oferta-hero__actions" role="navigation" aria-label="<?php esc_attr_e('Navegación de la oferta académica', 'flacso-oferta-academica'); ?>">
-                        <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url($link_maestria); ?>">
-                            <?php esc_html_e('Maestrías', 'flacso-oferta-academica'); ?>
-                        </a>
-                        <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url($link_especializacion); ?>">
-                            <?php esc_html_e('Especializaciones', 'flacso-oferta-academica'); ?>
-                        </a>
-                        <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url($link_diplomado); ?>">
-                            <?php esc_html_e('Diplomados', 'flacso-oferta-academica'); ?>
-                        </a>
-                        <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url($link_diploma); ?>">
-                            <?php esc_html_e('Diplomas', 'flacso-oferta-academica'); ?>
-                        </a>
+                        <?php foreach ($terms as $term) : ?>
+                            <?php
+                            $term_link = get_term_link($term);
+                            if (is_wp_error($term_link)) {
+                                continue;
+                            }
+                            ?>
+                            <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url($term_link); ?>">
+                                <?php echo esc_html($term->name); ?>
+                            </a>
+                        <?php endforeach; ?>
                         <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url($link_seminarios); ?>">
                             <?php esc_html_e('Seminarios', 'flacso-oferta-academica'); ?>
-                        </a>       </a>
+                        </a>
                         <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--convenios" href="https://flacso.edu.uy/convenios/">
                             <?php esc_html_e('Convenios', 'flacso-oferta-academica'); ?>
                         </a>
