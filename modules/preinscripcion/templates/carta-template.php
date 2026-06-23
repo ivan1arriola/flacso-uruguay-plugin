@@ -3392,6 +3392,552 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
     }
 }
 
+
+/* =========================================================
+   Mejora visual de tabla de inversión
+   Este bloque va al final para pisar estilos anteriores.
+========================================================= */
+.flacso-carta-virtual .fc-card[aria-labelledby="fc-inversion-title"] {
+    overflow: hidden;
+    border: 1px solid rgba(22, 57, 111, .12);
+    border-radius: 1.45rem;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, .98), rgba(247, 249, 252, .95));
+    box-shadow:
+        0 24px 60px rgba(15, 26, 45, .11),
+        0 1px 0 rgba(255, 255, 255, .9) inset;
+}
+
+.flacso-carta-virtual .fc-card[aria-labelledby="fc-inversion-title"] .fc-card-header {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(1.35rem, 3vw, 1.9rem) clamp(1.25rem, 3vw, 1.8rem);
+    background:
+        radial-gradient(circle at 92% 12%, rgba(254, 210, 34, .34), transparent 13rem),
+        radial-gradient(circle at 8% 0%, rgba(255, 255, 255, .14), transparent 14rem),
+        linear-gradient(135deg, #17366c 0%, #102b56 58%, #223d39 100%);
+}
+
+.flacso-carta-virtual .fc-card[aria-labelledby="fc-inversion-title"] .fc-card-header::after {
+    content: "";
+    position: absolute;
+    right: -3rem;
+    bottom: -4.75rem;
+    width: 12rem;
+    height: 12rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .08);
+}
+
+.flacso-carta-virtual .fc-card[aria-labelledby="fc-inversion-title"] .fc-card-kicker {
+    position: relative;
+    z-index: 1;
+    align-items: center;
+    gap: .45rem;
+    margin-bottom: .65rem;
+    padding: .38rem .65rem;
+    border-radius: 999px;
+    background: rgba(254, 210, 34, .14);
+    color: var(--fc-secondary);
+    font-size: .78rem;
+    letter-spacing: .09em;
+}
+
+.flacso-carta-virtual .fc-card[aria-labelledby="fc-inversion-title"] .fc-card-kicker::before {
+    content: "";
+    width: .48rem;
+    height: .48rem;
+    border-radius: 999px;
+    background: var(--fc-secondary);
+    box-shadow: 0 0 0 4px rgba(254, 210, 34, .16);
+}
+
+.flacso-carta-virtual .fc-card[aria-labelledby="fc-inversion-title"] .fc-card-header h2 {
+    position: relative;
+    z-index: 1;
+    max-width: 850px;
+    font-size: clamp(1.65rem, 3.1vw, 2.35rem);
+    letter-spacing: -.04em;
+}
+
+.flacso-carta-virtual .fc-card[aria-labelledby="fc-inversion-title"] .fc-table-wrap {
+    overflow-x: visible;
+    padding: 1rem 1.15rem .65rem;
+    background:
+        linear-gradient(180deg, rgba(247, 249, 252, .92), rgba(255, 255, 255, .98));
+}
+
+.flacso-carta-virtual .fc-pricing-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0 .7rem;
+}
+
+.flacso-carta-virtual .fc-pricing-table thead th {
+    padding: .35rem .95rem .55rem;
+    border: 0;
+    background: transparent;
+    color: var(--fc-primary);
+    font-size: .78rem;
+    font-weight: 950;
+    letter-spacing: .055em;
+    text-transform: uppercase;
+}
+
+.flacso-carta-virtual .fc-pricing-table thead th span {
+    margin-top: .18rem;
+    color: var(--fc-muted);
+    font-size: .72rem;
+    font-weight: 750;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.flacso-carta-virtual .fc-pricing-table tbody tr {
+    position: relative;
+}
+
+.flacso-carta-virtual .fc-pricing-table tbody td {
+    padding: 1.05rem .95rem;
+    border-top: 1px solid rgba(22, 57, 111, .11);
+    border-bottom: 1px solid rgba(22, 57, 111, .11);
+    background: rgba(255, 255, 255, .96) !important;
+    color: var(--fc-muted);
+    font-size: 1rem;
+    line-height: 1.45;
+    vertical-align: middle;
+    box-shadow: 0 10px 22px rgba(15, 26, 45, .045);
+}
+
+.flacso-carta-virtual .fc-pricing-table tbody td:first-child {
+    position: relative;
+    width: 50%;
+    padding-left: 1.2rem;
+    border-left: 1px solid rgba(22, 57, 111, .11);
+    border-radius: 1rem 0 0 1rem;
+    color: var(--fc-text);
+    font-size: 1.02rem;
+    font-weight: 900;
+}
+
+.flacso-carta-virtual .fc-pricing-table tbody td:last-child {
+    border-right: 1px solid rgba(22, 57, 111, .11);
+    border-radius: 0 1rem 1rem 0;
+}
+
+.flacso-carta-virtual .fc-pricing-table tbody td:nth-child(2),
+.flacso-carta-virtual .fc-pricing-table tbody td:nth-child(3) {
+    color: var(--fc-primary-dark);
+    font-size: 1.08rem;
+    font-weight: 850;
+}
+
+.flacso-carta-virtual .fc-pricing-table tbody tr:hover td {
+    background: #ffffff !important;
+    border-color: rgba(22, 57, 111, .20);
+    box-shadow: 0 14px 30px rgba(15, 26, 45, .075);
+}
+
+.flacso-carta-virtual .fc-pricing-table tr.is-highlighted td,
+.flacso-carta-virtual .fc-pricing-table tr.is-highlighted:hover td {
+    border-top-color: rgba(210, 146, 0, .34);
+    border-bottom-color: rgba(210, 146, 0, .34);
+    background:
+        linear-gradient(180deg, rgba(255, 248, 184, .98), rgba(255, 239, 132, .88)) !important;
+    color: #182033;
+    box-shadow:
+        0 18px 40px rgba(210, 146, 0, .16),
+        0 1px 0 rgba(255, 255, 255, .8) inset;
+}
+
+.flacso-carta-virtual .fc-pricing-table tr.is-highlighted td:first-child,
+.flacso-carta-virtual .fc-pricing-table tr.is-highlighted:hover td:first-child {
+    border-left-color: rgba(210, 146, 0, .34);
+    background:
+        linear-gradient(90deg, rgba(254, 210, 34, .95) 0 .42rem, rgba(255, 245, 157, .98) .42rem, rgba(255, 239, 132, .88) 100%) !important;
+}
+
+.flacso-carta-virtual .fc-pricing-table tr.is-highlighted td:last-child,
+.flacso-carta-virtual .fc-pricing-table tr.is-highlighted:hover td:last-child {
+    border-right-color: rgba(210, 146, 0, .34);
+}
+
+.flacso-carta-virtual .fc-pricing-table tr.is-highlighted td:first-child strong:first-child,
+.flacso-carta-virtual .fc-pricing-table tr.is-highlighted td:first-child b:first-child {
+    color: #102b56;
+}
+
+.flacso-carta-virtual .fc-pricing-note {
+    position: relative;
+    margin: 0 1.15rem 1.15rem;
+    padding: 1rem 1.1rem 1rem 3.15rem;
+    border: 1px solid rgba(22, 57, 111, .10);
+    border-radius: 1rem;
+    background: #ffffff;
+    color: var(--fc-muted);
+    box-shadow: 0 10px 24px rgba(15, 26, 45, .045);
+}
+
+.flacso-carta-virtual .fc-pricing-note::before {
+    content: "i";
+    position: absolute;
+    left: 1rem;
+    top: 1rem;
+    width: 1.45rem;
+    height: 1.45rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: rgba(22, 57, 111, .10);
+    color: var(--fc-primary);
+    font-weight: 950;
+    font-style: italic;
+}
+
+.flacso-carta-virtual .fc-pricing-note a {
+    color: var(--fc-primary);
+    font-weight: 900;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
+
+@media (min-width: 701px) {
+    .flacso-carta-virtual .fc-pricing-table th:first-child,
+    .flacso-carta-virtual .fc-pricing-table td:first-child,
+    .flacso-carta-virtual .fc-pricing-table.is-without-usd th:first-child,
+    .flacso-carta-virtual .fc-pricing-table.is-without-usd td:first-child {
+        width: 56%;
+    }
+
+    .flacso-carta-virtual .fc-pricing-table th:nth-child(2),
+    .flacso-carta-virtual .fc-pricing-table td:nth-child(2),
+    .flacso-carta-virtual .fc-pricing-table.is-without-usd th:nth-child(2),
+    .flacso-carta-virtual .fc-pricing-table.is-without-usd td:nth-child(2) {
+        width: 44%;
+    }
+
+    .flacso-carta-virtual .fc-pricing-table th:nth-child(3),
+    .flacso-carta-virtual .fc-pricing-table td:nth-child(3) {
+        width: 22%;
+    }
+
+    .flacso-carta-virtual .fc-pricing-table:not(.is-without-usd) th:first-child,
+    .flacso-carta-virtual .fc-pricing-table:not(.is-without-usd) td:first-child {
+        width: 46%;
+    }
+
+    .flacso-carta-virtual .fc-pricing-table:not(.is-without-usd) th:nth-child(2),
+    .flacso-carta-virtual .fc-pricing-table:not(.is-without-usd) td:nth-child(2),
+    .flacso-carta-virtual .fc-pricing-table:not(.is-without-usd) th:nth-child(3),
+    .flacso-carta-virtual .fc-pricing-table:not(.is-without-usd) td:nth-child(3) {
+        width: 27%;
+    }
+}
+
+@media (max-width: 700px) {
+    .flacso-carta-virtual .fc-card[aria-labelledby="fc-inversion-title"] {
+        border-radius: 1.2rem;
+    }
+
+    .flacso-carta-virtual .fc-card[aria-labelledby="fc-inversion-title"] .fc-table-wrap {
+        padding: .45rem;
+        overflow: visible;
+        background: rgba(247, 249, 252, .92);
+    }
+
+    .flacso-carta-virtual .fc-pricing-table {
+        display: block;
+        border-spacing: 0;
+        table-layout: auto;
+    }
+
+    .flacso-carta-virtual .fc-pricing-table tbody {
+        display: grid;
+        gap: .85rem;
+        padding: .55rem;
+    }
+
+    .flacso-carta-virtual .fc-pricing-table tbody tr {
+        display: block;
+        overflow: hidden;
+        border: 1px solid rgba(22, 57, 111, .12);
+        border-radius: 1rem;
+        background: #ffffff;
+        box-shadow: 0 10px 24px rgba(15, 26, 45, .07);
+    }
+
+    .flacso-carta-virtual .fc-pricing-table tbody td,
+    .flacso-carta-virtual .fc-pricing-table tbody td:first-child,
+    .flacso-carta-virtual .fc-pricing-table tbody td:last-child {
+        display: grid;
+        grid-template-columns: minmax(7rem, 42%) minmax(0, 1fr);
+        gap: .75rem;
+        width: 100%;
+        padding: .9rem 1rem;
+        border: 0;
+        border-bottom: 1px solid rgba(22, 57, 111, .10);
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .flacso-carta-virtual .fc-pricing-table tbody td:last-child {
+        border-bottom: 0;
+    }
+
+    .flacso-carta-virtual .fc-pricing-table tbody td::before {
+        content: attr(data-label);
+        color: var(--fc-primary);
+        font-size: .72rem;
+        font-weight: 950;
+        line-height: 1.25;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+    }
+
+    .flacso-carta-virtual .fc-pricing-table tbody td:first-child {
+        background: rgba(237, 242, 246, .74) !important;
+        color: var(--fc-primary);
+        font-size: 1rem;
+    }
+
+    .flacso-carta-virtual .fc-pricing-table tr.is-highlighted td:first-child,
+    .flacso-carta-virtual .fc-pricing-table tr.is-highlighted:hover td:first-child {
+        background:
+            linear-gradient(90deg, rgba(254, 210, 34, .95) 0 .32rem, rgba(255, 245, 157, .98) .32rem, rgba(255, 239, 132, .88) 100%) !important;
+    }
+
+    .flacso-carta-virtual .fc-pricing-note {
+        margin: .35rem 1rem 1rem;
+        padding: .9rem 1rem .9rem 2.85rem;
+        font-size: .94rem;
+    }
+}
+
+
+/* =========================================================
+   Ajuste final del HERO
+   Objetivo: equilibrar portada + CTA sin afectar el botón flotante
+========================================================= */
+
+.flacso-carta-virtual .fc-hero {
+    max-width: 1200px;
+}
+
+.flacso-carta-virtual .fc-hero-inner {
+    grid-template-columns: minmax(0, 1.08fr) minmax(300px, .92fr);
+    gap: clamp(1.5rem, 4vw, 3.4rem);
+    align-items: center;
+    min-height: min(76vh, 680px);
+    padding: clamp(2rem, 4.5vw, 3.6rem);
+    border-radius: 1.35rem;
+    background:
+        radial-gradient(circle at 10% 8%, rgba(254, 210, 34, .18), transparent 20rem),
+        radial-gradient(circle at 78% 8%, rgba(255, 255, 255, .13), transparent 18rem),
+        radial-gradient(circle at 95% 100%, rgba(255, 255, 255, .10), transparent 18rem),
+        linear-gradient(135deg, #183b70 0%, #122d59 52%, #0f254b 100%);
+}
+
+.flacso-carta-virtual .fc-hero-inner.has-hero-ribbon {
+    padding-top: clamp(3.4rem, 5vw, 4.4rem);
+}
+
+.flacso-carta-virtual .fc-hero-copy {
+    max-width: 720px;
+}
+
+.flacso-carta-virtual .fc-hero h1 {
+    max-width: 720px;
+    font-size: clamp(2.45rem, 4.7vw, 4.15rem);
+    line-height: 1.01;
+    letter-spacing: -.052em;
+}
+
+.flacso-carta-virtual .fc-eyebrow {
+    margin-bottom: 1.25rem;
+    padding: .52rem .82rem;
+    background: rgba(255, 255, 255, .11);
+}
+
+.flacso-carta-virtual .fc-hero-meta {
+    margin-top: 1.45rem;
+}
+
+.flacso-carta-virtual .fc-hero-meta span {
+    min-height: 2.35rem;
+    padding: .58rem .86rem;
+    border-radius: .72rem;
+}
+
+.flacso-carta-virtual .fc-hero-badge--accent {
+    min-height: 2.55rem;
+    padding: .68rem .95rem;
+    box-shadow: 0 10px 22px rgba(0, 0, 0, .12);
+}
+
+.flacso-carta-virtual .fc-hero-actions {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    margin-top: 1.45rem;
+}
+
+.flacso-carta-virtual .fc-hero-actions .fc-primary-button,
+.flacso-carta-virtual .fc-hero-actions .fc-secondary-button {
+    position: relative;
+    min-height: 3.55rem;
+    border-radius: .95rem;
+    padding: .82rem 1.05rem;
+    font-size: .98rem;
+    font-weight: 900;
+    letter-spacing: -.01em;
+    box-shadow: none;
+    transform: none;
+}
+
+.flacso-carta-virtual .fc-hero-actions .fc-primary-button {
+    min-width: 255px;
+    justify-content: flex-start;
+    border: 1px solid rgba(255, 255, 255, .50);
+    background: linear-gradient(135deg, #fed222 0%, #ffe66f 100%);
+    color: var(--fc-primary-dark);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, .18);
+}
+
+.flacso-carta-virtual .fc-hero-actions .fc-secondary-button {
+    min-width: 175px;
+    border: 1px solid rgba(255, 255, 255, .24);
+    background: rgba(255, 255, 255, .10);
+    color: var(--fc-white);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14);
+}
+
+.flacso-carta-virtual .fc-hero-actions .fc-primary-button i,
+.flacso-carta-virtual .fc-hero-actions .fc-secondary-button i {
+    width: 2rem;
+    height: 2rem;
+    border-radius: .72rem;
+    transform: none;
+}
+
+.flacso-carta-virtual .fc-hero-actions .fc-primary-button i {
+    background: rgba(16, 43, 86, .12);
+    color: var(--fc-primary-dark);
+}
+
+.flacso-carta-virtual .fc-hero-actions .fc-secondary-button i {
+    background: rgba(255, 255, 255, .10);
+    color: var(--fc-white);
+}
+
+.flacso-carta-virtual .fc-hero-actions .fc-primary-button:hover {
+    color: var(--fc-primary-dark);
+    border-color: rgba(255, 255, 255, .72);
+    background: linear-gradient(135deg, #ffe15a 0%, #fff1a2 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 18px 32px rgba(0, 0, 0, .22);
+}
+
+.flacso-carta-virtual .fc-hero-actions .fc-secondary-button:hover {
+    color: var(--fc-white);
+    border-color: rgba(255, 255, 255, .38);
+    background: rgba(255, 255, 255, .16);
+    transform: translateY(-2px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 14px 28px rgba(0, 0, 0, .14);
+}
+
+.flacso-carta-virtual .fc-hero-actions .fc-primary-button:hover i,
+.flacso-carta-virtual .fc-hero-actions .fc-secondary-button:hover i {
+    transform: none;
+}
+
+.flacso-carta-virtual .fc-hero-visual {
+    align-items: center;
+    justify-content: center;
+}
+
+.flacso-carta-virtual .fc-cover-card {
+    width: min(100%, 350px);
+    transform: rotate(.8deg);
+    box-shadow: 0 20px 46px rgba(0, 0, 0, .24);
+}
+
+.flacso-carta-virtual .fc-cover-card::before {
+    inset: -.38rem;
+    border-radius: 1.45rem;
+}
+
+.flacso-carta-virtual .fc-hero-ribbon {
+    right: clamp(1.25rem, 3vw, 2rem);
+    min-width: min(100%, 205px);
+    padding: .82rem 1rem 1.08rem;
+    font-size: .86rem;
+}
+
+@media (max-width: 980px) {
+    .flacso-carta-virtual .fc-hero-inner {
+        grid-template-columns: 1fr;
+        min-height: auto;
+    }
+
+    .flacso-carta-virtual .fc-hero-copy {
+        max-width: none;
+    }
+
+    .flacso-carta-virtual .fc-hero h1 {
+        max-width: 820px;
+    }
+
+    .flacso-carta-virtual .fc-hero-visual {
+        align-items: flex-start;
+    }
+
+    .flacso-carta-virtual .fc-cover-card {
+        width: min(100%, 320px);
+    }
+}
+
+@media (max-width: 640px) {
+    .flacso-carta-virtual .fc-hero {
+        padding: 0 .75rem;
+    }
+
+    .flacso-carta-virtual .fc-hero-inner {
+        padding: 1.4rem;
+        border-radius: 1.15rem;
+    }
+
+    .flacso-carta-virtual .fc-hero-inner.has-hero-ribbon {
+        padding-top: 3.8rem;
+    }
+
+    .flacso-carta-virtual .fc-hero h1 {
+        font-size: clamp(2rem, 12vw, 3rem);
+        letter-spacing: -.045em;
+    }
+
+    .flacso-carta-virtual .fc-hero-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: .65rem;
+    }
+
+    .flacso-carta-virtual .fc-hero-actions .fc-primary-button,
+    .flacso-carta-virtual .fc-hero-actions .fc-secondary-button {
+        width: 100%;
+        min-width: 0;
+        justify-content: center;
+        min-height: 3.35rem;
+    }
+
+    .flacso-carta-virtual .fc-cover-card {
+        width: min(100%, 290px);
+    }
+}
+
+
 </style>
 
 
