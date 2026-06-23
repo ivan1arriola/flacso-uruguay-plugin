@@ -2434,7 +2434,13 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 
 .fc-pricing-table tr.is-highlighted td,
 .fc-pricing-table tr.is-highlighted:hover td {
-    background: rgba(233, 229, 15, .22);
+    background: linear-gradient(180deg, rgba(255, 245, 157, .78), rgba(255, 236, 132, .72)) !important;
+    color: var(--fc-text);
+}
+
+.fc-pricing-table tr.is-highlighted td:first-child,
+.fc-pricing-table tr.is-highlighted:hover td:first-child {
+    background: linear-gradient(180deg, rgba(255, 239, 120, .92), rgba(255, 224, 102, .88)) !important;
 }
 
 .fc-pricing-note {
@@ -3081,11 +3087,15 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 
     .fc-pricing-table tr.is-highlighted {
         border-color: rgba(22, 57, 111, .32);
-        box-shadow: 0 0 0 3px rgba(233, 229, 15, .22), var(--fc-shadow-soft);
+        box-shadow: 0 0 0 3px rgba(255, 224, 102, .45), var(--fc-shadow-soft);
+    }
+
+    .fc-pricing-table tr.is-highlighted td {
+        background: linear-gradient(180deg, rgba(255, 245, 157, .82), rgba(255, 236, 132, .76)) !important;
     }
 
     .fc-pricing-table tr.is-highlighted td:first-child {
-        background: rgba(233, 229, 15, .32) !important;
+        background: linear-gradient(180deg, rgba(255, 239, 120, .94), rgba(255, 224, 102, .9)) !important;
     }
 }
 
