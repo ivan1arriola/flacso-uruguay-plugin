@@ -451,6 +451,18 @@ if (!function_exists('flacso_section_hero_render')) {
             pointer-events: auto;
         }
 
+        .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-fab.is-collapsed .fab-link {
+            width: 46px !important;
+            min-width: 46px !important;
+            padding: 0;
+            justify-content: center;
+        }
+
+        .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-fab.is-collapsed .fab-link span {
+            display: none;
+        }
+
+
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .fab-link,
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .fab-top {
             display: inline-flex;
@@ -767,6 +779,27 @@ if (!function_exists('flacso_section_hero_render')) {
                 const setVisible = function (visible) {
                     fab.classList.toggle('is-visible', !!visible);
                 };
+
+                let lastScrollY = window.scrollY;
+                let scrollTicking = false;
+
+                const updateFabState = function () {
+                    const currentScrollY = window.scrollY;
+                    if (currentScrollY > lastScrollY && currentScrollY > 200) {
+                        fab.classList.add('is-collapsed');
+                    } else if (currentScrollY < lastScrollY || currentScrollY < 200) {
+                        fab.classList.remove('is-collapsed');
+                    }
+                    lastScrollY = currentScrollY;
+                    scrollTicking = false;
+                };
+
+                window.addEventListener('scroll', function () {
+                    if (!scrollTicking) {
+                        window.requestAnimationFrame(updateFabState);
+                        scrollTicking = true;
+                    }
+                }, { passive: true });
 
                 if ('IntersectionObserver' in window) {
                     const observer = new IntersectionObserver(function (entries) {

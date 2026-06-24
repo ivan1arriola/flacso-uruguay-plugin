@@ -75,22 +75,32 @@ if (!function_exists('flacso_listar_paginas_render_grid')) {
             @media (min-width:1024px){.flacso-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
             .flacso-grid .flacso-card{display:flex;flex-direction:column;border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 10px 24px rgba(13,26,48,.14);text-decoration:none;color:inherit}
             .flacso-grid .flacso-card__img{aspect-ratio:1/1;background-size:cover;background-position:center;position:relative}
-            .flacso-grid .flacso-card__img::after{content:\"\";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.65))}
+            .flacso-grid .flacso-card__img::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.65))}
             .flacso-grid .flacso-card__title{position:absolute;left:1rem;right:1rem;bottom:1rem;color:#fff;font-weight:700;z-index:1}
             .flacso-grid .flacso-card__content{padding:.8rem 1rem}
             .flacso-grid .flacso-badges{display:flex;gap:.4rem;flex-wrap:wrap}
             .flacso-grid .flacso-badge{display:inline-flex;align-items:center;gap:.3rem;padding:.3rem .64rem;border-radius:999px;background:#173f7d;color:#fff;font-size:.74rem;font-weight:600}
             .flacso-grid .flacso-badge.nuevo{background:#f4c700;color:#162640}
             .flacso-grid .flacso-card.inactivo{opacity:.48;filter:grayscale(.65);pointer-events:none}
-        </style>
+            .flacso-grid .mobile-only{display:none}
+            @media (max-width:575.98px){
+                .flacso-grid .desktop-only{display:none !important}
+                .flacso-grid .mobile-only{display:block;color:#13294b;text-shadow:none;font-size:1.05rem;font-weight:700;margin-bottom:6px;line-height:1.25}
+                .flacso-grid .flacso-card{flex-direction:row;align-items:stretch;padding:10px;gap:12px}
+                .flacso-grid .flacso-card__img{width:96px;min-width:96px;height:96px;border-radius:8px;aspect-ratio:1/1}
+                .flacso-grid .flacso-card__img::after{display:none}
+                .flacso-grid .flacso-card__content{padding:0;justify-content:center;display:flex;flex-direction:column;gap:8px}
+                .flacso-grid .flacso-badge{padding:4px 8px;font-size:.68rem}
+            }
         <div class="flacso-grid">
             <?php foreach ($items as $item) : ?>
                 <?php $active = !empty($item['vigente']); ?>
                 <a class="flacso-card <?php echo $active ? '' : 'inactivo'; ?>" href="<?php echo esc_url((string) $item['url']); ?>">
                     <div class="flacso-card__img" style="background-image:url('<?php echo esc_url((string) $item['thumb']); ?>');">
-                        <div class="flacso-card__title"><?php echo esc_html((string) $item['title']); ?></div>
+                        <div class="flacso-card__title desktop-only"><?php echo esc_html((string) $item['title']); ?></div>
                     </div>
                     <div class="flacso-card__content">
+                        <div class="flacso-card__title mobile-only"><?php echo esc_html((string) $item['title']); ?></div>
                         <div class="flacso-badges">
                             <?php if ($active && !empty($item['es_nuevo'])) : ?><span class="flacso-badge nuevo"><i class="bi bi-stars"></i><?php esc_html_e('Nuevo', 'flacso-main-page'); ?></span><?php endif; ?>
                             <?php if ($active && !empty($item['abbr'])) : ?><span class="flacso-badge"><i class="bi bi-hash"></i><?php echo esc_html((string) $item['abbr']); ?></span><?php endif; ?>
@@ -128,9 +138,10 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
                         <a class="flacso-catalogo-3d__card<?php echo $active ? '' : ' is-disabled'; ?>" href="<?php echo esc_url($active ? (string) $item['url'] : '#'); ?>" data-index="<?php echo esc_attr((string) $index); ?>">
                             <div class="flacso-catalogo-3d__media" style="background-image:url('<?php echo esc_url((string) $item['thumb']); ?>');">
                                 <div class="flacso-catalogo-3d__overlay"></div>
-                                <h3 class="flacso-catalogo-3d__title"><?php echo esc_html((string) $item['title']); ?></h3>
+                                <h3 class="flacso-catalogo-3d__title desktop-only"><?php echo esc_html((string) $item['title']); ?></h3>
                             </div>
                             <div class="flacso-catalogo-3d__meta">
+                                <h3 class="flacso-catalogo-3d__title mobile-only"><?php echo esc_html((string) $item['title']); ?></h3>
                                 <?php if ($active && !empty($item['es_nuevo'])) : ?><span class="flacso-catalogo-3d__badge is-new"><i class="bi bi-stars"></i><?php esc_html_e('Nuevo', 'flacso-main-page'); ?></span><?php endif; ?>
                                 <?php if ($active && !empty($item['abbr'])) : ?><span class="flacso-catalogo-3d__badge"><i class="bi bi-hash"></i><?php echo esc_html((string) $item['abbr']); ?></span><?php endif; ?>
                                 <?php if ($active && !empty($item['tipo'])) : ?><span class="flacso-catalogo-3d__badge"><i class="bi bi-mortarboard"></i><?php echo esc_html((string) $item['tipo']); ?></span><?php endif; ?>
@@ -170,19 +181,23 @@ if (!function_exists('flacso_listar_paginas_render_catalogo_3d')) {
             #<?php echo esc_html($instance_id); ?>.is-ready .flacso-catalogo-3d__viewport{overflow:hidden;scroll-snap-type:none;cursor:default}
             #<?php echo esc_html($instance_id); ?>.is-ready .flacso-catalogo-3d__track{position:absolute;inset:0;display:block;padding:0;transform-style:preserve-3d}
             #<?php echo esc_html($instance_id); ?>.is-ready .flacso-catalogo-3d__card{position:absolute;left:50%;top:50%;flex:none;scroll-snap-align:none}
+            #<?php echo esc_html($instance_id); ?> .mobile-only{display:none}
             #<?php echo esc_html($instance_id); ?>.is-mobile-grid{padding:.6rem 0 1rem}
-            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__viewport{min-height:auto;height:auto;perspective:none;background:transparent;border:0;border-radius:0;overflow:visible}
+            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__viewport{min-height:auto;height:auto;perspective:none;background:transparent;border:0;border-radius:0;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px}
+            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__viewport::-webkit-scrollbar{display:none}
             #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__viewport::before,
             #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__viewport::after{display:none}
-            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__track{position:relative;display:grid;inset:auto;padding:.2rem 0;gap:.8rem;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
-            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__card{--w:auto;position:relative;left:auto;top:auto;flex:none;width:100%;min-width:0;max-width:none;scroll-snap-align:none;border-radius:16px}
+            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__track{position:relative;display:flex;inset:auto;padding:.4rem 1rem 1rem 1rem;gap:1rem;}
+            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__card{--w:min(340px,88vw);position:relative;left:auto;top:auto;flex:0 0 var(--w);width:var(--w);min-width:0;max-width:none;scroll-snap-align:center;border-radius:16px;flex-direction:row;align-items:stretch;padding:10px;gap:12px;background:#fff}
             #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__card::after{display:none}
-            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__card::before{width:8px}
-            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__title{left:.88rem;right:.8rem;bottom:.78rem;font-size:clamp(.92rem,.86rem + .44vw,1.08rem)}
-            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__meta{padding:.72rem .72rem .75rem .9rem;gap:.34rem}
-            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__badge{font-size:.68rem;padding:.3rem .56rem}
+            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__card::before{display:none}
+            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__media{width:96px;min-width:96px;height:96px;aspect-ratio:1/1;border-radius:8px;background-size:cover}
+            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__overlay{display:none}
+            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .desktop-only{display:none !important}
+            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .mobile-only{display:block;position:static;color:#13294b;text-shadow:none;font-size:1.05rem;font-weight:700;line-height:1.25;margin:0 0 6px 0;width:100%}
+            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__meta{padding:0;background:none;border:none;flex-direction:column;justify-content:center;gap:6px;flex:1}
+            #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__badge{font-size:.68rem;padding:.3rem .56rem;align-self:flex-start}
             #<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__dots{display:none}
-            @media (max-width:460px){#<?php echo esc_html($instance_id); ?>.is-mobile-grid .flacso-catalogo-3d__track{grid-template-columns:1fr}}
         </style>
         <script>
             (function () {

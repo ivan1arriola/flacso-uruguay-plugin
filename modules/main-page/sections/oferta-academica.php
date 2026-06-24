@@ -339,6 +339,10 @@ if (!function_exists('flacso_oferta_academica_shortcode')) {
                     padding: 12px;
                     text-shadow: 0 2px 6px rgba(0,0,0,.3);
                 }
+                
+                .<?php echo esc_html($wrapper_class); ?> .mobile-only {
+                    display: none;
+                }
 
                 .<?php echo esc_html($wrapper_class); ?> .flacso-card__content {
                     display: flex;
@@ -401,10 +405,73 @@ if (!function_exists('flacso_oferta_academica_shortcode')) {
                         padding: 90px 0 80px;
                     }
 
+                    .<?php echo esc_html($wrapper_class); ?> .nav-buttons {
+                        justify-content: flex-start;
+                        flex-wrap: nowrap;
+                        overflow-x: auto;
+                        scroll-snap-type: x mandatory;
+                        padding-bottom: 12px;
+                        -webkit-overflow-scrolling: touch;
+                        scrollbar-width: thin;
+                        scrollbar-color: rgba(255,255,255,0.4) transparent;
+                    }
+                    
+                    .<?php echo esc_html($wrapper_class); ?> .nav-buttons::-webkit-scrollbar {
+                        height: 4px;
+                    }
+                    
+                    .<?php echo esc_html($wrapper_class); ?> .nav-buttons::-webkit-scrollbar-thumb {
+                        background: rgba(255,255,255,0.4);
+                        border-radius: 4px;
+                    }
+
                     .<?php echo esc_html($wrapper_class); ?> .nav-btn {
-                        width: 100%;
-                        max-width: 260px;
-                        text-align: center;
+                        flex: 0 0 auto;
+                        scroll-snap-align: start;
+                        padding: 10px 20px;
+                        font-size: 0.9rem;
+                    }
+                }
+
+                @media (max-width: 575.98px) {
+                    .<?php echo esc_html($wrapper_class); ?> .desktop-only { display: none !important; }
+                    .<?php echo esc_html($wrapper_class); ?> .mobile-only { 
+                        display: block; 
+                        color: var(--global-palette1, #13294b); 
+                        text-shadow: none; 
+                        font-size: 1.05rem; 
+                        font-weight: 700; 
+                        margin-bottom: 6px; 
+                        line-height: 1.25; 
+                    }
+                    
+                    .<?php echo esc_html($wrapper_class); ?> .flacso-card {
+                        flex-direction: row;
+                        align-items: stretch;
+                        padding: 10px;
+                        gap: 12px;
+                    }
+                    
+                    .<?php echo esc_html($wrapper_class); ?> .flacso-card__img {
+                        width: 96px;
+                        min-width: 96px;
+                        height: 96px;
+                        border-radius: 8px;
+                        background-size: cover;
+                        background-position: center;
+                    }
+                    
+                    .<?php echo esc_html($wrapper_class); ?> .flacso-card__img::after { display: none; }
+                    
+                    .<?php echo esc_html($wrapper_class); ?> .flacso-card__content {
+                        padding: 0;
+                        justify-content: center;
+                        gap: 8px;
+                    }
+                    
+                    .<?php echo esc_html($wrapper_class); ?> .flacso-badge {
+                        padding: 4px 8px;
+                        font-size: 0.68rem;
                     }
                 }
             </style>
@@ -590,9 +657,10 @@ if (!function_exists('flacso_render_categoria_cards_unificada')) {
                         ?>
                         <a class="flacso-card <?php echo $es_vigente ? '' : 'inactivo'; ?>" href="<?php the_permalink(); ?>">
                             <div class="flacso-card__img" style="background-image:url('<?php echo esc_url($thumb); ?>');">
-                                <div class="flacso-card__title"><?php echo esc_html($titulo); ?></div>
+                                <div class="flacso-card__title desktop-only"><?php echo esc_html($titulo); ?></div>
                             </div>
                             <div class="flacso-card__content">
+                                <div class="flacso-card__title mobile-only"><?php echo esc_html($titulo); ?></div>
                                 <div class="flacso-badges">
                                     <?php if ($es_vigente) : ?>
                                         <?php if ($es_nuevo) : ?>
@@ -777,9 +845,10 @@ if (!function_exists('flacso_render_seminarios_unificados')) {
                         ?>
                         <a class="flacso-card" href="<?php the_permalink(); ?>">
                             <div class="flacso-card__img" style="background-image:url('<?php echo esc_url($img); ?>');">
-                                <div class="flacso-card__title"><?php the_title(); ?></div>
+                                <div class="flacso-card__title desktop-only"><?php the_title(); ?></div>
                             </div>
                             <div class="flacso-card__content">
+                                <div class="flacso-card__title mobile-only"><?php the_title(); ?></div>
                                 <div class="flacso-badges">
                                     <span class="flacso-badge <?php echo esc_attr($badge_class); ?>">
                                         <i class="bi <?php echo esc_attr($icon); ?>"></i>
