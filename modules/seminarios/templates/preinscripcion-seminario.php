@@ -500,7 +500,6 @@ get_header();
 .flacso-formulario-card,
 .flacso-success-card {
     width: 100%;
-    overflow: hidden;
     border: 1px solid var(--flacso-borde);
     border-radius: var(--flacso-radius-xl);
     background: var(--flacso-card);
@@ -982,53 +981,7 @@ button.flacso-btn-primary {
     }
 }
 
-@media (prefers-color-scheme: dark) {
-    .flacso-preinscripcion-seminario-main {
-        --flacso-fondo: #0b1220;
-        --flacso-card: #111827;
-        --flacso-texto: #e5e7eb;
-        --flacso-muted: #a7b0be;
-        --flacso-borde: rgba(255, 255, 255, 0.12);
-    }
 
-    .flacso-seccion,
-    .form-check-label-radio,
-    .form-control-flacso,
-    .form-select-flacso,
-    .flacso-preinscripcion-seminario-main input[type="text"],
-    .flacso-preinscripcion-seminario-main input[type="email"],
-    .flacso-preinscripcion-seminario-main input[type="tel"],
-    .flacso-preinscripcion-seminario-main input[type="date"],
-    .flacso-preinscripcion-seminario-main input[type="file"],
-    .flacso-preinscripcion-seminario-main select {
-        background: #111827 !important;
-        color: #f9fafb !important;
-        border-color: rgba(255, 255, 255, 0.16) !important;
-    }
-
-    .flacso-seccion {
-        background: linear-gradient(180deg, rgba(17, 24, 39, .98), rgba(15, 23, 42, .92));
-    }
-
-    .flacso-seccion-title,
-    .form-label,
-    .flacso-input-group > .form-label,
-    .flacso-input-group > span.form-label,
-    .flacso-success-header h3,
-    .flacso-success-steps h5 {
-        color: #f9fafb;
-    }
-
-    .flacso-success-header,
-    .flacso-success-steps {
-        background: rgba(255, 255, 255, 0.04);
-    }
-
-    .alert-danger {
-        background: rgba(122, 39, 26, 0.22);
-        color: #fecaca;
-    }
-}
 </style>
 
 <main id="main" class="site-main flacso-preinscripcion-seminario-main">
