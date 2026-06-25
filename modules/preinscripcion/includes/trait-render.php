@@ -187,11 +187,11 @@ trait FLACSO_Formulario_Preinscripcion_Render {
 
             <div class="flacso-campos-vertical">
                 <?php
-                $this->render_campo_texto('nombre1',   'Primer Nombre', 'text', true,  'given-name');
-                $this->render_campo_texto('nombre2',   'Segundo Nombre', 'text', false, 'additional-name');
-                $this->render_campo_texto('apellido1', 'Primer Apellido', 'text', true,  'family-name');
-                $this->render_campo_texto('apellido2', 'Segundo Apellido', 'text', false, 'family-name');
-                $this->render_campo_texto('fecha_nacimiento', 'Fecha de Nacimiento', 'date', true, 'bday');
+                $this->render_campo_texto('nombre1',   'Primer Nombre', 'text', true,  'given-name', 'Tu nombre');
+                $this->render_campo_texto('nombre2',   'Segundo Nombre', 'text', false, 'additional-name', 'Tu segundo nombre (opcional)');
+                $this->render_campo_texto('apellido1', 'Primer Apellido', 'text', true,  'family-name', 'Tu apellido');
+                $this->render_campo_texto('apellido2', 'Segundo Apellido', 'text', false, 'family-name', 'Tu segundo apellido (opcional)');
+                $this->render_campo_texto('fecha_nacimiento', 'Fecha de Nacimiento', 'date', true, 'bday', 'dd/mm/aaaa');
                 $this->render_campos_documento();
                 $this->render_campos_identidad();
                 ?>
@@ -199,7 +199,7 @@ trait FLACSO_Formulario_Preinscripcion_Render {
         </section>
     <?php }
 
-    public function render_campo_texto($id, $label, $type = 'text', $required = false, $autocomplete = null) {
+    public function render_campo_texto($id, $label, $type = 'text', $required = false, $autocomplete = null, $placeholder = null) {
         $required_attr = $required ? 'required' : '';
         $required_badge = $required ? ' <span class="text-danger">*</span>' : '';
         $autocomplete_attr = $autocomplete ? 'autocomplete="' . esc_attr($autocomplete) . '"' : '';
@@ -222,7 +222,7 @@ trait FLACSO_Formulario_Preinscripcion_Render {
                    <?php echo $required_attr; ?>
                    <?php echo $autocomplete_attr; ?>
                    <?php echo $extra_attrs; ?>
-                   placeholder="<?php echo esc_attr($label); ?>">
+                   placeholder="<?php echo esc_attr($placeholder ?: $label); ?>">
             <?php if ($required): ?>
                 <div class="invalid-feedback">Este campo es obligatorio.</div>
             <?php endif; ?>
@@ -326,7 +326,7 @@ trait FLACSO_Formulario_Preinscripcion_Render {
                 $this->render_campo_telefono();
                 $this->render_campo_texto('domicilio', 'Domicilio (incluyendo país)', 'text', true, 'street-address');
                 $this->render_campo_texto('ocupacion', 'Ocupación Actual', 'text', true, 'organization-title');
-                $this->render_campo_texto('estudios', 'Estudios Cursados', 'text', true, 'organization');
+                $this->render_campo_texto('estudios', 'Estudios Cursados', 'text', true, 'organization', 'Ej: Licenciatura en Educación');
                 $this->render_campo_pais('pais_nacimiento', 'País de Nacimiento', true);
                 $this->render_campo_pais('pais_residencia', 'País de Residencia', true);
                 ?>
@@ -346,7 +346,8 @@ trait FLACSO_Formulario_Preinscripcion_Render {
                    required
                    autocomplete="tel"
                    inputmode="tel"
-                   placeholder="">
+                   placeholder="Cargando..."> <!-- autoPlaceholder by intl-tel-input -->
+
             <div class="invalid-feedback" id="celular-invalid-feedback">Por favor ingrese un número de celular válido.</div>
             <div class="form-text mt-1">
                 <i class="bi bi-info-circle"></i> Use el selector de país y escriba su número en formato nacional.

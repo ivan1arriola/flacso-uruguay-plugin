@@ -133,37 +133,7 @@ jQuery(function($){
         input.value = val.trimStart();
     };
 
-    // Función para generar placeholder dinámico basado en país
-    const generarPlaceholder = () => {
-        if(!itiInstance) return '';
-        try {
-            const countryData = itiInstance.getSelectedCountryData();
-            if(!countryData) return '';
-            const iso2 = countryData.iso2.toUpperCase();
-            
-            // Usar libphonenumber para obtener ejemplo
-            if(typeof window.libphonenumber !== 'undefined'){
-                try {
-                    const ejemplo = window.libphonenumber.getExampleNumber(iso2, window.libphonenumber.examples.MOBILE);
-                    if(ejemplo){
-                        const formatted = ejemplo.formatNational();
-                        return formatted ? 'Ej: ' + formatted : '';
-                    }
-                } catch(e){ }
-            }
-        } catch(e){ }
-        return '';
-    };
-
-    const actualizarPlaceholder = () => {
-        const input = document.getElementById('celular');
-        if(!input) return;
-        const placeholder = generarPlaceholder();
-        if(placeholder){
-            input.placeholder = placeholder;
-        }
-    };
-
+    
     // Inicializar teléfono con detección por IP + placeholders internacionales
     (function initTelefono(){
         const input = document.getElementById('celular');
@@ -180,11 +150,11 @@ jQuery(function($){
             nationalMode: true,
             allowDropdown: true,
             countrySearch: true,
-            strictMode: false
+            strictMode: true,
+            autoPlaceholder: "polite",
+            placeholderNumberType: "MOBILE",
+            loadUtils: () => import('https://cdn.jsdelivr.net/npm/intl-tel-input@25.12.4/build/js/utils.js')
         });
-
-        // Actualizar placeholder inicial después de que cargue el país
-        setTimeout(actualizarPlaceholder, 500);
 
         // Ajustar padding inicial y en cambios de layout (fuentes/cambios de ancho)
         programarAjustePaddingTelefono();
@@ -207,8 +177,7 @@ jQuery(function($){
         input.addEventListener('countrychange', ()=> {
             limpiarDialCodeDelInput();
             resetValidacionTelefono();
-            actualizarPlaceholder();
-            programarAjustePaddingTelefono();
+                        programarAjustePaddingTelefono();
         });
 
         // Validar al perder el foco
