@@ -36,6 +36,7 @@ class Oferta_Data_MetaBox {
     }
 
     public static function add_meta_box(): void {
+        /* 
         add_meta_box(
             'oferta_data_meta',
             __('Datos estructurados de la oferta', 'flacso-oferta-academica'),
@@ -44,12 +45,13 @@ class Oferta_Data_MetaBox {
             'normal',
             'high'
         );
+        */
         add_meta_box(
             'oferta_react_editor_link',
             __('Gestor FLACSO (App Externa)', 'flacso-oferta-academica'),
             [self::class, 'render_react_editor_link_meta_box'],
             'oferta-academica',
-            'side',
+            'normal',
             'high'
         );
     }
@@ -117,15 +119,21 @@ class Oferta_Data_MetaBox {
                     <tr>
                         <th><label for="oferta_data_calendario"><?php esc_html_e('Calendario (PDF URL)', 'flacso-oferta-academica'); ?></label></th>
                         <td>
-                            <input type="url" id="oferta_data_calendario" name="oferta_data[calendario]" value="<?php echo esc_attr($values['calendario']); ?>" class="regular-text" placeholder="https://..." />
-                            <p class="description"><?php esc_html_e('Opcional. Ingresa la URL del PDF del calendario.', 'flacso-oferta-academica'); ?></p>
+                            <input type="url" id="oferta_data_calendario" name="oferta_data[calendario]" value="<?php echo esc_attr($values['calendario']); ?>" class="regular-text" readonly style="background: #f0f0f1; color: #8c8f94; pointer-events: none;" />
+                            <p class="description" style="color: #d63638; font-weight: 600; margin-top: 5px;">
+                                <span class="dashicons dashicons-warning" style="font-size: 16px; width: 16px; height: 16px; margin-top: 2px;"></span>
+                                <?php esc_html_e('Los documentos académicos ahora deben gestionarse exclusivamente desde el Gestor FLACSO.', 'flacso-oferta-academica'); ?>
+                            </p>
                         </td>
                     </tr>
                     <tr>
                         <th><label for="oferta_data_malla_curricular"><?php esc_html_e('Malla curricular (PDF URL)', 'flacso-oferta-academica'); ?></label></th>
                         <td>
-                            <input type="url" id="oferta_data_malla_curricular" name="oferta_data[malla_curricular]" value="<?php echo esc_attr($values['malla_curricular']); ?>" class="regular-text" placeholder="https://..." />
-                            <p class="description"><?php esc_html_e('Opcional. Ingresa la URL del PDF de la malla curricular.', 'flacso-oferta-academica'); ?></p>
+                            <input type="url" id="oferta_data_malla_curricular" name="oferta_data[malla_curricular]" value="<?php echo esc_attr($values['malla_curricular']); ?>" class="regular-text" readonly style="background: #f0f0f1; color: #8c8f94; pointer-events: none;" />
+                            <p class="description" style="color: #d63638; font-weight: 600; margin-top: 5px;">
+                                <span class="dashicons dashicons-warning" style="font-size: 16px; width: 16px; height: 16px; margin-top: 2px;"></span>
+                                <?php esc_html_e('Los documentos académicos ahora deben gestionarse exclusivamente desde el Gestor FLACSO.', 'flacso-oferta-academica'); ?>
+                            </p>
                         </td>
                     </tr>
                     <tr>
