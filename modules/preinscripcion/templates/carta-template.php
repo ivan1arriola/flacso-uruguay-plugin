@@ -3816,6 +3816,9 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 
 .flacso-carta-virtual .fc-hero-actions .fc-primary-button i,
 .flacso-carta-virtual .fc-hero-actions .fc-secondary-button i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 2rem;
     height: 2rem;
     border-radius: .72rem;
