@@ -65,8 +65,8 @@ wp_enqueue_script('jquery');
 wp_enqueue_style('country-select-css', 'https://cdn.jsdelivr.net/npm/country-select-js@2.0.1/build/css/countrySelect.min.css', [], '2.0.1');
 wp_enqueue_script('country-select-js', 'https://cdn.jsdelivr.net/npm/country-select-js@2.0.1/build/js/countrySelect.min.js', ['jquery'], '2.0.1', true);
 
-// Variables necesarias - Obtener ID del seminario desde la URL
-$seminario_id = isset($_GET['ID']) ? intval($_GET['ID']) : 0;
+// Variables necesarias - Obtener ID del seminario desde la URL o el objeto actual
+$seminario_id = isset($_GET['ID']) ? intval($_GET['ID']) : get_queried_object_id();
 
 // Verificar que el seminario existe
 if (!$seminario_id || get_post_type($seminario_id) !== 'seminario' || get_post_status($seminario_id) !== 'publish') {

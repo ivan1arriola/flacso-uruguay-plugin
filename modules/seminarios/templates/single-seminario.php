@@ -54,13 +54,9 @@ while (have_posts()) : the_post();
     }
 
     // Preinscription URL with tracking parameters
-    $preinscripcion_base = apply_filters('flacso_seminario_preinscripcion_url', home_url('/formacion/preinscripciones'), $post_id);
-    $preinscripcion_url = '';
-    if (!empty($preinscripcion_base)) {
-        $preinscripcion_url = add_query_arg(array(
-            'ID' => $post_id,
-        ), $preinscripcion_base);
-    }
+    $seminario_slug = get_post_field('post_name', $post_id);
+    $default_url = home_url('/formacion/seminarios/' . $seminario_slug . '/preinscripcion/');
+    $preinscripcion_url = apply_filters('flacso_seminario_preinscripcion_url', $default_url, $post_id);
 
     $valor_uyu = isset($meta['valor_uyu']) && $meta['valor_uyu'] !== '' ? (float) $meta['valor_uyu'] : null;
     $valor_uyu_15_descuento = isset($meta['valor_uyu_15_descuento']) && $meta['valor_uyu_15_descuento'] !== '' ? (float) $meta['valor_uyu_15_descuento'] : null;

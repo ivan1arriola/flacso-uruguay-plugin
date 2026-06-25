@@ -8,6 +8,9 @@ class Seminario_Templates
     public static function register_preinscripcion_route()
     {
         add_rewrite_tag('%flacso_preinscripcion%', '([0-1])');
+        // New route (child of seminario)
+        add_rewrite_rule('^formacion/seminarios/([^/]+)/preinscripcion/?$', 'index.php?seminario=$matches[1]&flacso_preinscripcion=1', 'top');
+        // Legacy route
         add_rewrite_rule('^formacion/preinscripciones/?$', 'index.php?flacso_preinscripcion=1', 'top');
     }
 
@@ -98,7 +101,7 @@ class Seminario_Templates
     {
         // Preinscripción endpoint title
         if (get_query_var('flacso_preinscripcion')) {
-            $seminario_id = isset($_GET['ID']) ? intval($_GET['ID']) : 0;
+            $seminario_id = isset($_GET['ID']) ? intval($_GET['ID']) : get_queried_object_id();
             $title = __('Preinscripción', 'cpt-seminario');
             if ($seminario_id) {
                 $seminario_titulo = get_the_title($seminario_id);
@@ -124,10 +127,10 @@ class Seminario_Templates
     {
         // Preinscripción endpoint
         if (get_query_var('flacso_preinscripcion')) {
-            $seminario_id = isset($_GET['ID']) ? intval($_GET['ID']) : 0;
+            $seminario_id = isset($_GET['ID']) ? intval($_GET['ID']) : get_queried_object_id();
             if ($seminario_id && get_post_type($seminario_id) === 'seminario') {
                 $seminario_titulo = get_the_title($seminario_id);
-                $seminario_url = add_query_arg('ID', $seminario_id, home_url('/formacion/preinscripciones/'));
+                $seminario_url = home_url('/formacion/seminarios/' . get_post_field('post_name', $seminario_id) . '/preinscripcion/');
                 $imagen_url = get_the_post_thumbnail_url($seminario_id, 'full');
                 $descripcion = get_the_excerpt($seminario_id);
                 if (empty($descripcion)) {
