@@ -1,7 +1,7 @@
 <?php
 /**
  * Template para página de preinscripción a seminarios
- * Version: 3.1.2 - Mejoras de UI y padding/márgenes
+ * Version: 3.2.0 - UI moderna responsive sin cambios de contrato
  */
 
 if (!defined('ABSPATH')) exit;
@@ -306,9 +306,729 @@ get_header();
 ?>
 
 <style>
-/* Minimal inline overrides. Full styling via kadence-compat.css using Kadence variables */
-#celular { padding-left: 52px; }
-.iti { width: 100%; }
+/*
+ * FLACSO - Preinscripción seminarios
+ * Modernización visual responsive sin modificar el contrato de datos.
+ */
+.flacso-preinscripcion-seminario-main {
+    --flacso-azul: var(--global-palette1, #16396f);
+    --flacso-azul-oscuro: var(--global-palette3, #0f1a2d);
+    --flacso-amarillo: var(--global-palette2, #fed222);
+    --flacso-texto: var(--global-palette4, #2e2f34);
+    --flacso-muted: var(--global-palette5, #6b7280);
+    --flacso-borde: rgba(22, 57, 111, 0.14);
+    --flacso-fondo: #f6f8fb;
+    --flacso-card: #ffffff;
+    --flacso-radius-xl: 26px;
+    --flacso-radius-lg: 18px;
+    --flacso-radius-md: 12px;
+    --flacso-shadow-soft: 0 20px 60px rgba(15, 26, 45, 0.12);
+    --flacso-shadow-card: 0 10px 30px rgba(15, 26, 45, 0.08);
+    background: var(--flacso-fondo);
+    color: var(--flacso-texto);
+    overflow-x: clip;
+}
+
+.flacso-preinscripcion-seminario-main *,
+.flacso-preinscripcion-seminario-main *::before,
+.flacso-preinscripcion-seminario-main *::after {
+    box-sizing: border-box;
+}
+
+.flacso-preinscripcion-seminario-main .site-container,
+.flacso-preinscripcion-seminario-main .content-container {
+    width: min(1120px, calc(100% - 32px));
+    max-width: 1120px;
+    margin-inline: auto;
+}
+
+.preinsc-hero {
+    position: relative;
+    isolation: isolate;
+    min-height: clamp(360px, 46vw, 560px);
+    padding: clamp(32px, 6vw, 72px) 0;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 12% 10%, rgba(254, 210, 34, 0.28), transparent 30%),
+        linear-gradient(135deg, rgba(15, 26, 45, 0.97), rgba(22, 57, 111, 0.94));
+    color: #ffffff;
+}
+
+.preinsc-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(90deg, rgba(15, 26, 45, 0.94) 0%, rgba(22, 57, 111, 0.82) 55%, rgba(15, 26, 45, 0.62) 100%);
+}
+
+.preinsc-hero-bg-image {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: saturate(0.9) contrast(1.05);
+    transform: scale(1.02);
+}
+
+.preinsc-hero-grid {
+    width: min(1120px, calc(100% - 32px));
+    margin-inline: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+    gap: clamp(24px, 5vw, 56px);
+    align-items: center;
+}
+
+.btn-back-seminario {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-height: 42px;
+    padding: 0.65rem 0.9rem;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    color: #ffffff !important;
+    text-decoration: none !important;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    transition: transform .2s ease, background .2s ease, border-color .2s ease;
+}
+
+.btn-back-seminario:hover,
+.btn-back-seminario:focus-visible {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.44);
+}
+
+.text-uppercase {
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    font-size: .78rem;
+}
+
+.preinsc-title {
+    max-width: 820px;
+    margin: 0.5rem 0 1rem;
+    color: #ffffff !important;
+    font-size: clamp(2rem, 5vw, 4.6rem);
+    line-height: 0.98;
+    letter-spacing: -0.055em;
+    font-weight: 800;
+}
+
+.preinsc-subtitle {
+    margin: 0;
+    max-width: 680px;
+    color: rgba(255, 255, 255, 0.88) !important;
+    font-size: clamp(1.05rem, 2vw, 1.35rem);
+    line-height: 1.45;
+}
+
+.preinsc-steps {
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: var(--flacso-radius-xl);
+    padding: clamp(1.15rem, 2vw, 1.5rem);
+    background: rgba(255, 255, 255, 0.10);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+    backdrop-filter: blur(14px);
+}
+
+.preinsc-steps ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.9rem;
+}
+
+.preinsc-steps li {
+    position: relative;
+    padding: 0.95rem 0.95rem 0.95rem 3rem;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.10);
+}
+
+.preinsc-steps li::before {
+    content: counter(list-item);
+    position: absolute;
+    left: 0.9rem;
+    top: 0.95rem;
+    width: 1.45rem;
+    height: 1.45rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--flacso-amarillo);
+    color: var(--flacso-azul-oscuro);
+    font-weight: 800;
+    font-size: 0.78rem;
+}
+
+.step-title {
+    color: #ffffff;
+    font-weight: 750;
+    line-height: 1.25;
+}
+
+.step-desc {
+    margin-top: 0.25rem;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 0.92rem;
+    line-height: 1.4;
+}
+
+.form-container {
+    width: min(100%, 980px);
+    margin-inline: auto;
+}
+
+.form-heading-eyebrow {
+    margin: 0 0 1.1rem;
+    color: var(--flacso-azul);
+    font-size: .86rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+}
+
+.flacso-formulario-card,
+.flacso-success-card {
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid var(--flacso-borde);
+    border-radius: var(--flacso-radius-xl);
+    background: var(--flacso-card);
+    box-shadow: var(--flacso-shadow-soft);
+}
+
+.flacso-formulario-body,
+.flacso-success-body {
+    padding: clamp(20px, 4vw, 42px);
+}
+
+.flacso-seccion {
+    position: relative;
+    padding: clamp(18px, 3vw, 28px);
+    border: 1px solid var(--flacso-borde);
+    border-radius: var(--flacso-radius-lg);
+    background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,250,252,.88));
+    box-shadow: var(--flacso-shadow-card);
+}
+
+.flacso-seccion + .flacso-seccion {
+    margin-top: clamp(16px, 3vw, 24px);
+}
+
+.flacso-seccion-header {
+    display: flex;
+    gap: 0.85rem;
+    align-items: center;
+    margin-bottom: 1.15rem;
+}
+
+.flacso-seccion-icon {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    background: rgba(22, 57, 111, 0.10);
+    color: var(--flacso-azul);
+}
+
+.flacso-seccion-icon i {
+    margin: 0 !important;
+}
+
+.flacso-seccion-title {
+    margin: 0;
+    color: var(--flacso-azul-oscuro);
+    font-size: clamp(1.04rem, 1.8vw, 1.32rem);
+    line-height: 1.25;
+    font-weight: 800;
+}
+
+.flacso-campos-vertical {
+    display: grid;
+    gap: 1rem;
+}
+
+.flacso-preinscripcion-seminario-main .row {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 0;
+}
+
+.flacso-preinscripcion-seminario-main .g-2 { gap: .65rem; }
+.flacso-preinscripcion-seminario-main .g-3 { gap: 1rem; }
+.flacso-preinscripcion-seminario-main .col-md-6,
+.flacso-preinscripcion-seminario-main .col-6 { grid-column: span 6; }
+
+.flacso-input-group {
+    min-width: 0;
+}
+
+.form-label,
+.flacso-input-group > .form-label,
+.flacso-input-group > span.form-label {
+    display: block;
+    margin-bottom: 0.45rem !important;
+    color: var(--flacso-azul-oscuro);
+    font-size: 0.94rem;
+    font-weight: 750;
+    line-height: 1.35;
+}
+
+.text-danger {
+    color: #b42318 !important;
+}
+
+.form-control-flacso,
+.form-select-flacso,
+.flacso-preinscripcion-seminario-main input[type="text"],
+.flacso-preinscripcion-seminario-main input[type="email"],
+.flacso-preinscripcion-seminario-main input[type="tel"],
+.flacso-preinscripcion-seminario-main input[type="date"],
+.flacso-preinscripcion-seminario-main input[type="file"],
+.flacso-preinscripcion-seminario-main select {
+    width: 100%;
+    min-height: 48px;
+    border: 1px solid rgba(22, 57, 111, 0.20) !important;
+    border-radius: 14px !important;
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+    font-size: 16px;
+    line-height: 1.4;
+    padding: 0.78rem 0.92rem;
+    transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+
+.flacso-preinscripcion-seminario-main input[type="file"] {
+    padding: 0.68rem 0.85rem;
+}
+
+.form-control-flacso:focus,
+.form-select-flacso:focus,
+.flacso-preinscripcion-seminario-main input:focus,
+.flacso-preinscripcion-seminario-main select:focus {
+    outline: none;
+    border-color: var(--flacso-azul) !important;
+    box-shadow: 0 0 0 4px rgba(22, 57, 111, 0.13) !important;
+}
+
+.form-control-flacso::placeholder {
+    color: #94a3b8;
+}
+
+.form-text,
+.phone-error-details {
+    display: block;
+    margin-top: 0.45rem;
+    color: var(--flacso-muted);
+    font-size: 0.86rem;
+    line-height: 1.35;
+}
+
+.invalid-feedback,
+.invalid-feedback-radio,
+.phone-error-details:not(.d-none) {
+    display: none;
+    margin-top: 0.45rem;
+    color: #b42318;
+    font-size: 0.86rem;
+    font-weight: 650;
+}
+
+.was-validated .form-control:invalid ~ .invalid-feedback,
+.was-validated .form-select:invalid ~ .invalid-feedback,
+.form-control.is-invalid ~ .invalid-feedback,
+.form-select.is-invalid ~ .invalid-feedback,
+.is-invalid ~ .invalid-feedback,
+.phone-error-details:not(.d-none) {
+    display: block;
+}
+
+.is-invalid {
+    border-color: #d92d20 !important;
+    box-shadow: 0 0 0 4px rgba(217, 45, 32, 0.10) !important;
+}
+
+.is-valid {
+    border-color: #12b76a !important;
+    box-shadow: 0 0 0 4px rgba(18, 183, 106, 0.10) !important;
+}
+
+.valid-feedback {
+    margin-top: .45rem;
+    color: #027a48;
+    font-size: .86rem;
+    font-weight: 650;
+}
+
+.d-none { display: none !important; }
+
+.flacso-radio-group {
+    width: 100%;
+}
+
+.flacso-radio-options {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.75rem !important;
+}
+
+.form-check-radio {
+    position: relative;
+    min-height: 52px;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.form-check-input-radio {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.form-check-label-radio {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 52px;
+    padding: .8rem 1rem;
+    border: 1px solid rgba(22, 57, 111, 0.18);
+    border-radius: 14px;
+    background: #ffffff;
+    color: var(--flacso-azul-oscuro);
+    font-weight: 750;
+    cursor: pointer;
+    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease, transform .18s ease;
+}
+
+.form-check-input-radio:checked + .form-check-label-radio {
+    border-color: var(--flacso-azul);
+    background: rgba(22, 57, 111, 0.08);
+    box-shadow: inset 0 0 0 1px var(--flacso-azul);
+}
+
+.form-check-input-radio:focus-visible + .form-check-label-radio {
+    outline: 3px solid rgba(22, 57, 111, 0.24);
+    outline-offset: 2px;
+}
+
+.form-check-label-radio:hover {
+    transform: translateY(-1px);
+}
+
+.country-select,
+.iti {
+    width: 100% !important;
+}
+
+#celular {
+    padding-left: 52px;
+}
+
+.iti--separate-dial-code #celular {
+    padding-left: 96px !important;
+}
+
+.iti__country-list,
+.country-select .country-list {
+    max-width: min(420px, calc(100vw - 32px));
+    border-radius: 16px;
+    box-shadow: 0 18px 44px rgba(15, 26, 45, 0.18);
+    overflow-x: hidden;
+}
+
+.country-select .flag-emoji {
+    position: absolute;
+    right: 0.9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    font-size: 1.2rem;
+}
+
+.alert {
+    width: min(100%, 980px);
+    margin: 0 auto 1.25rem;
+    padding: 1rem;
+    border-radius: var(--flacso-radius-lg);
+    border: 1px solid transparent;
+}
+
+.alert-danger {
+    border-color: rgba(217, 45, 32, .22);
+    background: #fff3f0;
+    color: #7a271a;
+}
+
+.d-flex { display: flex; }
+.align-items-start { align-items: flex-start; }
+.flex-shrink-0 { flex-shrink: 0; }
+.flex-grow-1 { flex-grow: 1; }
+.mx-auto { margin-inline: auto; }
+.text-center { text-align: center; }
+.w-100 { width: 100%; }
+.justify-content-center { justify-content: center; }
+
+.flacso-boton-envio {
+    margin-top: clamp(18px, 3vw, 28px);
+}
+
+.flacso-btn-primary,
+button.flacso-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    min-height: 52px;
+    padding: 0.9rem 1.25rem;
+    border: 0;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--flacso-azul), #24539a);
+    color: #ffffff !important;
+    font-weight: 800;
+    text-decoration: none !important;
+    cursor: pointer;
+    box-shadow: 0 12px 28px rgba(22, 57, 111, 0.24);
+    transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+}
+
+.flacso-btn-primary:hover,
+.flacso-btn-primary:focus-visible {
+    transform: translateY(-1px);
+    filter: brightness(1.04);
+    box-shadow: 0 16px 34px rgba(22, 57, 111, 0.30);
+}
+
+.flacso-btn-primary:disabled {
+    cursor: progress;
+    opacity: .78;
+    transform: none;
+}
+
+.submit-loading-message {
+    color: var(--flacso-texto) !important;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.flacso-success-card {
+    max-width: 760px;
+    margin-inline: auto;
+}
+
+.flacso-success-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: clamp(20px, 4vw, 34px);
+    background: linear-gradient(135deg, rgba(22, 57, 111, 0.10), rgba(254, 210, 34, 0.18));
+    border-bottom: 1px solid var(--flacso-borde);
+}
+
+.flacso-success-header h3 {
+    margin: 0;
+    color: var(--flacso-azul-oscuro);
+    font-size: clamp(1.35rem, 3vw, 2rem);
+    line-height: 1.15;
+}
+
+.flacso-success-icon {
+    flex: 0 0 auto;
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    display: grid;
+    place-items: center;
+    background: #12b76a;
+    color: #ffffff;
+    box-shadow: 0 14px 24px rgba(18, 183, 106, 0.22);
+}
+
+.flacso-success-steps {
+    padding: 1rem;
+    border: 1px solid var(--flacso-borde);
+    border-radius: var(--flacso-radius-lg);
+    background: rgba(22, 57, 111, 0.04);
+}
+
+.flacso-success-steps h5 {
+    margin: 0 0 .75rem;
+    color: var(--flacso-azul-oscuro);
+    font-size: 1rem;
+}
+
+.flacso-success-steps ol {
+    margin: 0;
+    padding-left: 1.2rem;
+}
+
+@media (max-width: 900px) {
+    .preinsc-hero-grid {
+        grid-template-columns: 1fr;
+    }
+    .preinsc-steps {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 700px) {
+    .flacso-preinscripcion-seminario-main .site-container,
+    .flacso-preinscripcion-seminario-main .content-container,
+    .preinsc-hero-grid {
+        width: min(100% - 24px, 1120px);
+    }
+
+    .content-container.site-container {
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
+    }
+
+    .preinsc-hero {
+        min-height: auto;
+        padding: 28px 0 36px;
+    }
+
+    .preinsc-title {
+        letter-spacing: -0.035em;
+    }
+
+    .preinsc-steps li {
+        padding-right: 0.85rem;
+    }
+
+    .flacso-formulario-card,
+    .flacso-success-card,
+    .flacso-seccion {
+        border-radius: 18px;
+    }
+
+    .flacso-formulario-body,
+    .flacso-success-body,
+    .flacso-seccion {
+        padding: 16px;
+    }
+
+    .flacso-preinscripcion-seminario-main .row,
+    .flacso-radio-options {
+        grid-template-columns: 1fr !important;
+    }
+
+    .flacso-preinscripcion-seminario-main .col-md-6,
+    .flacso-preinscripcion-seminario-main .col-6 {
+        grid-column: span 1;
+    }
+
+    .flacso-seccion-header {
+        align-items: flex-start;
+    }
+
+    .flacso-seccion-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+    }
+
+    .btn-back-seminario,
+    .flacso-btn-primary,
+    button.flacso-btn-primary {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .iti__country-list,
+    .country-select .country-list {
+        width: calc(100vw - 24px) !important;
+        max-width: calc(100vw - 24px) !important;
+    }
+}
+
+@media (max-width: 420px) {
+    .flacso-preinscripcion-seminario-main .site-container,
+    .flacso-preinscripcion-seminario-main .content-container,
+    .preinsc-hero-grid {
+        width: min(100% - 18px, 1120px);
+    }
+
+    .flacso-formulario-body,
+    .flacso-success-body,
+    .flacso-seccion {
+        padding: 14px;
+    }
+
+    .form-control-flacso,
+    .form-select-flacso,
+    .flacso-preinscripcion-seminario-main input[type="text"],
+    .flacso-preinscripcion-seminario-main input[type="email"],
+    .flacso-preinscripcion-seminario-main input[type="tel"],
+    .flacso-preinscripcion-seminario-main input[type="date"],
+    .flacso-preinscripcion-seminario-main input[type="file"],
+    .flacso-preinscripcion-seminario-main select {
+        border-radius: 12px !important;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .flacso-preinscripcion-seminario-main {
+        --flacso-fondo: #0b1220;
+        --flacso-card: #111827;
+        --flacso-texto: #e5e7eb;
+        --flacso-muted: #a7b0be;
+        --flacso-borde: rgba(255, 255, 255, 0.12);
+    }
+
+    .flacso-seccion,
+    .form-check-label-radio,
+    .form-control-flacso,
+    .form-select-flacso,
+    .flacso-preinscripcion-seminario-main input[type="text"],
+    .flacso-preinscripcion-seminario-main input[type="email"],
+    .flacso-preinscripcion-seminario-main input[type="tel"],
+    .flacso-preinscripcion-seminario-main input[type="date"],
+    .flacso-preinscripcion-seminario-main input[type="file"],
+    .flacso-preinscripcion-seminario-main select {
+        background: #111827 !important;
+        color: #f9fafb !important;
+        border-color: rgba(255, 255, 255, 0.16) !important;
+    }
+
+    .flacso-seccion {
+        background: linear-gradient(180deg, rgba(17, 24, 39, .98), rgba(15, 23, 42, .92));
+    }
+
+    .flacso-seccion-title,
+    .form-label,
+    .flacso-input-group > .form-label,
+    .flacso-input-group > span.form-label,
+    .flacso-success-header h3,
+    .flacso-success-steps h5 {
+        color: #f9fafb;
+    }
+
+    .flacso-success-header,
+    .flacso-success-steps {
+        background: rgba(255, 255, 255, 0.04);
+    }
+
+    .alert-danger {
+        background: rgba(122, 39, 26, 0.22);
+        color: #fecaca;
+    }
+}
 </style>
 
 <main id="main" class="site-main flacso-preinscripcion-seminario-main">
@@ -401,7 +1121,7 @@ get_header();
         })();
         </script>
     <?php else : ?>
-        
+        <div class="form-container">
             <?php if (!empty($submission_error)) : ?>
                 <div class="alert alert-danger">
                     <div class="d-flex align-items-start">
@@ -416,7 +1136,7 @@ get_header();
                 </div>
             <?php endif; ?>
 
-            <h2 style="font-size: 18px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2rem; color: var(--color-secondary);">Formulario de preinscripción</h2>
+            <h2 class="form-heading-eyebrow">Formulario de preinscripción</h2>
 
             <div class="flacso-formulario-card">
                 <div class="flacso-formulario-body">
@@ -436,7 +1156,7 @@ get_header();
                             <input type="text" class="form-control form-control-flacso" id="nombre1" name="nombre1" placeholder="Tu nombre" required>
                             <div class="invalid-feedback">Por favor ingresa tu nombre.</div>
                         </div>
-                        <div class="flacso-input-group">
+                        <div class="col-md-6 flacso-input-group">
                             <label for="apellido1" class="form-label">Apellido <span class="text-danger">*</span></label>
                             <input type="text" class="form-control form-control-flacso" id="apellido1" name="apellido1" placeholder="Tu apellido" required>
                             <div class="invalid-feedback">Por favor ingresa tu apellido.</div>
@@ -521,7 +1241,7 @@ get_header();
                     <div class="flacso-seccion-header">
                         <div class="flacso-seccion-icon"><i class="fas fa-envelope"></i></div>
                         <div>
-                            <h3 class="flacso-seccion-title"><span style="margin-left: 0.75rem;">Información de contacto</h3>
+                            <h3 class="flacso-seccion-title">Información de contacto</h3>
                         </div>
                     </div>
                     <div class="flacso-campos-vertical">
@@ -550,7 +1270,7 @@ get_header();
                     <div class="flacso-seccion-header">
                         <div class="flacso-seccion-icon"><i class="fas fa-globe"></i></div>
                         <div>
-                            <h3 class="flacso-seccion-title"><span style="margin-left: 0.75rem;">Ubicación</h3>
+                            <h3 class="flacso-seccion-title">Ubicación</h3>
                         </div>
                     </div>
                     <div class="flacso-campos-vertical">
@@ -1480,7 +2200,7 @@ function validate_ci(ci) {
                     trackMetaEvent('SubmitApplication', pixelPayload);
                     
                     // Éxito: ocultar formulario y mostrar mensaje
-                    const formContainer = document.querySelector('.form-container');
+                    const formContainer = document.querySelector('.form-container') || document.querySelector('.flacso-formulario-card');
                     if (formContainer) {
                         formContainer.style.display = 'none';
                         console.log('[Preinscripcion] Formulario ocultado');
@@ -1583,9 +2303,6 @@ function validate_ci(ci) {
 })();
 </script>
 
-</div>
 </main>
 
 <?php get_footer();
-
-
