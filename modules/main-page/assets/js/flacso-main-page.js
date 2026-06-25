@@ -261,5 +261,32 @@
             input.dispatchEvent(new Event('input', { bubbles: true }));
             input.dispatchEvent(new Event('change', { bubbles: true }));
         });
-    });
+    var lastScrollY = window.scrollY || window.pageYOffset;
+    var fabElement = document.querySelector('.zoom-registro-floating');
+    
+    if (fabElement) {
+        window.addEventListener('scroll', function() {
+            var currentScrollY = window.scrollY || window.pageYOffset;
+            
+            if (currentScrollY > 100) {
+                fabElement.classList.add('is-visible');
+                
+                if (currentScrollY > lastScrollY && currentScrollY > 300) {
+                    // Scrolling down - hide
+                    fabElement.style.transform = 'translateY(150%)';
+                    fabElement.style.opacity = '0';
+                } else {
+                    // Scrolling up - show
+                    fabElement.style.transform = 'translateY(0)';
+                    fabElement.style.opacity = '1';
+                }
+            } else {
+                fabElement.classList.remove('is-visible');
+                fabElement.style.transform = '';
+                fabElement.style.opacity = '';
+            }
+            
+            lastScrollY = currentScrollY;
+        }, { passive: true });
+    }
 }());
