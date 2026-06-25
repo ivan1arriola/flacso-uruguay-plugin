@@ -357,21 +357,29 @@ get_header();
 <div class="content-container site-container" style="padding-top: 3rem; padding-bottom: 3rem;">
     <?php if ($submission_success) : ?>
         <!-- Success Message -->
-        <div class="success-container">
-            <div class="success-content alert alert-success">
-                <div class="alert-icon">
-                    <i class="fas fa-check-circle" style="color: #28a745;"></i>
+        <div class="success-container mx-auto" style="max-width: 700px;">
+            <div class="flacso-success-card">
+                <div class="flacso-success-header">
+                    <div class="flacso-success-icon">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <h3>¡Preinscripción enviada con éxito!</h3>
                 </div>
-                <h2 style="margin-bottom: 0.5rem;">¡Preinscripción enviada con éxito!</h2>
-                <p style="font-size: 18px; margin-bottom: 1rem;">Gracias, <strong><?php echo esc_html($nombre_full); ?></strong></p>
-                <p style="margin-bottom: 1rem;">Recibimos tu solicitud para el seminario <strong><?php echo esc_html($seminario_titulo); ?></strong>. Te enviamos una confirmación al siguiente correo:</p>
-                <p style="margin-bottom: 1.5rem;"><strong><?php echo esc_html($email); ?></strong></p>
-                <div class="alert alert-info" style="margin-bottom: 1.5rem;">
-                    <p style="margin: 0;"><i class="fas fa-lightbulb" style="margin-right: 0.5rem;"></i>En breve te contactaremos con los próximos pasos. Si no ves el correo en unos minutos, revisa tu bandeja de spam o promociones.</p>
+                <div class="flacso-success-body">
+                    <p class="lead" style="margin-bottom: 1rem;">Gracias, <strong><?php echo esc_html($nombre_full); ?></strong>. Recibimos tu solicitud para el seminario <strong><?php echo esc_html($seminario_titulo); ?></strong>.</p>
+                    
+                    <div class="flacso-success-steps" style="margin-bottom: 1.5rem;">
+                        <h5>Próximos pasos</h5>
+                        <ol>
+                            <li>Te hemos enviado un correo de confirmación a: <strong><?php echo esc_html($email); ?></strong></li>
+                            <li>En breve te contactaremos con más detalles. Si no ves el correo en unos minutos, revisa tu bandeja de spam o promociones.</li>
+                        </ol>
+                    </div>
+
+                    <a href="<?php echo esc_url(home_url('/formacion/seminarios/')); ?>" class="flacso-btn-primary" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">
+                        <i class="fas fa-arrow-left" style="margin-right: 0.5rem;"></i> Volver a seminarios
+                    </a>
                 </div>
-                <a href="<?php echo esc_url(home_url('/formacion/seminarios/')); ?>" class="btn btn-lg">
-                    <i class="fas fa-arrow-left" style="margin-right: 0.5rem;"></i>Volver a seminarios
-                </a>
             </div>
         </div>
         <script>
@@ -410,46 +418,51 @@ get_header();
 
             <h2 style="font-size: 18px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2rem; color: var(--color-secondary);">Formulario de preinscripción</h2>
 
-            <div class="form-container">
+            <div class="flacso-formulario-card">
+                <div class="flacso-formulario-body">
             <form id="form-preinscripcion" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
                 <!-- Datos Personales -->
-                <div class="form-section">
-                    <h3>
-                        <i class="fas fa-user" style="margin-right: 0.5rem;"></i>Datos personales
-                    </h3>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="nombre1" class="form-label">Nombre <span class="required">*</span></label>
-                            <input type="text" class="form-control" id="nombre1" name="nombre1" placeholder="Tu nombre" required>
+                <div class="flacso-seccion">
+                    <div class="flacso-seccion-header">
+                        <div class="flacso-seccion-icon"><i class="fas fa-user" style="margin-right: 0.5rem;"></i></div>
+                        <div>
+                            <h3 class="flacso-seccion-title">Datos personales</h3>
+                        </div>
+                    </div>
+                    <div class="flacso-campos-vertical">
+                    <div class="row g-3">
+                        <div class="col-md-6 flacso-input-group">
+                            <label for="nombre1" class="form-label">Nombre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-flacso" id="nombre1" name="nombre1" placeholder="Tu nombre" required>
                             <div class="invalid-feedback">Por favor ingresa tu nombre.</div>
                         </div>
-                        <div class="form-group">
-                            <label for="apellido1" class="form-label">Apellido <span class="required">*</span></label>
-                            <input type="text" class="form-control" id="apellido1" name="apellido1" placeholder="Tu apellido" required>
+                        <div class="flacso-input-group">
+                            <label for="apellido1" class="form-label">Apellido <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-flacso" id="apellido1" name="apellido1" placeholder="Tu apellido" required>
                             <div class="invalid-feedback">Por favor ingresa tu apellido.</div>
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
+                    <div class="row g-3">
+                        <div class="col-md-6 flacso-input-group">
                             <label for="nombre2" class="form-label">Segundo Nombre</label>
-                            <input type="text" class="form-control" id="nombre2" name="nombre2" placeholder="Tu segundo nombre (opcional)">
+                            <input type="text" class="form-control form-control-flacso" id="nombre2" name="nombre2" placeholder="Tu segundo nombre (opcional)">
                         </div>
-                        <div class="form-group">
+                        <div class="col-md-6 flacso-input-group">
                             <label for="apellido2" class="form-label">Segundo Apellido</label>
-                            <input type="text" class="form-control" id="apellido2" name="apellido2" placeholder="Tu segundo apellido (opcional)">
+                            <input type="text" class="form-control form-control-flacso" id="apellido2" name="apellido2" placeholder="Tu segundo apellido (opcional)">
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="fecha_nacimiento" class="form-label">Fecha de Nacimiento <span class="required">*</span></label>
-                            <input type="date" class="form-control" id="fecha_nacimiento" name="fecha_nacimiento" max="<?php echo date('Y-m-d', strtotime('-17 years')); ?>" required>
+                    <div class="row g-3">
+                        <div class="col-md-6 flacso-input-group">
+                            <label for="fecha_nacimiento" class="form-label">Fecha de Nacimiento <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control form-control-flacso" id="fecha_nacimiento" name="fecha_nacimiento" max="<?php echo date('Y-m-d', strtotime('-17 years')); ?>" required>
                             <div class="invalid-feedback">Debes ser mayor de 17 años.</div>
                         </div>
-                        <div class="form-group">
-                            <label for="tipo_documento" class="form-label">Tipo de Documento <span class="required">*</span></label>
-                            <select class="form-select" id="tipo_documento" name="tipo_documento">
+                        <div class="col-md-6 flacso-input-group">
+                            <label for="tipo_documento" class="form-label">Tipo de Documento <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-flacso" id="tipo_documento" name="tipo_documento">
                                 <option value="">Selecciona...</option>
                                 <option value="CI">Cédula de Identidad Uruguaya</option>
                                 <option value="Pasaporte">Pasaporte</option>
@@ -460,24 +473,24 @@ get_header();
                     </div>
 
                     <!-- Campo para CI uruguaya -->
-                    <div class="form-group" id="campo_ci" style="display: none;">
-                        <label for="documento_ci" class="form-label">Número de Cédula de Identidad <span class="required">*</span></label>
-                        <input type="text" class="form-control" id="documento_ci" name="documento_ci" placeholder="12345678" pattern="[0-9]{7,8}" maxlength="8" inputmode="numeric">
+                    <div class="flacso-input-group" id="campo_ci" style="display: none;">
+                        <label for="documento_ci" class="form-label">Número de Cédula de Identidad <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-flacso" id="documento_ci" name="documento_ci" placeholder="12345678" pattern="[0-9]{7,8}" maxlength="8" inputmode="numeric">
                         <div class="invalid-feedback ci-feedback">Por favor ingresa una cédula válida.</div>
                         <small class="form-text">Ingresa solo números, sin puntos ni guiones, con dígito verificador (ej: 12345678)</small>
                     </div>
 
                     <!-- Campo para otros documentos -->
-                    <div class="form-group" id="campo_otro_doc" style="display: none;">
-                        <label for="documento_otro" class="form-label">Número de Documento <span class="required">*</span></label>
-                        <input type="text" class="form-control" id="documento_otro" name="documento_otro" placeholder="Tu número de documento" maxlength="20">
+                    <div class="flacso-input-group" id="campo_otro_doc" style="display: none;">
+                        <label for="documento_otro" class="form-label">Número de Documento <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-flacso" id="documento_otro" name="documento_otro" placeholder="Tu número de documento" maxlength="20">
                         <div class="invalid-feedback otro-doc-feedback">Por favor ingresa un número de documento válido (3-20 caracteres).</div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
+                    <div class="row g-3">
+                        <div class="col-md-6 flacso-input-group">
                             <label for="genero" class="form-label">Identidad de genero</label>
-                            <select class="form-select" id="genero" name="genero">
+                            <select class="form-select form-select-flacso" id="genero" name="genero">
                                 <option value="">Selecciona...</option>
                                 <option value="Mujer">Mujer</option>
                                 <option value="Varon">Varon</option>
@@ -488,35 +501,39 @@ get_header();
                                 <option value="Prefiero no responder">Prefiero no responder</option>
                             </select>
                         </div>
-                        <div class="form-group" id="genero_otra_container" style="display: none;">
-                            <label for="genero_otra" class="form-label">Especifica identidad de genero <span class="required">*</span></label>
-                            <input type="text" class="form-control" id="genero_otra" name="genero_otra" placeholder="Especifica tu identidad de genero">
+                        <div class="col-md-6 flacso-input-group" id="genero_otra_container" style="display: none;">
+                            <label for="genero_otra" class="form-label">Especifica identidad de genero <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-flacso" id="genero_otra" name="genero_otra" placeholder="Especifica tu identidad de genero">
                             <div class="invalid-feedback">Por favor especifica tu identidad de genero.</div>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="etnia" class="form-label">Con que raza/etnia se identifica? <span class="required">*</span></label>
-                        <input type="text" class="form-control" id="etnia" name="etnia" placeholder="Ingrese su raza/etnia" required>
+                    <div class="flacso-input-group">
+                        <label for="etnia" class="form-label">Con que raza/etnia se identifica? <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-flacso" id="etnia" name="etnia" placeholder="Ingrese su raza/etnia" required>
                         <div class="invalid-feedback">Por favor ingresa tu raza/etnia.</div>
+                    </div>
                     </div>
                 </div>
 
                 <!-- Contacto -->
-                <div class="form-section">
-                    <h3>
-                        <i class="fas fa-envelope"></i>
-                        <span style="margin-left: 0.75rem;">Información de contacto</span>
-                    </h3>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="correo" class="form-label">Correo Electrónico <span class="required">*</span></label>
-                            <input type="email" class="form-control" id="correo" name="correo" placeholder="tu@email.com" required>
+                <div class="flacso-seccion">
+                    <div class="flacso-seccion-header">
+                        <div class="flacso-seccion-icon"><i class="fas fa-envelope"></i></div>
+                        <div>
+                            <h3 class="flacso-seccion-title"><span style="margin-left: 0.75rem;">Información de contacto</h3>
+                        </div>
+                    </div>
+                    <div class="flacso-campos-vertical">
+                    <div class="row g-3">
+                        <div class="col-md-6 flacso-input-group">
+                            <label for="correo" class="form-label">Correo Electrónico <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control form-control-flacso" id="correo" name="correo" placeholder="tu@email.com" required>
                             <div class="invalid-feedback">Por favor ingresa una dirección de correo válida (ej: nombre@ejemplo.com).</div>
                         </div>
-                        <div class="form-group">
-                            <label for="celular" class="form-label">Celular <span class="required">*</span></label>
-                            <input type="tel" class="form-control" id="celular" name="celular" placeholder="099 123456 o +598 99 123456" required>
+                        <div class="col-md-6 flacso-input-group">
+                            <label for="celular" class="form-label">Celular <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control form-control-flacso" id="celular" name="celular" required>
                             <div class="valid-feedback d-none"><i class="fas fa-check-circle"></i> Teléfono válido</div>
                             <div class="invalid-feedback">Por favor ingresa un número de teléfono válido.</div>
                             <small class="phone-error-details d-none"></small>
@@ -525,114 +542,140 @@ get_header();
                             <input type="hidden" id="celular_e164" name="celular_e164" value="">
                         </div>
                     </div>
+                    </div>
                 </div>
 
                 <!-- Ubicación -->
-                <div class="form-section">
-                    <h3>
-                        <i class="fas fa-globe"></i>
-                        <span style="margin-left: 0.75rem;">Ubicación</span>
-                    </h3>
-                    <div class="form-group">
-                        <label for="pais_residencia_input" class="form-label">País de Residencia <span class="required">*</span></label>
+                <div class="flacso-seccion">
+                    <div class="flacso-seccion-header">
+                        <div class="flacso-seccion-icon"><i class="fas fa-globe"></i></div>
+                        <div>
+                            <h3 class="flacso-seccion-title"><span style="margin-left: 0.75rem;">Ubicación</h3>
+                        </div>
+                    </div>
+                    <div class="flacso-campos-vertical">
+                    <div class="flacso-input-group">
+                        <label for="pais_residencia_input" class="form-label">País de Residencia <span class="text-danger">*</span></label>
                         <div class="country-select">
-                            <input type="text" id="pais_residencia_input" class="form-control country-select-input" placeholder="Selecciona un país..." autocomplete="off" aria-autocomplete="list" required />
+                            <input type="text" id="pais_residencia_input" class="form-control form-control-flacso country-select-input" placeholder="Selecciona un país..." autocomplete="off" aria-autocomplete="list" required />
                             <input type="hidden" id="pais_residencia" name="pais_residencia" value="<?php echo isset($_POST['pais_residencia']) ? esc_attr(strtolower($_POST['pais_residencia'])) : ''; ?>" />
                         </div>
                         <div class="invalid-feedback">Por favor selecciona tu país de residencia.</div>
                     </div>
+                    </div>
                 </div>
 
                 <!-- Información Académica y Profesional -->
-                <div class="form-section">
-                    <h3>
-                        <i class="fas fa-graduation-cap" style="margin-right: 0.5rem;"></i>Información académica y profesional
-                    </h3>
-                    <div class="form-group">
-                        <label for="estudios" class="form-label">Estudios <span class="required">*</span></label>
-                        <input type="text" class="form-control" id="estudios" name="estudios" placeholder="Ej: Licenciatura en Educación" required>
+                <div class="flacso-seccion">
+                    <div class="flacso-seccion-header">
+                        <div class="flacso-seccion-icon"><i class="fas fa-graduation-cap" style="margin-right: 0.5rem;"></i></div>
+                        <div>
+                            <h3 class="flacso-seccion-title">Información académica y profesional</h3>
+                        </div>
+                    </div>
+                    <div class="flacso-campos-vertical">
+                    <div class="flacso-input-group">
+                        <label for="estudios" class="form-label">Estudios <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-flacso" id="estudios" name="estudios" placeholder="Ej: Licenciatura en Educación" required>
                         <div class="invalid-feedback">Por favor indica tu nivel de estudios.</div>
                         <small class="form-text">Indica tu nivel de estudios alcanzado</small>
                     </div>
-                    <div class="form-group">
-                        <label for="ocupacion" class="form-label">Ocupación Actual <span class="required">*</span></label>
-                        <input type="text" class="form-control" id="ocupacion" name="ocupacion" placeholder="Ej: Docente, Investigador, etc." required>
+                    <div class="flacso-input-group">
+                        <label for="ocupacion" class="form-label">Ocupación Actual <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-flacso" id="ocupacion" name="ocupacion" placeholder="Ej: Docente, Investigador, etc." required>
                         <div class="invalid-feedback">Por favor indica tu ocupación actual.</div>
+                    </div>
                     </div>
                 </div>
 
                 <!-- Relación con FLACSO -->
-                <div class="form-section">
-                    <h3>
-                        <i class="fas fa-university" style="margin-right: 0.5rem;"></i>Relación con FLACSO
-                    </h3>
-                    <div class="form-group" style="margin-bottom: 1rem;">
-                        <span class="form-label" style="margin-bottom: 0.75rem; display: block;">¿Has cursado algún posgrado en FLACSO? <span class="required">*</span></span>
-                        <div class="radio-button-group">
-                            <div class="radio-btn">
-                                <input type="radio" id="posgrado_flacso_si" name="posgrado_flacso" value="si" required>
-                                <label for="posgrado_flacso_si">Sí</label>
-                            </div>
-                            <div class="radio-btn">
-                                <input type="radio" id="posgrado_flacso_no" name="posgrado_flacso" value="no" required checked>
-                                <label for="posgrado_flacso_no">No</label>
+                <div class="flacso-seccion">
+                    <div class="flacso-seccion-header">
+                        <div class="flacso-seccion-icon"><i class="fas fa-university" style="margin-right: 0.5rem;"></i></div>
+                        <div>
+                            <h3 class="flacso-seccion-title">Relación con FLACSO</h3>
+                        </div>
+                    </div>
+                    <div class="flacso-campos-vertical">
+                    <div class="flacso-input-group" style="margin-bottom: 1rem;">
+                        <span class="form-label" style="margin-bottom: 0.75rem; display: block;">¿Has cursado algún posgrado en FLACSO? <span class="text-danger">*</span></span>
+                        <div class="flacso-radio-group">
+                            <div class="row g-2 flacso-radio-options flex-row" style="flex-direction: row !important;">
+                                <div class="col-6 form-check form-check-radio">
+                                    <input type="radio" id="posgrado_flacso_si" name="posgrado_flacso" value="si" class="form-check-input form-check-input-radio" required>
+                                    <label class="form-check-label form-check-label-radio" for="posgrado_flacso_si">Sí</label>
+                                </div>
+                                <div class="col-6 form-check form-check-radio">
+                                    <input type="radio" id="posgrado_flacso_no" name="posgrado_flacso" value="no" class="form-check-input form-check-input-radio" required checked>
+                                    <label class="form-check-label form-check-label-radio" for="posgrado_flacso_no">No</label>
+                                </div>
                             </div>
                         </div>
-                        <div class="invalid-feedback">Por favor selecciona una opción.</div>
+                        <div class="invalid-feedback-radio">Por favor selecciona una opción.</div>
                     </div>
-                    <div class="form-group" id="posgrado_cual_container" style="display: none;">
-                        <label for="posgrado_cual" class="form-label">¿Cuál posgrado? <span class="required">*</span></label>
-                        <input type="text" class="form-control" id="posgrado_cual" name="posgrado_cual" placeholder="Ej: Maestría en Educación">
+                    <div class="flacso-input-group" id="posgrado_cual_container" style="display: none;">
+                        <label for="posgrado_cual" class="form-label">¿Cuál posgrado? <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-flacso" id="posgrado_cual" name="posgrado_cual" placeholder="Ej: Maestría en Educación">
                         <div class="invalid-feedback">Por favor indica cuál posgrado cursaste.</div>
+                    </div>
                     </div>
                 </div>
 
                 <!-- Archivos -->
-                <div class="form-section">
-                    <h3>
-                        <i class="fas fa-file-upload" style="margin-right: 0.5rem;"></i>Documentación
-                    </h3>
-                    <div class="form-group">
-                        <label for="documento_identidad" class="form-label">Documento de Identidad <span class="required">*</span></label>
-                        <input type="file" class="form-control" id="documento_identidad" name="documento_identidad[]" accept="image/*,application/pdf" multiple required>
+                <div class="flacso-seccion">
+                    <div class="flacso-seccion-header">
+                        <div class="flacso-seccion-icon"><i class="fas fa-file-upload" style="margin-right: 0.5rem;"></i></div>
+                        <div>
+                            <h3 class="flacso-seccion-title">Documentación</h3>
+                        </div>
+                    </div>
+                    <div class="flacso-campos-vertical">
+                    <div class="flacso-input-group">
+                        <label for="documento_identidad" class="form-label">Documento de Identidad <span class="text-danger">*</span></label>
+                        <input type="file" class="form-control form-control-flacso" id="documento_identidad" name="documento_identidad[]" accept="image/*,application/pdf" multiple required>
                         <div class="invalid-feedback">Por favor sube al menos una imagen de tu documento de identidad.</div>
                         <small class="form-text">Puedes subir una o más imágenes (frente y reverso) o un PDF</small>
                     </div>
-                    <div class="form-group">
-                        <label for="titulo" class="form-label">Archivo del Título de Grado o Terciario <span class="required">*</span></label>
-                        <input type="file" class="form-control" id="titulo" name="titulo" accept="image/*,application/pdf" required>
+                    <div class="flacso-input-group">
+                        <label for="titulo" class="form-label">Archivo del Título de Grado o Terciario <span class="text-danger">*</span></label>
+                        <input type="file" class="form-control form-control-flacso" id="titulo" name="titulo" accept="image/*,application/pdf" required>
                         <div class="invalid-feedback">Por favor sube una copia de tu título.</div>
                         <small class="form-text">Sube una copia de tu título</small>
                     </div>
-                    <div class="form-group">
-                        <label for="titulo_denominacion" class="form-label">Denominación del Título de Grado o Terciario <span class="required">*</span></label>
-                        <input type="text" class="form-control" id="titulo_denominacion" name="titulo_denominacion" placeholder="Ej: Licenciatura en Educación, Técnico en Informática" required>
+                    <div class="flacso-input-group">
+                        <label for="titulo_denominacion" class="form-label">Denominación del Título de Grado o Terciario <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-flacso" id="titulo_denominacion" name="titulo_denominacion" placeholder="Ej: Licenciatura en Educación, Técnico en Informática" required>
                         <div class="invalid-feedback">Por favor indica el nombre de tu título.</div>
                         <small class="form-text">Indica el nombre de tu título de grado o terciario</small>
+                    </div>
                     </div>
                 </div>
 
                 <!-- Términos -->
-                <div class="form-section">
-                    <div class="form-group">
-                        <span class="form-label" style="margin-bottom: 0.75rem; display: block;">¿Acepta difusión de nombre/foto? <span class="required">*</span></span>
-                        <div class="radio-button-group">
-                            <div class="radio-btn">
-                                <input type="radio" id="acepta_difusion_si" name="acepta_difusion" value="si" required>
-                                <label for="acepta_difusion_si">Sí</label>
-                            </div>
-                            <div class="radio-btn">
-                                <input type="radio" id="acepta_difusion_no" name="acepta_difusion" value="no" required>
-                                <label for="acepta_difusion_no">No</label>
+                <div class="flacso-seccion">
+                    <div class="flacso-campos-vertical">
+                    <div class="flacso-input-group">
+                        <span class="form-label" style="margin-bottom: 0.75rem; display: block;">¿Acepta difusión de nombre/foto? <span class="text-danger">*</span></span>
+                        <div class="flacso-radio-group">
+                            <div class="row g-2 flacso-radio-options flex-row" style="flex-direction: row !important;">
+                                <div class="col-6 form-check form-check-radio">
+                                    <input type="radio" id="acepta_difusion_si" name="acepta_difusion" value="si" class="form-check-input form-check-input-radio" required>
+                                    <label class="form-check-label form-check-label-radio" for="acepta_difusion_si">Sí</label>
+                                </div>
+                                <div class="col-6 form-check form-check-radio">
+                                    <input type="radio" id="acepta_difusion_no" name="acepta_difusion" value="no" class="form-check-input form-check-input-radio" required>
+                                    <label class="form-check-label form-check-label-radio" for="acepta_difusion_no">No</label>
+                                </div>
                             </div>
                         </div>
-                        <div class="invalid-feedback">Por favor selecciona una opción.</div>
+                        <div class="invalid-feedback-radio">Por favor selecciona una opción.</div>
+                    </div>
                     </div>
                 </div>
 
                 <!-- Submit -->
-                <div style="margin-bottom: 1.5rem;">
-                    <button type="submit" class="btn btn-primary btn-lg btn-block">
+                <div class="flacso-boton-envio">
+                    <button type="submit" class="btn flacso-btn-primary w-100 justify-content-center">
                         <i class="fas fa-paper-plane" style="margin-right: 0.5rem;"></i>Enviar Preinscripción
                     </button>
                     <div class="submit-loading-message" style="margin-top: 1rem; padding: 1rem; background: rgba(254, 210, 34, 0.1); border-radius: 8px; border: 1px solid rgba(254, 210, 34, 0.3); display: none; text-align: center; color: var(--global-palette4);">
@@ -648,6 +691,7 @@ get_header();
 
                 <?php wp_nonce_field('preinscripcion_nonce', 'preinscripcion_nonce'); ?>
             </form>
+                </div>
             </div>
         </div>
     <?php endif; ?>
@@ -905,20 +949,15 @@ function validate_ci(ci) {
             updatePhonePlaceholder();
         });
 
-        // Función para actualizar placeholder según país seleccionado
         function updatePhonePlaceholder() {
             if (!window._iti) return;
             try {
                 const countryData = window._iti.getSelectedCountryData();
                 const dialCode = countryData.dialCode;
-                const placeholder = `+${dialCode} ...`;
-                
-                // Actualizar placeholder y helper text (específico para teléfono)
-                phoneInput.setAttribute('placeholder', placeholder);
                 
                 const helperText = document.querySelector('small.phone-helper-text');
                 if (helperText) {
-                    helperText.textContent = `Puedes ingresar: número local o formato internacional (${placeholder})`;
+                    helperText.textContent = `Puedes ingresar: número local o formato internacional (+${dialCode} ...)`;
                 }
             } catch (err) {
                 console.warn('Error actualizando placeholder:', err);
@@ -1092,7 +1131,7 @@ function validate_ci(ci) {
                 const placeholderOtro = tipo === 'Pasaporte' ? 'AB1234567' : 'Tu número de documento';
                 inputOtro.setAttribute('placeholder', placeholderOtro);
                 if (labelOtro) {
-                    labelOtro.innerHTML = (tipo === 'Pasaporte' ? 'Número de Pasaporte' : 'Número de Documento') + ' <span class="required">*</span>';
+                    labelOtro.innerHTML = (tipo === 'Pasaporte' ? 'Número de Pasaporte' : 'Número de Documento') + ' <span class="text-danger">*</span>';
                 }
             } else {
                 // Ninguno seleccionado, ocultar ambos

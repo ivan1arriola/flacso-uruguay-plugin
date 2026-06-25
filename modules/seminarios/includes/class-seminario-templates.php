@@ -61,6 +61,16 @@ class Seminario_Templates
                 FLACSO_SEMINARIO_VERSION
             );
 
+            // Enqueue modern preinscription styles if it's the preinscription endpoint
+            if (get_query_var('flacso_preinscripcion')) {
+                wp_enqueue_style(
+                    'flacso-formulario-styles',
+                    plugins_url('modules/preinscripcion/includes/assets/styles.css', FLACSO_URUGUAY_FILE),
+                    array(),
+                    FLACSO_SEMINARIO_VERSION
+                );
+            }
+
             // Legacy public CSS (if needed for additional styles)
             $public_css_path = dirname(__DIR__) . '/assets/css/public.css';
             if (file_exists($public_css_path)) {
