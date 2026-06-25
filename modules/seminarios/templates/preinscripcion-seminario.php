@@ -711,19 +711,20 @@ get_header();
     width: 100%;
     min-height: 52px;
     padding: .8rem 1rem;
-    border: 1px solid rgba(22, 57, 111, 0.18);
+    border: 1px solid rgba(22, 57, 111, 0.18) !important;
     border-radius: 14px;
-    background: #ffffff;
-    color: var(--flacso-azul-oscuro);
+    background: #ffffff !important;
+    color: var(--flacso-azul-oscuro) !important;
     font-weight: 750;
     cursor: pointer;
-    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease, transform .18s ease;
+    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease, transform .18s ease, color .18s ease;
 }
 
 .form-check-input-radio:checked + .form-check-label-radio {
-    border-color: var(--flacso-azul);
-    background: rgba(22, 57, 111, 0.08);
-    box-shadow: inset 0 0 0 1px var(--flacso-azul);
+    border-color: var(--flacso-azul) !important;
+    background: var(--flacso-azul) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(22, 57, 111, 0.24) !important;
 }
 
 .form-check-input-radio:focus-visible + .form-check-label-radio {
