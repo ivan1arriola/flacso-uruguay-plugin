@@ -68,6 +68,7 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
                 if (file_exists($custom_template)) {
                     add_filter('wp_title', array($this, 'modificar_titulo_preinscripcion'), 10, 3);
                     add_filter('document_title_parts', array($this, 'modificar_titulo_parts_preinscripcion'));
+                    add_action('wp_head', array($this, 'add_og_meta_tags'), 5);
                     return $custom_template;
                 }
             } elseif ($es_carta) {
@@ -76,6 +77,7 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
                 if (file_exists($custom_template)) {
                     add_filter('wp_title', array($this, 'modificar_titulo_carta'), 10, 3);
                     add_filter('document_title_parts', array($this, 'modificar_titulo_parts_carta'));
+                    add_action('wp_head', array($this, 'add_og_meta_tags'), 5);
                     return $custom_template;
                 }
             }
@@ -120,6 +122,40 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
             $title_parts['title'] = 'Carta de Presentación - ' . get_the_title($post->ID);
         }
         return $title_parts;
+    }
+    
+    /**
+     * Agrega etiquetas Open Graph para las páginas virtuales de preinscripción
+     */
+    public function add_og_meta_tags() {
+        global $post;
+        if (!$post) return;
+        
+        $info_posgrado = $this->obtener_info_posgrado_para_template($post->ID);
+        $es_carta = get_query_var('es_carta');
+        $prefix = $es_carta ? 'Carta de Presentación - ' : 'Preinscripción - ';
+        $desc_prefix = $es_carta ? 'Sube tu carta de presentación para ' : 'Completa el formulario de preinscripción para ';
+        
+        $titulo = $prefix . $info_posgrado['titulo_posgrado'];
+        $url = home_url(add_query_arg(array(), $GLOBALS['wp']->request));
+        $imagen_url = $info_posgrado['imagen_destacada'];
+        $descripcion = $desc_prefix . $info_posgrado['titulo_posgrado'];
+        
+        echo '<meta property="og:type" content="website" />' . "\n";
+        echo '<meta property="og:title" content="' . esc_attr($titulo) . '" />' . "\n";
+        echo '<meta property="og:description" content="' . esc_attr($descripcion) . '" />' . "\n";
+        echo '<meta property="og:url" content="' . esc_url($url) . '" />' . "\n";
+        if ($imagen_url) {
+            echo '<meta property="og:image" content="' . esc_url($imagen_url) . '" />' . "\n";
+            echo '<meta property="og:image:width" content="1200" />' . "\n";
+            echo '<meta property="og:image:height" content="630" />' . "\n";
+        }
+        echo '<meta name="twitter:card" content="summary_large_image" />' . "\n";
+        echo '<meta name="twitter:title" content="' . esc_attr($titulo) . '" />' . "\n";
+        echo '<meta name="twitter:description" content="' . esc_attr($descripcion) . '" />' . "\n";
+        if ($imagen_url) {
+            echo '<meta name="twitter:image" content="' . esc_url($imagen_url) . '" />' . "\n";
+        }
     }
     
     /**
