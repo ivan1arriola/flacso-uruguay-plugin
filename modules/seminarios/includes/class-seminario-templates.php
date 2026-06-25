@@ -61,12 +61,15 @@ class Seminario_Templates
                 FLACSO_SEMINARIO_VERSION
             );
 
-            // Enqueue modern preinscription styles if it's the preinscription endpoint
+            // Enqueue modern preinscription styles and external libs if it's the preinscription endpoint
             if (get_query_var('flacso_preinscripcion')) {
+                wp_enqueue_style('intl-tel-input-css', 'https://cdn.jsdelivr.net/npm/intl-tel-input@25.12.4/build/css/intlTelInput.css', array(), '25.12.4');
+                wp_enqueue_style('country-select-js-css', 'https://cdn.jsdelivr.net/npm/country-select-js@2.0.1/build/css/countrySelect.min.css', array(), '2.0.1');
+                
                 wp_enqueue_style(
                     'flacso-formulario-styles',
                     plugins_url('modules/preinscripcion/includes/assets/styles.css', FLACSO_URUGUAY_FILE),
-                    array(),
+                    array('intl-tel-input-css', 'country-select-js-css'),
                     FLACSO_SEMINARIO_VERSION
                 );
             }
