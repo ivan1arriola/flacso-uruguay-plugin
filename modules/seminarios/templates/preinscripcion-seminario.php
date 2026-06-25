@@ -560,16 +560,18 @@ get_header();
 }
 
 .flacso-preinscripcion-seminario-main .row {
-    display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 1rem;
-    margin: 0;
+    width: 100%;
 }
 
-.flacso-preinscripcion-seminario-main .g-2 { gap: .65rem; }
-.flacso-preinscripcion-seminario-main .g-3 { gap: 1rem; }
 .flacso-preinscripcion-seminario-main .col-md-6,
-.flacso-preinscripcion-seminario-main .col-6 { grid-column: span 6; }
+.flacso-preinscripcion-seminario-main .col-6 {
+    flex: 0 0 calc(50% - 0.5rem);
+    max-width: calc(50% - 0.5rem);
+    width: 100%;
+}
 
 .flacso-input-group {
     min-width: 0;
@@ -934,7 +936,8 @@ button.flacso-btn-primary {
 
     .flacso-preinscripcion-seminario-main .col-md-6,
     .flacso-preinscripcion-seminario-main .col-6 {
-        grid-column: span 1;
+        flex: 0 0 100%;
+        max-width: 100%;
     }
 
     .flacso-seccion-header {
