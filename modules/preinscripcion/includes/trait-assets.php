@@ -18,7 +18,7 @@ trait FLACSO_Formulario_Preinscripcion_Assets {
         wp_enqueue_script('libphonenumber-js', 'https://cdn.jsdelivr.net/npm/libphonenumber-js@1.11.14/bundle/libphonenumber-min.js', array(), '1.11.14', true);
         
         // Enqueue custom script with dependencies
-        wp_enqueue_script('flacso-formulario-script', $assets_url . 'scripts.js', array('jquery', 'intl-tel-input-js', 'country-select-js', 'libphonenumber-js'), '1.0.4', true);
+        wp_enqueue_script('flacso-formulario-script', $assets_url . 'scripts.js', array('jquery', 'intl-tel-input-js', 'country-select-js', 'libphonenumber-js'), '1.0.5', true);
         
         // Localize script with PHP data
         wp_localize_script('flacso-formulario-script', 'flacsoFormConfig', array(

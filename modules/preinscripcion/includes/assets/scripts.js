@@ -504,35 +504,17 @@ jQuery(function($){
                 trackMetaEvent('SubmitApplication', pixelPayload);
                 trackMetaEvent('Lead', pixelPayload);
 
-                resultado.html(`
-                    <div class="flacso-success-card">
-                        <div class="flacso-success-header">
-                            <div class="flacso-success-icon" aria-hidden="true">
-                                <i class="bi bi-check-circle-fill"></i>
-                            </div>
-                            <div>
-                                <h3>¡Postulación enviada exitosamente!</h3>
-                                <p class="mb-0">${fecha}</p>
-                            </div>
-                        </div>
-                        <div class="flacso-success-body">
-                            <h4>Gracias, ${nombreCompleto}</h4>
-                            <p class="lead mb-2">Hemos recibido tu postulación para <strong>${posgrado}</strong>.</p>
-                            <ul class="flacso-success-list">
-                                <li><strong>Correo de contacto:</strong> ${correo || 'no provisto'}</li>
-                                <li><strong>Estado:</strong> Recibida y en revisión inicial.</li>
-                            </ul>
-                            <div class="flacso-success-steps">
-                                <h5>Próximos pasos</h5>
-                                <ol>
-                                    <li>Recibirás un correo de confirmación en los próximos minutos.</li>
-                                    <li>Revisa spam/promociones si no lo ves en tu bandeja principal.</li>
-                                    <li>Ante dudas, escribe a <a href="mailto:inscripciones@flacso.edu.uy">inscripciones@flacso.edu.uy</a>.</li>
-                                </ol>
-                            </div>
-                        </div>
-                    </div>
-                `);
+                // Guardar en sessionStorage por si falla la obtención por pid
+                sessionStorage.setItem('consultaPrograma', posgrado);
+                sessionStorage.setItem('consultaNombreCompleto', nombreCompleto);
+
+                // Redirigir a la página de gracias (hija de la URL actual)
+                let currentUrl = window.location.href.split('?')[0];
+                if (!currentUrl.endsWith('/')) {
+                    currentUrl += '/';
+                }
+                const graciasUrl = currentUrl + 'gracias/?tipo=preinscripcion&pid=' + encodeURIComponent(config.idPosgrado || '');
+                window.location.href = graciasUrl;
             } else {
                 const msg = data.data || 'Error desconocido del servidor. Por favor, intente nuevamente.';
                 resultado.html(`

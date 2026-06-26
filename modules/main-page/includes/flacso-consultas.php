@@ -164,7 +164,7 @@ function flacso_consultas_render_form( $attributes = array() ) {
 	$id_pagina       = get_the_ID();
 	$titulo_posgrado = get_the_title( $id_pagina );
 	$url_actual      = get_permalink( $id_pagina );
-	$gracias_url     = home_url( '/confirmacion-consulta/' );
+	$gracias_url     = trailingslashit( $url_actual ) . 'gracias/';
 	if ( ! $id_pagina ) {
 		$id_pagina = 0;
 	}
@@ -373,7 +373,8 @@ function flacso_consultas_render_form( $attributes = array() ) {
 					sessionStorage.setItem('consultaPrograma', $form.find('[name="titulo_posgrado"]').val());
 					sessionStorage.setItem('consultaOrigen', $form.find('[name="url_base"]').val());
 					const pid = $form.find('[name="id_pagina"]').val();
-					const gracias = $form.find('[name="url_gracias"]').val() || '<?php echo esc_js( home_url( '/confirmacion-consulta/' ) ); ?>';
+					const urlBase = $form.find('[name="url_base"]').val();
+					const gracias = $form.find('[name="url_gracias"]').val() || (urlBase ? urlBase.replace(/\\/?$/, '/gracias/') : '<?php echo esc_js( home_url( '/gracias/' ) ); ?>');
 					window.location.href = gracias + '?pid=' + encodeURIComponent(pid);
 				},
 				error: function() {
@@ -382,7 +383,8 @@ function flacso_consultas_render_form( $attributes = array() ) {
 					sessionStorage.setItem('consultaPrograma', $form.find('[name="titulo_posgrado"]').val());
 					sessionStorage.setItem('consultaOrigen', $form.find('[name="url_base"]').val());
 					const pid = $form.find('[name="id_pagina"]').val();
-					const gracias = $form.find('[name="url_gracias"]').val() || '<?php echo esc_js( home_url( '/confirmacion-consulta/' ) ); ?>';
+					const urlBase = $form.find('[name="url_base"]').val();
+					const gracias = $form.find('[name="url_gracias"]').val() || (urlBase ? urlBase.replace(/\\/?$/, '/gracias/') : '<?php echo esc_js( home_url( '/gracias/' ) ); ?>');
 					window.location.href = gracias + '?pid=' + encodeURIComponent(pid);
 				},
 				complete: function() { toggleLoading(false); }
@@ -759,10 +761,22 @@ function flacso_render_gracias_virtual() {
 
         $volver_href = $pid ? get_permalink( $pid ) : home_url( '/' );
 
+        $tipo = isset( $_GET['tipo'] ) ? sanitize_text_field( $_GET['tipo'] ) : 'consulta';
+        // Ensure backward compatibility or expected types
+        if ( $tipo === 'preinscripcion' ) {
+            $tipo = 'preinscripcion_oferta';
+        }
+
         $intro = $titulo_programa ? flacso_intro_con_articulo( $titulo_programa ) : '';
-        $page_title = $titulo_programa
-                ? sprintf( 'Consulta enviada - %s', $titulo_programa )
-                : 'Consulta enviada';
+        
+        // Define page title based on type
+        if ( $tipo === 'preinscripcion_oferta' || $tipo === 'preinscripcion_seminario' ) {
+            $page_title = $titulo_programa ? sprintf( 'Preinscripción enviada - %s', $titulo_programa ) : 'Preinscripción enviada';
+        } elseif ( $tipo === 'solicitud_informacion' ) {
+            $page_title = $titulo_programa ? sprintf( 'Solicitud de información - %s', $titulo_programa ) : 'Solicitud de información';
+        } else {
+            $page_title = $titulo_programa ? sprintf( 'Consulta enviada - %s', $titulo_programa ) : 'Consulta enviada';
+        }
 
         status_header( 200 );
         nocache_headers();
@@ -782,24 +796,58 @@ function flacso_render_gracias_virtual() {
 			<div class="flacso-gracias-content container py-5 d-flex justify-content-center">
 				<div class="bg-white rounded-4 shadow-lg p-4 p-md-5 fade-in" style="max-width: 820px;">
 					<div class="flacso-gracias-icon display-5 text-success mb-2" aria-hidden="true">✓</div>
-					<h1 class="mb-3" style="color: var(--global-palette1);">¡Tu consulta fue enviada!</h1>
+					<h1 class="mb-3" style="color: var(--global-palette1);">
+						<?php 
+							if ( $tipo === 'preinscripcion_oferta' || $tipo === 'preinscripcion_seminario' ) {
+								echo 'Gracias por tu preinscripción';
+							} elseif ( $tipo === 'solicitud_informacion' ) {
+								echo '¡Gracias por solicitar información!';
+							} else {
+								echo '¡Tu consulta fue enviada!';
+							}
+						?>
+					</h1>
 
 					<div class="flacso-gracias-mensaje mb-3">
-						<?php if ( $intro ) : ?>
-							<p class="lead mb-2">
-								<?php printf( 'Gracias por tu interés en %s de FLACSO Uruguay.', esc_html( $intro ) ); ?>
+						<?php if ( $tipo === 'preinscripcion_oferta' || $tipo === 'preinscripcion_seminario' ) : ?>
+							<p class="lead mb-2">Recibimos tus datos correctamente.</p>
+							<p class="mb-2">El equipo de FLACSO Uruguay revisará la información y se comunicará contigo por correo electrónico.</p>
+							<p class="mb-2">Revisá también tu carpeta de spam o promociones.</p>
+							<?php if ( $titulo_programa ) : ?>
+								<p class="mb-0 fw-semibold"><?php echo $tipo === 'preinscripcion_seminario' ? 'Seminario' : 'Oferta'; ?> consultada: <?php echo esc_html( $titulo_programa ); ?></p>
+							<?php endif; ?>
+						<?php elseif ( $tipo === 'solicitud_informacion' ) : ?>
+							<?php if ( $intro ) : ?>
+								<p class="lead mb-2">
+									<?php printf( 'Hemos recibido tu solicitud de información sobre %s.', esc_html( $intro ) ); ?>
+								</p>
+							<?php else : ?>
+								<p class="lead mb-2">Hemos recibido tu solicitud de información correctamente.</p>
+							<?php endif; ?>
+							<p class="mb-2">A la brevedad te estaremos enviando el programa y los detalles de cursada al correo electrónico que ingresaste.</p>
+							<p class="mb-0">
+								Si tenés dudas, escribinos a
+								<a href="mailto:<?php echo esc_attr( FLACSO_EMAIL_CONTACTO ); ?>" class="fw-semibold">
+									<?php echo esc_html( FLACSO_EMAIL_CONTACTO ); ?>
+								</a>.
 							</p>
 						<?php else : ?>
-							<p class="lead mb-2">Hemos recibido tu consulta correctamente.</p>
-						<?php endif; ?>
+							<?php if ( $intro ) : ?>
+								<p class="lead mb-2">
+									<?php printf( 'Gracias por tu interés en %s de FLACSO Uruguay.', esc_html( $intro ) ); ?>
+								</p>
+							<?php else : ?>
+								<p class="lead mb-2">Hemos recibido tu consulta correctamente.</p>
+							<?php endif; ?>
 
-						<p class="mb-2">En breve recibirás un correo con toda la información detallada.</p>
-						<p class="mb-0">
-							Si tenés alguna consulta adicional, podés escribirnos a
-							<a href="mailto:<?php echo esc_attr( FLACSO_EMAIL_CONTACTO ); ?>" class="fw-semibold">
-								<?php echo esc_html( FLACSO_EMAIL_CONTACTO ); ?>
-							</a>.
-						</p>
+							<p class="mb-2">En breve recibirás un correo con la respuesta a tu consulta.</p>
+							<p class="mb-0">
+								Si precisas enviar más detalles, podés escribirnos a
+								<a href="mailto:<?php echo esc_attr( FLACSO_EMAIL_CONTACTO ); ?>" class="fw-semibold">
+									<?php echo esc_html( FLACSO_EMAIL_CONTACTO ); ?>
+								</a>.
+							</p>
+						<?php endif; ?>
 					</div>
 
 					<div class="flacso-gracias-buttons mt-4 mx-auto" style="max-width: 420px;">
@@ -847,6 +895,11 @@ function flacso_render_gracias_virtual() {
 				}
 			}
 			if (!pid) {
+				var urlParams = new URLSearchParams(window.location.search);
+				var tipo = urlParams.get('tipo') || 'consulta';
+				if (tipo === 'preinscripcion') tipo = 'preinscripcion_oferta';
+				var isPreinscripcion = (tipo === 'preinscripcion_oferta' || tipo === 'preinscripcion_seminario');
+				
 				var programa = sessionStorage.getItem('consultaPrograma') || '';
 				var intro    = programa ? (function(t){
 					var primera = (t || '').trim().split(/\s+/)[0] || '';
@@ -857,13 +910,36 @@ function flacso_render_gracias_virtual() {
 				})(programa) : '';
 				var cont = document.querySelector('.flacso-gracias-mensaje');
 				if (cont && intro) {
-					cont.innerHTML =
-						'<p class="lead mb-2">Gracias por tu interés en ' + intro.replace(/</g,'&lt;') + ' de FLACSO Uruguay.</p>' +
-						'<p class="mb-2">En breve recibirás un correo con toda la información detallada.</p>' +
-						'<p class="mb-0">Si tenés alguna consulta adicional, podés escribirnos a ' +
-						'<a class="fw-semibold" href="mailto:<?php echo esc_js( FLACSO_EMAIL_CONTACTO ); ?>">' +
-						'<?php echo esc_js( FLACSO_EMAIL_CONTACTO ); ?>' +
-						'</a>.</p>';
+					if (isPreinscripcion) {
+						var strTipo = (tipo === 'preinscripcion_seminario') ? 'Seminario' : 'Oferta';
+						cont.innerHTML =
+							'<p class="lead mb-2">Recibimos tus datos correctamente.</p>' +
+							'<p class="mb-2">El equipo de FLACSO Uruguay revisará la información y se comunicará contigo por correo electrónico.</p>' +
+							'<p class="mb-2">Revisá también tu carpeta de spam o promociones.</p>' +
+							'<p class="mb-0 fw-semibold">' + strTipo + ' consultada: ' + programa.replace(/</g,'&lt;') + '</p>';
+						
+						var h1 = document.querySelector('.flacso-gracias-content h1');
+						if (h1) h1.textContent = 'Gracias por tu preinscripción';
+					} else if (tipo === 'solicitud_informacion') {
+						cont.innerHTML =
+							'<p class="lead mb-2">Hemos recibido tu solicitud de información sobre ' + intro.replace(/</g,'&lt;') + '.</p>' +
+							'<p class="mb-2">A la brevedad te estaremos enviando el programa y los detalles de cursada al correo electrónico que ingresaste.</p>' +
+							'<p class="mb-0">Si tenés dudas, escribinos a ' +
+							'<a class="fw-semibold" href="mailto:<?php echo esc_js( FLACSO_EMAIL_CONTACTO ); ?>">' +
+							'<?php echo esc_js( FLACSO_EMAIL_CONTACTO ); ?>' +
+							'</a>.</p>';
+							
+						var h1 = document.querySelector('.flacso-gracias-content h1');
+						if (h1) h1.textContent = '¡Gracias por solicitar información!';
+					} else {
+						cont.innerHTML =
+							'<p class="lead mb-2">Gracias por tu interés en ' + intro.replace(/</g,'&lt;') + ' de FLACSO Uruguay.</p>' +
+							'<p class="mb-2">En breve recibirás un correo con la respuesta a tu consulta.</p>' +
+							'<p class="mb-0">Si precisas enviar más detalles, podés escribirnos a ' +
+							'<a class="fw-semibold" href="mailto:<?php echo esc_js( FLACSO_EMAIL_CONTACTO ); ?>">' +
+							'<?php echo esc_js( FLACSO_EMAIL_CONTACTO ); ?>' +
+							'</a>.</p>';
+					}
 				}
 			}
 			setTimeout(function() {

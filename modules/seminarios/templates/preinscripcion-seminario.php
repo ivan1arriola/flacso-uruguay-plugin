@@ -2178,37 +2178,17 @@ function validate_ci(ci) {
                     };
                     trackMetaEvent('SubmitApplication', pixelPayload);
                     
-                    // Éxito: ocultar formulario y mostrar mensaje
-                    const formContainer = document.querySelector('.form-container') || document.querySelector('.flacso-formulario-card');
-                    if (formContainer) {
-                        formContainer.style.display = 'none';
-                        console.log('[Preinscripcion] Formulario ocultado');
+                    // Guardar en sessionStorage
+                    sessionStorage.setItem('consultaPrograma', '<?php echo esc_js($seminario_titulo); ?>');
+                    
+                    // Redirigir a la página de gracias (hija de la URL actual)
+                    let currentUrl = window.location.href.split('?')[0];
+                    if (!currentUrl.endsWith('/')) {
+                        currentUrl += '/';
                     }
-                    
-                    // Insertar mensaje de éxito
-                    const contentDiv = document.querySelector('.site-container');
-                    const successDiv = document.createElement('div');
-                    successDiv.innerHTML = successContainer.outerHTML;
-                    console.log('[Preinscripcion] Mensaje de éxito preparado');
-                    
-                    // Reemplazar o insertar después del hero
-                    const existingSuccess = document.querySelector('.success-container');
-                    if (existingSuccess) {
-                        existingSuccess.replaceWith(successDiv.firstElementChild);
-                        console.log('[Preinscripcion] Mensaje de éxito reemplazado');
-                    } else {
-                        const hero = document.querySelector('.preinsc-hero');
-                        if (hero && hero.nextElementSibling) {
-                            hero.nextElementSibling.insertBefore(successDiv.firstElementChild, hero.nextElementSibling.firstChild);
-                        } else {
-                            contentDiv.insertBefore(successDiv.firstElementChild, contentDiv.firstChild);
-                        }
-                        console.log('[Preinscripcion] Mensaje de éxito insertado');
-                    }
-                    
-                    // Scroll suave al mensaje de éxito
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                    console.log('[Preinscripcion] Scroll al inicio completado');
+                    const graciasUrl = currentUrl + 'gracias/?tipo=preinscripcion_seminario&pid=<?php echo $post->ID; ?>';
+                    window.location.href = graciasUrl;
+                    return;
                 } else {
                     console.warn('[Preinscripcion] ✗ Error en el envío - no se encontró contenedor de éxito');
                     
