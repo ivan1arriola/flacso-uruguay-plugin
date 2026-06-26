@@ -880,7 +880,14 @@ function flacso_render_gracias_virtual() {
 				programaMeta = sessionStorage.getItem('consultaPrograma') || '';
 			}
 
-			if (typeof window.fbq === 'function') {
+			var urlParams = new URLSearchParams(window.location.search);
+			var tipo = urlParams.get('tipo') || 'consulta';
+			if (tipo === 'preinscripcion') tipo = 'preinscripcion_oferta';
+			var isPreinscripcion = (tipo === 'preinscripcion_oferta' || tipo === 'preinscripcion_seminario');
+
+			// Only fire Lead event if it's a general consultation or info request
+			// Pre-enrollments fire their own Lead & SubmitApplication events with Advanced Matching hashes prior to redirect
+			if (typeof window.fbq === 'function' && !isPreinscripcion) {
 				try {
 					window.fbq('track', 'Lead', {
 						content_name: programaMeta || '',
@@ -895,11 +902,6 @@ function flacso_render_gracias_virtual() {
 				}
 			}
 			if (!pid) {
-				var urlParams = new URLSearchParams(window.location.search);
-				var tipo = urlParams.get('tipo') || 'consulta';
-				if (tipo === 'preinscripcion') tipo = 'preinscripcion_oferta';
-				var isPreinscripcion = (tipo === 'preinscripcion_oferta' || tipo === 'preinscripcion_seminario');
-				
 				var programa = sessionStorage.getItem('consultaPrograma') || '';
 				var intro    = programa ? (function(t){
 					var primera = (t || '').trim().split(/\s+/)[0] || '';
