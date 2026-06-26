@@ -249,14 +249,40 @@ if (!empty($offers_grouped)) {
 }
 
 $total_ofertas = 0;
+$ofertas_abiertas = 0;
 $tiene_abiertas = false;
+
 foreach ($offers_grouped as $group_count) {
     foreach ($group_count['items'] as $item) {
         $total_ofertas++;
+
         if (!empty($item['is_open'])) {
+            $ofertas_abiertas++;
             $tiene_abiertas = true;
         }
     }
+}
+
+$taxonomy_name_lower = function_exists('mb_strtolower')
+    ? mb_strtolower($taxonomy_name, 'UTF-8')
+    : strtolower($taxonomy_name);
+
+if ($tiene_abiertas) {
+    $hero_badge = $ofertas_abiertas === 1
+        ? '1 propuesta con inscripción abierta'
+        : $ofertas_abiertas . ' propuestas con inscripción abierta';
+
+    $hero_title = 'Elegí una propuesta y avanzá con tu inscripción';
+    $hero_text = 'Accedé a la información completa de cada programa, fechas, duración y requisitos.';
+    $hero_button = 'Ver propuestas disponibles';
+} else {
+    $hero_badge = $total_ofertas === 1
+        ? '1 propuesta académica'
+        : $total_ofertas . ' propuestas académicas';
+
+    $hero_title = 'Conocé las próximas propuestas académicas';
+    $hero_text = 'Revisá la información de cada programa y consultá las próximas aperturas.';
+    $hero_button = 'Ver propuestas';
 }
 
 get_header();
