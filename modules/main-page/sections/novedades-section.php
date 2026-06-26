@@ -23,13 +23,13 @@ if (!function_exists('flacso_section_novedades_render')) {
         ?>
         <section class="flacso-novedades-section position-relative" id="<?php echo esc_attr($unique_id); ?>">
             <div class="flacso-content-shell">
-                <div class="flacso-novedades-header text-center mb-4">
-                    <h2 class="h3 mb-0">Novedades</h2>
+                <div class="flacso-novedades-header text-center mb-0">
+                    <h2 class="h3 mb-0" style="margin-bottom: 0 !important; padding-bottom: 0.5rem !important;">Novedades</h2>
                 </div>
             </div>
             
             <?php if ($destacadas_html): ?>
-                <div class="flacso-novedades-destacadas-merged">
+                <div class="flacso-novedades-destacadas-merged" style="margin-top: -1.5rem;">
                     <?php echo $destacadas_html; ?>
                 </div>
             <?php endif; ?>
