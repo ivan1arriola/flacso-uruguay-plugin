@@ -2581,11 +2581,29 @@
     background-color: var(--global-palette8, #f4f7fc);
 }
 
+.flacso-reels-subtitle {
+    font-size: 1.75rem;
+    color: var(--global-palette1, #1d3a72);
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.flacso-reels-loading {
+    text-align: center;
+    padding: 3rem;
+    color: var(--global-palette4, #4b5563);
+    font-size: 1.1rem;
+}
+
 .flacso-reels-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 24px;
     width: 100%;
+}
+
+.flacso-reels-grid--horizontal {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
 }
 
 .flacso-reel-item {
@@ -2605,9 +2623,26 @@
 
 .flacso-reel-video {
     width: 100%;
-    aspect-ratio: 9/16;
-    background: #000;
+    background: #0a0a0a;
     object-fit: contain;
+    display: block;
+}
+
+.flacso-reels-grid--vertical .flacso-reel-video {
+    aspect-ratio: 9/16;
+    height: 480px;
+}
+
+.flacso-reels-grid--horizontal .flacso-reel-video {
+    aspect-ratio: 16/9;
+    height: 240px;
+}
+
+@supports (aspect-ratio: 9/16) {
+    .flacso-reels-grid--vertical .flacso-reel-video,
+    .flacso-reels-grid--horizontal .flacso-reel-video {
+        height: auto;
+    }
 }
 
 .flacso-reel-caption {

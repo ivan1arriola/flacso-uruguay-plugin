@@ -26,7 +26,7 @@ function flacso_section_reels_render() {
         return '';
     }
 
-    $title = (string) apply_filters('flacso_main_page_reels_title', $settings['title'] ?? 'Reels Destacados');
+    $title = (string) apply_filters('flacso_main_page_reels_title', $settings['title'] ?? 'Contenido Audiovisual');
     $section_id = 'flacso-reels-' . wp_generate_password(6, false);
 
     ob_start();
@@ -37,29 +37,99 @@ function flacso_section_reels_render() {
                 <h2 id="<?php echo esc_attr($section_id); ?>"><?php echo esc_html($title); ?></h2>
             </header>
             
-            <div class="flacso-reels-grid">
-                <?php foreach ($reels as $reel) : ?>
-                    <div class="flacso-reel-item">
-                        <video 
-                            controls 
-                            preload="metadata" 
-                            poster="<?php echo esc_url($reel['thumbnail_url']); ?>" 
-                            class="flacso-reel-video"
-                        >
-                            <source src="<?php echo esc_url($reel['media_url']); ?>" type="video/mp4">
-                            Tu navegador no soporta el formato de video.
-                        </video>
-                        <?php if (!empty($reel['caption'])): ?>
-                            <div class="flacso-reel-caption">
-                                <p><?php echo esc_html(wp_trim_words($reel['caption'], 20)); ?></p>
-                                <a href="<?php echo esc_url($reel['permalink']); ?>" target="_blank" rel="noopener noreferrer" class="flacso-reel-link">
-                                    Ver en Instagram <i class="bi bi-box-arrow-up-right"></i>
-                                </a>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
+            <div id="<?php echo esc_attr($section_id); ?>-container" class="flacso-reels-dynamic-container">
+                <div class="flacso-reels-loading">
+                    <p><?php esc_html_e('Clasificando videos...', 'flacso-main-page'); ?></p>
+                </div>
             </div>
+            
+            <script type="application/json" id="<?php echo esc_attr($section_id); ?>-data">
+                <?php echo wp_json_encode(array_values($reels)); ?>
+            </script>
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const dataEl = document.getElementById('<?php echo esc_js($section_id); ?>-data');
+                const container = document.getElementById('<?php echo esc_js($section_id); ?>-container');
+                if (!dataEl || !container) return;
+                
+                try {
+                    const reels = JSON.parse(dataEl.textContent);
+                    const vertical = [];
+                    const horizontal = [];
+                    
+                    let pending = reels.length;
+                    if (pending === 0) {
+                        container.innerHTML = '';
+                        return;
+                    }
+                    
+                    // Función para renderizar cuando todos han sido medidos (o suficientes)
+                    const checkAndRender = () => {
+                        pending--;
+                        // Renderizamos cuando terminamos de medir todos los videos (o al menos logramos 3 y 3)
+                        if (pending === 0 || (vertical.length >= 3 && horizontal.length >= 3)) {
+                            // Evitar doble render
+                            if (container.dataset.rendered) return;
+                            container.dataset.rendered = 'true';
+                            
+                            const finalVertical = vertical.slice(0, 3);
+                            const finalHorizontal = horizontal.slice(0, 3);
+                            
+                            let html = '';
+                            
+                            const renderItem = (reel) => {
+                                const caption = reel.caption ? `<div class="flacso-reel-caption"><p>${reel.caption.substring(0, 100)}...</p><a href="${reel.permalink}" target="_blank" rel="noopener noreferrer" class="flacso-reel-link">Ver en Instagram <i class="bi bi-box-arrow-up-right"></i></a></div>` : '';
+                                return `
+                                    <div class="flacso-reel-item">
+                                        <video controls preload="metadata" poster="${reel.thumbnail_url}" class="flacso-reel-video">
+                                            <source src="${reel.media_url}" type="video/mp4">
+                                        </video>
+                                        ${caption}
+                                    </div>
+                                `;
+                            };
+                            
+                            if (finalVertical.length > 0) {
+                                html += `<h3 class="flacso-reels-subtitle">Reels Destacados</h3><div class="flacso-reels-grid flacso-reels-grid--vertical">`;
+                                html += finalVertical.map(renderItem).join('');
+                                html += `</div>`;
+                            }
+                            
+                            if (finalHorizontal.length > 0) {
+                                html += `<h3 class="flacso-reels-subtitle mt-5">Videos y Entrevistas</h3><div class="flacso-reels-grid flacso-reels-grid--horizontal">`;
+                                html += finalHorizontal.map(renderItem).join('');
+                                html += `</div>`;
+                            }
+                            
+                            container.innerHTML = html;
+                        }
+                    };
+                    
+                    // Medir imágenes en paralelo
+                    reels.forEach(reel => {
+                        const img = new Image();
+                        img.onload = function() {
+                            if (img.naturalHeight > img.naturalWidth) {
+                                vertical.push(reel);
+                            } else {
+                                horizontal.push(reel);
+                            }
+                            checkAndRender();
+                        };
+                        img.onerror = function() {
+                            // Si falla, asumimos vertical por defecto
+                            vertical.push(reel);
+                            checkAndRender();
+                        };
+                        img.src = reel.thumbnail_url;
+                    });
+                    
+                } catch (e) {
+                    console.error('Error parsing reels data', e);
+                    container.innerHTML = '';
+                }
+            });
+            </script>
         </div>
     </section>
     <?php
