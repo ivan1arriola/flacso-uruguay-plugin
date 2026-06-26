@@ -403,18 +403,15 @@ function flacso_shortcodes_cal_doc_source_url($row) {
 }
 
 function flacso_shortcodes_register_docs_page() {
-    add_menu_page(
-        __('FLACSO Shortcodes', 'flacso-uruguay'),
-        __('FLACSO Shortcodes', 'flacso-uruguay'),
+    add_options_page(
+        __('Tablas de Precios FLACSO', 'flacso-uruguay'),
+        __('Tablas de Precios', 'flacso-uruguay'),
         'manage_options',
         'flacso-shortcodes-docs',
-        'flacso_shortcodes_render_docs_page',
-        'dashicons-media-document',
-        58
+        'flacso_shortcodes_render_docs_page'
     );
 
-    add_submenu_page(
-        'flacso-shortcodes-docs',
+    add_options_page(
         __('Calendario Maestría en Género', 'flacso-uruguay'),
         __('Calendario Maestría', 'flacso-uruguay'),
         'manage_options',
