@@ -360,7 +360,7 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
                 --card-height-mobile: clamp(24rem, 66vh, 28rem);
                 --card-height-mobile: clamp(24rem, 66dvh, 28rem);
 
-                padding-top: clamp(1.5rem, 3vw, 2.5rem);
+                padding-top: 0;
                 padding-bottom: clamp(1.5rem, 3vw, 3rem); /* Aumentado ligeramente para dar aire a la sombra */
                 background: transparent;
                 font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
