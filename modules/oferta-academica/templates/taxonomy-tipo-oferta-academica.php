@@ -386,6 +386,17 @@ $card_cta = !empty($item['is_open'])
                     <p class="text-muted">En este momento no hay propuestas académicas listadas en esta categoría. Te invitamos a estar atento/a a nuestras próximas aperturas.</p>
                 </div>
             <?php endif; ?>
+
+            <?php
+            $term_desc = term_description();
+            if (!empty($term_desc)) :
+            ?>
+                <div class="flacso-taxonomy-description-footer mt-5">
+                    <div class="flacso-content-box" style="padding: 2rem; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(5, 25, 56, 0.05); color: #475569; line-height: 1.6;">
+                        <?php echo wp_kses_post($term_desc); ?>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
