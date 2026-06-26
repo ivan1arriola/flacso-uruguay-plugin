@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 }
 
 if (!function_exists('flacso_section_novedades_render')) {
-    function flacso_section_novedades_render()
+    function flacso_section_novedades_render($show_destacadas = true)
     {
         $unique_id = 'novedades_' . wp_generate_password(6, false);
 
@@ -17,7 +17,7 @@ if (!function_exists('flacso_section_novedades_render')) {
             'nonce' => $ajax_nonce,
         ]);
         
-        $destacadas_html = flacso_section_novedades_destacadas_render(false);
+        $destacadas_html = $show_destacadas ? flacso_section_novedades_destacadas_render(false) : '';
 
         ob_start();
         ?>
