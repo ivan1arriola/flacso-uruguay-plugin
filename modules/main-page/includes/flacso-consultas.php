@@ -374,7 +374,7 @@ function flacso_consultas_render_form( $attributes = array() ) {
 					sessionStorage.setItem('consultaOrigen', $form.find('[name="url_base"]').val());
 					const pid = $form.find('[name="id_pagina"]').val();
 					const urlBase = $form.find('[name="url_base"]').val();
-					const gracias = $form.find('[name="url_gracias"]').val() || (urlBase ? urlBase.replace(/\\/?$/, '/gracias/') : '<?php echo esc_js( home_url( '/gracias/' ) ); ?>');
+					const gracias = $form.find('[name="url_gracias"]').val() || (urlBase ? urlBase.replace(/\/$/, '') + '/gracias/' : '<?php echo esc_js( home_url( '/gracias/' ) ); ?>');
 					window.location.href = gracias + '?pid=' + encodeURIComponent(pid);
 				},
 				error: function() {
@@ -384,7 +384,7 @@ function flacso_consultas_render_form( $attributes = array() ) {
 					sessionStorage.setItem('consultaOrigen', $form.find('[name="url_base"]').val());
 					const pid = $form.find('[name="id_pagina"]').val();
 					const urlBase = $form.find('[name="url_base"]').val();
-					const gracias = $form.find('[name="url_gracias"]').val() || (urlBase ? urlBase.replace(/\\/?$/, '/gracias/') : '<?php echo esc_js( home_url( '/gracias/' ) ); ?>');
+					const gracias = $form.find('[name="url_gracias"]').val() || (urlBase ? urlBase.replace(/\/$/, '') + '/gracias/' : '<?php echo esc_js( home_url( '/gracias/' ) ); ?>');
 					window.location.href = gracias + '?pid=' + encodeURIComponent(pid);
 				},
 				complete: function() { toggleLoading(false); }
