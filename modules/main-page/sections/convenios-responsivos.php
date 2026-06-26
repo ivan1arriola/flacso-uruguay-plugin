@@ -262,9 +262,22 @@ if (!function_exists('flacso_convenios_responsivos_sc')) {
                 </div>
             </noscript>
         </section>
+        <script>
+        (function() {
+            if (typeof window.fbq !== 'function') return;
+            try {
+                window.fbq('track', 'ViewContent', {
+                    content_name: 'Listado de Convenios',
+                    content_category: 'listado_convenios',
+                    flacso_stage: 'listado_convenios'
+                });
+            } catch (e) {}
+        })();
+        </script>
         <?php
         return ob_get_clean();
     }
+
 
     remove_shortcode('convenios_responsivos');
     add_shortcode('convenios_responsivos', 'flacso_convenios_responsivos_sc');
