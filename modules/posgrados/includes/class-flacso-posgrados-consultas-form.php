@@ -171,7 +171,7 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
 
                 <?php if ($show_pre): ?>
                     <div class="d-grid gap-2 mt-4">
-                        <a class="btn btn-preinsc btn-lg py-3 fw-bold" href="<?php echo esc_url(trailingslashit($current_url) . 'preinscripcion'); ?>">
+                        <a class="btn btn-preinsc btn-lg py-3 fw-bold" href="<?php echo esc_url(trailingslashit($current_url) . 'preinscripcion'); ?>" onclick="if(typeof window.fbq === 'function'){ window.fbq('track', 'InitiateCheckout', { content_name: '<?php echo esc_js($title); ?>', content_category: 'oferta_academica' }); }">
                             <i class="bi bi-stars me-2" aria-hidden="true"></i>
                             <?php esc_html_e('Preinscripción', 'flacso-posgrados-docentes'); ?>
                         </a>
@@ -468,6 +468,7 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
                         <div class="text-center mb-4">
                             <div class="display-5 text-success mb-2" aria-hidden="true">✓</div>
                             <h1 class="mb-3" style="color: var(--global-palette1);"><?php esc_html_e('¡Gracias por tu consulta!', 'flacso-posgrados-docentes'); ?></h1>
+
                             <?php if ($title): ?>
                                 <p class="lead mb-1"><?php printf(esc_html__('Gracias por tu interés en %s de FLACSO Uruguay.', 'flacso-posgrados-docentes'), esc_html($title)); ?></p>
                             <?php else: ?>
@@ -498,6 +499,7 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
                     window.fbq('track', 'Lead', {
                         content_name: <?php echo wp_json_encode((string) $title); ?>,
                         content_category: 'solicitud_informacion',
+                        content_type: 'oferta_academica',
                         status: 'submitted'
                     });
                 } catch (e) {

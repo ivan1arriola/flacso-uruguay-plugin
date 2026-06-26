@@ -313,7 +313,8 @@ function flacso_consultas_render_form( $attributes = array() ) {
 		<a
 		   href="<?php echo esc_url( trailingslashit( $url_actual ) . 'preinscripcion' ); ?>"
 		   class="btn btn-preinsc btn-lg rounded-pill py-3 fw-bold"
-		   aria-label="Ir a Preinscripción 2026">
+		   aria-label="Ir a Preinscripción 2026"
+		   onclick="if(typeof window.fbq === 'function'){ window.fbq('track', 'InitiateCheckout', { content_name: '<?php echo esc_js($titulo_posgrado); ?>', content_category: 'oferta_academica' }); }">
 		   <i class="bi bi-stars me-2" aria-hidden="true"></i>
 		   Preinscripción 2026
 		</a>
@@ -345,6 +346,16 @@ function flacso_consultas_render_form( $attributes = array() ) {
 				$(this).addClass('was-validated');
 				showMessage('Revisá los campos marcados en rojo.', 'danger');
 				return;
+			}
+
+			if (typeof window.fbq === 'function') {
+				try {
+					window.fbq('track', 'Contact', {
+						content_name: programa,
+						content_category: 'solicitud_informacion',
+						content_type: 'oferta_academica'
+					});
+				} catch (e) {}
 			}
 
 			const formData = new FormData(this);
@@ -506,7 +517,8 @@ function flacso_consultas_render_preinscripcion_button() {
 		<a
 			href="<?php echo esc_url( $href_preinscripcion ); ?>"
 			class="btn btn-preinsc btn-lg rounded-pill py-3 fw-bold flacso-preinsc-standalone"
-			aria-label="Ir a Preinscripción 2026">
+			aria-label="Ir a Preinscripción 2026"
+			onclick="if(typeof window.fbq === 'function'){ window.fbq('track', 'InitiateCheckout', { content_name: '<?php echo esc_js(get_the_title($id_pagina)); ?>', content_category: 'oferta_academica' }); }">
 			<i class="bi bi-stars me-2" aria-hidden="true"></i>
 			Preinscripción 2026
 		</a>
@@ -815,11 +827,17 @@ function flacso_render_gracias_virtual() {
 		document.addEventListener('DOMContentLoaded', function() {
 			var pid = <?php echo (int) $pid; ?>;
 			var programaMeta = <?php echo wp_json_encode( (string) $titulo_programa ); ?>;
+			
+			if (!programaMeta) {
+				programaMeta = sessionStorage.getItem('consultaPrograma') || '';
+			}
+
 			if (typeof window.fbq === 'function') {
 				try {
 					window.fbq('track', 'Lead', {
 						content_name: programaMeta || '',
 						content_category: 'solicitud_informacion',
+						content_type: 'oferta_academica',
 						status: 'submitted'
 					});
 				} catch (e) {
