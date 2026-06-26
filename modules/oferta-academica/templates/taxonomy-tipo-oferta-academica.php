@@ -296,9 +296,7 @@ get_header();
                             Propuestas disponibles
                         </h2>
 
-                        <p class="flacso-ofertas-toolbar__text">
-                            Ordenadas por inscripción abierta y fecha de inicio.
-                        </p>
+
                     </div>
 
                     <div class="flacso-ofertas-grid">
@@ -813,14 +811,6 @@ $card_cta = !empty($item['is_open'])
     line-height: 1.2;
 }
 
-.flacso-ofertas-toolbar__text {
-    margin: 0;
-    color: #64748b;
-    font-size: 0.92rem;
-    font-weight: 600;
-    text-align: right;
-}
-
 .flacso-meta-item--start {
     padding: 0.28rem 0.5rem;
     border-radius: 999px;
@@ -837,11 +827,7 @@ $card_cta = !empty($item['is_open'])
         border-radius: 12px;
     }
 
-    .flacso-ofertas-toolbar__text {
-        text-align: left;
-        font-size: 0.86rem;
     }
-}
 </style>
 
 <script>
