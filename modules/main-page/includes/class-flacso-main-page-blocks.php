@@ -113,15 +113,6 @@ class Flacso_Main_Page_Blocks {
      */
     private static function get_shortcodes_map(): array {
         return [
-            
-                'attributes'  => [
-                    'title' => [
-                        'type'    => 'string',
-                        'default' => '',
-                        'label'   => __('Título (opcional)', 'flacso-main-page'),
-                    ],
-                ],
-            ],
 
             'flacso-uruguay/homepage-builder' => [
                 'title'       => __('Página principal modular', 'flacso-main-page'),

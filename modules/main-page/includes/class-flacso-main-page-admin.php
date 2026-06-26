@@ -60,7 +60,7 @@ class Flacso_Main_Page_Admin {
         $wp_admin_bar->add_node([
             'id'    => 'flacso-main-page-bar',
             'title' => __('Gestor FLACSO', 'flacso-main-page'),
-            'href'  => admin_url('admin.php?page=flacso-main-page'),
+            'href'  => admin_url('options-general.php?page=flacso-main-page'),
             'meta'  => ['title' => __('Gestor FLACSO', 'flacso-main-page')],
         ]);
     }
@@ -70,22 +70,16 @@ class Flacso_Main_Page_Admin {
     }
 
     public static function register_menu(): void {
-        add_menu_page(
+        add_options_page(
             __('Gestor FLACSO', 'flacso-main-page'),
             __('Gestor FLACSO', 'flacso-main-page'),
             'manage_options',
             'flacso-main-page',
-            [__CLASS__, 'render_section_page'],
-            'dashicons-layout',
-            58
+            [__CLASS__, 'render_section_page']
         );
-
-        // Mantener solo el item principal: la interfaz unificada muestra todas las secciones.
-        remove_submenu_page('flacso-main-page', 'flacso-main-page');
         
-        // Agregar página separada para Oferta Académica
-        add_submenu_page(
-            'flacso-main-page',
+        // Agregar página separada para Oferta Académica en Ajustes
+        add_options_page(
             __('Oferta Académica', 'flacso-main-page'),
             __('Oferta Académica', 'flacso-main-page'),
             'manage_options',
