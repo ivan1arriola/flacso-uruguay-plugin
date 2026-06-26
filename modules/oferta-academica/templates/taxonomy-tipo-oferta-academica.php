@@ -270,6 +270,36 @@ get_header();
                     </div>
                 <?php endif; ?>
             </header>
+<?php
+$total_ofertas = 0;
+$tiene_abiertas = false;
+foreach ($offers_grouped as $group_count) {
+    foreach ($group_count['items'] as $item) {
+        $total_ofertas++;
+        if (!empty($item['is_open'])) {
+            $tiene_abiertas = true;
+        }
+    }
+}
+?>
+
+<?php if ($total_ofertas > 0) : ?>
+    <section class="flacso-mobile-conversion-box" aria-label="Explorar diplomas disponibles">
+        <?php if ($tiene_abiertas) : ?>
+            <div class="flacso-mobile-conversion-box__eyebrow">Inscripciones abiertas</div>
+        <?php endif; ?>
+        <h2 class="flacso-mobile-conversion-box__title">
+            Elegí entre <?php echo esc_html((string) $total_ofertas); ?> opciones disponibles
+        </h2>
+        <p class="flacso-mobile-conversion-box__text">
+            Revisá duración, fecha de inicio, requisitos y beneficios disponibles antes de preinscribirte.
+        </p>
+        <a href="#flacso-listado-ofertas" class="flacso-mobile-conversion-box__button">
+            Ver ofertas disponibles
+        </a>
+    </section>
+<?php endif; ?>
+
 
             <?php if (!empty($offers_grouped)) : ?>
                 <?php foreach ($offers_grouped as $group) : ?>
@@ -279,7 +309,7 @@ get_header();
                             <?php echo esc_html((string) $group['label']); ?>
                         </h2>
 
-                        <div class="flacso-ofertas-grid">
+                        <div id="flacso-listado-ofertas" class="flacso-ofertas-grid">
                             <?php foreach ($group['items'] as $item) : ?>
                                 <div class="grid-item-wrap">
                                     <article class="flacso-premium-card h-100 w-100">
@@ -334,7 +364,7 @@ get_header();
                                             </div>
 
                                             <div class="flacso-premium-card__footer">
-                                                <span class="flacso-premium-card__cta">Ver detalles <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg></span>
+                                                <span class="flacso-premium-card__cta">Ver información e inscribirme <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg></span>
                                             </div>
                                         </div>
                                     </article>
@@ -571,6 +601,174 @@ get_header();
 
 .flacso-premium-card:hover .flacso-premium-card__cta svg {
     fill: var(--flacso-yellow);
+}
+
+.flacso-mobile-conversion-box {
+    display: none; /* Oculto en escritorio por defecto */
+    margin: -10px 0 28px;
+    padding: 22px 20px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--flacso-blue-dark), var(--flacso-blue-light));
+    color: #ffffff;
+    box-shadow: 0 14px 34px rgba(5, 25, 56, 0.16);
+}
+
+.flacso-mobile-conversion-box__eyebrow {
+    display: inline-flex;
+    margin-bottom: 10px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: var(--flacso-yellow);
+    color: var(--flacso-blue-dark);
+    font-size: 0.75rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.flacso-mobile-conversion-box__title {
+    margin: 0 0 8px;
+    color: #ffffff;
+    font-size: clamp(1.35rem, 5vw, 2rem);
+    line-height: 1.15;
+    font-weight: 900;
+}
+
+.flacso-mobile-conversion-box__text {
+    margin: 0 0 18px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.98rem;
+    line-height: 1.45;
+}
+
+.flacso-mobile-conversion-box__button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 48px;
+    padding: 13px 18px;
+    border-radius: 12px;
+    background: var(--flacso-yellow);
+    color: var(--flacso-blue-dark);
+    font-weight: 900;
+    text-decoration: none;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+}
+
+.flacso-mobile-conversion-box__button:hover,
+.flacso-mobile-conversion-box__button:focus {
+    color: var(--flacso-blue-dark);
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.flacso-premium-card__cta {
+    width: 100%;
+    justify-content: center;
+    min-height: 46px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--flacso-blue-light);
+    color: #ffffff;
+    font-weight: 900;
+    text-align: center;
+}
+
+.flacso-premium-card__cta svg {
+    fill: #ffffff;
+}
+
+.flacso-premium-card:hover .flacso-premium-card__cta {
+    gap: 8px;
+    color: #ffffff;
+    background: var(--flacso-blue-dark);
+}
+
+.flacso-premium-card:hover .flacso-premium-card__cta svg {
+    fill: #ffffff;
+}
+
+@media (max-width: 767px) {
+    .flacso-mobile-conversion-box {
+        display: block;
+    }
+
+    .flacso-oferta-academica-premium .content-container {
+        padding-top: 28px !important;
+        padding-bottom: 90px !important;
+    }
+
+    .flacso-taxonomy-hero {
+        gap: 1rem;
+        margin-bottom: 22px !important;
+    }
+
+    .flacso-taxonomy-hero .entry-title {
+        font-size: 2.1rem !important;
+        line-height: 1.05;
+        margin-bottom: 0.65rem !important;
+    }
+
+    .taxonomy-description {
+        font-size: 1rem !important;
+        line-height: 1.45 !important;
+    }
+
+    .flacso-taxonomy-hero__media {
+        display: none;
+    }
+
+    .flacso-ofertas-group__title {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        margin-bottom: 1rem;
+        font-size: 1rem;
+        background: #ffffff;
+        box-shadow: 0 6px 16px rgba(5, 25, 56, 0.08);
+    }
+
+    .flacso-ofertas-grid {
+        gap: 1rem;
+        grid-template-columns: 1fr;
+    }
+
+    .flacso-premium-card {
+        border-radius: 14px;
+        box-shadow: 0 6px 18px rgba(5, 25, 56, 0.08);
+    }
+
+    .flacso-premium-card__image-wrap {
+        height: 145px;
+    }
+
+    .flacso-premium-card__body {
+        padding: 16px;
+    }
+
+    .flacso-premium-card__meta {
+        gap: 8px;
+        margin-bottom: 10px;
+        font-size: 0.78rem;
+    }
+
+    .flacso-premium-card__title {
+        font-size: 1.08rem;
+        margin-bottom: 8px;
+    }
+
+    .flacso-premium-card__excerpt {
+        display: none;
+    }
+
+    .flacso-premium-card__footer {
+        padding-top: 12px;
+    }
+
+    .flacso-badge {
+        font-size: 0.68rem;
+        padding: 5px 9px;
+    }
 }
 </style>
 
