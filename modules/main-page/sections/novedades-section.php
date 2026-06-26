@@ -16,6 +16,8 @@ if (!function_exists('flacso_section_novedades_render')) {
         $results = flacso_section_novedades_responsivas_render([
             'nonce' => $ajax_nonce,
         ]);
+        
+        $destacadas_html = flacso_section_novedades_destacadas_render(false);
 
         ob_start();
         ?>
@@ -24,6 +26,15 @@ if (!function_exists('flacso_section_novedades_render')) {
                 <div class="flacso-novedades-header text-center mb-4">
                     <h2 class="h3 mb-0">Novedades</h2>
                 </div>
+            </div>
+            
+            <?php if ($destacadas_html): ?>
+                <div class="flacso-novedades-destacadas-merged">
+                    <?php echo $destacadas_html; ?>
+                </div>
+            <?php endif; ?>
+            
+            <div class="flacso-content-shell mt-2 pt-2">
                 <div class="flacso-novedades-results" data-novedades-wrapper>
                     <?php echo $results; ?>
                 </div>
@@ -270,7 +281,7 @@ if (!function_exists('flacso_section_novedades_render')) {
 }
 
 if (!function_exists('flacso_section_novedades_destacadas_render')) {
-    function flacso_section_novedades_destacadas_render()
+    function flacso_section_novedades_destacadas_render($show_heading = true)
     {
         $posts = flacso_section_novedades_get_sticky_posts(6);
         if (empty($posts)) {
@@ -280,11 +291,13 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
         $section_id = 'flacso-novedades-3d-' . wp_generate_password(6, false);
 
         ob_start(); ?>
-        <section id="<?php echo esc_attr($section_id); ?>" class="flacso-novedades-3d">
+        <div class="flacso-novedades-3d" id="<?php echo esc_attr($section_id); ?>">
             <div class="flacso-content-shell">
+                <?php if ($show_heading): ?>
                 <div class="flacso-novedades-3d__heading mb-4">
                     <h2 class="h3 mb-0"><?php esc_html_e('Novedades destacadas', 'flacso-main-page'); ?></h2>
                 </div>
+                <?php endif; ?>
 
                 <div class="flacso-novedades-3d__stage" data-flacso-3d-carousel>
                     <div class="flacso-novedades-3d__viewport">
@@ -332,7 +345,7 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
 
                 <div class="flacso-novedades-3d__dots" aria-label="<?php esc_attr_e('Selector de novedades', 'flacso-main-page'); ?>"></div>
             </div>
-        </section>
+        </div>
         <style>
             .flacso-novedades-3d {
                 --stage-radius: 28px;

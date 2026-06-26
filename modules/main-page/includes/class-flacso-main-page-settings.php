@@ -10,7 +10,6 @@ class Flacso_Main_Page_Settings {
         'hero',
         'festejos',
         'eventos',
-        'novedades_destacadas',
         'novedades_busqueda',
         'novedades',
         'seminarios',
@@ -26,7 +25,6 @@ class Flacso_Main_Page_Settings {
     private const HOMEPAGE_SECTION_KEYS = [
         'hero',
         'festejos',
-        'novedades_destacadas',
         'eventos',
         'novedades',
         'novedades_busqueda',
@@ -437,7 +435,6 @@ class Flacso_Main_Page_Settings {
         $labels = [
             'hero' => __('Hero principal', 'flacso-main-page'),
             'eventos' => __('Eventos', 'flacso-main-page'),
-            'novedades_destacadas' => __('Novedades destacadas', 'flacso-main-page'),
             'novedades_busqueda' => __('Buscador de novedades', 'flacso-main-page'),
             'novedades' => __('Novedades', 'flacso-main-page'),
             'seminarios' => __('Seminarios', 'flacso-main-page'),
@@ -457,7 +454,6 @@ class Flacso_Main_Page_Settings {
         return [
             'hero',
         'festejos',
-            'novedades_destacadas',
             'eventos',
             'novedades',
             'novedades_busqueda',
