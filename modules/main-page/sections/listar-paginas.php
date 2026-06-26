@@ -607,11 +607,25 @@ if (!function_exists('flacso_listar_paginas_shortcode')) {
             return '<div class="notice notice-info"><p>' . esc_html__('No hay programas para mostrar con los filtros actuales.', 'flacso-main-page') . '</p></div>';
         }
 
+
+        $tracking_script = "<script>
+        (function() {
+            if (typeof window.fbq !== 'function') return;
+            try {
+                window.fbq('track', 'ViewContent', {
+                    content_name: 'Listado Completo Oferta Academica',
+                    content_category: 'listado_ofertas',
+                    flacso_stage: 'listado_completo_ofertas'
+                });
+            } catch (e) {}
+        })();
+        </script>";
+
         if (sanitize_key((string) $atts['vista']) === 'grid') {
-            return flacso_listar_paginas_render_grid($items);
+            return flacso_listar_paginas_render_grid($items) . $tracking_script;
         }
 
-        return flacso_listar_paginas_render_catalogo_3d($items);
+        return flacso_listar_paginas_render_catalogo_3d($items) . $tracking_script;
     }
 
     add_shortcode('listar_paginas', 'flacso_listar_paginas_shortcode');

@@ -574,4 +574,18 @@ get_header();
 }
 </style>
 
-<?php get_footer(); ?>
+<script>
+(function() {
+    if (typeof window.fbq !== 'function') return;
+    try {
+        window.fbq('track', 'ViewContent', {
+            content_name: 'Listado: ' + <?php echo wp_json_encode((string) single_term_title('', false)); ?>,
+            content_category: 'listado_ofertas',
+            flacso_stage: 'listado_tipo_oferta'
+        });
+    } catch (e) {}
+})();
+</script>
+<?php
+get_footer();
+

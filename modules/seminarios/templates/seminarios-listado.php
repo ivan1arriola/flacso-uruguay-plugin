@@ -628,5 +628,16 @@ $ofertas_con_seminarios_disponibles = array_keys($ofertas_con_seminarios_disponi
     </main>
 </div>
 
-<?php
-get_footer();
+<script>
+(function() {
+    if (typeof window.fbq !== 'function') return;
+    try {
+        window.fbq('track', 'ViewContent', {
+            content_name: 'Listado de Seminarios',
+            content_category: 'listado_seminarios',
+            flacso_stage: 'listado_seminarios'
+        });
+    } catch (e) {}
+})();
+</script>
+<?php get_footer(); ?>
