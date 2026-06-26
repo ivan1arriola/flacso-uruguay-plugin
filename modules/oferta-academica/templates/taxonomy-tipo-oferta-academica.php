@@ -217,73 +217,48 @@ if ($ofertas_query->have_posts()) {
 
 wp_reset_postdata();
 
+$offers_flat = [];
+
 if (!empty($offers_grouped)) {
-    uasort($offers_grouped, static function (array $a, array $b): int {
-        if ($a['sort'] === $b['sort']) {
-            return strcasecmp((string) $a['label'], (string) $b['label']);
+    foreach ($offers_grouped as $group) {
+        foreach ($group['items'] as $item) {
+            $offers_flat[] = $item;
+        }
+    }
+
+    usort($offers_flat, static function (array $a, array $b): int {
+        $a_open = !empty($a['is_open']) ? 0 : 1;
+        $b_open = !empty($b['is_open']) ? 0 : 1;
+
+        if ($a_open !== $b_open) {
+            return $a_open <=> $b_open;
         }
 
-        return ((int) $a['sort'] < (int) $b['sort']) ? -1 : 1;
+        $a_sort = (int) ($a['sort_timestamp'] ?? PHP_INT_MAX);
+        $b_sort = (int) ($b['sort_timestamp'] ?? PHP_INT_MAX);
+
+        if ($a_sort === $b_sort) {
+            return strcasecmp((string) ($a['title'] ?? ''), (string) ($b['title'] ?? ''));
+        }
+
+        return $a_sort <=> $b_sort;
     });
-
-    foreach ($offers_grouped as &$group) {
-        usort($group['items'], static function (array $a, array $b): int {
-            $a_open = !empty($a['is_open']) ? 0 : 1;
-            $b_open = !empty($b['is_open']) ? 0 : 1;
-
-            if ($a_open !== $b_open) {
-                return $a_open <=> $b_open;
-            }
-
-            $a_sort = (int) ($a['sort_timestamp'] ?? PHP_INT_MAX);
-            $b_sort = (int) ($b['sort_timestamp'] ?? PHP_INT_MAX);
-
-            if ($a_sort === $b_sort) {
-                return strcasecmp((string) ($a['title'] ?? ''), (string) ($b['title'] ?? ''));
-            }
-
-            return ($a_sort < $b_sort) ? -1 : 1;
-        });
-    }
-    unset($group);
 }
 
 $total_ofertas = 0;
 $ofertas_abiertas = 0;
 $tiene_abiertas = false;
 
-foreach ($offers_grouped as $group_count) {
-    foreach ($group_count['items'] as $item) {
-        $total_ofertas++;
+foreach ($offers_flat as $item) {
+    $total_ofertas++;
 
-        if (!empty($item['is_open'])) {
-            $ofertas_abiertas++;
-            $tiene_abiertas = true;
-        }
+    if (!empty($item['is_open'])) {
+        $ofertas_abiertas++;
+        $tiene_abiertas = true;
     }
 }
 
-$taxonomy_name_lower = function_exists('mb_strtolower')
-    ? mb_strtolower($taxonomy_name, 'UTF-8')
-    : strtolower($taxonomy_name);
 
-if ($tiene_abiertas) {
-    $hero_badge = $ofertas_abiertas === 1
-        ? '1 propuesta con inscripción abierta'
-        : $ofertas_abiertas . ' propuestas con inscripción abierta';
-
-    $hero_title = 'Elegí una propuesta y avanzá con tu inscripción';
-    $hero_text = 'Accedé a la información completa de cada programa, fechas, duración y requisitos.';
-    $hero_button = 'Ver propuestas disponibles';
-} else {
-    $hero_badge = $total_ofertas === 1
-        ? '1 propuesta académica'
-        : $total_ofertas . ' propuestas académicas';
-
-    $hero_title = 'Conocé las próximas propuestas académicas';
-    $hero_text = 'Revisá la información de cada programa y consultá las próximas aperturas.';
-    $hero_button = 'Ver propuestas';
-}
 
 get_header();
 ?>
@@ -296,23 +271,10 @@ get_header();
                     <h1 class="entry-title" style="color: var(--flacso-blue-dark); font-weight: 800; font-size: clamp(2.5rem, 5vw, 3.5rem); margin-bottom: 1rem;"><?php echo esc_html($taxonomy_name); ?></h1>
                     
                     <div class="taxonomy-description" style="font-size: 1.15rem; line-height: 1.6; max-width: 900px; color: #475569;">
-                        <p>Conocé las propuestas de <?php echo esc_html($taxonomy_name_lower); ?> disponibles. Revisá la duración, modalidad, fecha de inicio y requisitos de inscripción de cada programa.</p>
+                        <p>
+                            Conocé las propuestas disponibles. Revisá la duración, modalidad, fecha de inicio y requisitos de inscripción de cada programa.
+                        </p>
                     </div>
-
-                    <?php if ($total_ofertas > 0) : ?>
-                        <div class="flacso-hero-actions">
-                            <span class="flacso-hero-pill"><?php echo esc_html($hero_badge); ?></span>
-
-                            <p class="flacso-hero-lead">
-                                <?php echo esc_html($hero_title); ?>.<br>
-                                <span style="font-size: 0.9em; font-weight: 500; opacity: 0.9;"><?php echo esc_html($hero_text); ?></span>
-                            </p>
-
-                            <a href="#flacso-listado-ofertas" class="flacso-hero-button">
-                                <?php echo esc_html($hero_button); ?>
-                            </a>
-                        </div>
-                    <?php endif; ?>
                 </div>
 
                 <?php if (!empty($term_image_data['large']) || !empty($term_image_data['url'])) : ?>
@@ -327,16 +289,20 @@ get_header();
             </header>
 
             <div id="flacso-listado-ofertas"></div>
-            <?php if (!empty($offers_grouped)) : ?>
-                <?php foreach ($offers_grouped as $group) : ?>
-                    <?php $group_id = 'grupo-' . sanitize_title((string) $group['label']); ?>
-                    <section class="flacso-ofertas-group" aria-labelledby="<?php echo esc_attr($group_id); ?>">
-                        <h2 id="<?php echo esc_attr($group_id); ?>" class="flacso-ofertas-group__title">
-                            <?php echo esc_html((string) $group['label']); ?>
+            <?php if (!empty($offers_flat)) : ?>
+                <section class="flacso-ofertas-listado" aria-labelledby="flacso-ofertas-titulo">
+                    <div class="flacso-ofertas-toolbar">
+                        <h2 id="flacso-ofertas-titulo" class="flacso-ofertas-toolbar__title">
+                            Propuestas disponibles
                         </h2>
 
-                        <div class="flacso-ofertas-grid">
-                            <?php foreach ($group['items'] as $item) : ?>
+                        <p class="flacso-ofertas-toolbar__text">
+                            Ordenadas por inscripción abierta y fecha de inicio.
+                        </p>
+                    </div>
+
+                    <div class="flacso-ofertas-grid">
+                        <?php foreach ($offers_flat as $item) : ?>
                                 <article class="grid-item-wrap">
                                     <a
                                         href="<?php echo esc_url((string) $item['permalink']); ?>"
@@ -414,8 +380,7 @@ $card_cta = !empty($item['is_open'])
                                 </article>
                             <?php endforeach; ?>
                         </div>
-                    </section>
-                <?php endforeach; ?>
+                </section>
             <?php else : ?>
                 <div class="col-12 text-center py-5">
                     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="text-muted mb-3 d-block mx-auto" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>
@@ -646,57 +611,6 @@ $card_cta = !empty($item['is_open'])
     fill: var(--flacso-yellow);
 }
 
-.flacso-hero-actions {
-    margin-top: 1.4rem;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.85rem;
-}
-
-.flacso-hero-pill {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.45rem 0.75rem;
-    border-radius: 999px;
-    background: var(--flacso-yellow);
-    color: var(--flacso-blue-dark);
-    font-size: 0.78rem;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.flacso-hero-lead {
-    margin: 0;
-    max-width: 620px;
-    color: var(--flacso-blue-dark);
-    font-size: 1.05rem;
-    font-weight: 700;
-    line-height: 1.45;
-}
-
-.flacso-hero-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 48px;
-    padding: 0.85rem 1.25rem;
-    border-radius: 999px;
-    background: #248138;
-    color: #ffffff;
-    font-weight: 900;
-    text-decoration: none;
-    box-shadow: 0 10px 24px rgba(36, 129, 56, 0.22);
-}
-
-.flacso-hero-button:hover,
-.flacso-hero-button:focus {
-    background: #1b6d2b;
-    color: #ffffff;
-    text-decoration: none;
-}
-
 .flacso-taxonomy-hero__media {
     position: relative;
 }
@@ -758,14 +672,6 @@ $card_cta = !empty($item['is_open'])
         line-height: 1.45 !important;
     }
 
-    .flacso-hero-actions {
-        margin-top: 1.1rem;
-    }
-
-    .flacso-hero-button {
-        width: 100%;
-        min-height: 52px;
-    }
     .flacso-taxonomy-hero__media {
         display: none;
     }
@@ -879,6 +785,61 @@ $card_cta = !empty($item['is_open'])
     .flacso-premium-card__badges {
         top: 10px;
         right: 10px;
+    }
+}
+.flacso-ofertas-listado {
+    margin-top: 0;
+}
+
+.flacso-ofertas-toolbar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0 0 1.4rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid rgba(5, 25, 56, 0.08);
+    border-left: 5px solid var(--flacso-yellow);
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 8px 22px rgba(5, 25, 56, 0.05);
+}
+
+.flacso-ofertas-toolbar__title {
+    margin: 0;
+    color: var(--flacso-blue-dark);
+    font-size: clamp(1.15rem, 2vw, 1.45rem);
+    font-weight: 900;
+    line-height: 1.2;
+}
+
+.flacso-ofertas-toolbar__text {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.92rem;
+    font-weight: 600;
+    text-align: right;
+}
+
+.flacso-meta-item--start {
+    padding: 0.28rem 0.5rem;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: var(--flacso-blue-dark);
+}
+
+@media (max-width: 767px) {
+    .flacso-ofertas-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+        margin-bottom: 1rem;
+        padding: 0.9rem;
+        border-radius: 12px;
+    }
+
+    .flacso-ofertas-toolbar__text {
+        text-align: left;
+        font-size: 0.86rem;
     }
 }
 </style>
