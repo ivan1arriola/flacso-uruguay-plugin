@@ -12,21 +12,33 @@ function flacso_section_reels_render() {
         return '';
     }
     
-    $settings = class_exists('Flacso_Main_Page_Settings') ? Flacso_Main_Page_Settings::get_section('reels') : [];
-    
-    // Filtrar solo los videos
+    $settings = Flacso_Main_Page_Settings::get_settings();
+    $selected_ids = $settings['reels']['selected_ids'] ?? [];
+    if (!is_array($selected_ids)) $selected_ids = [];
+
+    // Filtrar solo videos
     $reels = array_filter($feed, function($item) {
         return $item['media_type'] === 'VIDEO';
     });
-    
-    $count = intval($settings['count'] ?? 4);
-    $reels = array_slice($reels, 0, $count);
+
+    if (!empty($selected_ids)) {
+        // Filtrar reels manualmente seleccionados y ordenarlos según el orden de selección (opcional, aquí los preservamos según la API o podríamos ordenarlos)
+        $reels = array_filter($reels, function($item) use ($selected_ids) {
+            return in_array($item['id'], $selected_ids, true);
+        });
+        
+        // Reordenar para que coincidan con el orden de los selected_ids si se quiere, pero array_values es suficiente
+        $reels = array_values($reels);
+    } else {
+        // Fallback automático: solo los más recientes
+        $reels = array_slice($reels, 0, 10);
+    }
 
     if (empty($reels)) {
         return '';
     }
 
-    $title = (string) apply_filters('flacso_main_page_reels_title', $settings['title'] ?? 'Contenido Audiovisual');
+    $title = (string) apply_filters('flacso_main_page_reels_title', $settings['reels']['title'] ?? 'Contenido Audiovisual');
     $section_id = 'flacso-reels-' . wp_generate_password(6, false);
 
     ob_start();

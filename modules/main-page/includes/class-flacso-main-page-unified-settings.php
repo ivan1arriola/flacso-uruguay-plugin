@@ -478,10 +478,12 @@ class Flacso_Main_Page_Unified_Settings {
 
     private static function render_reels_section(array $settings): void {
         $reels = $settings['reels'] ?? [];
+        $selected_ids = $reels['selected_ids'] ?? [];
+        if (!is_array($selected_ids)) $selected_ids = [];
         ?>
         <h3><?php esc_html_e('Configuración de Reels', 'flacso-main-page'); ?></h3>
         <p class="description">
-            <?php esc_html_e('Esta sección mostrará automáticamente los Reels más recientes utilizando la misma configuración de API de la pestaña Instagram.', 'flacso-main-page'); ?>
+            <?php esc_html_e('Esta sección mostrará automáticamente los Reels más recientes utilizando la misma configuración de API de la pestaña Instagram. Si seleccionas Reels específicos a continuación, la sección en la portada mostrará únicamente tu selección manual (separándolos dinámicamente entre verticales y horizontales).', 'flacso-main-page'); ?>
         </p>
 
         <div class="flacso-form-group">
@@ -493,6 +495,56 @@ class Flacso_Main_Page_Unified_Settings {
                 class="regular-text" 
                 value="<?php echo esc_attr($reels['title'] ?? 'Reels Destacados'); ?>">
         </div>
+
+        <h3><?php esc_html_e('Selección Manual de Reels', 'flacso-main-page'); ?></h3>
+        <p class="description mb-4">
+            <?php esc_html_e('Selecciona hasta 6 videos para destacarlos en la portada. Si no seleccionas ninguno, se mostrarán los videos más recientes de forma automática.', 'flacso-main-page'); ?>
+        </p>
+
+        <?php
+        if (class_exists('Flacso_Instagram_API')) {
+            $feed = Flacso_Instagram_API::get_feed();
+            if (empty($feed)) {
+                echo '<div class="notice notice-warning inline"><p>' . esc_html__('No se pudieron obtener los videos de Instagram. Verifica el token en la pestaña Instagram.', 'flacso-main-page') . '</p></div>';
+            } else {
+                $videos = array_filter($feed, function($item) {
+                    return $item['media_type'] === 'VIDEO';
+                });
+
+                if (empty($videos)) {
+                    echo '<div class="notice notice-info inline"><p>' . esc_html__('No se encontraron videos (Reels) en el feed actual de Instagram.', 'flacso-main-page') . '</p></div>';
+                } else {
+                    echo '<div class="flacso-reels-admin-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">';
+                    foreach ($videos as $video) {
+                        $is_checked = in_array($video['id'], $selected_ids, true);
+                        ?>
+                        <label class="flacso-reel-admin-card" style="border: 2px solid <?php echo $is_checked ? '#2271b1' : '#ddd'; ?>; border-radius: 8px; overflow: hidden; cursor: pointer; display: flex; flex-direction: column; position: relative;">
+                            <div class="flacso-reel-admin-media" style="aspect-ratio: 4/5; background: #000; position: relative;">
+                                <img src="<?php echo esc_url($video['thumbnail_url']); ?>" alt="" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.8;">
+                                <input type="checkbox" name="reels[selected_ids][]" value="<?php echo esc_attr($video['id']); ?>" <?php checked($is_checked); ?> style="position: absolute; top: 10px; right: 10px; transform: scale(1.5);">
+                            </div>
+                            <div class="flacso-reel-admin-caption" style="padding: 10px; background: #fff; flex-grow: 1; font-size: 12px; color: #444; line-height: 1.4;">
+                                <?php echo esc_html(wp_trim_words($video['caption'] ?? '', 12)); ?>
+                            </div>
+                        </label>
+                        <?php
+                    }
+                    echo '</div>';
+                }
+            }
+        } else {
+            echo '<p>' . esc_html__('El módulo de Instagram no está disponible.', 'flacso-main-page') . '</p>';
+        }
+        ?>
+        
+        <script>
+        // Simple script to toggle visual border on check
+        document.querySelectorAll('.flacso-reel-admin-card input[type="checkbox"]').forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                this.closest('.flacso-reel-admin-card').style.borderColor = this.checked ? '#2271b1' : '#ddd';
+            });
+        });
+        </script>
         <?php
     }
 
