@@ -2478,3 +2478,97 @@
     background: #fff;
     color: #dc2743;
 }
+
+/* ==================================================
+   INSTAGRAM DYNAMIC FEED
+   ================================================== */
+.flacso-instagram-api-feed {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+    width: 100%;
+}
+
+@media (min-width: 576px) {
+    .flacso-instagram-api-feed {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 16px;
+    }
+}
+
+.flacso-ig-feed-item {
+    display: block;
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    aspect-ratio: 1 / 1;
+    background-color: var(--global-palette8, #f4f7fc);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.3s ease;
+}
+
+.flacso-ig-feed-item:hover,
+.flacso-ig-feed-item:focus-visible {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+}
+
+.flacso-ig-feed-image {
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+.flacso-ig-feed-type-icon {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    z-index: 2;
+}
+
+.flacso-ig-feed-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(29, 58, 114, 0.85); /* palette1 overlay */
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 1;
+}
+
+.flacso-ig-feed-item:hover .flacso-ig-feed-overlay,
+.flacso-ig-feed-item:focus-visible .flacso-ig-feed-overlay {
+    opacity: 1;
+}
+
+.flacso-ig-feed-overlay i {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.flacso-ig-feed-overlay p {
+    font-size: 0.8rem;
+    line-height: 1.3;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}

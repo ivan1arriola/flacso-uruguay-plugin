@@ -168,6 +168,15 @@ class Flacso_Main_Page_Settings {
                 'bubble_secondary_label' => '',
                 'bubble_secondary_url' => '',
             ],
+            'instagram' => [
+                'profile_url' => 'https://www.instagram.com/flacsouruguay/',
+                'title' => 'Seguinos en Instagram',
+                'description' => 'Publicamos novedades institucionales, actividades academicas, lanzamientos y contenidos destacados de FLACSO Uruguay.',
+                'cta_label' => 'Ir a @flacsouruguay',
+                'access_token' => '',
+                'count' => 6,
+                'api_type' => 'basic', // 'basic' or 'graph'
+            ],
             'contacto' => [
                 'title' => 'Contáctanos',
                 'subtitle' => 'Con gusto responderemos todas tus consultas',
@@ -728,6 +737,19 @@ class Flacso_Main_Page_Settings {
             $output['quienes']['cta_url'] = self::sanitize_relative_url($quienes['cta_url'] ?? $defaults['quienes']['cta_url']);
             $output['quienes']['background_image'] = esc_url_raw($quienes['background_image'] ?? $defaults['quienes']['background_image']);
             $output['quienes']['highlight_color'] = sanitize_hex_color($quienes['highlight_color'] ?? $defaults['quienes']['highlight_color']);
+        }
+
+        if (isset($input['instagram']) && is_array($input['instagram'])) {
+            $instagram = $input['instagram'];
+            $output['instagram']['profile_url'] = esc_url_raw($instagram['profile_url'] ?? $defaults['instagram']['profile_url']);
+            $output['instagram']['title'] = wp_kses_post($instagram['title'] ?? $defaults['instagram']['title']);
+            $output['instagram']['description'] = wp_kses_post($instagram['description'] ?? $defaults['instagram']['description']);
+            $output['instagram']['cta_label'] = wp_kses_post($instagram['cta_label'] ?? $defaults['instagram']['cta_label']);
+            $output['instagram']['access_token'] = sanitize_text_field($instagram['access_token'] ?? $defaults['instagram']['access_token']);
+            $count = intval($instagram['count'] ?? $defaults['instagram']['count']);
+            $output['instagram']['count'] = ($count > 0 && $count <= 24) ? $count : 6;
+            $api_type = sanitize_key($instagram['api_type'] ?? $defaults['instagram']['api_type']);
+            $output['instagram']['api_type'] = in_array($api_type, ['basic', 'graph'], true) ? $api_type : 'basic';
         }
 
         return $output;

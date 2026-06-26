@@ -1,3 +1,21 @@
+## Version 6.3.0 - 25 de junio de 2026
+
+### Resumen
+- Integración de la API de Instagram para mostrar un feed dinámico en la página principal.
+- Nuevo panel de configuración en el Gestor FLACSO para ingresar el Token de Acceso.
+- Caché de 2 horas en la API para optimizar rendimiento y evitar bloqueos por rate-limiting.
+- Diseño visual responsivo con cuadrícula e interacciones hover para las tarjetas del feed.
+
+### Cambios detallados
+- `modules/main-page/includes/class-flacso-main-page-unified-settings.php`: Nueva pestaña y campos para Instagram.
+- `modules/main-page/includes/class-flacso-main-page-settings.php`: Soporte para nuevas configuraciones de Instagram y valores por defecto.
+- `modules/main-page/includes/class-flacso-instagram-api.php`: Clase encargada de conectar con la Graph API y Basic Display API, con sistema de caché en transients.
+- `modules/main-page/sections/instagram.php`: Renderizado dinámico del feed con fallback a la tarjeta estática.
+- `modules/main-page/assets/css/flacso-main-page.css`: Estilos visuales para `.flacso-instagram-api-feed`.
+- `flacso-uruguay.php`: Versión actualizada a 6.3.0.
+
+---
+
 ## Version 4.4.5 - 27 de mayo de 2026
 
 ### Resumen
