@@ -27,6 +27,7 @@ trait FLACSO_Formulario_Preinscripcion_Assets {
             'maxTotalSize' => 25,
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'tituloPosgrado' => $info['titulo_posgrado'],
+            'idPosgrado' => isset($info['id_posgrado']) ? $info['id_posgrado'] : '',
             'preinscripcionesCerradas' => !empty($info['preinscripcion_cerrada']),
             'mensajeCierre' => $this->obtener_mensaje_preinscripciones_cerradas(),
         ));
@@ -45,6 +46,3 @@ trait FLACSO_Formulario_Preinscripcion_Assets {
     }
 
 }
-
-
-

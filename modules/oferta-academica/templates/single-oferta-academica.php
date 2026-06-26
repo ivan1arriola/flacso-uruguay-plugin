@@ -2561,5 +2561,18 @@ get_header();
 }
 </style>
 
+<script>
+(function() {
+    if (typeof window.fbq !== 'function') return;
+    try {
+        window.fbq('track', 'ViewContent', {
+            content_name: <?php echo wp_json_encode((string) get_the_title()); ?>,
+            content_category: 'oferta_academica',
+            content_ids: ['oferta-' + <?php echo wp_json_encode((string) get_the_ID()); ?>],
+            flacso_stage: 'pagina_oferta'
+        });
+    } catch (e) {}
+})();
+</script>
 <?php
 get_footer();

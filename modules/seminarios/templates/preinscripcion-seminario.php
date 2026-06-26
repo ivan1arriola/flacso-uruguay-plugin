@@ -1072,8 +1072,10 @@ button.flacso-btn-primary {
             try {
                 window.fbq('track', 'SubmitApplication', {
                     content_name: <?php echo wp_json_encode((string) $seminario_titulo); ?>,
-                    content_category: 'preinscripcion_seminario',
-                    status: 'completed'
+                    content_category: 'seminario',
+                    content_ids: ['seminario-' + <?php echo wp_json_encode((string) $seminario_id); ?>],
+                    status: 'completed',
+                    flacso_stage: 'preinscripcion_enviada'
                 });
             } catch (e) {
                 if (window.console && typeof window.console.warn === 'function') {
@@ -1376,6 +1378,21 @@ button.flacso-btn-primary {
                 </div>
             </div>
         </div>
+        <script>
+        (function() {
+            if (typeof window.fbq !== 'function') {
+                return;
+            }
+            try {
+                window.fbq('track', 'ViewContent', {
+                    content_name: <?php echo wp_json_encode((string) $seminario_titulo); ?>,
+                    content_category: 'seminario',
+                    content_ids: ['seminario-' + <?php echo wp_json_encode((string) $seminario_id); ?>],
+                    flacso_stage: 'formulario_preinscripcion'
+                });
+            } catch (e) {}
+        })();
+        </script>
     <?php endif; ?>
 </div>
 

@@ -475,9 +475,13 @@ jQuery(function($){
 
                 const pixelPayload = {
                     content_name: posgrado,
-                    content_category: 'preinscripcion_posgrado',
-                    status: 'completed'
+                    content_category: 'oferta_academica',
+                    status: 'completed',
+                    flacso_stage: 'preinscripcion_enviada'
                 };
+                if (config.idPosgrado) {
+                    pixelPayload.content_ids = ['oferta-' + String(config.idPosgrado)];
+                }
                 trackMetaEvent('SubmitApplication', pixelPayload);
 
                 resultado.html(`

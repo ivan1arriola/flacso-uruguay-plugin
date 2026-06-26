@@ -1100,8 +1100,9 @@ endwhile;
     try {
         window.fbq('track', 'ViewContent', {
             content_name: <?php echo wp_json_encode(get_the_title($post_id)); ?>,
-            content_ids: [<?php echo (int) $post_id; ?>],
-            content_type: 'seminario'
+            content_category: 'seminario',
+            content_ids: ['seminario-' + <?php echo (int) $post_id; ?>],
+            flacso_stage: 'pagina_seminario'
         });
     } catch (e) {
         if (window.console && typeof window.console.warn === 'function') {
