@@ -54,6 +54,16 @@ function flacso_section_instagram_render() {
                                 <div class="flacso-instagram-embed">
                     <?php
                     $feed = class_exists('Flacso_Instagram_API') ? Flacso_Instagram_API::get_feed() : new WP_Error('no_class', 'API class not found');
+                    $settings = class_exists('Flacso_Main_Page_Settings') ? Flacso_Main_Page_Settings::get_section('instagram') : [];
+                    $count = intval($settings['count'] ?? 6);
+                    if (!is_wp_error($feed) && is_array($feed)) {
+                        $feed = array_slice($feed, 0, $count);
+                    }
+                    $settings = class_exists('Flacso_Main_Page_Settings') ? Flacso_Main_Page_Settings::get_section('instagram') : [];
+                    $count = intval($settings['count'] ?? 6);
+                    if (!is_wp_error($feed) && is_array($feed)) {
+                        $feed = array_slice($feed, 0, $count);
+                    }
                     
                     if (is_wp_error($feed)) :
                         // Fallback to static card if error or no token

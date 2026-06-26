@@ -12,16 +12,20 @@ function flacso_section_reels_render() {
         return '';
     }
     
+    $settings = class_exists('Flacso_Main_Page_Settings') ? Flacso_Main_Page_Settings::get_section('reels') : [];
+    
     // Filtrar solo los videos
     $reels = array_filter($feed, function($item) {
         return $item['media_type'] === 'VIDEO';
     });
+    
+    $count = intval($settings['count'] ?? 4);
+    $reels = array_slice($reels, 0, $count);
 
     if (empty($reels)) {
         return '';
     }
 
-    $settings = class_exists('Flacso_Main_Page_Settings') ? Flacso_Main_Page_Settings::get_section('reels') : [];
     $title = (string) apply_filters('flacso_main_page_reels_title', $settings['title'] ?? 'Reels Destacados');
     $section_id = 'flacso-reels-' . wp_generate_password(6, false);
 

@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 class Flacso_Instagram_API {
-    private const TRANSIENT_KEY = 'flacso_instagram_feed_cache';
+    private const TRANSIENT_KEY = 'flacso_instagram_feed_cache_v2';
     private const CACHE_TIME = HOUR_IN_SECONDS * 2; // 2 hours
 
     /**
@@ -39,16 +39,17 @@ class Flacso_Instagram_API {
         $params = [
             'fields' => 'id,caption,media_type,media_url,permalink,thumbnail_url,timestamp',
             'access_token' => $access_token,
-            'limit' => $count
+            'limit' =>  40
         ];
 
         $url = add_query_arg($params, $endpoint);
 
         $response = wp_remote_get($url, [
-            'timeout' => 15,
+            'timeout' => 5,
         ]);
 
         if (is_wp_error($response)) {
+            set_transient(self::TRANSIENT_KEY, $response, 5 * MINUTE_IN_SECONDS);
             return $response;
         }
 
@@ -58,7 +59,9 @@ class Flacso_Instagram_API {
 
         if ($status_code !== 200 || empty($data['data'])) {
             $error_message = $data['error']['message'] ?? 'Unknown error fetching Instagram feed.';
-            return new WP_Error('api_error', $error_message);
+            $error = new WP_Error('api_error', $error_message);
+            set_transient(self::TRANSIENT_KEY, $error, 5 * MINUTE_IN_SECONDS);
+            return $error;
         }
 
         $feed = [];

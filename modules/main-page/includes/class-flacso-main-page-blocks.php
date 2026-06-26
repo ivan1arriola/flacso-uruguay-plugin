@@ -113,6 +113,16 @@ class Flacso_Main_Page_Blocks {
      */
     private static function get_shortcodes_map(): array {
         return [
+            
+                'attributes'  => [
+                    'title' => [
+                        'type'    => 'string',
+                        'default' => '',
+                        'label'   => __('Título (opcional)', 'flacso-main-page'),
+                    ],
+                ],
+            ],
+
             'flacso-uruguay/homepage-builder' => [
                 'title'       => __('Página principal modular', 'flacso-main-page'),
                 'description' => __('Construye el home completo con hero full-width, novedades con buscador AJAX, eventos, Instagram y secciones institucionales.', 'flacso-main-page'),
