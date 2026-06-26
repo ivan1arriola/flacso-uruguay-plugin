@@ -528,13 +528,23 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 
         <div class="fc-page-container">
 
-            <?php if (!$mostrar_carta) : ?>
+            <?php 
+            $is_admin = current_user_can('manage_options');
+            if (!$mostrar_carta && !$is_admin) : 
+            ?>
                 <div class="fc-message-box fc-message-box-standalone" style="text-align:center; padding: 4rem 2rem; margin-top: 2rem; border-color: #fecdd3; background: #fff1f2; border-radius: 12px;">
                     <i class="bi bi-info-circle" style="font-size: 3rem; color: #be123c; margin-bottom: 1rem; display: block;"></i>
                     <h2 style="color: #be123c; margin-bottom: 1rem;">Inscripciones Cerradas</h2>
                     <p style="color: #881337; font-size: 1.15rem; max-width: 600px; margin: 0 auto;">En este momento no estamos recibiendo inscripciones para esta cursada.</p>
                 </div>
             <?php else : ?>
+                <?php if (!$mostrar_carta && $is_admin) : ?>
+                    <div class="fc-message-box fc-message-box-standalone" style="text-align:center; padding: 1.5rem; margin-top: 2rem; border-color: #ffeeba; background: #fff3cd; color: #856404; border-radius: 12px; border: 1px solid #ffeeba;">
+                        <i class="bi bi-exclamation-triangle-fill" style="font-size: 1.8rem; margin-bottom: 0.5rem; display: block;"></i>
+                        <h4 style="margin-bottom: 0.5rem; color: #856404;">Vista previa de administrador</h4>
+                        <p style="margin: 0; font-size: 1rem;">Las inscripciones están <strong>cerradas</strong> para el público general. Como eres administrador de WordPress, puedes ver el contenido completo de esta página.</p>
+                    </div>
+                <?php endif; ?>
 
             <section id="fc-info-clave" class="fc-feature-grid">
                 <?php
