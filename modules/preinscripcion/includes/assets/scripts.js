@@ -426,6 +426,18 @@ jQuery(function($){
         resultado[0].scrollIntoView({ behavior:'smooth', block:'start' });
     }
     
+    async function hashForMeta(value) {
+        if (!value) return undefined;
+        try {
+            const str = value.trim().toLowerCase();
+            const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+            return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+        } catch (e) {
+            console.warn('[Preinscripcion] No se pudo hashear el valor', e);
+            return undefined;
+        }
+    }
+
     async function enviarFormulario(){
         if(preinscripcionesCerradas){
             mostrarAvisoCierre();
@@ -470,8 +482,12 @@ jQuery(function($){
                 form.hide();
                 const nombreCompleto = [$('#nombre1').val(), $('#apellido1').val()].filter(Boolean).join(' ').trim() || 'Postulante';
                 const correo = ($('#correo').val() || '').trim();
+                const celularE164 = ($('#celular_e164').val() || '').trim();
                 const posgrado = config.tituloPosgrado || 'el posgrado seleccionado';
                 const fecha = new Date().toLocaleString();
+
+                const em_hash = await hashForMeta(correo);
+                const ph_hash = await hashForMeta(celularE164.replace(/\D/g, ''));
 
                 const pixelPayload = {
                     content_name: posgrado,
@@ -479,10 +495,14 @@ jQuery(function($){
                     status: 'completed',
                     flacso_stage: 'preinscripcion_enviada'
                 };
+                if (em_hash) pixelPayload.em = em_hash;
+                if (ph_hash) pixelPayload.ph = ph_hash;
+
                 if (config.idPosgrado) {
                     pixelPayload.content_ids = ['oferta-' + String(config.idPosgrado)];
                 }
                 trackMetaEvent('SubmitApplication', pixelPayload);
+                trackMetaEvent('Lead', pixelPayload);
 
                 resultado.html(`
                     <div class="flacso-success-card">
