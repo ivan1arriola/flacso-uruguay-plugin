@@ -68,11 +68,12 @@ class Flacso_Instagram_API {
                 continue;
             }
             
-            $feed[] = [
+                        $feed[] = [
                 'id' => $item['id'],
                 'caption' => $item['caption'] ?? '',
                 'media_type' => $item['media_type'],
-                'media_url' => $item['media_type'] === 'VIDEO' ? ($item['thumbnail_url'] ?? $item['media_url']) : $item['media_url'],
+                'media_url' => $item['media_url'],
+                'thumbnail_url' => $item['thumbnail_url'] ?? $item['media_url'],
                 'permalink' => $item['permalink'],
                 'timestamp' => $item['timestamp'],
             ];

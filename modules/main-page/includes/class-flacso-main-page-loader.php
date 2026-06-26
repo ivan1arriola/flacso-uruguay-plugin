@@ -235,6 +235,7 @@ class Flacso_Main_Page_Loader {
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/quienes-somos.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-instagram-api.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/instagram.php';
+        require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/reels.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/posgrados.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/mailing.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/congreso.php';

@@ -2516,7 +2516,8 @@
 .flacso-ig-feed-image {
     width: 100%;
     height: 100%;
-    background-size: cover;
+    background-size: contain;
+    background-repeat: no-repeat;
     background-position: center;
     position: relative;
 }
@@ -2571,4 +2572,69 @@
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+}
+
+/* ==================================================
+   REELS INSTAGRAM
+   ================================================== */
+.flacso-reels-section {
+    background-color: var(--global-palette8, #f4f7fc);
+}
+
+.flacso-reels-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+    width: 100%;
+}
+
+.flacso-reel-item {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.flacso-reel-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+}
+
+.flacso-reel-video {
+    width: 100%;
+    aspect-ratio: 9/16;
+    background: #000;
+    object-fit: contain;
+}
+
+.flacso-reel-caption {
+    padding: 1.25rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.flacso-reel-caption p {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--global-palette4, #333);
+    margin-bottom: 1rem;
+}
+
+.flacso-reel-link {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--global-palette1, #1d3a72);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.flacso-reel-link:hover {
+    text-decoration: underline;
 }

@@ -30,6 +30,10 @@ class Flacso_Main_Page_Unified_Settings {
             'label' => 'Instagram',
             'icon' => 'dashicons-camera',
         ],
+        'reels' => [
+            'label' => 'Reels',
+            'icon' => 'dashicons-video-alt3',
+        ],
         'posgrados' => [
             'label' => 'Oferta Educativa',
             'icon' => 'dashicons-book-alt',
@@ -187,6 +191,9 @@ class Flacso_Main_Page_Unified_Settings {
                 break;
             case 'instagram':
                 self::render_instagram_section($settings);
+                break;
+            case 'reels':
+                self::render_reels_section($settings);
                 break;
             case 'posgrados':
                 self::render_posgrados_section($settings);
@@ -466,6 +473,26 @@ class Flacso_Main_Page_Unified_Settings {
             }
         }
         ?>
+        <?php
+    }
+
+    private static function render_reels_section(array $settings): void {
+        $reels = $settings['reels'] ?? [];
+        ?>
+        <h3><?php esc_html_e('Configuración de Reels', 'flacso-main-page'); ?></h3>
+        <p class="description">
+            <?php esc_html_e('Esta sección mostrará automáticamente los Reels más recientes utilizando la misma configuración de API de la pestaña Instagram.', 'flacso-main-page'); ?>
+        </p>
+
+        <div class="flacso-form-group">
+            <label for="reels_title"><?php esc_html_e('Título de la sección', 'flacso-main-page'); ?></label>
+            <input 
+                type="text" 
+                id="reels_title" 
+                name="reels[title]" 
+                class="regular-text" 
+                value="<?php echo esc_attr($reels['title'] ?? 'Reels Destacados'); ?>">
+        </div>
         <?php
     }
 

@@ -71,7 +71,7 @@ function flacso_section_instagram_render() {
                                 $caption_preview = wp_trim_words($item['caption'], 15);
                             ?>
                                 <a href="<?php echo esc_url($item['permalink']); ?>" target="_blank" rel="noopener noreferrer" class="flacso-ig-feed-item">
-                                    <div class="flacso-ig-feed-image" style="background-image: url('<?php echo esc_url($item['media_url']); ?>');">
+                                    <div class="flacso-ig-feed-image" style="background-image: url('<?php echo esc_url($item['thumbnail_url']); ?>');">
                                         <?php if ($item['media_type'] === 'VIDEO') : ?>
                                             <div class="flacso-ig-feed-type-icon"><i class="bi bi-play-fill"></i></div>
                                         <?php elseif ($item['media_type'] === 'CAROUSEL_ALBUM') : ?>
