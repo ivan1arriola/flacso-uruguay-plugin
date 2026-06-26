@@ -2673,3 +2673,204 @@
 .flacso-reel-link:hover {
     text-decoration: underline;
 }
+
+/* ==========================================================================
+   Seccion Festejos 20 Anos
+   ========================================================================== */
+
+.flacso-festejos-section {
+    padding: 5rem 0;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.flacso-festejos-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+}
+
+.flacso-festejos-title {
+    font-size: 2.5rem;
+    color: var(--global-palette1, #1d3a72);
+    margin: 0 0 0.5rem 0;
+}
+
+.flacso-festejos-description {
+    font-size: 1.15rem;
+    color: var(--global-palette4, #4b5563);
+    margin: 0;
+    max-width: 600px;
+}
+
+.flacso-festejos-controls {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.flacso-festejos-arrow {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.1);
+    background: #fff;
+    color: var(--global-palette1, #1d3a72);
+    font-size: 1.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.flacso-festejos-arrow:hover {
+    background: var(--global-palette1, #1d3a72);
+    color: #fff;
+    border-color: var(--global-palette1, #1d3a72);
+}
+
+.flacso-festejos-carousel-wrapper {
+    position: relative;
+    margin: 0 calc(-50vw + 50%); /* Full bleed effect */
+    padding: 1rem calc(50vw - 50%);
+}
+
+.flacso-festejos-carousel {
+    display: flex;
+    gap: 24px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE and Edge */
+    padding-bottom: 2rem;
+}
+
+.flacso-festejos-carousel::-webkit-scrollbar {
+    display: none;
+}
+
+.flacso-festejos-slide {
+    flex: 0 0 320px;
+    scroll-snap-align: start;
+}
+
+.flacso-festejos-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.flacso-festejos-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+}
+
+.flacso-festejos-media {
+    position: relative;
+    aspect-ratio: 4/3;
+    overflow: hidden;
+    background: #f4f7fc;
+}
+
+.flacso-festejos-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.flacso-festejos-card:hover .flacso-festejos-media img {
+    transform: scale(1.05);
+}
+
+.flacso-festejos-play-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--global-palette1, #1d3a72);
+    font-size: 2rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    transition: transform 0.3s ease, background 0.3s ease;
+}
+
+.flacso-festejos-card:hover .flacso-festejos-play-overlay {
+    transform: translate(-50%, -50%) scale(1.1);
+    background: #fff;
+}
+
+.flacso-festejos-content {
+    padding: 1.5rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.flacso-festejos-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    color: #e1306c;
+    margin-bottom: 0.75rem;
+}
+
+.flacso-festejos-card-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--global-palette2, #1a202c);
+    margin: 0 0 1.5rem 0;
+    flex-grow: 1;
+}
+
+.flacso-festejos-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--global-palette1, #1d3a72);
+    transition: gap 0.2s ease;
+}
+
+.flacso-festejos-card:hover .flacso-festejos-action {
+    gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .flacso-festejos-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .flacso-festejos-slide {
+        flex: 0 0 280px;
+    }
+    
+    .flacso-festejos-controls {
+        display: none; /* Hide arrows on mobile, users can swipe naturally */
+    }
+}

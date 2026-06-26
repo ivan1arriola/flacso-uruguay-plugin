@@ -17,6 +17,10 @@ if (!function_exists('flacso_homepage_builder_render')) {
                 'function' => 'flacso_section_hero_render',
             ],
             [
+                'key' => 'festejos',
+                'function' => 'flacso_section_festejos_render',
+            ],
+            [
                 'key' => 'novedades_destacadas',
                 'function' => 'flacso_section_novedades_destacadas_render',
             ],

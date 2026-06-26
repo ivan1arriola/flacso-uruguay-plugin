@@ -10,9 +10,13 @@ if (!defined('ABSPATH')) {
  */
 class Flacso_Main_Page_Unified_Settings {
     private const SECTIONS = [
-        'hero' => [
+                'hero' => [
             'label' => 'Encabezado',
             'icon' => 'dashicons-image-filter',
+        ],
+        'festejos' => [
+            'label' => 'Festejos 20 Años',
+            'icon' => 'dashicons-star-filled',
         ],
         'eventos' => [
             'label' => 'Eventos',
@@ -177,8 +181,11 @@ class Flacso_Main_Page_Unified_Settings {
 
     private static function render_section_content(string $section_key, array $settings): void {
         switch ($section_key) {
-            case 'hero':
+                        case 'hero':
                 self::render_hero_section($settings);
+                break;
+            case 'festejos':
+                self::render_festejos_section($settings);
                 break;
             case 'eventos':
                 self::render_eventos_section($settings);
@@ -214,6 +221,76 @@ class Flacso_Main_Page_Unified_Settings {
                 self::render_contacto_section($settings);
                 break;
         }
+    }
+
+        private static function render_festejos_section(array $settings): void {
+        $festejos = $settings['festejos'] ?? [];
+        $items = $festejos['items'] ?? array_fill(0, 8, ['title' => '', 'image' => '', 'url' => '', 'type' => 'link']);
+        ?>
+        <h3><?php esc_html_e('Configuración del Carrusel de Festejos', 'flacso-main-page'); ?></h3>
+        
+        <div class="flacso-form-group">
+            <label for="festejos_title"><?php esc_html_e('Título de la sección', 'flacso-main-page'); ?></label>
+            <input 
+                type="text" 
+                id="festejos_title" 
+                name="festejos[title]" 
+                class="regular-text" 
+                value="<?php echo esc_attr($festejos['title'] ?? 'Festejos de los 20 años de FLACSO'); ?>">
+        </div>
+        
+        <div class="flacso-form-group">
+            <label for="festejos_description"><?php esc_html_e('Descripción', 'flacso-main-page'); ?></label>
+            <textarea 
+                id="festejos_description" 
+                name="festejos[description]" 
+                rows="3" 
+                class="regular-text"><?php echo esc_textarea($festejos['description'] ?? ''); ?></textarea>
+        </div>
+
+        <hr style="margin: 2rem 0;">
+        <h3><?php esc_html_e('Tarjetas del Carrusel', 'flacso-main-page'); ?></h3>
+        <p class="description mb-4"><?php esc_html_e('Configura hasta 8 elementos para mostrar en el carrusel de Festejos. Si dejas el título o la imagen vacíos, la tarjeta no se mostrará.', 'flacso-main-page'); ?></p>
+        
+        <div class="flacso-cards-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+        <?php foreach ($items as $index => $item): ?>
+            <div class="flacso-admin-card-slot" style="background: #f9f9f9; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+                <h4 style="margin-top: 0;">Tarjeta <?php echo $index + 1; ?></h4>
+                
+                <div class="flacso-form-group" style="margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; margin-bottom: 5px;">Título / Texto</label>
+                    <input type="text" name="festejos[items][<?php echo $index; ?>][title]" value="<?php echo esc_attr($item['title'] ?? ''); ?>" style="width: 100%;">
+                </div>
+                
+                <div class="flacso-form-group" style="margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; margin-bottom: 5px;">Tipo de Contenido</label>
+                    <select name="festejos[items][<?php echo $index; ?>][type]" style="width: 100%;">
+                        <option value="link" <?php selected(($item['type'] ?? 'link'), 'link'); ?>>Enlace Normal</option>
+                        <option value="instagram" <?php selected(($item['type'] ?? 'link'), 'instagram'); ?>>Post de Instagram</option>
+                        <option value="video" <?php selected(($item['type'] ?? 'link'), 'video'); ?>>Video (YouTube, etc)</option>
+                    </select>
+                </div>
+                
+                <div class="flacso-form-group" style="margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; margin-bottom: 5px;">URL de Destino</label>
+                    <input type="url" name="festejos[items][<?php echo $index; ?>][url]" value="<?php echo esc_attr($item['url'] ?? ''); ?>" style="width: 100%;" placeholder="https://...">
+                </div>
+                
+                <div class="flacso-form-group" style="margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; margin-bottom: 5px;">URL de la Imagen de Portada</label>
+                    <div style="display: flex; gap: 5px;">
+                        <input type="url" id="festejos_img_<?php echo $index; ?>" name="festejos[items][<?php echo $index; ?>][image]" value="<?php echo esc_attr($item['image'] ?? ''); ?>" style="flex-grow: 1;">
+                    </div>
+                    <?php if (!empty($item['image'])): ?>
+                        <div style="margin-top: 5px; height: 100px; background: #e5e5e5; border-radius: 4px; overflow: hidden;">
+                            <img src="<?php echo esc_url($item['image']); ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endforeach; ?>
+        </div>
+        <?php
     }
 
     private static function render_hero_section(array $settings): void {

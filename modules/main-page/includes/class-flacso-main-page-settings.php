@@ -8,6 +8,7 @@ class Flacso_Main_Page_Settings {
     const OPTION_KEY = 'flacso-main-page_settings';
     private const SECTION_KEYS = [
         'hero',
+        'festejos',
         'eventos',
         'novedades_destacadas',
         'novedades_busqueda',
@@ -24,6 +25,7 @@ class Flacso_Main_Page_Settings {
     ];
     private const HOMEPAGE_SECTION_KEYS = [
         'hero',
+        'festejos',
         'novedades_destacadas',
         'eventos',
         'novedades',
@@ -92,6 +94,16 @@ class Flacso_Main_Page_Settings {
         }
 
         self::$defaults_cache = [
+            'festejos' => [
+                'title' => 'Festejos de los 20 años de FLACSO',
+                'description' => 'Acompañanos en este recorrido por nuestras dos décadas de historia.',
+                'items' => array_fill(0, 8, [
+                    'title' => '',
+                    'image' => '',
+                    'url' => '',
+                    'type' => 'link', // link, video, instagram
+                ]),
+            ],
             'hero' => [
                 'kicker' => '',
                 'title' => 'Inscripciones Abiertas: Maestrías, Especializaciones, Diplomados y Diplomas',
@@ -444,6 +456,7 @@ class Flacso_Main_Page_Settings {
     public static function get_homepage_section_order_defaults(): array {
         return [
             'hero',
+        'festejos',
             'novedades_destacadas',
             'eventos',
             'novedades',
