@@ -204,6 +204,31 @@ class Oferta_Rest_API
             'schema' => null,
         ]);
 
+        register_rest_field('oferta-academica', 'cadena_ciclos', [
+            'get_callback' => function ($post_array) {
+                if (!class_exists('Oferta_Data_Schema') || !method_exists('Oferta_Data_Schema', 'get_cycle_chain')) {
+                    return [];
+                }
+
+                return Oferta_Data_Schema::get_cycle_chain((int) $post_array['id']);
+            },
+            'schema' => null,
+        ]);
+
+        register_rest_field('oferta-academica', 'validacion_ciclos', [
+            'get_callback' => function ($post_array) {
+                if (!class_exists('Oferta_Data_Schema') || !method_exists('Oferta_Data_Schema', 'get_cycle_validation')) {
+                    return [
+                        'es_valida' => true,
+                        'problemas' => [],
+                    ];
+                }
+
+                return Oferta_Data_Schema::get_cycle_validation((int) $post_array['id']);
+            },
+            'schema' => null,
+        ]);
+
         // Registrar seminarios asociados a la oferta
         register_rest_field('oferta-academica', '_oferta_seminarios_ids', [
             'get_callback' => function ($post_array) {

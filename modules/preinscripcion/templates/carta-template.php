@@ -312,8 +312,8 @@ $bloques_html = [
     'titulos_certificaciones_html' => 'Títulos y Certificaciones',
 ];
 
-$titulos_intermedios_ids = !empty($data['titulos_intermedios']) && is_array($data['titulos_intermedios'])
-    ? $data['titulos_intermedios']
+$cadena_ciclos = !empty($data['cadena_ciclos']) && is_array($data['cadena_ciclos'])
+    ? array_values(array_filter($data['cadena_ciclos'], 'is_array'))
     : [];
 
 echo "<!-- DEBUG TABLA PRECIO: tabla_precio_id=" . (isset($data['tabla_precio_id']) ? esc_html($data['tabla_precio_id']) : 'NOT_SET') . " -->\n";
@@ -486,31 +486,48 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 
             </div>
 
-            <?php if (!empty($titulos_intermedios_ids)) : ?>
+            <?php if (count($cadena_ciclos) > 1) : ?>
                 <div class="fc-intermediate-strip">
-                    <p>Durante la cursada del programa se obtendrán <strong>títulos intermedios</strong>:</p>
+                    <p>Esta propuesta integra la siguiente <strong>cadena ordenada de ciclos</strong>:</p>
 
                     <div class="fc-intermediate-grid">
-                        <?php foreach ($titulos_intermedios_ids as $tid) : ?>
+                        <?php foreach ($cadena_ciclos as $ciclo) : ?>
                             <?php
-                            $t_post = get_post($tid);
-
-                            if (!$t_post) {
-                                continue;
-                            }
-
-                            $t_duracion = get_post_meta($tid, 'duracion_html', true);
+                            $t_titulo = trim((string) ($ciclo['titulo'] ?? ''));
+                            $t_titulo = $t_titulo !== '' ? $t_titulo : 'Oferta académica';
+                            $t_duracion = trim((string) ($ciclo['duracion_html'] ?? ''));
+                            $t_carta_url = trim((string) ($ciclo['carta_url'] ?? ''));
+                            $t_posicion = max(1, intval($ciclo['posicion'] ?? 0));
+                            $t_es_actual = !empty($ciclo['es_actual']);
                             ?>
-                            <article class="fc-intermediate-card">
+                            <article class="fc-intermediate-card<?php echo $t_es_actual ? ' is-current' : ''; ?>">
                                 <div class="fc-intermediate-icon">
                                     <i class="bi bi-mortarboard" aria-hidden="true"></i>
                                 </div>
 
-                                <div>
-                                    <h3><?php echo esc_html($t_post->post_title); ?></h3>
+                                <div class="fc-intermediate-content">
+                                    <div class="fc-intermediate-copy">
+                                        <div class="fc-intermediate-kicker">
+                                            <span class="fc-intermediate-order">Ciclo <?php echo esc_html((string) $t_posicion); ?></span>
+                                            <?php if ($t_es_actual) : ?>
+                                                <span class="fc-intermediate-current">Actual</span>
+                                            <?php endif; ?>
+                                        </div>
 
-                                    <?php if (!empty($t_duracion)) : ?>
-                                        <span><?php echo esc_html(wp_strip_all_tags($t_duracion)); ?></span>
+                                        <h3><?php echo esc_html($t_titulo); ?></h3>
+
+                                        <?php if (!empty($t_duracion)) : ?>
+                                            <span><?php echo esc_html(wp_strip_all_tags($t_duracion)); ?></span>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <?php if (!$t_es_actual && $t_carta_url !== '') : ?>
+                                        <a class="fc-card-button fc-intermediate-button" href="<?php echo esc_url($t_carta_url); ?>" aria-label="Ver el ciclo <?php echo esc_attr($t_titulo); ?>">
+                                            <i class="bi bi-arrow-right-circle" aria-hidden="true"></i>
+                                            Ver ciclo
+                                        </a>
+                                    <?php elseif ($t_es_actual) : ?>
+                                        <span class="fc-intermediate-current-pill">Ciclo actual</span>
                                     <?php endif; ?>
                                 </div>
                             </article>
@@ -1309,12 +1326,63 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
 
 .fc-intermediate-card {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: .85rem;
     padding: 1rem;
     border-radius: 1rem;
     background: var(--fc-soft);
     border: 1px solid var(--fc-border);
+}
+
+.fc-intermediate-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .9rem;
+    width: 100%;
+    min-width: 0;
+}
+
+.fc-intermediate-card.is-current {
+    background: rgba(22, 57, 111, .08);
+    border-color: rgba(22, 57, 111, .22);
+}
+
+.fc-intermediate-copy {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.fc-intermediate-kicker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .45rem;
+    margin-bottom: .5rem;
+}
+
+.fc-intermediate-order,
+.fc-intermediate-current,
+.fc-intermediate-current-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    font-size: .76rem;
+    font-weight: 800;
+    letter-spacing: .02em;
+}
+
+.fc-intermediate-order {
+    padding: .35rem .65rem;
+    background: rgba(22, 57, 111, .10);
+    color: var(--fc-primary);
+}
+
+.fc-intermediate-current,
+.fc-intermediate-current-pill {
+    padding: .35rem .7rem;
+    background: var(--fc-primary);
+    color: var(--fc-white);
 }
 
 .fc-intermediate-icon,
@@ -1352,10 +1420,28 @@ $url_inscripcion = trailingslashit(get_permalink($post_id)) . 'preinscripcion';
     font-weight: 650;
 }
 
+.fc-intermediate-button {
+    flex: 0 0 auto;
+    padding: .75rem 1rem;
+    font-size: .92rem;
+    white-space: nowrap;
+}
+
 .fc-intermediate-note {
     margin-top: 1rem !important;
     margin-bottom: 0 !important;
     color: var(--fc-muted) !important;
+}
+
+@media (max-width: 640px) {
+    .fc-intermediate-content {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .fc-intermediate-button {
+        width: 100%;
+    }
 }
 
 .fc-page-container {

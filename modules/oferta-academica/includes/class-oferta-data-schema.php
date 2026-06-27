@@ -72,11 +72,13 @@ class Oferta_Data_Schema {
 
     private const FALLBACK_USER_HEADER = 'x-flacso-app-user';
     private const FALLBACK_PASSWORD_HEADER = 'x-flacso-app-password';
+    private static $cycle_analysis_cache = null;
 
     public static function init(): void {
         add_action('init', [self::class, 'register_meta'], 12);
         add_action('rest_api_init', [self::class, 'register_rest_routes']);
         add_action('rest_after_insert_oferta-academica', [self::class, 'sync_documentos_after_rest_insert'], 10, 3);
+        add_filter('rest_pre_insert_oferta-academica', [self::class, 'validate_cycle_chain_before_rest_insert'], 10, 2);
     }
 
     public static function register_meta(): void {
@@ -883,7 +885,108 @@ class Oferta_Data_Schema {
             }
         }
 
+        $schema['cadena_ciclos'] = self::get_cycle_chain($post_id);
+        $schema['validacion_ciclos'] = self::get_cycle_validation($post_id);
+
         return $schema;
+    }
+
+    public static function get_cycle_chain(int $post_id): array {
+        $post_id = absint($post_id);
+
+        if ($post_id <= 0) {
+            return [];
+        }
+
+        $chain_ids = self::get_cycle_chain_ids($post_id);
+
+        if (count($chain_ids) <= 1) {
+            return [];
+        }
+
+        $chain = [];
+
+        foreach ($chain_ids as $index => $cycle_id) {
+            $cycle_post = get_post($cycle_id);
+
+            if (!$cycle_post) {
+                continue;
+            }
+
+            $permalink = get_permalink($cycle_id);
+            $duracion_html = self::get_meta_value($cycle_id, 'duracion_html');
+
+            $chain[] = [
+                'id' => $cycle_id,
+                'titulo' => get_the_title($cycle_post),
+                'posicion' => $index + 1,
+                'es_actual' => $cycle_id === $post_id,
+                'url' => $permalink ? (string) $permalink : '',
+                'carta_url' => $permalink ? trailingslashit((string) $permalink) . 'carta/' : '',
+                'duracion_html' => $duracion_html,
+                'abreviacion' => self::get_meta_value($cycle_id, 'abreviacion'),
+            ];
+        }
+
+        return $chain;
+    }
+
+    public static function get_cycle_validation(int $post_id): array {
+        $post_id = absint($post_id);
+
+        if ($post_id <= 0) {
+            return [
+                'es_valida' => true,
+                'problemas' => [],
+            ];
+        }
+
+        $analysis = self::get_cycle_analysis();
+        $issues = isset($analysis['issues'][$post_id]) && is_array($analysis['issues'][$post_id])
+            ? array_values($analysis['issues'][$post_id])
+            : [];
+
+        return [
+            'es_valida' => count($issues) === 0,
+            'problemas' => $issues,
+        ];
+    }
+
+    public static function validate_cycle_chain_before_rest_insert($prepared_post, \WP_REST_Request $request) {
+        $cycle_ids = self::extract_requested_cycle_ids($request);
+
+        if ($cycle_ids === null) {
+            return $prepared_post;
+        }
+
+        $current_id = 0;
+
+        if ($prepared_post instanceof \WP_Post) {
+            $current_id = (int) $prepared_post->ID;
+        }
+
+        if ($current_id <= 0) {
+            $current_id = (int) $request->get_param('id');
+        }
+
+        $analysis = self::get_cycle_analysis([
+            $current_id > 0 ? $current_id : '__new__' => $cycle_ids,
+        ]);
+
+        $target_key = $current_id > 0 ? $current_id : '__new__';
+        $issues = isset($analysis['issues'][$target_key]) && is_array($analysis['issues'][$target_key])
+            ? array_values($analysis['issues'][$target_key])
+            : [];
+
+        if (count($issues) === 0) {
+            return $prepared_post;
+        }
+
+        return new \WP_Error(
+            'invalid_cycle_chain',
+            'La cadena de ciclos es inconsistente: ' . implode(' ', $issues),
+            ['status' => 400]
+        );
     }
 
     public static function rest_update_oferta(\WP_REST_Request $request) {
@@ -906,6 +1009,20 @@ class Oferta_Data_Schema {
         if (isset($data['meta']) && is_array($data['meta'])) {
             $data = array_merge($data['meta'], $data);
             unset($data['meta']);
+        }
+
+        if (array_key_exists('titulos_intermedios', $data)) {
+            $validation_request = new \WP_REST_Request($request->get_method(), $request->get_route());
+            $validation_request->set_param('id', $post_id);
+            $validation_request->set_body_params([
+                'titulos_intermedios' => $data['titulos_intermedios'],
+            ]);
+
+            $validation_result = self::validate_cycle_chain_before_rest_insert($post, $validation_request);
+
+            if ($validation_result instanceof \WP_Error) {
+                return $validation_result;
+            }
         }
 
         $post_update = ['ID' => $post_id];
@@ -983,6 +1100,10 @@ class Oferta_Data_Schema {
                 continue;
             }
             self::update_meta_value($post_id, $key, self::sanitize_integer_array($data[$key]));
+        }
+
+        if (array_key_exists('titulos_intermedios', $data)) {
+            self::clear_cycle_chain_caches();
         }
 
         foreach (self::BOOLEAN_FIELDS as $key) {
@@ -1345,6 +1466,342 @@ class Oferta_Data_Schema {
         }
 
         return '';
+    }
+
+    private static function extract_requested_cycle_ids(\WP_REST_Request $request): ?array {
+        $payload = $request->get_json_params();
+
+        if (!is_array($payload) || empty($payload)) {
+            $payload = $request->get_body_params();
+        }
+
+        if (!is_array($payload)) {
+            $payload = [];
+        }
+
+        if (isset($payload['meta']) && is_array($payload['meta']) && array_key_exists('titulos_intermedios', $payload['meta'])) {
+            return self::sanitize_integer_array($payload['meta']['titulos_intermedios']);
+        }
+
+        if (array_key_exists('titulos_intermedios', $payload)) {
+            return self::sanitize_integer_array($payload['titulos_intermedios']);
+        }
+
+        return null;
+    }
+
+    private static function clear_cycle_chain_caches(): void {
+        self::$cycle_analysis_cache = null;
+    }
+
+    private static function add_cycle_issue(array &$issues, $offer_key, string $message): void {
+        if (!isset($issues[$offer_key]) || !is_array($issues[$offer_key])) {
+            $issues[$offer_key] = [];
+        }
+
+        if (!in_array($message, $issues[$offer_key], true)) {
+            $issues[$offer_key][] = $message;
+        }
+    }
+
+    private static function get_cycle_analysis(array $override_relations = []): array {
+        if (empty($override_relations) && is_array(self::$cycle_analysis_cache)) {
+            return self::$cycle_analysis_cache;
+        }
+
+        $offer_ids = get_posts([
+            'post_type' => 'oferta-academica',
+            'post_status' => ['publish', 'draft', 'future', 'pending', 'private'],
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'orderby' => 'ID',
+            'order' => 'ASC',
+            'no_found_rows' => true,
+        ]);
+
+        $known_ids = array_values(array_unique(array_map('intval', is_array($offer_ids) ? $offer_ids : [])));
+        $nodes = array_fill_keys($known_ids, true);
+
+        foreach ($override_relations as $override_key => $override_value) {
+            if ($override_key === '__new__') {
+                $nodes[$override_key] = true;
+                continue;
+            }
+
+            $override_id = intval($override_key);
+            if ($override_id > 0) {
+                $nodes[$override_id] = true;
+            }
+        }
+
+        $relations = [];
+        $issues = [];
+        $predecessor_map = [];
+        $successor_map = [];
+        $adjacency = [];
+
+        foreach (array_keys($nodes) as $node_key) {
+            $adjacency[$node_key] = [];
+            $issues[$node_key] = [];
+        }
+
+        foreach (array_keys($nodes) as $node_key) {
+            $raw_relations = array_key_exists($node_key, $override_relations)
+                ? $override_relations[$node_key]
+                : (($node_key === '__new__')
+                    ? []
+                    : get_post_meta((int) $node_key, 'titulos_intermedios', true));
+
+            $declared_ids = self::sanitize_integer_array($raw_relations);
+            $valid_declared_ids = [];
+
+            if (count($declared_ids) > 1) {
+                self::add_cycle_issue(
+                    $issues,
+                    $node_key,
+                    'Cada oferta solo puede declarar un ciclo previo directo para mantener una cadena lineal.'
+                );
+            }
+
+            foreach ($declared_ids as $declared_id) {
+                $declared_id = intval($declared_id);
+
+                if ($node_key !== '__new__' && $declared_id === intval($node_key)) {
+                    self::add_cycle_issue($issues, $node_key, 'Una oferta no puede referenciarse a sí misma como ciclo previo.');
+                    continue;
+                }
+
+                if (!isset($nodes[$declared_id])) {
+                    self::add_cycle_issue($issues, $node_key, 'Uno de los ciclos declarados no existe o no está disponible.');
+                    continue;
+                }
+
+                $valid_declared_ids[] = $declared_id;
+                $adjacency[$node_key][$declared_id] = true;
+                $adjacency[$declared_id][$node_key] = true;
+            }
+
+            $relations[$node_key] = $valid_declared_ids;
+            $predecessor_map[$node_key] = count($valid_declared_ids) === 1 ? $valid_declared_ids[0] : null;
+        }
+
+        foreach ($predecessor_map as $node_key => $predecessor_id) {
+            if ($predecessor_id === null) {
+                continue;
+            }
+
+            if (!isset($successor_map[$predecessor_id])) {
+                $successor_map[$predecessor_id] = [];
+            }
+
+            $successor_map[$predecessor_id][] = $node_key;
+        }
+
+        foreach ($successor_map as $predecessor_id => $successors) {
+            $successors = array_values(array_unique($successors, SORT_REGULAR));
+
+            if (count($successors) <= 1) {
+                $successor_map[$predecessor_id] = $successors;
+                continue;
+            }
+
+            self::add_cycle_issue(
+                $issues,
+                $predecessor_id,
+                'Un mismo ciclo previo no puede desembocar en más de una oferta porque rompería la cadena lineal.'
+            );
+
+            foreach ($successors as $successor_id) {
+                self::add_cycle_issue(
+                    $issues,
+                    $successor_id,
+                    'Comparte el mismo ciclo previo directo con otra oferta y eso genera una bifurcación inconsistente.'
+                );
+            }
+
+            $successor_map[$predecessor_id] = $successors;
+        }
+
+        $visit_state = [];
+        $stack = [];
+
+        $detect_cycle = function ($node_key) use (&$detect_cycle, &$visit_state, &$stack, $predecessor_map, &$issues) {
+            $visit_state[$node_key] = 1;
+            $stack[] = $node_key;
+            $predecessor_id = $predecessor_map[$node_key] ?? null;
+
+            if ($predecessor_id !== null) {
+                $predecessor_key = $predecessor_id;
+
+                if (!isset($visit_state[$predecessor_key])) {
+                    $detect_cycle($predecessor_key);
+                } elseif (($visit_state[$predecessor_key] ?? 0) === 1) {
+                    $cycle_start = array_search($predecessor_key, $stack, true);
+                    $cycle_nodes = $cycle_start === false ? [$predecessor_key] : array_slice($stack, $cycle_start);
+
+                    foreach ($cycle_nodes as $cycle_node_key) {
+                        self::add_cycle_issue(
+                            $issues,
+                            $cycle_node_key,
+                            'Se detectó un ciclo cerrado entre ofertas. La relación entre ciclos debe formar una secuencia lineal sin vueltas.'
+                        );
+                    }
+                }
+            }
+
+            array_pop($stack);
+            $visit_state[$node_key] = 2;
+        };
+
+        foreach (array_keys($nodes) as $node_key) {
+            if (!isset($visit_state[$node_key])) {
+                $detect_cycle($node_key);
+            }
+        }
+
+        $components = [];
+        $component_of = [];
+
+        foreach (array_keys($nodes) as $node_key) {
+            if (isset($component_of[$node_key])) {
+                continue;
+            }
+
+            $component_id = count($components);
+            $queue = [$node_key];
+            $component_nodes = [];
+
+            while (!empty($queue)) {
+                $current = array_shift($queue);
+
+                if (isset($component_of[$current])) {
+                    continue;
+                }
+
+                $component_of[$current] = $component_id;
+                $component_nodes[] = $current;
+
+                foreach (array_keys($adjacency[$current] ?? []) as $neighbor) {
+                    if (!isset($component_of[$neighbor])) {
+                        $queue[] = $neighbor;
+                    }
+                }
+            }
+
+            $components[$component_id] = $component_nodes;
+        }
+
+        $component_invalid = [];
+        $chain_map = [];
+
+        foreach ($components as $component_id => $component_nodes) {
+            $component_invalid[$component_id] = false;
+
+            foreach ($component_nodes as $node_key) {
+                if (!empty($issues[$node_key])) {
+                    $component_invalid[$component_id] = true;
+                    break;
+                }
+            }
+
+            if ($component_invalid[$component_id]) {
+                continue;
+            }
+
+            $roots = [];
+
+            foreach ($component_nodes as $node_key) {
+                if (($predecessor_map[$node_key] ?? null) === null) {
+                    $roots[] = $node_key;
+                }
+            }
+
+            if (count($component_nodes) > 1 && count($roots) !== 1) {
+                foreach ($component_nodes as $node_key) {
+                    self::add_cycle_issue(
+                        $issues,
+                        $node_key,
+                        'La cadena de ciclos no tiene un único inicio claro. Revisa las relaciones declaradas.'
+                    );
+                }
+                $component_invalid[$component_id] = true;
+                continue;
+            }
+
+            $root = count($roots) === 1 ? $roots[0] : $component_nodes[0];
+            $ordered = [];
+            $seen_nodes = [];
+            $cursor = $root;
+
+            while ($cursor !== null && !isset($seen_nodes[$cursor])) {
+                $seen_nodes[$cursor] = true;
+                $ordered[] = $cursor;
+                $next_nodes = $successor_map[$cursor] ?? [];
+                $cursor = count($next_nodes) === 1 ? $next_nodes[0] : null;
+            }
+
+            if (count($ordered) !== count($component_nodes)) {
+                foreach ($component_nodes as $node_key) {
+                    self::add_cycle_issue(
+                        $issues,
+                        $node_key,
+                        'La cadena de ciclos quedó incompleta o ambigua. Debe existir un único recorrido lineal entre todas las ofertas vinculadas.'
+                    );
+                }
+                $component_invalid[$component_id] = true;
+                continue;
+            }
+
+            foreach ($ordered as $node_key) {
+                $chain_map[$node_key] = $ordered;
+            }
+        }
+
+        $analysis = [
+            'relations' => $relations,
+            'issues' => $issues,
+            'chain_map' => $chain_map,
+        ];
+
+        if (empty($override_relations)) {
+            self::$cycle_analysis_cache = $analysis;
+        }
+
+        return $analysis;
+    }
+
+    private static function get_cycle_chain_ids(int $post_id): array {
+        $post_id = absint($post_id);
+
+        if ($post_id <= 0) {
+            return [];
+        }
+
+        $analysis = self::get_cycle_analysis();
+
+        if (!empty($analysis['issues'][$post_id])) {
+            return [];
+        }
+
+        $chain_ids = isset($analysis['chain_map'][$post_id]) && is_array($analysis['chain_map'][$post_id])
+            ? $analysis['chain_map'][$post_id]
+            : [];
+
+        $normalized = [];
+        $seen = [];
+
+        foreach ($chain_ids as $chain_id) {
+            $chain_id = intval($chain_id);
+
+            if ($chain_id <= 0 || isset($seen[$chain_id])) {
+                continue;
+            }
+
+            $seen[$chain_id] = true;
+            $normalized[] = $chain_id;
+        }
+
+        return $normalized;
     }
 
     private static function normalize_personnel_data($value, string $name_key): array {
