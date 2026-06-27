@@ -15,6 +15,7 @@ class FLACSO_Meta_Tracking {
         add_action('wp_footer', [self::class, 'render_noscript_pixel_fallback'], 1);
         add_action('wp_ajax_' . self::AJAX_ACTION, [self::class, 'handle_track_event']);
         add_action('wp_ajax_nopriv_' . self::AJAX_ACTION, [self::class, 'handle_track_event']);
+        add_action('admin_post_flacso_meta_test_event', [self::class, 'handle_admin_test_event']);
     }
 
     public static function enqueue_frontend_assets(): void {
@@ -96,6 +97,103 @@ class FLACSO_Meta_Tracking {
         }
 
         wp_send_json_success(['sent' => true, 'event_id' => $event_id]);
+    }
+
+    public static function handle_admin_test_event(): void {
+        if (!current_user_can('manage_options')) {
+            wp_die(esc_html__('No tenés permisos para ejecutar esta prueba.', 'flacso-uruguay'));
+        }
+
+        check_admin_referer('flacso_meta_test_event', 'flacso_meta_test_event_nonce');
+
+        $settings = self::get_settings();
+        $redirect_url = class_exists('FLACSO_Integrations_Settings')
+            ? FLACSO_Integrations_Settings::get_redirect_url_from_request([], FLACSO_Integrations_Settings::get_page_url())
+            : admin_url('options-general.php?page=flacso-integraciones');
+
+        if (!$settings['enabled']) {
+            wp_safe_redirect(add_query_arg([
+                'flacso_meta_test' => 'fail',
+                'flacso_meta_test_message' => __('Activá primero el tracking de Meta antes de ejecutar la prueba.', 'flacso-uruguay'),
+            ], $redirect_url));
+            exit;
+        }
+
+        if ($settings['pixel_id'] === '' || $settings['access_token'] === '') {
+            wp_safe_redirect(add_query_arg([
+                'flacso_meta_test' => 'fail',
+                'flacso_meta_test_message' => __('Completá el Pixel ID y el Access Token para poder probar CAPI.', 'flacso-uruguay'),
+            ], $redirect_url));
+            exit;
+        }
+
+        if ($settings['test_event_code'] === '') {
+            wp_safe_redirect(add_query_arg([
+                'flacso_meta_test' => 'fail',
+                'flacso_meta_test_message' => __('Agregá un Test Event Code para ejecutar una prueba segura sin enviar eventos reales.', 'flacso-uruguay'),
+            ], $redirect_url));
+            exit;
+        }
+
+        $event_id = 'flacso-meta-test-' . wp_generate_uuid4();
+        $payload = self::build_capi_request_payload('PageView', $event_id, [
+            'content_name' => 'Diagnostico Meta FLACSO',
+            'content_category' => 'admin_meta_test',
+            'flacso_stage' => 'admin_meta_test',
+        ], [
+            'event_source_url' => home_url('/'),
+            'event_type' => 'track',
+        ]);
+
+        $response = self::send_capi_event($settings, $payload);
+
+        if (is_wp_error($response)) {
+            wp_safe_redirect(add_query_arg([
+                'flacso_meta_test' => 'fail',
+                'flacso_meta_test_message' => $response->get_error_message(),
+            ], $redirect_url));
+            exit;
+        }
+
+        $status_code = (int) wp_remote_retrieve_response_code($response);
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+
+        if ($status_code < 200 || $status_code >= 300) {
+            $message = '';
+            if (is_array($body) && !empty($body['error']['message'])) {
+                $message = (string) $body['error']['message'];
+            }
+
+            if ($message === '') {
+                $message = sprintf(
+                    /* translators: %d: HTTP status code */
+                    __('Meta devolvió un error HTTP %d durante la prueba.', 'flacso-uruguay'),
+                    $status_code
+                );
+            }
+
+            wp_safe_redirect(add_query_arg([
+                'flacso_meta_test' => 'fail',
+                'flacso_meta_test_code' => $status_code,
+                'flacso_meta_test_message' => $message,
+            ], $redirect_url));
+            exit;
+        }
+
+        $message = __('Meta aceptó el evento de prueba por CAPI. Revisá Events Manager > Test Events para confirmarlo visualmente.', 'flacso-uruguay');
+        if (is_array($body) && isset($body['events_received'])) {
+            $message .= ' ' . sprintf(
+                /* translators: %d: event count */
+                __('Eventos recibidos: %d.', 'flacso-uruguay'),
+                (int) $body['events_received']
+            );
+        }
+
+        wp_safe_redirect(add_query_arg([
+            'flacso_meta_test' => 'success',
+            'flacso_meta_test_message' => $message,
+        ], $redirect_url));
+        exit;
     }
 
     public static function render_noscript_pixel(): void {
