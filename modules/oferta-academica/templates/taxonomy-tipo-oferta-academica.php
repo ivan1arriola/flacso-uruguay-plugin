@@ -845,9 +845,9 @@ $card_cta = !empty($item['is_open'])
 (function() {
     var termTitle = <?php echo wp_json_encode((string) single_term_title('', false)); ?>;
 
-    if (typeof window.fbq === 'function') {
+    if (typeof window.flacsoMetaTrack === 'function') {
         try {
-            window.fbq('track', 'ViewContent', {
+            window.flacsoMetaTrack('ViewContent', {
                 content_name: 'Listado: ' + termTitle,
                 content_category: 'listado_ofertas',
                 flacso_stage: 'listado_tipo_oferta'
@@ -876,9 +876,9 @@ $card_cta = !empty($item['is_open'])
             } catch (e) {}
         }
 
-        if (typeof window.fbq === 'function') {
+        if (typeof window.flacsoMetaTrackCustom === 'function') {
             try {
-                window.fbq('trackCustom', 'OfertaAcademicaClick', {
+                window.flacsoMetaTrackCustom('OfertaAcademicaClick', {
                     content_name: offerTitle,
                     content_category: termTitle,
                     flacso_offer_status: offerStatus,
@@ -891,4 +891,3 @@ $card_cta = !empty($item['is_open'])
 </script>
 <?php
 get_footer();
-

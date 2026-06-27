@@ -477,9 +477,9 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
             <?php endif; ?>
             <script>
             (function() {
-                if (typeof window.fbq !== 'function') return;
+                if (typeof window.flacsoMetaTrack !== 'function') return;
                 try {
-                    window.fbq('track', 'ViewContent', {
+                    window.flacsoMetaTrack('ViewContent', {
                         content_name: <?php echo wp_json_encode((string) $info_posgrado['titulo_posgrado']); ?>,
                         content_category: 'oferta_academica',
                         content_ids: ['oferta-' + <?php echo wp_json_encode((string) $info_posgrado['id_posgrado']); ?>],
@@ -544,9 +544,9 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
             <?php endif; ?>
             <script>
             (function() {
-                if (typeof window.fbq !== 'function') return;
+                if (typeof window.flacsoMetaTrack !== 'function') return;
                 try {
-                    window.fbq('track', 'ViewContent', {
+                    window.flacsoMetaTrack('ViewContent', {
                         content_name: <?php echo wp_json_encode((string) $info_posgrado['titulo_posgrado']); ?>,
                         content_category: 'oferta_academica',
                         content_ids: ['oferta-' + <?php echo wp_json_encode((string) $info_posgrado['id_posgrado']); ?>],

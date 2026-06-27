@@ -359,11 +359,11 @@ function flacso_get_paises_consulta() {
 <script>
     jQuery(document).ready(function($) {
         const trackMetaEvent = (eventName, params) => {
-            if (typeof window.fbq !== "function") {
+            if (typeof window.flacsoMetaTrack !== "function") {
                 return;
             }
             try {
-                window.fbq("track", eventName, params || {});
+                window.flacsoMetaTrack(eventName, params || {});
             } catch (e) {
                 console.warn("[Consulta Seminario] Error enviando evento Meta Pixel:", e);
             }

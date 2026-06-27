@@ -630,9 +630,9 @@ $ofertas_con_seminarios_disponibles = array_keys($ofertas_con_seminarios_disponi
 
 <script>
 (function() {
-    if (typeof window.fbq !== 'function') return;
+    if (typeof window.flacsoMetaTrack !== 'function') return;
     try {
-        window.fbq('track', 'ViewContent', {
+        window.flacsoMetaTrack('ViewContent', {
             content_name: 'Listado de Seminarios',
             content_category: 'listado_seminarios',
             flacso_stage: 'listado_seminarios'

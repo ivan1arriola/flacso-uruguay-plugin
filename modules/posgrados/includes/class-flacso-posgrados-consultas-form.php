@@ -171,7 +171,7 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
 
                 <?php if ($show_pre): ?>
                     <div class="d-grid gap-2 mt-4">
-                        <a class="btn btn-preinsc btn-lg py-3 fw-bold" href="<?php echo esc_url(trailingslashit($current_url) . 'preinscripcion'); ?>" onclick="if(typeof window.fbq === 'function'){ window.fbq('track', 'InitiateCheckout', { content_name: '<?php echo esc_js($title); ?>', content_category: 'oferta_academica' }); }">
+                        <a class="btn btn-preinsc btn-lg py-3 fw-bold" href="<?php echo esc_url(trailingslashit($current_url) . 'preinscripcion'); ?>" onclick="if(typeof window.flacsoMetaTrack === 'function'){ window.flacsoMetaTrack('InitiateCheckout', { content_name: '<?php echo esc_js($title); ?>', content_category: 'oferta_academica' }); }">
                             <i class="bi bi-stars me-2" aria-hidden="true"></i>
                             <?php esc_html_e('Preinscripción', 'flacso-posgrados-docentes'); ?>
                         </a>
@@ -492,11 +492,11 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
             </main>
             <script>
             (function() {
-                if (typeof window.fbq !== 'function') {
+                if (typeof window.flacsoMetaTrack !== 'function') {
                     return;
                 }
                 try {
-                    window.fbq('track', 'Lead', {
+                    window.flacsoMetaTrack('Lead', {
                         content_name: <?php echo wp_json_encode((string) $title); ?>,
                         content_category: 'solicitud_informacion',
                         content_type: 'oferta_academica',

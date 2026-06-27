@@ -123,7 +123,7 @@ function fc_maybe_render_gracias_page() {
     </main>
     <script>
     (function() {
-        if (typeof window.fbq !== 'function') {
+        if (typeof window.flacsoMetaTrack !== 'function') {
             return;
         }
         var pixelPayload = {
@@ -132,7 +132,7 @@ function fc_maybe_render_gracias_page() {
             status: 'submitted'
         };
         try {
-            window.fbq('track', 'Lead', pixelPayload);
+            window.flacsoMetaTrack('Lead', pixelPayload);
         } catch (e) {
             if (window.console && typeof window.console.warn === 'function') {
                 console.warn('[Formulario Consultas] Error enviando evento Meta Pixel:', e);

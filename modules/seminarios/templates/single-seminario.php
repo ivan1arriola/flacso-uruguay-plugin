@@ -1094,11 +1094,11 @@ endwhile;
 ?>
 <script>
 (function() {
-    if (typeof window.fbq !== 'function') {
+    if (typeof window.flacsoMetaTrack !== 'function') {
         return;
     }
     try {
-        window.fbq('track', 'ViewContent', {
+        window.flacsoMetaTrack('ViewContent', {
             content_name: <?php echo wp_json_encode(get_the_title($post_id)); ?>,
             content_category: 'seminario',
             content_ids: ['seminario-' + <?php echo (int) $post_id; ?>],

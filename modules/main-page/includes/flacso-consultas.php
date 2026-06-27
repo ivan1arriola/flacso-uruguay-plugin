@@ -314,7 +314,7 @@ function flacso_consultas_render_form( $attributes = array() ) {
 		   href="<?php echo esc_url( trailingslashit( $url_actual ) . 'preinscripcion' ); ?>"
 		   class="btn btn-preinsc btn-lg rounded-pill py-3 fw-bold"
 		   aria-label="Ir a Preinscripción 2026"
-		   onclick="if(typeof window.fbq === 'function'){ window.fbq('track', 'InitiateCheckout', { content_name: '<?php echo esc_js($titulo_posgrado); ?>', content_category: 'oferta_academica' }); }">
+		   onclick="if(typeof window.flacsoMetaTrack === 'function'){ window.flacsoMetaTrack('InitiateCheckout', { content_name: '<?php echo esc_js($titulo_posgrado); ?>', content_category: 'oferta_academica' }); }">
 		   <i class="bi bi-stars me-2" aria-hidden="true"></i>
 		   Preinscripción 2026
 		</a>
@@ -328,8 +328,8 @@ function flacso_consultas_render_form( $attributes = array() ) {
 		const $message = $('#form-consultas-mensaje');
 		const programa = $form.find('[name="titulo_posgrado"]').val() || '';
 
-		if ($form.length && typeof window.fbq === 'function') {
-			window.fbq('track', 'ViewContent', {
+		if ($form.length && typeof window.flacsoMetaTrack === 'function') {
+			window.flacsoMetaTrack('ViewContent', {
 				content_name: programa,
 				content_category: 'solicitud_informacion',
 				content_type: 'oferta_academica'
@@ -348,9 +348,9 @@ function flacso_consultas_render_form( $attributes = array() ) {
 				return;
 			}
 
-			if (typeof window.fbq === 'function') {
+			if (typeof window.flacsoMetaTrack === 'function') {
 				try {
-					window.fbq('track', 'Contact', {
+					window.flacsoMetaTrack('Contact', {
 						content_name: programa,
 						content_category: 'solicitud_informacion',
 						content_type: 'oferta_academica'
@@ -520,7 +520,7 @@ function flacso_consultas_render_preinscripcion_button() {
 			href="<?php echo esc_url( $href_preinscripcion ); ?>"
 			class="btn btn-preinsc btn-lg rounded-pill py-3 fw-bold flacso-preinsc-standalone"
 			aria-label="Ir a Preinscripción 2026"
-			onclick="if(typeof window.fbq === 'function'){ window.fbq('track', 'InitiateCheckout', { content_name: '<?php echo esc_js(get_the_title($id_pagina)); ?>', content_category: 'oferta_academica' }); }">
+			onclick="if(typeof window.flacsoMetaTrack === 'function'){ window.flacsoMetaTrack('InitiateCheckout', { content_name: '<?php echo esc_js(get_the_title($id_pagina)); ?>', content_category: 'oferta_academica' }); }">
 			<i class="bi bi-stars me-2" aria-hidden="true"></i>
 			Preinscripción 2026
 		</a>
@@ -854,9 +854,9 @@ function flacso_render_gracias_virtual() {
 
 			// Only fire Lead event if it's a general consultation or info request
 			// Pre-enrollments fire their own Lead & SubmitApplication events with Advanced Matching hashes prior to redirect
-			if (typeof window.fbq === 'function' && !isPreinscripcion) {
+			if (typeof window.flacsoMetaTrack === 'function' && !isPreinscripcion) {
 				try {
-					window.fbq('track', 'Lead', {
+					window.flacsoMetaTrack('Lead', {
 						content_name: programaMeta || '',
 						content_category: 'solicitud_informacion',
 						content_type: 'oferta_academica',
@@ -996,5 +996,4 @@ function flacso_consultas_register_block() {
 	);
 }
 add_action( 'init', 'flacso_consultas_register_block' );
-
 

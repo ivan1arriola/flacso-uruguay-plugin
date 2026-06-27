@@ -610,9 +610,9 @@ if (!function_exists('flacso_listar_paginas_shortcode')) {
 
         $tracking_script = "<script>
         (function() {
-            if (typeof window.fbq !== 'function') return;
+            if (typeof window.flacsoMetaTrack !== 'function') return;
             try {
-                window.fbq('track', 'ViewContent', {
+                window.flacsoMetaTrack('ViewContent', {
                     content_name: 'Listado Completo Oferta Academica',
                     content_category: 'listado_ofertas',
                     flacso_stage: 'listado_completo_ofertas'

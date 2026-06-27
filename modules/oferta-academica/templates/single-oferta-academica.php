@@ -2563,9 +2563,9 @@ get_header();
 
 <script>
 (function() {
-    if (typeof window.fbq !== 'function') return;
+    if (typeof window.flacsoMetaTrack !== 'function') return;
     try {
-        window.fbq('track', 'ViewContent', {
+        window.flacsoMetaTrack('ViewContent', {
             content_name: <?php echo wp_json_encode((string) get_the_title()); ?>,
             content_category: 'oferta_academica',
             content_ids: ['oferta-' + <?php echo wp_json_encode((string) get_the_ID()); ?>],

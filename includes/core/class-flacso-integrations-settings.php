@@ -25,6 +25,11 @@ class FLACSO_Integrations_Settings {
     private const OPTION_MAILJET_SENDER_EMAIL = 'flacso_mailjet_sender_email';
     private const OPTION_MAILJET_SENDER_NAME = 'flacso_mailjet_sender_name';
     private const OPTION_CARTA_CTA_TITULO_DEFAULT = 'flacso_carta_cta_titulo_default';
+    private const OPTION_META_ENABLED = 'flacso_meta_enabled';
+    private const OPTION_META_PIXEL_ID = 'flacso_meta_pixel_id';
+    private const OPTION_META_ACCESS_TOKEN = 'flacso_meta_access_token';
+    private const OPTION_META_TEST_EVENT_CODE = 'flacso_meta_test_event_code';
+    private const OPTION_META_TRACK_PAGEVIEW = 'flacso_meta_track_pageview';
 
     public static function init(): void {
         if (!is_admin()) {
@@ -217,6 +222,56 @@ class FLACSO_Integrations_Settings {
                 'default' => 'Comenzá el año cursando un posgrado en FLACSO Uruguay',
             ]
         );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_META_ENABLED,
+            [
+                'type' => 'boolean',
+                'sanitize_callback' => [self::class, 'sanitize_checkbox'],
+                'default' => 0,
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_META_PIXEL_ID,
+            [
+                'type' => 'string',
+                'sanitize_callback' => [self::class, 'sanitize_meta_pixel_id'],
+                'default' => '',
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_META_ACCESS_TOKEN,
+            [
+                'type' => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+                'default' => '',
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_META_TEST_EVENT_CODE,
+            [
+                'type' => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+                'default' => '',
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_META_TRACK_PAGEVIEW,
+            [
+                'type' => 'boolean',
+                'sanitize_callback' => [self::class, 'sanitize_checkbox'],
+                'default' => 1,
+            ]
+        );
     }
 
     public static function sanitize_charlas_webhook_url($value): string {
@@ -247,6 +302,14 @@ class FLACSO_Integrations_Settings {
         return preg_replace('/[^0-9]/', '', (string) $value) ?: '';
     }
 
+    public static function sanitize_checkbox($value): int {
+        return !empty($value) ? 1 : 0;
+    }
+
+    public static function sanitize_meta_pixel_id($value): string {
+        return preg_replace('/[^0-9]/', '', (string) $value) ?: '';
+    }
+
     public static function get_mailjet_settings(): array {
         return [
             'api_key' => trim((string) get_option(self::OPTION_MAILJET_API_KEY, '')),
@@ -254,6 +317,21 @@ class FLACSO_Integrations_Settings {
             'list_id' => trim((string) get_option(self::OPTION_MAILJET_LIST_ID, '')),
             'sender_email' => sanitize_email((string) get_option(self::OPTION_MAILJET_SENDER_EMAIL, get_option('admin_email'))),
             'sender_name' => trim((string) get_option(self::OPTION_MAILJET_SENDER_NAME, wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES))),
+        ];
+    }
+
+    public static function get_meta_settings(): array {
+        $pixel_id = trim((string) get_option(self::OPTION_META_PIXEL_ID, ''));
+        $access_token = trim((string) get_option(self::OPTION_META_ACCESS_TOKEN, ''));
+
+        return [
+            'enabled' => (bool) get_option(self::OPTION_META_ENABLED, 0),
+            'pixel_id' => $pixel_id,
+            'access_token' => $access_token,
+            'test_event_code' => trim((string) get_option(self::OPTION_META_TEST_EVENT_CODE, '')),
+            'track_pageview' => (bool) get_option(self::OPTION_META_TRACK_PAGEVIEW, 1),
+            'capi_enabled' => $access_token !== '',
+            'is_ready' => $pixel_id !== '',
         ];
     }
 
@@ -415,6 +493,7 @@ class FLACSO_Integrations_Settings {
                     <div class="flacso-integrations-grid">
                         <?php self::render_consultas_card(); ?>
                         <?php self::render_ofertas_card(); ?>
+                        <?php self::render_meta_card(); ?>
                         <?php self::render_charlas_card(); ?>
                         <?php self::render_oferta_flotante_card(); ?>
                         <?php self::render_preinscripciones_card(); ?>
@@ -1122,6 +1201,65 @@ class FLACSO_Integrations_Settings {
         <?php
     }
 
+    private static function render_meta_card(): void {
+        $meta = self::get_meta_settings();
+        ?>
+        <section class="flacso-integrations-card card-meta">
+            <div class="flacso-card-header">
+                <div class="flacso-card-icon-title">
+                    <span class="flacso-card-icon">📈</span>
+                    <h2><?php esc_html_e('Meta Pixel + CAPI', 'flacso-uruguay'); ?></h2>
+                </div>
+                <p class="flacso-integrations-lead"><?php esc_html_e('Implementación nativa del plugin para reemplazar el plugin externo de Meta. El navegador dispara Pixel y WordPress envía los mismos eventos por Conversions API con deduplicación por eventID.', 'flacso-uruguay'); ?></p>
+            </div>
+
+            <div class="flacso-card-body">
+                <?php
+                self::render_checkbox_field(
+                    self::OPTION_META_ENABLED,
+                    __('Activar tracking de Meta', 'flacso-uruguay'),
+                    __('Si se activa, el plugin inyecta el Pixel y toma control del envío a CAPI.', 'flacso-uruguay')
+                );
+                self::render_input_field(
+                    self::OPTION_META_PIXEL_ID,
+                    __('Meta Pixel ID', 'flacso-uruguay'),
+                    'text',
+                    '123456789012345',
+                    __('ID numérico del Pixel/dataset web que recibirá los eventos del sitio.', 'flacso-uruguay')
+                );
+                self::render_input_field(
+                    self::OPTION_META_ACCESS_TOKEN,
+                    __('Meta CAPI Access Token', 'flacso-uruguay'),
+                    'password',
+                    'EAAG...',
+                    __('Token usado por WordPress para enviar eventos server-side al endpoint de Conversions API.', 'flacso-uruguay')
+                );
+                self::render_input_field(
+                    self::OPTION_META_TEST_EVENT_CODE,
+                    __('Meta Test Event Code', 'flacso-uruguay'),
+                    'text',
+                    'TEST12345',
+                    __('Opcional. Si lo completás, CAPI enviará los eventos al modo de prueba de Meta Events Manager.', 'flacso-uruguay')
+                );
+                self::render_checkbox_field(
+                    self::OPTION_META_TRACK_PAGEVIEW,
+                    __('Enviar PageView automático', 'flacso-uruguay'),
+                    __('Mantiene un PageView global desde el plugin, además de los eventos específicos como ViewContent, Lead y SubmitApplication.', 'flacso-uruguay')
+                );
+                ?>
+            </div>
+
+            <span class="flacso-integrations-note">
+                <?php
+                echo $meta['capi_enabled']
+                    ? esc_html__('Cuando desactives el plugin externo de Meta, esta configuración seguirá cubriendo Pixel + CAPI desde WordPress.', 'flacso-uruguay')
+                    : esc_html__('CAPI queda activo en cuanto guardes un Access Token válido. Mientras tanto, el plugin puede seguir emitiendo solo Pixel.', 'flacso-uruguay');
+                ?>
+            </span>
+        </section>
+        <?php
+    }
+
     private static function render_charlas_card(): void {
         ?>
         <section class="flacso-integrations-card card-charlas">
@@ -1406,6 +1544,26 @@ class FLACSO_Integrations_Settings {
                 autocomplete="<?php echo 'password' === $type ? 'new-password' : 'off'; ?>"
                 spellcheck="false"
             />
+            <p class="flacso-integrations-help"><?php echo esc_html($description); ?></p>
+        </div>
+        <?php
+    }
+
+    private static function render_checkbox_field(string $option_name, string $label, string $description): void {
+        $checked = (bool) get_option($option_name, 0);
+        ?>
+        <div class="flacso-integrations-field">
+            <span style="display:block;font-weight:700;margin-bottom:8px;"><?php echo esc_html($label); ?></span>
+            <label style="display:flex;align-items:center;gap:10px;font-weight:600;">
+                <input
+                    id="<?php echo esc_attr($option_name); ?>"
+                    name="<?php echo esc_attr($option_name); ?>"
+                    type="checkbox"
+                    value="1"
+                    <?php checked($checked); ?>
+                />
+                <span><?php esc_html_e('Activado', 'flacso-uruguay'); ?></span>
+            </label>
             <p class="flacso-integrations-help"><?php echo esc_html($description); ?></p>
         </div>
         <?php

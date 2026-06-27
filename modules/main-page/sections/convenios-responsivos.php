@@ -264,9 +264,9 @@ if (!function_exists('flacso_convenios_responsivos_sc')) {
         </section>
         <script>
         (function() {
-            if (typeof window.fbq !== 'function') return;
+            if (typeof window.flacsoMetaTrack !== 'function') return;
             try {
-                window.fbq('track', 'ViewContent', {
+                window.flacsoMetaTrack('ViewContent', {
                     content_name: 'Listado de Convenios',
                     content_category: 'listado_convenios',
                     flacso_stage: 'listado_convenios'

@@ -1066,11 +1066,11 @@ button.flacso-btn-primary {
         </div>
         <script>
         (function() {
-            if (typeof window.fbq !== 'function') {
+            if (typeof window.flacsoMetaTrack !== 'function') {
                 return;
             }
             try {
-                window.fbq('track', 'SubmitApplication', {
+                window.flacsoMetaTrack('SubmitApplication', {
                     content_name: <?php echo wp_json_encode((string) $seminario_titulo); ?>,
                     content_category: 'seminario',
                     content_ids: ['seminario-' + <?php echo wp_json_encode((string) $seminario_id); ?>],
@@ -1380,11 +1380,11 @@ button.flacso-btn-primary {
         </div>
         <script>
         (function() {
-            if (typeof window.fbq !== 'function') {
+            if (typeof window.flacsoMetaTrack !== 'function') {
                 return;
             }
             try {
-                window.fbq('track', 'ViewContent', {
+                window.flacsoMetaTrack('ViewContent', {
                     content_name: <?php echo wp_json_encode((string) $seminario_titulo); ?>,
                     content_category: 'seminario',
                     content_ids: ['seminario-' + <?php echo wp_json_encode((string) $seminario_id); ?>],
@@ -1432,11 +1432,11 @@ function validate_ci(ci) {
     'use strict';
 
     const trackMetaEvent = (eventName, params) => {
-        if (typeof window.fbq !== 'function') {
+        if (typeof window.flacsoMetaTrack !== 'function') {
             return;
         }
         try {
-            window.fbq('track', eventName, params || {});
+            window.flacsoMetaTrack(eventName, params || {});
         } catch (e) {
             console.warn('[Preinscripcion Seminario] Error enviando evento Meta Pixel:', e);
         }

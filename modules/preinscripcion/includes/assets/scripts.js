@@ -7,11 +7,11 @@ jQuery(function($){
     'use strict';
 
     const trackMetaEvent = (eventName, params) => {
-        if (typeof window.fbq !== 'function') {
+        if (typeof window.flacsoMetaTrack !== 'function') {
             return;
         }
         try {
-            window.fbq('track', eventName, params || {});
+            window.flacsoMetaTrack(eventName, params || {});
         } catch (e) {
             console.warn('[Preinscripcion] Error enviando evento Meta Pixel:', e);
         }
@@ -590,4 +590,3 @@ jQuery(function($){
 
     // No marcamos de rojo al cargar: sólo tras intento de envío.
 });
-
