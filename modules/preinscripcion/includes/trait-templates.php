@@ -7,10 +7,63 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
      * Registra los templates personalizados
      */
     public function registrar_templates() {
+        add_action('template_redirect', array($this, 'validar_ruta_virtual_canonica'), 0);
         add_filter('template_include', array($this, 'cargar_template_preinscripcion'), 99);
         add_action('wp_enqueue_scripts', array($this, 'enqueue_assets_en_templates'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_assets_en_shortcode'));
         add_shortcode('formulario_preinscripcion', array($this, 'render_shortcode_preinscripcion'));
+    }
+
+    /**
+     * Canonicaliza rutas virtuales legacy y bloquea rutas trash/old antes de renderizar.
+     */
+    public function validar_ruta_virtual_canonica() {
+        $tipo_ruta = $this->obtener_tipo_ruta_virtual_activa();
+
+        if ($tipo_ruta === '') {
+            return;
+        }
+
+        $request_path = $this->obtener_request_path_virtual_actual();
+        $has_legacy_markers = $this->ruta_virtual_tiene_marcadores_legacy($request_path);
+        $queried_post = get_queried_object();
+
+        if (!($queried_post instanceof WP_Post)) {
+            if ($has_legacy_markers) {
+                $fallback_url = $this->obtener_url_virtual_alternativa_desde_path($request_path, $tipo_ruta);
+
+                if ($this->debe_redirigir_a_url_virtual($request_path, $fallback_url)) {
+                    wp_safe_redirect($this->preservar_query_args_actuales($fallback_url), 301);
+                    exit;
+                }
+
+                $this->renderizar_respuesta_virtual_invalida(410);
+            }
+
+            return;
+        }
+
+        $canonical_url = $this->obtener_url_virtual_canonica_para_post($queried_post, $tipo_ruta);
+
+        if ($this->debe_redirigir_a_url_virtual($request_path, $canonical_url)) {
+            wp_safe_redirect($this->preservar_query_args_actuales($canonical_url), 301);
+            exit;
+        }
+
+        if ($has_legacy_markers) {
+            $fallback_url = $this->obtener_url_virtual_alternativa_desde_path($request_path, $tipo_ruta);
+
+            if ($this->debe_redirigir_a_url_virtual($request_path, $fallback_url)) {
+                wp_safe_redirect($this->preservar_query_args_actuales($fallback_url), 301);
+                exit;
+            }
+
+            $this->renderizar_respuesta_virtual_invalida(410);
+        }
+
+        if (!$this->post_virtual_es_publicable($queried_post)) {
+            $this->renderizar_respuesta_virtual_invalida(410);
+        }
     }
     
     /**
@@ -84,6 +137,208 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
         }
         
         return $template;
+    }
+
+    private function obtener_tipo_ruta_virtual_activa() {
+        if (get_query_var('es_carta')) {
+            return 'carta';
+        }
+
+        if (get_query_var('es_preinscripcion')) {
+            return 'preinscripcion';
+        }
+
+        return '';
+    }
+
+    private function obtener_request_path_virtual_actual() {
+        $request_uri = isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : '';
+        $path = is_string($request_uri) ? (string) wp_parse_url($request_uri, PHP_URL_PATH) : '';
+
+        return $this->normalizar_path_virtual($path);
+    }
+
+    private function normalizar_path_virtual($path) {
+        $path = rawurldecode((string) $path);
+        $path = preg_replace('#/+#', '/', $path);
+        $path = is_string($path) ? $path : (string) $path;
+
+        return trim($path, '/');
+    }
+
+    private function ruta_virtual_tiene_marcadores_legacy($path) {
+        if (!is_string($path) || $path === '') {
+            return false;
+        }
+
+        foreach (array_filter(explode('/', $path), 'strlen') as $segment) {
+            if (preg_match('/__trashed(?:-\d+)?$/i', $segment)) {
+                return true;
+            }
+
+            if (preg_match('/(?:-|_)old$/i', $segment)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function post_virtual_es_publicable($post) {
+        if (!($post instanceof WP_Post)) {
+            return false;
+        }
+
+        if ($post->post_status === 'publish') {
+            return true;
+        }
+
+        return $post->post_status === 'private' && current_user_can('read_post', $post->ID);
+    }
+
+    private function obtener_url_virtual_canonica_para_post($post, $tipo_ruta) {
+        $tipo_ruta = $tipo_ruta === 'carta' ? 'carta' : 'preinscripcion';
+        $canonical_post = $this->resolver_post_canonico_virtual($post);
+
+        if (!($canonical_post instanceof WP_Post) || !$this->post_virtual_es_publicable($canonical_post)) {
+            return '';
+        }
+
+        $permalink = get_permalink($canonical_post);
+
+        if (!is_string($permalink) || $permalink === '') {
+            return '';
+        }
+
+        return trailingslashit($permalink) . $tipo_ruta . '/';
+    }
+
+    private function resolver_post_canonico_virtual($post) {
+        if (!($post instanceof WP_Post)) {
+            return null;
+        }
+
+        if ($post->post_type === 'page' && class_exists('Oferta_Page_Adapter') && method_exists('Oferta_Page_Adapter', 'get_oferta_id_by_page_id')) {
+            $offer_id = Oferta_Page_Adapter::get_oferta_id_by_page_id((int) $post->ID);
+
+            if (!empty($offer_id)) {
+                $offer_post = get_post((int) $offer_id);
+
+                if ($offer_post instanceof WP_Post && $this->post_virtual_es_publicable($offer_post)) {
+                    return $offer_post;
+                }
+            }
+        }
+
+        return $post;
+    }
+
+    private function obtener_url_virtual_alternativa_desde_path($request_path, $tipo_ruta) {
+        if (!is_string($request_path) || $request_path === '') {
+            return '';
+        }
+
+        $suffix = '/' . $tipo_ruta;
+
+        if (substr($request_path, -strlen($suffix)) !== $suffix) {
+            return '';
+        }
+
+        $base_path = substr($request_path, 0, -strlen($suffix));
+        $segments = array_values(array_filter(explode('/', trim((string) $base_path, '/')), 'strlen'));
+
+        if (empty($segments)) {
+            return '';
+        }
+
+        $normalized_segments = array();
+
+        foreach ($segments as $segment) {
+            $clean_segment = preg_replace('/__trashed(?:-\d+)?$/i', '', $segment);
+            $clean_segment = preg_replace('/(?:-|_)old$/i', '', (string) $clean_segment);
+            $clean_segment = trim((string) $clean_segment);
+
+            if ($clean_segment !== '') {
+                $normalized_segments[] = $clean_segment;
+            }
+        }
+
+        $candidate_base_path = implode('/', $normalized_segments);
+
+        if ($candidate_base_path === '' || $candidate_base_path === trim((string) $base_path, '/')) {
+            return '';
+        }
+
+        $candidate_post_id = url_to_postid(home_url('/' . $candidate_base_path . '/'));
+
+        if ($candidate_post_id <= 0) {
+            return '';
+        }
+
+        $candidate_post = get_post($candidate_post_id);
+
+        if (!($candidate_post instanceof WP_Post)) {
+            return '';
+        }
+
+        return $this->obtener_url_virtual_canonica_para_post($candidate_post, $tipo_ruta);
+    }
+
+    private function debe_redirigir_a_url_virtual($request_path, $target_url) {
+        if (!$this->request_virtual_permite_redirect()) {
+            return false;
+        }
+
+        if (!is_string($target_url) || $target_url === '') {
+            return false;
+        }
+
+        $target_path = $this->normalizar_path_virtual((string) wp_parse_url($target_url, PHP_URL_PATH));
+
+        return $target_path !== '' && $target_path !== $request_path;
+    }
+
+    private function request_virtual_permite_redirect() {
+        $method = isset($_SERVER['REQUEST_METHOD']) ? strtoupper((string) $_SERVER['REQUEST_METHOD']) : 'GET';
+        return in_array($method, array('GET', 'HEAD'), true);
+    }
+
+    private function preservar_query_args_actuales($url) {
+        if (empty($_GET)) {
+            return $url;
+        }
+
+        return add_query_arg(wp_unslash($_GET), $url);
+    }
+
+    private function renderizar_respuesta_virtual_invalida($status_code = 410) {
+        $status_code = (int) $status_code;
+
+        if ($status_code < 400) {
+            $status_code = 410;
+        }
+
+        status_header($status_code);
+        nocache_headers();
+        header('X-Robots-Tag: noindex, nofollow', true);
+        header('Content-Type: text/html; charset=' . get_bloginfo('charset'));
+
+        $titulo = $status_code === 410 ? 'URL no disponible' : 'Pagina no encontrada';
+        $mensaje = $status_code === 410
+            ? 'La direccion solicitada ya no esta disponible.'
+            : 'No encontramos la direccion solicitada.';
+
+        echo '<!doctype html><html lang="es"><head><meta charset="' . esc_attr(get_bloginfo('charset')) . '">';
+        echo '<meta name="robots" content="noindex, nofollow">';
+        echo '<meta name="viewport" content="width=device-width, initial-scale=1">';
+        echo '<title>' . esc_html($titulo) . ' | ' . esc_html(get_bloginfo('name')) . '</title>';
+        echo '<style>body{margin:0;font-family:Arial,sans-serif;background:#f6f8fb;color:#17325c}main{max-width:720px;margin:10vh auto;padding:32px 24px}section{background:#fff;border:1px solid #d9e2f0;border-radius:18px;padding:32px;box-shadow:0 20px 60px rgba(23,50,92,.08)}h1{margin:0 0 12px;font-size:2rem}p{margin:0 0 16px;line-height:1.6}a{color:#17325c;font-weight:700}</style>';
+        echo '</head><body><main><section>';
+        echo '<h1>' . esc_html($titulo) . '</h1>';
+        echo '<p>' . esc_html($mensaje) . '</p>';
+        echo '<p><a href="' . esc_url(home_url('/')) . '">Ir al inicio</a></p>';
+        echo '</section></main></body></html>';
+        exit;
     }
     
     /**
