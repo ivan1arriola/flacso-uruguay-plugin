@@ -6,6 +6,7 @@ if (!defined('ABSPATH')) {
 
 class FLACSO_Integrations_Settings {
     private const PAGE_SLUG = 'flacso-integraciones';
+    private const PAGE_SLUG_META = 'flacso-integracion-meta';
     private const SETTINGS_GROUP = 'flacso_integraciones_group';
 
     private const OPTION_CONSULTAS_WEBHOOK_URL = 'fc_consultas_webhook_url';
@@ -30,6 +31,7 @@ class FLACSO_Integrations_Settings {
     private const OPTION_META_ACCESS_TOKEN = 'flacso_meta_access_token';
     private const OPTION_META_TEST_EVENT_CODE = 'flacso_meta_test_event_code';
     private const OPTION_META_TRACK_PAGEVIEW = 'flacso_meta_track_pageview';
+    private const OPTION_META_LAST_TEST_RESULT = 'flacso_meta_last_test_result';
 
     public static function init(): void {
         if (!is_admin()) {
@@ -48,6 +50,15 @@ class FLACSO_Integrations_Settings {
             'manage_options',
             self::PAGE_SLUG,
             [self::class, 'render_page']
+        );
+
+        add_submenu_page(
+            'options-general.php',
+            __('Integración con Meta', 'flacso-uruguay'),
+            __('Integración con Meta', 'flacso-uruguay'),
+            'manage_options',
+            self::PAGE_SLUG_META,
+            [self::class, 'render_meta_page']
         );
     }
 
@@ -332,7 +343,14 @@ class FLACSO_Integrations_Settings {
             'track_pageview' => (bool) get_option(self::OPTION_META_TRACK_PAGEVIEW, 1),
             'capi_enabled' => $access_token !== '',
             'is_ready' => $pixel_id !== '',
+            'last_test' => self::get_meta_last_test_result(),
         ];
+    }
+
+    public static function get_meta_last_test_result(): array {
+        $value = get_option(self::OPTION_META_LAST_TEST_RESULT, []);
+
+        return is_array($value) ? $value : [];
     }
 
     public static function is_mailjet_configured(): bool {
@@ -444,6 +462,18 @@ class FLACSO_Integrations_Settings {
         );
     }
 
+    public static function get_meta_page_url(array $args = []): string {
+        return add_query_arg(
+            array_merge(
+                [
+                    'page' => self::PAGE_SLUG_META,
+                ],
+                $args
+            ),
+            admin_url('options-general.php')
+        );
+    }
+
     public static function get_redirect_url_from_request(array $args = [], string $default_url = ''): string {
         $base_url = $default_url !== '' ? $default_url : self::get_page_url();
 
@@ -493,7 +523,6 @@ class FLACSO_Integrations_Settings {
                     <div class="flacso-integrations-grid">
                         <?php self::render_consultas_card(); ?>
                         <?php self::render_ofertas_card(); ?>
-                        <?php self::render_meta_card(); ?>
                         <?php self::render_charlas_card(); ?>
                         <?php self::render_oferta_flotante_card(); ?>
                         <?php self::render_preinscripciones_card(); ?>
@@ -547,13 +576,67 @@ class FLACSO_Integrations_Settings {
                 <div class="flacso-integrations-links">
                     <h2>🔗 <?php esc_html_e('Accesos Directos Relacionados', 'flacso-uruguay'); ?></h2>
                     <ul>
+                        <li><a href="<?php echo esc_url(self::get_meta_page_url()); ?>">📈 <?php esc_html_e('Integración con Meta', 'flacso-uruguay'); ?></a></li>
                         <li><a href="<?php echo esc_url(admin_url('edit.php?post_type=oferta-academica&page=flacso-oferta-consulta-form')); ?>">🌐 <?php esc_html_e('Formulario flotante de Oferta Académica', 'flacso-uruguay'); ?></a></li>
                         <li><a href="<?php echo esc_url(admin_url('admin.php?page=flacso-preinscripciones')); ?>">📝 <?php esc_html_e('Preinscripciones', 'flacso-uruguay'); ?></a></li>
                     </ul>
                 </div>
             </div>
         </div>
+        <?php self::render_admin_styles(); ?>
+        <?php self::render_test_script(); ?>
+        <?php
+    }
 
+    public static function render_meta_page(): void {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
+        ?>
+        <div class="wrap">
+            <div class="flacso-integrations-dashboard flacso-integrations-dashboard--narrow">
+                <header class="flacso-dashboard-header">
+                    <div class="flacso-dashboard-title-area">
+                        <h1 class="flacso-dashboard-title">
+                            <?php esc_html_e('Integración con Meta', 'flacso-uruguay'); ?>
+                            <span class="flacso-badge"><?php esc_html_e('Pixel + CAPI', 'flacso-uruguay'); ?></span>
+                        </h1>
+                    </div>
+                    <p class="flacso-dashboard-subtitle">
+                        <?php esc_html_e('Pantalla dedicada para administrar, verificar y diagnosticar la integración nativa con Meta desde el plugin, sin depender del plugin externo.', 'flacso-uruguay'); ?>
+                    </p>
+                </header>
+
+                <?php settings_errors(); ?>
+                <?php self::render_inline_notices(); ?>
+
+                <form method="post" action="options.php">
+                    <?php settings_fields(self::SETTINGS_GROUP); ?>
+
+                    <div class="flacso-integrations-grid flacso-integrations-grid--single">
+                        <?php self::render_meta_card(self::get_meta_page_url()); ?>
+                    </div>
+
+                    <div class="flacso-submit-section">
+                        <?php submit_button(__('Guardar configuración de Meta', 'flacso-uruguay')); ?>
+                    </div>
+                </form>
+
+                <div class="flacso-integrations-links">
+                    <h2>🔗 <?php esc_html_e('Accesos Relacionados', 'flacso-uruguay'); ?></h2>
+                    <ul>
+                        <li><a href="<?php echo esc_url(self::get_page_url()); ?>">↩ <?php esc_html_e('Volver a Integraciones FLACSO', 'flacso-uruguay'); ?></a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <?php self::render_admin_styles(); ?>
+        <?php
+    }
+
+    private static function render_admin_styles(): void {
+        ?>
         <style>
             .flacso-integrations-dashboard {
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
@@ -562,7 +645,10 @@ class FLACSO_Integrations_Settings {
                 padding: 0 10px;
             }
 
-            /* Header styling */
+            .flacso-integrations-dashboard--narrow {
+                max-width: 920px;
+            }
+
             .flacso-dashboard-header {
                 background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
                 color: #ffffff;
@@ -624,7 +710,6 @@ class FLACSO_Integrations_Settings {
                 line-height: 1.6;
             }
 
-            /* Global Token Card */
             .flacso-global-token-card {
                 background: #ffffff;
                 border: 2px solid #3b82f6;
@@ -687,12 +772,15 @@ class FLACSO_Integrations_Settings {
                 max-width: 720px;
             }
 
-            /* Grid & Cards */
             .flacso-integrations-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
                 gap: 24px;
                 margin-bottom: 24px;
+            }
+
+            .flacso-integrations-grid--single {
+                grid-template-columns: minmax(0, 1fr);
             }
 
             .flacso-integrations-card {
@@ -741,7 +829,6 @@ class FLACSO_Integrations_Settings {
                 justify-content: center;
             }
 
-            /* Card custom colors based on service type */
             .card-consultas .flacso-card-icon { background: #eff6ff; color: #3b82f6; }
             .card-ofertas .flacso-card-icon { background: #eef2ff; color: #4338ca; }
             .card-meta .flacso-card-icon { background: #effcf6; color: #059669; }
@@ -758,12 +845,12 @@ class FLACSO_Integrations_Settings {
                 margin: 0;
             }
 
-            /* Field styling */
             .flacso-integrations-field {
                 margin-bottom: 18px;
             }
 
-            .flacso-integrations-field label {
+            .flacso-integrations-field label:not(.flacso-toggle-control),
+            .flacso-field-label {
                 display: block;
                 font-size: 13px;
                 font-weight: 600;
@@ -771,7 +858,7 @@ class FLACSO_Integrations_Settings {
                 margin-bottom: 6px;
             }
 
-            .flacso-integrations-field input,
+            .flacso-integrations-field input:not([type="checkbox"]):not([type="hidden"]),
             .flacso-integrations-field select {
                 width: 100%;
                 max-width: none;
@@ -784,7 +871,7 @@ class FLACSO_Integrations_Settings {
                 transition: all 0.2s ease-in-out;
             }
 
-            .flacso-integrations-field input:focus,
+            .flacso-integrations-field input:not([type="checkbox"]):not([type="hidden"]):focus,
             .flacso-integrations-field select:focus {
                 border-color: #3b82f6;
                 background: #ffffff;
@@ -792,12 +879,97 @@ class FLACSO_Integrations_Settings {
                 outline: none;
             }
 
-            .flacso-integrations-field input[disabled] {
+            .flacso-integrations-field input:not([type="checkbox"]):not([type="hidden"])[disabled] {
                 background: #e2e8f0;
                 border-color: #cbd5e1;
                 color: #475569;
                 cursor: not-allowed;
                 font-weight: 550;
+            }
+
+            .flacso-integrations-field--checkbox {
+                border: 1px solid #dbe7f3;
+                border-radius: 14px;
+                padding: 16px;
+                background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+            }
+
+            .flacso-toggle-control {
+                display: inline-flex;
+                align-items: center;
+                gap: 12px;
+                margin: 0;
+                cursor: pointer;
+                user-select: none;
+            }
+
+            .flacso-toggle-control__input {
+                position: absolute;
+                opacity: 0;
+                width: 1px;
+                height: 1px;
+                pointer-events: none;
+            }
+
+            .flacso-toggle-control__switch {
+                position: relative;
+                width: 56px;
+                height: 32px;
+                border-radius: 999px;
+                background: #cbd5e1;
+                transition: background 0.2s ease, box-shadow 0.2s ease;
+                box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+                flex-shrink: 0;
+            }
+
+            .flacso-toggle-control__switch::after {
+                content: '';
+                position: absolute;
+                top: 4px;
+                left: 4px;
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                background: #ffffff;
+                box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
+                transition: transform 0.2s ease;
+            }
+
+            .flacso-toggle-control__input:checked + .flacso-toggle-control__switch {
+                background: #2563eb;
+            }
+
+            .flacso-toggle-control__input:checked + .flacso-toggle-control__switch::after {
+                transform: translateX(24px);
+            }
+
+            .flacso-toggle-control__input:focus-visible + .flacso-toggle-control__switch {
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            }
+
+            .flacso-toggle-control__labels {
+                display: inline-flex;
+                align-items: center;
+                min-width: 96px;
+                font-size: 13px;
+                font-weight: 700;
+            }
+
+            .flacso-toggle-control__state--on {
+                display: none;
+                color: #1d4ed8;
+            }
+
+            .flacso-toggle-control__state--off {
+                color: #64748b;
+            }
+
+            .flacso-toggle-control__input:checked + .flacso-toggle-control__switch + .flacso-toggle-control__labels .flacso-toggle-control__state--on {
+                display: inline;
+            }
+
+            .flacso-toggle-control__input:checked + .flacso-toggle-control__switch + .flacso-toggle-control__labels .flacso-toggle-control__state--off {
+                display: none;
             }
 
             .flacso-integrations-help {
@@ -948,7 +1120,37 @@ class FLACSO_Integrations_Settings {
                 opacity: .6;
             }
 
-            /* Submit Area */
+            .flacso-meta-last-test {
+                margin-top: 12px;
+                border-top: 1px solid #e2e8f0;
+                padding-top: 12px;
+            }
+
+            .flacso-meta-last-test h4 {
+                margin: 0 0 8px;
+                font-size: 13px;
+                font-weight: 800;
+                color: #0f172a;
+            }
+
+            .flacso-meta-last-test p {
+                margin: 0 0 8px;
+                font-size: 12px;
+                color: #475569;
+                line-height: 1.5;
+            }
+
+            .flacso-meta-last-test ul {
+                margin: 0;
+                padding-left: 18px;
+                color: #475569;
+                font-size: 12px;
+            }
+
+            .flacso-meta-last-test li {
+                margin: 3px 0;
+            }
+
             .flacso-submit-section {
                 background: #ffffff;
                 border: 1px solid #e2e8f0;
@@ -985,7 +1187,6 @@ class FLACSO_Integrations_Settings {
                 transform: translateY(-1px);
             }
 
-            /* Test Section styling */
             .flacso-integrations-tests {
                 background: #ffffff;
                 border: 1px solid #e2e8f0;
@@ -1074,7 +1275,6 @@ class FLACSO_Integrations_Settings {
                 border-color: #94a3b8 !important;
             }
 
-            /* Links Section */
             .flacso-integrations-links {
                 background: #ffffff;
                 border: 1px solid #e2e8f0;
@@ -1125,7 +1325,6 @@ class FLACSO_Integrations_Settings {
                 transform: translateY(-1px);
             }
 
-            /* Test loading and spinner */
             .flacso-test-loading {
                 display: flex;
                 align-items: center;
@@ -1151,25 +1350,29 @@ class FLACSO_Integrations_Settings {
                 100% { transform: rotate(360deg); }
             }
         </style>
+        <?php
+    }
+
+    private static function render_test_script(): void {
+        ?>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 const forms = document.querySelectorAll('.flacso-integrations-test-card');
                 forms.forEach(form => {
                     form.addEventListener('submit', function(e) {
                         e.preventDefault();
-                        
+
                         const button = form.querySelector('input[type="submit"]');
                         const placeholder = form.querySelector('.flacso-test-result-placeholder');
                         const originalButtonVal = button.value;
-                        
-                        // Set loading state
+
                         button.disabled = true;
                         button.value = '<?php esc_attr_e('Ejecutando...', 'flacso-uruguay'); ?>';
                         placeholder.innerHTML = '<div class="flacso-test-loading"><?php esc_html_e('Conectando y validando...', 'flacso-uruguay'); ?></div>';
-                        
+
                         const formData = new FormData(form);
                         const actionUrl = form.getAttribute('action');
-                        
+
                         fetch(actionUrl, {
                             method: 'POST',
                             body: formData
@@ -1329,8 +1532,9 @@ class FLACSO_Integrations_Settings {
         <?php
     }
 
-    private static function render_meta_card(): void {
+    private static function render_meta_card(string $redirect_url = ''): void {
         $meta = self::get_meta_settings();
+        $redirect_url = $redirect_url !== '' ? $redirect_url : self::get_meta_page_url();
         ?>
         <section class="flacso-integrations-card card-meta">
             <div class="flacso-card-header">
@@ -1376,7 +1580,7 @@ class FLACSO_Integrations_Settings {
                     __('Mantiene un PageView global desde el plugin, además de los eventos específicos como ViewContent, Lead y SubmitApplication.', 'flacso-uruguay')
                 );
                 ?>
-                <?php self::render_meta_test_box($meta); ?>
+                <?php self::render_meta_test_box($meta, $redirect_url); ?>
             </div>
 
             <span class="flacso-integrations-note">
@@ -1416,7 +1620,7 @@ class FLACSO_Integrations_Settings {
         <?php
     }
 
-    private static function render_meta_test_box(array $meta): void {
+    private static function render_meta_test_box(array $meta, string $redirect_url): void {
         $can_test = !empty($meta['enabled']) && !empty($meta['pixel_id']) && !empty($meta['access_token']) && !empty($meta['test_event_code']);
         $help = $can_test
             ? __('Envía un evento de prueba por CAPI a Meta usando el Test Event Code configurado. No genera un evento real de producción.', 'flacso-uruguay')
@@ -1428,9 +1632,10 @@ class FLACSO_Integrations_Settings {
             <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <?php wp_nonce_field('flacso_meta_test_event', 'flacso_meta_test_event_nonce'); ?>
                 <input type="hidden" name="action" value="flacso_meta_test_event" />
-                <input type="hidden" name="redirect_to" value="<?php echo esc_attr(self::get_page_url()); ?>" />
+                <input type="hidden" name="redirect_to" value="<?php echo esc_attr($redirect_url); ?>" />
                 <?php submit_button(__('Probar CAPI ahora', 'flacso-uruguay'), 'secondary', 'submit', false, $can_test ? [] : ['disabled' => 'disabled']); ?>
             </form>
+            <?php self::render_meta_last_test_result($meta['last_test'] ?? []); ?>
         </div>
         <?php
     }
@@ -1442,6 +1647,9 @@ class FLACSO_Integrations_Settings {
         $capi_ready = !empty($meta['enabled']) && !empty($meta['access_token']);
         $test_ready = !empty($meta['test_event_code']);
         $pageview_ready = !empty($meta['enabled']) && !empty($meta['track_pageview']);
+
+        $last_test = isset($meta['last_test']) && is_array($meta['last_test']) ? $meta['last_test'] : [];
+        $last_test_success = !empty($last_test['status']) && $last_test['status'] === 'success';
 
         if (empty($meta['enabled'])) {
             $variant = 'neutral';
@@ -1455,6 +1663,10 @@ class FLACSO_Integrations_Settings {
             $variant = 'warning';
             $label = __('Solo Pixel', 'flacso-uruguay');
             $description = __('El frontend puede cargar el Pixel, pero CAPI todavía no está listo porque falta el Access Token.', 'flacso-uruguay');
+        } elseif ($last_test_success) {
+            $variant = 'success';
+            $label = __('Verificado', 'flacso-uruguay');
+            $description = __('La última prueba desde WordPress fue aceptada por Meta. Podés revisar abajo la fecha, el fbtrace_id y la cantidad de eventos recibidos.', 'flacso-uruguay');
         } elseif (!$test_ready) {
             $variant = 'warning';
             $label = __('Listo sin prueba', 'flacso-uruguay');
@@ -1485,8 +1697,8 @@ class FLACSO_Integrations_Settings {
 
         $checks[] = [
             'label' => __('Modo de prueba', 'flacso-uruguay'),
-            'status' => $test_ready ? __('Configurado', 'flacso-uruguay') : __('Falta código', 'flacso-uruguay'),
-            'variant' => $test_ready ? 'success' : 'warning',
+            'status' => $last_test_success ? __('Verificado', 'flacso-uruguay') : ($test_ready ? __('Configurado', 'flacso-uruguay') : __('Falta código', 'flacso-uruguay')),
+            'variant' => $last_test_success ? 'success' : ($test_ready ? 'success' : 'warning'),
             'description' => $test_ready
                 ? sprintf(
                     /* translators: %s: test event code */
@@ -1511,6 +1723,47 @@ class FLACSO_Integrations_Settings {
             'description' => $description,
             'checks' => $checks,
         ];
+    }
+
+    private static function render_meta_last_test_result(array $result): void {
+        if (empty($result['status'])) {
+            return;
+        }
+
+        $variant = $result['status'] === 'success' ? 'success' : 'danger';
+        $label = $result['status'] === 'success'
+            ? __('Última prueba: exitosa', 'flacso-uruguay')
+            : __('Última prueba: fallida', 'flacso-uruguay');
+
+        $timestamp = !empty($result['timestamp']) ? absint($result['timestamp']) : 0;
+        $formatted_date = $timestamp > 0
+            ? wp_date('d/m/Y H:i:s', $timestamp, wp_timezone())
+            : '';
+        ?>
+        <div class="flacso-meta-last-test">
+            <h4><?php esc_html_e('Última prueba guardada', 'flacso-uruguay'); ?></h4>
+            <p>
+                <?php self::render_meta_status_badge($variant, $label); ?>
+            </p>
+            <ul>
+                <?php if ($formatted_date !== ''): ?>
+                    <li><strong><?php esc_html_e('Fecha:', 'flacso-uruguay'); ?></strong> <?php echo esc_html($formatted_date); ?></li>
+                <?php endif; ?>
+                <?php if (!empty($result['http_code'])): ?>
+                    <li><strong><?php esc_html_e('HTTP:', 'flacso-uruguay'); ?></strong> <?php echo esc_html((string) $result['http_code']); ?></li>
+                <?php endif; ?>
+                <?php if (isset($result['events_received'])): ?>
+                    <li><strong><?php esc_html_e('Events received:', 'flacso-uruguay'); ?></strong> <?php echo esc_html((string) $result['events_received']); ?></li>
+                <?php endif; ?>
+                <?php if (!empty($result['fbtrace_id'])): ?>
+                    <li><strong><?php esc_html_e('fbtrace_id:', 'flacso-uruguay'); ?></strong> <code><?php echo esc_html((string) $result['fbtrace_id']); ?></code></li>
+                <?php endif; ?>
+                <?php if (!empty($result['message'])): ?>
+                    <li><strong><?php esc_html_e('Detalle:', 'flacso-uruguay'); ?></strong> <?php echo esc_html((string) $result['message']); ?></li>
+                <?php endif; ?>
+            </ul>
+        </div>
+        <?php
     }
 
     private static function render_meta_status_badge(string $variant, string $label): void {
@@ -1817,17 +2070,23 @@ class FLACSO_Integrations_Settings {
     private static function render_checkbox_field(string $option_name, string $label, string $description): void {
         $checked = (bool) get_option($option_name, 0);
         ?>
-        <div class="flacso-integrations-field">
-            <span style="display:block;font-weight:700;margin-bottom:8px;"><?php echo esc_html($label); ?></span>
-            <label style="display:flex;align-items:center;gap:10px;font-weight:600;">
+        <div class="flacso-integrations-field flacso-integrations-field--checkbox">
+            <span class="flacso-field-label"><?php echo esc_html($label); ?></span>
+            <label class="flacso-toggle-control" for="<?php echo esc_attr($option_name); ?>">
+                <input type="hidden" name="<?php echo esc_attr($option_name); ?>" value="0" />
                 <input
                     id="<?php echo esc_attr($option_name); ?>"
                     name="<?php echo esc_attr($option_name); ?>"
                     type="checkbox"
                     value="1"
+                    class="flacso-toggle-control__input"
                     <?php checked($checked); ?>
                 />
-                <span><?php esc_html_e('Activado', 'flacso-uruguay'); ?></span>
+                <span class="flacso-toggle-control__switch" aria-hidden="true"></span>
+                <span class="flacso-toggle-control__labels">
+                    <span class="flacso-toggle-control__state flacso-toggle-control__state--on"><?php esc_html_e('Activado', 'flacso-uruguay'); ?></span>
+                    <span class="flacso-toggle-control__state flacso-toggle-control__state--off"><?php esc_html_e('Desactivado', 'flacso-uruguay'); ?></span>
+                </span>
             </label>
             <p class="flacso-integrations-help"><?php echo esc_html($description); ?></p>
         </div>
@@ -1849,6 +2108,8 @@ class FLACSO_Integrations_Settings {
     }
 
     private static function render_inline_notices(): void {
+        self::render_meta_inline_notice();
+
         if (!function_exists('fc_render_webhook_test_notice')) {
             return;
         }
@@ -1868,23 +2129,6 @@ class FLACSO_Integrations_Settings {
         }
 
         if (!isset($_GET['flacso_charlas_webhook_test'])) {
-            if (isset($_GET['flacso_meta_test'])) {
-                $status = sanitize_key(wp_unslash($_GET['flacso_meta_test']));
-                $message = isset($_GET['flacso_meta_test_message'])
-                    ? sanitize_text_field((string) wp_unslash($_GET['flacso_meta_test_message']))
-                    : '';
-                $code = isset($_GET['flacso_meta_test_code']) ? absint(wp_unslash($_GET['flacso_meta_test_code'])) : 0;
-                $class = $status === 'success' ? 'notice notice-success' : 'notice notice-error';
-                $title = $status === 'success'
-                    ? __('Prueba de Meta CAPI exitosa', 'flacso-uruguay')
-                    : __('Prueba de Meta CAPI fallida', 'flacso-uruguay');
-                echo '<div class="' . esc_attr($class) . '"><p><strong>' . esc_html($title) . '.</strong> ';
-                echo esc_html($message);
-                if ($code > 0) {
-                    echo ' ' . esc_html(sprintf(__('HTTP %d.', 'flacso-uruguay'), $code));
-                }
-                echo '</p></div>';
-            }
             return;
         }
 
@@ -1893,6 +2137,29 @@ class FLACSO_Integrations_Settings {
         $message = isset($_GET['flacso_charlas_webhook_message']) ? sanitize_text_field(wp_unslash($_GET['flacso_charlas_webhook_message'])) : '';
 
         fc_render_webhook_test_notice($status, $code, $message, 'FLACSO_WEBHOOK_TOKEN');
+    }
+
+    private static function render_meta_inline_notice(): void {
+        if (!isset($_GET['flacso_meta_test'])) {
+            return;
+        }
+
+        $status = sanitize_key(wp_unslash($_GET['flacso_meta_test']));
+        $message = isset($_GET['flacso_meta_test_message'])
+            ? sanitize_text_field((string) wp_unslash($_GET['flacso_meta_test_message']))
+            : '';
+        $code = isset($_GET['flacso_meta_test_code']) ? absint(wp_unslash($_GET['flacso_meta_test_code'])) : 0;
+        $class = $status === 'success' ? 'notice notice-success' : 'notice notice-error';
+        $title = $status === 'success'
+            ? __('Prueba de Meta CAPI exitosa', 'flacso-uruguay')
+            : __('Prueba de Meta CAPI fallida', 'flacso-uruguay');
+
+        echo '<div class="' . esc_attr($class) . '"><p><strong>' . esc_html($title) . '.</strong> ';
+        echo esc_html($message);
+        if ($code > 0) {
+            echo ' ' . esc_html(sprintf(__('HTTP %d.', 'flacso-uruguay'), $code));
+        }
+        echo '</p></div>';
     }
 }
 

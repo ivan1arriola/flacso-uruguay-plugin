@@ -7,6 +7,7 @@ if (!defined('ABSPATH')) {
 class FLACSO_Meta_Tracking {
     private const AJAX_ACTION = 'flacso_meta_track_event';
     private const GRAPH_API_VERSION = 'v25.0';
+    private const LAST_TEST_OPTION = 'flacso_meta_last_test_result';
     private static $noscript_rendered = false;
 
     public static function init(): void {
@@ -108,10 +109,14 @@ class FLACSO_Meta_Tracking {
 
         $settings = self::get_settings();
         $redirect_url = class_exists('FLACSO_Integrations_Settings')
-            ? FLACSO_Integrations_Settings::get_redirect_url_from_request([], FLACSO_Integrations_Settings::get_page_url())
-            : admin_url('options-general.php?page=flacso-integraciones');
+            ? FLACSO_Integrations_Settings::get_redirect_url_from_request([], FLACSO_Integrations_Settings::get_meta_page_url())
+            : admin_url('options-general.php?page=flacso-integracion-meta');
 
         if (!$settings['enabled']) {
+            self::store_last_test_result([
+                'status' => 'fail',
+                'message' => __('Activá primero el tracking de Meta antes de ejecutar la prueba.', 'flacso-uruguay'),
+            ]);
             wp_safe_redirect(add_query_arg([
                 'flacso_meta_test' => 'fail',
                 'flacso_meta_test_message' => __('Activá primero el tracking de Meta antes de ejecutar la prueba.', 'flacso-uruguay'),
@@ -120,6 +125,10 @@ class FLACSO_Meta_Tracking {
         }
 
         if ($settings['pixel_id'] === '' || $settings['access_token'] === '') {
+            self::store_last_test_result([
+                'status' => 'fail',
+                'message' => __('Completá el Pixel ID y el Access Token para poder probar CAPI.', 'flacso-uruguay'),
+            ]);
             wp_safe_redirect(add_query_arg([
                 'flacso_meta_test' => 'fail',
                 'flacso_meta_test_message' => __('Completá el Pixel ID y el Access Token para poder probar CAPI.', 'flacso-uruguay'),
@@ -128,6 +137,10 @@ class FLACSO_Meta_Tracking {
         }
 
         if ($settings['test_event_code'] === '') {
+            self::store_last_test_result([
+                'status' => 'fail',
+                'message' => __('Agregá un Test Event Code para ejecutar una prueba segura sin enviar eventos reales.', 'flacso-uruguay'),
+            ]);
             wp_safe_redirect(add_query_arg([
                 'flacso_meta_test' => 'fail',
                 'flacso_meta_test_message' => __('Agregá un Test Event Code para ejecutar una prueba segura sin enviar eventos reales.', 'flacso-uruguay'),
@@ -148,6 +161,10 @@ class FLACSO_Meta_Tracking {
         $response = self::send_capi_event($settings, $payload);
 
         if (is_wp_error($response)) {
+            self::store_last_test_result([
+                'status' => 'fail',
+                'message' => $response->get_error_message(),
+            ]);
             wp_safe_redirect(add_query_arg([
                 'flacso_meta_test' => 'fail',
                 'flacso_meta_test_message' => $response->get_error_message(),
@@ -172,6 +189,12 @@ class FLACSO_Meta_Tracking {
                 );
             }
 
+            self::store_last_test_result([
+                'status' => 'fail',
+                'http_code' => $status_code,
+                'fbtrace_id' => is_array($body) ? (string) ($body['fbtrace_id'] ?? '') : '',
+                'message' => $message,
+            ]);
             wp_safe_redirect(add_query_arg([
                 'flacso_meta_test' => 'fail',
                 'flacso_meta_test_code' => $status_code,
@@ -189,6 +212,14 @@ class FLACSO_Meta_Tracking {
             );
         }
 
+        self::store_last_test_result([
+            'status' => 'success',
+            'http_code' => $status_code,
+            'events_received' => is_array($body) ? (int) ($body['events_received'] ?? 0) : 0,
+            'fbtrace_id' => is_array($body) ? (string) ($body['fbtrace_id'] ?? '') : '',
+            'message' => $message,
+            'event_id' => $event_id,
+        ]);
         wp_safe_redirect(add_query_arg([
             'flacso_meta_test' => 'success',
             'flacso_meta_test_message' => $message,
@@ -506,6 +537,20 @@ class FLACSO_Meta_Tracking {
         }
 
         error_log('[FLACSO Meta] ' . $code . ' :: ' . $details);
+    }
+
+    private static function store_last_test_result(array $result): void {
+        $payload = [
+            'status' => sanitize_key((string) ($result['status'] ?? 'fail')),
+            'timestamp' => time(),
+            'http_code' => isset($result['http_code']) ? absint($result['http_code']) : 0,
+            'events_received' => isset($result['events_received']) ? absint($result['events_received']) : null,
+            'fbtrace_id' => sanitize_text_field((string) ($result['fbtrace_id'] ?? '')),
+            'message' => sanitize_text_field((string) ($result['message'] ?? '')),
+            'event_id' => sanitize_text_field((string) ($result['event_id'] ?? '')),
+        ];
+
+        update_option(self::LAST_TEST_OPTION, $payload, false);
     }
 }
 
