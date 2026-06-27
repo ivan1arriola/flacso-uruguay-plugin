@@ -615,13 +615,17 @@ class FLACSO_Integrations_Settings {
                     <?php settings_fields(self::SETTINGS_GROUP); ?>
 
                     <div class="flacso-integrations-grid flacso-integrations-grid--single">
-                        <?php self::render_meta_card(self::get_meta_page_url()); ?>
+                        <?php self::render_meta_card(false); ?>
                     </div>
 
                     <div class="flacso-submit-section">
                         <?php submit_button(__('Guardar configuración de Meta', 'flacso-uruguay')); ?>
                     </div>
                 </form>
+
+                <div class="flacso-integrations-grid flacso-integrations-grid--single">
+                    <?php self::render_meta_test_panel(self::get_meta_page_url()); ?>
+                </div>
 
                 <div class="flacso-integrations-links">
                     <h2>🔗 <?php esc_html_e('Accesos Relacionados', 'flacso-uruguay'); ?></h2>
@@ -1532,7 +1536,7 @@ class FLACSO_Integrations_Settings {
         <?php
     }
 
-    private static function render_meta_card(string $redirect_url = ''): void {
+    private static function render_meta_card(bool $include_test_box = true, string $redirect_url = ''): void {
         $meta = self::get_meta_settings();
         $redirect_url = $redirect_url !== '' ? $redirect_url : self::get_meta_page_url();
         ?>
@@ -1580,7 +1584,9 @@ class FLACSO_Integrations_Settings {
                     __('Mantiene un PageView global desde el plugin, además de los eventos específicos como ViewContent, Lead y SubmitApplication.', 'flacso-uruguay')
                 );
                 ?>
-                <?php self::render_meta_test_box($meta, $redirect_url); ?>
+                <?php if ($include_test_box) : ?>
+                    <?php self::render_meta_test_box($meta, $redirect_url); ?>
+                <?php endif; ?>
             </div>
 
             <span class="flacso-integrations-note">
@@ -1590,6 +1596,26 @@ class FLACSO_Integrations_Settings {
                     : esc_html__('CAPI queda activo en cuanto guardes un Access Token válido. Mientras tanto, el plugin puede seguir emitiendo solo Pixel.', 'flacso-uruguay');
                 ?>
             </span>
+        </section>
+        <?php
+    }
+
+    private static function render_meta_test_panel(string $redirect_url = ''): void {
+        $meta = self::get_meta_settings();
+        $redirect_url = $redirect_url !== '' ? $redirect_url : self::get_meta_page_url();
+        ?>
+        <section class="flacso-integrations-card card-meta">
+            <div class="flacso-card-header">
+                <div class="flacso-card-icon-title">
+                    <span class="flacso-card-icon">🧪</span>
+                    <h2><?php esc_html_e('Pruebas y diagnóstico', 'flacso-uruguay'); ?></h2>
+                </div>
+                <p class="flacso-integrations-lead"><?php esc_html_e('Validá la conexión con Meta por Conversions API sin interferir con el guardado de la configuración.', 'flacso-uruguay'); ?></p>
+            </div>
+
+            <div class="flacso-card-body">
+                <?php self::render_meta_test_box($meta, $redirect_url); ?>
+            </div>
         </section>
         <?php
     }
