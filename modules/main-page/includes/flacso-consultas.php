@@ -327,6 +327,7 @@ function flacso_consultas_render_form( $attributes = array() ) {
 			const $submitBtn = $('#btn-enviar');
 			const $message = $('#form-consultas-mensaje');
 			const programa = $form.find('[name="titulo_posgrado"]').val() || '';
+			let infoRequestFormViewTracked = false;
 			const buildGraciasUrl = function(baseUrl, pid) {
 				const redirectUrl = new URL(baseUrl, window.location.href);
 				const currentParams = new URLSearchParams(window.location.search);
@@ -339,13 +340,44 @@ function flacso_consultas_render_form( $attributes = array() ) {
 
 				return redirectUrl.toString();
 			};
+			const trackInfoRequestFormView = function() {
+				if (infoRequestFormViewTracked || !$form.length || typeof window.flacsoMetaTrackCustom !== 'function') {
+					return;
+				}
 
-		if ($form.length && typeof window.flacsoMetaTrack === 'function') {
-			window.flacsoMetaTrack('ViewContent', {
-				content_name: programa,
-				content_category: 'solicitud_informacion',
-				content_type: 'oferta_academica'
-			});
+				infoRequestFormViewTracked = true;
+
+				try {
+					window.flacsoMetaTrackCustom('InfoRequestFormView', {
+						content_name: programa,
+						content_category: 'solicitud_informacion',
+						content_type: 'oferta_academica',
+						flacso_stage: 'formulario_visible'
+					});
+				} catch (e) {}
+			};
+
+		if ($form.length) {
+			const formContainer = document.getElementById('form-consultas-container') || $form.get(0);
+
+			if (formContainer && 'IntersectionObserver' in window) {
+				const observer = new IntersectionObserver(function(entries) {
+					entries.forEach(function(entry) {
+						if (!entry.isIntersecting || entry.intersectionRatio < 0.35) {
+							return;
+						}
+
+						trackInfoRequestFormView();
+						observer.disconnect();
+					});
+				}, {
+					threshold: [0.35]
+				});
+
+				observer.observe(formContainer);
+			} else {
+				trackInfoRequestFormView();
+			}
 		}
 
 		$form.find('input, select').on('blur change', function() {
