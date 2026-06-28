@@ -124,12 +124,25 @@ $mostrar_instancias_presenciales = $instancias_presenciales_meta === true
     || $instancias_presenciales_meta === '1'
     || $instancias_presenciales_meta === 'true';
 
-$render_info_card = static function ($title, $body, $extra_class = '') use ($has_visible_html) {
+$render_info_card = static function ($title, $body, $extra_class = '', array $attrs = []) use ($has_visible_html) {
     if (!$has_visible_html($body)) {
         return;
     }
+    $attrs_html = '';
+    foreach ($attrs as $name => $value) {
+        if ($value === null || $value === false || $value === '') {
+            continue;
+        }
+
+        if ($value === true) {
+            $attrs_html .= ' ' . esc_attr((string) $name);
+            continue;
+        }
+
+        $attrs_html .= sprintf(' %s="%s"', esc_attr((string) $name), esc_attr((string) $value));
+    }
     ?>
-    <section class="flacso-oa-info-card <?php echo esc_attr($extra_class); ?>">
+    <section class="flacso-oa-info-card <?php echo esc_attr($extra_class); ?>"<?php echo $attrs_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
         <header class="flacso-oa-info-card__header">
             <h3><?php echo esc_html($title); ?></h3>
         </header>
@@ -617,12 +630,16 @@ get_header();
                                         if ($proxied) $cartamalla_pdf_url = $proxied;
                                     }
                                     $combined_body = '<p style="margin-bottom:1rem;">' . esc_html__('Podés descargar el calendario de cursada y la malla curricular.', 'flacso-uruguay') . '</p>' .
-                                                     '<a href="' . esc_url($cartamalla_pdf_url) . '" target="_blank" class="flacso-oa-link-btn" style="display:inline-flex; align-items:center; gap:0.5rem;"><i class="bi bi-file-earmark-pdf"></i> ' . esc_html__('Ver Calendario y Malla (PDF)', 'flacso-uruguay') . '</a>';
+                                                     '<a href="' . esc_url($cartamalla_pdf_url) . '" target="_blank" class="flacso-oa-link-btn flacso-meta-doc-link flacso-meta-doc-link--combined" style="display:inline-flex; align-items:center; gap:0.5rem;"><i class="bi bi-file-earmark-pdf"></i> ' . esc_html__('Ver Calendario y Malla (PDF)', 'flacso-uruguay') . '</a>';
                                     
                                     $render_info_card(
                                         __('Malla y Calendario Académico', 'flacso-uruguay'),
                                         $combined_body,
-                                        'flacso-oa-info-card--wide'
+                                        'flacso-oa-info-card--wide',
+                                        [
+                                            'data-flacso-meta-doc-section' => 'MallaCalendarioSectionView',
+                                            'data-flacso-meta-doc-layout' => 'combined_pdf',
+                                        ]
                                     );
                                 } else {
                                     $malla_pdf_url = !empty($documentos['malla']['link']) ? trim((string) $documentos['malla']['link']) : (!empty($data['malla_curricular']) ? trim((string) $data['malla_curricular']) : '');
@@ -637,14 +654,18 @@ get_header();
                                             if ($proxied_cal) $calendario_pdf_url = $proxied_cal;
                                         }
                                         $combined_body = '<div style="display:flex; flex-wrap:wrap; gap:1rem;">' .
-                                                         '<a href="' . esc_url($malla_pdf_url) . '" target="_blank" class="flacso-oa-link-btn" style="display:inline-flex; align-items:center; gap:0.5rem;"><i class="bi bi-file-earmark-pdf"></i> ' . esc_html__('Ver Malla Curricular (PDF)', 'flacso-uruguay') . '</a>' .
-                                                         '<a href="' . esc_url($calendario_pdf_url) . '" target="_blank" class="flacso-oa-link-btn" style="display:inline-flex; align-items:center; gap:0.5rem;"><i class="bi bi-file-earmark-pdf"></i> ' . esc_html__('Ver Calendario (PDF)', 'flacso-uruguay') . '</a>' .
+                                                         '<a href="' . esc_url($malla_pdf_url) . '" target="_blank" class="flacso-oa-link-btn flacso-meta-doc-link flacso-meta-doc-link--malla" style="display:inline-flex; align-items:center; gap:0.5rem;"><i class="bi bi-file-earmark-pdf"></i> ' . esc_html__('Ver Malla Curricular (PDF)', 'flacso-uruguay') . '</a>' .
+                                                         '<a href="' . esc_url($calendario_pdf_url) . '" target="_blank" class="flacso-oa-link-btn flacso-meta-doc-link flacso-meta-doc-link--calendario" style="display:inline-flex; align-items:center; gap:0.5rem;"><i class="bi bi-file-earmark-pdf"></i> ' . esc_html__('Ver Calendario (PDF)', 'flacso-uruguay') . '</a>' .
                                                          '</div>';
                                         
                                         $render_info_card(
                                             __('Malla y Calendario Académico', 'flacso-uruguay'),
                                             $combined_body,
-                                            'flacso-oa-info-card--wide'
+                                            'flacso-oa-info-card--wide',
+                                            [
+                                                'data-flacso-meta-doc-section' => 'MallaCalendarioSectionView',
+                                                'data-flacso-meta-doc-layout' => 'split_buttons',
+                                            ]
                                         );
                                     } else {
                                         if ($malla_pdf_url) {
@@ -652,12 +673,16 @@ get_header();
                                                 $proxied = flacso_get_pdf_proxy_url($malla_pdf_url, 'Malla curricular');
                                                 if ($proxied) $malla_pdf_url = $proxied;
                                             }
-                                            $malla_body = '<a href="' . esc_url($malla_pdf_url) . '" target="_blank" class="flacso-oa-link-btn" style="display:inline-flex; align-items:center; gap:0.5rem;"><i class="bi bi-file-earmark-pdf"></i> ' . esc_html__('Ver Malla Curricular (PDF)', 'flacso-uruguay') . '</a>';
+                                            $malla_body = '<a href="' . esc_url($malla_pdf_url) . '" target="_blank" class="flacso-oa-link-btn flacso-meta-doc-link flacso-meta-doc-link--malla" style="display:inline-flex; align-items:center; gap:0.5rem;"><i class="bi bi-file-earmark-pdf"></i> ' . esc_html__('Ver Malla Curricular (PDF)', 'flacso-uruguay') . '</a>';
                                             
                                             $render_info_card(
                                                 __('Malla Curricular', 'flacso-uruguay'),
                                                 $malla_body,
-                                                'flacso-oa-info-card--wide'
+                                                'flacso-oa-info-card--wide',
+                                                [
+                                                    'data-flacso-meta-doc-section' => 'MallaCurricularSectionView',
+                                                    'data-flacso-meta-doc-layout' => 'single_malla',
+                                                ]
                                             );
                                         }
                                         
@@ -666,12 +691,16 @@ get_header();
                                                 $proxied = flacso_get_pdf_proxy_url($calendario_pdf_url, 'Calendario Academico');
                                                 if ($proxied) $calendario_pdf_url = $proxied;
                                             }
-                                            $calendario_body = '<a href="' . esc_url($calendario_pdf_url) . '" target="_blank" class="flacso-oa-link-btn" style="display:inline-flex; align-items:center; gap:0.5rem;"><i class="bi bi-file-earmark-pdf"></i> ' . esc_html__('Ver Calendario (PDF)', 'flacso-uruguay') . '</a>';
+                                            $calendario_body = '<a href="' . esc_url($calendario_pdf_url) . '" target="_blank" class="flacso-oa-link-btn flacso-meta-doc-link flacso-meta-doc-link--calendario" style="display:inline-flex; align-items:center; gap:0.5rem;"><i class="bi bi-file-earmark-pdf"></i> ' . esc_html__('Ver Calendario (PDF)', 'flacso-uruguay') . '</a>';
                                             
                                             $render_info_card(
                                                 __('Calendario Académico', 'flacso-uruguay'),
                                                 $calendario_body,
-                                                'flacso-oa-info-card--wide'
+                                                'flacso-oa-info-card--wide',
+                                                [
+                                                    'data-flacso-meta-doc-section' => 'CalendarioAcademicoSectionView',
+                                                    'data-flacso-meta-doc-layout' => 'single_calendario',
+                                                ]
                                             );
                                         }
                                     }
@@ -2572,6 +2601,93 @@ get_header();
             flacso_stage: 'pagina_oferta'
         });
     } catch (e) {}
+})();
+
+(function() {
+    if (typeof window.flacsoMetaTrackCustom !== 'function') return;
+
+    var ofertaTitle = <?php echo wp_json_encode((string) get_the_title()); ?>;
+    var ofertaId = <?php echo wp_json_encode((string) get_the_ID()); ?>;
+    var trackedSections = {};
+    var baseParams = {
+        content_name: ofertaTitle,
+        content_category: 'oferta_academica',
+        content_ids: ['oferta-' + ofertaId]
+    };
+
+    function trackDocumentEvent(eventName, extraParams) {
+        if (!eventName) return;
+
+        try {
+            window.flacsoMetaTrackCustom(eventName, Object.assign({}, baseParams, extraParams || {}));
+        } catch (e) {}
+    }
+
+    document.querySelectorAll('[data-flacso-meta-doc-section]').forEach(function(section) {
+        var eventName = section.getAttribute('data-flacso-meta-doc-section') || '';
+        var layout = section.getAttribute('data-flacso-meta-doc-layout') || '';
+
+        if (!eventName) {
+            return;
+        }
+
+        function fireSectionView() {
+            if (trackedSections[eventName]) {
+                return;
+            }
+
+            trackedSections[eventName] = true;
+            trackDocumentEvent(eventName, {
+                flacso_stage: 'document_section_visible',
+                flacso_doc_layout: layout
+            });
+        }
+
+        if ('IntersectionObserver' in window) {
+            var observer = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (!entry.isIntersecting || entry.intersectionRatio < 0.35) {
+                        return;
+                    }
+
+                    fireSectionView();
+                    observer.disconnect();
+                });
+            }, {
+                threshold: [0.35]
+            });
+
+            observer.observe(section);
+        } else {
+            fireSectionView();
+        }
+    });
+
+    document.addEventListener('click', function(event) {
+        var link = event.target.closest('.flacso-meta-doc-link');
+
+        if (!link) {
+            return;
+        }
+
+        var section = link.closest('[data-flacso-meta-doc-section]');
+        var layout = section ? (section.getAttribute('data-flacso-meta-doc-layout') || '') : '';
+        var eventName = '';
+
+        if (link.classList.contains('flacso-meta-doc-link--combined')) {
+            eventName = 'MallaCalendarioClick';
+        } else if (link.classList.contains('flacso-meta-doc-link--malla')) {
+            eventName = 'MallaCurricularClick';
+        } else if (link.classList.contains('flacso-meta-doc-link--calendario')) {
+            eventName = 'CalendarioAcademicoClick';
+        }
+
+        trackDocumentEvent(eventName, {
+            flacso_stage: 'document_click',
+            flacso_doc_layout: layout,
+            flacso_doc_url: link.href || ''
+        });
+    }, true);
 })();
 </script>
 <?php
