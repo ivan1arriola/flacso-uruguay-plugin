@@ -328,6 +328,7 @@ function flacso_consultas_render_form( $attributes = array() ) {
 			const $message = $('#form-consultas-mensaje');
 			const programa = $form.find('[name="titulo_posgrado"]').val() || '';
 			let infoRequestFormViewTracked = false;
+			const metaSessionStorageKey = 'consultaMetaUserData';
 			const buildGraciasUrl = function(baseUrl, pid) {
 				const redirectUrl = new URL(baseUrl, window.location.href);
 				const currentParams = new URLSearchParams(window.location.search);
@@ -339,6 +340,51 @@ function flacso_consultas_render_form( $attributes = array() ) {
 				}
 
 				return redirectUrl.toString();
+			};
+			const hashForMeta = async function(value) {
+				const str = String(value || '').trim().toLowerCase();
+				if (!str || !window.crypto || !window.crypto.subtle || typeof window.TextEncoder !== 'function') {
+					return '';
+				}
+
+				try {
+					const buf = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+					return Array.from(new Uint8Array(buf)).map(function(b) {
+						return b.toString(16).padStart(2, '0');
+					}).join('');
+				} catch (e) {
+					return '';
+				}
+			};
+			const buildMetaUserData = async function() {
+				const nombre = ($form.find('[name="nombre"]').val() || '').trim();
+				const apellido = ($form.find('[name="apellido"]').val() || '').trim();
+				const correo = ($form.find('[name="correo"]').val() || '').trim();
+				const pais = ($form.find('[name="pais"]').val() || '').trim();
+
+				const [emHash, fnHash, lnHash, countryHash] = await Promise.all([
+					hashForMeta(correo),
+					hashForMeta(nombre),
+					hashForMeta(apellido),
+					hashForMeta(pais)
+				]);
+
+				const payload = {};
+				if (emHash) payload.em = emHash;
+				if (fnHash) payload.fn = fnHash;
+				if (lnHash) payload.ln = lnHash;
+				if (countryHash) payload.country = countryHash;
+
+				return payload;
+			};
+			const persistMetaUserData = function(userData) {
+				if (!userData || typeof userData !== 'object') {
+					return;
+				}
+
+				try {
+					sessionStorage.setItem(metaSessionStorageKey, JSON.stringify(userData));
+				} catch (e) {}
 			};
 			const trackInfoRequestFormView = function() {
 				if (infoRequestFormViewTracked || !$form.length || typeof window.flacsoMetaTrackCustom !== 'function') {
@@ -384,7 +430,7 @@ function flacso_consultas_render_form( $attributes = array() ) {
 			this.checkValidity() ? $(this).removeClass('is-invalid') : $(this).addClass('is-invalid');
 		});
 
-		$form.on('submit', function(e) {
+		$form.on('submit', async function(e) {
 			e.preventDefault();
 			if (!this.checkValidity()) {
 				$(this).addClass('was-validated');
@@ -392,13 +438,16 @@ function flacso_consultas_render_form( $attributes = array() ) {
 				return;
 			}
 
+			const metaUserData = await buildMetaUserData();
+			persistMetaUserData(metaUserData);
+
 			if (typeof window.flacsoMetaTrack === 'function') {
 				try {
-					window.flacsoMetaTrack('Contact', {
+					window.flacsoMetaTrack('Contact', Object.assign({
 						content_name: programa,
 						content_category: 'solicitud_informacion',
 						content_type: 'oferta_academica'
-					});
+					}, metaUserData));
 				} catch (e) {}
 			}
 
@@ -895,17 +944,25 @@ function flacso_render_gracias_virtual() {
 			var tipo = urlParams.get('tipo') || 'consulta';
 			if (tipo === 'preinscripcion') tipo = 'preinscripcion_oferta';
 			var isPreinscripcion = (tipo === 'preinscripcion_oferta' || tipo === 'preinscripcion_seminario');
+			var metaUserData = {};
+
+			try {
+				metaUserData = JSON.parse(sessionStorage.getItem('consultaMetaUserData') || '{}');
+			} catch (e) {
+				metaUserData = {};
+			}
 
 			// Only fire Lead event if it's a general consultation or info request
 			// Pre-enrollments fire their own Lead & SubmitApplication events with Advanced Matching hashes prior to redirect
 			if (typeof window.flacsoMetaTrack === 'function' && !isPreinscripcion) {
 				try {
-					window.flacsoMetaTrack('Lead', {
+					window.flacsoMetaTrack('Lead', Object.assign({
 						content_name: programaMeta || '',
 						content_category: 'solicitud_informacion',
 						content_type: 'oferta_academica',
 						status: 'submitted'
-					});
+					}, metaUserData));
+					sessionStorage.removeItem('consultaMetaUserData');
 				} catch (e) {
 					if (window.console && typeof window.console.warn === 'function') {
 						console.warn('[Formulario Consultas] Error enviando Lead:', e);
