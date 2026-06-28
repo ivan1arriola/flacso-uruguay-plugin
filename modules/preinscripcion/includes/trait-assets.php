@@ -15,10 +15,9 @@ trait FLACSO_Formulario_Preinscripcion_Assets {
         // Enqueue external JS libraries
         wp_enqueue_script('intl-tel-input-js', 'https://cdn.jsdelivr.net/npm/intl-tel-input@25.12.4/build/js/intlTelInput.min.js', array(), '25.12.4', true);
         wp_enqueue_script('country-select-js', 'https://cdn.jsdelivr.net/npm/country-select-js@2.0.1/build/js/countrySelect.min.js', array(), '2.0.1', true);
-        wp_enqueue_script('libphonenumber-js', 'https://cdn.jsdelivr.net/npm/libphonenumber-js@1.11.14/bundle/libphonenumber-min.js', array(), '1.11.14', true);
         
         // Enqueue custom script with dependencies
-        wp_enqueue_script('flacso-formulario-script', $assets_url . 'scripts.js', array('jquery', 'intl-tel-input-js', 'country-select-js', 'libphonenumber-js'), '1.0.5', true);
+        wp_enqueue_script('flacso-formulario-script', $assets_url . 'scripts.js', array('jquery', 'intl-tel-input-js', 'country-select-js'), '1.0.5', true);
         
         // Localize script with PHP data
         wp_localize_script('flacso-formulario-script', 'flacsoFormConfig', array(

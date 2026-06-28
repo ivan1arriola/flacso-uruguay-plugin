@@ -55,8 +55,6 @@ wp_enqueue_style('fontawesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awe
 wp_enqueue_style('intl-tel-input-css', 'https://cdn.jsdelivr.net/npm/intl-tel-input@25.15.0/build/css/intlTelInput.css', [], '25.15.0');
 wp_enqueue_script('intl-tel-input-js', 'https://cdn.jsdelivr.net/npm/intl-tel-input@25.15.0/build/js/intlTelInput.min.js', [], '25.15.0', true);
 
-// libphonenumber (Google's library for phone number validation)
-wp_enqueue_script('libphonenumber', 'https://cdn.jsdelivr.net/npm/google-libphonenumber@3.2.34/dist/libphonenumber-js.min.js', [], '3.2.34', true);
 
 // jQuery (for intl-tel-input and general use)
 wp_enqueue_script('jquery');

@@ -186,9 +186,12 @@ if ($ofertas_query->have_posts()) {
         $inscripciones_abiertas = get_post_meta($post_id, 'inscripciones_abiertas', true);
         $is_open = ($inscripciones_abiertas === '1' || $inscripciones_abiertas === 'true' || $inscripciones_abiertas === true || $inscripciones_abiertas === 1);
 
-        $data = class_exists('Oferta_Data_Schema') ? Oferta_Data_Schema::get_schema($post_id) : [];
-        $duracion = !empty($data['duracion_meses']) && class_exists('Oferta_Renderer')
-            ? Oferta_Renderer::format_duration_months((string) $data['duracion_meses'], 'flacso-uruguay')
+        $duracion_meses = get_post_meta($post_id, 'duracion_meses', true);
+        if (is_array($duracion_meses)) {
+            $duracion_meses = reset($duracion_meses);
+        }
+        $duracion = !empty($duracion_meses) && class_exists('Oferta_Renderer')
+            ? Oferta_Renderer::format_duration_months((string) $duracion_meses, 'flacso-uruguay')
             : '';
         $start_data = flacso_oferta_archive_get_start_data($post_id);
         $group_key = (string) $start_data['group_key'];

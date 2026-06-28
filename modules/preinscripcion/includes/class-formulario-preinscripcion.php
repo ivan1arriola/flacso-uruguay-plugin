@@ -136,6 +136,11 @@ class FLACSO_Formulario_Preinscripcion_Final {
         if ($page_id <= 0) {
             return 0;
         }
+        $transient_key = 'flacso_oferta_id_by_page_' . $page_id;
+        $cached_val = get_transient($transient_key);
+        if ($cached_val !== false) {
+            return (int) $cached_val;
+        }
         $ids = get_posts(array(
             'post_type' => 'oferta-academica',
             'post_status' => array('publish', 'private'),
@@ -145,7 +150,9 @@ class FLACSO_Formulario_Preinscripcion_Final {
             'meta_value' => $page_id,
             'no_found_rows' => true,
         ));
-        return !empty($ids) ? (int) $ids[0] : 0;
+        $oferta_id = !empty($ids) ? (int) $ids[0] : 0;
+        set_transient($transient_key, $oferta_id, DAY_IN_SECONDS);
+        return $oferta_id;
     }
 
     private function resolver_oferta_id_desde_programa($programa_id) {
@@ -359,8 +366,11 @@ class FLACSO_Formulario_Preinscripcion_Final {
             if (empty($_POST[$campo])) { $this->send_json_error("El campo $campo es obligatorio."); }
         }
 
-        if (!$this->archivo_obligatorio_presente('carta_motivacion')) {
-            $this->send_json_error('La carta de motivación es obligatoria para todos los posgrados.');
+        $documentacion_completa = sanitize_text_field($_POST['documentacion_completa'] ?? '');
+        if ($documentacion_completa !== 'No') {
+            if (!$this->archivo_obligatorio_presente('carta_motivacion')) {
+                $this->send_json_error('La carta de motivación es obligatoria para todos los posgrados.');
+            }
         }
 
         // Validación de documento

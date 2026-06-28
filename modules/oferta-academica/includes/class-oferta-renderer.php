@@ -254,6 +254,12 @@ class Oferta_Renderer {
             return null;
         }
 
+        $transient_key = 'flacso_term_earliest_start_' . $term_id;
+        $cached = get_transient($transient_key);
+        if ($cached !== false) {
+            return $cached === -1 ? null : (int) $cached;
+        }
+
         $query_args = [
             'post_type' => 'oferta-academica',
             'post_status' => self::oferta_post_statuses(),
@@ -271,6 +277,7 @@ class Oferta_Renderer {
         $post_ids = get_posts(self::exclude_password_protected_from_query_args($query_args));
 
         if (empty($post_ids)) {
+            set_transient($transient_key, -1, DAY_IN_SECONDS);
             return null;
         }
 
@@ -293,6 +300,9 @@ class Oferta_Renderer {
                 $earliest = $timestamp;
             }
         }
+
+        $cache_value = ($earliest === null) ? -1 : $earliest;
+        set_transient($transient_key, $cache_value, DAY_IN_SECONDS);
 
         return $earliest;
     }

@@ -79,6 +79,9 @@ class Oferta_Data_Schema {
         add_action('rest_api_init', [self::class, 'register_rest_routes']);
         add_action('rest_after_insert_oferta-academica', [self::class, 'sync_documentos_after_rest_insert'], 10, 3);
         add_filter('rest_pre_insert_oferta-academica', [self::class, 'validate_cycle_chain_before_rest_insert'], 10, 2);
+        add_action('save_post_oferta-academica', [self::class, 'clear_all_oferta_transients']);
+        add_action('deleted_post', [self::class, 'clear_all_oferta_transients']);
+        add_action('trash_post', [self::class, 'clear_all_oferta_transients']);
     }
 
     public static function register_meta(): void {
@@ -1492,6 +1495,27 @@ class Oferta_Data_Schema {
 
     private static function clear_cycle_chain_caches(): void {
         self::$cycle_analysis_cache = null;
+        delete_transient('flacso_cycle_analysis');
+    }
+
+    public static function clear_all_oferta_transients($post_id = null): void {
+        if ($post_id !== null) {
+            $post = get_post($post_id);
+            if ($post && $post->post_type !== 'oferta-academica') {
+                return;
+            }
+        }
+        self::clear_cycle_chain_caches();
+
+        $terms = get_terms([
+            'taxonomy' => 'tipo-oferta-academica',
+            'hide_empty' => false,
+        ]);
+        if (!is_wp_error($terms) && is_array($terms)) {
+            foreach ($terms as $term) {
+                delete_transient('flacso_term_earliest_start_' . $term->term_id);
+            }
+        }
     }
 
     private static function add_cycle_issue(array &$issues, $offer_key, string $message): void {
@@ -1505,8 +1529,15 @@ class Oferta_Data_Schema {
     }
 
     private static function get_cycle_analysis(array $override_relations = []): array {
-        if (empty($override_relations) && is_array(self::$cycle_analysis_cache)) {
-            return self::$cycle_analysis_cache;
+        if (empty($override_relations)) {
+            if (is_array(self::$cycle_analysis_cache)) {
+                return self::$cycle_analysis_cache;
+            }
+            $cached = get_transient('flacso_cycle_analysis');
+            if (is_array($cached)) {
+                self::$cycle_analysis_cache = $cached;
+                return $cached;
+            }
         }
 
         $offer_ids = get_posts([
@@ -1765,6 +1796,7 @@ class Oferta_Data_Schema {
 
         if (empty($override_relations)) {
             self::$cycle_analysis_cache = $analysis;
+            set_transient('flacso_cycle_analysis', $analysis, DAY_IN_SECONDS);
         }
 
         return $analysis;

@@ -311,9 +311,50 @@ jQuery(function($){
         const o = $('#contenedor-genero-otra'), i = $('#genero_otra');
         if(this.value==='Otra'){ o.slideDown(300); i.prop('required',true); } else { o.slideUp(300); i.prop('required',false).val('').removeClass('is-valid is-invalid'); }
     });
+    function actualizarObligatoriedadArchivos() {
+        const completa = $('input[name="documentacion_completa"]:checked').val();
+        const fileInputs = form.find('input[type="file"]');
+        const esMaestria = $('input[name="es_maestria"]').val() === 'si';
+
+        fileInputs.each(function() {
+            const input = $(this);
+            const id = input.attr('id');
+            const label = form.find('label[for="' + id + '"]');
+            
+            // Determinar si este archivo debería ser requerido en el flujo completo
+            let debieraSerRequerido = false;
+            if (id === 'documento_identidad' || id === 'cv' || id === 'carta_motivacion' || id === 'titulo_grado') {
+                debieraSerRequerido = true;
+            } else if (id === 'carta_recomendacion_1' || id === 'carta_recomendacion_2') {
+                debieraSerRequerido = esMaestria;
+            }
+
+            if (completa === 'No') {
+                input.prop('required', false);
+                input.removeClass('is-invalid is-valid');
+                label.find('.text-danger').addClass('d-none');
+            } else {
+                if (debieraSerRequerido) {
+                    input.prop('required', true);
+                    label.find('.text-danger').removeClass('d-none');
+                } else {
+                    input.prop('required', false);
+                    label.find('.text-danger').addClass('d-none');
+                }
+            }
+        });
+    }
+
     $('input[name="documentacion_completa"]').on('change', function(){
         const f = $('#contenedor-documentacion-faltante'), i = $('#documentacion_faltante');
-        if(this.value==='No'){ f.slideDown(300); i.prop('required',true); } else { f.slideUp(300); i.prop('required',false).val('').removeClass('is-valid is-invalid'); }
+        if(this.value==='No'){ 
+            f.slideDown(300); 
+            i.prop('required',true); 
+        } else { 
+            f.slideUp(300); 
+            i.prop('required',false).val('').removeClass('is-valid is-invalid'); 
+        }
+        actualizarObligatoriedadArchivos();
     });
 
     // Validación en tiempo real básica
