@@ -117,6 +117,18 @@ jQuery(function($){
         `);
     };
 
+    const appendMetaTestEventCode = (targetUrl) => {
+        const redirectUrl = new URL(targetUrl, window.location.href);
+        const currentParams = new URLSearchParams(window.location.search);
+        const testEventCode = (currentParams.get('test_event_code') || '').trim();
+
+        if (testEventCode) {
+            redirectUrl.searchParams.set('test_event_code', testEventCode);
+        }
+
+        return redirectUrl.toString();
+    };
+
     const limpiarDialCodeDelInput = () => {
         if(!itiInstance) return;
         const input = document.getElementById('celular');
@@ -523,7 +535,7 @@ jQuery(function($){
                     currentUrl += '/';
                 }
                 const graciasUrl = currentUrl + 'gracias/?tipo=preinscripcion&pid=' + encodeURIComponent(config.idPosgrado || '');
-                window.location.href = graciasUrl;
+                window.location.href = appendMetaTestEventCode(graciasUrl);
             } else {
                 const msg = data.data || 'Error desconocido del servidor. Por favor, intente nuevamente.';
                 resultado.html(`

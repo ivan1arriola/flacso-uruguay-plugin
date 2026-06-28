@@ -322,11 +322,23 @@ function flacso_consultas_render_form( $attributes = array() ) {
 	<?php endif; ?>
 
 	<script>
-	jQuery(function($) {
-		const $form = $('#form-consultas');
-		const $submitBtn = $('#btn-enviar');
-		const $message = $('#form-consultas-mensaje');
-		const programa = $form.find('[name="titulo_posgrado"]').val() || '';
+		jQuery(function($) {
+			const $form = $('#form-consultas');
+			const $submitBtn = $('#btn-enviar');
+			const $message = $('#form-consultas-mensaje');
+			const programa = $form.find('[name="titulo_posgrado"]').val() || '';
+			const buildGraciasUrl = function(baseUrl, pid) {
+				const redirectUrl = new URL(baseUrl, window.location.href);
+				const currentParams = new URLSearchParams(window.location.search);
+				const testEventCode = (currentParams.get('test_event_code') || '').trim();
+
+				redirectUrl.searchParams.set('pid', String(pid || ''));
+				if (testEventCode) {
+					redirectUrl.searchParams.set('test_event_code', testEventCode);
+				}
+
+				return redirectUrl.toString();
+			};
 
 		if ($form.length && typeof window.flacsoMetaTrack === 'function') {
 			window.flacsoMetaTrack('ViewContent', {
@@ -375,7 +387,7 @@ function flacso_consultas_render_form( $attributes = array() ) {
 					const pid = $form.find('[name="id_pagina"]').val();
 					const urlBase = $form.find('[name="url_base"]').val();
 					const gracias = $form.find('[name="url_gracias"]').val() || (urlBase ? urlBase.replace(/\/$/, '') + '/gracias/' : '<?php echo esc_js( home_url( '/gracias/' ) ); ?>');
-					window.location.href = gracias + '?pid=' + encodeURIComponent(pid);
+					window.location.href = buildGraciasUrl(gracias, pid);
 				},
 				error: function() {
 					sessionStorage.setItem('consultaNombreCompleto',
@@ -385,7 +397,7 @@ function flacso_consultas_render_form( $attributes = array() ) {
 					const pid = $form.find('[name="id_pagina"]').val();
 					const urlBase = $form.find('[name="url_base"]').val();
 					const gracias = $form.find('[name="url_gracias"]').val() || (urlBase ? urlBase.replace(/\/$/, '') + '/gracias/' : '<?php echo esc_js( home_url( '/gracias/' ) ); ?>');
-					window.location.href = gracias + '?pid=' + encodeURIComponent(pid);
+					window.location.href = buildGraciasUrl(gracias, pid);
 				},
 				complete: function() { toggleLoading(false); }
 			});
@@ -996,4 +1008,3 @@ function flacso_consultas_register_block() {
 	);
 }
 add_action( 'init', 'flacso_consultas_register_block' );
-

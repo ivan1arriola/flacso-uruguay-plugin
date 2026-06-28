@@ -1459,6 +1459,18 @@ function validate_ci(ci) {
         }
     };
 
+    const appendMetaTestEventCode = (targetUrl) => {
+        const redirectUrl = new URL(targetUrl, window.location.href);
+        const currentParams = new URLSearchParams(window.location.search);
+        const testEventCode = (currentParams.get('test_event_code') || '').trim();
+
+        if (testEventCode) {
+            redirectUrl.searchParams.set('test_event_code', testEventCode);
+        }
+
+        return redirectUrl.toString();
+    };
+
     // Inicializar intl-tel-input con configuración completa (después de cargar scripts)
     const phoneInput = document.querySelector('#celular');
     if (phoneInput) {
@@ -2206,7 +2218,7 @@ function validate_ci(ci) {
                         currentUrl += '/';
                     }
                     const graciasUrl = currentUrl + 'gracias/?tipo=preinscripcion_seminario&pid=<?php echo $post->ID; ?>';
-                    window.location.href = graciasUrl;
+                    window.location.href = appendMetaTestEventCode(graciasUrl);
                     return;
                 } else {
                     console.warn('[Preinscripcion] ✗ Error en el envío - no se encontró contenedor de éxito');
