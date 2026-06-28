@@ -30,6 +30,8 @@ trait FLACSO_Formulario_Preinscripcion_Assets {
             'idPosgrado' => isset($info['id_posgrado']) ? $info['id_posgrado'] : '',
             'preinscripcionesCerradas' => !empty($info['preinscripcion_cerrada']),
             'mensajeCierre' => $this->obtener_mensaje_preinscripciones_cerradas(),
+            'valor' => isset($info['valor']) ? $info['valor'] : null,
+            'currency' => isset($info['currency']) ? $info['currency'] : null,
         ));
     }
 

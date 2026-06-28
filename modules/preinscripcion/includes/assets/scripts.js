@@ -501,6 +501,15 @@ jQuery(function($){
                 if (config.idPosgrado) {
                     pixelPayload.content_ids = ['oferta-' + String(config.idPosgrado)];
                 }
+
+                if (config.valor !== undefined && config.valor !== null && config.valor !== '') {
+                    pixelPayload.value = Number(config.valor);
+                    pixelPayload.currency = 'USD';
+                } else {
+                    pixelPayload.value = 0;
+                    pixelPayload.currency = 'USD';
+                }
+
                 trackMetaEvent('SubmitApplication', pixelPayload);
                 trackMetaEvent('Lead', pixelPayload);
 

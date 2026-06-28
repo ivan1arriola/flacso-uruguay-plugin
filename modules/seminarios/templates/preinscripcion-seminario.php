@@ -87,6 +87,21 @@ $modalidad = get_post_meta($seminario_id, '_seminario_modalidad', true);
 $creditos = get_post_meta($seminario_id, '_seminario_creditos', true);
 $carga_horaria = get_post_meta($seminario_id, '_seminario_carga_horaria', true);
 
+// Precios para Meta Pixel tracking
+$sem_valor_uyu = get_post_meta($seminario_id, '_seminario_valor_uyu', true);
+$sem_valor_usd = get_post_meta($seminario_id, '_seminario_valor_usd', true);
+$sem_tracking_value = 0;
+$sem_tracking_currency = 'USD';
+
+if ($sem_valor_usd !== '' && $sem_valor_usd !== null && (float)$sem_valor_usd > 0) {
+    $sem_tracking_value = (float) $sem_valor_usd;
+} elseif ($sem_valor_uyu !== '' && $sem_valor_uyu !== null && (float)$sem_valor_uyu > 0) {
+    $sem_tracking_value = round((float)$sem_valor_uyu / 40.0);
+    if ($sem_tracking_value <= 0) {
+        $sem_tracking_value = 1;
+    }
+}
+
 // Taxonomías
 
 // Variables de envío
@@ -1075,7 +1090,9 @@ button.flacso-btn-primary {
                     content_category: 'seminario',
                     content_ids: ['seminario-' + <?php echo wp_json_encode((string) $seminario_id); ?>],
                     status: 'completed',
-                    flacso_stage: 'preinscripcion_enviada'
+                    flacso_stage: 'preinscripcion_enviada',
+                    value: <?php echo $sem_tracking_value; ?>,
+                    currency: <?php echo wp_json_encode($sem_tracking_currency); ?>
                 });
             } catch (e) {
                 if (window.console && typeof window.console.warn === 'function') {
@@ -2174,7 +2191,9 @@ function validate_ci(ci) {
                     const pixelPayload = {
                         content_name: '<?php echo esc_js($seminario_titulo); ?>',
                         content_category: 'preinscripcion_seminario',
-                        status: 'completed'
+                        status: 'completed',
+                        value: <?php echo $sem_tracking_value; ?>,
+                        currency: <?php echo wp_json_encode($sem_tracking_currency); ?>
                     };
                     trackMetaEvent('SubmitApplication', pixelPayload);
                     

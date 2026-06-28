@@ -561,6 +561,110 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
     }
     
     /**
+     * Extrae un número float de una cadena de texto que contiene un precio.
+     */
+    private function extraer_numero_desde_texto_precio($str) {
+        if (!is_string($str)) {
+            return null;
+        }
+        $str = strip_tags($str);
+        $str = str_replace(' ', '', $str);
+        
+        // Si tiene formato de decimales con coma al final (ej: 15.000,00 o 15000,00)
+        if (preg_match('/(\d+[\.,]\d+)[\.,](\d{2})$/', $str, $matches)) {
+            $number_part = str_replace(array('.', ','), '', $matches[1]);
+            return (float) ($number_part . '.' . $matches[2]);
+        }
+        
+        // De lo contrario, remueve todo lo que no sea dígito
+        $digits = preg_replace('/[^\d]/', '', $str);
+        return $digits !== '' ? (float) $digits : null;
+    }
+
+    /**
+     * Obtiene el precio y divisa de una oferta académica de forma heurística.
+     */
+    private function obtener_precio_y_divisa_oferta($oferta_id) {
+        $oferta_id = (int) $oferta_id;
+        if ($oferta_id <= 0) {
+            return null;
+        }
+
+        $precios_filas_str = '';
+        $mostrar_usd = false;
+
+        $tabla_precio_id = (int) get_post_meta($oferta_id, 'tabla_precio_id', true);
+        if ($tabla_precio_id > 0) {
+            $precios_filas_str = get_post_meta($tabla_precio_id, 'precios_filas', true);
+            $mostrar_usd = get_post_meta($tabla_precio_id, 'mostrar_precios_dolares', true) === '1';
+        } else {
+            $precios_filas_str = get_post_meta($oferta_id, 'precios_filas', true);
+            $mostrar_usd = get_post_meta($oferta_id, 'mostrar_precios_dolares', true) === '1';
+        }
+
+        if (empty($precios_filas_str)) {
+            return null;
+        }
+
+        $rows = json_decode($precios_filas_str, true);
+        if (!is_array($rows) || empty($rows)) {
+            $rows = json_decode(wp_unslash($precios_filas_str), true);
+            if (!is_array($rows) || empty($rows)) {
+                return null;
+            }
+        }
+
+        $selected_row = null;
+
+        // Fase 1: Buscar concepto que contenga "total" (case-insensitive)
+        foreach ($rows as $row) {
+            $concept = isset($row['concept']) ? mb_strtolower($row['concept']) : '';
+            if (strpos($concept, 'total') !== false) {
+                $selected_row = $row;
+                break;
+            }
+        }
+
+        // Fase 2: Buscar fila destacada ("highlight")
+        if (!$selected_row) {
+            foreach ($rows as $row) {
+                if (!empty($row['highlight'])) {
+                    $selected_row = $row;
+                    break;
+                }
+            }
+        }
+
+        // Fase 3: Tomar la primera fila válida
+        if (!$selected_row && !empty($rows)) {
+            $selected_row = $rows[0];
+        }
+
+        if (!$selected_row) {
+            return null;
+        }
+
+        $uy_val = isset($selected_row['uy']) ? $this->extraer_numero_desde_texto_precio($selected_row['uy']) : null;
+        $us_val = isset($selected_row['us']) ? $this->extraer_numero_desde_texto_precio($selected_row['us']) : null;
+
+        if ($us_val !== null && $us_val > 0) {
+            return array(
+                'value' => $us_val,
+                'currency' => 'USD'
+            );
+        } elseif ($uy_val !== null && $uy_val > 0) {
+            // Convert UYU to USD using a standard exchange rate of 40 UYU per USD, rounded
+            $converted_val = round($uy_val / 40.0);
+            return array(
+                'value' => $converted_val > 0 ? $converted_val : 1,
+                'currency' => 'USD'
+            );
+        }
+
+        return null;
+    }
+
+    /**
      * Obtiene la información del posgrado para el template
      */
     private function obtener_info_posgrado_para_template($pagina_padre_id) {
@@ -578,7 +682,17 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
             'preinscripcion_cerrada' => $this->formulario_preinscripcion_esta_cerrado($id_posgrado),
             'imagen_destacada' => '',
             'convenios_validos' => $this->obtener_convenios_validos(),
+            'valor' => null,
+            'currency' => null,
         );
+        
+        if ($offer_id > 0) {
+            $precio_info = $this->obtener_precio_y_divisa_oferta($offer_id);
+            if ($precio_info) {
+                $info['valor'] = $precio_info['value'];
+                $info['currency'] = $precio_info['currency'];
+            }
+        }
         
         if ($id_posgrado) {
             $imagen_url = get_the_post_thumbnail_url($id_posgrado, 'full');
