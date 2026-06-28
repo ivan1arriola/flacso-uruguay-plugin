@@ -292,8 +292,8 @@ class FLACSO_Meta_Tracking {
             if (!empty($settings['test_event_code'])) {
                 $configured_code = $settings['test_event_code'];
                 $has_cookie = !empty($_COOKIE['flacso_meta_test_event_code']) && $_COOKIE['flacso_meta_test_event_code'] === $configured_code;
-                $has_get_param = !empty($_GET['test_event_code']) && preg_replace('/[^A-Za-z0-9]/', '', sanitize_text_field(wp_unslash($_GET['test_event_code']))) === $configured_code;
-                $is_admin_action = is_admin() && current_user_can('manage_options');
+                $has_get_param = !empty($_GET['test_event_code']) && preg_replace('/[^A-Za-z0-9]/', '', (string) $_GET['test_event_code']) === $configured_code;
+                $is_admin_action = is_admin() && (!function_exists('wp_doing_ajax') || !wp_doing_ajax());
                 
                 if (!$has_cookie && !$has_get_param && !$is_admin_action) {
                     $settings['test_event_code'] = '';
@@ -573,7 +573,7 @@ class FLACSO_Meta_Tracking {
         $domain = defined('COOKIE_DOMAIN') ? COOKIE_DOMAIN : '';
 
         if (isset($_GET['test_event_code'])) {
-            $code = preg_replace('/[^A-Za-z0-9]/', '', sanitize_text_field(wp_unslash($_GET['test_event_code'])));
+            $code = preg_replace('/[^A-Za-z0-9]/', '', (string) $_GET['test_event_code']);
             if ($code !== '') {
                 setcookie('flacso_meta_test_event_code', $code, time() + 7200, $path, $domain, is_ssl(), true);
                 $_COOKIE['flacso_meta_test_event_code'] = $code;
