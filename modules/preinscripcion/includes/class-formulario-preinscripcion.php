@@ -563,7 +563,24 @@ class FLACSO_Formulario_Preinscripcion_Final {
             $payload = array(
                 'test' => true,
                 'origen' => 'wp_preinscripciones_test',
-                'timestamp' => current_time('mysql')
+                'timestamp' => current_time('mysql'),
+                'posgrado' => array(
+                    'id' => 9999,
+                    'titulo' => 'Prueba de Conectividad Webhook',
+                    'es_maestria' => 'no'
+                ),
+                'datos' => array(
+                    'correo' => 'test@flacso.edu.uy',
+                    'nombre1' => 'Test',
+                    'apellido1' => 'Test',
+                    'celular' => '00000000',
+                    'pais_residencia' => 'Uruguay'
+                ),
+                'archivos' => array(),
+                'meta' => array(
+                    'timestamp_client' => current_time('c'),
+                    'origen' => 'wp_preinscripciones_test'
+                )
             );
             $body_json = wp_json_encode($payload);
 
