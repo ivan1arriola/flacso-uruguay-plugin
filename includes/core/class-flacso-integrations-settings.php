@@ -512,7 +512,9 @@ class FLACSO_Integrations_Settings {
                 </header>
 
                 <?php settings_errors(); ?>
+                <?php self::render_migration_banner(); ?>
                 <?php self::render_inline_notices(); ?>
+
 
                 <form method="post" action="options.php">
                     <?php settings_fields(self::SETTINGS_GROUP); ?>
@@ -609,7 +611,9 @@ class FLACSO_Integrations_Settings {
                 </header>
 
                 <?php settings_errors(); ?>
+                <?php self::render_migration_banner(); ?>
                 <?php self::render_inline_notices(); ?>
+
 
                 <form method="post" action="options.php">
                     <?php settings_fields(self::SETTINGS_GROUP); ?>
@@ -2130,6 +2134,28 @@ class FLACSO_Integrations_Settings {
             <?php submit_button(__('Ejecutar prueba', 'flacso-uruguay'), 'secondary', 'submit', false); ?>
             <div class="flacso-test-result-placeholder"></div>
         </form>
+        <?php
+    }
+
+    private static function render_migration_banner(): void {
+        $external_editor_url = get_option(self::OPTION_EXTERNAL_EDITOR_URL, 'https://editor-flacso-uy.vercel.app');
+        $settings_url = rtrim($external_editor_url, '/') . '/ajustes';
+        ?>
+        <div class="flacso-migration-banner" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #f8fafc; padding: 1.75rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1); display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; border-left: 5px solid #0284c7;">
+            <div style="flex: 1; min-width: 280px;">
+                <h3 style="margin: 0 0 0.5rem 0; color: #38bdf8; font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; font-family: system-ui;">
+                    <span>⚙️</span> <?php esc_html_e('Administración Centralizada Activa', 'flacso-uruguay'); ?>
+                </h3>
+                <p style="margin: 0; color: #cbd5e1; font-size: 0.95rem; line-height: 1.5; font-family: system-ui;">
+                    <?php esc_html_e('Para evitar inconsistencias, te recomendamos administrar todas las credenciales e integraciones directamente desde el panel de Ajustes del Editor Externo.', 'flacso-uruguay'); ?>
+                </p>
+            </div>
+            <div>
+                <a href="<?php echo esc_url($settings_url); ?>" target="_blank" rel="noopener noreferrer" style="background: #0284c7; color: #ffffff; padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; transition: background 0.2s ease; display: inline-flex; align-items: center; gap: 0.5rem; font-family: system-ui;">
+                    <?php esc_html_e('Ir a Ajustes del Editor', 'flacso-uruguay'); ?> <span>↗</span>
+                </a>
+            </div>
+        </div>
         <?php
     }
 
