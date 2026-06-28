@@ -501,6 +501,7 @@ class FLACSO_Formulario_Preinscripcion_Final {
 
         if (is_wp_error($result)) {
             error_log('Error en webhook preinscripciones: ' . $result->get_error_message());
+            $this->send_telegram_error_notification('WP_Error / Fallo de Red', $result->get_error_message(), $payload);
             $this->send_json_error('Error de conexión con el servidor. Por favor, intente nuevamente.');
         }
 
@@ -524,6 +525,8 @@ class FLACSO_Formulario_Preinscripcion_Final {
         } elseif ($body) {
             $error_msg = "Error: $body";
         }
+
+        $this->send_telegram_error_notification("HTTP $status", $error_msg, $payload);
         $this->send_json_error($error_msg);
     }
     
@@ -641,6 +644,69 @@ class FLACSO_Formulario_Preinscripcion_Final {
         $resto = $suma % 10;
         $esperado = ($resto === 0) ? 0 : 10 - $resto;
         return $verificador === $esperado;
+    }
+
+    private function send_telegram_error_notification(string $error_type, string $error_msg, array $payload): void {
+        if (!function_exists('fc_send_telegram_message')) {
+            return;
+        }
+
+        $webhook_url = trim((string) get_option('flacso_preinscripciones_webhook_url', ''));
+        if (empty($webhook_url)) {
+            $webhook_url = trim((string) get_option('fc_oferta_webhook_url', ''));
+        }
+        if (empty($webhook_url) && defined('FLACSO_WEBHOOK_URL')) {
+            $webhook_url = trim((string) FLACSO_WEBHOOK_URL);
+        }
+
+        $datos = $payload['datos'] ?? [];
+        $posgrado = $payload['posgrado'] ?? [];
+
+        $nombre = trim(($datos['nombre1'] ?? '') . ' ' . ($datos['nombre2'] ?? '') . ' ' . ($datos['apellido1'] ?? '') . ' ' . ($datos['apellido2'] ?? ''));
+        if ($nombre === '') {
+            $nombre = 'No especificado';
+        }
+        $email = $datos['correo'] ?? 'No especificado';
+        $telefono = $datos['celular'] ?? 'No especificado';
+        $documento = trim(($datos['tipo_documento'] ?? '') . ' ' . ($datos['documento'] ?? ''));
+        if ($documento === '') {
+            $documento = 'No especificado';
+        }
+        $carrera = $posgrado['titulo'] ?? 'No especificada';
+        
+        $site_name = wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES);
+        $fecha = current_time('d/m/Y H:i:s');
+
+        // Limpiar código HTML del cuerpo de error (por ejemplo, el HTML del error 400 de Google)
+        $error_clean = strip_tags($error_msg);
+        $error_clean = html_entity_decode($error_clean, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $error_clean = preg_replace('/\s+/', ' ', $error_clean);
+        $error_clean = trim($error_clean);
+        if (strlen($error_clean) > 400) {
+            $error_clean = substr($error_clean, 0, 397) . '...';
+        }
+
+        $msg = "🚨 <b>URGENTE: Fallo al enviar Preinscripción</b>\n";
+        $msg .= "━━━━━━━━━━━━━━━━━━━━━━\n\n";
+        $msg .= "<b>📍 Sitio:</b> " . htmlspecialchars($site_name, ENT_QUOTES, 'UTF-8') . "\n";
+        $msg .= "<b>📅 Fecha:</b> " . $fecha . "\n";
+        $msg .= "<b>🔗 Webhook:</b> <code>" . htmlspecialchars($webhook_url, ENT_QUOTES, 'UTF-8') . "</code>\n\n";
+
+        $msg .= "<b>🎓 Posgrado:</b>\n";
+        $msg .= "  " . htmlspecialchars($carrera, ENT_QUOTES, 'UTF-8') . " (ID: " . intval($posgrado['id'] ?? 0) . ")\n\n";
+
+        $msg .= "<b>👤 Datos del Alumno:</b>\n";
+        $msg .= "  <b>Nombre:</b> " . htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8') . "\n";
+        $msg .= "  <b>Documento:</b> " . htmlspecialchars($documento, ENT_QUOTES, 'UTF-8') . "\n";
+        $msg .= "  <b>Email:</b> " . htmlspecialchars($email, ENT_QUOTES, 'UTF-8') . "\n";
+        $msg .= "  <b>Teléfono:</b> " . htmlspecialchars($telefono, ENT_QUOTES, 'UTF-8') . "\n\n";
+
+        $msg .= "<b>❌ Detalles del Error (" . htmlspecialchars($error_type, ENT_QUOTES, 'UTF-8') . "):</b>\n";
+        $msg .= "<pre>" . htmlspecialchars($error_clean, ENT_QUOTES, 'UTF-8') . "</pre>\n\n";
+        $msg .= "━━━━━━━━━━━━━━━━━━━━━━\n";
+        $msg .= "⚠️ <i>Por favor, contactar al alumno a la brevedad para realizar la preinscripción de forma manual.</i>";
+
+        fc_send_telegram_message($msg);
     }
 }
 
