@@ -591,75 +591,14 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
             return null;
         }
 
-        $precios_filas_str = '';
-        $mostrar_usd = false;
-
-        $tabla_precio_id = (int) get_post_meta($oferta_id, 'tabla_precio_id', true);
-        if ($tabla_precio_id > 0) {
-            $precios_filas_str = get_post_meta($tabla_precio_id, 'precios_filas', true);
-            $mostrar_usd = get_post_meta($tabla_precio_id, 'mostrar_precios_dolares', true) === '1';
-        } else {
-            $precios_filas_str = get_post_meta($oferta_id, 'precios_filas', true);
-            $mostrar_usd = get_post_meta($oferta_id, 'mostrar_precios_dolares', true) === '1';
-        }
-
-        if (empty($precios_filas_str)) {
-            return null;
-        }
-
-        $rows = json_decode($precios_filas_str, true);
-        if (!is_array($rows) || empty($rows)) {
-            $rows = json_decode(wp_unslash($precios_filas_str), true);
-            if (!is_array($rows) || empty($rows)) {
-                return null;
+        if (function_exists('flacso_meta_get_price_usd')) {
+            $value = flacso_meta_get_price_usd($oferta_id);
+            if ($value > 0) {
+                return array(
+                    'value' => $value,
+                    'currency' => 'USD'
+                );
             }
-        }
-
-        $selected_row = null;
-
-        // Fase 1: Buscar concepto que contenga "total" (case-insensitive)
-        foreach ($rows as $row) {
-            $concept = isset($row['concept']) ? mb_strtolower($row['concept']) : '';
-            if (strpos($concept, 'total') !== false) {
-                $selected_row = $row;
-                break;
-            }
-        }
-
-        // Fase 2: Buscar fila destacada ("highlight")
-        if (!$selected_row) {
-            foreach ($rows as $row) {
-                if (!empty($row['highlight'])) {
-                    $selected_row = $row;
-                    break;
-                }
-            }
-        }
-
-        // Fase 3: Tomar la primera fila válida
-        if (!$selected_row && !empty($rows)) {
-            $selected_row = $rows[0];
-        }
-
-        if (!$selected_row) {
-            return null;
-        }
-
-        $uy_val = isset($selected_row['uy']) ? $this->extraer_numero_desde_texto_precio($selected_row['uy']) : null;
-        $us_val = isset($selected_row['us']) ? $this->extraer_numero_desde_texto_precio($selected_row['us']) : null;
-
-        if ($us_val !== null && $us_val > 0) {
-            return array(
-                'value' => $us_val,
-                'currency' => 'USD'
-            );
-        } elseif ($uy_val !== null && $uy_val > 0) {
-            // Convert UYU to USD using a standard exchange rate of 40 UYU per USD, rounded
-            $converted_val = round($uy_val / 40.0);
-            return array(
-                'value' => $converted_val > 0 ? $converted_val : 1,
-                'currency' => 'USD'
-            );
         }
 
         return null;

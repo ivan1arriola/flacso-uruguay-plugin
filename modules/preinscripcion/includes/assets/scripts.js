@@ -6,12 +6,12 @@
 jQuery(function($){
     'use strict';
 
-    const trackMetaEvent = (eventName, params) => {
+    const trackMetaEvent = (eventName, customData, options) => {
         if (typeof window.flacsoMetaTrack !== 'function') {
             return;
         }
         try {
-            window.flacsoMetaTrack(eventName, params || {});
+            window.flacsoMetaTrack(eventName, customData || {}, options);
         } catch (e) {
             console.warn('[Preinscripcion] Error enviando evento Meta Pixel:', e);
         }
@@ -602,13 +602,14 @@ jQuery(function($){
                     status: 'completed',
                     flacso_stage: 'preinscripcion_enviada'
                 };
-                if (em_hash) pixelPayload.em = em_hash;
-                if (ph_hash) pixelPayload.ph = ph_hash;
-                if (fn_hash) pixelPayload.fn = fn_hash;
-                if (ln_hash) pixelPayload.ln = ln_hash;
-                if (country_hash) pixelPayload.country = country_hash;
-                if (db_hash) pixelPayload.db = db_hash;
-                if (ge_hash) pixelPayload.ge = ge_hash;
+                const userData = {};
+                if (em_hash) userData.em = em_hash;
+                if (ph_hash) userData.ph = ph_hash;
+                if (fn_hash) userData.fn = fn_hash;
+                if (ln_hash) userData.ln = ln_hash;
+                if (country_hash) userData.country = country_hash;
+                if (db_hash) userData.db = db_hash;
+                if (ge_hash) userData.ge = ge_hash;
 
                 if (config.idPosgrado) {
                     pixelPayload.content_ids = ['oferta-' + String(config.idPosgrado)];
@@ -622,8 +623,7 @@ jQuery(function($){
                     pixelPayload.currency = 'USD';
                 }
 
-                trackMetaEvent('SubmitApplication', pixelPayload);
-                trackMetaEvent('Lead', pixelPayload);
+                trackMetaEvent('SubmitApplication', pixelPayload, { userData });
 
                 // Guardar en sessionStorage por si falla la obtención por pid
                 sessionStorage.setItem('consultaPrograma', posgrado);

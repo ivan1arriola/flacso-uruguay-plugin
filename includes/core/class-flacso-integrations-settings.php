@@ -39,6 +39,7 @@ class FLACSO_Integrations_Settings {
     private const OPTION_META_TEST_EVENT_CODE = 'flacso_meta_test_event_code';
     private const OPTION_META_TRACK_PAGEVIEW = 'flacso_meta_track_pageview';
     private const OPTION_META_LAST_TEST_RESULT = 'flacso_meta_last_test_result';
+    private const OPTION_USD_EXCHANGE_RATE = 'flacso_usd_exchange_rate';
 
     public static function init(): void {
         if (!is_admin()) {
@@ -358,6 +359,16 @@ class FLACSO_Integrations_Settings {
                 'type' => 'boolean',
                 'sanitize_callback' => [self::class, 'sanitize_checkbox'],
                 'default' => 1,
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_USD_EXCHANGE_RATE,
+            [
+                'type' => 'number',
+                'sanitize_callback' => 'absint',
+                'default' => 40,
             ]
         );
     }
@@ -2217,6 +2228,13 @@ class FLACSO_Integrations_Settings {
                     'password',
                     '6LeIxAcTAAAAA...',
                     __('Clave privada usada para validar reCAPTCHA en servidor.', 'flacso-uruguay')
+                );
+                self::render_input_field(
+                    self::OPTION_USD_EXCHANGE_RATE,
+                    __('Tipo de cambio UYU a USD', 'flacso-uruguay'),
+                    'number',
+                    '40',
+                    __('Valor utilizado para calcular el precio en dólares para eventos de Meta.', 'flacso-uruguay')
                 );
                 ?>
             </div>
