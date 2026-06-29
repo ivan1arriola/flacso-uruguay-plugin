@@ -26,9 +26,5 @@ run_python() {
   return 1
 }
 
-echo "[pre-commit] Bumping plugin version..."
-run_python .github/scripts/bump_plugin_version.py
-git add flacso-uruguay.php
-
 echo "[pre-commit] Running encoding checks..."
 run_python .github/scripts/check_encoding.py

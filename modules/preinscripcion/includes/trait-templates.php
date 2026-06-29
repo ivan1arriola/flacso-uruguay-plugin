@@ -115,39 +115,20 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
         
         if (($es_preinscripcion || $es_carta) && (is_singular('page') || is_singular('oferta-academica')) && $post) {
             if ($es_preinscripcion) {
-                // Lógica de preinscripción
-                // Always load the template; the template will handle displaying the closed message if not active
-                $overridden = locate_template(array('preinscripcion-template.php'));
+                $overridden = locate_template(array('templates/preinscripciones/template-preinscripcion-oferta-academica.php'));
                 if ($overridden !== '') {
                     add_filter('wp_title', array($this, 'modificar_titulo_preinscripcion'), 10, 3);
                     add_filter('document_title_parts', array($this, 'modificar_titulo_parts_preinscripcion'));
                     add_action('wp_head', array($this, 'add_og_meta_tags'), 5);
                     return $overridden;
-                }
-
-                $custom_template = plugin_dir_path(dirname(__FILE__)) . 'templates/preinscripcion-template.php';
-                if (file_exists($custom_template)) {
-                    add_filter('wp_title', array($this, 'modificar_titulo_preinscripcion'), 10, 3);
-                    add_filter('document_title_parts', array($this, 'modificar_titulo_parts_preinscripcion'));
-                    add_action('wp_head', array($this, 'add_og_meta_tags'), 5);
-                    return $custom_template;
                 }
             } elseif ($es_carta) {
-                // Lógica de carta de presentación
-                $overridden = locate_template(array('carta-template.php'));
+                $overridden = locate_template(array('templates/preinscripciones/carta-template.php'));
                 if ($overridden !== '') {
                     add_filter('wp_title', array($this, 'modificar_titulo_carta'), 10, 3);
                     add_filter('document_title_parts', array($this, 'modificar_titulo_parts_carta'));
                     add_action('wp_head', array($this, 'add_og_meta_tags'), 5);
                     return $overridden;
-                }
-
-                $custom_template = plugin_dir_path(dirname(__FILE__)) . 'templates/carta-template.php';
-                if (file_exists($custom_template)) {
-                    add_filter('wp_title', array($this, 'modificar_titulo_carta'), 10, 3);
-                    add_filter('document_title_parts', array($this, 'modificar_titulo_parts_carta'));
-                    add_action('wp_head', array($this, 'add_og_meta_tags'), 5);
-                    return $custom_template;
                 }
             }
         }
@@ -430,29 +411,35 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
     }
     
     /**
-     * Obtiene la ruta del template personalizado
+     * Expone el contexto de la plantilla virtual de preinscripción para que el theme
+     * pueda componer la vista sin delegar el render completo al plugin.
      */
-    private function obtener_ruta_template() {
-        return plugin_dir_path(dirname(__FILE__)) . 'templates/preinscripcion-template.php';
+    public function get_preinscripcion_template_context(): ?array {
+        global $post;
+
+        if (!($post instanceof WP_Post)) {
+            return null;
+        }
+
+        $pagina_padre_id = (int) $post->ID;
+        if ($pagina_padre_id <= 0) {
+            return null;
+        }
+
+        return $this->obtener_info_posgrado_para_template($pagina_padre_id);
     }
-    
+
     /**
      * Renderiza el contenido del formulario de preinscripción
      */
     public function render_template_preinscripcion() {
-        global $post;
-        
-        // Para páginas virtuales, el $post es la página padre
-        // No hay página hijo real, así que obtenemos el ID del padre directamente
-        $pagina_padre_id = $post->ID;
-        
-        if (!$pagina_padre_id) {
+        $info_posgrado = $this->get_preinscripcion_template_context();
+
+        if (!is_array($info_posgrado)) {
             echo '<div class="error"><p>Error: No se pudo determinar el programa de posgrado.</p></div>';
             return;
         }
-        
-        $info_posgrado = $this->obtener_info_posgrado_para_template($pagina_padre_id);
-        
+
         ?>
         <div class="flacso-preinscripciones-container">
             <?php $this->render_hero_header($info_posgrado); ?>

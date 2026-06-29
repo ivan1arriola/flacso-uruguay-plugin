@@ -273,15 +273,14 @@ if (!function_exists('flacso_homepage_builder_template_takeover')) {
             return $template;
         }
 
-        $takeover_template = FLACSO_MAIN_PAGE_MODULE_PATH . 'templates/homepage-takeover.php';
-        if (!is_readable($takeover_template)) {
-            return $template;
+        $theme_front_page = locate_template('front-page.php');
+        if ($theme_front_page !== '') {
+            return $theme_front_page;
         }
 
-        return $takeover_template;
+        return $template;
     }
 }
 
 add_filter('template_include', 'flacso_homepage_builder_template_takeover', 99);
-
 

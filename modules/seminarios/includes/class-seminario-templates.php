@@ -27,11 +27,6 @@ class Seminario_Templates
             if ($overridden !== '') {
                 return $overridden;
             }
-
-            $plugin_template = FLACSO_SEMINARIO_PATH . 'templates/single-seminario.php';
-            if (file_exists($plugin_template)) {
-                return $plugin_template;
-            }
         }
         return $template;
     }
@@ -40,16 +35,10 @@ class Seminario_Templates
     {
         $is_endpoint = get_query_var('flacso_preinscripcion');
         if ($is_endpoint) {
-            $overridden = locate_template(array('preinscripcion-seminario.php'));
+            $overridden = locate_template(array('templates/preinscripciones/preinscripcion-seminario.php'));
             if ($overridden !== '') {
                 status_header(200);
                 return $overridden;
-            }
-
-            $plugin_template = FLACSO_SEMINARIO_PATH . 'templates/preinscripcion-seminario.php';
-            if (file_exists($plugin_template)) {
-                status_header(200);
-                return $plugin_template;
             }
         }
         return $template;
@@ -219,11 +208,6 @@ class Seminario_Templates
             if ($overridden !== '') {
                 return $overridden;
             }
-
-            $plugin_template = FLACSO_SEMINARIO_PATH . 'templates/seminarios-listado.php';
-            if (file_exists($plugin_template)) {
-                return $plugin_template;
-            }
         }
         return $template;
     }
@@ -234,11 +218,6 @@ class Seminario_Templates
             $overridden = locate_template(array('consulta-seminario.php'));
             if ($overridden !== '') {
                 return $overridden;
-            }
-
-            $plugin_template = FLACSO_SEMINARIO_PATH . 'templates/consulta-seminario.php';
-            if (file_exists($plugin_template)) {
-                return $plugin_template;
             }
         }
         return $template;

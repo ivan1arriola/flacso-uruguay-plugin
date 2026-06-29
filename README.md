@@ -87,7 +87,6 @@ El repositorio incluye un chequeo de:
 - BOM (UTF-8/UTF-16/UTF-32)
 - UTF-8 invalido
 - patrones tipicos de mojibake
-- incremento automatico de version del plugin en `flacso-uruguay.php` (patch `x.y.z`, con acarreo decimal entre segmentos)
 
 Para que se ejecute automaticamente antes de cada commit local:
 
@@ -99,9 +98,8 @@ Para que se ejecute automaticamente antes de cada commit local:
 Resultado esperado: `.githooks`
 
 Desde ese momento, cada `git commit`:
-1. incrementa la version patch del plugin (`* Version:` y `FLACSO_URUGUAY_VERSION`), manteniendo cada segmento entre `0` y `9` y propagando el acarreo hacia la izquierda,
-2. corre `.github/scripts/check_encoding.py`,
-3. bloquea el commit si encuentra problemas de encoding.
+1. corre `.github/scripts/check_encoding.py`,
+2. bloquea el commit si encuentra problemas de encoding.
 
 ## Actualizacion del plugin
 

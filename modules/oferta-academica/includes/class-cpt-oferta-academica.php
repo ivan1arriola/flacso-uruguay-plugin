@@ -55,12 +55,11 @@ class CPT_Oferta_Academica {
             if ($template) {
                 include $template;
             } else {
-                get_header();
-                echo Oferta_Renderer::render_oferta_pagina([
-                    'heroTitle' => 'Oferta Académica',
-                    'heroImageId' => 22981,
-                ]);
-                get_footer();
+                wp_die(
+                    esc_html__('Falta el template page-formacion.php en el theme activo.', 'flacso-uruguay'),
+                    esc_html__('Template no disponible', 'flacso-uruguay'),
+                    ['response' => 500]
+                );
             }
             exit;
         }

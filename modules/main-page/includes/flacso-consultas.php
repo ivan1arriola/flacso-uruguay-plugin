@@ -905,14 +905,9 @@ function flacso_render_gracias_virtual() {
 						if ($overridden !== '') {
 							include $overridden;
 						} else {
-							$template_path = FLACSO_MAIN_PAGE_MODULE_PATH . 'templates/' . $template_name;
-							if ( file_exists( $template_path ) ) {
-								include $template_path;
-							} else {
-								// Fallback if template is missing
-								echo '<h1 class="mb-3" style="color: var(--global-palette1);">¡Tu consulta fue enviada!</h1>';
-								echo '<div class="flacso-gracias-mensaje mb-3"><p class="lead mb-2">Hemos recibido tu consulta correctamente.</p></div>';
-							}
+							// Fallback mínimo genérico si el theme no define una vista específica.
+							echo '<h1 class="mb-3" style="color: var(--global-palette1);">¡Tu consulta fue enviada!</h1>';
+							echo '<div class="flacso-gracias-mensaje mb-3"><p class="lead mb-2">Hemos recibido tu consulta correctamente.</p></div>';
 						}
 					?>
 

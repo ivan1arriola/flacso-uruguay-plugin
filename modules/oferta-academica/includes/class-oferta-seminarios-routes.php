@@ -48,11 +48,6 @@ class Oferta_Seminarios_Routes {
             if ($overridden !== '') {
                 return $overridden;
             }
-
-            $plugin_template = self::template_path('taxonomy-tipo-oferta-academica.php');
-            if (file_exists($plugin_template)) {
-                return $plugin_template;
-            }
         }
 
         $is_seminarios_endpoint = self::is_seminarios_endpoint_request();
@@ -119,12 +114,6 @@ class Oferta_Seminarios_Routes {
             $overridden = locate_template(array($template_name));
             if ($overridden !== '') {
                 return $overridden;
-            }
-
-            $plugin_template = self::template_path($template_name);
-            
-            if (file_exists($plugin_template)) {
-                return $plugin_template;
             }
         }
 
