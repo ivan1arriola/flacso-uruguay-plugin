@@ -479,10 +479,50 @@ jQuery(function($){
         resultado[0].scrollIntoView({ behavior:'smooth', block:'start' });
     }
     
-    async function hashForMeta(value) {
-        if (!value) return undefined;
+    function normalizeMetaGender(value) {
+        const normalized = String(value || '').trim().toLowerCase();
+        if (!normalized) return '';
+        if (['f', 'female', 'mujer', 'mujer trans'].includes(normalized)) return 'f';
+        if (['m', 'male', 'varon', 'varón', 'varon trans', 'varón trans'].includes(normalized)) return 'm';
+        return '';
+    }
+
+    function normalizeMetaBirthDate(value) {
+        const raw = String(value || '').trim();
+        if (!raw) return '';
+
+        const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (isoMatch) {
+            return `${isoMatch[1]}${isoMatch[2]}${isoMatch[3]}`;
+        }
+
+        const digits = raw.replace(/\D/g, '');
+        return digits.length === 8 ? digits : '';
+    }
+
+    function getCountryIsoForMeta($input) {
+        if (!$input || !$input.length) return '';
+
         try {
-            const str = value.trim().toLowerCase();
+            if (typeof $input.countrySelect === 'function') {
+                const data = $input.countrySelect('getSelectedCountryData');
+                const iso = (data && data.iso2) ? String(data.iso2).trim().toLowerCase() : '';
+                if (iso) return iso;
+            }
+        } catch (e) {}
+
+        const raw = String($input.val() || '').trim().toLowerCase();
+        return /^[a-z]{2}$/.test(raw) ? raw : '';
+    }
+
+    async function hashForMeta(value, normalizer) {
+        const str = typeof normalizer === 'function'
+            ? normalizer(value)
+            : String(value || '').trim().toLowerCase();
+        if (!str || !window.crypto || !window.crypto.subtle || typeof window.TextEncoder !== 'function') {
+            return undefined;
+        }
+        try {
             const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
             return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
         } catch (e) {
@@ -537,10 +577,24 @@ jQuery(function($){
                 const correo = ($('#correo').val() || '').trim();
                 const celularE164 = ($('#celular_e164').val() || '').trim();
                 const posgrado = config.tituloPosgrado || 'el posgrado seleccionado';
-                const fecha = new Date().toLocaleString();
-
-                const em_hash = await hashForMeta(correo);
-                const ph_hash = await hashForMeta(celularE164.replace(/\D/g, ''));
+                const countryIso = getCountryIsoForMeta($('#pais_residencia'));
+                const [
+                    em_hash,
+                    ph_hash,
+                    fn_hash,
+                    ln_hash,
+                    country_hash,
+                    db_hash,
+                    ge_hash
+                ] = await Promise.all([
+                    hashForMeta(correo),
+                    hashForMeta(celularE164, value => String(value || '').replace(/\D/g, '')),
+                    hashForMeta($('#nombre1').val()),
+                    hashForMeta($('#apellido1').val()),
+                    hashForMeta(countryIso, value => String(value || '').trim().toLowerCase()),
+                    hashForMeta($('#fecha_nacimiento').val(), normalizeMetaBirthDate),
+                    hashForMeta($('#genero').val(), normalizeMetaGender)
+                ]);
 
                 const pixelPayload = {
                     content_name: posgrado,
@@ -550,6 +604,11 @@ jQuery(function($){
                 };
                 if (em_hash) pixelPayload.em = em_hash;
                 if (ph_hash) pixelPayload.ph = ph_hash;
+                if (fn_hash) pixelPayload.fn = fn_hash;
+                if (ln_hash) pixelPayload.ln = ln_hash;
+                if (country_hash) pixelPayload.country = country_hash;
+                if (db_hash) pixelPayload.db = db_hash;
+                if (ge_hash) pixelPayload.ge = ge_hash;
 
                 if (config.idPosgrado) {
                     pixelPayload.content_ids = ['oferta-' + String(config.idPosgrado)];
