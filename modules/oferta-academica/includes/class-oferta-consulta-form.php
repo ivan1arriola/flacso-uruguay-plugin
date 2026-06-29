@@ -447,13 +447,22 @@ class Oferta_Consulta_Form {
             );
         }
 
+        $webhook_token = get_option('flacso_webhook_token', '');
+
+        $headers = [
+            'Content-Type' => 'application/json; charset=utf-8',
+            'Accept' => 'application/json',
+        ];
+
+        if ($webhook_token !== '') {
+            $headers['X-FLACSO-Webhook-Token'] = $webhook_token;
+            $headers['Authorization'] = 'Bearer ' . $webhook_token;
+        }
+
         $response = wp_safe_remote_post($endpoint, [
             'timeout' => 20,
             'redirection' => 3,
-            'headers' => [
-                'Content-Type' => 'application/json; charset=utf-8',
-                'Accept' => 'application/json',
-            ],
+            'headers' => $headers,
             'body' => $payload_json,
         ]);
 
@@ -474,9 +483,7 @@ class Oferta_Consulta_Form {
         $status_code = (int) wp_remote_retrieve_response_code($response);
         $response_body = (string) wp_remote_retrieve_body($response);
 
-        // Confirmación de entrega: 2xx y 400 (requerimiento de integración actual).
-        $is_success_status = ($status_code >= 200 && $status_code < 300) || $status_code === 400;
-        if (!$is_success_status) {
+        if ($status_code < 200 || $status_code >= 300) {
             $error_payload = [
                 'message' => sprintf(__('El webhook respondió con código %d. La consulta no se confirmó.', 'flacso-oferta-academica'), $status_code),
             ];
@@ -499,12 +506,29 @@ class Oferta_Consulta_Form {
             );
         }
 
+        $decoded_body = json_decode($response_body, true);
+        if (!is_array($decoded_body)) {
+            wp_send_json_error(
+                ['message' => __('El webhook respondió con un formato inválido.', 'flacso-oferta-academica')],
+                502
+            );
+        }
+
+        $crm_confirmed = !empty($decoded_body['ok']) || !empty($decoded_body['success']);
+        if (!$crm_confirmed) {
+            wp_send_json_error(
+                ['message' => __('La consulta no pudo ser registrada en el sistema.', 'flacso-oferta-academica')],
+                502
+            );
+        }
+
         $success_payload = [
             'message' => __('Gracias. Recibimos tu consulta y te contactaremos a la brevedad.', 'flacso-oferta-academica'),
         ];
 
         if ($include_response_code) {
             $success_payload['response_code'] = $status_code;
+            $success_payload['editor_response'] = $decoded_body;
         }
 
         wp_send_json_success($success_payload);

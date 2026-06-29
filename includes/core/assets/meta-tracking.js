@@ -60,6 +60,23 @@
         }
     }
 
+    function ensureExternalIdCookie() {
+        var current = getCookie("flacso_external_id");
+        if (current) {
+            return current;
+        }
+
+        var newId;
+        if (window.crypto && typeof window.crypto.randomUUID === "function") {
+            newId = window.crypto.randomUUID();
+        } else {
+            newId = "flacso-" + Date.now() + "-" + Math.random().toString(16).slice(2) + "-" + Math.random().toString(36).slice(2, 10);
+        }
+
+        setCookie("flacso_external_id", newId, 365 * 24 * 60 * 60);
+        return newId;
+    }
+
     function normalizeParams(params) {
         if (!params || typeof params !== "object" || Array.isArray(params)) {
             return {};
@@ -224,6 +241,14 @@
             body.append("fbc", payload.fbc);
         }
 
+        if (payload.externalId) {
+            body.append("external_id", payload.externalId);
+        }
+
+        if (payload.userData && typeof payload.userData === "object") {
+            body.append("user_data", JSON.stringify(payload.userData));
+        }
+
         return body;
     }
 
@@ -319,7 +344,7 @@
         }
     }
 
-    function sendServerEvent(eventType, eventName, params, eventId) {
+    function sendServerEvent(eventType, eventName, params, eventId, userData) {
         var payload;
         var fbp;
         var fbc;
@@ -338,7 +363,9 @@
             eventSourceUrl: window.location.href,
             params: normalizeParams(params),
             fbp: fbp || "",
-            fbc: fbc || ""
+            fbc: fbc || "",
+            userData: userData && typeof userData === "object" ? Object.assign({}, userData) : null,
+            externalId: ensureExternalIdCookie()
         });
 
         transportQueuedEvent(payload, true);
@@ -411,12 +438,25 @@
 
         ensurePixelBootstrap();
 
+        var userData = options.userData && typeof options.userData === "object" ? options.userData : null;
+
+        var pixelParams = Object.assign({}, params);
+        if (userData) {
+            delete pixelParams.em;
+            delete pixelParams.ph;
+            delete pixelParams.fn;
+            delete pixelParams.ln;
+            delete pixelParams.db;
+            delete pixelParams.country;
+            delete pixelParams.ge;
+        }
+
         if (config.enabled && typeof window.fbq === "function") {
             try {
                 if (eventType === "trackCustom") {
-                    window.fbq("trackCustom", eventName, params, options);
+                    window.fbq("trackCustom", eventName, pixelParams, options);
                 } else {
-                    window.fbq("track", eventName, params, options);
+                    window.fbq("track", eventName, pixelParams, options);
                 }
             } catch (error) {
                 if (config.debug && window.console && typeof window.console.warn === "function") {
@@ -425,7 +465,7 @@
             }
         }
 
-        sendServerEvent(eventType, eventName, params, eventId);
+        sendServerEvent(eventType, eventName, params, eventId, userData);
 
         return eventId;
     }

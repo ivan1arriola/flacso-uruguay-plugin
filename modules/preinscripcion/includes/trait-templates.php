@@ -591,6 +591,16 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
             return null;
         }
 
+        if (function_exists('flacso_get_entity_price_usd')) {
+            $precio = flacso_get_entity_price_usd($oferta_id);
+            if (is_array($precio) && isset($precio['value']) && $precio['value'] > 0) {
+                return array(
+                    'value' => $precio['value'],
+                    'currency' => $precio['currency'],
+                );
+            }
+        }
+
         if (function_exists('flacso_meta_get_price_usd')) {
             $value = flacso_meta_get_price_usd($oferta_id);
             if ($value > 0) {

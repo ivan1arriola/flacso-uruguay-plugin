@@ -615,11 +615,9 @@ jQuery(function($){
                     pixelPayload.content_ids = ['oferta-' + String(config.idPosgrado)];
                 }
 
-                if (config.valor !== undefined && config.valor !== null && config.valor !== '') {
-                    pixelPayload.value = Number(config.valor);
-                    pixelPayload.currency = 'USD';
-                } else {
-                    pixelPayload.value = 0;
+                const precioUsd = Number(config.valor);
+                if (Number.isFinite(precioUsd) && precioUsd > 0) {
+                    pixelPayload.value = precioUsd;
                     pixelPayload.currency = 'USD';
                 }
 

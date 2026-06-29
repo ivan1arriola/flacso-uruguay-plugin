@@ -69,6 +69,8 @@ class FLACSO_Meta_Tracking {
         $fbp = sanitize_text_field((string) wp_unslash($_POST['fbp'] ?? ''));
         $fbc = sanitize_text_field((string) wp_unslash($_POST['fbc'] ?? ''));
         $event_type = sanitize_key((string) wp_unslash($_POST['event_type'] ?? 'track'));
+        $user_data_raw = self::decode_params($_POST['user_data'] ?? '');
+        $external_id = sanitize_text_field((string) wp_unslash($_POST['external_id'] ?? ''));
 
         if ($event_name === '') {
             wp_send_json_error(['message' => 'invalid_event_name'], 400);
@@ -83,6 +85,8 @@ class FLACSO_Meta_Tracking {
             'fbp' => $fbp,
             'fbc' => $fbc,
             'event_type' => $event_type,
+            'user_data' => $user_data_raw,
+            'external_id' => $external_id,
         ]);
 
         $response = self::send_capi_event($settings, $payload);
@@ -356,6 +360,23 @@ class FLACSO_Meta_Tracking {
             'client_user_agent' => self::get_user_agent(),
         ];
 
+        if (!empty($context['external_id'])) {
+            $user_data['external_id'] = trim((string) $context['external_id']);
+        }
+
+        if (!empty($context['user_data']) && is_array($context['user_data'])) {
+            foreach ($context['user_data'] as $key => $value) {
+                $key = sanitize_key((string) $key);
+                if ($key === '' || in_array($key, ['fbp', 'fbc', 'client_ip_address', 'client_user_agent'], true)) {
+                    continue;
+                }
+                $normalized = self::normalize_user_data_value($key, $value);
+                if ($normalized !== '') {
+                    $user_data[$key] = $normalized;
+                }
+            }
+        }
+
         if (!empty($context['fbp'])) {
             $user_data['fbp'] = trim((string) $context['fbp']);
         } elseif (!empty($_COOKIE['_fbp'])) {
@@ -589,6 +610,230 @@ class FLACSO_Meta_Tracking {
 }
 
 if (!function_exists('flacso_meta_get_price_usd')) {
+    /**
+     * Obtiene el precio en USD de una oferta académica o seminario.
+     * Si el precio está en UYU, lo convierte usando la opción flacso_usd_exchange_rate.
+     *
+     * @param int $post_id
+     * @return float
+     * @deprecated Use flacso_get_entity_price_usd() que devuelve estructura completa.
+     */
+    function flacso_meta_get_price_usd(int $post_id): float {
+        if ($post_id <= 0) {
+            return 0.0;
+        }
+
+        $exchange_rate = (float) get_option('flacso_usd_exchange_rate', 40);
+        if ($exchange_rate <= 0) {
+            $exchange_rate = 40.0;
+        }
+
+        $post_type = get_post_type($post_id);
+
+        if ($post_type === 'cpt_seminario') {
+            $usd = (float) get_post_meta($post_id, '_seminario_valor_usd', true);
+            if ($usd > 0) {
+                return $usd;
+            }
+
+            $uyu = (float) get_post_meta($post_id, '_seminario_valor_uyu', true);
+            if ($uyu > 0) {
+                return round($uyu / $exchange_rate);
+            }
+
+            return 0.0;
+        }
+
+        // Lógica para oferta académica (o fallback general a tablas de precios)
+        $tabla_precio_id = (int) get_post_meta($post_id, 'tabla_precio_id', true);
+        $target_id = $tabla_precio_id > 0 ? $tabla_precio_id : $post_id;
+
+        $precios_filas_str = get_post_meta($target_id, 'precios_filas', true);
+        if (empty($precios_filas_str)) {
+            return 0.0;
+        }
+
+        $rows = json_decode($precios_filas_str, true);
+        if (!is_array($rows) || empty($rows)) {
+            $rows = json_decode(wp_unslash($precios_filas_str), true);
+            if (!is_array($rows) || empty($rows)) {
+                return 0.0;
+            }
+        }
+
+        $selected_row = null;
+        foreach ($rows as $row) {
+            $concept = isset($row['concept']) ? mb_strtolower($row['concept']) : '';
+            if (strpos($concept, 'total') !== false) {
+                $selected_row = $row;
+                break;
+            }
+        }
+
+        if (!$selected_row) {
+            foreach ($rows as $row) {
+                if (!empty($row['highlight'])) {
+                    $selected_row = $row;
+                    break;
+                }
+            }
+        }
+
+        if (!$selected_row && !empty($rows)) {
+            $selected_row = $rows[0];
+        }
+
+        if (!$selected_row) {
+            return 0.0;
+        }
+
+        $extract_number = static function($str) {
+            if (!is_string($str)) return 0.0;
+            $str = strip_tags($str);
+            $str = str_replace(' ', '', $str);
+            if (preg_match('/(\d+[\.,]\d+)[\.,](\d{2})$/', $str, $matches)) {
+                $number_part = str_replace(['.', ','], '', $matches[1]);
+                return (float) ($number_part . '.' . $matches[2]);
+            }
+            $digits = preg_replace('/[^\d]/', '', $str);
+            return $digits !== '' ? (float) $digits : 0.0;
+        };
+
+        $us_val = isset($selected_row['us']) ? $extract_number($selected_row['us']) : 0.0;
+        if ($us_val > 0) {
+            return $us_val;
+        }
+
+        $uy_val = isset($selected_row['uy']) ? $extract_number($selected_row['uy']) : 0.0;
+        if ($uy_val > 0) {
+            return round($uy_val / $exchange_rate);
+        }
+
+        return 0.0;
+    }
+}
+
+if (!function_exists('flacso_get_entity_price_usd')) {
+    /**
+     * Función central reutilizable para obtener precio USD de una entidad.
+     *
+     * @param int $post_id ID del post (oferta-academica o seminario).
+     * @return array|null {value, currency, source, ...} o null si no hay precio confiable.
+     */
+    function flacso_get_entity_price_usd(int $post_id): ?array {
+        if ($post_id <= 0) {
+            return null;
+        }
+
+        $exchange_rate = (float) get_option('flacso_usd_exchange_rate', 0);
+        $post_type = get_post_type($post_id);
+
+        if ($post_type === 'cpt_seminario') {
+            $usd = (float) get_post_meta($post_id, '_seminario_valor_usd', true);
+            if ($usd > 0) {
+                return [
+                    'value' => $usd,
+                    'currency' => 'USD',
+                    'source' => 'meta_precio_usd',
+                ];
+            }
+
+            $uyu = (float) get_post_meta($post_id, '_seminario_valor_uyu', true);
+            if ($uyu > 0 && $exchange_rate > 0) {
+                $converted = round($uyu / $exchange_rate, 2);
+                return [
+                    'value' => $converted,
+                    'currency' => 'USD',
+                    'source' => 'converted_from_uyu',
+                    'original_value' => $uyu,
+                    'original_currency' => 'UYU',
+                    'exchange_rate' => $exchange_rate,
+                ];
+            }
+
+            return null;
+        }
+
+        // Oferta académica
+        $tabla_precio_id = (int) get_post_meta($post_id, 'tabla_precio_id', true);
+        $target_id = $tabla_precio_id > 0 ? $tabla_precio_id : $post_id;
+
+        $precios_filas_str = get_post_meta($target_id, 'precios_filas', true);
+        if (empty($precios_filas_str)) {
+            return null;
+        }
+
+        $rows = json_decode($precios_filas_str, true);
+        if (!is_array($rows) || empty($rows)) {
+            $rows = json_decode(wp_unslash($precios_filas_str), true);
+            if (!is_array($rows) || empty($rows)) {
+                return null;
+            }
+        }
+
+        $selected_row = null;
+        foreach ($rows as $row) {
+            $concept = isset($row['concept']) ? mb_strtolower($row['concept']) : '';
+            if (strpos($concept, 'total') !== false) {
+                $selected_row = $row;
+                break;
+            }
+        }
+
+        if (!$selected_row) {
+            foreach ($rows as $row) {
+                if (!empty($row['highlight'])) {
+                    $selected_row = $row;
+                    break;
+                }
+            }
+        }
+
+        if (!$selected_row && !empty($rows)) {
+            $selected_row = $rows[0];
+        }
+
+        if (!$selected_row) {
+            return null;
+        }
+
+        $extract_number = static function($str) {
+            if (!is_string($str)) return 0.0;
+            $str = strip_tags($str);
+            $str = str_replace(' ', '', $str);
+            if (preg_match('/(\d+[\.,]\d+)[\.,](\d{2})$/', $str, $matches)) {
+                $number_part = str_replace(['.', ','], '', $matches[1]);
+                return (float) ($number_part . '.' . $matches[2]);
+            }
+            $digits = preg_replace('/[^\d]/', '', $str);
+            return $digits !== '' ? (float) $digits : 0.0;
+        };
+
+        $us_val = isset($selected_row['us']) ? $extract_number($selected_row['us']) : 0.0;
+        if ($us_val > 0) {
+            return [
+                'value' => $us_val,
+                'currency' => 'USD',
+                'source' => 'tabla_precios_us',
+            ];
+        }
+
+        $uy_val = isset($selected_row['uy']) ? $extract_number($selected_row['uy']) : 0.0;
+        if ($uy_val > 0 && $exchange_rate > 0) {
+            $converted = round($uy_val / $exchange_rate, 2);
+            return [
+                'value' => $converted,
+                'currency' => 'USD',
+                'source' => 'converted_from_uyu',
+                'original_value' => $uy_val,
+                'original_currency' => 'UYU',
+                'exchange_rate' => $exchange_rate,
+            ];
+        }
+
+        return null;
+    }
+}
     /**
      * Obtiene el precio en USD de una oferta académica o seminario.
      * Si el precio está en UYU, lo convierte usando la opción flacso_usd_exchange_rate.
