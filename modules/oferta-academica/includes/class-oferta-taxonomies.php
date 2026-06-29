@@ -23,11 +23,6 @@ class Oferta_Taxonomies {
         add_action('template_redirect', [__CLASS__, 'redirect_old_taxonomy_urls']);
         add_action('pre_get_posts', [__CLASS__, 'exclude_password_protected_offers_from_public_lists']);
         add_action('admin_footer-edit-tags.php', [__CLASS__, 'print_term_image_admin_assets']);
-        add_action('wp_head', [__CLASS__, 'add_taxonomy_meta_tags'], 5);
-        add_filter('wpseo_opengraph_image', [__CLASS__, 'filter_wpseo_opengraph_image']);
-        add_filter('wpseo_twitter_image', [__CLASS__, 'filter_wpseo_twitter_image']);
-        add_filter('rank_math/opengraph/facebook/image', [__CLASS__, 'filter_rank_math_facebook_image']);
-        add_filter('rank_math/opengraph/twitter/image', [__CLASS__, 'filter_rank_math_twitter_image']);
     }
 
     public static function register_taxonomies(): void {

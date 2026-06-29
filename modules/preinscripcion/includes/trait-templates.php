@@ -119,7 +119,6 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
                 if ($overridden !== '') {
                     add_filter('wp_title', array($this, 'modificar_titulo_preinscripcion'), 10, 3);
                     add_filter('document_title_parts', array($this, 'modificar_titulo_parts_preinscripcion'));
-                    add_action('wp_head', array($this, 'add_og_meta_tags'), 5);
                     return $overridden;
                 }
             } elseif ($es_carta) {
@@ -127,7 +126,6 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
                 if ($overridden !== '') {
                     add_filter('wp_title', array($this, 'modificar_titulo_carta'), 10, 3);
                     add_filter('document_title_parts', array($this, 'modificar_titulo_parts_carta'));
-                    add_action('wp_head', array($this, 'add_og_meta_tags'), 5);
                     return $overridden;
                 }
             }

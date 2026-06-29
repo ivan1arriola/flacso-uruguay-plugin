@@ -51,8 +51,6 @@ class Seminario_Templates
         if (is_singular('seminario') || $is_seminarios_listing || is_page('contactar-seminario') || get_query_var('flacso_preinscripcion')) {
             // Ensure document title reflects page context
             add_filter('document_title_parts', array(__CLASS__, 'filter_document_title'));
-            // Add Open Graph meta tags for social sharing
-            add_action('wp_head', array(__CLASS__, 'add_og_meta_tags'), 5);
             // Enqueue Kadence compatibility CSS
             wp_enqueue_style(
                 'flacso-kadence-compat',

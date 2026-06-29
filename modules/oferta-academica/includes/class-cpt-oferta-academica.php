@@ -11,7 +11,6 @@ class CPT_Oferta_Academica {
     
     public static function init(): void {
         self::register_post_type();
-        add_action('wp_head', [self::class, 'add_og_meta_tags'], 5);
         add_action('template_redirect', [self::class, 'maybe_render_formacion_virtual_page'], 1);
     }
 
