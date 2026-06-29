@@ -83,6 +83,9 @@ class FLACSO_Uruguay_Plugin {
         
         // Registrar categorias de bloques
         add_filter('block_categories_all', [$this, 'register_block_categories'], 10, 2);
+
+        // Ayuda a precalentar dominios externos usados frecuentemente por el sitio.
+        add_filter('wp_resource_hints', [$this, 'add_resource_hints'], 10, 2);
         
         // Auto-flush rewrite rules temporal para limpiar la caché de es_carta
         add_action('init', function() {
@@ -115,6 +118,24 @@ class FLACSO_Uruguay_Plugin {
         }
         
         return $categories;
+    }
+
+    public function add_resource_hints($hints, $relation_type) {
+        if ('preconnect' !== $relation_type) {
+            return $hints;
+        }
+
+        $hints[] = 'https://fonts.googleapis.com';
+        $hints[] = [
+            'href' => 'https://fonts.gstatic.com',
+            'crossorigin' => 'anonymous',
+        ];
+        $hints[] = [
+            'href' => 'https://cdn.jsdelivr.net',
+            'crossorigin' => 'anonymous',
+        ];
+
+        return $hints;
     }
     
     public function load_modules() {

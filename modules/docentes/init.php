@@ -71,6 +71,11 @@ add_action('init', function () {
     // Redirigir a templates del modulo.
     add_filter('template_include', function ($template) {
         if (is_singular('docente')) {
+            $overridden = locate_template(array('single-docente.php'));
+            if ($overridden !== '') {
+                return $overridden;
+            }
+
             $plugin_template = FLACSO_URUGUAY_PATH . 'modules/docentes/templates/single-docente.php';
             if (file_exists($plugin_template)) {
                 return $plugin_template;
@@ -78,6 +83,11 @@ add_action('init', function () {
         }
 
         if (is_post_type_archive('docente')) {
+            $overridden = locate_template(array('archive-docente.php'));
+            if ($overridden !== '') {
+                return $overridden;
+            }
+
             $plugin_template = FLACSO_URUGUAY_PATH . 'modules/docentes/templates/archive-docente.php';
             if (file_exists($plugin_template)) {
                 return $plugin_template;

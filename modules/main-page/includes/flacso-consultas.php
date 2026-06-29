@@ -890,23 +890,29 @@ function flacso_render_gracias_virtual() {
 				<div class="bg-white rounded-4 shadow-lg p-4 p-md-5 fade-in" style="max-width: 820px;">
 					<div class="flacso-gracias-icon display-5 text-success mb-2" aria-hidden="true">✓</div>
 					<?php
-						$template_path = '';
+						$template_name = '';
 						if ( $tipo === 'preinscripcion_oferta' ) {
-							$template_path = FLACSO_MAIN_PAGE_MODULE_PATH . 'templates/gracias/preinscripcion_oferta.php';
+							$template_name = 'gracias/preinscripcion_oferta.php';
 						} elseif ( $tipo === 'preinscripcion_seminario' ) {
-							$template_path = FLACSO_MAIN_PAGE_MODULE_PATH . 'templates/gracias/preinscripcion_seminario.php';
+							$template_name = 'gracias/preinscripcion_seminario.php';
 						} elseif ( $tipo === 'solicitud_informacion' ) {
-							$template_path = FLACSO_MAIN_PAGE_MODULE_PATH . 'templates/gracias/solicitud_informacion.php';
+							$template_name = 'gracias/solicitud_informacion.php';
 						} else {
-							$template_path = FLACSO_MAIN_PAGE_MODULE_PATH . 'templates/gracias/consulta.php';
+							$template_name = 'gracias/consulta.php';
 						}
 
-						if ( file_exists( $template_path ) ) {
-							include $template_path;
+						$overridden = locate_template(array($template_name));
+						if ($overridden !== '') {
+							include $overridden;
 						} else {
-							// Fallback if template is missing
-							echo '<h1 class="mb-3" style="color: var(--global-palette1);">¡Tu consulta fue enviada!</h1>';
-							echo '<div class="flacso-gracias-mensaje mb-3"><p class="lead mb-2">Hemos recibido tu consulta correctamente.</p></div>';
+							$template_path = FLACSO_MAIN_PAGE_MODULE_PATH . 'templates/' . $template_name;
+							if ( file_exists( $template_path ) ) {
+								include $template_path;
+							} else {
+								// Fallback if template is missing
+								echo '<h1 class="mb-3" style="color: var(--global-palette1);">¡Tu consulta fue enviada!</h1>';
+								echo '<div class="flacso-gracias-mensaje mb-3"><p class="lead mb-2">Hemos recibido tu consulta correctamente.</p></div>';
+							}
 						}
 					?>
 

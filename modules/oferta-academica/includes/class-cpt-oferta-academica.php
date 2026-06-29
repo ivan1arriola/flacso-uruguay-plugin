@@ -51,12 +51,17 @@ class CPT_Oferta_Academica {
                 return $image ? $image : 'https://flacso.edu.uy/wp-content/uploads/2025/11/primer-plano-de-ejecutivos-de-negocios-en-la-oficina-scaled.jpg';
             });
 
-            get_header();
-            echo Oferta_Renderer::render_oferta_pagina([
-                'heroTitle' => 'Oferta Académica',
-                'heroImageId' => 22981,
-            ]);
-            get_footer();
+            $template = locate_template('page-formacion.php');
+            if ($template) {
+                include $template;
+            } else {
+                get_header();
+                echo Oferta_Renderer::render_oferta_pagina([
+                    'heroTitle' => 'Oferta Académica',
+                    'heroImageId' => 22981,
+                ]);
+                get_footer();
+            }
             exit;
         }
     }

@@ -367,9 +367,9 @@ class Oferta_Renderer {
     }
 
     /**
-     * Render de página completa (hero + categorías + secciones + seminarios)
+     * Prepara los datos para la página de Oferta Académica.
      */
-    public static function render_oferta_pagina(array $attributes = []): string {
+    public static function get_oferta_pagina_data(array $attributes = []): array {
         self::enqueue_styles();
 
         $hero_title_default = __('Oferta Académica', 'flacso-oferta-academica');
@@ -434,7 +434,66 @@ class Oferta_Renderer {
             $terms = [];
         }
 
-        $link_seminarios = home_url('/seminarios/');
+        $link_seminarios = home_url('/formacion/seminarios/');
+        $link_convenios  = 'https://flacso.edu.uy/convenios/';
+
+        $sections = [];
+        foreach ($terms as $term) {
+            $term_link = get_term_link($term);
+            $query_args = [
+                'post_type' => 'oferta-academica',
+                'post_status' => self::oferta_post_statuses(),
+                'posts_per_page' => -1,
+                'orderby' => 'menu_order',
+                'order' => 'ASC',
+                'tax_query' => [
+                    [
+                        'taxonomy' => 'tipo-oferta-academica',
+                        'field' => 'term_id',
+                        'terms' => $term->term_id,
+                    ],
+                ],
+            ];
+
+            $sections[] = [
+                'term' => $term,
+                'term_link' => is_wp_error($term_link) ? '' : $term_link,
+                'query_args' => self::exclude_password_protected_from_query_args($query_args),
+            ];
+        }
+
+        $seminarios_html = self::render_seminarios_bootstrap();
+        $floating_form_html = '';
+        if (class_exists('Oferta_Consulta_Form') && method_exists('Oferta_Consulta_Form', 'render_floating_form')) {
+            $floating_form_html = Oferta_Consulta_Form::render_floating_form();
+        }
+
+        return [
+            'hero_title' => $hero_title,
+            'hero_subtitle' => $hero_subtitle,
+            'hero_image' => $hero_image,
+            'terms' => $terms,
+            'link_seminarios' => $link_seminarios,
+            'link_convenios' => $link_convenios,
+            'sections' => $sections,
+            'seminarios_html' => $seminarios_html,
+            'floating_form_html' => $floating_form_html,
+        ];
+    }
+
+    /**
+     * Render de página completa (hero + categorías + secciones + seminarios)
+     */
+    public static function render_oferta_pagina(array $attributes = []): string {
+        $data = self::get_oferta_pagina_data($attributes);
+
+        $hero_title = $data['hero_title'];
+        $hero_subtitle = $data['hero_subtitle'];
+        $hero_image = $data['hero_image'];
+        $terms = $data['terms'];
+        $link_seminarios = $data['link_seminarios'];
+        $link_convenios = $data['link_convenios'];
+        $sections = $data['sections'];
 
         ob_start();
         ?>
@@ -444,21 +503,17 @@ class Oferta_Renderer {
                     <h1 class="flacso-oferta-hero__title mb-3"><?php echo esc_html($hero_title); ?></h1>
                     <p class="flacso-oferta-hero__subtitle mb-4"><?php echo esc_html($hero_subtitle); ?></p>
                     <div class="flacso-oferta-hero__actions" role="navigation" aria-label="<?php esc_attr_e('Navegación de la oferta académica', 'flacso-oferta-academica'); ?>">
-                        <?php foreach ($terms as $term) : ?>
-                            <?php
-                            $term_link = get_term_link($term);
-                            if (is_wp_error($term_link)) {
-                                continue;
-                            }
-                            ?>
-                            <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url($term_link); ?>">
-                                <?php echo esc_html($term->name); ?>
+                        <?php foreach ($sections as $section_data) : ?>
+                            <?php if (!empty($section_data['term_link'])) : ?>
+                            <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url($section_data['term_link']); ?>">
+                                <?php echo esc_html($section_data['term']->name); ?>
                             </a>
+                            <?php endif; ?>
                         <?php endforeach; ?>
                         <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url($link_seminarios); ?>">
                             <?php esc_html_e('Seminarios', 'flacso-oferta-academica'); ?>
                         </a>
-                        <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--convenios" href="https://flacso.edu.uy/convenios/">
+                        <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--convenios" href="<?php echo esc_url($link_convenios); ?>">
                             <?php esc_html_e('Convenios', 'flacso-oferta-academica'); ?>
                         </a>
                     </div>
@@ -469,22 +524,9 @@ class Oferta_Renderer {
         <section class="flacso-oferta-body">
             <div class="container">
                 <?php
-                foreach ($terms as $term) :
-                    $query_args = [
-                        'post_type' => 'oferta-academica',
-                        'post_status' => self::oferta_post_statuses(),
-                        'posts_per_page' => -1,
-                        'orderby' => 'menu_order',
-                        'order' => 'ASC',
-                        'tax_query' => [
-                            [
-                                'taxonomy' => 'tipo-oferta-academica',
-                                'field' => 'term_id',
-                                'terms' => $term->term_id,
-                            ],
-                        ],
-                    ];
-                    $query = new WP_Query(self::exclude_password_protected_from_query_args($query_args));
+                foreach ($sections as $section_data) :
+                    $term = $section_data['term'];
+                    $query = new WP_Query($section_data['query_args']);
                     ?>
                     <div class="flacso-oferta-section" id="<?php echo esc_attr($term->slug); ?>">
                         <div class="d-flex justify-content-between align-items-center mb-3 gap-3">
@@ -529,9 +571,9 @@ class Oferta_Renderer {
                             <h2 class="flacso-oferta-section__title mb-0"><?php esc_html_e('Seminarios', 'flacso-oferta-academica'); ?></h2>
                         </div>
                     </div>
-                    <?php echo self::render_seminarios_bootstrap(); ?>
+                    <?php echo $data['seminarios_html']; ?>
                     <div class="flacso-oferta-section__actions">
-                        <a class="flacso-oferta-section__btn flacso-oferta-section__btn--primary" href="<?php echo esc_url(home_url('/seminarios/')); ?>">
+                        <a class="flacso-oferta-section__btn flacso-oferta-section__btn--primary" href="<?php echo esc_url($link_seminarios); ?>">
                             <?php esc_html_e('Ver todos los seminarios abiertos', 'flacso-oferta-academica'); ?>
                         </a>
                         <a class="flacso-oferta-section__btn flacso-oferta-section__btn--outline" href="https://flacso.edu.uy/preguntas-frecuentes/">
@@ -542,11 +584,7 @@ class Oferta_Renderer {
             </div>
         </section>
 
-        <?php
-        if (class_exists('Oferta_Consulta_Form') && method_exists('Oferta_Consulta_Form', 'render_floating_form')) {
-            echo Oferta_Consulta_Form::render_floating_form();
-        }
-        ?>
+        <?php echo $data['floating_form_html']; ?>
 
         <script>
         (function() {
@@ -1118,7 +1156,7 @@ class Oferta_Renderer {
         return false;
     }
 
-    private static function render_program_card(int $post_id, $term): bool {
+    public static function render_program_card(int $post_id, $term): bool {
         if (self::is_password_protected_program($post_id)) {
             return false;
         }

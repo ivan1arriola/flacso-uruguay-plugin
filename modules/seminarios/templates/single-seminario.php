@@ -6,11 +6,21 @@ if (!defined('ABSPATH')) {
 get_header();
 
 // Enqueue Bootstrap CSS and JS
-wp_enqueue_style('bootstrap-css', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css', [], '5.3.2');
-wp_enqueue_script('bootstrap-js', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js', array('jquery'), '5.3.2', true);
+if (!wp_style_is('bootstrap-css', 'registered')) {
+    wp_register_style('bootstrap-css', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css', [], '5.3.2');
+}
+wp_enqueue_style('bootstrap-css');
+
+if (!wp_script_is('bootstrap-js', 'registered')) {
+    wp_register_script('bootstrap-js', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js', array('jquery'), '5.3.2', true);
+}
+wp_enqueue_script('bootstrap-js');
 
 // Enqueue Bootstrap Icons
-wp_enqueue_style('bootstrap-icons', 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css', [], '1.11.3');
+if (!wp_style_is('bootstrap-icons', 'registered')) {
+    wp_register_style('bootstrap-icons', 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css', [], '1.11.3');
+}
+wp_enqueue_style('bootstrap-icons');
 
 /**
  * Convierte una fecha YYYY-MM-DD al formato español: "Lunes 20 de Enero 2026"

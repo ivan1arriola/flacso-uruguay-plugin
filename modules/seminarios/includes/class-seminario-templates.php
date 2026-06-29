@@ -23,6 +23,11 @@ class Seminario_Templates
     public static function single_template($template)
     {
         if (is_singular('seminario')) {
+            $overridden = locate_template(array('single-seminario.php'));
+            if ($overridden !== '') {
+                return $overridden;
+            }
+
             $plugin_template = FLACSO_SEMINARIO_PATH . 'templates/single-seminario.php';
             if (file_exists($plugin_template)) {
                 return $plugin_template;
@@ -35,6 +40,12 @@ class Seminario_Templates
     {
         $is_endpoint = get_query_var('flacso_preinscripcion');
         if ($is_endpoint) {
+            $overridden = locate_template(array('preinscripcion-seminario.php'));
+            if ($overridden !== '') {
+                status_header(200);
+                return $overridden;
+            }
+
             $plugin_template = FLACSO_SEMINARIO_PATH . 'templates/preinscripcion-seminario.php';
             if (file_exists($plugin_template)) {
                 status_header(200);
@@ -204,6 +215,11 @@ class Seminario_Templates
     public static function seminarios_template($template)
     {
         if (is_post_type_archive('seminario') || is_page('seminarios')) {
+            $overridden = locate_template(array('seminarios-listado.php'));
+            if ($overridden !== '') {
+                return $overridden;
+            }
+
             $plugin_template = FLACSO_SEMINARIO_PATH . 'templates/seminarios-listado.php';
             if (file_exists($plugin_template)) {
                 return $plugin_template;
@@ -215,6 +231,11 @@ class Seminario_Templates
     public static function consulta_template($template)
     {
         if (is_page('contactar-seminario')) {
+            $overridden = locate_template(array('consulta-seminario.php'));
+            if ($overridden !== '') {
+                return $overridden;
+            }
+
             $plugin_template = FLACSO_SEMINARIO_PATH . 'templates/consulta-seminario.php';
             if (file_exists($plugin_template)) {
                 return $plugin_template;

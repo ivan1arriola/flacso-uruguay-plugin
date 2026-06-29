@@ -58,8 +58,16 @@ if (!$solo_un_seminario) {
 
 // Enqueuing de assets
 wp_enqueue_script('jquery');
-wp_enqueue_script('bootstrap-js', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js', ['jquery'], null, true);
-wp_enqueue_style('bootstrap-css', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css');
+
+if (!wp_style_is('bootstrap-css', 'registered')) {
+    wp_register_style('bootstrap-css', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css', [], '5.3.2');
+}
+wp_enqueue_style('bootstrap-css');
+
+if (!wp_script_is('bootstrap-js', 'registered')) {
+    wp_register_script('bootstrap-js', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js', ['jquery'], '5.3.2', true);
+}
+wp_enqueue_script('bootstrap-js');
 
 // Assets para teléfono e país
 wp_enqueue_style('intl-tel-input-css', 'https://cdn.jsdelivr.net/npm/intl-tel-input@24.2.0/build/css/intlTelInput.css');

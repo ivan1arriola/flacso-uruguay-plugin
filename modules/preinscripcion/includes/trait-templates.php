@@ -117,6 +117,14 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
             if ($es_preinscripcion) {
                 // Lógica de preinscripción
                 // Always load the template; the template will handle displaying the closed message if not active
+                $overridden = locate_template(array('preinscripcion-template.php'));
+                if ($overridden !== '') {
+                    add_filter('wp_title', array($this, 'modificar_titulo_preinscripcion'), 10, 3);
+                    add_filter('document_title_parts', array($this, 'modificar_titulo_parts_preinscripcion'));
+                    add_action('wp_head', array($this, 'add_og_meta_tags'), 5);
+                    return $overridden;
+                }
+
                 $custom_template = plugin_dir_path(dirname(__FILE__)) . 'templates/preinscripcion-template.php';
                 if (file_exists($custom_template)) {
                     add_filter('wp_title', array($this, 'modificar_titulo_preinscripcion'), 10, 3);
@@ -126,6 +134,14 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
                 }
             } elseif ($es_carta) {
                 // Lógica de carta de presentación
+                $overridden = locate_template(array('carta-template.php'));
+                if ($overridden !== '') {
+                    add_filter('wp_title', array($this, 'modificar_titulo_carta'), 10, 3);
+                    add_filter('document_title_parts', array($this, 'modificar_titulo_parts_carta'));
+                    add_action('wp_head', array($this, 'add_og_meta_tags'), 5);
+                    return $overridden;
+                }
+
                 $custom_template = plugin_dir_path(dirname(__FILE__)) . 'templates/carta-template.php';
                 if (file_exists($custom_template)) {
                     add_filter('wp_title', array($this, 'modificar_titulo_carta'), 10, 3);
