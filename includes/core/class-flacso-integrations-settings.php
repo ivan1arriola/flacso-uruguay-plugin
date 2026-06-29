@@ -20,6 +20,13 @@ class FLACSO_Integrations_Settings {
     private const OPTION_RECAPTCHA_SITE_KEY = 'fc_recaptcha_site_key';
     private const OPTION_RECAPTCHA_SECRET_KEY = 'fc_recaptcha_secret_key';
     private const OPTION_EXTERNAL_EDITOR_URL = 'flacso_external_editor_url';
+    private const OPTION_NAV_ANNOUNCEMENT_ENABLED = 'flacso_nav_announcement_enabled';
+    private const OPTION_NAV_ANNOUNCEMENT_URL = 'flacso_nav_announcement_url';
+    private const OPTION_NAV_ANNOUNCEMENT_KICKER = 'flacso_nav_announcement_kicker';
+    private const OPTION_NAV_ANNOUNCEMENT_MESSAGE = 'flacso_nav_announcement_message';
+    private const OPTION_NAV_ANNOUNCEMENT_CTA = 'flacso_nav_announcement_cta';
+    private const OPTION_NAV_ANNOUNCEMENT_ARIA = 'flacso_nav_announcement_aria';
+    private const OPTION_NAV_ANNOUNCEMENT_HIDE_FORMACION = 'flacso_nav_announcement_hide_formacion';
     private const OPTION_MAILJET_API_KEY = 'flacso_mailjet_api_key';
     private const OPTION_MAILJET_SECRET_KEY = 'flacso_mailjet_secret_key';
     private const OPTION_MAILJET_LIST_ID = 'flacso_mailjet_list_id';
@@ -171,6 +178,76 @@ class FLACSO_Integrations_Settings {
                 'type' => 'string',
                 'sanitize_callback' => 'esc_url_raw',
                 'default' => 'https://editor-flacso-uy.vercel.app',
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_NAV_ANNOUNCEMENT_ENABLED,
+            [
+                'type' => 'boolean',
+                'sanitize_callback' => [self::class, 'sanitize_checkbox'],
+                'default' => 0,
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_NAV_ANNOUNCEMENT_URL,
+            [
+                'type' => 'string',
+                'sanitize_callback' => 'esc_url_raw',
+                'default' => '',
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_NAV_ANNOUNCEMENT_KICKER,
+            [
+                'type' => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+                'default' => 'Próxima apertura',
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_NAV_ANNOUNCEMENT_MESSAGE,
+            [
+                'type' => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+                'default' => 'Diplomas 2026 · Segundo semestre',
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_NAV_ANNOUNCEMENT_CTA,
+            [
+                'type' => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+                'default' => 'Postúlate ahora',
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_NAV_ANNOUNCEMENT_ARIA,
+            [
+                'type' => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+                'default' => '',
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_NAV_ANNOUNCEMENT_HIDE_FORMACION,
+            [
+                'type' => 'boolean',
+                'sanitize_callback' => [self::class, 'sanitize_checkbox'],
+                'default' => 1,
             ]
         );
 
@@ -529,6 +606,7 @@ class FLACSO_Integrations_Settings {
                         <?php self::render_oferta_flotante_card(); ?>
                         <?php self::render_preinscripciones_card(); ?>
                         <?php self::render_external_editor_card(); ?>
+                        <?php self::render_nav_announcement_card(); ?>
                         <?php self::render_mailjet_card(); ?>
                         <?php self::render_services_card(); ?>
                     </div>
@@ -1909,6 +1987,76 @@ class FLACSO_Integrations_Settings {
                     'url',
                     'https://editor-flacso-uy.vercel.app',
                     __('Las páginas reedirigirán a esta URL (ej: https://editor-flacso-uy.vercel.app/ofertas/ID).', 'flacso-uruguay')
+                );
+                ?>
+            </div>
+        </section>
+        <?php
+    }
+
+    private static function render_nav_announcement_card(): void {
+        ?>
+        <section class="flacso-integrations-card card-nav-announcement">
+            <div class="flacso-card-header">
+                <div class="flacso-card-icon-title">
+                    <span class="flacso-card-icon">📣</span>
+                    <h2><?php esc_html_e('Anuncio debajo del navbar', 'flacso-uruguay'); ?></h2>
+                </div>
+                <p class="flacso-integrations-lead"><?php esc_html_e('Muestra una franja clickeable justo debajo del header de Kadence. Es ideal para anunciar aperturas, convocatorias o campañas temporales.', 'flacso-uruguay'); ?></p>
+            </div>
+
+            <div class="flacso-card-body">
+                <?php
+                self::render_checkbox_field(
+                    self::OPTION_NAV_ANNOUNCEMENT_ENABLED,
+                    __('Mostrar anuncio global', 'flacso-uruguay'),
+                    __('Activa o desactiva el anuncio sin borrar su contenido.', 'flacso-uruguay')
+                );
+
+                self::render_input_field(
+                    self::OPTION_NAV_ANNOUNCEMENT_URL,
+                    __('URL de destino', 'flacso-uruguay'),
+                    'url',
+                    'https://flacso.edu.uy/tipo-oferta/diploma/',
+                    __('Toda la franja funciona como enlace. Usa una URL absoluta.', 'flacso-uruguay')
+                );
+
+                self::render_input_field(
+                    self::OPTION_NAV_ANNOUNCEMENT_KICKER,
+                    __('Etiqueta izquierda', 'flacso-uruguay'),
+                    'text',
+                    'Próxima apertura',
+                    __('Texto corto destacado al inicio del anuncio.', 'flacso-uruguay')
+                );
+
+                self::render_input_field(
+                    self::OPTION_NAV_ANNOUNCEMENT_MESSAGE,
+                    __('Mensaje principal', 'flacso-uruguay'),
+                    'text',
+                    'Diplomas 2026 · Segundo semestre',
+                    __('Mensaje central que se repite dentro del ticker.', 'flacso-uruguay')
+                );
+
+                self::render_input_field(
+                    self::OPTION_NAV_ANNOUNCEMENT_CTA,
+                    __('Texto del botón', 'flacso-uruguay'),
+                    'text',
+                    'Postúlate ahora',
+                    __('Texto del badge verde al final del anuncio.', 'flacso-uruguay')
+                );
+
+                self::render_input_field(
+                    self::OPTION_NAV_ANNOUNCEMENT_ARIA,
+                    __('Etiqueta accesible', 'flacso-uruguay'),
+                    'text',
+                    'Próxima apertura de diplomas FLACSO Uruguay',
+                    __('Describe el objetivo del enlace para lectores de pantalla. Si lo dejas vacío, se genera automáticamente.', 'flacso-uruguay')
+                );
+
+                self::render_checkbox_field(
+                    self::OPTION_NAV_ANNOUNCEMENT_HIDE_FORMACION,
+                    __('Ocultar en /formacion', 'flacso-uruguay'),
+                    __('Replica el comportamiento actual y evita mostrar el anuncio en la página índice de formación.', 'flacso-uruguay')
                 );
                 ?>
             </div>
