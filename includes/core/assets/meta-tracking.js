@@ -2,6 +2,10 @@
     "use strict";
 
     var config = window.flacsoMetaConfig || {};
+    var queueStorageKey = "flacso_meta_pending_events";
+    var queueMaxItems = 100;
+    var queueTtlMs = 7 * 24 * 60 * 60 * 1000;
+    var inflightEvents = {};
 
     function generateEventId() {
         if (window.crypto && typeof window.crypto.randomUUID === "function") {
@@ -64,57 +68,280 @@
         return params;
     }
 
+    function nowTs() {
+        return Date.now ? Date.now() : (new Date()).getTime();
+    }
+
+    function canUseStorage() {
+        try {
+            return !!window.localStorage;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    function pruneQueue(queue) {
+        var cutoff = nowTs() - queueTtlMs;
+        var filtered = [];
+        var seen = {};
+        var i;
+        var item;
+
+        if (!Array.isArray(queue)) {
+            return [];
+        }
+
+        for (i = queue.length - 1; i >= 0; i -= 1) {
+            item = queue[i];
+            if (!item || typeof item !== "object" || !item.eventId || seen[item.eventId]) {
+                continue;
+            }
+
+            if (item.createdAt && item.createdAt < cutoff) {
+                continue;
+            }
+
+            seen[item.eventId] = true;
+            filtered.unshift(item);
+        }
+
+        if (filtered.length > queueMaxItems) {
+            filtered = filtered.slice(filtered.length - queueMaxItems);
+        }
+
+        return filtered;
+    }
+
+    function readQueue() {
+        var raw;
+
+        if (!canUseStorage()) {
+            return [];
+        }
+
+        try {
+            raw = window.localStorage.getItem(queueStorageKey);
+            return pruneQueue(raw ? JSON.parse(raw) : []);
+        } catch (error) {
+            return [];
+        }
+    }
+
+    function writeQueue(queue) {
+        var nextQueue = pruneQueue(queue);
+
+        if (!canUseStorage()) {
+            return nextQueue;
+        }
+
+        try {
+            if (nextQueue.length) {
+                window.localStorage.setItem(queueStorageKey, JSON.stringify(nextQueue));
+            } else {
+                window.localStorage.removeItem(queueStorageKey);
+            }
+        } catch (error) {}
+
+        return nextQueue;
+    }
+
+    function upsertQueuedEvent(payload) {
+        var queue;
+        var i;
+        var existing;
+
+        if (!payload || !payload.eventId) {
+            return payload;
+        }
+
+        queue = readQueue();
+
+        for (i = 0; i < queue.length; i += 1) {
+            if (queue[i] && queue[i].eventId === payload.eventId) {
+                existing = queue[i];
+                queue[i] = Object.assign({}, existing, payload, {
+                    createdAt: existing.createdAt || payload.createdAt || nowTs(),
+                    attempts: existing.attempts || 0,
+                    lastAttemptAt: existing.lastAttemptAt || 0
+                });
+                writeQueue(queue);
+                return queue[i];
+            }
+        }
+
+        payload.createdAt = payload.createdAt || nowTs();
+        payload.attempts = payload.attempts || 0;
+        payload.lastAttemptAt = payload.lastAttemptAt || 0;
+        queue.push(payload);
+        writeQueue(queue);
+        return payload;
+    }
+
+    function removeQueuedEvent(eventId) {
+        var queue;
+
+        if (!eventId) {
+            return;
+        }
+
+        queue = readQueue().filter(function (item) {
+            return item && item.eventId !== eventId;
+        });
+
+        writeQueue(queue);
+    }
+
+    function markQueuedEventAttempt(eventId) {
+        var queue = readQueue();
+        var i;
+
+        for (i = 0; i < queue.length; i += 1) {
+            if (queue[i] && queue[i].eventId === eventId) {
+                queue[i].attempts = (queue[i].attempts || 0) + 1;
+                queue[i].lastAttemptAt = nowTs();
+                break;
+            }
+        }
+
+        writeQueue(queue);
+    }
+
+    function buildRequestBody(payload) {
+        var body = new URLSearchParams();
+
+        body.append("action", config.ajaxAction);
+        body.append("event_type", payload.eventType);
+        body.append("event_name", payload.eventName);
+        body.append("event_id", payload.eventId);
+        body.append("event_source_url", payload.eventSourceUrl || window.location.href);
+        body.append("params", JSON.stringify(payload.params || {}));
+
+        if (payload.fbp) {
+            body.append("fbp", payload.fbp);
+        }
+
+        if (payload.fbc) {
+            body.append("fbc", payload.fbc);
+        }
+
+        return body;
+    }
+
+    function trySendBeacon(body) {
+        if (!navigator.sendBeacon) {
+            return false;
+        }
+
+        try {
+            return navigator.sendBeacon(config.ajaxUrl, body);
+        } catch (error) {
+            if (config.debug && window.console && typeof window.console.warn === "function") {
+                console.warn("[FLACSO Meta] sendBeacon falló", error);
+            }
+            return false;
+        }
+    }
+
+    function transportQueuedEvent(payload, allowBeaconFallback) {
+        var body;
+        var request;
+
+        if (!payload || !payload.eventId || inflightEvents[payload.eventId]) {
+            return inflightEvents[payload && payload.eventId] || null;
+        }
+
+        if (!config.capiEnabled || !config.ajaxUrl || !config.ajaxAction) {
+            removeQueuedEvent(payload.eventId);
+            return null;
+        }
+
+        body = buildRequestBody(payload);
+        markQueuedEventAttempt(payload.eventId);
+
+        if (typeof window.fetch !== "function") {
+            if (allowBeaconFallback) {
+                trySendBeacon(body);
+            }
+            return null;
+        }
+
+        request = window.fetch(config.ajaxUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+            },
+            body: body.toString(),
+            credentials: "same-origin",
+            keepalive: true
+        }).then(function (response) {
+            if (!response || !response.ok) {
+                throw new Error("HTTP " + (response ? response.status : 0));
+            }
+
+            removeQueuedEvent(payload.eventId);
+            return true;
+        }).catch(function (error) {
+            if (config.debug && window.console && typeof window.console.warn === "function") {
+                console.warn("[FLACSO Meta] fetch falló", error);
+            }
+
+            if (allowBeaconFallback) {
+                trySendBeacon(body);
+            }
+
+            return false;
+        });
+
+        inflightEvents[payload.eventId] = request.then(function (result) {
+            delete inflightEvents[payload.eventId];
+            return result;
+        }, function (error) {
+            delete inflightEvents[payload.eventId];
+            throw error;
+        });
+
+        return inflightEvents[payload.eventId];
+    }
+
+    function flushPendingServerEvents() {
+        var queue;
+        var i;
+
+        if (!config.capiEnabled || !config.ajaxUrl || !config.ajaxAction || typeof window.fetch !== "function") {
+            return;
+        }
+
+        queue = readQueue();
+        for (i = 0; i < queue.length; i += 1) {
+            if (queue[i] && queue[i].eventId && !inflightEvents[queue[i].eventId]) {
+                transportQueuedEvent(queue[i], false);
+            }
+        }
+    }
+
     function sendServerEvent(eventType, eventName, params, eventId) {
+        var payload;
+        var fbp;
+        var fbc;
+
         if (!config.capiEnabled || !config.ajaxUrl || !config.ajaxAction) {
             return;
         }
 
-        var body = new URLSearchParams();
-        body.append("action", config.ajaxAction);
-        body.append("event_type", eventType);
-        body.append("event_name", eventName);
-        body.append("event_id", eventId);
-        body.append("event_source_url", window.location.href);
-        body.append("params", JSON.stringify(params || {}));
+        fbp = getCookie("_fbp");
+        fbc = ensureFbcCookie() || getCookie("_fbc");
 
-        var fbp = getCookie("_fbp");
-        var fbc = ensureFbcCookie() || getCookie("_fbc");
+        payload = upsertQueuedEvent({
+            eventType: eventType,
+            eventName: eventName,
+            eventId: eventId,
+            eventSourceUrl: window.location.href,
+            params: normalizeParams(params),
+            fbp: fbp || "",
+            fbc: fbc || ""
+        });
 
-        if (fbp) {
-            body.append("fbp", fbp);
-        }
-
-        if (fbc) {
-            body.append("fbc", fbc);
-        }
-
-        if (navigator.sendBeacon) {
-            try {
-                if (navigator.sendBeacon(config.ajaxUrl, body)) {
-                    return;
-                }
-            } catch (error) {
-                if (config.debug && window.console && typeof window.console.warn === "function") {
-                    console.warn("[FLACSO Meta] sendBeacon falló", error);
-                }
-            }
-        }
-
-        if (typeof window.fetch === "function") {
-            window.fetch(config.ajaxUrl, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
-                },
-                body: body.toString(),
-                credentials: "same-origin",
-                keepalive: true
-            }).catch(function (error) {
-                if (config.debug && window.console && typeof window.console.warn === "function") {
-                    console.warn("[FLACSO Meta] fetch falló", error);
-                }
-            });
-        }
+        transportQueuedEvent(payload, true);
     }
 
     function ensurePixelBootstrap() {
@@ -210,6 +437,21 @@
     window.flacsoMetaTrackCustom = function (eventName, params, options) {
         return track("trackCustom", eventName, params, options);
     };
+
+    if (typeof window.addEventListener === "function") {
+        window.addEventListener("online", flushPendingServerEvents);
+        window.addEventListener("pageshow", flushPendingServerEvents);
+    }
+
+    if (document && typeof document.addEventListener === "function") {
+        document.addEventListener("visibilitychange", function () {
+            if (document.visibilityState === "visible") {
+                flushPendingServerEvents();
+            }
+        });
+    }
+
+    flushPendingServerEvents();
 
     if (!config.enabled || !config.trackPageView) {
         return;
