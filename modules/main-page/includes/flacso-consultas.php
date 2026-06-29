@@ -443,11 +443,11 @@ function flacso_consultas_render_form( $attributes = array() ) {
 
 			if (typeof window.flacsoMetaTrack === 'function') {
 				try {
-					window.flacsoMetaTrack('Contact', Object.assign({
+					window.flacsoMetaTrack('Contact', {
 						content_name: programa,
 						content_category: 'solicitud_informacion',
 						content_type: 'oferta_academica'
-					}, metaUserData));
+					}, { userData: metaUserData });
 				} catch (e) {}
 			}
 
@@ -960,7 +960,7 @@ function flacso_render_gracias_virtual() {
 				try {
 					// Meta Lead: consulta WordPress enviada correctamente.
 					// Debe ejecutarse solo después de confirmación AJAX exitosa y redirección a /gracias.
-					window.flacsoMetaTrack('Lead', Object.assign({
+					window.flacsoMetaTrack('Lead', {
 						lead_type: 'consulta_wordpress_oferta',
 						form_type: 'consulta_oferta_academica',
 						lead_source: 'wordpress_form',
@@ -969,7 +969,7 @@ function flacso_render_gracias_virtual() {
 						content_category: 'oferta_academica',
 						content_type: 'oferta_academica',
 						status: 'submitted'
-					}, metaUserData));
+					}, { userData: metaUserData });
 					sessionStorage.removeItem('consultaMetaUserData');
 				} catch (e) {
 					if (window.console && typeof window.console.warn === 'function') {

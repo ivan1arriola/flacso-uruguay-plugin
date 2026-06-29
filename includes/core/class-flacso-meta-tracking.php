@@ -630,7 +630,7 @@ if (!function_exists('flacso_meta_get_price_usd')) {
 
         $post_type = get_post_type($post_id);
 
-        if ($post_type === 'cpt_seminario') {
+        if (in_array($post_type, ['seminario', 'cpt_seminario'], true)) {
             $usd = (float) get_post_meta($post_id, '_seminario_valor_usd', true);
             if ($usd > 0) {
                 return $usd;
@@ -728,7 +728,7 @@ if (!function_exists('flacso_get_entity_price_usd')) {
         $exchange_rate = (float) get_option('flacso_usd_exchange_rate', 0);
         $post_type = get_post_type($post_id);
 
-        if ($post_type === 'cpt_seminario') {
+        if (in_array($post_type, ['seminario', 'cpt_seminario'], true)) {
             $usd = (float) get_post_meta($post_id, '_seminario_valor_usd', true);
             if ($usd > 0) {
                 return [
@@ -832,107 +832,6 @@ if (!function_exists('flacso_get_entity_price_usd')) {
         }
 
         return null;
-    }
-}
-    /**
-     * Obtiene el precio en USD de una oferta académica o seminario.
-     * Si el precio está en UYU, lo convierte usando la opción flacso_usd_exchange_rate.
-     *
-     * @param int $post_id
-     * @return float
-     */
-    function flacso_meta_get_price_usd(int $post_id): float {
-        if ($post_id <= 0) {
-            return 0.0;
-        }
-
-        $exchange_rate = (float) get_option('flacso_usd_exchange_rate', 40);
-        if ($exchange_rate <= 0) {
-            $exchange_rate = 40.0;
-        }
-
-        $post_type = get_post_type($post_id);
-
-        if ($post_type === 'cpt_seminario') {
-            $usd = (float) get_post_meta($post_id, '_seminario_valor_usd', true);
-            if ($usd > 0) {
-                return $usd;
-            }
-
-            $uyu = (float) get_post_meta($post_id, '_seminario_valor_uyu', true);
-            if ($uyu > 0) {
-                return round($uyu / $exchange_rate);
-            }
-
-            return 0.0;
-        }
-
-        // Lógica para oferta académica (o fallback general a tablas de precios)
-        $tabla_precio_id = (int) get_post_meta($post_id, 'tabla_precio_id', true);
-        $target_id = $tabla_precio_id > 0 ? $tabla_precio_id : $post_id;
-
-        $precios_filas_str = get_post_meta($target_id, 'precios_filas', true);
-        if (empty($precios_filas_str)) {
-            return 0.0;
-        }
-
-        $rows = json_decode($precios_filas_str, true);
-        if (!is_array($rows) || empty($rows)) {
-            $rows = json_decode(wp_unslash($precios_filas_str), true);
-            if (!is_array($rows) || empty($rows)) {
-                return 0.0;
-            }
-        }
-
-        $selected_row = null;
-        foreach ($rows as $row) {
-            $concept = isset($row['concept']) ? mb_strtolower($row['concept']) : '';
-            if (strpos($concept, 'total') !== false) {
-                $selected_row = $row;
-                break;
-            }
-        }
-
-        if (!$selected_row) {
-            foreach ($rows as $row) {
-                if (!empty($row['highlight'])) {
-                    $selected_row = $row;
-                    break;
-                }
-            }
-        }
-
-        if (!$selected_row && !empty($rows)) {
-            $selected_row = $rows[0];
-        }
-
-        if (!$selected_row) {
-            return 0.0;
-        }
-
-        $extract_number = static function($str) {
-            if (!is_string($str)) return 0.0;
-            $str = strip_tags($str);
-            $str = str_replace(' ', '', $str);
-            if (preg_match('/(\d+[\.,]\d+)[\.,](\d{2})$/', $str, $matches)) {
-                $number_part = str_replace(['.', ','], '', $matches[1]);
-                return (float) ($number_part . '.' . $matches[2]);
-            }
-            $digits = preg_replace('/[^\d]/', '', $str);
-            return $digits !== '' ? (float) $digits : 0.0;
-        };
-
-        $us_val = isset($selected_row['us']) ? $extract_number($selected_row['us']) : 0.0;
-        if ($us_val > 0) {
-            return $us_val;
-        }
-
-        $uy_val = isset($selected_row['uy']) ? $extract_number($selected_row['uy']) : 0.0;
-        if ($uy_val > 0) {
-            return round($uy_val / $exchange_rate);
-        }
-
-        return 0.0;
     }
 }
 
