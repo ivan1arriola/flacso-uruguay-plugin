@@ -8,25 +8,24 @@ En el menú lateral de WordPress verás: **Preinscripciones** → Gestión de Pr
 
 ---
 
-## Paso 1: Configurar Webhook (Google Apps Script)
+## Paso 1: Configurar Webhook de la App
 
 ### ¿Qué es el Webhook?
 Es la URL donde se **enviarán automáticamente** los datos de todos los formularios de preinscripción en tiempo real.
 
 ### Pasos:
-1. **Obtén tu URL de Google Apps Script**
-   - En Google Drive, crea un nuevo Apps Script
-   - Escribe tu función `doPost(e)` para procesar datos
-   - Publicar → Publicar como app web
-   - Copiar la URL (termina en `/usercontent`)
+1. **Obtén la URL base del editor FLACSO**
+   - Usa la URL pública de la app Next.js
+   - El endpoint oficial de preinscripciones es `/api/preinscripciones/ofertas`
+   - El plugin puede derivarlo automáticamente desde `flacso_external_editor_url`
 
 2. **Ingresa la URL en el formulario**
    - Campo: "URL del Webhook"
-   - Ejemplo: `https://script.google.com/macros/s/AKfycbxMPc7-8FOP-5Hkrv_x_dPZMtpAUHArGpjdTg2tjnV5MzO2wOAbu2jJDoXdGU3MPyZA/exec`
+   - Ejemplo: `https://editor-flacso-uy.vercel.app/api/preinscripciones/ofertas`
    - **Guardar Webhook**
 
 ### Validación
-✅ Si la URL es válida, los formularios enviarán datos automáticamente a Google Sheets
+✅ Si la URL es válida, los formularios enviarán datos automáticamente a la app de FLACSO
 
 ---
 
@@ -65,7 +64,7 @@ Cada programa seleccionado tendrá un formulario accesible en: **[url-programa]/
 - 📄 **URL virtual**: No crea página real en la BD
 - 🎯 **Automático**: El título se genera dinámicamente
 - 🔄 **Sin perder datos**: Desactivar un programa solo oculta el acceso
-- 📊 **Datos en Sheets**: Cada envío va al webhook configurado
+- 📊 **Datos centralizados**: Cada envío va al webhook configurado en la app
 
 ### Pasos:
 1. **Por cada categoría**, verás todos los programas disponibles
@@ -120,35 +119,22 @@ El formulario automático solicita:
 
 ---
 
-## Recibir Datos en Google Sheets
+## Destino de Datos en la App
 
-### Configuración mínima en Google Apps Script:
+### Comportamiento esperado
 
-```javascript
-function doPost(e) {
-  const data = JSON.parse(e.postData.contents);
-  
-  // Abrir hoja de cálculo
-  const sheet = SpreadsheetApp.getActiveSheet();
-  
-  // Agregar fila
-  sheet.appendRow([
-    new Date().toLocaleString(),
-    data.nombre,
-    data.email,
-    data.telefono,
-    data.consulta,
-    data.programa
-  ]);
-  
-  return ContentService.createTextOutput(JSON.stringify({success: true}))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-```
+El endpoint oficial `POST /api/preinscripciones/ofertas`:
 
-### Encabezados sugeridos en Sheets:
-| Fecha | Nombre | Email | Teléfono | Consulta | Programa |
-|-------|--------|-------|----------|----------|----------|
+- valida el payload
+- persiste la preinscripción en la app
+- sube adjuntos a Drive si corresponde
+- registra metadatos y dispara notificaciones operativas
+
+### Requisitos
+
+- Configurar `flacso_external_editor_url`
+- Configurar `flacso_webhook_token`
+- Verificar que la URL final sea `https://tu-editor.com/api/preinscripciones/ofertas`
 
 ---
 
@@ -179,7 +165,7 @@ https://ejemplo.com/especialidad-xyz/preinscripcion/
 | Problema | Solución |
 |----------|----------|
 | URL `/preinscripcion/` devuelve 404 | Guardar enlaces permanentes en Configuración |
-| Webhook no recibe datos | Verifica que la URL sea correcta y que Google Apps Script esté publicado como web app |
+| Webhook no recibe datos | Verifica que la URL sea correcta, que apunte a `/api/preinscripciones/ofertas` y que el token unificado coincida |
 | Categoría con ✗ roja | Crea o publica la página padre en WordPress |
 | Programas no aparecen | Asegúrate que sean hijas de la página padre y estén publicadas |
 | Formulario rechaza archivo | Máximo 10MB, debe ser PDF, DOC o DOCX |
@@ -188,7 +174,7 @@ https://ejemplo.com/especialidad-xyz/preinscripcion/
 
 ## Información Importante
 
-- 🔒 **Privacidad**: Los datos se envían directamente a tu Google Sheets
+- 🔒 **Privacidad**: Los datos se envían directamente a la app de FLACSO
 - 📱 **Responsive**: El formulario funciona en móvil y desktop
 - 🔄 **Sin límites**: Puedes tener preinscripción en 100+ programas
 - 🗑️ **Seguro**: Al desactivar un programa, no se pierden datos
@@ -208,10 +194,10 @@ R: Los campos principales son fijos (Nombre, Email, Teléfono, CV, Consulta). Pa
 R: La URL `/preinscripcion/` ya no será accesible, pero los datos quedan guardados.
 
 **P: ¿Cómo respaldar los datos?**
-R: Los datos están en tu Google Sheets. Descárgalos en cualquier momento como Excel.
+R: Los datos quedan centralizados en la app y sus integraciones operativas.
 
 **P: ¿Puedo enviar emails automáticos?**
-R: Sí, en tu Apps Script agrega lógica con `GmailApp.sendEmail()`.
+R: Sí, la app procesa las notificaciones y correos operativos cuando su configuración está disponible.
 
 ---
 

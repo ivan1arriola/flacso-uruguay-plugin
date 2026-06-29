@@ -65,6 +65,176 @@ class FLACSO_Formulario_Preinscripcion_Final {
         wp_send_json_error($data, $status_code);
     }
 
+    private function sanitize_error_text($text, $max_length = 280) {
+        if (!is_string($text) || $text === '') {
+            return '';
+        }
+
+        $clean = $this->remove_utf8_bom($text);
+        $clean = wp_strip_all_tags($clean, true);
+        $clean = html_entity_decode($clean, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $clean = preg_replace('/\s+/', ' ', (string) $clean);
+        $clean = trim((string) $clean);
+
+        if ($clean === '') {
+            return '';
+        }
+
+        if (function_exists('mb_strlen') && function_exists('mb_substr')) {
+            if (mb_strlen($clean, 'UTF-8') > $max_length) {
+                $clean = mb_substr($clean, 0, max(0, $max_length - 3), 'UTF-8') . '...';
+            }
+        } elseif (strlen($clean) > $max_length) {
+            $clean = substr($clean, 0, max(0, $max_length - 3)) . '...';
+        }
+
+        return $clean;
+    }
+
+    private function response_body_looks_like_html($body) {
+        if (!is_string($body) || trim($body) === '') {
+            return false;
+        }
+
+        return preg_match('/<(?:!doctype|html|head|body|meta|style|script|title|div|p)\b/i', $body) === 1;
+    }
+
+    private function is_google_bad_request_response($body, $clean_message = '') {
+        $haystack = strtolower((string) $body . ' ' . (string) $clean_message);
+
+        return str_contains($haystack, 'error 400 (bad request)')
+            || str_contains($haystack, "that's an error")
+            || str_contains($haystack, 'that’s an error')
+            || str_contains($haystack, 'malformed or illegal request')
+            || str_contains($haystack, 'googlelogo')
+            || str_contains($haystack, 'www.google.com/images/errors/robot.png');
+    }
+
+    private function extract_webhook_error_text($body, $json = null, $max_length = 280) {
+        if (is_array($json) && is_array($json['error'] ?? null) && !empty($json['error']['message'])) {
+            return $this->sanitize_error_text((string) $json['error']['message'], $max_length);
+        }
+
+        if (is_array($json) && is_string($json['error'] ?? null) && trim((string) $json['error']) !== '') {
+            return $this->sanitize_error_text((string) $json['error'], $max_length);
+        }
+
+        if (is_array($json) && is_string($json['message'] ?? null) && trim((string) $json['message']) !== '') {
+            return $this->sanitize_error_text((string) $json['message'], $max_length);
+        }
+
+        return $this->sanitize_error_text((string) $body, $max_length);
+    }
+
+    private function get_public_webhook_error_message($status, $body, $json = null) {
+        $fallback = 'No pudimos enviar la postulación en este momento. Por favor, intente nuevamente en unos minutos.';
+        $message = $this->extract_webhook_error_text($body, $json, 220);
+
+        if ($message === '') {
+            return $fallback;
+        }
+
+        if ($this->response_body_looks_like_html($body) || $this->is_google_bad_request_response($body, $message)) {
+            return $fallback;
+        }
+
+        if ((int) $status >= 500) {
+            return $fallback;
+        }
+
+        return $message;
+    }
+
+    private function get_admin_webhook_error_message($status, $body, $json = null) {
+        $base = (int) $status > 0
+            ? 'El servidor respondió HTTP ' . (int) $status . '.'
+            : 'No se pudo completar la prueba del webhook.';
+        $message = $this->extract_webhook_error_text($body, $json, 280);
+
+        if ($this->is_google_bad_request_response($body, $message)) {
+            return $base . ' El servicio remoto devolvió un 400. Revisá que la URL apunte al endpoint oficial de preinscripciones de la app.';
+        }
+
+        if ($this->response_body_looks_like_html($body)) {
+            return $base . ' El webhook devolvió HTML en lugar de JSON. Revise la publicación y los permisos del servicio externo.';
+        }
+
+        if ($message === '') {
+            return $base;
+        }
+
+        return $base . ' ' . $message;
+    }
+
+    private function get_external_editor_preinscripciones_webhook_url() {
+        $external_editor_url = trim((string) get_option('flacso_external_editor_url', 'https://editor-flacso-uy.vercel.app'));
+        if ($external_editor_url === '') {
+            return '';
+        }
+
+        return rtrim($external_editor_url, '/') . '/api/preinscripciones/ofertas';
+    }
+
+    private function get_preinscripciones_webhook_candidates() {
+        $configured_url = trim((string) get_option('flacso_preinscripciones_webhook_url', ''));
+        $editor_url = trim((string) $this->get_external_editor_preinscripciones_webhook_url());
+        $has_unified_token = trim((string) get_option('flacso_webhook_token', '')) !== '';
+
+        $candidates = array();
+
+        if ($configured_url !== '') {
+            $candidates[] = array(
+                'url' => $configured_url,
+                'source' => 'configured',
+            );
+        } elseif ($has_unified_token && $editor_url !== '') {
+            $candidates[] = array(
+                'url' => $editor_url,
+                'source' => 'editor_default',
+            );
+        }
+
+        $unique = array();
+        $seen = array();
+
+        foreach ($candidates as $candidate) {
+            $url = trim((string) ($candidate['url'] ?? ''));
+            if ($url === '' || isset($seen[$url])) {
+                continue;
+            }
+
+            $seen[$url] = true;
+            $unique[] = array(
+                'url' => $url,
+                'source' => (string) ($candidate['source'] ?? 'configured'),
+            );
+        }
+
+        return $unique;
+    }
+
+    private function post_preinscripciones_webhook($webhook_url, $body_json, $webhook_token, $timeout = 100) {
+        $webhook_headers = array();
+        if ($webhook_token !== '') {
+            $webhook_headers['X-FLACSO-Webhook-Token'] = $webhook_token;
+            $webhook_headers['Authorization'] = 'Bearer ' . $webhook_token;
+        }
+
+        return wp_remote_post($webhook_url, array(
+            'headers' => array_merge(array(
+                'Content-Type' => 'application/json; charset=utf-8',
+                'Accept'       => 'application/json',
+                'User-Agent'   => 'FLACSO-Uruguay-Form/1.0',
+            ), $webhook_headers),
+            'body' => $body_json,
+            'timeout' => $timeout,
+            'redirection' => 3,
+            'blocking' => true,
+            'httpversion' => '1.1',
+            'data_format' => 'body',
+        ));
+    }
+
     private function archivo_obligatorio_presente($campo) {
         if (!isset($_FILES[$campo])) { return false; }
         $file = $_FILES[$campo];
@@ -334,17 +504,9 @@ class FLACSO_Formulario_Preinscripcion_Final {
         ini_set('memory_limit', '256M');
         ini_set('max_execution_time', 300);
 
-        // Obtener webhook URL desde la configuración
-        $webhook_url = trim((string) get_option('flacso_preinscripciones_webhook_url', ''));
-        if (empty($webhook_url)) {
-            $webhook_url = trim((string) get_option('fc_oferta_webhook_url', ''));
-        }
-        if (empty($webhook_url) && defined('FLACSO_WEBHOOK_URL')) {
-            $webhook_url = trim((string) FLACSO_WEBHOOK_URL);
-        }
-
         $webhook_token = sanitize_text_field((string) get_option('flacso_webhook_token', ''));
-        if (empty($webhook_url)) {
+        $webhook_candidates = $this->get_preinscripciones_webhook_candidates();
+        if (empty($webhook_candidates)) {
             $this->send_json_error('Error de configuración: No se ha configurado la URL del webhook. Contacte al administrador.');
         }
 
@@ -489,55 +651,55 @@ class FLACSO_Formulario_Preinscripcion_Final {
         $body_json = wp_json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         if ($body_json === false) { $this->send_json_error('Error codificando los datos del formulario.'); }
 
-        $webhook_headers = array();
-        if ($webhook_token !== '') {
-            $webhook_headers['X-FLACSO-Webhook-Token'] = $webhook_token;
-            $webhook_headers['Authorization'] = 'Bearer ' . $webhook_token;
+        $last_status = 0;
+        $last_body = '';
+        $last_json = null;
+        $last_error_msg = 'Error del servidor. Por favor, contacte a inscripciones@flacso.edu.uy';
+        $last_wp_error_message = '';
+
+        foreach ($webhook_candidates as $candidate) {
+            $candidate_url = (string) ($candidate['url'] ?? '');
+            $candidate_source = (string) ($candidate['source'] ?? 'configured');
+            $result = $this->post_preinscripciones_webhook($candidate_url, $body_json, $webhook_token, 100);
+
+            if (is_wp_error($result)) {
+                $last_wp_error_message = $result->get_error_message();
+                error_log('Error en webhook preinscripciones [' . $candidate_source . ']: ' . $last_wp_error_message);
+                continue;
+            }
+
+            $status = wp_remote_retrieve_response_code($result);
+            $body = wp_remote_retrieve_body($result);
+            $json = json_decode($body, true);
+            $last_status = (int) $status;
+            $last_body = (string) $body;
+            $last_json = $json;
+
+            error_log("Respuesta webhook preinscripciones [$candidate_source] - Status: $status, Body: " . substr($body, 0, 500));
+
+            if ($status === 200 && is_array($json) && ($json['ok'] ?? false)) {
+                $this->send_json_success(array(
+                    'message' => 'Preinscripción enviada correctamente.',
+                    'editor_response' => $json,
+                ));
+            }
+
+            if (is_array($json) && is_array($json['error'] ?? null) && !empty($json['error']['message'])) {
+                $last_error_msg = (string) $json['error']['message'];
+            } elseif (is_array($json) && is_string($json['message'] ?? null) && $json['message'] !== '') {
+                $last_error_msg = $json['message'];
+            } elseif ($body) {
+                $last_error_msg = (string) $body;
+            }
         }
 
-        $result = wp_remote_post($webhook_url, array(
-            'headers' => array_merge(array(
-                'Content-Type' => 'application/json; charset=utf-8',
-                'Accept'       => 'application/json',
-                'User-Agent'   => 'FLACSO-Uruguay-Form/1.0',
-            ), $webhook_headers),
-            'body' => $body_json,
-            'timeout' => 100,
-            'redirection' => 3,
-            'blocking' => true,
-            'httpversion' => '1.1',
-            'data_format' => 'body',
-        ));
-
-        if (is_wp_error($result)) {
-            error_log('Error en webhook preinscripciones: ' . $result->get_error_message());
-            $this->send_telegram_error_notification('WP_Error / Fallo de Red', $result->get_error_message(), $payload);
+        if ($last_wp_error_message !== '' && $last_status === 0) {
+            $this->send_telegram_error_notification('WP_Error / Fallo de Red', $last_wp_error_message, $payload);
             $this->send_json_error('Error de conexión con el servidor. Por favor, intente nuevamente.');
         }
 
-        $status = wp_remote_retrieve_response_code($result);
-        $body = wp_remote_retrieve_body($result);
-        error_log("Respuesta webhook preinscripciones - Status: $status, Body: " . substr($body, 0, 500));
-
-        $json = json_decode($body, true);
-        if ($status === 200 && is_array($json) && ($json['ok'] ?? false)) {
-            $this->send_json_success(array(
-                'message' => 'Preinscripción enviada correctamente.',
-                'editor_response' => $json,
-            ));
-        }
-
-        $error_msg = 'Error del servidor. Por favor, contacte a inscripciones@flacso.edu.uy';
-        if (is_array($json) && is_array($json['error'] ?? null) && !empty($json['error']['message'])) {
-            $error_msg = (string) $json['error']['message'];
-        } elseif (is_array($json) && is_string($json['message'] ?? null) && $json['message'] !== '') {
-            $error_msg = $json['message'];
-        } elseif ($body) {
-            $error_msg = "Error: $body";
-        }
-
-        $this->send_telegram_error_notification("HTTP $status", $error_msg, $payload);
-        $this->send_json_error($error_msg);
+        $this->send_telegram_error_notification("HTTP $last_status", $last_error_msg, $payload);
+        $this->send_json_error($this->get_public_webhook_error_message($last_status, $last_body, $last_json));
     }
     
 
@@ -550,25 +712,13 @@ class FLACSO_Formulario_Preinscripcion_Final {
             wp_die(esc_html__('Solicitud no válida.', 'flacso-uruguay'));
         }
 
-        $webhook_url = trim((string) get_option('flacso_preinscripciones_webhook_url', ''));
-        if (empty($webhook_url)) {
-            $webhook_url = trim((string) get_option('fc_oferta_webhook_url', ''));
-        }
-        if (empty($webhook_url) && defined('FLACSO_WEBHOOK_URL')) {
-            $webhook_url = trim((string) FLACSO_WEBHOOK_URL);
-        }
-
         $result = array('ok' => false, 'code' => 0, 'error' => '', 'message' => '');
+        $webhook_candidates = $this->get_preinscripciones_webhook_candidates();
 
-        if (empty($webhook_url)) {
+        if (empty($webhook_candidates)) {
             $result['error'] = 'No se ha configurado la URL del webhook.';
         } else {
             $webhook_token = sanitize_text_field((string) get_option('flacso_webhook_token', ''));
-            $webhook_headers = array();
-            if ($webhook_token !== '') {
-                $webhook_headers['X-FLACSO-Webhook-Token'] = $webhook_token;
-                $webhook_headers['Authorization'] = 'Bearer ' . $webhook_token;
-            }
 
             $payload = array(
                 'test' => true,
@@ -594,20 +744,14 @@ class FLACSO_Formulario_Preinscripcion_Final {
             );
             $body_json = wp_json_encode($payload);
 
-            $response = wp_remote_post($webhook_url, array(
-                'headers' => array_merge(array(
-                    'Content-Type' => 'application/json; charset=utf-8',
-                    'Accept'       => 'application/json',
-                    'User-Agent'   => 'FLACSO-Uruguay-Form/1.0',
-                ), $webhook_headers),
-                'body' => $body_json,
-                'timeout' => 15,
-                'blocking' => true,
-            ));
+            foreach ($webhook_candidates as $candidate) {
+                $response = $this->post_preinscripciones_webhook((string) ($candidate['url'] ?? ''), $body_json, $webhook_token, 15);
 
-            if (is_wp_error($response)) {
-                $result['error'] = 'Error de conexión: ' . $response->get_error_message();
-            } else {
+                if (is_wp_error($response)) {
+                    $result['error'] = 'Error de conexión: ' . $response->get_error_message();
+                    continue;
+                }
+
                 $status = wp_remote_retrieve_response_code($response);
                 $body = wp_remote_retrieve_body($response);
                 $json = json_decode($body, true);
@@ -615,12 +759,12 @@ class FLACSO_Formulario_Preinscripcion_Final {
                 $result['code'] = $status;
                 if ($status >= 200 && $status < 300) {
                     $result['ok'] = true;
-                } else {
-                    $result['message'] = 'El servidor respondió HTTP ' . $status . '.';
-                    if (is_array($json) && !empty($json['error'])) {
-                        $result['message'] .= ' ' . (is_string($json['error']) ? $json['error'] : wp_json_encode($json['error']));
-                    }
+                    $result['error'] = '';
+                    $result['message'] = '';
+                    break;
                 }
+
+                $result['message'] = $this->get_admin_webhook_error_message($status, $body, $json);
             }
         }
 
@@ -678,13 +822,8 @@ class FLACSO_Formulario_Preinscripcion_Final {
             return;
         }
 
-        $webhook_url = trim((string) get_option('flacso_preinscripciones_webhook_url', ''));
-        if (empty($webhook_url)) {
-            $webhook_url = trim((string) get_option('fc_oferta_webhook_url', ''));
-        }
-        if (empty($webhook_url) && defined('FLACSO_WEBHOOK_URL')) {
-            $webhook_url = trim((string) FLACSO_WEBHOOK_URL);
-        }
+        $webhook_candidates = $this->get_preinscripciones_webhook_candidates();
+        $webhook_url = (string) (($webhook_candidates[0]['url'] ?? ''));
 
         $datos = $payload['datos'] ?? [];
         $posgrado = $payload['posgrado'] ?? [];
@@ -704,14 +843,7 @@ class FLACSO_Formulario_Preinscripcion_Final {
         $site_name = wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES);
         $fecha = current_time('d/m/Y H:i:s');
 
-        // Limpiar código HTML del cuerpo de error (por ejemplo, el HTML del error 400 de Google)
-        $error_clean = strip_tags($error_msg);
-        $error_clean = html_entity_decode($error_clean, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $error_clean = preg_replace('/\s+/', ' ', $error_clean);
-        $error_clean = trim($error_clean);
-        if (strlen($error_clean) > 400) {
-            $error_clean = substr($error_clean, 0, 397) . '...';
-        }
+        $error_clean = $this->sanitize_error_text($error_msg, 400);
 
         $msg = "🚨 <b>URGENTE: Fallo al enviar Preinscripción</b>\n";
         $msg .= "━━━━━━━━━━━━━━━━━━━━━━\n\n";
@@ -736,7 +868,5 @@ class FLACSO_Formulario_Preinscripcion_Final {
         fc_send_telegram_message($msg);
     }
 }
-
-
 
 

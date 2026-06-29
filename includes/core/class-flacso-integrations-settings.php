@@ -1872,7 +1872,7 @@ class FLACSO_Integrations_Settings {
                     <span class="flacso-card-icon">📝</span>
                     <h2><?php esc_html_e('Preinscripciones', 'flacso-uruguay'); ?></h2>
                 </div>
-                <p class="flacso-integrations-lead"><?php esc_html_e('Define el webhook externo que recibe los datos de preinscripción. Suele apuntar a Google Apps Script.', 'flacso-uruguay'); ?></p>
+                <p class="flacso-integrations-lead"><?php esc_html_e('Define el endpoint que recibe las preinscripciones académicas. La integración soportada es la app Next.js en /api/preinscripciones/ofertas.', 'flacso-uruguay'); ?></p>
             </div>
 
             <div class="flacso-card-body">
@@ -1881,8 +1881,8 @@ class FLACSO_Integrations_Settings {
                     self::OPTION_PREINSCRIPCIONES_WEBHOOK_URL,
                     __('Webhook de preinscripciones', 'flacso-uruguay'),
                     'url',
-                    'https://script.google.com/macros/s/.../exec',
-                    __('Se guarda sobre la misma opción usada por el panel de Preinscripciones.', 'flacso-uruguay')
+                    'https://tu-editor.com/api/preinscripciones/ofertas',
+                    __('Si este campo queda vacío, el plugin intentará derivarlo desde la URL base del editor externo.', 'flacso-uruguay')
                 );
                 ?>
             </div>

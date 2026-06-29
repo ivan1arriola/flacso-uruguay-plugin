@@ -10,7 +10,7 @@
 
 ### 1️⃣ Webhook Configuration
 ```
-✅ URL de Google Apps Script
+✅ URL del endpoint de la app
 ✅ Envío automático de datos
 ✅ Validación de URL
 ```
@@ -118,9 +118,9 @@ Procesamiento PHP (backend)
         ↓
 Envío POST a Webhook
         ↓
-Google Apps Script recibe
+App FLACSO recibe
         ↓
-Datos en Google Sheets
+Persistencia y automatizaciones
 ```
 
 ---
@@ -154,7 +154,7 @@ wp_ajax_nopriv_flacso_enviar_preinscripcion
 
 | Opción | Descripción |
 |--------|-------------|
-| `flacso_preinscripciones_webhook_url` | URL de Google Apps Script |
+| `flacso_preinscripciones_webhook_url` | URL del endpoint de preinscripciones |
 | `flacso_preinscripciones_paginas_padre` | Configuración de categorías |
 | `flacso_preinscripciones_activas` | Programas con preinscripción activa |
 
@@ -192,7 +192,7 @@ wp_ajax_nopriv_flacso_enviar_preinscripcion
 - WordPress 6.0+
 - PHP 7.4+
 - Acceso a rewrite rules
-- Google Apps Script (para webhook)
+- App FLACSO accesible por HTTPS
 
 ---
 
@@ -233,7 +233,7 @@ modules/preinscripcion/
 - ✅ Webhook URL (wp_options)
 - ✅ Categorías (wp_options)
 - ✅ Programas activos (wp_options)
-- ✅ Envíos de formularios (Google Sheets)
+- ✅ Envíos de formularios (app FLACSO)
 
 ---
 
@@ -266,8 +266,8 @@ No ocupa espacio en BD, se generan dinámicamente
 ### 🛡️ Sin Pérdida de Datos
 Desactivar = ocultar acceso, no eliminar datos
 
-### 📊 Integración Google Sheets
-Envío automático de todos los formularios
+### 📊 Integración App-Only
+Envío automático de todos los formularios al endpoint oficial
 
 ---
 

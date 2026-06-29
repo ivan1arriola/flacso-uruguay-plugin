@@ -9,12 +9,12 @@
 El módulo **Preinscripciones** está completamente integrado en el plugin FLACSO Uruguay con todas las funcionalidades requeridas:
 
 ✅ Panel de administración con 3 pasos  
-✅ Gestión de webhook (Google Apps Script)  
+✅ Gestión de webhook de la app  
 ✅ Definición de categorías de programas  
 ✅ Activación/desactivación de preinscripción por programa  
 ✅ URLs virtuales dinámicas (`/programa/preinscripcion/`)  
 ✅ Formulario automático con validación  
-✅ Integración Google Sheets  
+✅ Integración con la app FLACSO  
 ✅ Sistema de migración de datos  
 ✅ Interfaz responsive
 
@@ -80,7 +80,7 @@ WordPress Admin → Preinscripciones → Gestión de Preinscripciones
 ```
 
 **Funcionalidad:**
-- Guardar URL de Google Apps Script
+- Guardar URL del endpoint oficial de preinscripciones
 - Validar URL antes de guardar
 - Enviar datos de formularios automáticamente
 
@@ -251,7 +251,7 @@ AJAX POST /wp-admin/admin-ajax.php?action=flacso_enviar_preinscripcion
     ↓
 Backend procesar
     ↓
-Enviar POST a Webhook (Google Apps Script)
+Enviar POST a Webhook de la app
     ↓
 Respuesta JSON
     ↓
@@ -400,7 +400,7 @@ wp_verify_nonce()    // CSRF
 
 ```php
 // Webhook
-'https://script.google.com/macros/s/AKfycbxMPc7.../exec'
+'https://editor-flacso-uy.vercel.app/api/preinscripciones/ofertas'
 
 // Categorías
 [
@@ -487,7 +487,7 @@ obtener_estado_migracion()
 - ✅ Activación/desactivación por programa
 - ✅ URLs virtuales sin crear páginas
 - ✅ Formulario con validación
-- ✅ Integración Google Apps Script
+- ✅ Integración con endpoint app-only
 - ✅ Sistema de migración de datos
 - ✅ Interfaz responsive
 - ✅ Seguridad (nonces, sanitización, capacidades)
@@ -514,7 +514,7 @@ obtener_estado_migracion()
 - [ ] 3. Adjuntar CV
 - [ ] 4. Enviar formulario
 - [ ] 5. Recibir confirmación
-- [ ] 6. Datos aparecen en Google Sheets
+- [ ] 6. Datos aparecen en la app / destino configurado
 
 ---
 
