@@ -460,7 +460,13 @@ function flacso_consultas_render_form( $attributes = array() ) {
 				type: 'POST',
 				data: payload + '&action=flacso_enviar_consulta',
 				timeout: <?php echo ( FLACSO_WEBHOOK_TIMEOUT * 1000 ) + 5000; ?>,
-				success: function() {
+				success: function(response) {
+					// Solo redirigir a /gracias si la respuesta confirma envío correcto.
+					// No disparar Lead si el servidor reportó error.
+					if (!response || !response.success) {
+						showMessage('No se pudo enviar la consulta. Intentá más tarde.', 'danger');
+						return;
+					}
 					sessionStorage.setItem('consultaNombreCompleto',
 						$form.find('[name="nombre"]').val() + ' ' + $form.find('[name="apellido"]').val());
 					sessionStorage.setItem('consultaPrograma', $form.find('[name="titulo_posgrado"]').val());
@@ -471,14 +477,9 @@ function flacso_consultas_render_form( $attributes = array() ) {
 					window.location.href = buildGraciasUrl(gracias, pid);
 				},
 				error: function() {
-					sessionStorage.setItem('consultaNombreCompleto',
-						$form.find('[name="nombre"]').val() + ' ' + $form.find('[name="apellido"]').val());
-					sessionStorage.setItem('consultaPrograma', $form.find('[name="titulo_posgrado"]').val());
-					sessionStorage.setItem('consultaOrigen', $form.find('[name="url_base"]').val());
-					const pid = $form.find('[name="id_pagina"]').val();
-					const urlBase = $form.find('[name="url_base"]').val();
-					const gracias = $form.find('[name="url_gracias"]').val() || (urlBase ? urlBase.replace(/\/$/, '') + '/gracias/' : '<?php echo esc_js( home_url( '/gracias/' ) ); ?>');
-					window.location.href = buildGraciasUrl(gracias, pid);
+					// No redirigir a /gracias en caso de error AJAX.
+					// No disparar Lead si el envío falló.
+					showMessage('No se pudo enviar la consulta. Revisá tu conexión e intentá de nuevo.', 'danger');
 				},
 				complete: function() { toggleLoading(false); }
 			});
@@ -957,9 +958,15 @@ function flacso_render_gracias_virtual() {
 			// Pre-enrollments fire their own Lead & SubmitApplication events with Advanced Matching hashes prior to redirect
 			if (typeof window.flacsoMetaTrack === 'function' && !isPreinscripcion) {
 				try {
+					// Meta Lead: consulta WordPress enviada correctamente.
+					// Debe ejecutarse solo después de confirmación AJAX exitosa y redirección a /gracias.
 					window.flacsoMetaTrack('Lead', Object.assign({
+						lead_type: 'consulta_wordpress_oferta',
+						form_type: 'consulta_oferta_academica',
+						lead_source: 'wordpress_form',
+						lead_context: 'oferta_academica',
 						content_name: programaMeta || '',
-						content_category: 'solicitud_informacion',
+						content_category: 'oferta_academica',
 						content_type: 'oferta_academica',
 						status: 'submitted'
 					}, metaUserData));

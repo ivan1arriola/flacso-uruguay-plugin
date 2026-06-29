@@ -194,6 +194,33 @@
                     }
 
                     if (result && result.success) {
+                        // Meta Lead: consulta WordPress enviada correctamente.
+                        // Debe ejecutarse solo después de confirmación AJAX exitosa.
+                        if (typeof window.flacsoMetaTrack === 'function') {
+                            var ofertaId = String(formData.get('oferta_id') || '').trim();
+                            var ofertaTitulo = ofertaInput ? String(ofertaInput.value || '').trim() : '';
+                            try {
+                                window.flacsoMetaTrack('Lead', {
+                                    lead_type: 'consulta_wordpress_oferta',
+                                    form_type: 'consulta_oferta_academica',
+                                    lead_source: 'wordpress_form',
+                                    lead_context: 'oferta_academica',
+                                    content_name: ofertaTitulo,
+                                    content_category: 'oferta_academica',
+                                    content_type: 'oferta_academica',
+                                    content_ids: ofertaId ? ['oferta-' + ofertaId] : [],
+                                    oferta_id: ofertaId,
+                                    oferta_titulo: ofertaTitulo,
+                                    flacso_stage: 'consulta_enviada',
+                                    status: 'submitted'
+                                });
+                            } catch (e) {
+                                if (window.console && typeof window.console.warn === 'function') {
+                                    console.warn('[FLACSO Meta] Lead tracking failed', e);
+                                }
+                            }
+                        }
+
                         setStatus(statusNode, message, 'success');
                         form.reset();
                         if (ofertaInput) {

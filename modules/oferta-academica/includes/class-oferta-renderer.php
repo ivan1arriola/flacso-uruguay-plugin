@@ -800,9 +800,15 @@ class Oferta_Renderer {
                     event.preventDefault();
                     var scope = document.querySelector('[data-flacso-oa-consulta]');
                     if (!scope) return;
-                    var select = scope.querySelector('select[name="oferta_id"]');
-                    if (select) {
-                        select.value = <?php echo (int) $oferta_id; ?>;
+                    // Preseleccionar la oferta en el formulario flotante de consulta.
+                    var ofertaInput = scope.querySelector('[data-oa-oferta-input]');
+                    var ofertaIdInput = scope.querySelector('[data-oa-oferta-id]');
+                    if (ofertaInput) {
+                        ofertaInput.value = <?php echo wp_json_encode($title); ?>;
+                        ofertaInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                    if (ofertaIdInput) {
+                        ofertaIdInput.value = <?php echo (int) $oferta_id; ?>;
                     }
                     var opener = scope.querySelector('[data-oa-consulta-open]');
                     if (opener) opener.click();

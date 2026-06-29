@@ -496,9 +496,15 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
                     return;
                 }
                 try {
+                    // Meta Lead: consulta WordPress enviada correctamente.
+                    // Debe ejecutarse solo después de confirmación AJAX exitosa y redirección a /gracias.
                     window.flacsoMetaTrack('Lead', {
+                        lead_type: 'consulta_wordpress_oferta',
+                        form_type: 'consulta_oferta_academica',
+                        lead_source: 'wordpress_form',
+                        lead_context: 'oferta_academica',
                         content_name: <?php echo wp_json_encode((string) $title); ?>,
-                        content_category: 'solicitud_informacion',
+                        content_category: 'oferta_academica',
                         content_type: 'oferta_academica',
                         status: 'submitted'
                     });

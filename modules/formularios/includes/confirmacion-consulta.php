@@ -127,10 +127,17 @@ function fc_maybe_render_gracias_page() {
             return;
         }
         var pixelPayload = {
+            lead_type: 'consulta_general',
+            form_type: 'consulta_general',
+            lead_source: 'wordpress_form',
+            lead_context: 'consulta_general',
             content_name: <?php echo wp_json_encode( (string) $asunto ); ?>,
             content_category: 'consulta_general',
+            content_type: 'consulta_general',
             status: 'submitted'
         };
+        // Meta Lead: consulta general enviada correctamente.
+        // Debe ejecutarse solo en la página de confirmación de consulta.
         try {
             window.flacsoMetaTrack('Lead', pixelPayload);
         } catch (e) {
