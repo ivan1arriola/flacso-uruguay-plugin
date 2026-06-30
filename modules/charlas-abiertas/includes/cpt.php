@@ -221,6 +221,20 @@ function flacso_charlas_abiertas_format_duracion_hhmm_desde_minutos($value) {
     return sprintf('%02d:%02d', $horas, $minutos);
 }
 
+function flacso_charlas_abiertas_get_charla_descripcion_html($post) {
+    $post = get_post($post);
+    if (!$post) {
+        return '';
+    }
+
+    $descripcion = (string) get_post_meta($post->ID, '_charla_descripcion', true);
+    if ('' !== trim($descripcion)) {
+        return $descripcion;
+    }
+
+    return (string) $post->post_content;
+}
+
 function flacso_charlas_abiertas_render_meta_box($post) {
     wp_nonce_field('flacso_charla_detalles_nonce', 'flacso_charla_detalles_nonce_field');
 
@@ -233,7 +247,7 @@ function flacso_charlas_abiertas_render_meta_box($post) {
     $lugar_nombre = get_post_meta($post->ID, '_charla_lugar_nombre', true);
     $direccion = get_post_meta($post->ID, '_charla_direccion', true);
     $google_maps_url = get_post_meta($post->ID, '_charla_google_maps_url', true);
-    $descripcion = get_post_meta($post->ID, '_charla_descripcion', true);
+    $descripcion = flacso_charlas_abiertas_get_charla_descripcion_html($post);
     $form_variant = flacso_charlas_abiertas_normalize_form_variant(
         get_post_meta($post->ID, '_charla_form_variant', true)
     );
@@ -603,7 +617,7 @@ function flacso_charlas_abiertas_sync_evento_from_charla($charla_id, $force_crea
         'post_type'    => 'evento',
         'post_status'  => $event_status,
         'post_title'   => $titulo,
-        'post_content' => (string) get_post_meta($charla_id, '_charla_descripcion', true),
+        'post_content' => flacso_charlas_abiertas_get_charla_descripcion_html($charla_id),
     ];
 
     if ($evento_id > 0) {
@@ -671,7 +685,7 @@ function flacso_charlas_abiertas_sync_post_from_charla($charla_id) {
     if ($post_exists) {
         update_post_meta($post_id, '_post_charla_id', $charla_id);
     } else {
-        $descripcion = (string) get_post_meta($charla_id, '_charla_descripcion', true);
+        $descripcion = flacso_charlas_abiertas_get_charla_descripcion_html($charla_id);
         $form_variant = flacso_charlas_abiertas_normalize_form_variant(
             get_post_meta($charla_id, '_charla_form_variant', true)
         );

@@ -84,7 +84,9 @@ function flacso_charlas_abiertas_render_block($attributes) {
     $lugar_nombre = get_post_meta($evento_id, '_charla_lugar_nombre', true);
     $direccion = get_post_meta($evento_id, '_charla_direccion', true);
     $google_maps_url = get_post_meta($evento_id, '_charla_google_maps_url', true);
-    $descripcion = get_post_meta($evento_id, '_charla_descripcion', true);
+    $descripcion = function_exists('flacso_charlas_abiertas_get_charla_descripcion_html')
+        ? flacso_charlas_abiertas_get_charla_descripcion_html($evento_id)
+        : ((string) get_post_meta($evento_id, '_charla_descripcion', true) ?: (string) get_post_field('post_content', $evento_id));
     $descripcion_b64 = base64_encode((string) $descripcion);
     if (!$modalidad) {
         $modalidad = 'virtual';

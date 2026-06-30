@@ -340,7 +340,9 @@ function flacso_charlas_abiertas_build_charla_data($post) {
     $lugar_nombre = (string) get_post_meta($post->ID, '_charla_lugar_nombre', true);
     $direccion = (string) get_post_meta($post->ID, '_charla_direccion', true);
     $google_maps_url = (string) get_post_meta($post->ID, '_charla_google_maps_url', true);
-    $descripcion = (string) get_post_meta($post->ID, '_charla_descripcion', true);
+    $descripcion = function_exists('flacso_charlas_abiertas_get_charla_descripcion_html')
+        ? flacso_charlas_abiertas_get_charla_descripcion_html($post)
+        : ((string) get_post_meta($post->ID, '_charla_descripcion', true) ?: (string) $post->post_content);
     $form_variant = function_exists('flacso_charlas_abiertas_normalize_form_variant')
         ? flacso_charlas_abiertas_normalize_form_variant(
             get_post_meta($post->ID, '_charla_form_variant', true)
