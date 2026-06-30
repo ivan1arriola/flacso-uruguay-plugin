@@ -497,6 +497,100 @@ class FLACSO_Formulario_Preinscripcion_Final {
         return $out;
     }
 
+    private function get_preinscripciones_files_upload_url() {
+        $editor_url = $this->get_external_editor_preinscripciones_webhook_url();
+        if ($editor_url === '') {
+            $configured_url = trim((string) get_option('flacso_preinscripciones_webhook_url', ''));
+            if ($configured_url !== '') {
+                $base = rtrim(preg_replace('#/api/preinscripciones/ofertas/?$#', '', $configured_url), '/');
+                return $base . '/api/preinscripciones/ofertas/files';
+            }
+            return '';
+        }
+        return rtrim($editor_url, '/') . '/files';
+    }
+
+    private function upload_single_file_to_endpoint($file_data, $field_name, $offer_info, $applicant_info) {
+        $webhook_token = sanitize_text_field((string) get_option('flacso_webhook_token', ''));
+        $upload_url = $this->get_preinscripciones_files_upload_url();
+
+        if ($upload_url === '') {
+            return array('ok' => false, 'error' => 'No hay URL configurada para subida de archivos.');
+        }
+
+        $body = array(
+            'field' => $field_name,
+            'file' => array(
+                'name' => $file_data['name'],
+                'type' => $file_data['type'],
+                'content' => $file_data['content'],
+            ),
+            'offer' => array(
+                'id' => $offer_info['id'],
+                'title' => $offer_info['title'],
+            ),
+            'applicant' => array(
+                'nombre1' => $applicant_info['nombre1'],
+                'apellido1' => $applicant_info['apellido1'],
+                'nombre2' => $applicant_info['nombre2'] ?? '',
+                'apellido2' => $applicant_info['apellido2'] ?? '',
+                'documento' => $applicant_info['documento'] ?? '',
+            ),
+        );
+
+        $body_json = wp_json_encode($body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if ($body_json === false) {
+            return array('ok' => false, 'error' => 'Error codificando archivo para subida.');
+        }
+
+        $headers = array(
+            'Content-Type' => 'application/json; charset=utf-8',
+            'Accept' => 'application/json',
+            'User-Agent' => 'FLACSO-Uruguay-Form/1.0',
+        );
+        if ($webhook_token !== '') {
+            $headers['X-FLACSO-Webhook-Token'] = $webhook_token;
+            $headers['Authorization'] = 'Bearer ' . $webhook_token;
+        }
+
+        $response = wp_remote_post($upload_url, array(
+            'headers' => $headers,
+            'body' => $body_json,
+            'timeout' => 120,
+            'redirection' => 0,
+            'blocking' => true,
+            'httpversion' => '1.1',
+            'data_format' => 'body',
+        ));
+
+        if (is_wp_error($response)) {
+            return array('ok' => false, 'error' => $response->get_error_message());
+        }
+
+        $status = wp_remote_retrieve_response_code($response);
+        $body_raw = wp_remote_retrieve_body($response);
+        $json = json_decode($body_raw, true);
+
+        if ($status === 200 && is_array($json) && !empty($json['ok']) && is_array($json['data'])) {
+            return array(
+                'ok' => true,
+                'file_id' => $json['data']['file_id'] ?? '',
+                'file_url' => $json['data']['file_url'] ?? '',
+                'file_name' => $json['data']['file_name'] ?? $file_data['name'],
+                'file_size' => $json['data']['file_size'] ?? null,
+            );
+        }
+
+        $error_msg = 'Error HTTP ' . $status;
+        if (is_array($json) && !empty($json['error']['message'])) {
+            $error_msg .= ': ' . $json['error']['message'];
+        } elseif (!empty($body_raw)) {
+            $error_msg .= ': ' . substr($body_raw, 0, 200);
+        }
+
+        return array('ok' => false, 'error' => $error_msg);
+    }
+
     public function procesar_formulario() {
         $this->flush_output_buffers();
         $this->configurar_limites_archivos();
@@ -563,31 +657,78 @@ class FLACSO_Formulario_Preinscripcion_Final {
         }
         $datos_basicos['celular_e164'] = $cel_e164;
 
-        // Archivos
-        $archivos = array();
+        // Archivos — subir uno por uno al endpoint de archivos, luego enviar solo referencias
+        $archivos_con_drive = array();
         $max_file_size = 10 * 1024 * 1024;
+        $file_upload_errors = array();
+        $offer_info = array(
+            'id' => $oferta_id,
+            'title' => $titulo_posgrado,
+        );
+        $applicant_info = array(
+            'nombre1' => $datos_basicos['nombre1'] ?? '',
+            'apellido1' => $datos_basicos['apellido1'] ?? '',
+            'nombre2' => $datos_basicos['nombre2'] ?? '',
+            'apellido2' => $datos_basicos['apellido2'] ?? '',
+            'documento' => $datos_basicos['documento'] ?? '',
+        );
+
         if (!empty($_FILES)) {
             foreach ($_FILES as $campo => $file) {
                 if (!$es_maestria && in_array($campo, array('carta_recomendacion_1','carta_recomendacion_2'), true)) { continue; }
 
-                $pushFile = function($name, $type, $tmp, $error) use (&$archivos, $campo, $max_file_size) {
+                $collectFile = function($name, $type, $tmp, $error) use (&$archivos_con_drive, &$file_upload_errors, $campo, $max_file_size, $offer_info, $applicant_info) {
                     if ($error !== UPLOAD_ERR_OK) { error_log("Error subiendo archivo $name: código $error"); return; }
                     if (!file_exists($tmp)) { error_log("Archivo temporal no existe: $tmp"); return; }
                     $file_size = filesize($tmp);
                     if ($file_size > $max_file_size) { error_log("Archivo $name excede tamaño máximo: $file_size bytes"); return; }
                     $content = file_get_contents($tmp);
                     if ($content === false) { error_log("No se pudo leer el archivo: $tmp"); return; }
-                    $archivos[$campo][] = array('name'=>sanitize_file_name($name),'type'=>$type ?: 'application/octet-stream','content'=>base64_encode($content));
+                    $b64_content = base64_encode($content);
+                    $sanitized_name = sanitize_file_name($name);
+                    $sanitized_type = $type ?: 'application/octet-stream';
+
+                    error_log("[Preinscripcion] Subiendo archivo '$campo/$name' ($file_size bytes) al endpoint de archivos...");
+                    $upload_result = $this->upload_single_file_to_endpoint(
+                        array(
+                            'name' => $sanitized_name,
+                            'type' => $sanitized_type,
+                            'content' => $b64_content,
+                        ),
+                        $campo,
+                        $offer_info,
+                        $applicant_info
+                    );
+
+                    if ($upload_result['ok']) {
+                        $archivos_con_drive[$campo][] = array(
+                            'name' => $sanitized_name,
+                            'type' => $sanitized_type,
+                            'drive_url' => $upload_result['file_url'],
+                            'drive_id' => $upload_result['file_id'],
+                            'size' => $file_size,
+                        );
+                        error_log("[Preinscripcion] Archivo '$campo/$name' subido a Drive: " . $upload_result['file_url']);
+                    } else {
+                        $error_msg = $upload_result['error'] ?? 'Error desconocido';
+                        $file_upload_errors[] = "$campo/$name: $error_msg";
+                        error_log("[Preinscripcion] Error subiendo archivo '$campo/$name': $error_msg");
+                    }
                 };
 
                 if (is_array($file['name'])) {
                     foreach ($file['name'] as $i => $name) {
-                        if (!empty($name)) { $pushFile($name, $file['type'][$i] ?? '', $file['tmp_name'][$i] ?? '', $file['error'][$i] ?? UPLOAD_ERR_NO_FILE); }
+                        if (!empty($name)) { $collectFile($name, $file['type'][$i] ?? '', $file['tmp_name'][$i] ?? '', $file['error'][$i] ?? UPLOAD_ERR_NO_FILE); }
                     }
                 } elseif (!empty($file['name'])) {
-                    $pushFile($file['name'], $file['type'] ?? '', $file['tmp_name'] ?? '', $file['error'] ?? UPLOAD_ERR_NO_FILE);
+                    $collectFile($file['name'], $file['type'] ?? '', $file['tmp_name'] ?? '', $file['error'] ?? UPLOAD_ERR_NO_FILE);
                 }
             }
+        }
+
+        // Si fallaron todas las subidas de archivos, notificar pero continuar
+        if (!empty($file_upload_errors)) {
+            error_log("[Preinscripcion] Errores en subida de archivos: " . implode('; ', $file_upload_errors));
         }
 
         // Capturar metadata de la solicitud
@@ -615,7 +756,6 @@ class FLACSO_Formulario_Preinscripcion_Final {
                 'celular_e164' => $cel_e164,
                 'pais_nacimiento' => $datos_basicos['pais_nacimiento'] ?? '',
                 'pais_residencia' => $datos_basicos['pais_residencia'] ?? '',
-                // Campos actuales del formulario (y fallback a nombres legacy si existen).
                 'domicilio' => $datos_basicos['domicilio'] ?? ($datos_basicos['direccion'] ?? ''),
                 'ocupacion' => $datos_basicos['ocupacion'] ?? ($datos_basicos['ocupacion_actual'] ?? ''),
                 'estudios' => $datos_basicos['estudios'] ?? ($datos_basicos['nivel_estudios'] ?? ''),
@@ -628,7 +768,6 @@ class FLACSO_Formulario_Preinscripcion_Final {
                 'titulo_grado_especificacion' => $datos_basicos['titulo_grado_especificacion'] ?? ($datos_basicos['titulo_obtenido'] ?? ''),
                 'documentacion_completa' => $datos_basicos['documentacion_completa'] ?? '',
                 'documentacion_faltante' => $datos_basicos['documentacion_faltante'] ?? '',
-                // Campos legacy adicionales (ya no se muestran en el formulario actual).
                 'direccion' => $datos_basicos['direccion'] ?? '',
                 'nivel_estudios' => $datos_basicos['nivel_estudios'] ?? '',
                 'titulo_obtenido' => $datos_basicos['titulo_obtenido'] ?? '',
@@ -639,7 +778,7 @@ class FLACSO_Formulario_Preinscripcion_Final {
                 'institucion_trabajo' => $datos_basicos['institucion_trabajo'] ?? '',
                 'como_conociste' => $datos_basicos['como_conociste'] ?? ''
             ),
-            'archivos' => $archivos,
+            'archivos' => $archivos_con_drive,
             'meta' => array(
                 'timestamp_client' => current_time('c'),
                 'ip_address' => $ip_address,
@@ -648,8 +787,12 @@ class FLACSO_Formulario_Preinscripcion_Final {
                 'origen' => 'wordpress_formulario_preinscripcion'
             )
         );
+
+        // Log seguro del tamaño del payload antes del fetch
         $body_json = wp_json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         if ($body_json === false) { $this->send_json_error('Error codificando los datos del formulario.'); }
+        $payload_size_mb = strlen($body_json) / 1024 / 1024;
+        error_log("[Preinscripcion] Payload JSON listo para enviar: " . sprintf('%.2f', $payload_size_mb) . " MB, oferta_id=$oferta_id, archivos=" . count($archivos_con_drive, COUNT_RECURSIVE));
 
         $last_status = 0;
         $last_body = '';
@@ -682,6 +825,22 @@ class FLACSO_Formulario_Preinscripcion_Final {
                     'message' => 'Preinscripción enviada correctamente.',
                     'editor_response' => $json,
                 ));
+            }
+
+            // Manejo específico para HTTP 413 Payload Too Large
+            if ($status === 413) {
+                $error_detail = 'El payload es demasiado grande para el servidor remoto (413 Request Entity Too Large). ';
+                $error_detail .= 'Los archivos se subieron individualmente a Drive correctamente, pero el payload final (' . sprintf('%.2f', $payload_size_mb) . ' MB) excede el límite del servidor. ';
+                $error_detail .= 'Por favor, contacte a inscripciones@flacso.edu.uy para completar la preinscripción de forma manual.';
+                $error_msg_413 = 'El sistema de archivos es demasiado grande. ';
+                $error_msg_413 .= 'Por favor, contacte a inscripciones@flacso.edu.uy para completar su postulación manualmente. Código de seguimiento: oferta-' . $oferta_id;
+
+                $this->send_telegram_error_notification(
+                    'HTTP 413 Payload Too Large',
+                    $error_detail . ' | Datos del alumno: ' . ($datos_basicos['nombre1'] ?? '') . ' ' . ($datos_basicos['apellido1'] ?? '') . ' - ' . ($datos_basicos['correo'] ?? ''),
+                    $payload
+                );
+                $this->send_json_error($error_msg_413);
             }
 
             if (is_array($json) && is_array($json['error'] ?? null) && !empty($json['error']['message'])) {
