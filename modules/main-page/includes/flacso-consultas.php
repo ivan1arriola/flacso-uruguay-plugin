@@ -877,19 +877,14 @@ function flacso_render_gracias_virtual() {
         flacso_consultas_apply_virtual_page_title( $page_title );
         get_header();
         ?>
-                <main class="flacso-gracias-container position-relative overflow-hidden">
+                <main class="flacso-gracias-container">
                         <?php if ( $thumb_url ) : ?>
-                        <div class="position-absolute top-0 start-0 w-100 h-100" aria-hidden="true" style="z-index:-1;">
-				<div class="w-100 h-100" style="
-					background-image: linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)), url('<?php echo esc_url( $thumb_url ); ?>');
-					background-size: cover; background-position: center; filter: saturate(.95) brightness(.95);
-				"></div>
-			</div>
-			<?php endif; ?>
+                        <div class="flacso-gracias-bg" aria-hidden="true" style="background-image: linear-gradient(rgba(18,45,75,.72), rgba(18,45,75,.58)), url('<?php echo esc_url( $thumb_url ); ?>');"></div>
+                        <?php endif; ?>
 
-			<div class="flacso-gracias-content container py-5 d-flex justify-content-center">
-				<div class="bg-white rounded-4 shadow-lg p-4 p-md-5 fade-in" style="max-width: 820px;">
-					<div class="flacso-gracias-icon display-5 text-success mb-2" aria-hidden="true">✓</div>
+                        <div class="flacso-gracias-content">
+                                <section class="flacso-gracias-card" aria-labelledby="flacso-gracias-title">
+                                        <div class="flacso-gracias-icon" aria-hidden="true">✓</div>
 					<?php
 						$template_name = '';
 						if ( $tipo === 'preinscripcion_oferta' ) {
@@ -907,31 +902,29 @@ function flacso_render_gracias_virtual() {
 							include $overridden;
 						} else {
 							// Fallback mínimo genérico si el theme no define una vista específica.
-							echo '<h1 class="mb-3" style="color: var(--global-palette1);">¡Tu consulta fue enviada!</h1>';
+							echo '<h1 id="flacso-gracias-title" class="mb-3">¡Tu consulta fue enviada!</h1>';
 							echo '<div class="flacso-gracias-mensaje mb-3"><p class="lead mb-2">Hemos recibido tu consulta correctamente.</p></div>';
 						}
 					?>
 
-					<div class="flacso-gracias-buttons mt-4 mx-auto" style="max-width: 420px;">
-						<div class="d-flex flex-column gap-3">
-							<a class="btn btn-primary btn-lg py-3 px-4 shadow-sm d-flex align-items-center text-start text-decoration-none border-0"
-							   href="<?php echo esc_url( $volver_href ); ?>" aria-label="Volver al posgrado seleccionado">
-								<i class="bi bi-arrow-left-circle fs-2 me-3" style="opacity: 0.8;" aria-hidden="true"></i>
-								<div style="flex: 1; min-width: 0;">
-									<span class="d-block fw-bold text-white mb-1" style="font-size: 1.05rem; line-height: 1.2;">Volver al programa</span>
-									<span class="d-block text-white" style="font-size: 0.85rem; line-height: 1.3; opacity: 0.8; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal;"><?php echo esc_html( $titulo_programa ?: 'posgrado' ); ?></span>
-								</div>
-							</a>
-							<a class="btn btn-outline-secondary btn-lg py-3 px-4 d-flex align-items-center justify-content-center text-decoration-none rounded-pill"
-							   href="<?php echo esc_url( home_url( '/formacion/' ) ); ?>" target="_self" rel="noopener">
-								<i class="bi bi-layers fs-5 me-2" aria-hidden="true"></i>
-								<span class="fw-semibold" style="font-size: 1rem;">Ver resto de la oferta</span>
-							</a>
-						</div>
-					</div>
-				</div>
-			</div>
-		</main>
+                                        <nav class="flacso-gracias-buttons" aria-label="Acciones posteriores">
+                                                <a class="flacso-gracias-btn flacso-gracias-btn--primary"
+                                                   href="<?php echo esc_url( $volver_href ); ?>" aria-label="Volver al programa seleccionado">
+                                                        <span class="flacso-gracias-btn__icon" aria-hidden="true">←</span>
+                                                        <span class="flacso-gracias-btn__text">
+                                                                <strong>Volver al programa</strong>
+                                                                <small><?php echo esc_html( $titulo_programa ?: 'posgrado' ); ?></small>
+                                                        </span>
+                                                </a>
+                                                <a class="flacso-gracias-btn flacso-gracias-btn--secondary"
+                                                   href="<?php echo esc_url( home_url( '/formacion/' ) ); ?>" target="_self" rel="noopener">
+                                                        <span class="flacso-gracias-btn__icon" aria-hidden="true">▦</span>
+                                                        <span class="flacso-gracias-btn__text"><strong>Ver resto de la oferta</strong></span>
+                                                </a>
+                                        </nav>
+                                </section>
+                        </div>
+                </main>
 
 		<script>
 		document.addEventListener('DOMContentLoaded', function() {
@@ -1021,22 +1014,149 @@ function flacso_render_gracias_virtual() {
 		</script>
 
 		<style>
-		.flacso-gracias-container { min-height: 80vh; background: var(--global-palette7); }
-		.flacso-gracias-buttons .btn-primary {
-			border-radius: 16px !important;
-			transition: transform 0.2s ease, box-shadow 0.2s ease;
-		}
-		.flacso-gracias-buttons .btn-primary:hover {
-			transform: translateY(-2px);
-			box-shadow: 0 8px 20px rgba(22, 57, 111, 0.25) !important;
-		}
-		.flacso-gracias-buttons .btn-outline-secondary {
-			transition: background-color 0.2s ease, transform 0.2s ease;
-		}
-		.flacso-gracias-buttons .btn-outline-secondary:hover {
-			background-color: var(--global-palette8);
-			transform: translateY(-1px);
-		}
+                .flacso-gracias-container {
+                        position: relative;
+                        min-height: min(820px, 86vh);
+                        overflow: hidden;
+                        background: linear-gradient(135deg, #f4f7fb 0%, #e8eef5 100%);
+                }
+                .flacso-gracias-bg {
+                        position: absolute;
+                        inset: 0;
+                        z-index: 0;
+                        background-size: cover;
+                        background-position: center;
+                        filter: saturate(.95);
+                }
+                .flacso-gracias-content {
+                        position: relative;
+                        z-index: 1;
+                        width: min(100% - 32px, 880px);
+                        margin: 0 auto;
+                        padding: clamp(48px, 8vw, 96px) 0;
+                        min-height: inherit;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                }
+                .flacso-gracias-card {
+                        width: 100%;
+                        background: rgba(255,255,255,.96);
+                        border: 1px solid rgba(24, 50, 76, .10);
+                        border-radius: 8px;
+                        box-shadow: 0 28px 70px rgba(15, 35, 56, .20);
+                        padding: clamp(28px, 5vw, 52px);
+                        text-align: center;
+                }
+                .flacso-gracias-icon {
+                        width: 64px;
+                        height: 64px;
+                        margin: 0 auto 18px;
+                        border-radius: 999px;
+                        display: grid;
+                        place-items: center;
+                        background: #e7f6ed;
+                        color: #217a3c;
+                        font-size: 2.1rem;
+                        font-weight: 800;
+                        line-height: 1;
+                        border: 1px solid rgba(33,122,60,.18);
+                }
+                .flacso-gracias-card h1 {
+                        margin: 0 0 16px;
+                        color: var(--global-palette1, #173f6b);
+                        font-size: clamp(2rem, 4vw, 3rem);
+                        line-height: 1.08;
+                        letter-spacing: 0;
+                }
+                .flacso-gracias-mensaje {
+                        max-width: 680px;
+                        margin: 0 auto 28px;
+                        color: #334155;
+                        font-size: 1rem;
+                        line-height: 1.65;
+                }
+                .flacso-gracias-mensaje p { margin: 0 0 10px; }
+                .flacso-gracias-mensaje .lead {
+                        font-size: clamp(1.12rem, 2vw, 1.32rem);
+                        color: #18324d;
+                        font-weight: 650;
+                        line-height: 1.45;
+                }
+                .flacso-gracias-mensaje .fw-semibold { font-weight: 650; }
+                .flacso-gracias-card .mb-0 { margin-bottom: 0; }
+                .flacso-gracias-card .mb-1 { margin-bottom: .25rem; }
+                .flacso-gracias-card .mb-2 { margin-bottom: .5rem; }
+                .flacso-gracias-card .mb-3 { margin-bottom: 1rem; }
+                .flacso-gracias-buttons {
+                        width: min(100%, 460px);
+                        margin: 30px auto 0;
+                        display: grid;
+                        gap: 12px;
+                }
+                .flacso-gracias-btn {
+                        min-height: 62px;
+                        border-radius: 8px;
+                        padding: 14px 18px;
+                        display: flex;
+                        align-items: center;
+                        gap: 14px;
+                        text-decoration: none;
+                        transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease, border-color .18s ease;
+                }
+                .flacso-gracias-btn:hover { transform: translateY(-1px); text-decoration: none; }
+                .flacso-gracias-btn--primary {
+                        background: var(--global-palette-btn-bg, #173f6b);
+                        color: #fff;
+                        box-shadow: 0 14px 28px rgba(23,63,107,.22);
+                }
+                .flacso-gracias-btn--primary:hover {
+                        background: var(--global-palette-btn-bg-hover, #0f2f55);
+                        color: #fff;
+                        box-shadow: 0 18px 34px rgba(23,63,107,.28);
+                }
+                .flacso-gracias-btn--secondary {
+                        background: #fff;
+                        color: #173f6b;
+                        border: 1px solid rgba(23,63,107,.22);
+                }
+                .flacso-gracias-btn--secondary:hover {
+                        background: #f4f7fb;
+                        color: #173f6b;
+                        border-color: rgba(23,63,107,.36);
+                }
+                .flacso-gracias-btn__icon {
+                        flex: 0 0 34px;
+                        width: 34px;
+                        height: 34px;
+                        border-radius: 999px;
+                        display: grid;
+                        place-items: center;
+                        background: rgba(255,255,255,.18);
+                        font-size: 1.15rem;
+                        font-weight: 800;
+                }
+                .flacso-gracias-btn--secondary .flacso-gracias-btn__icon {
+                        background: #edf3f8;
+                        color: #173f6b;
+                }
+                .flacso-gracias-btn__text { min-width: 0; text-align: left; }
+                .flacso-gracias-btn__text strong { display: block; line-height: 1.2; }
+                .flacso-gracias-btn__text small {
+                        display: -webkit-box;
+                        -webkit-line-clamp: 2;
+                        -webkit-box-orient: vertical;
+                        overflow: hidden;
+                        margin-top: 3px;
+                        color: rgba(255,255,255,.78);
+                        line-height: 1.3;
+                }
+                @media (max-width: 640px) {
+                        .flacso-gracias-content { width: min(100% - 24px, 880px); padding: 32px 0; }
+                        .flacso-gracias-card { padding: 24px 18px; }
+                        .flacso-gracias-icon { width: 56px; height: 56px; font-size: 1.9rem; }
+                        .flacso-gracias-btn { align-items: flex-start; }
+                }
                 </style>
                 <?php
                 get_footer();
