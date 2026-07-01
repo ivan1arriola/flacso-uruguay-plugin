@@ -53,6 +53,28 @@ jQuery(function($){
         return digitoVerificador === esperado;
     }
 
+    function formatearCedulaUruguaya(value){
+        const digits = String(value || '').replace(/\D/g,'').slice(0,8);
+        if(digits.length <= 1){ return digits; }
+
+        const cuerpo = digits.slice(0, -1);
+        const verificador = digits.slice(-1);
+        const grupos = [];
+        let restante = cuerpo;
+
+        while(restante.length > 3){
+            grupos.unshift(restante.slice(-3));
+            restante = restante.slice(0, -3);
+        }
+        if(restante){ grupos.unshift(restante); }
+
+        return grupos.join('.') + '-' + verificador;
+    }
+
+    function obtenerDigitosCedula(value){
+        return String(value || '').replace(/\D/g,'').slice(0,8);
+    }
+
     const form       = $('#flacso-formulario-preinscripcion');
     const resultado  = $('#flacso-resultado-envio');
     const btnSubmit  = $('.btn.btn-success');
@@ -417,25 +439,31 @@ jQuery(function($){
 
     // Validación en tiempo real básica
     $('#cedula_uruguaya').on('input', function(){
-        const original = $(this).val();
-        const soloDigitos = original.replace(/\D/g,'').slice(0,8);
-        if(soloDigitos !== original){ $(this).val(soloDigitos); }
+        const soloDigitos = obtenerDigitosCedula($(this).val());
+        const formateada = formatearCedulaUruguaya(soloDigitos);
+        if($(this).val() !== formateada){ $(this).val(formateada); }
+
+        this.setCustomValidity('');
         if(soloDigitos === ''){
             $(this).removeClass('is-valid is-invalid');
             actualizarFeedbackCedula(mensajeCedulaBase);
             return;
         }
         if(soloDigitos.length < 7){
+            const msg = 'La cédula debe tener 7 u 8 dígitos.';
+            this.setCustomValidity(msg);
             $(this).removeClass('is-valid').addClass('is-invalid');
-            actualizarFeedbackCedula('La cédula debe tener 7 u 8 dígitos.');
+            actualizarFeedbackCedula(msg);
             return;
         }
         if(validarCedulaUruguaya(soloDigitos)){
             $(this).removeClass('is-invalid').addClass('is-valid');
             actualizarFeedbackCedula(mensajeCedulaBase);
         } else {
+            const msg = 'El dígito verificador no coincide. Revise el número ingresado.';
+            this.setCustomValidity(msg);
             $(this).removeClass('is-valid').addClass('is-invalid');
-            actualizarFeedbackCedula('El dígito verificador no coincide. Revise el número ingresado.');
+            actualizarFeedbackCedula(msg);
         }
     });
     $('#otro_documento').on('input', function(){ const v=$(this).val().trim(); $(this).toggleClass('is-invalid', v==='').toggleClass('is-valid', v!==''); });
@@ -466,7 +494,7 @@ jQuery(function($){
         const tipo = $(this).val();
         const cCed = $('#contenedor-cedula'), cOtr = $('#contenedor-otro-documento');
         cCed.hide(); cOtr.hide();
-        $('#cedula_uruguaya').val('').removeClass('is-valid is-invalid').prop('required', false);
+        $('#cedula_uruguaya').val('').removeClass('is-valid is-invalid').prop('required', false).each(function(){ this.setCustomValidity(''); });
         actualizarFeedbackCedula(mensajeCedulaBase);
         $('#otro_documento').val('').removeClass('is-valid is-invalid').prop('required', false);
         if(tipo==='cedula_uruguaya'){ cCed.show(); $('#cedula_uruguaya').prop('required', true); }
@@ -503,7 +531,7 @@ jQuery(function($){
 
         // Tipo de documento coherente
         const tipo = $('#tipo_documento').val();
-        if(tipo==='cedula_uruguaya' && !validarCedulaUruguaya($('#cedula_uruguaya').val()||'')){
+        if(tipo==='cedula_uruguaya' && !validarCedulaUruguaya(obtenerDigitosCedula($('#cedula_uruguaya').val()))){
             errores.push({ label:'Cédula de Identidad Uruguaya', msg:'Ingrese 7 u 8 dígitos con un dígito verificador válido.' });
         }
         if(tipo && tipo!=='cedula_uruguaya' && !($('#otro_documento').val()||'').trim()){
@@ -746,7 +774,7 @@ jQuery(function($){
         const tipoDocumento = $('#tipo_documento').val();
         $('input[name="documento"]').remove();
         if(tipoDocumento==='cedula_uruguaya'){
-            const ciLimpia = ($('#cedula_uruguaya').val()||'').replace(/\D/g,'');
+            const ciLimpia = obtenerDigitosCedula($('#cedula_uruguaya').val());
             form.append('<input type="hidden" name="documento" value="'+ ciLimpia +'">');
         } else {
             form.append('<input type="hidden" name="documento" value="'+ (($('#otro_documento').val()||'').trim()) +'">');
@@ -754,20 +782,26 @@ jQuery(function($){
 
         const formData = new FormData(form[0]);
 
-        resultado.html(`
-            <div class="flacso-loader flacso-loader--theme">
-                <div class="flacso-loader-icon" aria-hidden="true">
-                    <div class="flacso-loader-circle"></div>
-                    <div class="flacso-loader-circle"></div>
-                    <div class="flacso-loader-circle"></div>
+        resultado.empty();
+        form.addClass('flacso-form-is-submitting').attr('aria-hidden', 'true');
+        form.before(`
+            <section class="flacso-submit-stage" role="status" aria-live="polite" aria-label="Envío de postulación en curso">
+                <div class="flacso-submit-stage__card">
+                    <div class="flacso-submit-stage__spinner" aria-hidden="true">
+                        <span></span><span></span><span></span>
+                    </div>
+                    <div class="flacso-submit-stage__content">
+                        <p class="flacso-submit-stage__eyebrow">Envío en curso</p>
+                        <h2>Enviando tu postulación</h2>
+                        <p>Estamos subiendo tus adjuntos y registrando la preinscripción. Mantené esta pestaña abierta hasta que termine.</p>
+                        <div class="flacso-submit-stage__note">
+                            Este proceso puede tardar unos minutos si adjuntaste varios archivos.
+                        </div>
+                    </div>
                 </div>
-                <div class="flacso-loader-text">
-                    <h4>Enviando tu postulación...</h4>
-                    <p>Estamos procesando tu solicitud. Por favor no cierres esta página ni recargues el navegador.</p>
-                    <p class="text-muted small mt-2"><i class="bi bi-info-circle me-1"></i>Este proceso puede tomar algunos minutos debido a los archivos adjuntos.</p>
-                </div>
-            </div>
+            </section>
         `);
+        $('.flacso-submit-stage').get(0)?.scrollIntoView({ behavior:'smooth', block:'start' });
         btnSubmit.prop('disabled', true).html('<i class="bi bi-hourglass-split me-2"></i>Enviando...');
 
         const controller = new AbortController();
@@ -846,6 +880,8 @@ jQuery(function($){
                 window.location.href = appendMetaTestEventCode(graciasUrl);
             } else {
                 const msg = data.data || 'Error desconocido del servidor. Por favor, intente nuevamente.';
+                $('.flacso-submit-stage').remove();
+                form.removeClass('flacso-form-is-submitting').removeAttr('aria-hidden');
                 resultado.html(`
                     <div class="alert alert-danger">
                         <div class="d-flex align-items-start">
@@ -867,6 +903,8 @@ jQuery(function($){
             const errorMessage = timeoutError
                 ? 'No recibimos respuesta del servidor a tiempo. La preinscripción no se confirmó. Revisá que cada archivo pese menos de 3 MB y volvé a intentar.'
                 : 'No pudimos procesar su postulación. Por favor, intente nuevamente en unos minutos.';
+            $('.flacso-submit-stage').remove();
+            form.removeClass('flacso-form-is-submitting').removeAttr('aria-hidden');
             resultado.html(`
                 <div class="alert alert-danger">
                     <div class="d-flex align-items-start">

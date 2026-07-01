@@ -69,16 +69,20 @@
 .flacso-doc-card .flacso-input-group { margin-bottom:0; }
 .flacso-doc-card label.form-label { margin-bottom:.35rem; }
 
-.flacso-loader { position:relative; overflow:hidden; border-radius:14px; padding:1.5rem; background:linear-gradient(135deg,#fbbf24 0%,#f97316 50%,#16a34a 100%); color:#0f172a; display:flex; align-items:center; gap:1rem; box-shadow:0 8px 24px rgba(0,0,0,.12); }
-.flacso-loader::after { content:''; position:absolute; inset:0; background:radial-gradient(circle at 20% 20%, rgba(255,255,255,.15), transparent 45%), radial-gradient(circle at 80% 0%, rgba(255,255,255,.12), transparent 35%); pointer-events:none; }
-.flacso-loader-icon { display:flex; gap:.4rem; position:relative; z-index:1; }
-.flacso-loader-circle { width:12px; height:12px; border:2px solid #0f172a; background: rgba(255,255,255,.6); border-radius:50%; animation: flacso-bounce 1s infinite ease-in-out; }
-.flacso-loader-circle:nth-child(2){ animation-delay:.15s; }
-.flacso-loader-circle:nth-child(3){ animation-delay:.3s; }
-.flacso-loader-text { position:relative; z-index:1; }
-.flacso-loader-text h4 { margin:0 0 .25rem 0; font-weight:700; letter-spacing:.3px; color:#0f172a; }
-.flacso-loader-text p { margin:0; font-weight:500; color:#111827; opacity:1; }
-@keyframes flacso-bounce { 0%,80%,100%{ transform:translateY(0); opacity:.7;} 40%{ transform:translateY(-6px); opacity:1;} }
+.flacso-form-is-submitting { display:none !important; }
+.flacso-submit-stage { padding:clamp(1rem, 3vw, 2rem) 0 2.5rem; }
+.flacso-submit-stage__card { display:flex; gap:1.25rem; align-items:center; max-width:760px; margin:0 auto; padding:clamp(1.25rem, 4vw, 2rem); border:1px solid #d9e3ef; border-radius:12px; background:#fff; box-shadow:0 18px 42px rgba(15,35,56,.12); }
+.flacso-submit-stage__spinner { flex:0 0 74px; width:74px; height:74px; border-radius:999px; display:flex; align-items:center; justify-content:center; gap:.28rem; background:#eef5fb; border:1px solid #cdddeb; }
+.flacso-submit-stage__spinner span { width:9px; height:9px; border-radius:999px; background:#1d3a72; animation: flacso-bounce 1s infinite ease-in-out; }
+.flacso-submit-stage__spinner span:nth-child(2){ animation-delay:.15s; }
+.flacso-submit-stage__spinner span:nth-child(3){ animation-delay:.3s; }
+.flacso-submit-stage__content { min-width:0; color:#24364b; }
+.flacso-submit-stage__eyebrow { margin:0 0 .35rem; color:#1d3a72; font-size:.78rem; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
+.flacso-submit-stage__content h2 { margin:0 0 .55rem; color:#172b45; font-size:clamp(1.45rem, 3vw, 2rem); line-height:1.15; letter-spacing:0; }
+.flacso-submit-stage__content p { margin:0; color:#334155; line-height:1.6; font-weight:500; }
+.flacso-submit-stage__note { margin-top:.9rem; padding:.8rem .95rem; border-radius:8px; background:#f7fafc; color:#475569; border:1px solid #e3ebf3; font-size:.92rem; line-height:1.45; }
+@keyframes flacso-bounce { 0%,80%,100%{ transform:translateY(0); opacity:.65;} 40%{ transform:translateY(-6px); opacity:1;} }
+@media (max-width:640px){ .flacso-submit-stage__card { align-items:flex-start; } .flacso-submit-stage__spinner { flex-basis:54px; width:54px; height:54px; } }
 
 .flacso-success-card { background:#e8f5e9; border:1px solid #c7e5cd; border-radius:12px; padding:1.5rem 1.25rem; box-shadow:0 4px 12px rgba(0,0,0,.06); }
 .flacso-success-header { display:flex; align-items:center; gap:1rem; margin-bottom:1rem; }

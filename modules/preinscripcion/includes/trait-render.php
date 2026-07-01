@@ -257,16 +257,16 @@ trait FLACSO_Formulario_Preinscripcion_Render {
                    name="cedula_uruguaya"
                    id="cedula_uruguaya"
                    class="form-control form-control-flacso"
-                   placeholder="Ej: 41234567"
+                   placeholder="Ej: 4.123.456-7"
                    inputmode="numeric"
-                   pattern="\d{7,8}"
+                   pattern="[0-9.\-]{9,11}"
                    minlength="7"
-                   maxlength="8"
+                   maxlength="11"
                    autocomplete="off"
                    aria-describedby="cedula-ayuda">
-            <div class="invalid-feedback" id="cedula-invalid-feedback">Ingrese 7 u 8 dígitos sin puntos ni guiones.</div>
+            <div class="invalid-feedback" id="cedula-invalid-feedback">Ingrese una cédula uruguaya válida.</div>
             <div class="form-text mt-1" id="cedula-ayuda">
-                <i class="bi bi-info-circle"></i> Ingrese solo números, sin puntos ni guiones, e incluya el dígito verificador (7 u 8 dígitos).
+                <i class="bi bi-info-circle"></i> Escriba los números de la cédula; el formato se agregará automáticamente e incluirá el dígito verificador.
             </div>
         </div>
 
@@ -306,8 +306,17 @@ trait FLACSO_Formulario_Preinscripcion_Render {
             <label for="etnia" class="form-label fw-semibold mb-2">
                 ¿Con qué raza/etnia se identifica? <span class="text-danger">*</span>
             </label>
-            <input type="text" name="etnia" id="etnia" class="form-control form-control-flacso" required autocomplete="off" placeholder="Ingrese su raza/etnia">
-            <div class="invalid-feedback">Este campo es obligatorio.</div>
+            <select name="etnia" id="etnia" class="form-select form-select-flacso" required>
+                <option value="">Seleccionar opción</option>
+                <option value="Afrodescendiente">Afrodescendiente</option>
+                <option value="Indígena">Indígena</option>
+                <option value="Asiática">Asiática</option>
+                <option value="Blanca">Blanca</option>
+                <option value="Mestiza">Mestiza</option>
+                <option value="Otra">Otra</option>
+                <option value="Prefiero no responder">Prefiero no responder</option>
+            </select>
+            <div class="invalid-feedback">Por favor seleccione una opción.</div>
         </div>
     <?php }
 
