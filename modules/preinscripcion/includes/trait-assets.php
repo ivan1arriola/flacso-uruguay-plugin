@@ -10,20 +10,21 @@ trait FLACSO_Formulario_Preinscripcion_Assets {
         wp_enqueue_style('country-select-js-css', 'https://cdn.jsdelivr.net/npm/country-select-js@2.0.1/build/css/countrySelect.min.css', array(), '2.0.1');
         
         // Enqueue custom styles
-        wp_enqueue_style('flacso-formulario-styles', $assets_url . 'styles.css', array('intl-tel-input-css', 'country-select-js-css'), '1.0.2');
+        wp_enqueue_style('flacso-formulario-styles', $assets_url . 'styles.css', array('intl-tel-input-css', 'country-select-js-css'), '1.0.3');
         
         // Enqueue external JS libraries
         wp_enqueue_script('intl-tel-input-js', 'https://cdn.jsdelivr.net/npm/intl-tel-input@25.12.4/build/js/intlTelInput.min.js', array(), '25.12.4', true);
         wp_enqueue_script('country-select-js', 'https://cdn.jsdelivr.net/npm/country-select-js@2.0.1/build/js/countrySelect.min.js', array(), '2.0.1', true);
         
         // Enqueue custom script with dependencies
-        wp_enqueue_script('flacso-formulario-script', $assets_url . 'scripts.js', array('jquery', 'intl-tel-input-js', 'country-select-js'), '1.0.6', true);
+        wp_enqueue_script('flacso-formulario-script', $assets_url . 'scripts.js', array('jquery', 'intl-tel-input-js', 'country-select-js'), '1.0.8', true);
         
         // Localize script with PHP data
         wp_localize_script('flacso-formulario-script', 'flacsoFormConfig', array(
             'convenios' => $info['convenios_validos'],
             'maxFileSize' => 3,
             'maxTotalSize' => 25,
+            'submitTimeoutMs' => 240000,
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'tituloPosgrado' => $info['titulo_posgrado'],
             'idPosgrado' => isset($info['id_posgrado']) ? $info['id_posgrado'] : '',

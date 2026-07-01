@@ -311,6 +311,53 @@ jQuery(function($){
         const o = $('#contenedor-genero-otra'), i = $('#genero_otra');
         if(this.value==='Otra'){ o.slideDown(300); i.prop('required',true); } else { o.slideUp(300); i.prop('required',false).val('').removeClass('is-valid is-invalid'); }
     });
+    function obtenerLabelArchivo(input) {
+        const id = input.id || '';
+        const labelEl = form.find('label[for="' + id + '"]').first();
+        return labelEl.length ? labelEl.text().replace(/\*|\s+$/g,'').trim() : (input.name || 'Archivo');
+    }
+
+    function validarArchivoInput(input) {
+        const maxFileSizeMb = Number(config.maxFileSize) || 3;
+        const maxFileSizeBytes = maxFileSizeMb * 1024 * 1024;
+        const archivos = input.files ? Array.from(input.files) : [];
+        const demasiadoGrande = archivos.find(file => file && file.size > maxFileSizeBytes);
+        const $input = $(input);
+
+        input.setCustomValidity('');
+        $input.removeClass('is-invalid');
+        const feedback = $input.siblings('.invalid-feedback');
+
+        if(demasiadoGrande){
+            const msg = 'El archivo "' + demasiadoGrande.name + '" supera el límite de ' + maxFileSizeMb + ' MB.';
+            input.setCustomValidity(msg);
+            $input.addClass('is-invalid');
+            if(feedback.length){ feedback.text(msg); }
+            return { label: obtenerLabelArchivo(input), msg };
+        }
+
+        if(feedback.length && $input.prop('required')){
+            feedback.text('Este documento es requerido.');
+        }
+
+        if(archivos.length){
+            $input.addClass('is-valid');
+        } else {
+            $input.removeClass('is-valid');
+        }
+
+        return null;
+    }
+
+    function validarArchivosSeleccionados() {
+        const errores = [];
+        form.find('input[type="file"]').each(function(){
+            const error = validarArchivoInput(this);
+            if(error){ errores.push(error); }
+        });
+        return errores;
+    }
+
     function actualizarObligatoriedadArchivos() {
         const completa = $('input[name="documentacion_completa"]:checked').val();
         const fileInputs = form.find('input[type="file"]');
@@ -332,6 +379,7 @@ jQuery(function($){
             if (completa === 'No') {
                 input.prop('required', false);
                 input.removeClass('is-invalid is-valid');
+                if (this.setCustomValidity) { this.setCustomValidity(''); }
                 label.find('.text-danger').addClass('d-none');
             } else {
                 if (debieraSerRequerido) {
@@ -355,6 +403,16 @@ jQuery(function($){
             i.prop('required',false).val('').removeClass('is-valid is-invalid'); 
         }
         actualizarObligatoriedadArchivos();
+        validarArchivosSeleccionados();
+    });
+
+    form.on('change', 'input[type="file"]', function(){
+        const error = validarArchivoInput(this);
+        if(error){
+            mostrarInformeErrores([error]);
+        } else {
+            resultado.empty();
+        }
     });
 
     // Validación en tiempo real básica
@@ -417,6 +475,7 @@ jQuery(function($){
 
     // Construir informe de errores tras intentar enviar
     function construirInformeErrores(){
+        validarArchivosSeleccionados();
         const errores = [];
 
         // HTML5 invalids
@@ -457,24 +516,6 @@ jQuery(function($){
             errores.push({ label:'Documentación faltante', msg:'Especifique qué documentación falta.' });
         }
 
-        const maxFileSizeMb = Number(config.maxFileSize) || 3;
-        const maxFileSizeBytes = maxFileSizeMb * 1024 * 1024;
-        form.find('input[type="file"]').each(function(){
-            const input = this;
-            if(!input.files || !input.files.length){ return; }
-
-            const labelEl = form.find('label[for="' + (input.id || '') + '"]').first();
-            const label = labelEl.length ? labelEl.text().replace(/\*|\s+$/g,'').trim() : (input.name || 'Archivo');
-
-            Array.from(input.files).forEach(file => {
-                if(file && file.size > maxFileSizeBytes){
-                    errores.push({
-                        label,
-                        msg: 'El archivo "' + file.name + '" supera el límite de ' + maxFileSizeMb + ' MB.'
-                    });
-                }
-            });
-        });
 
         return errores;
     }
@@ -498,6 +539,148 @@ jQuery(function($){
         resultado[0].scrollIntoView({ behavior:'smooth', block:'start' });
     }
     
+    const wizardState = {
+        sections: $(),
+        current: 0,
+        initialized: false
+    };
+
+    function obtenerLabelCampo(el){
+        const id = el.id || el.name || '(campo)';
+        const lbl = form.find('label[for="' + id + '"]').first();
+        return lbl.length ? lbl.text().replace(/\*|\s+$/g,'').trim() : id;
+    }
+
+    function validarCamposDeContenedor($scope){
+        validarArchivosSeleccionados();
+        const errores = [];
+        const seen = new Set();
+
+        $scope.find(':input').each(function(){
+            const el = this;
+            if(el.disabled || el.type === 'hidden'){ return; }
+            if(el.offsetParent === null && !$(el).is('[type="radio"]')){ return; }
+
+            if(el.checkValidity && !el.checkValidity()){
+                const key = el.name || el.id || Math.random().toString(36);
+                if(seen.has(key)){ return; }
+                seen.add(key);
+
+                const $el = $(el);
+                let label = obtenerLabelCampo(el);
+                let msg = el.validationMessage || 'Campo inválido';
+                if($el.is('[type="file"]') && $el.prop('required') && !$el.val()){ msg = 'Este documento es requerido.'; }
+                if($el.is('[type="radio"]')){
+                    const groupLabel = $el.closest('.flacso-radio-group').find('> .form-label').first().text().replace(/\*|\s+$/g,'').trim();
+                    label = groupLabel || label;
+                    msg = 'Seleccione una opción.';
+                }
+                errores.push({label, msg});
+            }
+        });
+
+        if($scope.find('#celular').length){
+            const telVal = validarTelefono();
+            if(!telVal.isValid){ errores.push({ label:'Celular', msg: telVal.message }); }
+        }
+
+        if($scope.find('#cedula_uruguaya').length){
+            const tipo = $('#tipo_documento').val();
+            if(tipo === 'cedula_uruguaya' && !validarCedulaUruguaya($('#cedula_uruguaya').val() || '')){
+                errores.push({ label:'Cédula de Identidad Uruguaya', msg:'Ingrese 7 u 8 dígitos con un dígito verificador válido.' });
+            }
+            if(tipo && tipo !== 'cedula_uruguaya' && !($('#otro_documento').val() || '').trim()){
+                errores.push({ label:'Número de Documento', msg:'Este campo es obligatorio.' });
+            }
+        }
+
+        if($scope.find('#documentacion_faltante').length){
+            const docComp = $('input[name="documentacion_completa"]:checked').val();
+            if(docComp === 'No' && !($('#documentacion_faltante').val() || '').trim()){
+                errores.push({ label:'Documentación faltante', msg:'Especifique qué documentación falta.' });
+            }
+        }
+
+        return errores;
+    }
+
+    function validarPasoWizard(index){
+        const $section = wizardState.sections.eq(index);
+        const errores = validarCamposDeContenedor($section);
+        if(errores.length){
+            form[0].classList.add('was-validated');
+            mostrarInformeErrores(errores);
+            const firstInvalid = $section.find(':invalid:visible, .is-invalid:visible').first().get(0);
+            if(firstInvalid){ firstInvalid.scrollIntoView({ behavior:'smooth', block:'center' }); firstInvalid.focus(); }
+            return false;
+        }
+        resultado.empty();
+        return true;
+    }
+
+    function actualizarWizard(){
+        const total = wizardState.sections.length;
+        wizardState.sections.each(function(i){
+            const active = i === wizardState.current;
+            $(this).toggleClass('is-active', active).prop('hidden', !active);
+        });
+
+        $('.flacso-wizard-step').each(function(i){
+            $(this)
+                .toggleClass('is-active', i === wizardState.current)
+                .toggleClass('is-complete', i < wizardState.current)
+                .attr('aria-current', i === wizardState.current ? 'step' : null);
+        });
+
+        $('.flacso-wizard-prev').prop('disabled', wizardState.current === 0);
+        $('.flacso-wizard-next').toggle(wizardState.current < total - 1);
+        $('.flacso-boton-envio').toggle(wizardState.current === total - 1);
+
+        const title = wizardState.sections.eq(wizardState.current).find('.flacso-seccion-title').first().text().trim();
+        $('.flacso-wizard-current').text('Paso ' + (wizardState.current + 1) + ' de ' + total + (title ? ': ' + title : ''));
+    }
+
+    function inicializarWizard(){
+        const $sections = form.find('section.flacso-seccion');
+        if($sections.length < 2 || wizardState.initialized){ return; }
+
+        wizardState.sections = $sections;
+        wizardState.initialized = true;
+
+        const steps = $sections.map(function(i){
+            const title = $(this).find('.flacso-seccion-title').first().text().trim() || ('Paso ' + (i + 1));
+            return '<button type="button" class="flacso-wizard-step" data-step="' + i + '"><span>' + (i + 1) + '</span><strong>' + title + '</strong></button>';
+        }).get().join('');
+
+        form.prepend('<div class="flacso-wizard" aria-label="Progreso del formulario"><div class="flacso-wizard-current"></div><div class="flacso-wizard-steps">' + steps + '</div></div>');
+        $('.flacso-boton-envio').before('<div class="flacso-wizard-nav"><button type="button" class="flacso-wizard-btn flacso-wizard-prev">Anterior</button><button type="button" class="flacso-wizard-btn flacso-wizard-next">Siguiente</button></div>');
+
+        form.on('click', '.flacso-wizard-next', function(){
+            if(!validarPasoWizard(wizardState.current)){ return; }
+            wizardState.current = Math.min(wizardState.current + 1, wizardState.sections.length - 1);
+            actualizarWizard();
+            form.find('.flacso-wizard').get(0)?.scrollIntoView({ behavior:'smooth', block:'start' });
+        });
+
+        form.on('click', '.flacso-wizard-prev', function(){
+            wizardState.current = Math.max(wizardState.current - 1, 0);
+            actualizarWizard();
+            resultado.empty();
+            form.find('.flacso-wizard').get(0)?.scrollIntoView({ behavior:'smooth', block:'start' });
+        });
+
+        form.on('click', '.flacso-wizard-step', function(){
+            const target = Number($(this).data('step'));
+            if(!Number.isFinite(target) || target === wizardState.current){ return; }
+            if(target > wizardState.current && !validarPasoWizard(wizardState.current)){ return; }
+            wizardState.current = target;
+            actualizarWizard();
+            resultado.empty();
+        });
+
+        actualizarWizard();
+    }
+
     function normalizeMetaGender(value) {
         const normalized = String(value || '').trim().toLowerCase();
         if (!normalized) return '';
@@ -587,8 +770,16 @@ jQuery(function($){
         `);
         btnSubmit.prop('disabled', true).html('<i class="bi bi-hourglass-split me-2"></i>Enviando...');
 
+        const controller = new AbortController();
+        const timeoutMs = Number(config.submitTimeoutMs) || 240000;
+        const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+
         try{
-            const resp = await fetch(config.ajaxUrl, { method:'POST', body: formData });
+            const resp = await fetch(config.ajaxUrl, {
+                method:'POST',
+                body: formData,
+                signal: controller.signal
+            });
             const data = await resp.json();
             if(data.success){
                 form.hide();
@@ -671,20 +862,29 @@ jQuery(function($){
             }
         } catch(e){
             console.error('Error en el envío:', e);
+            const timeoutError = e && e.name === 'AbortError';
+            const errorTitle = timeoutError ? 'Tiempo de espera agotado' : 'Error de conexión';
+            const errorMessage = timeoutError
+                ? 'No recibimos respuesta del servidor a tiempo. La preinscripción no se confirmó. Revisá que cada archivo pese menos de 3 MB y volvé a intentar.'
+                : 'No pudimos procesar su postulación. Por favor, intente nuevamente en unos minutos.';
             resultado.html(`
                 <div class="alert alert-danger">
                     <div class="d-flex align-items-start">
                         <i class="bi bi-x-circle-fill me-2 mt-1"></i>
                         <div>
-                            <h5 class="alert-heading">Error de conexión</h5>
-                            <p class="mb-0">No pudimos procesar su postulación. Por favor, intente nuevamente en unos minutos.</p>
+                            <h5 class="alert-heading">${errorTitle}</h5>
+                            <p class="mb-0">${errorMessage}</p>
                         </div>
                     </div>
                 </div>
             `);
             btnSubmit.prop('disabled', false).html('<i class="bi bi-send-check me-2"></i>Enviar Postulación');
+        } finally {
+            window.clearTimeout(timeoutId);
         }
     }
+
+    inicializarWizard();
 
     // Bootstrap validation + reporte de errores al enviar
     (function(){
@@ -700,6 +900,11 @@ jQuery(function($){
 
                 // Forzar evaluar teléfono si el usuario nunca interactuó
                 if(!telefonoHaSidoInteractuado){ telefonoHaSidoInteractuado = true; validarTelefono(); }
+
+                if(wizardState.initialized && wizardState.current < wizardState.sections.length - 1){
+                    validarPasoWizard(wizardState.current);
+                    return;
+                }
 
                 // Construir informe de errores ANTES del checkValidity para incluir custom
                 const listaErrores = construirInformeErrores();

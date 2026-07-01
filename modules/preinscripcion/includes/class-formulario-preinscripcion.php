@@ -838,6 +838,15 @@ class FLACSO_Formulario_Preinscripcion_Final {
 
         error_log("[Preinscripcion] Archivos seleccionados: $selected_files_count, subidos: $uploaded_files_count");
 
+        if ($documentacion_completa === 'No' && empty($datos_basicos['documentacion_faltante'])) {
+            if ($uploaded_files_count === 0) {
+                $datos_basicos['documentacion_faltante'] = 'No se adjuntaron archivos en el formulario. La persona indicó que falta documentación.';
+            } else {
+                $datos_basicos['documentacion_faltante'] = 'La persona indicó que falta documentación, pero no especificó cuál.';
+            }
+            error_log('[Preinscripcion] documentacion_faltante autocompletada: ' . $datos_basicos['documentacion_faltante']);
+        }
+
         if ($selected_files_count > 0 && $uploaded_files_count < $selected_files_count) {
             $file_upload_errors[] = "Conteo inconsistente: seleccionados=$selected_files_count, subidos=$uploaded_files_count.";
         }

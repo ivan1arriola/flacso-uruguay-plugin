@@ -526,18 +526,18 @@ trait FLACSO_Formulario_Preinscripcion_Render {
                     </div>
                 </div>
             </div>
-        </section>
 
-        <div class="alert alert-warning">
-            <div class="d-flex align-items-start">
-                <i class="bi bi-exclamation-triangle-fill me-2 mt-1"></i>
-                <div>
-                    <strong>Límite de archivos:</strong>
-                    Cada archivo individual no puede superar los <?php echo (int)$max_file_size; ?> MB.
-                    El total de todos los archivos combinados no puede exceder los <?php echo (int)$max_total_size; ?> MB.
+            <div class="alert alert-warning mt-3">
+                <div class="d-flex align-items-start">
+                    <i class="bi bi-exclamation-triangle-fill me-2 mt-1"></i>
+                    <div>
+                        <strong>Límite de archivos:</strong>
+                        Cada archivo individual no puede superar los <?php echo (int)$max_file_size; ?> MB.
+                        El total de todos los archivos combinados no puede exceder los <?php echo (int)$max_total_size; ?> MB.
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
     <?php }
 
     public function render_seccion_cartas_recomendacion() { ?>

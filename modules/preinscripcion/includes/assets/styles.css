@@ -133,3 +133,29 @@
     .flacso-hero-actions { flex-direction:column; }
     .flacso-btn-primary, .flacso-btn-convenios { width:100%; justify-content:center; }
 }
+
+.flacso-wizard { margin:0 0 1.5rem; padding:1rem; border:1px solid #e6edf5; border-radius:12px; background:#f8fafc; }
+.flacso-wizard-current { margin-bottom:.85rem; color:#1d3a72; font-weight:800; font-size:.98rem; }
+.flacso-wizard-steps { display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:.5rem; }
+.flacso-wizard-step { min-height:58px; display:flex; align-items:center; gap:.55rem; padding:.65rem .75rem; border:1px solid #d9e3ef; border-radius:8px; background:#fff; color:#3b4a5f; text-align:left; cursor:pointer; transition:all .18s ease; }
+.flacso-wizard-step span { flex:0 0 26px; width:26px; height:26px; border-radius:999px; display:grid; place-items:center; background:#e9eef5; color:#1d3a72; font-weight:800; font-size:.82rem; }
+.flacso-wizard-step strong { font-size:.82rem; line-height:1.15; font-weight:700; }
+.flacso-wizard-step.is-active { border-color:#1d3a72; box-shadow:0 0 0 3px rgba(29,58,114,.10); }
+.flacso-wizard-step.is-active span { background:#1d3a72; color:#fff; }
+.flacso-wizard-step.is-complete { border-color:#b7dfc2; background:#f2fbf5; }
+.flacso-wizard-step.is-complete span { background:#198754; color:#fff; }
+.flacso-seccion[hidden] { display:none !important; }
+.flacso-seccion.is-active { display:block; }
+.flacso-wizard-nav { display:flex; justify-content:space-between; gap:.75rem; margin:1.25rem 0; }
+.flacso-wizard-btn { min-height:48px; border-radius:8px; border:1px solid #1d3a72; padding:.75rem 1.15rem; font-weight:800; background:#fff; color:#1d3a72; cursor:pointer; transition:all .18s ease; }
+.flacso-wizard-btn:hover:not(:disabled) { background:#eef3ff; transform:translateY(-1px); }
+.flacso-wizard-btn:disabled { opacity:.45; cursor:not-allowed; }
+.flacso-wizard-next { margin-left:auto; background:#1d3a72; color:#fff; }
+.flacso-wizard-next:hover:not(:disabled) { background:#16305f; color:#fff; }
+@media (max-width:768px){
+    .flacso-wizard { padding:.85rem; }
+    .flacso-wizard-steps { grid-template-columns:1fr; }
+    .flacso-wizard-step { min-height:48px; }
+    .flacso-wizard-nav { position:sticky; bottom:0; z-index:20; background:#fff; padding:.75rem; margin:1rem -.75rem 0; border-top:1px solid #e6edf5; }
+    .flacso-wizard-btn { flex:1; }
+}
