@@ -446,7 +446,7 @@ trait FLACSO_Formulario_Preinscripcion_Render {
     <?php }
 
     public function render_seccion_documentacion($info) {
-        $max_file_size  = 5;
+        $max_file_size  = 3;
         $max_total_size = 25; ?>
         <section class="flacso-seccion mb-4">
             <div class="flacso-seccion-header mb-3">
@@ -494,7 +494,7 @@ trait FLACSO_Formulario_Preinscripcion_Render {
                         $this->render_documento_item(
                             'cv',
                             'Curriculum Vitae (CV)',
-                            'Formatos: PDF, JPG, PNG, WEBP. Máximo 5MB por archivo.',
+                            'Formatos: PDF, JPG, PNG, WEBP. Máximo 3 MB por archivo.',
                             true,
                             false
                         );
@@ -505,7 +505,7 @@ trait FLACSO_Formulario_Preinscripcion_Render {
                         $this->render_documento_item(
                             'carta_motivacion',
                             'Carta de Motivación',
-                            'Explique las razones de su interés en el posgrado. Formatos: PDF, JPG, PNG, WEBP. Máximo 5MB.',
+                            'Explique las razones de su interés en el posgrado. Formatos: PDF, JPG, PNG, WEBP. Máximo 3 MB.',
                             true,
                             false
                         );
@@ -558,8 +558,8 @@ trait FLACSO_Formulario_Preinscripcion_Render {
 
                 <div class="flacso-campos-vertical">
                     <?php
-                    $this->render_documento_item('carta_recomendacion_1', 'Primera Carta de Recomendación', 'Formatos: PDF, JPG, PNG, WEBP. Máximo 5MB.', true, false);
-                    $this->render_documento_item('carta_recomendacion_2', 'Segunda Carta de Recomendación', 'Formatos: PDF, JPG, PNG, WEBP. Máximo 5MB.', true, false);
+                    $this->render_documento_item('carta_recomendacion_1', 'Primera Carta de Recomendación', 'Formatos: PDF, JPG, PNG, WEBP. Máximo 3 MB.', true, false);
+                    $this->render_documento_item('carta_recomendacion_2', 'Segunda Carta de Recomendación', 'Formatos: PDF, JPG, PNG, WEBP. Máximo 3 MB.', true, false);
                     ?>
                 </div>
             </div>
@@ -578,7 +578,7 @@ trait FLACSO_Formulario_Preinscripcion_Render {
     <?php }
 
     public function render_documento_item($name, $label, $descripcion, $required = false, $multiple = false) {
-        $max_file_size = 5;
+        $max_file_size = 3;
         $id = str_replace(array('[]', '[', ']'), array('', '_', ''), $name);
         $required_attr = $required ? 'required' : '';
         $multiple_attr = $multiple ? 'multiple' : '';

@@ -17,12 +17,12 @@ trait FLACSO_Formulario_Preinscripcion_Assets {
         wp_enqueue_script('country-select-js', 'https://cdn.jsdelivr.net/npm/country-select-js@2.0.1/build/js/countrySelect.min.js', array(), '2.0.1', true);
         
         // Enqueue custom script with dependencies
-        wp_enqueue_script('flacso-formulario-script', $assets_url . 'scripts.js', array('jquery', 'intl-tel-input-js', 'country-select-js'), '1.0.5', true);
+        wp_enqueue_script('flacso-formulario-script', $assets_url . 'scripts.js', array('jquery', 'intl-tel-input-js', 'country-select-js'), '1.0.6', true);
         
         // Localize script with PHP data
         wp_localize_script('flacso-formulario-script', 'flacsoFormConfig', array(
             'convenios' => $info['convenios_validos'],
-            'maxFileSize' => 5,
+            'maxFileSize' => 3,
             'maxTotalSize' => 25,
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'tituloPosgrado' => $info['titulo_posgrado'],

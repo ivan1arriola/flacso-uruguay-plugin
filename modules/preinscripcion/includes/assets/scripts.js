@@ -20,7 +20,7 @@ jQuery(function($){
     // Configuración global (será inyectada por WordPress)
     const config = window.flacsoFormConfig || {
         convenios: [],
-        maxFileSize: 5,
+        maxFileSize: 3,
         maxTotalSize: 25,
         ajaxUrl: '/wp-admin/admin-ajax.php',
         tituloPosgrado: '',
@@ -456,6 +456,25 @@ jQuery(function($){
         if(docComp==='No' && !($('#documentacion_faltante').val()||'').trim()){
             errores.push({ label:'Documentación faltante', msg:'Especifique qué documentación falta.' });
         }
+
+        const maxFileSizeMb = Number(config.maxFileSize) || 3;
+        const maxFileSizeBytes = maxFileSizeMb * 1024 * 1024;
+        form.find('input[type="file"]').each(function(){
+            const input = this;
+            if(!input.files || !input.files.length){ return; }
+
+            const labelEl = form.find('label[for="' + (input.id || '') + '"]').first();
+            const label = labelEl.length ? labelEl.text().replace(/\*|\s+$/g,'').trim() : (input.name || 'Archivo');
+
+            Array.from(input.files).forEach(file => {
+                if(file && file.size > maxFileSizeBytes){
+                    errores.push({
+                        label,
+                        msg: 'El archivo "' + file.name + '" supera el límite de ' + maxFileSizeMb + ' MB.'
+                    });
+                }
+            });
+        });
 
         return errores;
     }

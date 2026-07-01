@@ -588,7 +588,81 @@ class FLACSO_Formulario_Preinscripcion_Final {
             $error_msg .= ': ' . substr($body_raw, 0, 200);
         }
 
+        if ($status === 200) {
+            $error_msg = 'Respuesta inválida del endpoint de archivos';
+            if (!empty($body_raw)) {
+                $error_msg .= ': ' . substr($body_raw, 0, 200);
+            }
+        }
+
         return array('ok' => false, 'error' => $error_msg);
+    }
+
+    private function get_php_upload_error_message($error_code) {
+        $messages = array(
+            UPLOAD_ERR_INI_SIZE => 'El archivo excede el límite configurado por el servidor.',
+            UPLOAD_ERR_FORM_SIZE => 'El archivo excede el límite permitido por el formulario.',
+            UPLOAD_ERR_PARTIAL => 'El archivo se subió parcialmente.',
+            UPLOAD_ERR_NO_FILE => 'No se recibió ningún archivo.',
+            UPLOAD_ERR_NO_TMP_DIR => 'Falta la carpeta temporal del servidor.',
+            UPLOAD_ERR_CANT_WRITE => 'No se pudo escribir el archivo temporal en el servidor.',
+            UPLOAD_ERR_EXTENSION => 'Una extensión de PHP detuvo la subida.',
+        );
+
+        return $messages[(int) $error_code] ?? 'Error de subida PHP desconocido.';
+    }
+
+    private function send_telegram_attachment_failure_notification(
+        array $context,
+        int $selected_files_count,
+        int $uploaded_files_count,
+        array $file_upload_errors
+    ): void {
+        if (!function_exists('fc_send_telegram_message')) {
+            return;
+        }
+
+        $nombre = trim(
+            ($context['nombre1'] ?? '') . ' ' .
+            ($context['nombre2'] ?? '') . ' ' .
+            ($context['apellido1'] ?? '') . ' ' .
+            ($context['apellido2'] ?? '')
+        );
+        if ($nombre === '') {
+            $nombre = 'No especificado';
+        }
+
+        $errores = array_map(function($error) {
+            return $this->sanitize_error_text((string) $error, 300);
+        }, $file_upload_errors);
+        $errores = array_values(array_filter($errores));
+        if (empty($errores)) {
+            $errores[] = 'Sin detalle adicional.';
+        }
+
+        $site_name = wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES);
+        $fecha = current_time('d/m/Y H:i:s');
+
+        $msg = "🚨 <b>Fallo de subida de adjuntos</b>\n";
+        $msg .= "━━━━━━━━━━━━━━━━━━━━━━\n\n";
+        $msg .= "<b>📍 Sitio:</b> " . htmlspecialchars($site_name, ENT_QUOTES, 'UTF-8') . "\n";
+        $msg .= "<b>📅 Fecha:</b> " . $fecha . "\n\n";
+        $msg .= "<b>🎓 Oferta:</b>\n";
+        $msg .= "  <b>ID:</b> " . intval($context['oferta_id'] ?? 0) . "\n";
+        $msg .= "  <b>Título:</b> " . htmlspecialchars((string) ($context['titulo_posgrado'] ?? 'No especificado'), ENT_QUOTES, 'UTF-8') . "\n\n";
+        $msg .= "<b>👤 Postulante:</b>\n";
+        $msg .= "  <b>Nombre:</b> " . htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8') . "\n";
+        $msg .= "  <b>Email:</b> " . htmlspecialchars((string) ($context['correo'] ?? 'No especificado'), ENT_QUOTES, 'UTF-8') . "\n";
+        $msg .= "  <b>Teléfono:</b> " . htmlspecialchars((string) ($context['telefono'] ?? 'No especificado'), ENT_QUOTES, 'UTF-8') . "\n\n";
+        $msg .= "<b>📎 Adjuntos:</b>\n";
+        $msg .= "  <b>Seleccionados:</b> " . $selected_files_count . "\n";
+        $msg .= "  <b>Subidos:</b> " . $uploaded_files_count . "\n\n";
+        $msg .= "<b>❌ Errores concretos:</b>\n";
+        $msg .= "<pre>" . htmlspecialchars(implode("\n", $errores), ENT_QUOTES, 'UTF-8') . "</pre>\n\n";
+        $msg .= "━━━━━━━━━━━━━━━━━━━━━━\n";
+        $msg .= "⚠️ <i>La preinscripción no fue registrada.</i>";
+
+        fc_send_telegram_message($msg);
     }
 
     public function procesar_formulario() {
@@ -659,8 +733,10 @@ class FLACSO_Formulario_Preinscripcion_Final {
 
         // Archivos — subir uno por uno al endpoint de archivos, luego enviar solo referencias
         $archivos_con_drive = array();
-        $max_file_size = 10 * 1024 * 1024;
+        $max_file_size = 3 * 1024 * 1024;
         $file_upload_errors = array();
+        $selected_files_count = 0;
+        $uploaded_files_count = 0;
         $offer_info = array(
             'id' => $oferta_id,
             'title' => $titulo_posgrado,
@@ -677,13 +753,46 @@ class FLACSO_Formulario_Preinscripcion_Final {
             foreach ($_FILES as $campo => $file) {
                 if (!$es_maestria && in_array($campo, array('carta_recomendacion_1','carta_recomendacion_2'), true)) { continue; }
 
-                $collectFile = function($name, $type, $tmp, $error) use (&$archivos_con_drive, &$file_upload_errors, $campo, $max_file_size, $offer_info, $applicant_info) {
-                    if ($error !== UPLOAD_ERR_OK) { error_log("Error subiendo archivo $name: código $error"); return; }
-                    if (!file_exists($tmp)) { error_log("Archivo temporal no existe: $tmp"); return; }
+                $collectFile = function($name, $type, $tmp, $error) use (&$archivos_con_drive, &$file_upload_errors, &$selected_files_count, &$uploaded_files_count, $campo, $max_file_size, $offer_info, $applicant_info) {
+                    $name = (string) $name;
+                    if ($name === '') {
+                        return;
+                    }
+
+                    $selected_files_count++;
+
+                    if ($error !== UPLOAD_ERR_OK) {
+                        $error_msg = $this->get_php_upload_error_message($error) . " Código: $error.";
+                        $file_upload_errors[] = "$campo/$name: $error_msg";
+                        error_log("[Preinscripcion] Error subiendo archivo '$campo/$name': $error_msg");
+                        return;
+                    }
+                    if (!is_string($tmp) || $tmp === '' || !file_exists($tmp)) {
+                        $error_msg = 'Archivo temporal inexistente.';
+                        $file_upload_errors[] = "$campo/$name: $error_msg";
+                        error_log("[Preinscripcion] $error_msg Ruta: $tmp");
+                        return;
+                    }
                     $file_size = filesize($tmp);
-                    if ($file_size > $max_file_size) { error_log("Archivo $name excede tamaño máximo: $file_size bytes"); return; }
+                    if ($file_size === false) {
+                        $error_msg = 'No se pudo determinar el tamaño del archivo.';
+                        $file_upload_errors[] = "$campo/$name: $error_msg";
+                        error_log("[Preinscripcion] $error_msg Ruta: $tmp");
+                        return;
+                    }
+                    if ($file_size > $max_file_size) {
+                        $error_msg = 'Archivo excede el tamaño máximo de 3 MB. Tamaño: ' . $file_size . ' bytes.';
+                        $file_upload_errors[] = "$campo/$name: $error_msg";
+                        error_log("[Preinscripcion] $error_msg");
+                        return;
+                    }
                     $content = file_get_contents($tmp);
-                    if ($content === false) { error_log("No se pudo leer el archivo: $tmp"); return; }
+                    if ($content === false) {
+                        $error_msg = 'No se pudo leer el archivo temporal.';
+                        $file_upload_errors[] = "$campo/$name: $error_msg";
+                        error_log("[Preinscripcion] $error_msg Ruta: $tmp");
+                        return;
+                    }
                     $b64_content = base64_encode($content);
                     $sanitized_name = sanitize_file_name($name);
                     $sanitized_type = $type ?: 'application/octet-stream';
@@ -708,6 +817,7 @@ class FLACSO_Formulario_Preinscripcion_Final {
                             'drive_id' => $upload_result['file_id'],
                             'size' => $file_size,
                         );
+                        $uploaded_files_count++;
                         error_log("[Preinscripcion] Archivo '$campo/$name' subido a Drive: " . $upload_result['file_url']);
                     } else {
                         $error_msg = $upload_result['error'] ?? 'Error desconocido';
@@ -726,9 +836,37 @@ class FLACSO_Formulario_Preinscripcion_Final {
             }
         }
 
-        // Si fallaron todas las subidas de archivos, notificar pero continuar
+        error_log("[Preinscripcion] Archivos seleccionados: $selected_files_count, subidos: $uploaded_files_count");
+
+        if ($selected_files_count > 0 && $uploaded_files_count < $selected_files_count) {
+            $file_upload_errors[] = "Conteo inconsistente: seleccionados=$selected_files_count, subidos=$uploaded_files_count.";
+        }
+
+        if ($documentacion_completa === 'Si' && $uploaded_files_count === 0) {
+            $file_upload_errors[] = 'Documentación completa declarada, pero no se subió ningún archivo.';
+        }
+
         if (!empty($file_upload_errors)) {
-            error_log("[Preinscripcion] Errores en subida de archivos: " . implode('; ', $file_upload_errors));
+            $attachment_error_message = 'No pudimos subir tus archivos. Revisá que cada archivo pese menos de 3 MB y volvé a intentar. La preinscripción no fue registrada.';
+            $file_upload_errors = array_values(array_unique($file_upload_errors));
+            $error_detail = implode('; ', $file_upload_errors);
+            error_log("[Preinscripcion] Preinscripción detenida por fallo de adjuntos: $error_detail");
+            $this->send_telegram_attachment_failure_notification(
+                array(
+                    'oferta_id' => $oferta_id,
+                    'titulo_posgrado' => $titulo_posgrado,
+                    'nombre1' => $datos_basicos['nombre1'] ?? '',
+                    'nombre2' => $datos_basicos['nombre2'] ?? '',
+                    'apellido1' => $datos_basicos['apellido1'] ?? '',
+                    'apellido2' => $datos_basicos['apellido2'] ?? '',
+                    'correo' => $datos_basicos['correo'] ?? '',
+                    'telefono' => $cel_e164 ?: ($datos_basicos['celular'] ?? ''),
+                ),
+                $selected_files_count,
+                $uploaded_files_count,
+                $file_upload_errors
+            );
+            $this->send_json_error($attachment_error_message);
         }
 
         // Capturar metadata de la solicitud
