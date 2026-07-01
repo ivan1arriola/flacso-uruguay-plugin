@@ -420,6 +420,61 @@
         }
     }
 
+    function trackGA4Equivalent(eventType, eventName, params) {
+        var normalizedName = String(eventName || "");
+        var ga4Name = normalizedName;
+        var payload = normalizeParams(params);
+        var category = String(payload.content_category || payload.event_category || "").toLowerCase();
+
+        if (normalizedName === "PageView") {
+            ga4Name = "page_view";
+        } else if (normalizedName === "ViewContent") {
+            ga4Name = category.indexOf("listado") !== -1 ? "view_item_list" : "view_item";
+        } else if (normalizedName === "Lead" || normalizedName === "Contact") {
+            ga4Name = "generate_lead";
+        } else if (normalizedName === "SubmitApplication") {
+            ga4Name = "submit_application";
+        } else if (normalizedName === "InitiateCheckout") {
+            ga4Name = "begin_checkout";
+        } else if (normalizedName === "OfertaAcademicaClick") {
+            ga4Name = "select_item";
+        } else if (normalizedName === "ConvenioClick") {
+            ga4Name = "convenio_click";
+        } else if (normalizedName === "SeminarioClick") {
+            ga4Name = "seminario_click";
+        } else if (normalizedName === "InfoRequestFormView") {
+            ga4Name = "form_view";
+        } else {
+            ga4Name = normalizedName
+                .toLowerCase()
+                .replace(/[^a-z0-9_]+/g, "_")
+                .replace(/^_+|_+$/g, "");
+        }
+
+        payload.meta_event_name = normalizedName;
+        payload.meta_event_type = eventType;
+
+        if (typeof window.flacsoTrackGA4 === "function") {
+            try {
+                window.flacsoTrackGA4(ga4Name, payload);
+                return;
+            } catch (error) {}
+        }
+
+        if (typeof window.gtag === "function") {
+            try {
+                window.gtag("event", ga4Name, payload);
+                return;
+            } catch (error) {}
+        }
+
+        if (Array.isArray(window.dataLayer)) {
+            try {
+                window.dataLayer.push(Object.assign({ event: ga4Name }, payload));
+            } catch (error) {}
+        }
+    }
+
     function track(eventType, eventName, params, options) {
         if (!eventName || typeof eventName !== "string") {
             return null;
@@ -464,6 +519,8 @@
                 }
             }
         }
+
+        trackGA4Equivalent(eventType, eventName, params);
 
         sendServerEvent(eventType, eventName, params, eventId, userData);
 

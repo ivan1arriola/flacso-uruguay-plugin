@@ -26,6 +26,23 @@ class FLACSO_Meta_Tracking {
         }
 
         wp_register_script(
+            'flacso-ga4-events',
+            FLACSO_URUGUAY_URL . 'includes/core/assets/ga4-events.js',
+            [],
+            FLACSO_URUGUAY_VERSION,
+            true
+        );
+
+        wp_enqueue_script('flacso-ga4-events');
+        wp_add_inline_script(
+            'flacso-ga4-events',
+            'window.flacsoGA4Config = ' . wp_json_encode([
+                'siteArea' => 'flacso_plugin',
+            ]) . ';',
+            'before'
+        );
+
+        wp_register_script(
             'flacso-meta-tracking',
             FLACSO_URUGUAY_URL . 'includes/core/assets/meta-tracking.js',
             [],
