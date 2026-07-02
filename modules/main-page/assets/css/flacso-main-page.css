@@ -2874,3 +2874,116 @@
         display: none; /* Hide arrows on mobile, users can swipe naturally */
     }
 }
+
+/* Home 2026: cleaner section rhythm and less boxed-in composition */
+.flacso-homepage-completa {
+    background: #f4f7fb;
+}
+
+.flacso-homepage-completa::before,
+.flacso-homepage-completa::after {
+    display: none;
+}
+
+.flacso-main-page .flacso-home-layout {
+    padding-block: 0;
+}
+
+.flacso-main-page .flacso-home-block {
+    padding: clamp(2rem, 5vw, 4.5rem) clamp(1rem, 3vw, 2rem) !important;
+    background: #ffffff;
+}
+
+.flacso-main-page .flacso-home-block--hero {
+    padding: 0 !important;
+    background: transparent;
+}
+
+.flacso-main-page .flacso-home-block--eventos,
+.flacso-main-page .flacso-home-block--novedades_busqueda,
+.flacso-main-page .flacso-home-block--instagram {
+    background: #f4f7fb;
+}
+
+.flacso-main-page .flacso-home-block--seminarios,
+.flacso-main-page .flacso-home-block--quienes,
+.flacso-main-page .flacso-home-block--contacto {
+    background: #f8faf6;
+}
+
+.flacso-main-page .flacso-home-block--posgrados,
+.flacso-main-page .flacso-home-block--mailing,
+.flacso-main-page .flacso-home-block--congreso {
+    background: #fff9ef;
+}
+
+.flacso-main-page .flacso-home-block__surface,
+.flacso-main-page .flacso-home-block:not(.flacso-home-block--hero) .flacso-home-block__surface {
+    width: min(100%, var(--flacso-section-max-width));
+    max-width: var(--flacso-section-max-width);
+}
+
+.flacso-main-page .flacso-home-block__surface--card {
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+}
+
+.flacso-main-page .flacso-home-block__surface--card::before,
+.flacso-main-page .flacso-home-block__surface--card::after {
+    display: none !important;
+}
+
+.flacso-main-page .flacso-home-block__surface--card .flacso-content-shell {
+    padding-inline: clamp(0.25rem, 2vw, 1rem);
+}
+
+.flacso-home-block:not(.flacso-home-block--hero) h2 {
+    letter-spacing: 0;
+    border-bottom: 0;
+    padding-bottom: 0;
+    color: var(--flacso-section-heading-color, var(--global-palette1, #1d3a72));
+}
+
+.flacso-home-block:not(.flacso-home-block--hero) h2::after {
+    content: "";
+    display: block;
+    width: 56px;
+    height: 3px;
+    margin-top: 0.65rem;
+    border-radius: 999px;
+    background: var(--global-palette-btn-bg, #248138);
+}
+
+.flacso-main-page .card,
+.flacso-main-page [class*="card"] {
+    border-radius: 8px;
+}
+
+.flacso-main-page .flacso-home-block__surface--novedades .novedades-grid .card,
+.flacso-main-page .flacso-home-block__surface--novedades_destacadas .novedades-grid .card,
+.flacso-main-page .flc-eventos-react__featured,
+.flacso-main-page .flacso-festejos-card {
+    box-shadow: 0 14px 32px rgba(13, 30, 60, 0.1);
+}
+
+.flacso-main-page .flacso-home-block__surface--eventos .flc-eventos-react__featured,
+.flacso-main-page .flacso-home-block__surface--eventos .flc-eventos-react__event-btn {
+    border-radius: 8px;
+}
+
+@media (max-width: 767.98px) {
+    .flacso-main-page .flacso-home-block {
+        padding: 1.75rem 0.85rem !important;
+    }
+
+    .flacso-main-page .flacso-home-block__surface--card .flacso-content-shell {
+        padding-inline: 0;
+    }
+
+    .flacso-home-block:not(.flacso-home-block--hero) h2 {
+        font-size: clamp(1.45rem, 8vw, 2rem);
+    }
+}

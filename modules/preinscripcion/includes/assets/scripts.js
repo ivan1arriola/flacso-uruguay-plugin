@@ -17,6 +17,11 @@ jQuery(function($){
         }
     };
 
+    function normalizeMetaCurrency(value) {
+        const currency = String(value || '').trim().toUpperCase();
+        return /^[A-Z]{3}$/.test(currency) ? currency : '';
+    }
+
     // Configuración global (será inyectada por WordPress)
     const config = window.flacsoFormConfig || {
         convenios: [],
@@ -859,10 +864,11 @@ jQuery(function($){
                     pixelPayload.content_ids = ['oferta-' + String(config.idPosgrado)];
                 }
 
-                const precioUsd = Number(config.valor);
-                if (Number.isFinite(precioUsd) && precioUsd > 0) {
-                    pixelPayload.value = precioUsd;
-                    pixelPayload.currency = 'USD';
+                const precio = Number(config.valor);
+                const currency = normalizeMetaCurrency(config.currency);
+                if (Number.isFinite(precio) && precio > 0 && currency) {
+                    pixelPayload.value = precio;
+                    pixelPayload.currency = currency;
                 }
 
                 trackMetaEvent('SubmitApplication', pixelPayload, { userData });

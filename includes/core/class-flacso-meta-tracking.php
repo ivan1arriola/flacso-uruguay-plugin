@@ -83,8 +83,8 @@ class FLACSO_Meta_Tracking {
         $event_id = sanitize_text_field((string) wp_unslash($_POST['event_id'] ?? ''));
         $event_source_url = esc_url_raw((string) wp_unslash($_POST['event_source_url'] ?? ''));
         $params = self::decode_params($_POST['params'] ?? '');
-        $fbp = sanitize_text_field((string) wp_unslash($_POST['fbp'] ?? ''));
-        $fbc = sanitize_text_field((string) wp_unslash($_POST['fbc'] ?? ''));
+        $fbp = self::sanitize_meta_browser_id($_POST['fbp'] ?? '', 'fbp');
+        $fbc = self::sanitize_meta_browser_id($_POST['fbc'] ?? '', 'fbc');
         $event_type = sanitize_key((string) wp_unslash($_POST['event_type'] ?? 'track'));
         $user_data_raw = self::decode_params($_POST['user_data'] ?? '');
         $external_id = sanitize_text_field((string) wp_unslash($_POST['external_id'] ?? ''));
@@ -395,15 +395,15 @@ class FLACSO_Meta_Tracking {
         }
 
         if (!empty($context['fbp'])) {
-            $user_data['fbp'] = trim((string) $context['fbp']);
+            $user_data['fbp'] = self::sanitize_meta_browser_id($context['fbp'], 'fbp');
         } elseif (!empty($_COOKIE['_fbp'])) {
-            $user_data['fbp'] = sanitize_text_field(wp_unslash($_COOKIE['_fbp']));
+            $user_data['fbp'] = self::sanitize_meta_browser_id($_COOKIE['_fbp'], 'fbp');
         }
 
         if (!empty($context['fbc'])) {
-            $user_data['fbc'] = trim((string) $context['fbc']);
+            $user_data['fbc'] = self::sanitize_meta_browser_id($context['fbc'], 'fbc');
         } elseif (!empty($_COOKIE['_fbc'])) {
-            $user_data['fbc'] = sanitize_text_field(wp_unslash($_COOKIE['_fbc']));
+            $user_data['fbc'] = self::sanitize_meta_browser_id($_COOKIE['_fbc'], 'fbc');
         }
 
         $custom_data = [];
@@ -422,7 +422,7 @@ class FLACSO_Meta_Tracking {
                 continue;
             }
 
-            $custom_data[$key] = self::sanitize_custom_data_value($value);
+            $custom_data[$key] = self::sanitize_custom_data_value($value, $key);
         }
 
         $event = [
@@ -480,7 +480,61 @@ class FLACSO_Meta_Tracking {
         return hash('sha256', $value);
     }
 
-    private static function sanitize_custom_data_value($value) {
+    private static function sanitize_meta_browser_id($value, string $type = ''): string {
+        if (is_array($value)) {
+            $value = reset($value);
+        }
+
+        $value = trim((string) wp_unslash($value));
+        if ($value === '') {
+            return '';
+        }
+
+        $value = preg_replace('/[\x00-\x20\x7F]+/', '', $value);
+        if (!is_string($value) || $value === '') {
+            return '';
+        }
+
+        $value = substr($value, 0, 512);
+
+        if ($type === 'fbc' && !preg_match('/^fb\.\d+\.\d+\.[A-Za-z0-9_-]+$/', $value)) {
+            return '';
+        }
+
+        if ($type === 'fbp' && !preg_match('/^fb\.\d+\.\d+\.[A-Za-z0-9]+$/', $value)) {
+            return '';
+        }
+
+        return $value;
+    }
+
+    private static function sanitize_custom_data_value($value, string $key = '') {
+        if ($key === 'value') {
+            if (is_array($value)) {
+                $value = reset($value);
+            }
+
+            if (is_string($value)) {
+                $value = str_replace(',', '.', trim($value));
+            }
+
+            if (!is_numeric($value)) {
+                return '';
+            }
+
+            $number = (float) $value;
+            return $number > 0 ? $number : '';
+        }
+
+        if ($key === 'currency') {
+            if (is_array($value)) {
+                $value = reset($value);
+            }
+
+            $currency = strtoupper(trim((string) $value));
+            return preg_match('/^[A-Z]{3}$/', $currency) ? $currency : '';
+        }
+
         if (is_bool($value) || is_numeric($value)) {
             return $value;
         }
