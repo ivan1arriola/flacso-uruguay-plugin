@@ -442,16 +442,6 @@ function flacso_consultas_render_form( $attributes = array() ) {
 			const metaUserData = await buildMetaUserData();
 			persistMetaUserData(metaUserData);
 
-			if (typeof window.flacsoMetaTrack === 'function') {
-				try {
-					window.flacsoMetaTrack('Contact', {
-						content_name: programa,
-						content_category: 'solicitud_informacion',
-						content_type: 'oferta_academica'
-					}, { userData: metaUserData });
-				} catch (e) {}
-			}
-
 			const formData = new FormData(this);
 			const payload = new URLSearchParams(formData).toString();
 			toggleLoading(true);
