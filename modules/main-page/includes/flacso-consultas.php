@@ -150,21 +150,37 @@ function flacso_consultas_render_form( $attributes = array() ) {
 	$atts = shortcode_atts(
 		array(
 			'mostrar_preinscripcion' => 'true',
+			'post_id'                => 0,
+			'titulo_posgrado'        => '',
+			'url_base'               => '',
+			'url_gracias'            => '',
+			'form_variant'           => '',
+			'intro_text'             => '',
 		),
 		$attributes,
 		'Consultas_Fase_1'
 	);
 
 	$is_preview = flacso_consultas_is_block_preview();
+	$explicit_post_id = absint( $atts['post_id'] );
 
-	if ( ! is_singular() && ! $is_preview ) {
+	if ( ! is_singular() && ! $is_preview && ! $explicit_post_id ) {
 		return '<p class="text-muted">El formulario de consultas solo está disponible en páginas de posgrados.</p>';
 	}
 
-	$id_pagina       = get_the_ID();
-	$titulo_posgrado = get_the_title( $id_pagina );
-	$url_actual      = get_permalink( $id_pagina );
-	$gracias_url     = trailingslashit( $url_actual ) . 'gracias/';
+	$id_pagina       = $explicit_post_id ?: get_the_ID();
+	$titulo_posgrado = trim( (string) $atts['titulo_posgrado'] );
+	if ( $titulo_posgrado === '' ) {
+		$titulo_posgrado = get_the_title( $id_pagina );
+	}
+	$url_actual = esc_url_raw( (string) $atts['url_base'] );
+	if ( $url_actual === '' ) {
+		$url_actual = get_permalink( $id_pagina );
+	}
+	$gracias_url = esc_url_raw( (string) $atts['url_gracias'] );
+	if ( $gracias_url === '' ) {
+		$gracias_url = trailingslashit( $url_actual ) . 'gracias/';
+	}
 	if ( ! $id_pagina ) {
 		$id_pagina = 0;
 	}
@@ -175,6 +191,11 @@ function flacso_consultas_render_form( $attributes = array() ) {
 		$url_actual = home_url( '/' );
 	}
 	$mostrar_pre     = wp_validate_boolean( $atts['mostrar_preinscripcion'] );
+	$form_variant    = sanitize_html_class( (string) $atts['form_variant'] );
+	$intro_text      = trim( (string) $atts['intro_text'] );
+	if ( $intro_text === '' ) {
+		$intro_text = __( 'Llená el formulario y recibí toda la información de cursada 2026.', 'flacso-consultas' );
+	}
 
 	// ADAPTACIÓN CPT: Solo mostrar si las inscripciones están abiertas
 	if ( $mostrar_pre && get_post_type($id_pagina) === 'oferta-academica' ) {
@@ -188,10 +209,10 @@ function flacso_consultas_render_form( $attributes = array() ) {
 
 	ob_start();
 	?>
-	<div class="flacso-consultas-formulario shadow-sm mx-auto fade-in" id="form-consultas-container" role="region" aria-labelledby="consultas-title">
+	<div class="flacso-consultas-formulario shadow-sm mx-auto fade-in <?php echo $form_variant ? 'flacso-consultas-formulario--' . esc_attr( $form_variant ) : ''; ?>" id="form-consultas-container" role="region" aria-labelledby="consultas-title">
 		<h3 id="consultas-title" class="mb-1"><strong>Solicitá información</strong></h3>
 		<p class="mb-4 text-muted" style="line-height:1.5">
-			Llená el formulario y recibí toda la información de cursada 2026.
+			<?php echo esc_html( $intro_text ); ?>
 		</p>
 
 		<?php if ( ! FLACSO_CONSULTAS_HABILITADO ) : ?>
@@ -774,6 +795,222 @@ function flacso_enviar_consulta_func() {
 }
 add_action( 'wp_ajax_flacso_enviar_consulta', 'flacso_enviar_consulta_func' );
 add_action( 'wp_ajax_nopriv_flacso_enviar_consulta', 'flacso_enviar_consulta_func' );
+
+/**
+ * Página virtual /solicitar-info/ para cada oferta académica.
+ */
+function flacso_consultas_resolve_offer_from_request_path( string $path ) {
+	$path = trim( $path, '/' );
+	if ( $path === '' || ! preg_match( '#^formacion/[^/]+/([^/]+)/solicitar-info/?$#', $path, $matches ) ) {
+		return null;
+	}
+
+	$slug = sanitize_title( $matches[1] );
+	if ( $slug === '' ) {
+		return null;
+	}
+
+	$post = get_page_by_path( $slug, OBJECT, 'oferta-academica' );
+	if ( $post instanceof WP_Post && $post->post_status === 'publish' ) {
+		return $post;
+	}
+
+	return null;
+}
+
+function flacso_render_solicitar_info_virtual() {
+	$path = wp_parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH );
+	if ( ! is_string( $path ) || $path === '' ) {
+		return;
+	}
+
+	$oferta = flacso_consultas_resolve_offer_from_request_path( $path );
+	if ( ! ( $oferta instanceof WP_Post ) ) {
+		return;
+	}
+
+	global $wp_query, $post;
+	if ( $wp_query ) {
+		$wp_query->is_404 = false;
+		$wp_query->is_singular = true;
+		$wp_query->is_page = false;
+		$wp_query->is_archive = false;
+		$wp_query->is_home = false;
+		$wp_query->is_posts_page = false;
+		$wp_query->queried_object = $oferta;
+		$wp_query->queried_object_id = (int) $oferta->ID;
+		$wp_query->post = $oferta;
+		$wp_query->posts = array( $oferta );
+		$wp_query->post_count = 1;
+		$wp_query->set_404( false );
+	}
+
+	$post = $oferta;
+	setup_postdata( $post );
+
+	$oferta_id = (int) $oferta->ID;
+	$oferta_title = get_the_title( $oferta_id );
+	$oferta_url = get_permalink( $oferta_id );
+	$current_url = home_url( '/' . trim( $path, '/' ) . '/' );
+	$gracias_url = add_query_arg( 'tipo', 'solicitud_informacion', trailingslashit( $current_url ) . 'gracias/' );
+	$thumb_url = get_the_post_thumbnail_url( $oferta_id, 'full' );
+	$page_title = sprintf( 'Solicitá información - %s', $oferta_title );
+	$intro_text = sprintf(
+		'Completá el formulario y recibí información sobre cursada, inscripción y financiación de %s.',
+		$oferta_title
+	);
+
+	status_header( 200 );
+	nocache_headers();
+	flacso_consultas_apply_virtual_page_title( $page_title );
+
+	get_header();
+	?>
+	<main class="flacso-solicitar-info-page" aria-labelledby="flacso-solicitar-info-title">
+		<h1 id="flacso-solicitar-info-title" class="screen-reader-text"><?php echo esc_html( $page_title ); ?></h1>
+		<?php if ( $thumb_url ) : ?>
+			<div class="flacso-solicitar-info-page__bg" aria-hidden="true" style="background-image: linear-gradient(rgba(8, 25, 58, .66), rgba(8, 25, 58, .72)), url('<?php echo esc_url( $thumb_url ); ?>');"></div>
+		<?php endif; ?>
+
+		<section class="flacso-solicitar-info-page__shell">
+			<div class="flacso-solicitar-info-page__form">
+				<?php
+				echo flacso_consultas_render_form(
+					array(
+						'mostrar_preinscripcion' => false,
+						'post_id'                => $oferta_id,
+						'titulo_posgrado'        => $oferta_title,
+						'url_base'               => $oferta_url,
+						'url_gracias'            => $gracias_url,
+						'form_variant'           => 'solicitar-info',
+						'intro_text'             => $intro_text,
+					)
+				);
+				?>
+			</div>
+		</section>
+	</main>
+
+	<script>
+	(function() {
+		if (typeof window.flacsoMetaTrack !== 'function') return;
+		try {
+			window.flacsoMetaTrack('ViewContent', {
+				content_name: <?php echo wp_json_encode( (string) $oferta_title ); ?>,
+				content_category: 'oferta_academica',
+				content_ids: ['oferta-' + <?php echo wp_json_encode( (string) $oferta_id ); ?>],
+				flacso_stage: 'solicitar_info'
+			});
+		} catch (e) {}
+	})();
+	</script>
+
+	<style>
+	.flacso-solicitar-info-page {
+		position: relative;
+		min-height: min(860px, calc(100svh - 1px));
+		background: #0d2347;
+		overflow: hidden;
+	}
+
+	.flacso-solicitar-info-page__bg {
+		position: absolute;
+		inset: 0;
+		background-position: center;
+		background-size: cover;
+		filter: saturate(.9);
+	}
+
+	.flacso-solicitar-info-page__shell {
+		position: relative;
+		z-index: 1;
+		width: min(100% - 32px, 1120px);
+		margin: 0 auto;
+		padding: clamp(36px, 7vw, 76px) 0;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.flacso-solicitar-info-page__form {
+		width: min(100%, 540px);
+		margin-inline: auto;
+	}
+
+	.flacso-consultas-formulario--solicitar-info {
+		max-width: 100%;
+		margin: 0;
+		padding: clamp(28px, 5vw, 38px);
+		border: 0;
+		border-radius: 24px;
+		background: linear-gradient(145deg, #ffcf07 0%, #ffd91f 64%, #fff0a3 100%);
+		box-shadow: 0 24px 60px rgba(3, 12, 31, .26);
+		color: #071832;
+	}
+
+	.flacso-consultas-formulario--solicitar-info h3 {
+		margin: 0 0 12px;
+		color: #071832;
+		font-size: clamp(2rem, 6vw, 2.65rem);
+		line-height: 1.03;
+		letter-spacing: 0;
+	}
+
+	.flacso-consultas-formulario--solicitar-info p {
+		color: #071832 !important;
+		font-size: clamp(1rem, 2.8vw, 1.22rem);
+		line-height: 1.42 !important;
+		margin-bottom: 22px !important;
+	}
+
+	.flacso-consultas-formulario--solicitar-info .form-floating {
+		margin-bottom: 20px !important;
+	}
+
+	.flacso-consultas-formulario--solicitar-info .form-floating > .form-control,
+	.flacso-consultas-formulario--solicitar-info .form-floating > .form-select {
+		min-height: 72px;
+		border: 1px solid rgba(8, 24, 50, .12);
+		border-radius: 14px;
+		background-color: #fff;
+		color: #071832;
+		font-size: 1.15rem;
+		box-shadow: 0 4px 14px rgba(8, 24, 50, .06);
+	}
+
+	.flacso-consultas-formulario--solicitar-info .form-floating > label {
+		padding: 1rem;
+		font-size: 1rem;
+		color: #071832;
+	}
+
+	.flacso-consultas-formulario--solicitar-info .btn.btn-primary {
+		min-height: 64px;
+		margin-top: 10px !important;
+		border-radius: 999px !important;
+		background: #23883a !important;
+		border-color: #23883a !important;
+		color: #fff !important;
+		font-size: 1.05rem;
+		font-weight: 800 !important;
+		text-transform: uppercase;
+		letter-spacing: .03em;
+		box-shadow: none;
+	}
+
+	.flacso-consultas-formulario--solicitar-info .btn.btn-primary:hover,
+	.flacso-consultas-formulario--solicitar-info .btn.btn-primary:focus-visible {
+		background: #1d7431 !important;
+		border-color: #1d7431 !important;
+	}
+
+	</style>
+	<?php
+	get_footer();
+	wp_reset_postdata();
+	exit;
+}
+add_action( 'template_redirect', 'flacso_render_solicitar_info_virtual', 0 );
 
 /**
  * Página /gracias virtual.
