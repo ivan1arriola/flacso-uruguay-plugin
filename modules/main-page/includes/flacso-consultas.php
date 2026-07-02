@@ -329,6 +329,7 @@ function flacso_consultas_render_form( $attributes = array() ) {
 			const programa = $form.find('[name="titulo_posgrado"]').val() || '';
 			let infoRequestFormViewTracked = false;
 			const metaSessionStorageKey = 'consultaMetaUserData';
+			const metaLeadPendingStorageKey = 'consultaMetaLeadPending';
 			const buildGraciasUrl = function(baseUrl, pid) {
 				const redirectUrl = new URL(baseUrl, window.location.href);
 				const currentParams = new URLSearchParams(window.location.search);
@@ -474,6 +475,13 @@ function flacso_consultas_render_form( $attributes = array() ) {
 					const pid = $form.find('[name="id_pagina"]').val();
 					const urlBase = $form.find('[name="url_base"]').val();
 					const gracias = $form.find('[name="url_gracias"]').val() || (urlBase ? urlBase.replace(/\/$/, '') + '/gracias/' : '<?php echo esc_js( home_url( '/gracias/' ) ); ?>');
+					try {
+						sessionStorage.setItem(metaLeadPendingStorageKey, JSON.stringify({
+							pid: String(pid || ''),
+							tipo: (new URL(gracias, window.location.href)).searchParams.get('tipo') || 'consulta',
+							createdAt: Date.now()
+						}));
+					} catch (e) {}
 					window.location.href = buildGraciasUrl(gracias, pid);
 				},
 				error: function() {
@@ -939,6 +947,9 @@ function flacso_render_gracias_virtual() {
 			var tipo = urlParams.get('tipo') || 'consulta';
 			if (tipo === 'preinscripcion') tipo = 'preinscripcion_oferta';
 			var isPreinscripcion = (tipo === 'preinscripcion_oferta' || tipo === 'preinscripcion_seminario');
+			var metaLeadPendingStorageKey = 'consultaMetaLeadPending';
+			var shouldTrackLead = false;
+			var pendingLead = null;
 			var metaUserData = {};
 
 			try {
@@ -947,9 +958,25 @@ function flacso_render_gracias_virtual() {
 				metaUserData = {};
 			}
 
+			try {
+				pendingLead = JSON.parse(sessionStorage.getItem(metaLeadPendingStorageKey) || 'null');
+			} catch (e) {
+				pendingLead = null;
+			}
+
+			if (pendingLead && typeof pendingLead === 'object') {
+				var pendingAge = Date.now() - Number(pendingLead.createdAt || 0);
+				var pendingTipo = String(pendingLead.tipo || 'consulta');
+				if (pendingTipo === 'preinscripcion') pendingTipo = 'preinscripcion_oferta';
+				shouldTrackLead = pendingAge >= 0 &&
+					pendingAge < 30 * 60 * 1000 &&
+					String(pendingLead.pid || '') === String(pid || '') &&
+					pendingTipo === tipo;
+			}
+
 			// Only fire Lead event if it's a general consultation or info request
 			// Pre-enrollments fire their own Lead & SubmitApplication events with Advanced Matching hashes prior to redirect
-			if (typeof window.flacsoMetaTrack === 'function' && !isPreinscripcion) {
+			if (shouldTrackLead && typeof window.flacsoMetaTrack === 'function' && !isPreinscripcion) {
 				try {
 					// Meta Lead: consulta WordPress enviada correctamente.
 					// Debe ejecutarse solo después de confirmación AJAX exitosa y redirección a /gracias.
@@ -969,6 +996,10 @@ function flacso_render_gracias_virtual() {
 						console.warn('[Formulario Consultas] Error enviando Lead:', e);
 					}
 				}
+			}
+			sessionStorage.removeItem(metaLeadPendingStorageKey);
+			if (!shouldTrackLead || isPreinscripcion) {
+				sessionStorage.removeItem('consultaMetaUserData');
 			}
 			if (!pid) {
 				var programa = sessionStorage.getItem('consultaPrograma') || '';
