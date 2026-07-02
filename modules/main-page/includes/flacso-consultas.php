@@ -234,8 +234,7 @@ function flacso_consultas_render_form( $attributes = array() ) {
 			<div class="form-floating mb-3">
 				<input
 					type="text" id="nombre" name="nombre" class="form-control"
-					placeholder="Nombre" required maxlength="50"
-					pattern="[A-Za-zÁáÉéÍíÓóÚúÑñ\s\-]{2,}"
+					placeholder="Nombre" required minlength="2" maxlength="50"
 					inputmode="text" autocomplete="given-name" aria-required="true" />
 				<label for="nombre">Nombre *</label>
 				<div class="invalid-feedback">Ingresá tu nombre (mínimo 2 letras)</div>
@@ -244,8 +243,7 @@ function flacso_consultas_render_form( $attributes = array() ) {
 			<div class="form-floating mb-3">
 				<input
 					type="text" id="apellido" name="apellido" class="form-control"
-					placeholder="Apellido" required maxlength="50"
-					pattern="[A-Za-zÁáÉéÍíÓóÚúÑñ\s\-]{2,}"
+					placeholder="Apellido" required minlength="2" maxlength="50"
 					inputmode="text" autocomplete="family-name" aria-required="true" />
 				<label for="apellido">Apellido *</label>
 				<div class="invalid-feedback">Ingresá tu apellido (mínimo 2 letras)</div>
@@ -304,8 +302,7 @@ function flacso_consultas_render_form( $attributes = array() ) {
 			<div class="form-floating mb-3">
 				<input
 					type="text" id="profesion" name="profesion" class="form-control"
-					placeholder="Profesión" required maxlength="100"
-					pattern="[A-Za-zÁáÉéÍíÓóÚúÑñ0-9\s\-\_\(\)\.]{2,}"
+					placeholder="Profesión" required minlength="2" maxlength="100"
 					inputmode="text" autocomplete="organization-title" aria-required="true" />
 				<label for="profesion">Profesión *</label>
 				<div class="invalid-feedback">Ingresá tu profesión (mínimo 2 caracteres)</div>
@@ -511,7 +508,7 @@ function flacso_consultas_render_form( $attributes = array() ) {
 		}
 		function showMessage(text, type) {
 			$message.removeClass('d-none alert-success alert-danger alert-warning')
-					.addClass('alert-' + type).text(text).focus();
+					.addClass('alert-' + type).text(text).trigger('focus');
 			$('html, body').animate({ scrollTop: $message.offset().top - 100 }, 400);
 		}
 	});
@@ -863,9 +860,28 @@ function flacso_render_solicitar_info_virtual() {
 	status_header( 200 );
 	nocache_headers();
 	flacso_consultas_apply_virtual_page_title( $page_title );
+	add_filter(
+		'body_class',
+		static function ( $classes ) {
+			$classes[] = 'flacso-solicitar-info-template';
+			return $classes;
+		},
+		20
+	);
 
 	get_header();
 	?>
+	<header class="flacso-solicitar-info-brand" aria-label="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>">
+		<a class="flacso-solicitar-info-brand__link" href="<?php echo esc_url( home_url( '/' ) ); ?>" aria-label="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>">
+			<?php
+			if ( function_exists( 'the_custom_logo' ) && has_custom_logo() ) {
+				the_custom_logo();
+			} else {
+				echo '<span class="flacso-solicitar-info-brand__text">FLACSO Uruguay</span>';
+			}
+			?>
+		</a>
+	</header>
 	<main class="flacso-solicitar-info-page" aria-labelledby="flacso-solicitar-info-title">
 		<h1 id="flacso-solicitar-info-title" class="screen-reader-text"><?php echo esc_html( $page_title ); ?></h1>
 		<?php if ( $thumb_url ) : ?>
@@ -891,24 +907,55 @@ function flacso_render_solicitar_info_virtual() {
 		</section>
 	</main>
 
-	<script>
-	(function() {
-		if (typeof window.flacsoMetaTrack !== 'function') return;
-		try {
-			window.flacsoMetaTrack('ViewContent', {
-				content_name: <?php echo wp_json_encode( (string) $oferta_title ); ?>,
-				content_category: 'oferta_academica',
-				content_ids: ['oferta-' + <?php echo wp_json_encode( (string) $oferta_id ); ?>],
-				flacso_stage: 'solicitar_info'
-			});
-		} catch (e) {}
-	})();
-	</script>
-
 	<style>
+	body.flacso-solicitar-info-template #masthead,
+	body.flacso-solicitar-info-template .site-header,
+	body.flacso-solicitar-info-template .flacso-nav-announcement,
+	body.flacso-solicitar-info-template #colophon,
+	body.flacso-solicitar-info-template .site-footer {
+		display: none !important;
+	}
+
+	body.flacso-solicitar-info-template #inner-wrap,
+	body.flacso-solicitar-info-template .content-area,
+	body.flacso-solicitar-info-template .site-main {
+		margin-top: 0 !important;
+		padding-top: 0 !important;
+	}
+
+	.flacso-solicitar-info-brand {
+		position: relative;
+		z-index: 3;
+		background: #fff;
+		border-bottom: 1px solid rgba(8, 24, 50, .08);
+	}
+
+	.flacso-solicitar-info-brand__link {
+		display: flex;
+		align-items: center;
+		width: min(100% - 32px, 1120px);
+		min-height: 82px;
+		margin: 0 auto;
+		text-decoration: none;
+	}
+
+	.flacso-solicitar-info-brand__link .custom-logo {
+		width: auto;
+		max-width: min(220px, 62vw);
+		max-height: 58px;
+		object-fit: contain;
+	}
+
+	.flacso-solicitar-info-brand__text {
+		color: #10346e;
+		font-size: 1.35rem;
+		font-weight: 800;
+		letter-spacing: 0;
+	}
+
 	.flacso-solicitar-info-page {
 		position: relative;
-		min-height: min(860px, calc(100svh - 1px));
+		min-height: calc(100svh - 82px);
 		background: #0d2347;
 		overflow: hidden;
 	}
@@ -926,10 +973,10 @@ function flacso_render_solicitar_info_virtual() {
 		z-index: 1;
 		width: min(100% - 32px, 1120px);
 		margin: 0 auto;
-		padding: clamp(36px, 7vw, 76px) 0;
+		padding: clamp(18px, 4vw, 34px) 0;
 		display: flex;
 		justify-content: center;
-		align-items: center;
+		align-items: flex-start;
 	}
 
 	.flacso-solicitar-info-page__form {
@@ -940,7 +987,7 @@ function flacso_render_solicitar_info_virtual() {
 	.flacso-consultas-formulario--solicitar-info {
 		max-width: 100%;
 		margin: 0;
-		padding: clamp(28px, 5vw, 38px);
+		padding: clamp(24px, 4vw, 32px);
 		border: 0;
 		border-radius: 24px;
 		background: linear-gradient(145deg, #ffcf07 0%, #ffd91f 64%, #fff0a3 100%);
@@ -966,25 +1013,25 @@ function flacso_render_solicitar_info_virtual() {
 	}
 
 	.flacso-consultas-formulario--solicitar-info h3 {
-		margin: 0 0 12px;
+		margin: 0 0 10px;
 		color: #071832;
-		font-size: clamp(2rem, 6vw, 2.65rem);
+		font-size: clamp(1.85rem, 5vw, 2.45rem);
 		line-height: 1.03;
 		letter-spacing: 0;
 	}
 
 	.flacso-consultas-formulario--solicitar-info p {
 		color: #071832 !important;
-		font-size: clamp(1rem, 2.8vw, 1.22rem);
+		font-size: clamp(.98rem, 2.5vw, 1.13rem);
 		line-height: 1.42 !important;
-		margin-bottom: 22px !important;
+		margin-bottom: 18px !important;
 	}
 
 	.flacso-consultas-formulario--solicitar-info .form-floating {
 		position: relative;
 		display: block;
 		width: 100%;
-		margin-bottom: 20px !important;
+		margin-bottom: 12px !important;
 	}
 
 	.flacso-consultas-formulario--solicitar-info .form-floating > .form-control,
@@ -992,10 +1039,10 @@ function flacso_render_solicitar_info_virtual() {
 		display: block;
 		width: 100% !important;
 		min-width: 0;
-		height: 72px !important;
-		min-height: 72px;
+		height: 58px !important;
+		min-height: 58px;
 		margin: 0;
-		padding: 2.15rem 1rem .75rem !important;
+		padding: 1.95rem 1rem .55rem !important;
 		border: 1px solid rgba(8, 24, 50, .12);
 		border-radius: 14px;
 		background-color: #fff;
@@ -1015,7 +1062,7 @@ function flacso_render_solicitar_info_virtual() {
 
 	.flacso-consultas-formulario--solicitar-info .form-floating > label {
 		position: absolute;
-		top: .62rem;
+		top: .52rem;
 		left: 1rem;
 		z-index: 2;
 		display: block;
@@ -1052,9 +1099,9 @@ function flacso_render_solicitar_info_virtual() {
 		justify-content: center;
 		gap: .55rem;
 		width: 100% !important;
-		min-height: 64px;
-		margin-top: 10px !important;
-		padding: 1rem 1.35rem !important;
+		min-height: 58px;
+		margin-top: 8px !important;
+		padding: .9rem 1.25rem !important;
 		border-radius: 999px !important;
 		background: #23883a !important;
 		border-color: #23883a !important;
