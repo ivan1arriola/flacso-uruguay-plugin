@@ -852,7 +852,7 @@ function flacso_render_solicitar_info_virtual() {
 	$oferta_title = get_the_title( $oferta_id );
 	$oferta_url = get_permalink( $oferta_id );
 	$current_url = home_url( '/' . trim( $path, '/' ) . '/' );
-	$gracias_url = add_query_arg( 'tipo', 'solicitud_informacion', trailingslashit( $current_url ) . 'gracias/' );
+	$gracias_url = add_query_arg( 'tipo', 'solicitud_informacion', trailingslashit( $oferta_url ) . 'gracias/' );
 	$thumb_url = get_the_post_thumbnail_url( $oferta_id, 'full' );
 	$page_title = sprintf( 'Solicitá información - %s', $oferta_title );
 	$intro_text = sprintf(
@@ -933,7 +933,7 @@ function flacso_render_solicitar_info_virtual() {
 	}
 
 	.flacso-solicitar-info-page__form {
-		width: min(100%, 540px);
+		width: min(100%, 526px);
 		margin-inline: auto;
 	}
 
@@ -946,6 +946,23 @@ function flacso_render_solicitar_info_virtual() {
 		background: linear-gradient(145deg, #ffcf07 0%, #ffd91f 64%, #fff0a3 100%);
 		box-shadow: 0 24px 60px rgba(3, 12, 31, .26);
 		color: #071832;
+	}
+
+	.flacso-consultas-formulario--solicitar-info,
+	.flacso-consultas-formulario--solicitar-info * {
+		box-sizing: border-box;
+	}
+
+	.flacso-consultas-formulario--solicitar-info .visually-hidden {
+		position: absolute !important;
+		width: 1px !important;
+		height: 1px !important;
+		padding: 0 !important;
+		margin: -1px !important;
+		overflow: hidden !important;
+		clip: rect(0, 0, 0, 0) !important;
+		white-space: nowrap !important;
+		border: 0 !important;
 	}
 
 	.flacso-consultas-formulario--solicitar-info h3 {
@@ -964,24 +981,69 @@ function flacso_render_solicitar_info_virtual() {
 	}
 
 	.flacso-consultas-formulario--solicitar-info .form-floating {
+		position: relative;
+		display: block;
+		width: 100%;
 		margin-bottom: 20px !important;
 	}
 
 	.flacso-consultas-formulario--solicitar-info .form-floating > .form-control,
 	.flacso-consultas-formulario--solicitar-info .form-floating > .form-select {
+		display: block;
+		width: 100% !important;
+		min-width: 0;
+		height: 72px !important;
 		min-height: 72px;
+		margin: 0;
+		padding: 2.15rem 1rem .75rem !important;
 		border: 1px solid rgba(8, 24, 50, .12);
 		border-radius: 14px;
 		background-color: #fff;
 		color: #071832;
 		font-size: 1.15rem;
+		line-height: 1.25;
 		box-shadow: 0 4px 14px rgba(8, 24, 50, .06);
 	}
 
+	.flacso-consultas-formulario--solicitar-info .form-floating > .form-control::placeholder {
+		color: transparent;
+	}
+
+	.flacso-consultas-formulario--solicitar-info .form-floating > .form-select {
+		appearance: auto;
+	}
+
 	.flacso-consultas-formulario--solicitar-info .form-floating > label {
-		padding: 1rem;
+		position: absolute;
+		top: .62rem;
+		left: 1rem;
+		z-index: 2;
+		display: block;
+		width: calc(100% - 2rem);
+		height: auto;
+		margin: 0;
+		padding: 0;
 		font-size: 1rem;
+		line-height: 1.1;
 		color: #071832;
+		pointer-events: none;
+		transform: none !important;
+		opacity: 1;
+	}
+
+	.flacso-consultas-formulario--solicitar-info .invalid-feedback {
+		display: none;
+		margin-top: .4rem;
+		color: #7a2700;
+		font-size: .9rem;
+		line-height: 1.25;
+	}
+
+	.flacso-consultas-formulario--solicitar-info .was-validated .form-control:invalid ~ .invalid-feedback,
+	.flacso-consultas-formulario--solicitar-info .was-validated .form-select:invalid ~ .invalid-feedback,
+	.flacso-consultas-formulario--solicitar-info .form-control.is-invalid ~ .invalid-feedback,
+	.flacso-consultas-formulario--solicitar-info .form-select.is-invalid ~ .invalid-feedback {
+		display: block;
 	}
 
 	.flacso-consultas-formulario--solicitar-info .btn.btn-primary {
