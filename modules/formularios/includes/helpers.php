@@ -157,6 +157,63 @@ function fc_dispatch_info_request_webhook( array $payload, array $extra_headers 
     ];
 }
 
+function fc_get_montevideo_timezone(): DateTimeZone {
+    try {
+        return new DateTimeZone( 'America/Montevideo' );
+    } catch ( Exception $e ) {
+        return new DateTimeZone( '-03:00' );
+    }
+}
+
+function fc_normalize_program_start_for_webhook( string $value, string $precision = '' ): array {
+    $value     = trim( $value );
+    $precision = strtolower( trim( $precision ) );
+
+    if ( $value === '' ) {
+        return [];
+    }
+
+    if ( $precision === '' ) {
+        if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $value ) || preg_match( '/^\d{1,2}\/\d{1,2}\/\d{4}$/', $value ) ) {
+            $precision = 'day';
+        } elseif ( preg_match( '/^\d{4}-\d{2}$/', $value ) ) {
+            $precision = 'month';
+        } elseif ( preg_match( '/^\d{4}$/', $value ) ) {
+            $precision = 'year';
+        }
+    }
+
+    $timezone = fc_get_montevideo_timezone();
+    $result   = [
+        'proximo_inicio'            => $value,
+        'proximo_inicio_precision'  => $precision,
+        'proximo_inicio_timezone'   => 'America/Montevideo',
+        'proximo_inicio_utc_offset' => '-03:00',
+    ];
+
+    if ( $precision !== 'day' ) {
+        return $result;
+    }
+
+    $date = DateTimeImmutable::createFromFormat( '!Y-m-d', $value, $timezone );
+    if ( ! $date ) {
+        $date = DateTimeImmutable::createFromFormat( '!d/m/Y', $value, $timezone );
+    }
+    if ( ! $date ) {
+        $date = DateTimeImmutable::createFromFormat( '!j/m/Y', $value, $timezone );
+    }
+
+    if ( $date instanceof DateTimeImmutable ) {
+        $date = $date->setTime( 0, 0, 0 );
+        $result['proximo_inicio_fecha'] = $date->format( 'Y-m-d' );
+        $result['proximo_inicio_at']    = $date->format( 'Y-m-d\TH:i:sP' );
+        $result['program_start_date']   = $result['proximo_inicio_fecha'];
+        $result['program_start_at']     = $result['proximo_inicio_at'];
+    }
+
+    return $result;
+}
+
 /**
  * Completa el contexto del programa usando el ID del CPT como fuente de verdad.
  *
@@ -177,6 +234,17 @@ function fc_enrich_info_request_program_context( array $data ) {
     if ( $offer_id > 0 ) {
         $resolved_title = (string) get_the_title( $offer_id );
         $resolved_url   = (string) get_permalink( $offer_id );
+
+        if ( 'oferta-academica' === get_post_type( $offer_id ) ) {
+            $start_value     = (string) get_post_meta( $offer_id, 'proximo_inicio', true );
+            $start_precision = (string) get_post_meta( $offer_id, 'proximo_inicio_precision', true );
+            if ( $start_value !== '' ) {
+                $data = array_merge(
+                    $data,
+                    fc_normalize_program_start_for_webhook( $start_value, $start_precision )
+                );
+            }
+        }
     }
 
     if ( '' === $resolved_title && isset( $data['titulo_posgrado'] ) ) {
@@ -277,6 +345,14 @@ function fc_build_info_request_webhook_payload( array $data ) {
         'inquiry_at'      => $inquiry_at,
         'ip_address'      => isset( $data['ip_usuario'] ) ? sanitize_text_field( $data['ip_usuario'] ) : '',
         'user_agent'      => isset( $data['user_agent'] ) ? sanitize_text_field( $data['user_agent'] ) : '',
+        'program_start_date' => isset( $data['program_start_date'] ) ? sanitize_text_field( $data['program_start_date'] ) : '',
+        'program_start_at'   => isset( $data['program_start_at'] ) ? sanitize_text_field( $data['program_start_at'] ) : '',
+        'program_start_timezone' => isset( $data['proximo_inicio_timezone'] ) ? sanitize_text_field( $data['proximo_inicio_timezone'] ) : '',
+        'program_start_utc_offset' => isset( $data['proximo_inicio_utc_offset'] ) ? sanitize_text_field( $data['proximo_inicio_utc_offset'] ) : '',
+        'fecha_inicio'     => isset( $data['proximo_inicio_fecha'] ) ? sanitize_text_field( $data['proximo_inicio_fecha'] ) : '',
+        'fecha_inicio_at'  => isset( $data['proximo_inicio_at'] ) ? sanitize_text_field( $data['proximo_inicio_at'] ) : '',
+        'fecha_inicio_timezone' => isset( $data['proximo_inicio_timezone'] ) ? sanitize_text_field( $data['proximo_inicio_timezone'] ) : '',
+        'fecha_inicio_utc_offset' => isset( $data['proximo_inicio_utc_offset'] ) ? sanitize_text_field( $data['proximo_inicio_utc_offset'] ) : '',
 
         // Alias útiles para compatibilidad con el payload legacy
         'nombre'          => isset( $data['nombre'] ) ? sanitize_text_field( $data['nombre'] ) : '',
@@ -291,6 +367,12 @@ function fc_build_info_request_webhook_payload( array $data ) {
         'origen'          => 'Web',
         'fecha_envio'     => $inquiry_at,
         'ip_usuario'      => isset( $data['ip_usuario'] ) ? sanitize_text_field( $data['ip_usuario'] ) : '',
+        'proximo_inicio'  => isset( $data['proximo_inicio'] ) ? sanitize_text_field( $data['proximo_inicio'] ) : '',
+        'proximo_inicio_precision' => isset( $data['proximo_inicio_precision'] ) ? sanitize_text_field( $data['proximo_inicio_precision'] ) : '',
+        'proximo_inicio_fecha' => isset( $data['proximo_inicio_fecha'] ) ? sanitize_text_field( $data['proximo_inicio_fecha'] ) : '',
+        'proximo_inicio_at' => isset( $data['proximo_inicio_at'] ) ? sanitize_text_field( $data['proximo_inicio_at'] ) : '',
+        'proximo_inicio_timezone' => isset( $data['proximo_inicio_timezone'] ) ? sanitize_text_field( $data['proximo_inicio_timezone'] ) : '',
+        'proximo_inicio_utc_offset' => isset( $data['proximo_inicio_utc_offset'] ) ? sanitize_text_field( $data['proximo_inicio_utc_offset'] ) : '',
     ];
 }
 
@@ -667,4 +749,3 @@ function fc_api_export_consultas() {
 
     return new WP_REST_Response( $exported_data, 200 );
 }
-

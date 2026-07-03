@@ -874,8 +874,18 @@ function flacso_render_solicitar_info_virtual() {
 	<header class="flacso-solicitar-info-brand" aria-label="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>">
 		<a class="flacso-solicitar-info-brand__link" href="<?php echo esc_url( home_url( '/' ) ); ?>" aria-label="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>">
 			<?php
-			if ( function_exists( 'the_custom_logo' ) && has_custom_logo() ) {
-				the_custom_logo();
+			$custom_logo_id = (int) get_theme_mod( 'custom_logo' );
+			if ( $custom_logo_id ) {
+				echo wp_get_attachment_image(
+					$custom_logo_id,
+					'medium',
+					false,
+					array(
+						'class'   => 'flacso-solicitar-info-brand__logo',
+						'loading' => 'eager',
+						'alt'     => get_bloginfo( 'name' ),
+					)
+				);
 			} else {
 				echo '<span class="flacso-solicitar-info-brand__text">FLACSO Uruguay</span>';
 			}
@@ -911,6 +921,7 @@ function flacso_render_solicitar_info_virtual() {
 	body.flacso-solicitar-info-template #masthead,
 	body.flacso-solicitar-info-template .site-header,
 	body.flacso-solicitar-info-template .flacso-nav-announcement,
+	body.flacso-solicitar-info-template .flacso-banner-full-clickable,
 	body.flacso-solicitar-info-template #colophon,
 	body.flacso-solicitar-info-template .site-footer {
 		display: none !important;
@@ -934,15 +945,16 @@ function flacso_render_solicitar_info_virtual() {
 		display: flex;
 		align-items: center;
 		width: min(100% - 32px, 1120px);
-		min-height: 82px;
+		min-height: 70px;
 		margin: 0 auto;
 		text-decoration: none;
 	}
 
-	.flacso-solicitar-info-brand__link .custom-logo {
+	.flacso-solicitar-info-brand__logo {
+		display: block;
 		width: auto;
-		max-width: min(220px, 62vw);
-		max-height: 58px;
+		max-width: min(178px, 54vw);
+		max-height: 46px;
 		object-fit: contain;
 	}
 
@@ -955,7 +967,7 @@ function flacso_render_solicitar_info_virtual() {
 
 	.flacso-solicitar-info-page {
 		position: relative;
-		min-height: calc(100svh - 82px);
+		min-height: calc(100svh - 70px);
 		background: #0d2347;
 		overflow: hidden;
 	}
@@ -1141,6 +1153,27 @@ function flacso_render_solicitar_info_virtual() {
 		flex: 0 0 auto;
 		margin: 0 !important;
 		font-size: 1.05em;
+	}
+
+	@media (max-width: 767px) {
+		.flacso-solicitar-info-brand__link {
+			min-height: 58px;
+			width: min(100% - 24px, 1120px);
+		}
+
+		.flacso-solicitar-info-brand__logo {
+			max-width: min(146px, 58vw);
+			max-height: 38px;
+		}
+
+		.flacso-solicitar-info-page {
+			min-height: calc(100svh - 58px);
+		}
+
+		.flacso-solicitar-info-page__shell {
+			width: min(100% - 20px, 1120px);
+			padding: 14px 0 20px;
+		}
 	}
 
 	</style>

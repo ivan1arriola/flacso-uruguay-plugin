@@ -30,11 +30,11 @@ function flacso_section_instagram_render() {
     ?>
     <section class="flacso-instagram-section" aria-labelledby="<?php echo esc_attr($section_id); ?>">
         <div class="flacso-content-shell">
-            <div class="flacso-instagram-grid">
+            <div class="flacso-instagram-panel">
                 <div class="flacso-instagram-copy">
                     <p class="flacso-instagram-eyebrow">
                         <i class="bi bi-instagram" aria-hidden="true"></i>
-                        @flacsouruguay
+                        Comunidad FLACSO Uruguay
                     </p>
                     <h2 class="flacso-instagram-title" id="<?php echo esc_attr($section_id); ?>">
                         <?php echo esc_html($title); ?>
@@ -42,16 +42,29 @@ function flacso_section_instagram_render() {
                     <p class="flacso-instagram-description">
                         <?php echo esc_html($description); ?>
                     </p>
+                    <div class="flacso-instagram-tags" aria-label="<?php echo esc_attr__('Temas publicados en Instagram', 'flacso-main-page'); ?>">
+                        <span>Novedades</span>
+                        <span>Actividades</span>
+                        <span>Comunidad academica</span>
+                    </div>
                     <div class="flacso-instagram-actions">
-                        <a href="<?php echo esc_url($profile_url); ?>" class="flacso-btn flacso-btn-primary flacso-btn-anim" target="_blank" rel="noopener noreferrer">
+                        <a href="<?php echo esc_url($profile_url); ?>" class="flacso-instagram-button flacso-instagram-button--primary" target="_blank" rel="noopener noreferrer">
+                            <i class="bi bi-instagram" aria-hidden="true"></i>
                             <?php echo esc_html($cta_label); ?>
                         </a>
-                        <a href="<?php echo esc_url($reels_url); ?>" class="flacso-btn flacso-btn-outline flacso-btn-anim" target="_blank" rel="noopener noreferrer">
+                        <a href="<?php echo esc_url($reels_url); ?>" class="flacso-instagram-button flacso-instagram-button--secondary" target="_blank" rel="noopener noreferrer">
+                            <i class="bi bi-play-circle" aria-hidden="true"></i>
                             <?php echo esc_html($reels_label); ?>
                         </a>
                     </div>
                 </div>
-                                <div class="flacso-instagram-embed">
+                <div class="flacso-instagram-showcase">
+                    <div class="flacso-instagram-showcase-header">
+                        <span class="flacso-instagram-live-dot" aria-hidden="true"></span>
+                        <span>Feed oficial</span>
+                        <strong>@flacsouruguay</strong>
+                    </div>
+                    <div class="flacso-instagram-embed">
                     <?php
                     $feed = class_exists('Flacso_Instagram_API') ? Flacso_Instagram_API::get_feed() : new WP_Error('no_class', 'API class not found');
                     $settings = class_exists('Flacso_Main_Page_Settings') ? Flacso_Main_Page_Settings::get_section('instagram') : [];
@@ -59,13 +72,8 @@ function flacso_section_instagram_render() {
                     if (!is_wp_error($feed) && is_array($feed)) {
                         $feed = array_slice($feed, 0, $count);
                     }
-                    $settings = class_exists('Flacso_Main_Page_Settings') ? Flacso_Main_Page_Settings::get_section('instagram') : [];
-                    $count = intval($settings['count'] ?? 6);
-                    if (!is_wp_error($feed) && is_array($feed)) {
-                        $feed = array_slice($feed, 0, $count);
-                    }
                     
-                    if (is_wp_error($feed)) :
+                    if (is_wp_error($feed) || empty($feed)) :
                         // Fallback to static card if error or no token
                     ?>
                     <a href="<?php echo esc_url($profile_url); ?>" target="_blank" rel="noopener noreferrer" class="flacso-instagram-static-card">
@@ -78,13 +86,13 @@ function flacso_section_instagram_render() {
                     <?php else : ?>
                         <div class="flacso-instagram-api-feed">
                             <?php foreach ($feed as $item) : 
-                                $caption_preview = wp_trim_words($item['caption'], 15);
+                                $caption_preview = wp_trim_words($item['caption'] ?? '', 15);
                             ?>
-                                <a href="<?php echo esc_url($item['permalink']); ?>" target="_blank" rel="noopener noreferrer" class="flacso-ig-feed-item">
+                                <a href="<?php echo esc_url($item['permalink']); ?>" target="_blank" rel="noopener noreferrer" class="flacso-ig-feed-item" aria-label="<?php echo esc_attr__('Abrir publicacion en Instagram', 'flacso-main-page'); ?>">
                                     <div class="flacso-ig-feed-image" style="background-image: url('<?php echo esc_url($item['thumbnail_url']); ?>');">
-                                        <?php if ($item['media_type'] === 'VIDEO') : ?>
+                                        <?php if (($item['media_type'] ?? '') === 'VIDEO') : ?>
                                             <div class="flacso-ig-feed-type-icon"><i class="bi bi-play-fill"></i></div>
-                                        <?php elseif ($item['media_type'] === 'CAROUSEL_ALBUM') : ?>
+                                        <?php elseif (($item['media_type'] ?? '') === 'CAROUSEL_ALBUM') : ?>
                                             <div class="flacso-ig-feed-type-icon"><i class="bi bi-images"></i></div>
                                         <?php endif; ?>
                                         <div class="flacso-ig-feed-overlay">
@@ -96,6 +104,7 @@ function flacso_section_instagram_render() {
                             <?php endforeach; ?>
                         </div>
                     <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>
@@ -104,4 +113,3 @@ function flacso_section_instagram_render() {
     return ob_get_clean();
 }
 }
-
