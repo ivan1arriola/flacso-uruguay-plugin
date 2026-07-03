@@ -613,6 +613,25 @@ class Flacso_Main_Page_Unified_Settings {
                 <option value="graph" <?php selected(($instagram['api_type'] ?? 'basic'), 'graph'); ?>><?php esc_html_e('Instagram Graph API (Cuenta Profesional vinculada a FB)', 'flacso-main-page'); ?></option>
             </select>
         </div>
+
+        <hr style="margin: 2rem 0;">
+
+        <div class="flacso-instagram-importer" data-instagram-importer>
+            <div class="flacso-instagram-importer__header">
+                <div>
+                    <h3><?php esc_html_e('Importar publicaciones como novedades', 'flacso-main-page'); ?></h3>
+                    <p class="description">
+                        <?php esc_html_e('Crea borradores de WordPress a partir de publicaciones recientes de Instagram. Quedan listos para editar, revisar y publicar como posts del sitio.', 'flacso-main-page'); ?>
+                    </p>
+                </div>
+                <button type="button" class="button button-secondary" data-instagram-load>
+                    <span class="dashicons dashicons-update"></span>
+                    <?php esc_html_e('Cargar publicaciones recientes', 'flacso-main-page'); ?>
+                </button>
+            </div>
+            <div class="flacso-instagram-importer__notice" data-instagram-notice aria-live="polite"></div>
+            <div class="flacso-instagram-importer__grid" data-instagram-list></div>
+        </div>
         <?php
     }
 

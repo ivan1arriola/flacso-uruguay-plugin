@@ -31,6 +31,7 @@
         });
 
         initReorderLists();
+        initInstagramImporter();
 
         // Previews iniciales y on change
         qsa('[data-preview-target]', form).forEach(input => {
@@ -258,6 +259,201 @@
                 btn.disabled = (dir === 'up' && isFirstMovable) || (dir === 'down' && isLast);
             });
         });
+    }
+
+    function initInstagramImporter() {
+        const importer = qs('[data-instagram-importer]');
+        if (!importer) return;
+
+        const loadButton = qs('[data-instagram-load]', importer);
+        const list = qs('[data-instagram-list]', importer);
+        const notice = qs('[data-instagram-notice]', importer);
+        if (!loadButton || !list || !notice) return;
+
+        loadButton.addEventListener('click', () => loadInstagramPosts(importer));
+        list.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-instagram-import]');
+            if (!button) return;
+            event.preventDefault();
+            importInstagramPost(button, importer);
+        });
+    }
+
+    function getInstagramAjaxConfig() {
+        return {
+            ajaxUrl: (typeof flacsoSettings !== 'undefined' && flacsoSettings.ajaxUrl) || window.ajaxurl || '',
+            nonce: (typeof flacsoSettings !== 'undefined' && flacsoSettings.nonce) || '',
+        };
+    }
+
+    function loadInstagramPosts(importer) {
+        const { ajaxUrl, nonce } = getInstagramAjaxConfig();
+        const button = qs('[data-instagram-load]', importer);
+        const list = qs('[data-instagram-list]', importer);
+
+        if (!ajaxUrl || !nonce) {
+            setInstagramNotice(importer, 'error', 'No se pudo iniciar el importador: falta configuración AJAX.');
+            return;
+        }
+
+        button.disabled = true;
+        importer.classList.add('is-loading');
+        setInstagramNotice(importer, 'info', 'Cargando publicaciones recientes...');
+        list.innerHTML = '';
+
+        const params = new URLSearchParams();
+        params.append('action', 'flacso_instagram_import_preview');
+        params.append('nonce', nonce);
+
+        fetch(ajaxUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+            body: params.toString(),
+        })
+            .then(res => res.json().catch(() => ({})))
+            .then(json => {
+                if (!json || !json.success) {
+                    throw new Error((json && json.data && json.data.message) || 'No se pudieron cargar las publicaciones.');
+                }
+
+                const items = (json.data && json.data.items) || [];
+                renderInstagramItems(importer, items);
+                setInstagramNotice(importer, 'success', (json.data && json.data.message) || 'Publicaciones cargadas.');
+            })
+            .catch(error => {
+                console.error('Error cargando Instagram', error);
+                setInstagramNotice(importer, 'error', error.message || 'No se pudieron cargar las publicaciones.');
+            })
+            .finally(() => {
+                button.disabled = false;
+                importer.classList.remove('is-loading');
+            });
+    }
+
+    function renderInstagramItems(importer, items) {
+        const list = qs('[data-instagram-list]', importer);
+        if (!list) return;
+
+        if (!items.length) {
+            list.innerHTML = '<p class="description">No hay publicaciones recientes para importar.</p>';
+            return;
+        }
+
+        list.innerHTML = items.map(item => {
+            const thumb = item.thumbnailUrl || item.mediaUrl || '';
+            const imported = Boolean(item.imported);
+            const action = imported
+                ? `<a class="button button-secondary" href="${escapeAttribute(item.editUrl || '#')}">Editar post</a>`
+                : `<button type="button" class="button button-primary" data-instagram-import data-media-id="${escapeAttribute(item.id)}">Crear borrador</button>`;
+            const badge = imported
+                ? '<span class="flacso-instagram-import-card__badge is-imported">Importada</span>'
+                : '<span class="flacso-instagram-import-card__badge">Disponible</span>';
+
+            return `
+                <article class="flacso-instagram-import-card" data-instagram-card="${escapeAttribute(item.id)}">
+                    <div class="flacso-instagram-import-card__media">
+                        ${thumb ? `<img src="${escapeAttribute(thumb)}" alt="">` : '<span class="dashicons dashicons-format-image"></span>'}
+                        <span class="flacso-instagram-import-card__type">${escapeHtml(formatMediaType(item.mediaType))}</span>
+                    </div>
+                    <div class="flacso-instagram-import-card__body">
+                        <div class="flacso-instagram-import-card__meta">
+                            ${badge}
+                            ${item.dateLabel ? `<span>${escapeHtml(item.dateLabel)}</span>` : ''}
+                        </div>
+                        <h4>${escapeHtml(item.title || 'Publicación de Instagram')}</h4>
+                        <p>${escapeHtml(item.caption || 'Sin texto de publicación.')}</p>
+                        <div class="flacso-instagram-import-card__actions">
+                            ${action}
+                            ${item.permalink ? `<a class="button button-link" href="${escapeAttribute(item.permalink)}" target="_blank" rel="noopener noreferrer">Ver en Instagram</a>` : ''}
+                        </div>
+                    </div>
+                </article>
+            `;
+        }).join('');
+    }
+
+    function importInstagramPost(button, importer) {
+        const { ajaxUrl, nonce } = getInstagramAjaxConfig();
+        const mediaId = button.dataset.mediaId || '';
+        const card = button.closest('[data-instagram-card]');
+
+        if (!ajaxUrl || !nonce || !mediaId) {
+            setInstagramNotice(importer, 'error', 'No se pudo importar: faltan datos de la publicación.');
+            return;
+        }
+
+        button.disabled = true;
+        button.textContent = 'Creando borrador...';
+        if (card) card.classList.add('is-importing');
+
+        const params = new URLSearchParams();
+        params.append('action', 'flacso_instagram_import_post');
+        params.append('nonce', nonce);
+        params.append('media_id', mediaId);
+
+        fetch(ajaxUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+            body: params.toString(),
+        })
+            .then(res => res.json().catch(() => ({})))
+            .then(json => {
+                if (!json || !json.success) {
+                    throw new Error((json && json.data && json.data.message) || 'No se pudo crear el borrador.');
+                }
+
+                const editUrl = json.data && json.data.editUrl;
+                if (card && editUrl) {
+                    card.classList.add('is-imported');
+                    const badge = qs('.flacso-instagram-import-card__badge', card);
+                    if (badge) {
+                        badge.textContent = 'Importada';
+                        badge.classList.add('is-imported');
+                    }
+                    button.outerHTML = `<a class="button button-secondary" href="${escapeAttribute(editUrl)}">Editar borrador</a>`;
+                }
+                setInstagramNotice(importer, 'success', (json.data && json.data.message) || 'Borrador creado.');
+            })
+            .catch(error => {
+                console.error('Error importando Instagram', error);
+                button.disabled = false;
+                button.textContent = 'Crear borrador';
+                setInstagramNotice(importer, 'error', error.message || 'No se pudo crear el borrador.');
+            })
+            .finally(() => {
+                if (card) card.classList.remove('is-importing');
+            });
+    }
+
+    function setInstagramNotice(importer, type, message) {
+        const notice = qs('[data-instagram-notice]', importer);
+        if (!notice) return;
+
+        notice.className = `flacso-instagram-importer__notice is-${type}`;
+        notice.textContent = message || '';
+        notice.hidden = !message;
+    }
+
+    function formatMediaType(type) {
+        const value = String(type || '').toUpperCase();
+        if (value === 'VIDEO') return 'Video/Reel';
+        if (value === 'CAROUSEL_ALBUM') return 'Carrusel';
+        return 'Imagen';
+    }
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function escapeAttribute(value) {
+        return escapeHtml(value).replace(/`/g, '&#096;');
     }
 
     function showNotice(type, message, button) {

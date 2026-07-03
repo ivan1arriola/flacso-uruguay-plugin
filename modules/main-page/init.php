@@ -22,6 +22,7 @@ require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-blo
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-loader.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-migrations.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-rest-api.php';
+require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-instagram-api.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-telegram-manager.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/flacso-consultas.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/flacso-raw-content-api.php';
@@ -36,6 +37,7 @@ if ($is_admin_context) {
     require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-ajax-settings.php';
     require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-ajax-handler.php';
     require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-seminarios.php';
+    require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-instagram-post-importer.php';
 }
 
 // Cargar bloques
@@ -64,6 +66,9 @@ add_action('init', function() {
     }
     if (class_exists('Flacso_Main_Page_Seminarios')) {
         Flacso_Main_Page_Seminarios::init();
+    }
+    if (class_exists('Flacso_Instagram_Post_Importer')) {
+        Flacso_Instagram_Post_Importer::init();
     }
     if (class_exists('Flacso_Main_Page_Migrations')) {
         Flacso_Main_Page_Migrations::init();
