@@ -70,7 +70,7 @@ class Flacso_Main_Page_Unified_Settings {
             'flacso-main-page-builder',
             FLACSO_MAIN_PAGE_MODULE_URL . 'assets/js/flacso-main-page.js',
             [],
-            FLACSO_MAIN_PAGE_VERSION,
+            self::asset_version('assets/js/flacso-main-page.js'),
             true
         );
 
@@ -88,7 +88,7 @@ class Flacso_Main_Page_Unified_Settings {
             'flacso-unified-settings',
             FLACSO_MAIN_PAGE_MODULE_URL . 'assets/js/flacso-unified-settings.js',
             ['flacso-main-page-builder'],
-            FLACSO_MAIN_PAGE_VERSION,
+            self::asset_version('assets/js/flacso-unified-settings.js'),
             true
         );
 
@@ -96,13 +96,18 @@ class Flacso_Main_Page_Unified_Settings {
             'flacso-unified-settings',
             FLACSO_MAIN_PAGE_MODULE_URL . 'assets/css/flacso-unified-settings.css',
             [],
-            FLACSO_MAIN_PAGE_VERSION
+            self::asset_version('assets/css/flacso-unified-settings.css')
         );
 
         wp_localize_script('flacso-unified-settings', 'flacsoSettings', [
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('flacso-settings-nonce'),
         ]);
+    }
+
+    private static function asset_version(string $relative_path): string {
+        $absolute_path = FLACSO_MAIN_PAGE_MODULE_PATH . ltrim($relative_path, '/');
+        return file_exists($absolute_path) ? (string) filemtime($absolute_path) : (string) FLACSO_MAIN_PAGE_VERSION;
     }
 
     public static function render_unified_page(): void {

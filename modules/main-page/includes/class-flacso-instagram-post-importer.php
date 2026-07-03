@@ -10,6 +10,7 @@ class Flacso_Instagram_Post_Importer {
     private const META_MEDIA_TYPE = '_flacso_instagram_media_type';
     private const META_TIMESTAMP = '_flacso_instagram_timestamp';
     private const META_IMPORTED_AT = '_flacso_instagram_imported_at';
+    private const META_ATTACHMENT_IDS = '_flacso_instagram_attachment_ids';
 
     public static function init(): void {
         add_action('wp_ajax_flacso_instagram_import_preview', [__CLASS__, 'ajax_preview']);
@@ -27,7 +28,7 @@ class Flacso_Instagram_Post_Importer {
             wp_send_json_error(['message' => __('La API de Instagram no está disponible.', 'flacso-main-page')], 500);
         }
 
-        $feed = Flacso_Instagram_API::get_feed();
+        $feed = Flacso_Instagram_API::get_feed(true);
         if (is_wp_error($feed)) {
             wp_send_json_error(['message' => $feed->get_error_message()], 400);
         }
@@ -49,6 +50,7 @@ class Flacso_Instagram_Post_Importer {
                     'permalink' => esc_url_raw((string) ($item['permalink'] ?? '')),
                     'timestamp' => sanitize_text_field((string) ($item['timestamp'] ?? '')),
                     'dateLabel' => self::format_instagram_date((string) ($item['timestamp'] ?? '')),
+                    'childrenCount' => count((array) ($item['children'] ?? [])),
                     'imported' => $post_id > 0,
                     'postId' => $post_id,
                     'editUrl' => $post_id > 0 ? get_edit_post_link($post_id, 'raw') : '',
@@ -75,12 +77,13 @@ class Flacso_Instagram_Post_Importer {
         check_ajax_referer('flacso-settings-nonce', 'nonce');
 
         $media_id = isset($_POST['media_id']) ? sanitize_text_field(wp_unslash((string) $_POST['media_id'])) : '';
+        $should_reimport = !empty($_POST['reimport']);
         if ($media_id === '') {
             wp_send_json_error(['message' => __('No se recibió la publicación de Instagram.', 'flacso-main-page')], 400);
         }
 
         $existing_post_id = self::find_existing_post_id($media_id);
-        if ($existing_post_id > 0) {
+        if ($existing_post_id > 0 && !$should_reimport) {
             wp_send_json_success([
                 'message' => __('Esta publicación ya estaba importada.', 'flacso-main-page'),
                 'postId' => $existing_post_id,
@@ -93,7 +96,7 @@ class Flacso_Instagram_Post_Importer {
             wp_send_json_error(['message' => __('La API de Instagram no está disponible.', 'flacso-main-page')], 500);
         }
 
-        $feed = Flacso_Instagram_API::get_feed();
+        $feed = Flacso_Instagram_API::get_feed(true);
         if (is_wp_error($feed)) {
             wp_send_json_error(['message' => $feed->get_error_message()], 400);
         }
@@ -103,16 +106,18 @@ class Flacso_Instagram_Post_Importer {
             wp_send_json_error(['message' => __('No se encontró esa publicación en el feed reciente.', 'flacso-main-page')], 404);
         }
 
-        $post_id = self::create_draft_from_item($item);
+        $post_id = self::import_item($item, $existing_post_id);
         if (is_wp_error($post_id)) {
             wp_send_json_error(['message' => $post_id->get_error_message()], 500);
         }
 
         wp_send_json_success([
-            'message' => __('Borrador creado. Ya podés editarlo antes de publicar.', 'flacso-main-page'),
+            'message' => $existing_post_id > 0
+                ? __('Post reimportado. Se reemplazó el contenido con la versión actual de Instagram.', 'flacso-main-page')
+                : __('Borrador creado. Ya podés editarlo antes de publicar.', 'flacso-main-page'),
             'postId' => (int) $post_id,
             'editUrl' => get_edit_post_link((int) $post_id, 'raw'),
-            'alreadyImported' => false,
+            'alreadyImported' => $existing_post_id > 0,
         ]);
     }
 
@@ -166,25 +171,38 @@ class Flacso_Instagram_Post_Importer {
         return null;
     }
 
-    private static function create_draft_from_item(array $item) {
+    private static function import_item(array $item, int $existing_post_id = 0) {
         $title = self::generate_title($item);
-        $content = self::build_post_content($item);
         $caption = (string) ($item['caption'] ?? '');
         $post_data = [
             'post_type' => 'post',
-            'post_status' => 'draft',
-            'post_author' => get_current_user_id(),
             'post_title' => $title,
-            'post_content' => $content,
+            'post_content' => self::build_post_content($item),
             'post_excerpt' => self::trim_text(wp_strip_all_tags($caption), 220),
         ];
+
+        if ($existing_post_id > 0) {
+            $post_data['ID'] = $existing_post_id;
+            self::delete_previous_imported_attachments($existing_post_id);
+        } else {
+            $post_data['post_status'] = 'draft';
+            $post_data['post_author'] = get_current_user_id();
+        }
+
+        $original_date = self::get_original_post_dates((string) ($item['timestamp'] ?? ''));
+        if ($original_date) {
+            $post_data['post_date'] = $original_date['local'];
+            $post_data['post_date_gmt'] = $original_date['gmt'];
+        }
 
         $category_ids = self::get_novedades_category_ids();
         if ($category_ids) {
             $post_data['post_category'] = $category_ids;
         }
 
-        $post_id = wp_insert_post($post_data, true);
+        $post_id = $existing_post_id > 0
+            ? wp_update_post($post_data, true)
+            : wp_insert_post($post_data, true);
 
         if (is_wp_error($post_id)) {
             return $post_id;
@@ -196,22 +214,21 @@ class Flacso_Instagram_Post_Importer {
         update_post_meta((int) $post_id, self::META_TIMESTAMP, sanitize_text_field((string) ($item['timestamp'] ?? '')));
         update_post_meta((int) $post_id, self::META_IMPORTED_AT, current_time('mysql'));
 
-        $attachment_id = self::maybe_set_featured_image((int) $post_id, $item, $title);
-        if ($attachment_id > 0) {
+        $attachment_ids = self::sideload_item_media((int) $post_id, $item, $title);
+        update_post_meta((int) $post_id, self::META_ATTACHMENT_IDS, array_values(array_filter($attachment_ids)));
+
+        if ($attachment_ids) {
             wp_update_post([
                 'ID' => (int) $post_id,
-                'post_content' => self::build_post_content($item, $attachment_id),
+                'post_content' => self::build_post_content($item, $attachment_ids),
             ]);
         }
 
         return (int) $post_id;
     }
 
-    private static function build_post_content(array $item, int $attachment_id = 0): string {
+    private static function build_post_content(array $item, array $attachment_ids = []): string {
         $caption = trim((string) ($item['caption'] ?? ''));
-        $media_type = strtoupper((string) ($item['media_type'] ?? ''));
-        $media_url = esc_url_raw((string) ($item['media_url'] ?? ''));
-        $thumbnail_url = esc_url_raw((string) ($item['thumbnail_url'] ?? $media_url));
         $permalink = esc_url_raw((string) ($item['permalink'] ?? ''));
         $blocks = [];
 
@@ -228,9 +245,20 @@ class Flacso_Instagram_Post_Importer {
             }
         }
 
-        if ($media_url !== '') {
+        foreach (self::get_content_media_items($item) as $index => $media_item) {
+            $media_type = strtoupper((string) ($media_item['media_type'] ?? ''));
+            $media_url = esc_url_raw((string) ($media_item['media_url'] ?? ''));
+            $thumbnail_url = esc_url_raw((string) ($media_item['thumbnail_url'] ?? $media_url));
+            $attachment_id = isset($attachment_ids[$index]) ? (int) $attachment_ids[$index] : 0;
+
+            if ($media_url === '') {
+                continue;
+            }
+
             if ($media_type === 'VIDEO') {
-                $poster_attr = $thumbnail_url !== '' ? ' poster="' . esc_url($thumbnail_url) . '"' : '';
+                $local_poster_url = $attachment_id > 0 ? wp_get_attachment_image_url($attachment_id, 'large') : '';
+                $poster_url = $local_poster_url ?: $thumbnail_url;
+                $poster_attr = $poster_url !== '' ? ' poster="' . esc_url($poster_url) . '"' : '';
                 $blocks[] = '<!-- wp:video -->' .
                     '<figure class="wp-block-video"><video controls src="' . esc_url($media_url) . '"' . $poster_attr . '></video></figure>' .
                     '<!-- /wp:video -->';
@@ -261,28 +289,68 @@ class Flacso_Instagram_Post_Importer {
         return implode("\n\n", $blocks);
     }
 
-    private static function maybe_set_featured_image(int $post_id, array $item, string $title): int {
-        $media_type = strtoupper((string) ($item['media_type'] ?? ''));
-        $image_url = $media_type === 'VIDEO'
-            ? (string) ($item['thumbnail_url'] ?? '')
-            : (string) ($item['media_url'] ?? '');
-
-        $image_url = esc_url_raw($image_url);
-        if ($image_url === '') {
-            return 0;
+    private static function get_content_media_items(array $item): array {
+        if (
+            strtoupper((string) ($item['media_type'] ?? '')) === 'CAROUSEL_ALBUM'
+            && !empty($item['children'])
+            && is_array($item['children'])
+        ) {
+            return array_values(array_filter($item['children'], 'is_array'));
         }
 
+        return [[
+            'id' => (string) ($item['id'] ?? ''),
+            'media_type' => (string) ($item['media_type'] ?? ''),
+            'media_url' => (string) ($item['media_url'] ?? ''),
+            'thumbnail_url' => (string) ($item['thumbnail_url'] ?? $item['media_url'] ?? ''),
+            'permalink' => (string) ($item['permalink'] ?? ''),
+        ]];
+    }
+
+    private static function sideload_item_media(int $post_id, array $item, string $title): array {
         require_once ABSPATH . 'wp-admin/includes/file.php';
         require_once ABSPATH . 'wp-admin/includes/media.php';
         require_once ABSPATH . 'wp-admin/includes/image.php';
 
-        $attachment_id = media_sideload_image($image_url, $post_id, $title, 'id');
-        if (!is_wp_error($attachment_id)) {
-            set_post_thumbnail($post_id, (int) $attachment_id);
-            return (int) $attachment_id;
+        $attachment_ids = [];
+        foreach (self::get_content_media_items($item) as $index => $media_item) {
+            $media_type = strtoupper((string) ($media_item['media_type'] ?? ''));
+            $image_url = $media_type === 'VIDEO'
+                ? (string) ($media_item['thumbnail_url'] ?? '')
+                : (string) ($media_item['media_url'] ?? '');
+
+            $image_url = esc_url_raw($image_url);
+            if ($image_url === '') {
+                continue;
+            }
+
+            $attachment_id = media_sideload_image($image_url, $post_id, $title, 'id');
+            if (is_wp_error($attachment_id)) {
+                continue;
+            }
+
+            $attachment_ids[$index] = (int) $attachment_id;
+            if (!has_post_thumbnail($post_id)) {
+                set_post_thumbnail($post_id, (int) $attachment_id);
+            }
         }
 
-        return 0;
+        return $attachment_ids;
+    }
+
+    private static function delete_previous_imported_attachments(int $post_id): void {
+        $attachment_ids = get_post_meta($post_id, self::META_ATTACHMENT_IDS, true);
+        if (is_array($attachment_ids)) {
+            foreach ($attachment_ids as $attachment_id) {
+                $attachment_id = absint($attachment_id);
+                if ($attachment_id > 0) {
+                    wp_delete_attachment($attachment_id, true);
+                }
+            }
+        }
+
+        delete_post_thumbnail($post_id);
+        delete_post_meta($post_id, self::META_ATTACHMENT_IDS);
     }
 
     private static function get_novedades_category_ids(): array {
@@ -292,6 +360,22 @@ class Flacso_Instagram_Post_Importer {
         }
 
         return $category instanceof WP_Term ? [(int) $category->term_id] : [];
+    }
+
+    private static function get_original_post_dates(string $timestamp): array {
+        if ($timestamp === '') {
+            return [];
+        }
+
+        $time = strtotime($timestamp);
+        if (!$time) {
+            return [];
+        }
+
+        return [
+            'local' => wp_date('Y-m-d H:i:s', $time),
+            'gmt' => gmdate('Y-m-d H:i:s', $time),
+        ];
     }
 
     private static function generate_title(array $item): string {

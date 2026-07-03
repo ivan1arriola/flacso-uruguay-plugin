@@ -343,18 +343,16 @@
         list.innerHTML = items.map(item => {
             const thumb = item.thumbnailUrl || item.mediaUrl || '';
             const imported = Boolean(item.imported);
-            const action = imported
-                ? `<a class="button button-secondary" href="${escapeAttribute(item.editUrl || '#')}">Editar post</a>`
-                : `<button type="button" class="button button-primary" data-instagram-import data-media-id="${escapeAttribute(item.id)}">Crear borrador</button>`;
             const badge = imported
                 ? '<span class="flacso-instagram-import-card__badge is-imported">Importada</span>'
                 : '<span class="flacso-instagram-import-card__badge">Disponible</span>';
+            const mediaLabel = formatMediaType(item.mediaType, item.childrenCount);
 
             return `
                 <article class="flacso-instagram-import-card" data-instagram-card="${escapeAttribute(item.id)}">
                     <div class="flacso-instagram-import-card__media">
                         ${thumb ? `<img src="${escapeAttribute(thumb)}" alt="">` : '<span class="dashicons dashicons-format-image"></span>'}
-                        <span class="flacso-instagram-import-card__type">${escapeHtml(formatMediaType(item.mediaType))}</span>
+                        <span class="flacso-instagram-import-card__type">${escapeHtml(mediaLabel)}</span>
                     </div>
                     <div class="flacso-instagram-import-card__body">
                         <div class="flacso-instagram-import-card__meta">
@@ -364,7 +362,7 @@
                         <h4>${escapeHtml(item.title || 'Publicación de Instagram')}</h4>
                         <p>${escapeHtml(item.caption || 'Sin texto de publicación.')}</p>
                         <div class="flacso-instagram-import-card__actions">
-                            ${action}
+                            ${renderInstagramActions(item)}
                             ${item.permalink ? `<a class="button button-link" href="${escapeAttribute(item.permalink)}" target="_blank" rel="noopener noreferrer">Ver en Instagram</a>` : ''}
                         </div>
                     </div>
@@ -376,6 +374,7 @@
     function importInstagramPost(button, importer) {
         const { ajaxUrl, nonce } = getInstagramAjaxConfig();
         const mediaId = button.dataset.mediaId || '';
+        const isReimport = button.dataset.reimport === '1';
         const card = button.closest('[data-instagram-card]');
 
         if (!ajaxUrl || !nonce || !mediaId) {
@@ -384,13 +383,16 @@
         }
 
         button.disabled = true;
-        button.textContent = 'Creando borrador...';
+        button.textContent = isReimport ? 'Reimportando...' : 'Creando borrador...';
         if (card) card.classList.add('is-importing');
 
         const params = new URLSearchParams();
         params.append('action', 'flacso_instagram_import_post');
         params.append('nonce', nonce);
         params.append('media_id', mediaId);
+        if (isReimport) {
+            params.append('reimport', '1');
+        }
 
         fetch(ajaxUrl, {
             method: 'POST',
@@ -412,19 +414,37 @@
                         badge.textContent = 'Importada';
                         badge.classList.add('is-imported');
                     }
-                    button.outerHTML = `<a class="button button-secondary" href="${escapeAttribute(editUrl)}">Editar borrador</a>`;
+                    const actions = qs('.flacso-instagram-import-card__actions', card);
+                    if (actions) {
+                        const externalLink = qs('.button-link', actions)?.outerHTML || '';
+                        actions.innerHTML =
+                            renderInstagramActions({ id: mediaId, imported: true, editUrl }) +
+                            externalLink;
+                    }
                 }
                 setInstagramNotice(importer, 'success', (json.data && json.data.message) || 'Borrador creado.');
             })
             .catch(error => {
                 console.error('Error importando Instagram', error);
                 button.disabled = false;
-                button.textContent = 'Crear borrador';
+                button.textContent = isReimport ? 'Reimportar' : 'Crear borrador';
                 setInstagramNotice(importer, 'error', error.message || 'No se pudo crear el borrador.');
             })
             .finally(() => {
                 if (card) card.classList.remove('is-importing');
             });
+    }
+
+    function renderInstagramActions(item) {
+        const mediaId = escapeAttribute(item.id || '');
+        if (item.imported) {
+            return `
+                <button type="button" class="button button-primary" data-instagram-import data-reimport="1" data-media-id="${mediaId}">Reimportar</button>
+                <a class="button button-secondary" href="${escapeAttribute(item.editUrl || '#')}">Editar post</a>
+            `;
+        }
+
+        return `<button type="button" class="button button-primary" data-instagram-import data-media-id="${mediaId}">Crear borrador</button>`;
     }
 
     function setInstagramNotice(importer, type, message) {
@@ -436,10 +456,13 @@
         notice.hidden = !message;
     }
 
-    function formatMediaType(type) {
+    function formatMediaType(type, childrenCount) {
         const value = String(type || '').toUpperCase();
         if (value === 'VIDEO') return 'Video/Reel';
-        if (value === 'CAROUSEL_ALBUM') return 'Carrusel';
+        if (value === 'CAROUSEL_ALBUM') {
+            const count = Number(childrenCount || 0);
+            return count > 1 ? `Carrusel · ${count}` : 'Carrusel';
+        }
         return 'Imagen';
     }
 
