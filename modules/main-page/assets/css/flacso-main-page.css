@@ -2650,28 +2650,33 @@
 .flacso-instagram-api-feed {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-auto-rows: minmax(118px, 1fr);
-    gap: 8px;
+    grid-auto-rows: minmax(150px, 1fr);
+    gap: 10px;
     width: 100%;
     min-height: 0;
-    padding: 8px;
+    padding: 10px;
     background: #eef3f8;
 }
 
 @media (min-width: 576px) {
     .flacso-instagram-api-feed {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        grid-auto-rows: minmax(110px, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-auto-rows: minmax(150px, 1fr);
     }
 }
 
 .flacso-ig-feed-item {
     display: block;
     position: relative;
+    width: 100%;
+    min-height: 150px;
+    padding: 0;
+    border: 0;
     border-radius: 6px;
     overflow: hidden;
     background-color: var(--global-palette8, #f4f7fc);
     box-shadow: none;
+    cursor: zoom-in;
     transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.3s ease;
 }
 
@@ -2684,12 +2689,16 @@
 .flacso-ig-feed-item:focus-visible {
     transform: translateY(-3px);
     box-shadow: 0 12px 26px rgba(12, 35, 72, 0.18);
+    outline: 3px solid rgba(247, 183, 51, 0.38);
+    outline-offset: 2px;
     z-index: 2;
 }
 
 .flacso-ig-feed-image {
+    display: block;
     width: 100%;
     height: 100%;
+    min-height: inherit;
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
@@ -2728,6 +2737,20 @@
     z-index: 1;
 }
 
+.flacso-ig-feed-overlay::after {
+    content: "Ampliar";
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    margin-top: 0.65rem;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
 .flacso-ig-feed-item:hover .flacso-ig-feed-overlay,
 .flacso-ig-feed-item:focus-visible .flacso-ig-feed-overlay {
     opacity: 1;
@@ -2738,7 +2761,7 @@
     margin-bottom: 0.5rem;
 }
 
-.flacso-ig-feed-overlay p {
+.flacso-ig-feed-overlay-caption {
     font-size: 0.82rem;
     line-height: 1.3;
     margin: 0;
@@ -2746,6 +2769,145 @@
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+}
+
+.flacso-instagram-modal-open {
+    overflow: hidden;
+}
+
+.flacso-instagram-modal[hidden] {
+    display: none;
+}
+
+.flacso-instagram-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: grid;
+    place-items: center;
+    padding: clamp(1rem, 3vw, 2rem);
+}
+
+.flacso-instagram-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 20, 43, 0.78);
+    backdrop-filter: blur(8px);
+}
+
+.flacso-instagram-modal__dialog {
+    position: relative;
+    z-index: 1;
+    width: min(980px, 100%);
+    max-height: min(88vh, 840px);
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+    overflow: hidden;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 28px 70px rgba(8, 20, 43, 0.38);
+}
+
+.flacso-instagram-modal__close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 2;
+    display: inline-grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(8, 20, 43, 0.72);
+    color: #ffffff;
+    cursor: pointer;
+}
+
+.flacso-instagram-modal__close:hover,
+.flacso-instagram-modal__close:focus-visible {
+    background: var(--flacso-ig-blue-dark, #0c2348);
+    outline: 3px solid rgba(247, 183, 51, 0.45);
+    outline-offset: 2px;
+}
+
+.flacso-instagram-modal__figure {
+    display: grid;
+    place-items: center;
+    min-height: 420px;
+    max-height: 88vh;
+    margin: 0;
+    background: #0b1730;
+}
+
+.flacso-instagram-modal__figure img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-height: 88vh;
+    object-fit: contain;
+}
+
+.flacso-instagram-modal__content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1rem;
+    padding: clamp(1.25rem, 3vw, 2rem);
+    color: #18345f;
+}
+
+.flacso-instagram-modal__kicker {
+    margin: 0;
+    color: var(--flacso-ig-blue, #163970);
+    font-size: 1rem;
+    font-weight: 900;
+}
+
+.flacso-instagram-modal__caption {
+    max-height: 42vh;
+    overflow: auto;
+    margin: 0;
+    color: #334155;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.flacso-instagram-modal__content .flacso-instagram-button {
+    align-self: flex-start;
+}
+
+@media (max-width: 767.98px) {
+    .flacso-instagram-api-feed {
+        grid-auto-rows: minmax(132px, 1fr);
+    }
+
+    .flacso-ig-feed-item,
+    .flacso-ig-feed-image {
+        min-height: 132px;
+    }
+
+    .flacso-instagram-modal {
+        padding: 0.85rem;
+    }
+
+    .flacso-instagram-modal__dialog {
+        grid-template-columns: 1fr;
+        max-height: 92vh;
+    }
+
+    .flacso-instagram-modal__figure {
+        min-height: 0;
+        height: min(62vh, 520px);
+    }
+
+    .flacso-instagram-modal__content {
+        padding: 1rem;
+    }
+
+    .flacso-instagram-modal__content .flacso-instagram-button {
+        align-self: stretch;
+    }
 }
 
 /* ==========================================================================

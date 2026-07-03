@@ -39,6 +39,16 @@ class FLACSO_Integrations_Settings {
     private const OPTION_META_TEST_EVENT_CODE = 'flacso_meta_test_event_code';
     private const OPTION_META_TRACK_PAGEVIEW = 'flacso_meta_track_pageview';
     private const OPTION_META_LAST_TEST_RESULT = 'flacso_meta_last_test_result';
+    private const OPTION_META_LEADS_ENABLED = 'flacso_meta_leads_enabled';
+    private const OPTION_META_LEADS_VERIFY_TOKEN = 'flacso_meta_leads_verify_token';
+    private const OPTION_META_LEADS_PAGE_ACCESS_TOKEN = 'flacso_meta_leads_page_access_token';
+    private const OPTION_META_LEADS_APP_SECRET = 'flacso_meta_leads_app_secret';
+    private const OPTION_META_LEADS_PAGE_ID = 'flacso_meta_leads_page_id';
+    private const OPTION_META_LEADS_FORM_IDS = 'flacso_meta_leads_form_ids';
+    private const OPTION_META_LEADS_OFFER_FIELD = 'flacso_meta_leads_offer_field';
+    private const OPTION_META_LEADS_GRAPH_VERSION = 'flacso_meta_leads_graph_version';
+    private const OPTION_META_LEADS_FORWARD_TO_WEBHOOK = 'flacso_meta_leads_forward_to_webhook';
+    private const OPTION_META_LEADS_LAST_PERMISSION_CHECK = 'flacso_meta_leads_last_permission_check';
     private const OPTION_USD_EXCHANGE_RATE = 'flacso_usd_exchange_rate';
 
     public static function init(): void {
@@ -364,6 +374,96 @@ class FLACSO_Integrations_Settings {
 
         register_setting(
             self::SETTINGS_GROUP,
+            self::OPTION_META_LEADS_ENABLED,
+            [
+                'type' => 'boolean',
+                'sanitize_callback' => [self::class, 'sanitize_checkbox'],
+                'default' => 0,
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_META_LEADS_VERIFY_TOKEN,
+            [
+                'type' => 'string',
+                'sanitize_callback' => [self::class, 'sanitize_secret_text'],
+                'default' => '',
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_META_LEADS_PAGE_ACCESS_TOKEN,
+            [
+                'type' => 'string',
+                'sanitize_callback' => [self::class, 'sanitize_secret_text'],
+                'default' => '',
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_META_LEADS_APP_SECRET,
+            [
+                'type' => 'string',
+                'sanitize_callback' => [self::class, 'sanitize_secret_text'],
+                'default' => '',
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_META_LEADS_PAGE_ID,
+            [
+                'type' => 'string',
+                'sanitize_callback' => [self::class, 'sanitize_meta_numeric_id'],
+                'default' => '',
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_META_LEADS_FORM_IDS,
+            [
+                'type' => 'string',
+                'sanitize_callback' => [self::class, 'sanitize_meta_leads_form_ids'],
+                'default' => '',
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_META_LEADS_OFFER_FIELD,
+            [
+                'type' => 'string',
+                'sanitize_callback' => 'sanitize_key',
+                'default' => 'programa',
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_META_LEADS_GRAPH_VERSION,
+            [
+                'type' => 'string',
+                'sanitize_callback' => [self::class, 'sanitize_meta_graph_version'],
+                'default' => 'v25.0',
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_META_LEADS_FORWARD_TO_WEBHOOK,
+            [
+                'type' => 'boolean',
+                'sanitize_callback' => [self::class, 'sanitize_checkbox'],
+                'default' => 1,
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
             self::OPTION_USD_EXCHANGE_RATE,
             [
                 'type' => 'number',
@@ -409,6 +509,34 @@ class FLACSO_Integrations_Settings {
         return preg_replace('/[^0-9]/', '', (string) $value) ?: '';
     }
 
+    public static function sanitize_meta_numeric_id($value): string {
+        return preg_replace('/[^0-9]/', '', (string) $value) ?: '';
+    }
+
+    public static function sanitize_secret_text($value): string {
+        return trim(sanitize_text_field((string) $value));
+    }
+
+    public static function sanitize_meta_graph_version($value): string {
+        $value = trim((string) $value);
+
+        return preg_match('/^v[0-9]+\.[0-9]+$/', $value) ? $value : 'v25.0';
+    }
+
+    public static function sanitize_meta_leads_form_ids($value): string {
+        $parts = preg_split('/[\s,;]+/', (string) $value) ?: [];
+        $ids = [];
+
+        foreach ($parts as $part) {
+            $id = self::sanitize_meta_numeric_id($part);
+            if ($id !== '') {
+                $ids[$id] = $id;
+            }
+        }
+
+        return implode("\n", array_values($ids));
+    }
+
     public static function get_mailjet_settings(): array {
         return [
             'api_key' => trim((string) get_option(self::OPTION_MAILJET_API_KEY, '')),
@@ -433,6 +561,40 @@ class FLACSO_Integrations_Settings {
             'is_ready' => $pixel_id !== '',
             'last_test' => self::get_meta_last_test_result(),
         ];
+    }
+
+    public static function get_meta_leads_settings(): array {
+        $form_ids = self::sanitize_meta_leads_form_ids(get_option(self::OPTION_META_LEADS_FORM_IDS, ''));
+        $form_id_list = $form_ids !== '' ? explode("\n", $form_ids) : [];
+
+        return [
+            'enabled' => (bool) get_option(self::OPTION_META_LEADS_ENABLED, 0),
+            'verify_token' => trim((string) get_option(self::OPTION_META_LEADS_VERIFY_TOKEN, '')),
+            'page_access_token' => trim((string) get_option(self::OPTION_META_LEADS_PAGE_ACCESS_TOKEN, '')),
+            'app_secret' => trim((string) get_option(self::OPTION_META_LEADS_APP_SECRET, '')),
+            'page_id' => self::sanitize_meta_numeric_id(get_option(self::OPTION_META_LEADS_PAGE_ID, '')),
+            'form_ids_raw' => $form_ids,
+            'form_ids' => array_values(array_filter($form_id_list)),
+            'offer_field' => sanitize_key((string) get_option(self::OPTION_META_LEADS_OFFER_FIELD, 'programa')) ?: 'programa',
+            'graph_version' => self::sanitize_meta_graph_version(get_option(self::OPTION_META_LEADS_GRAPH_VERSION, 'v25.0')),
+            'forward_to_webhook' => (bool) get_option(self::OPTION_META_LEADS_FORWARD_TO_WEBHOOK, 1),
+            'endpoint_url' => self::get_meta_leads_endpoint_url(),
+            'last_permission_check' => self::get_meta_leads_last_permission_check(),
+        ];
+    }
+
+    public static function get_meta_leads_endpoint_url(): string {
+        return rest_url('flacso/v1/meta-leads');
+    }
+
+    public static function get_meta_leads_last_permission_check(): array {
+        $value = get_option(self::OPTION_META_LEADS_LAST_PERMISSION_CHECK, []);
+
+        return is_array($value) ? $value : [];
+    }
+
+    public static function store_meta_leads_last_permission_check(array $result): void {
+        update_option(self::OPTION_META_LEADS_LAST_PERMISSION_CHECK, $result, false);
     }
 
     public static function get_meta_last_test_result(): array {
@@ -715,6 +877,7 @@ class FLACSO_Integrations_Settings {
                         <?php submit_button(__('Guardar configuración de Meta', 'flacso-uruguay')); ?>
                     </div>
                 </form>
+                <?php self::render_meta_leads_permission_form(self::get_meta_page_url()); ?>
 
                 <div class="flacso-integrations-grid flacso-integrations-grid--single">
                     <?php self::render_meta_test_panel(self::get_meta_page_url()); ?>
@@ -956,6 +1119,7 @@ class FLACSO_Integrations_Settings {
             }
 
             .flacso-integrations-field input:not([type="checkbox"]):not([type="hidden"]),
+            .flacso-integrations-field textarea,
             .flacso-integrations-field select {
                 width: 100%;
                 max-width: none;
@@ -969,11 +1133,18 @@ class FLACSO_Integrations_Settings {
             }
 
             .flacso-integrations-field input:not([type="checkbox"]):not([type="hidden"]):focus,
+            .flacso-integrations-field textarea:focus,
             .flacso-integrations-field select:focus {
                 border-color: #3b82f6;
                 background: #ffffff;
                 box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
                 outline: none;
+            }
+
+            .flacso-integrations-field textarea {
+                min-height: 96px;
+                resize: vertical;
+                font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
             }
 
             .flacso-integrations-field input:not([type="checkbox"]):not([type="hidden"])[disabled] {
@@ -1246,6 +1417,22 @@ class FLACSO_Integrations_Settings {
 
             .flacso-meta-last-test li {
                 margin: 3px 0;
+            }
+
+            .flacso-meta-leads-endpoint {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+            }
+
+            .flacso-meta-leads-endpoint code {
+                display: block;
+                flex: 1;
+                padding: 10px 12px;
+                border-radius: 8px;
+                background: #e2e8f0;
+                color: #0f172a;
+                overflow-wrap: anywhere;
             }
 
             .flacso-submit-section {
@@ -1680,6 +1867,7 @@ class FLACSO_Integrations_Settings {
                 <?php if ($include_test_box) : ?>
                     <?php self::render_meta_test_box($meta, $redirect_url); ?>
                 <?php endif; ?>
+                <?php self::render_meta_leads_box($redirect_url); ?>
             </div>
 
             <span class="flacso-integrations-note">
@@ -1756,6 +1944,105 @@ class FLACSO_Integrations_Settings {
             </form>
             <?php self::render_meta_last_test_result($meta['last_test'] ?? []); ?>
         </div>
+        <?php
+    }
+
+    private static function render_meta_leads_box(string $redirect_url): void {
+        $leads = self::get_meta_leads_settings();
+        $can_check = $leads['page_access_token'] !== '';
+        ?>
+        <div class="flacso-meta-test-box">
+            <h3><?php esc_html_e('Meta Lead Ads', 'flacso-uruguay'); ?></h3>
+            <p><?php esc_html_e('Recibe formularios instantáneos de Meta, descarga el lead original desde Graph API y lo deja listo para reenviar al flujo de solicitud de información.', 'flacso-uruguay'); ?></p>
+
+            <div class="flacso-integrations-field">
+                <label><?php esc_html_e('URL del webhook para Meta', 'flacso-uruguay'); ?></label>
+                <div class="flacso-meta-leads-endpoint">
+                    <code><?php echo esc_html($leads['endpoint_url']); ?></code>
+                </div>
+                <p class="flacso-integrations-help"><?php esc_html_e('Usá esta URL al configurar el webhook leadgen en la app de Meta.', 'flacso-uruguay'); ?></p>
+            </div>
+
+            <?php
+            self::render_checkbox_field(
+                self::OPTION_META_LEADS_ENABLED,
+                __('Activar recepción de Lead Ads', 'flacso-uruguay'),
+                __('Si está apagado, el endpoint sigue respondiendo la verificación de Meta pero no procesa leads entrantes.', 'flacso-uruguay')
+            );
+            self::render_input_field(
+                self::OPTION_META_LEADS_VERIFY_TOKEN,
+                __('Verify Token del webhook', 'flacso-uruguay'),
+                'password',
+                'token-secreto-para-meta',
+                __('Debe coincidir exactamente con el token configurado en Webhooks dentro de Meta Developers.', 'flacso-uruguay')
+            );
+            self::render_input_field(
+                self::OPTION_META_LEADS_PAGE_ACCESS_TOKEN,
+                __('Page Access Token para Lead Ads', 'flacso-uruguay'),
+                'password',
+                'EAAG...',
+                __('Token de la página con permisos leads_retrieval y pages_manage_metadata para leer formularios y leads.', 'flacso-uruguay')
+            );
+            self::render_input_field(
+                self::OPTION_META_LEADS_APP_SECRET,
+                __('App Secret', 'flacso-uruguay'),
+                'password',
+                'app-secret',
+                __('Opcional pero recomendado. Permite validar la firma X-Hub-Signature-256 de Meta en cada webhook.', 'flacso-uruguay')
+            );
+            self::render_input_field(
+                self::OPTION_META_LEADS_PAGE_ID,
+                __('Page ID de Facebook', 'flacso-uruguay'),
+                'text',
+                '123456789012345',
+                __('ID de la página que contiene los formularios instantáneos.', 'flacso-uruguay')
+            );
+            self::render_textarea_field(
+                self::OPTION_META_LEADS_FORM_IDS,
+                __('Form IDs permitidos', 'flacso-uruguay'),
+                "123456789012345\n987654321098765",
+                __('Uno por línea. Si queda vacío, se aceptan todos los formularios que lleguen al webhook.', 'flacso-uruguay')
+            );
+            self::render_input_field(
+                self::OPTION_META_LEADS_OFFER_FIELD,
+                __('Campo de oferta/programa en Meta', 'flacso-uruguay'),
+                'text',
+                'programa',
+                __('Nombre interno de la pregunta de Meta que identifica la oferta académica, por ejemplo programa u oferta.', 'flacso-uruguay')
+            );
+            self::render_input_field(
+                self::OPTION_META_LEADS_GRAPH_VERSION,
+                __('Versión de Graph API', 'flacso-uruguay'),
+                'text',
+                'v25.0',
+                __('Versión usada para leer leads, formularios y suscripciones.', 'flacso-uruguay')
+            );
+            self::render_checkbox_field(
+                self::OPTION_META_LEADS_FORWARD_TO_WEBHOOK,
+                __('Reenviar al webhook de solicitud de información', 'flacso-uruguay'),
+                __('Cuando esté activo, cada lead válido se envía al mismo endpoint configurado para solicitudes de información de oferta académica.', 'flacso-uruguay')
+            );
+            ?>
+
+            <?php
+            $button_attrs = ['form' => 'flacso-meta-leads-permissions-form'];
+            if (!$can_check) {
+                $button_attrs['disabled'] = 'disabled';
+            }
+            submit_button(__('Chequear permisos', 'flacso-uruguay'), 'secondary', 'submit', false, $button_attrs);
+            ?>
+            <?php self::render_meta_leads_permission_result($leads['last_permission_check']); ?>
+        </div>
+        <?php
+    }
+
+    private static function render_meta_leads_permission_form(string $redirect_url): void {
+        ?>
+        <form id="flacso-meta-leads-permissions-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:none;">
+            <?php wp_nonce_field('flacso_meta_leads_check_permissions', 'flacso_meta_leads_check_permissions_nonce'); ?>
+            <input type="hidden" name="action" value="flacso_meta_leads_check_permissions" />
+            <input type="hidden" name="redirect_to" value="<?php echo esc_attr($redirect_url); ?>" />
+        </form>
         <?php
     }
 
@@ -1881,6 +2168,42 @@ class FLACSO_Integrations_Settings {
                     <li><strong><?php esc_html_e('Detalle:', 'flacso-uruguay'); ?></strong> <?php echo esc_html((string) $result['message']); ?></li>
                 <?php endif; ?>
             </ul>
+        </div>
+        <?php
+    }
+
+    private static function render_meta_leads_permission_result(array $result): void {
+        if (empty($result['checked_at']) || empty($result['checks']) || !is_array($result['checks'])) {
+            return;
+        }
+
+        $checked_at = absint($result['checked_at']);
+        $formatted_date = $checked_at > 0
+            ? wp_date('d/m/Y H:i:s', $checked_at, wp_timezone())
+            : '';
+        ?>
+        <div class="flacso-meta-last-test">
+            <h4><?php esc_html_e('Último chequeo de permisos', 'flacso-uruguay'); ?></h4>
+            <?php if ($formatted_date !== ''): ?>
+                <p><?php echo esc_html(sprintf(__('Ejecutado el %s.', 'flacso-uruguay'), $formatted_date)); ?></p>
+            <?php endif; ?>
+            <div class="flacso-meta-checklist">
+                <?php foreach ($result['checks'] as $check): ?>
+                    <?php
+                    $variant = isset($check['ok']) && $check['ok'] ? 'success' : 'danger';
+                    $label = isset($check['ok']) && $check['ok']
+                        ? __('Correcto', 'flacso-uruguay')
+                        : __('Revisar', 'flacso-uruguay');
+                    ?>
+                    <div class="flacso-meta-check">
+                        <div>
+                            <strong><?php echo esc_html((string) ($check['label'] ?? '')); ?></strong>
+                            <p><?php echo esc_html((string) ($check['message'] ?? '')); ?></p>
+                        </div>
+                        <?php self::render_meta_status_badge($variant, $label); ?>
+                    </div>
+                <?php endforeach; ?>
+            </div>
         </div>
         <?php
     }
@@ -2258,6 +2581,24 @@ class FLACSO_Integrations_Settings {
                 autocomplete="<?php echo 'password' === $type ? 'new-password' : 'off'; ?>"
                 spellcheck="false"
             />
+            <p class="flacso-integrations-help"><?php echo esc_html($description); ?></p>
+        </div>
+        <?php
+    }
+
+    private static function render_textarea_field(string $option_name, string $label, string $placeholder, string $description): void {
+        $value = get_option($option_name, '');
+        $value = is_scalar($value) ? (string) $value : '';
+        ?>
+        <div class="flacso-integrations-field">
+            <label for="<?php echo esc_attr($option_name); ?>"><?php echo esc_html($label); ?></label>
+            <textarea
+                id="<?php echo esc_attr($option_name); ?>"
+                name="<?php echo esc_attr($option_name); ?>"
+                class="large-text code"
+                placeholder="<?php echo esc_attr($placeholder); ?>"
+                spellcheck="false"
+            ><?php echo esc_textarea($value); ?></textarea>
             <p class="flacso-integrations-help"><?php echo esc_html($description); ?></p>
         </div>
         <?php

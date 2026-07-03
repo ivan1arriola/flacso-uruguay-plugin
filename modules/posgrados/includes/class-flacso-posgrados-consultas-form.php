@@ -134,6 +134,7 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
                         <input type="hidden" name="titulo_posgrado" value="<?php echo esc_attr($title); ?>">
                         <input type="hidden" name="url_base" value="<?php echo esc_url($current_url); ?>">
                         <input type="hidden" name="url_referer" value="<?php echo esc_url(wp_get_referer() ?: $current_url); ?>">
+                        <?php if (function_exists('fc_render_campaign_attribution_hidden_fields')) { fc_render_campaign_attribution_hidden_fields(function_exists('fc_get_current_request_url') ? fc_get_current_request_url() : $current_url, wp_get_referer() ?: ''); } ?>
                         <?php if (FLACSO_USE_NONCE) { wp_nonce_field('flacso_consultas_form', 'flacso_nonce'); } ?>
 
                         <?php echo self::render_input('nombre', __('Nombre', 'flacso-posgrados-docentes'), 'text', true, [
@@ -274,6 +275,10 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
             $fields = [
                 'nombre','apellido','pais','nivel_academico','correo','profesion',
                 'id_pagina','titulo_posgrado','url_base','url_referer',
+                'campaign_provider','campaign_source','campaign_medium','campaign_name',
+                'campaign_external_id','campaign_content','campaign_term',
+                'utm_source','utm_medium','utm_campaign','utm_id','utm_content','utm_term',
+                'landing_url','referrer_url',
             ];
 
             $data = [];
@@ -281,7 +286,7 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
                 $value = $_POST[$field] ?? '';
                 if ($field === 'id_pagina') {
                     $data[$field] = absint($value);
-                } elseif (in_array($field, ['url_base', 'url_referer'], true)) {
+                } elseif (in_array($field, ['url_base', 'url_referer', 'landing_url', 'referrer_url'], true)) {
                     $data[$field] = esc_url_raw($value);
                 } elseif ($field === 'correo') {
                     $data[$field] = sanitize_email($value);

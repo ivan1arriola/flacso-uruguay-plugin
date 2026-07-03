@@ -311,6 +311,150 @@ function fc_resolve_info_request_offer_id( array $data ) {
     return 0;
 }
 
+function fc_info_request_sanitize_text_value( array $data, string $key ): string {
+    if ( ! isset( $data[ $key ] ) ) {
+        return '';
+    }
+
+    return sanitize_text_field( (string) $data[ $key ] );
+}
+
+function fc_get_current_request_url(): string {
+    $request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( (string) $_SERVER['REQUEST_URI'] ) : '/';
+    $request_uri = '/' . ltrim( $request_uri, '/' );
+
+    return esc_url_raw( home_url( $request_uri ) );
+}
+
+function fc_get_url_query_value( string $url, string $key ): string {
+    if ( '' === $url ) {
+        return '';
+    }
+
+    $parts = wp_parse_url( $url );
+    if ( empty( $parts['query'] ) ) {
+        return '';
+    }
+
+    parse_str( $parts['query'], $query_args );
+    if ( ! isset( $query_args[ $key ] ) || is_array( $query_args[ $key ] ) ) {
+        return '';
+    }
+
+    return sanitize_text_field( (string) $query_args[ $key ] );
+}
+
+function fc_pick_campaign_value( array $sources, array $keys ): string {
+    foreach ( $sources as $source ) {
+        if ( ! is_array( $source ) ) {
+            continue;
+        }
+
+        foreach ( $keys as $key ) {
+            if ( isset( $source[ $key ] ) && ! is_array( $source[ $key ] ) ) {
+                $value = sanitize_text_field( (string) $source[ $key ] );
+                if ( '' !== $value ) {
+                    return $value;
+                }
+            }
+        }
+    }
+
+    return '';
+}
+
+function fc_detect_campaign_provider( array $attribution, string $source = '' ): string {
+    if ( ! empty( $attribution['provider'] ) ) {
+        return sanitize_text_field( (string) $attribution['provider'] );
+    }
+
+    $haystack = strtolower( implode( ' ', array_filter( [ $source, $attribution['source'] ?? '', $attribution['external_id'] ?? '' ] ) ) );
+    if ( false !== strpos( $haystack, 'meta' ) || false !== strpos( $haystack, 'facebook' ) || false !== strpos( $haystack, 'instagram' ) ) {
+        return 'meta';
+    }
+    if ( false !== strpos( $haystack, 'mailjet' ) || false !== strpos( $haystack, 'mj-' ) ) {
+        return 'mailjet';
+    }
+    if ( ! empty( $attribution['source'] ) || ! empty( $attribution['medium'] ) || ! empty( $attribution['name'] ) ) {
+        return 'utm';
+    }
+
+    return '';
+}
+
+function fc_get_campaign_attribution_from_request( string $landing_url = '', string $referer_url = '' ): array {
+    $request = [];
+    foreach ( $_GET as $key => $value ) {
+        if ( is_array( $value ) ) {
+            continue;
+        }
+        $request[ sanitize_key( $key ) ] = sanitize_text_field( wp_unslash( (string) $value ) );
+    }
+
+    $candidate_url = $landing_url ?: fc_get_current_request_url();
+    $url_query = [];
+    foreach ( [
+        'utm_source',
+        'utm_medium',
+        'utm_campaign',
+        'utm_id',
+        'utm_content',
+        'utm_term',
+        'campaign_provider',
+        'campaign_source',
+        'campaign_medium',
+        'campaign_name',
+        'campaign_external_id',
+        'campaign_content',
+        'campaign_term',
+    ] as $key ) {
+        $url_query[ $key ] = fc_get_url_query_value( $candidate_url, $key );
+    }
+
+    $sources = [ $request, $url_query ];
+    $attribution = [
+        'provider'    => fc_pick_campaign_value( $sources, [ 'campaign_provider', 'provider', 'attribution_provider' ] ),
+        'source'      => fc_pick_campaign_value( $sources, [ 'campaign_source', 'acquisition_source', 'fuente', 'utm_source' ] ),
+        'medium'      => fc_pick_campaign_value( $sources, [ 'campaign_medium', 'medium', 'utm_medium' ] ),
+        'name'        => fc_pick_campaign_value( $sources, [ 'campaign_name', 'campana', 'utm_campaign', 'campaign' ] ),
+        'external_id' => fc_pick_campaign_value( $sources, [ 'campaign_external_id', 'campaign_id', 'campana_id', 'utm_id', 'meta_campaign_id', 'mailjet_campaign_id', 'mj_campaign_id' ] ),
+        'content'     => fc_pick_campaign_value( $sources, [ 'campaign_content', 'content', 'utm_content', 'meta_ad_name' ] ),
+        'term'        => fc_pick_campaign_value( $sources, [ 'campaign_term', 'term', 'utm_term', 'meta_adset_name' ] ),
+    ];
+
+    $attribution['provider'] = fc_detect_campaign_provider( $attribution );
+
+    return [
+        'campaign_provider'    => $attribution['provider'],
+        'campaign_source'      => $attribution['source'],
+        'campaign_medium'      => $attribution['medium'],
+        'campaign_name'        => $attribution['name'],
+        'campaign_external_id' => $attribution['external_id'],
+        'campaign_content'     => $attribution['content'],
+        'campaign_term'        => $attribution['term'],
+        'utm_source'           => fc_pick_campaign_value( $sources, [ 'utm_source' ] ),
+        'utm_medium'           => fc_pick_campaign_value( $sources, [ 'utm_medium' ] ),
+        'utm_campaign'         => fc_pick_campaign_value( $sources, [ 'utm_campaign' ] ),
+        'utm_id'               => fc_pick_campaign_value( $sources, [ 'utm_id' ] ),
+        'utm_content'          => fc_pick_campaign_value( $sources, [ 'utm_content' ] ),
+        'utm_term'             => fc_pick_campaign_value( $sources, [ 'utm_term' ] ),
+        'landing_url'          => esc_url_raw( $candidate_url ),
+        'referrer_url'         => esc_url_raw( $referer_url ?: ( wp_get_referer() ?: '' ) ),
+    ];
+}
+
+function fc_render_campaign_attribution_hidden_fields( string $landing_url = '', string $referer_url = '' ): void {
+    $fields = fc_get_campaign_attribution_from_request( $landing_url, $referer_url );
+
+    foreach ( $fields as $name => $value ) {
+        printf(
+            '<input type="hidden" name="%1$s" value="%2$s">' . "\n",
+            esc_attr( $name ),
+            esc_attr( $value )
+        );
+    }
+}
+
 /**
  * Normaliza el payload de Solicitud de Informacion para la API del panel.
  * Mantiene tambien los campos legacy para compatibilidad.
@@ -331,6 +475,53 @@ function fc_build_info_request_webhook_payload( array $data ) {
         $inquiry_at = current_time( 'c' );
     }
 
+    $source = isset( $data['source'] ) ? sanitize_text_field( (string) $data['source'] ) : '';
+    if ( '' === $source && isset( $data['origen'] ) ) {
+        $source = sanitize_text_field( (string) $data['origen'] );
+    }
+    if ( '' === $source ) {
+        $source = 'Web';
+    }
+
+    $campaign_provider    = fc_info_request_sanitize_text_value( $data, 'campaign_provider' );
+    $campaign_source      = fc_info_request_sanitize_text_value( $data, 'campaign_source' );
+    $campaign_medium      = fc_info_request_sanitize_text_value( $data, 'campaign_medium' );
+    $campaign_name        = fc_info_request_sanitize_text_value( $data, 'campaign_name' );
+    $campaign_external_id = fc_info_request_sanitize_text_value( $data, 'campaign_external_id' );
+    $campaign_content     = fc_info_request_sanitize_text_value( $data, 'campaign_content' );
+    $campaign_term        = fc_info_request_sanitize_text_value( $data, 'campaign_term' );
+
+    if ( '' === $campaign_source ) {
+        $campaign_source = fc_info_request_sanitize_text_value( $data, 'utm_source' );
+    }
+    if ( '' === $campaign_medium ) {
+        $campaign_medium = fc_info_request_sanitize_text_value( $data, 'utm_medium' );
+    }
+    if ( '' === $campaign_name ) {
+        $campaign_name = fc_info_request_sanitize_text_value( $data, 'utm_campaign' );
+    }
+    if ( '' === $campaign_external_id ) {
+        $campaign_external_id = fc_info_request_sanitize_text_value( $data, 'utm_id' );
+    }
+    if ( '' === $campaign_content ) {
+        $campaign_content = fc_info_request_sanitize_text_value( $data, 'utm_content' );
+    }
+    if ( '' === $campaign_term ) {
+        $campaign_term = fc_info_request_sanitize_text_value( $data, 'utm_term' );
+    }
+
+    $attribution = [
+        'provider'    => $campaign_provider,
+        'source'      => $campaign_source,
+        'medium'      => $campaign_medium,
+        'name'        => $campaign_name,
+        'external_id' => $campaign_external_id,
+        'content'     => $campaign_content,
+        'term'        => $campaign_term,
+    ];
+    $campaign_provider = fc_detect_campaign_provider( $attribution, $source );
+    $attribution['provider'] = $campaign_provider;
+
     return [
         // Campos canónicos (PanelFLACSOConsultas /api/consultas)
         'email'           => isset( $data['correo'] ) ? sanitize_email( $data['correo'] ) : '',
@@ -340,7 +531,23 @@ function fc_build_info_request_webhook_payload( array $data ) {
         'profession'      => isset( $data['profesion'] ) ? sanitize_text_field( $data['profesion'] ) : '',
         'education_level' => isset( $data['nivel_academico'] ) ? sanitize_text_field( $data['nivel_academico'] ) : '',
         'offer_id'        => $offer_id,
-        'source'          => 'Web',
+        'source'          => $source,
+        'campaign_provider' => $campaign_provider,
+        'campaign_source'   => $campaign_source,
+        'campaign_medium'   => $campaign_medium,
+        'campaign_name'     => $campaign_name,
+        'campaign_external_id' => $campaign_external_id,
+        'campaign_content'  => $campaign_content,
+        'campaign_term'     => $campaign_term,
+        'utm_source'        => fc_info_request_sanitize_text_value( $data, 'utm_source' ),
+        'utm_medium'        => fc_info_request_sanitize_text_value( $data, 'utm_medium' ),
+        'utm_campaign'      => fc_info_request_sanitize_text_value( $data, 'utm_campaign' ),
+        'utm_id'            => fc_info_request_sanitize_text_value( $data, 'utm_id' ),
+        'utm_content'       => fc_info_request_sanitize_text_value( $data, 'utm_content' ),
+        'utm_term'          => fc_info_request_sanitize_text_value( $data, 'utm_term' ),
+        'landing_url'       => isset( $data['landing_url'] ) ? esc_url_raw( $data['landing_url'] ) : '',
+        'referrer_url'      => isset( $data['referrer_url'] ) ? esc_url_raw( $data['referrer_url'] ) : '',
+        'attribution'       => array_filter( $attribution ),
         'url_referer'     => isset( $data['url_referer'] ) ? esc_url_raw( $data['url_referer'] ) : '',
         'inquiry_at'      => $inquiry_at,
         'ip_address'      => isset( $data['ip_usuario'] ) ? sanitize_text_field( $data['ip_usuario'] ) : '',
@@ -364,7 +571,7 @@ function fc_build_info_request_webhook_payload( array $data ) {
         'nivel_educativo' => isset( $data['nivel_academico'] ) ? sanitize_text_field( $data['nivel_academico'] ) : '',
         'id_pagina'       => $offer_id,
         'post_id'         => $offer_id,
-        'origen'          => 'Web',
+        'origen'          => $source,
         'fecha_envio'     => $inquiry_at,
         'ip_usuario'      => isset( $data['ip_usuario'] ) ? sanitize_text_field( $data['ip_usuario'] ) : '',
         'proximo_inicio'  => isset( $data['proximo_inicio'] ) ? sanitize_text_field( $data['proximo_inicio'] ) : '',

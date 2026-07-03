@@ -58,6 +58,7 @@ require_once FLACSO_URUGUAY_PATH . 'includes/core/helpers.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-editor-admin-mode.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-integrations-settings.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-meta-tracking.php';
+require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-meta-leads-webhook.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/loader.php';
 
 // ============================================
