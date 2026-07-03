@@ -48,6 +48,26 @@ class Oferta_Rest_API
         return current_user_can('manage_options');
     }
 
+    private static function normalize_mailjet_contact_list_ids($value): array
+    {
+        if (is_string($value)) {
+            $value = preg_split('/[\s,;]+/', $value);
+        }
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $ids = [];
+        foreach ($value as $item) {
+            $id = absint($item);
+            if ($id > 0) {
+                $ids[] = $id;
+            }
+        }
+
+        return array_values(array_unique($ids));
+    }
+
     public static function get_mailjet_lists_endpoint()
     {
         if (class_exists('FLACSO_Integrations_Settings')) {
@@ -297,7 +317,7 @@ class Oferta_Rest_API
             'tabla_precios_tipo', 'carta_presentacion_html', 'precios_filas', 'precios_nota',
             'titulos_intermedios', 'convenio_iin_oea', 'mostrar_costos_envio', 'modalidad_resumen',
             'carta_cta_titulo', 'asistente_academica_docente_id', 'asistente_academica_rol', 'tabla_precio_id',
-            'asistente_academica_correo', 'documentos', 'visibilidad_carta'
+            'asistente_academica_correo', 'documentos', 'visibilidad_carta', 'mailjet_contact_list_ids'
         ];
 
         foreach ($meta_keys as $key) {
@@ -312,6 +332,9 @@ class Oferta_Rest_API
                     if ($key === 'inscripciones_mensaje_cerrado_default') {
                         return get_option('flacso_inscripciones_mensaje_cerrado_default', 'Mantente atento a nuestras próximas aperturas.');
                     }
+                    if ($key === 'mailjet_contact_list_ids') {
+                        return self::normalize_mailjet_contact_list_ids(get_post_meta($post_array['id'], $key, true));
+                    }
                     return get_post_meta($post_array['id'], $key, true);
                 },
                 'update_callback' => function ($value, $post_obj) use ($key) {
@@ -323,6 +346,15 @@ class Oferta_Rest_API
                     }
                     if ($key === 'inscripciones_mensaje_cerrado_default') {
                         return update_option('flacso_inscripciones_mensaje_cerrado_default', $value);
+                    }
+                    if ($key === 'mailjet_contact_list_ids') {
+                        $ids = self::normalize_mailjet_contact_list_ids($value);
+                        if (empty($ids)) {
+                            delete_post_meta($post_obj->ID, $key);
+                            return true;
+                        }
+
+                        return update_post_meta($post_obj->ID, $key, $ids);
                     }
                     return update_post_meta($post_obj->ID, $key, $value);
                 },

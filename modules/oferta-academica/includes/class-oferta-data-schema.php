@@ -208,6 +208,20 @@ class Oferta_Data_Schema {
             ],
         ]);
 
+        register_post_meta('oferta-academica', 'mailjet_contact_list_ids', [
+            'type' => 'array',
+            'single' => true,
+            'sanitize_callback' => [self::class, 'sanitize_mailjet_contact_list_ids'],
+            'auth_callback' => [self::class, 'user_can_edit_meta'],
+            'show_in_rest' => [
+                'schema' => [
+                    'description' => __('IDs de listas Mailjet para consultas de la oferta', 'flacso-oferta-academica'),
+                    'type' => 'array',
+                    'items' => ['type' => 'integer'],
+                ],
+            ],
+        ]);
+
         register_post_meta('oferta-academica', 'inscripciones_abiertas', [
             'type' => 'boolean',
             'single' => true,
@@ -532,6 +546,27 @@ class Oferta_Data_Schema {
         return array_values(array_unique($out));
     }
 
+    public static function sanitize_mailjet_contact_list_ids($value): array {
+        if (!is_array($value)) {
+            $value = preg_split('/[\s,;|,]+/', trim((string) $value), -1, PREG_SPLIT_NO_EMPTY);
+        }
+
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $out = [];
+
+        foreach ($value as $item) {
+            $id = absint($item);
+            if ($id > 0) {
+                $out[] = $id;
+            }
+        }
+
+        return array_values(array_unique($out));
+    }
+
     public static function sanitize_prices_rows($value): string {
         if (is_string($value)) {
             $value = trim($value);
@@ -822,6 +857,7 @@ class Oferta_Data_Schema {
             'malla_curricular' => self::get_meta_value($post_id, 'malla_curricular'),
             'abreviacion' => self::get_meta_value($post_id, 'abreviacion'),
             'correo' => self::get_meta_value($post_id, 'correo'),
+            'mailjet_contact_list_ids' => self::sanitize_mailjet_contact_list_ids(get_post_meta($post_id, 'mailjet_contact_list_ids', true)),
             'inscripciones_abiertas' => self::get_meta_boolean($post_id, 'inscripciones_abiertas'),
             'inscripciones_mensaje' => self::get_meta_value($post_id, 'inscripciones_mensaje'),
             'inscripciones_mensaje_cerrado' => self::get_meta_value($post_id, 'inscripciones_mensaje_cerrado'),
@@ -1061,6 +1097,7 @@ class Oferta_Data_Schema {
             'malla_curricular_modo' => fn($value) => sanitize_text_field($value),
             'abreviacion' => fn($value) => self::sanitize_abreviacion($value),
             'correo' => fn($value) => self::sanitize_email($value),
+            'mailjet_contact_list_ids' => fn($value) => self::sanitize_mailjet_contact_list_ids($value),
             'inscripciones_abiertas' => fn($value) => self::sanitize_meta_boolean($value),
             'inscripciones_mensaje' => fn($value) => sanitize_textarea_field($value),
             'inscripciones_mensaje_cerrado' => fn($value) => sanitize_text_field($value),
