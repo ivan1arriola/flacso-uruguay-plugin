@@ -4,6 +4,43 @@
 // ==================================================
 
 if (!function_exists('flacso_section_instagram_render')) {
+function flacso_instagram_select_dynamic_feed_items(array $feed): array {
+    $feed = array_values($feed);
+    $total = count($feed);
+    if ($total <= 0) {
+        return [];
+    }
+
+    $display_count = $total;
+    if ($display_count > 13) {
+        $display_count = 13;
+    } elseif ($display_count === 6) {
+        $display_count = 5;
+    } elseif ($display_count >= 10 && $display_count <= 12) {
+        $display_count = 9;
+    }
+
+    $display_count = (int) apply_filters('flacso_main_page_instagram_dynamic_display_count', $display_count, $feed);
+    $display_count = max(1, min($total, $display_count));
+
+    $selected = array_slice($feed, 0, $display_count);
+    $has_video = array_reduce($selected, static function(bool $carry, array $item): bool {
+        return $carry || (($item['media_type'] ?? '') === 'VIDEO');
+    }, false);
+
+    if (!$has_video) {
+        foreach (array_slice($feed, $display_count) as $item) {
+            if (($item['media_type'] ?? '') !== 'VIDEO') {
+                continue;
+            }
+            $selected[$display_count - 1] = $item;
+            break;
+        }
+    }
+
+    return array_values($selected);
+}
+
 function flacso_section_instagram_render() {
     $profile_url = (string) apply_filters('flacso_main_page_instagram_profile_url', 'https://www.instagram.com/flacsouruguay/');
     if ($profile_url === '') {
@@ -67,10 +104,8 @@ function flacso_section_instagram_render() {
                     <div class="flacso-instagram-embed">
                     <?php
                     $feed = class_exists('Flacso_Instagram_API') ? Flacso_Instagram_API::get_feed() : new WP_Error('no_class', 'API class not found');
-                    $settings = class_exists('Flacso_Main_Page_Settings') ? Flacso_Main_Page_Settings::get_section('instagram') : [];
-                    $count = intval($settings['count'] ?? 6);
                     if (!is_wp_error($feed) && is_array($feed)) {
-                        $feed = array_slice($feed, 0, $count);
+                        $feed = flacso_instagram_select_dynamic_feed_items($feed);
                     }
                     
                     if (is_wp_error($feed) || empty($feed)) :

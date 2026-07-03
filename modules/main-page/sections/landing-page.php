@@ -45,10 +45,6 @@ if (!function_exists('flacso_homepage_builder_render')) {
                 'function' => 'flacso_section_instagram_render',
             ],
             [
-                'key' => 'reels',
-                'function' => 'flacso_section_reels_render',
-            ],
-            [
                 'key' => 'posgrados',
                 'function' => 'flacso_section_oferta_educativa_render',
             ],
@@ -283,4 +279,3 @@ if (!function_exists('flacso_homepage_builder_template_takeover')) {
 }
 
 add_filter('template_include', 'flacso_homepage_builder_template_takeover', 99);
-

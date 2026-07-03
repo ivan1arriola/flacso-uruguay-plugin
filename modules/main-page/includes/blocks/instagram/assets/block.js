@@ -23,13 +23,6 @@
             description: 'Muestra publicaciones tipo carrusel de Instagram.',
             icon: 'images-alt2',
             category: 'flacso-uruguay'
-        },
-        {
-            name: 'flacso-uruguay/instagram-reels',
-            title: 'Instagram: Reels',
-            description: 'Muestra los últimos videos/Reels de Instagram.',
-            icon: 'video-alt3',
-            category: 'flacso-uruguay'
         }
     ];
 
@@ -50,10 +43,6 @@
                 title: {
                     type: 'string',
                     default: ''
-                },
-                count: {
-                    type: 'number',
-                    default: 6
                 }
             },
             edit: function(props) {
@@ -73,16 +62,6 @@
                                 value: attributes.title,
                                 onChange: function(newValue) {
                                     setAttributes({ title: newValue });
-                                }
-                            }),
-                            el(TextControl, {
-                                label: 'Cantidad a mostrar',
-                                type: 'number',
-                                min: 1,
-                                max: 40,
-                                value: attributes.count,
-                                onChange: function(newValue) {
-                                    setAttributes({ count: parseInt(newValue) || 6 });
                                 }
                             })
                         )

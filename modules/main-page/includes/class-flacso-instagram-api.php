@@ -27,9 +27,6 @@ class Flacso_Instagram_API {
             return $cached_feed;
         }
 
-        $count = intval($settings['count'] ?? 6);
-        $api_type = $settings['api_type'] ?? 'basic';
-        
         // For Basic Display API, the endpoint is graph.instagram.com/me/media
         // For Graph API, we would normally need the IG User ID, but for simplicity we'll assume basic display usage for now.
         // Or if they provided a Graph API token, they might be using a page token. 

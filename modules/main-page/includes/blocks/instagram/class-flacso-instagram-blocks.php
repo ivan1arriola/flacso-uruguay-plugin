@@ -69,14 +69,6 @@ class Flacso_Instagram_Blocks {
                     'type' => 'string',
                     'default' => '',
                 ],
-                'count' => [
-                    'type' => 'number',
-                    'default' => 6,
-                ],
-                'count' => [
-                    'type' => 'number',
-                    'default' => 6,
-                ],
             ],
         ];
 
@@ -102,16 +94,6 @@ class Flacso_Instagram_Blocks {
             }
         ]));
 
-        // Reels (Videos)
-        register_block_type('flacso-uruguay/instagram-reels', array_merge($common_args, [
-            'title' => __('Instagram: Reels', 'flacso-main-page'),
-            'description' => __('Muestra los últimos videos/Reels de Instagram.', 'flacso-main-page'),
-            'icon' => 'video-alt3',
-            'keywords' => ['instagram', 'reels', 'videos'],
-            'render_callback' => function ($attributes) {
-                return $this->render_block($attributes, ['VIDEO']);
-            }
-        ]));
     }
 
     public function render_block(array $attributes, array $types): string {
@@ -124,11 +106,6 @@ class Flacso_Instagram_Blocks {
         $items = array_filter($feed, function($item) use ($types) {
             return in_array($item['media_type'], $types);
         });
-
-        $count = intval($attributes['count'] ?? 6);
-        $items = array_slice($items, 0, $count);
-        $count = intval($attributes['count'] ?? 6);
-        $items = array_slice($items, 0, $count);
 
         if (empty($items)) {
             return '';
@@ -144,51 +121,25 @@ class Flacso_Instagram_Blocks {
                 <h3 class="flacso-ig-block-title mb-4"><?php echo esc_html($title); ?></h3>
             <?php endif; ?>
             
-            <?php if (in_array('VIDEO', $types) && count($types) === 1) : ?>
-                <div class="flacso-reels-grid">
-                    <?php foreach ($items as $reel) : ?>
-                        <div class="flacso-reel-item">
-                            <video 
-                                controls 
-                                preload="metadata" 
-                                poster="<?php echo esc_url($reel['thumbnail_url']); ?>" 
-                                class="flacso-reel-video"
-                            >
-                                <source src="<?php echo esc_url($reel['media_url']); ?>" type="video/mp4">
-                                Tu navegador no soporta el formato de video.
-                            </video>
-                            <?php if (!empty($reel['caption'])): ?>
-                                <div class="flacso-reel-caption">
-                                    <p><?php echo esc_html(wp_trim_words($reel['caption'], 20)); ?></p>
-                                    <a href="<?php echo esc_url($reel['permalink']); ?>" target="_blank" rel="noopener noreferrer" class="flacso-reel-link">
-                                        Ver en Instagram <i class="bi bi-box-arrow-up-right"></i>
-                                    </a>
-                                </div>
+            <div class="flacso-instagram-api-feed">
+                <?php foreach ($items as $item) : 
+                    $caption_preview = wp_trim_words($item['caption'] ?? '', 15);
+                ?>
+                    <a href="<?php echo esc_url($item['permalink']); ?>" target="_blank" rel="noopener noreferrer" class="flacso-ig-feed-item">
+                        <div class="flacso-ig-feed-image" style="background-image: url('<?php echo esc_url($item['thumbnail_url']); ?>');">
+                            <?php if (($item['media_type'] ?? '') === 'VIDEO') : ?>
+                                <div class="flacso-ig-feed-type-icon"><i class="bi bi-play-fill"></i></div>
+                            <?php elseif (($item['media_type'] ?? '') === 'CAROUSEL_ALBUM') : ?>
+                                <div class="flacso-ig-feed-type-icon"><i class="bi bi-images"></i></div>
                             <?php endif; ?>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php else : ?>
-                <div class="flacso-instagram-api-feed">
-                    <?php foreach ($items as $item) : 
-                        $caption_preview = wp_trim_words($item['caption'], 15);
-                    ?>
-                        <a href="<?php echo esc_url($item['permalink']); ?>" target="_blank" rel="noopener noreferrer" class="flacso-ig-feed-item">
-                            <div class="flacso-ig-feed-image" style="background-image: url('<?php echo esc_url($item['thumbnail_url']); ?>');">
-                                <?php if ($item['media_type'] === 'VIDEO') : ?>
-                                    <div class="flacso-ig-feed-type-icon"><i class="bi bi-play-fill"></i></div>
-                                <?php elseif ($item['media_type'] === 'CAROUSEL_ALBUM') : ?>
-                                    <div class="flacso-ig-feed-type-icon"><i class="bi bi-images"></i></div>
-                                <?php endif; ?>
-                                <div class="flacso-ig-feed-overlay">
-                                    <i class="bi bi-instagram"></i>
-                                    <p><?php echo esc_html($caption_preview); ?></p>
-                                </div>
+                            <div class="flacso-ig-feed-overlay">
+                                <i class="bi bi-instagram"></i>
+                                <p><?php echo esc_html($caption_preview); ?></p>
                             </div>
-                        </a>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
+                        </div>
+                    </a>
+                <?php endforeach; ?>
+            </div>
         </div>
         <?php
         return ob_get_clean();

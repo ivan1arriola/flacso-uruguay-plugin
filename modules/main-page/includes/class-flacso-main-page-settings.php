@@ -15,7 +15,6 @@ class Flacso_Main_Page_Settings {
         'seminarios',
         'quienes',
         'instagram',
-        'reels',
         'posgrados',
         'mailing',
         // REMOVED: 'oferta_academica' - Movido a plugin separado flacso-formacion
@@ -31,7 +30,6 @@ class Flacso_Main_Page_Settings {
         'seminarios',
         'quienes',
         'instagram',
-        'reels',
         'posgrados',
         'mailing',
         'congreso',
@@ -186,7 +184,6 @@ class Flacso_Main_Page_Settings {
                 'description' => 'Publicamos novedades institucionales, actividades academicas, lanzamientos y contenidos destacados de FLACSO Uruguay.',
                 'cta_label' => 'Ir a @flacsouruguay',
                 'access_token' => '',
-                'count' => 6,
                 'api_type' => 'basic', // 'basic' or 'graph'
             ],
             'contacto' => [
@@ -440,7 +437,6 @@ class Flacso_Main_Page_Settings {
             'seminarios' => __('Seminarios', 'flacso-main-page'),
             'quienes' => __('Quiénes somos', 'flacso-main-page'),
             'instagram' => __('Instagram', 'flacso-main-page'),
-            'reels' => __('Reels', 'flacso-main-page'),
             'posgrados' => __('Nuestra Oferta Educativa', 'flacso-main-page'),
             'mailing' => __('Lista de difusión', 'flacso-main-page'),
             'congreso' => __('Congreso', 'flacso-main-page'),
@@ -460,7 +456,6 @@ class Flacso_Main_Page_Settings {
             'seminarios',
             'quienes',
             'instagram',
-        'reels',
             'posgrados',
             'mailing',
             'contacto',
@@ -759,8 +754,6 @@ class Flacso_Main_Page_Settings {
             $output['instagram']['description'] = wp_kses_post($instagram['description'] ?? $defaults['instagram']['description']);
             $output['instagram']['cta_label'] = wp_kses_post($instagram['cta_label'] ?? $defaults['instagram']['cta_label']);
             $output['instagram']['access_token'] = sanitize_text_field($instagram['access_token'] ?? $defaults['instagram']['access_token']);
-            $count = intval($instagram['count'] ?? $defaults['instagram']['count']);
-            $output['instagram']['count'] = ($count > 0 && $count <= 24) ? $count : 6;
             $api_type = sanitize_key($instagram['api_type'] ?? $defaults['instagram']['api_type']);
             $output['instagram']['api_type'] = in_array($api_type, ['basic', 'graph'], true) ? $api_type : 'basic';
         }
@@ -822,4 +815,3 @@ class Flacso_Main_Page_Settings {
         return esc_url_raw($value);
     }
 }
-

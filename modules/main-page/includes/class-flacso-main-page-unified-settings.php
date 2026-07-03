@@ -34,10 +34,6 @@ class Flacso_Main_Page_Unified_Settings {
             'label' => 'Instagram',
             'icon' => 'dashicons-camera',
         ],
-        'reels' => [
-            'label' => 'Reels',
-            'icon' => 'dashicons-video-alt3',
-        ],
         'posgrados' => [
             'label' => 'Oferta Educativa',
             'icon' => 'dashicons-book-alt',
@@ -198,9 +194,6 @@ class Flacso_Main_Page_Unified_Settings {
                 break;
             case 'instagram':
                 self::render_instagram_section($settings);
-                break;
-            case 'reels':
-                self::render_reels_section($settings);
                 break;
             case 'posgrados':
                 self::render_posgrados_section($settings);
@@ -553,78 +546,6 @@ class Flacso_Main_Page_Unified_Settings {
         <?php
     }
 
-    private static function render_reels_section(array $settings): void {
-        $reels = $settings['reels'] ?? [];
-        $selected_ids = $reels['selected_ids'] ?? [];
-        if (!is_array($selected_ids)) $selected_ids = [];
-        ?>
-        <h3><?php esc_html_e('Configuración de Reels', 'flacso-main-page'); ?></h3>
-        <p class="description">
-            <?php esc_html_e('Esta sección mostrará automáticamente los Reels más recientes utilizando la misma configuración de API de la pestaña Instagram. Si seleccionas Reels específicos a continuación, la sección en la portada mostrará únicamente tu selección manual (separándolos dinámicamente entre verticales y horizontales).', 'flacso-main-page'); ?>
-        </p>
-
-        <div class="flacso-form-group">
-            <label for="reels_title"><?php esc_html_e('Título de la sección', 'flacso-main-page'); ?></label>
-            <input 
-                type="text" 
-                id="reels_title" 
-                name="reels[title]" 
-                class="regular-text" 
-                value="<?php echo esc_attr($reels['title'] ?? 'Reels Destacados'); ?>">
-        </div>
-
-        <h3><?php esc_html_e('Selección Manual de Reels', 'flacso-main-page'); ?></h3>
-        <p class="description mb-4">
-            <?php esc_html_e('Selecciona hasta 6 videos para destacarlos en la portada. Si no seleccionas ninguno, se mostrarán los videos más recientes de forma automática.', 'flacso-main-page'); ?>
-        </p>
-
-        <?php
-        if (class_exists('Flacso_Instagram_API')) {
-            $feed = Flacso_Instagram_API::get_feed();
-            if (empty($feed)) {
-                echo '<div class="notice notice-warning inline"><p>' . esc_html__('No se pudieron obtener los videos de Instagram. Verifica el token en la pestaña Instagram.', 'flacso-main-page') . '</p></div>';
-            } else {
-                $videos = array_filter($feed, function($item) {
-                    return $item['media_type'] === 'VIDEO';
-                });
-
-                if (empty($videos)) {
-                    echo '<div class="notice notice-info inline"><p>' . esc_html__('No se encontraron videos (Reels) en el feed actual de Instagram.', 'flacso-main-page') . '</p></div>';
-                } else {
-                    echo '<div class="flacso-reels-admin-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">';
-                    foreach ($videos as $video) {
-                        $is_checked = in_array($video['id'], $selected_ids, true);
-                        ?>
-                        <label class="flacso-reel-admin-card" style="border: 2px solid <?php echo $is_checked ? '#2271b1' : '#ddd'; ?>; border-radius: 8px; overflow: hidden; cursor: pointer; display: flex; flex-direction: column; position: relative;">
-                            <div class="flacso-reel-admin-media" style="aspect-ratio: 4/5; background: #000; position: relative;">
-                                <img src="<?php echo esc_url($video['thumbnail_url']); ?>" alt="" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.8;">
-                                <input type="checkbox" name="reels[selected_ids][]" value="<?php echo esc_attr($video['id']); ?>" <?php checked($is_checked); ?> style="position: absolute; top: 10px; right: 10px; transform: scale(1.5);">
-                            </div>
-                            <div class="flacso-reel-admin-caption" style="padding: 10px; background: #fff; flex-grow: 1; font-size: 12px; color: #444; line-height: 1.4;">
-                                <?php echo esc_html(wp_trim_words($video['caption'] ?? '', 12)); ?>
-                            </div>
-                        </label>
-                        <?php
-                    }
-                    echo '</div>';
-                }
-            }
-        } else {
-            echo '<p>' . esc_html__('El módulo de Instagram no está disponible.', 'flacso-main-page') . '</p>';
-        }
-        ?>
-        
-        <script>
-        // Simple script to toggle visual border on check
-        document.querySelectorAll('.flacso-reel-admin-card input[type="checkbox"]').forEach(function(checkbox) {
-            checkbox.addEventListener('change', function() {
-                this.closest('.flacso-reel-admin-card').style.borderColor = this.checked ? '#2271b1' : '#ddd';
-            });
-        });
-        </script>
-        <?php
-    }
-
     private static function render_instagram_section(array $settings): void {
         $instagram = $settings['instagram'] ?? [];
         ?>
@@ -671,7 +592,7 @@ class Flacso_Main_Page_Unified_Settings {
 
         <h3><?php esc_html_e('Integración con la API', 'flacso-main-page'); ?></h3>
         <p class="description">
-            <?php esc_html_e('Configura las credenciales de la API de Instagram para mostrar automáticamente el feed más reciente. Si el token está vacío o es inválido, se mostrará una tarjeta estática como alternativa (fallback).', 'flacso-main-page'); ?>
+            <?php esc_html_e('Configura las credenciales de la API de Instagram para mostrar automáticamente el feed más reciente. La cantidad visible se adapta al diseño e integra publicaciones, carruseles y Reels disponibles. Si el token está vacío o es inválido, se mostrará una tarjeta estática como alternativa (fallback).', 'flacso-main-page'); ?>
         </p>
 
         <div class="flacso-form-group">
@@ -691,17 +612,6 @@ class Flacso_Main_Page_Unified_Settings {
                 <option value="basic" <?php selected(($instagram['api_type'] ?? 'basic'), 'basic'); ?>><?php esc_html_e('Instagram Basic Display API (Personal/Creador)', 'flacso-main-page'); ?></option>
                 <option value="graph" <?php selected(($instagram['api_type'] ?? 'basic'), 'graph'); ?>><?php esc_html_e('Instagram Graph API (Cuenta Profesional vinculada a FB)', 'flacso-main-page'); ?></option>
             </select>
-        </div>
-
-        <div class="flacso-form-group">
-            <label for="instagram_count"><?php esc_html_e('Cantidad de publicaciones a mostrar', 'flacso-main-page'); ?></label>
-            <input 
-                type="number" 
-                id="instagram_count" 
-                name="instagram[count]" 
-                value="<?php echo esc_attr(intval($instagram['count'] ?? 6)); ?>"
-                min="1"
-                max="24">
         </div>
         <?php
     }

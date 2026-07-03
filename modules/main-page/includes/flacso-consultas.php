@@ -445,15 +445,55 @@ function flacso_consultas_render_form( $attributes = array() ) {
 			}
 		}
 
-		$form.find('input, select').on('blur change', function() {
-			this.checkValidity() ? $(this).removeClass('is-invalid') : $(this).addClass('is-invalid');
+		const normalizeField = function(field) {
+			if (!field || !field.name || field.type === 'hidden') {
+				return;
+			}
+
+			if (field.tagName === 'SELECT') {
+				return;
+			}
+
+			const trimmed = String(field.value || '').trim().replace(/\s+/g, ' ');
+			field.value = field.type === 'email' ? trimmed.toLowerCase() : trimmed;
+		};
+
+		const validateField = function(field) {
+			if (!field || field.type === 'hidden') {
+				return true;
+			}
+
+			const valid = field.checkValidity();
+			$(field).toggleClass('is-invalid', !valid).toggleClass('is-valid', valid && Boolean(field.value));
+			return valid;
+		};
+
+		$form.find('input, select').on('input change blur', function(event) {
+			if (event.type === 'blur' || event.type === 'change') {
+				normalizeField(this);
+			}
+			validateField(this);
 		});
 
 		$form.on('submit', async function(e) {
 			e.preventDefault();
+			$form.find('input, select').each(function() {
+				normalizeField(this);
+				validateField(this);
+			});
+
 			if (!this.checkValidity()) {
 				$(this).addClass('was-validated');
-				showMessage('Revisá los campos marcados en rojo.', 'danger');
+				const firstInvalid = this.querySelector(':invalid');
+				if (firstInvalid && typeof firstInvalid.focus === 'function') {
+					try {
+						firstInvalid.focus({ preventScroll: true });
+					} catch (err) {
+						firstInvalid.focus();
+					}
+					firstInvalid.scrollIntoView({ block: 'center', behavior: 'smooth' });
+				}
+				showMessage('Revisá los campos marcados en rojo.', 'danger', false);
 				return;
 			}
 
@@ -506,10 +546,13 @@ function flacso_consultas_render_form( $attributes = array() ) {
 			$submitBtn.find('.btn-text').toggleClass('d-none', isLoading);
 			$submitBtn.find('.btn-loading').toggleClass('d-none', !isLoading);
 		}
-		function showMessage(text, type) {
+		function showMessage(text, type, shouldScroll) {
+			shouldScroll = shouldScroll !== false;
 			$message.removeClass('d-none alert-success alert-danger alert-warning')
 					.addClass('alert-' + type).text(text).trigger('focus');
-			$('html, body').animate({ scrollTop: $message.offset().top - 100 }, 400);
+			if (shouldScroll) {
+				$('html, body').animate({ scrollTop: $message.offset().top - 100 }, 400);
+			}
 		}
 	});
 	</script>
@@ -969,12 +1012,13 @@ function flacso_render_solicitar_info_virtual() {
 		position: relative;
 		min-height: calc(100svh - 70px);
 		background: #0d2347;
-		overflow: hidden;
+		overflow: visible;
 	}
 
 	.flacso-solicitar-info-page__bg {
-		position: absolute;
+		position: fixed;
 		inset: 0;
+		z-index: 0;
 		background-position: center;
 		background-size: cover;
 		filter: saturate(.9);
@@ -985,7 +1029,7 @@ function flacso_render_solicitar_info_virtual() {
 		z-index: 1;
 		width: min(100% - 32px, 1120px);
 		margin: 0 auto;
-		padding: clamp(18px, 4vw, 34px) 0;
+		padding: clamp(18px, 4vw, 34px) 0 clamp(28px, 6vw, 56px);
 		display: flex;
 		justify-content: center;
 		align-items: flex-start;
@@ -999,7 +1043,7 @@ function flacso_render_solicitar_info_virtual() {
 	.flacso-consultas-formulario--solicitar-info {
 		max-width: 100%;
 		margin: 0;
-		padding: clamp(24px, 4vw, 32px);
+		padding: clamp(22px, 3.4vw, 30px);
 		border: 0;
 		border-radius: 24px;
 		background: linear-gradient(145deg, #ffcf07 0%, #ffd91f 64%, #fff0a3 100%);
@@ -1043,7 +1087,7 @@ function flacso_render_solicitar_info_virtual() {
 		position: relative;
 		display: block;
 		width: 100%;
-		margin-bottom: 12px !important;
+		margin-bottom: 14px !important;
 	}
 
 	.flacso-consultas-formulario--solicitar-info .form-floating > .form-control,
@@ -1051,16 +1095,16 @@ function flacso_render_solicitar_info_virtual() {
 		display: block;
 		width: 100% !important;
 		min-width: 0;
-		height: 58px !important;
-		min-height: 58px;
+		height: 66px !important;
+		min-height: 66px;
 		margin: 0;
-		padding: 1.95rem 1rem .55rem !important;
+		padding: 2.15rem 1rem .62rem !important;
 		border: 1px solid rgba(8, 24, 50, .12);
 		border-radius: 14px;
 		background-color: #fff;
 		color: #071832;
-		font-size: 1.15rem;
-		line-height: 1.25;
+		font-size: 1.08rem;
+		line-height: 1.22;
 		box-shadow: 0 4px 14px rgba(8, 24, 50, .06);
 	}
 
@@ -1069,7 +1113,15 @@ function flacso_render_solicitar_info_virtual() {
 	}
 
 	.flacso-consultas-formulario--solicitar-info .form-floating > .form-select {
-		appearance: auto;
+		-webkit-appearance: none !important;
+		-moz-appearance: none !important;
+		appearance: none !important;
+		padding-right: 3.1rem !important;
+		background-color: #fff;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23071832' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+		background-repeat: no-repeat !important;
+		background-position: right 1rem center !important;
+		background-size: 18px 18px !important;
 	}
 
 	.flacso-consultas-formulario--solicitar-info .form-floating > label {
@@ -1105,6 +1157,21 @@ function flacso_render_solicitar_info_virtual() {
 		display: block;
 	}
 
+	.flacso-consultas-formulario--solicitar-info .form-control.is-valid,
+	.flacso-consultas-formulario--solicitar-info .form-select.is-valid,
+	.flacso-consultas-formulario--solicitar-info .was-validated .form-control:valid,
+	.flacso-consultas-formulario--solicitar-info .was-validated .form-select:valid {
+		border-color: rgba(35, 136, 58, .55) !important;
+	}
+
+	.flacso-consultas-formulario--solicitar-info .form-control.is-invalid,
+	.flacso-consultas-formulario--solicitar-info .form-select.is-invalid,
+	.flacso-consultas-formulario--solicitar-info .was-validated .form-control:invalid,
+	.flacso-consultas-formulario--solicitar-info .was-validated .form-select:invalid {
+		border-color: #b54708 !important;
+		box-shadow: 0 0 0 .16rem rgba(181, 71, 8, .14);
+	}
+
 	.flacso-consultas-formulario--solicitar-info .btn.btn-primary {
 		display: flex !important;
 		align-items: center;
@@ -1112,7 +1179,7 @@ function flacso_render_solicitar_info_virtual() {
 		gap: .55rem;
 		width: 100% !important;
 		min-height: 58px;
-		margin-top: 8px !important;
+		margin-top: 4px !important;
 		padding: .9rem 1.25rem !important;
 		border-radius: 999px !important;
 		background: #23883a !important;
@@ -1172,7 +1239,23 @@ function flacso_render_solicitar_info_virtual() {
 
 		.flacso-solicitar-info-page__shell {
 			width: min(100% - 20px, 1120px);
-			padding: 14px 0 20px;
+			padding: 14px 0 28px;
+		}
+
+		.flacso-consultas-formulario--solicitar-info {
+			border-radius: 20px;
+			padding: 20px;
+		}
+
+		.flacso-consultas-formulario--solicitar-info h3 {
+			font-size: clamp(1.75rem, 9vw, 2.25rem);
+		}
+
+		.flacso-consultas-formulario--solicitar-info .form-floating > .form-control,
+		.flacso-consultas-formulario--solicitar-info .form-floating > .form-select {
+			height: 64px !important;
+			min-height: 64px;
+			font-size: 1rem;
 		}
 	}
 
