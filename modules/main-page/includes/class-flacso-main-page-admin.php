@@ -59,27 +59,39 @@ class Flacso_Main_Page_Admin {
 
         $wp_admin_bar->add_node([
             'id'    => 'flacso-main-page-bar',
-            'title' => __('Gestor FLACSO', 'flacso-main-page'),
-            'href'  => admin_url('options-general.php?page=flacso-main-page'),
-            'meta'  => ['title' => __('Gestor FLACSO', 'flacso-main-page')],
+            'title' => __('Panel FLACSO', 'flacso-main-page'),
+            'href'  => admin_url('admin.php?page=flacso-main-page'),
+            'meta'  => ['title' => __('Panel FLACSO', 'flacso-main-page')],
         ]);
     }
     public static function init(): void {
         add_action('admin_menu', [__CLASS__, 'register_menu']);
-        add_action('admin_bar_menu', [__CLASS__, 'register_admin_bar_menu'], 100);
+        add_action('admin_bar_menu', [__CLASS__, 'register_admin_bar_menu'], 1);
     }
 
     public static function register_menu(): void {
-        add_options_page(
-            __('Gestor FLACSO', 'flacso-main-page'),
-            __('Gestor FLACSO', 'flacso-main-page'),
+        add_menu_page(
+            __('Panel FLACSO', 'flacso-main-page'),
+            __('Panel FLACSO', 'flacso-main-page'),
+            'manage_options',
+            'flacso-main-page',
+            [__CLASS__, 'render_section_page'],
+            'dashicons-admin-site-alt3',
+            1
+        );
+
+        add_submenu_page(
+            'flacso-main-page',
+            __('Inicio', 'flacso-main-page'),
+            __('Inicio', 'flacso-main-page'),
             'manage_options',
             'flacso-main-page',
             [__CLASS__, 'render_section_page']
         );
         
-        // Agregar página separada para Oferta Académica en Ajustes
-        add_options_page(
+        // Agregar página separada para Oferta Académica dentro del panel principal.
+        add_submenu_page(
+            'flacso-main-page',
             __('Oferta Académica', 'flacso-main-page'),
             __('Oferta Académica', 'flacso-main-page'),
             'manage_options',
@@ -117,14 +129,14 @@ class Flacso_Main_Page_Admin {
         ?>
         <div class="wrap">
             <header class="flacso-global-header">
-                <h1><?php esc_html_e('Gestor FLACSO', 'flacso-main-page'); ?></h1>
+                <h1><?php esc_html_e('Panel FLACSO', 'flacso-main-page'); ?></h1>
                 <p class="description">
                     <?php esc_html_e('Gestiona el home completo (hero full-width, orden de secciones, novedades con buscador y vista completa, Instagram y bloques institucionales) desde un unico panel.', 'flacso-main-page'); ?>
                 </p>
             </header>
             <div class="flacso-admin-ui-bar" data-admin-ui-bar>
                 <div class="flacso-admin-ui-bar__primary">
-                    <nav class="flacso-admin-tabs" role="tablist" aria-label="<?php esc_attr_e('Secciones del gestor FLACSO','flacso-main-page');?>">
+                    <nav class="flacso-admin-tabs" role="tablist" aria-label="<?php esc_attr_e('Secciones del Panel FLACSO','flacso-main-page');?>">
                         <?php foreach (self::SECTION_PAGES as $key => $cfg): $is_active = ($active_section === $key); ?>
                             <button type="button"
                                     class="flacso-admin-tab <?php echo $is_active ? 'is-active' : ''; ?>"
@@ -1566,7 +1578,7 @@ class Flacso_Main_Page_Admin {
                 <ul class="flacso-info-links">
                     <li>
                         <a href="<?php echo esc_url(admin_url('admin.php?page=flacso-main-page')); ?>" class="button button-primary">
-                            <?php esc_html_e('Ir al gestor FLACSO', 'flacso-main-page'); ?>
+                            <?php esc_html_e('Ir al Panel FLACSO', 'flacso-main-page'); ?>
                         </a>
                     </li>
                     <li>
@@ -1896,5 +1908,3 @@ class Flacso_Main_Page_Admin {
         <?php
     }
 }
-
-

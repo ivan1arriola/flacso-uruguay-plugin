@@ -127,14 +127,14 @@ class Flacso_Main_Page_Unified_Settings {
         ?>
         <div class="wrap flacso-unified-wrap">
             <header class="flacso-global-header">
-                <h1><?php esc_html_e('Gestor FLACSO', 'flacso-main-page'); ?></h1>
+                <h1><?php esc_html_e('Panel FLACSO', 'flacso-main-page'); ?></h1>
                 <p class="description">
                     <?php esc_html_e('Gestiona el home completo (hero full-width, orden de secciones, novedades con buscador y vista completa, Instagram y bloques institucionales) desde un unico panel.', 'flacso-main-page'); ?>
                 </p>
             </header>
 
             <div class="flacso-unified-container">
-                <nav class="flacso-unified-tabs" role="tablist" aria-label="<?php esc_attr_e('Secciones del gestor FLACSO', 'flacso-main-page'); ?>">
+                <nav class="flacso-unified-tabs" role="tablist" aria-label="<?php esc_attr_e('Secciones del Panel FLACSO', 'flacso-main-page'); ?>">
                     <?php foreach (self::SECTIONS as $key => $config): ?>
                         <button 
                             type="button"
