@@ -937,7 +937,11 @@ class Oferta_Data_Schema {
             return [];
         }
 
+        $analysis = self::get_cycle_analysis();
         $chain_ids = self::get_cycle_chain_ids($post_id);
+        $cycle_levels = isset($analysis['level_map']) && is_array($analysis['level_map'])
+            ? $analysis['level_map']
+            : [];
 
         if (count($chain_ids) <= 1) {
             return [];
@@ -959,6 +963,7 @@ class Oferta_Data_Schema {
                 'id' => $cycle_id,
                 'titulo' => get_the_title($cycle_post),
                 'posicion' => $index + 1,
+                'nivel' => isset($cycle_levels[$cycle_id]) ? intval($cycle_levels[$cycle_id]) : $index + 1,
                 'es_actual' => $cycle_id === $post_id,
                 'url' => $permalink ? (string) $permalink : '',
                 'carta_url' => $permalink ? trailingslashit((string) $permalink) . 'carta/' : '',
@@ -1023,7 +1028,7 @@ class Oferta_Data_Schema {
 
         return new \WP_Error(
             'invalid_cycle_chain',
-            'La cadena de ciclos es inconsistente: ' . implode(' ', $issues),
+            'La trayectoria de ciclos es inconsistente: ' . implode(' ', $issues),
             ['status' => 400]
         );
     }
@@ -1623,14 +1628,6 @@ class Oferta_Data_Schema {
             $declared_ids = self::sanitize_integer_array($raw_relations);
             $valid_declared_ids = [];
 
-            if (count($declared_ids) > 1) {
-                self::add_cycle_issue(
-                    $issues,
-                    $node_key,
-                    'Cada oferta solo puede declarar un ciclo previo directo para mantener una cadena lineal.'
-                );
-            }
-
             foreach ($declared_ids as $declared_id) {
                 $declared_id = intval($declared_id);
 
@@ -1650,44 +1647,18 @@ class Oferta_Data_Schema {
             }
 
             $relations[$node_key] = $valid_declared_ids;
-            $predecessor_map[$node_key] = count($valid_declared_ids) === 1 ? $valid_declared_ids[0] : null;
+            $predecessor_map[$node_key] = $valid_declared_ids;
         }
 
-        foreach ($predecessor_map as $node_key => $predecessor_id) {
-            if ($predecessor_id === null) {
-                continue;
+        foreach ($predecessor_map as $node_key => $predecessor_ids) {
+            foreach ((array) $predecessor_ids as $predecessor_id) {
+                if (!isset($successor_map[$predecessor_id])) {
+                    $successor_map[$predecessor_id] = [];
+                }
+
+                $successor_map[$predecessor_id][] = $node_key;
+                $successor_map[$predecessor_id] = array_values(array_unique($successor_map[$predecessor_id], SORT_REGULAR));
             }
-
-            if (!isset($successor_map[$predecessor_id])) {
-                $successor_map[$predecessor_id] = [];
-            }
-
-            $successor_map[$predecessor_id][] = $node_key;
-        }
-
-        foreach ($successor_map as $predecessor_id => $successors) {
-            $successors = array_values(array_unique($successors, SORT_REGULAR));
-
-            if (count($successors) <= 1) {
-                $successor_map[$predecessor_id] = $successors;
-                continue;
-            }
-
-            self::add_cycle_issue(
-                $issues,
-                $predecessor_id,
-                'Un mismo ciclo previo no puede desembocar en más de una oferta porque rompería la cadena lineal.'
-            );
-
-            foreach ($successors as $successor_id) {
-                self::add_cycle_issue(
-                    $issues,
-                    $successor_id,
-                    'Comparte el mismo ciclo previo directo con otra oferta y eso genera una bifurcación inconsistente.'
-                );
-            }
-
-            $successor_map[$predecessor_id] = $successors;
         }
 
         $visit_state = [];
@@ -1696,9 +1667,9 @@ class Oferta_Data_Schema {
         $detect_cycle = function ($node_key) use (&$detect_cycle, &$visit_state, &$stack, $predecessor_map, &$issues) {
             $visit_state[$node_key] = 1;
             $stack[] = $node_key;
-            $predecessor_id = $predecessor_map[$node_key] ?? null;
+            $predecessor_ids = $predecessor_map[$node_key] ?? [];
 
-            if ($predecessor_id !== null) {
+            foreach ((array) $predecessor_ids as $predecessor_id) {
                 $predecessor_key = $predecessor_id;
 
                 if (!isset($visit_state[$predecessor_key])) {
@@ -1711,7 +1682,7 @@ class Oferta_Data_Schema {
                         self::add_cycle_issue(
                             $issues,
                             $cycle_node_key,
-                            'Se detectó un ciclo cerrado entre ofertas. La relación entre ciclos debe formar una secuencia lineal sin vueltas.'
+                            'Se detectó un ciclo cerrado entre ofertas. La trayectoria debe ser acíclica y sin vueltas.'
                         );
                     }
                 }
@@ -1761,6 +1732,19 @@ class Oferta_Data_Schema {
 
         $component_invalid = [];
         $chain_map = [];
+        $level_map = [];
+        $sort_nodes = function (array $node_ids): array {
+            usort($node_ids, function ($a, $b) {
+                $title_a = $a === '__new__' ? '' : get_the_title((int) $a);
+                $title_b = $b === '__new__' ? '' : get_the_title((int) $b);
+                $comparison = strcasecmp((string) $title_a, (string) $title_b);
+                if ($comparison !== 0) {
+                    return $comparison;
+                }
+                return intval($a) <=> intval($b);
+            });
+            return $node_ids;
+        };
 
         foreach ($components as $component_id => $component_nodes) {
             $component_invalid[$component_id] = false;
@@ -1776,52 +1760,59 @@ class Oferta_Data_Schema {
                 continue;
             }
 
-            $roots = [];
+            $component_lookup = array_fill_keys($component_nodes, true);
+            $indegree = [];
+            $local_level = [];
 
             foreach ($component_nodes as $node_key) {
-                if (($predecessor_map[$node_key] ?? null) === null) {
-                    $roots[] = $node_key;
+                $indegree[$node_key] = 0;
+                $local_level[$node_key] = 1;
+            }
+
+            foreach ($component_nodes as $node_key) {
+                foreach ((array) ($predecessor_map[$node_key] ?? []) as $predecessor_id) {
+                    if (isset($component_lookup[$predecessor_id])) {
+                        $indegree[$node_key]++;
+                    }
                 }
             }
 
-            if (count($component_nodes) > 1 && count($roots) !== 1) {
-                foreach ($component_nodes as $node_key) {
-                    self::add_cycle_issue(
-                        $issues,
-                        $node_key,
-                        'La cadena de ciclos no tiene un único inicio claro. Revisa las relaciones declaradas.'
-                    );
+            $ready = [];
+            foreach ($component_nodes as $node_key) {
+                if (($indegree[$node_key] ?? 0) === 0) {
+                    $ready[] = $node_key;
                 }
-                $component_invalid[$component_id] = true;
-                continue;
             }
-
-            $root = count($roots) === 1 ? $roots[0] : $component_nodes[0];
+            $ready = $sort_nodes($ready);
             $ordered = [];
-            $seen_nodes = [];
-            $cursor = $root;
 
-            while ($cursor !== null && !isset($seen_nodes[$cursor])) {
-                $seen_nodes[$cursor] = true;
-                $ordered[] = $cursor;
-                $next_nodes = $successor_map[$cursor] ?? [];
-                $cursor = count($next_nodes) === 1 ? $next_nodes[0] : null;
-            }
+            while (!empty($ready)) {
+                $current = array_shift($ready);
+                $ordered[] = $current;
 
-            if (count($ordered) !== count($component_nodes)) {
-                foreach ($component_nodes as $node_key) {
-                    self::add_cycle_issue(
-                        $issues,
-                        $node_key,
-                        'La cadena de ciclos quedó incompleta o ambigua. Debe existir un único recorrido lineal entre todas las ofertas vinculadas.'
+                $successors = array_values(array_filter(
+                    $successor_map[$current] ?? [],
+                    fn($successor_id) => isset($component_lookup[$successor_id])
+                ));
+                $successors = $sort_nodes($successors);
+
+                foreach ($successors as $successor_id) {
+                    $local_level[$successor_id] = max(
+                        intval($local_level[$successor_id] ?? 1),
+                        intval($local_level[$current] ?? 1) + 1
                     );
+                    $indegree[$successor_id] = intval($indegree[$successor_id] ?? 0) - 1;
+
+                    if (($indegree[$successor_id] ?? 0) === 0) {
+                        $ready[] = $successor_id;
+                        $ready = $sort_nodes($ready);
+                    }
                 }
-                $component_invalid[$component_id] = true;
-                continue;
             }
 
             foreach ($ordered as $node_key) {
                 $chain_map[$node_key] = $ordered;
+                $level_map[$node_key] = intval($local_level[$node_key] ?? 1);
             }
         }
 
@@ -1829,6 +1820,7 @@ class Oferta_Data_Schema {
             'relations' => $relations,
             'issues' => $issues,
             'chain_map' => $chain_map,
+            'level_map' => $level_map,
         ];
 
         if (empty($override_relations)) {
