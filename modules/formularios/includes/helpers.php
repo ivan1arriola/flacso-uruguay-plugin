@@ -344,6 +344,26 @@ function fc_get_url_query_value( string $url, string $key ): string {
     return sanitize_text_field( (string) $query_args[ $key ] );
 }
 
+function fc_get_campaign_attribution_field_names(): array {
+    return [
+        'campaign_provider',
+        'campaign_source',
+        'campaign_medium',
+        'campaign_name',
+        'campaign_external_id',
+        'campaign_content',
+        'campaign_term',
+        'utm_source',
+        'utm_medium',
+        'utm_campaign',
+        'utm_id',
+        'utm_content',
+        'utm_term',
+        'landing_url',
+        'referrer_url',
+    ];
+}
+
 function fc_pick_campaign_value( array $sources, array $keys ): string {
     foreach ( $sources as $source ) {
         if ( ! is_array( $source ) ) {
@@ -411,7 +431,12 @@ function fc_get_campaign_attribution_from_request( string $landing_url = '', str
         $url_query[ $key ] = fc_get_url_query_value( $candidate_url, $key );
     }
 
-    $sources = [ $request, $url_query ];
+    $referer_query = [];
+    foreach ( array_keys( $url_query ) as $key ) {
+        $referer_query[ $key ] = fc_get_url_query_value( $referer_url, $key );
+    }
+
+    $sources = [ $request, $url_query, $referer_query ];
     $attribution = [
         'provider'    => fc_pick_campaign_value( $sources, [ 'campaign_provider', 'provider', 'attribution_provider' ] ),
         'source'      => fc_pick_campaign_value( $sources, [ 'campaign_source', 'acquisition_source', 'fuente', 'utm_source' ] ),
@@ -453,6 +478,124 @@ function fc_render_campaign_attribution_hidden_fields( string $landing_url = '',
             esc_attr( $value )
         );
     }
+    ?>
+    <script>
+    (function() {
+        var script = document.currentScript;
+        var form = script && script.closest ? script.closest('form') : null;
+        if (!form || !window.URL || !window.location) return;
+
+        var currentUrl = window.location.href;
+        var referrerUrl = document.referrer || '';
+        var current;
+        var referrer;
+
+        try { current = new URL(currentUrl); } catch (e) { current = null; }
+        try { referrer = referrerUrl ? new URL(referrerUrl) : null; } catch (e) { referrer = null; }
+
+        function param(name) {
+            var value = current ? (current.searchParams.get(name) || '') : '';
+            if (!value && referrer) {
+                value = referrer.searchParams.get(name) || '';
+            }
+            return value.trim();
+        }
+
+        function setField(name, value) {
+            var field = form.querySelector('[name="' + name + '"]');
+            if (field) field.value = value || '';
+        }
+
+        function first() {
+            for (var i = 0; i < arguments.length; i++) {
+                var value = (arguments[i] || '').trim();
+                if (value) return value;
+            }
+            return '';
+        }
+
+        setField('landing_url', currentUrl);
+        setField('referrer_url', referrerUrl);
+        setField('utm_source', param('utm_source'));
+        setField('utm_medium', param('utm_medium'));
+        setField('utm_campaign', param('utm_campaign'));
+        setField('utm_id', param('utm_id'));
+        setField('utm_content', param('utm_content'));
+        setField('utm_term', param('utm_term'));
+        setField('campaign_source', first(param('campaign_source'), param('acquisition_source'), param('fuente'), param('utm_source')));
+        setField('campaign_medium', first(param('campaign_medium'), param('medium'), param('utm_medium')));
+        setField('campaign_name', first(param('campaign_name'), param('campana'), param('campaign'), param('utm_campaign')));
+        setField('campaign_external_id', first(param('campaign_external_id'), param('campaign_id'), param('campana_id'), param('utm_id'), param('meta_campaign_id'), param('mailjet_campaign_id'), param('mj_campaign_id')));
+        setField('campaign_content', first(param('campaign_content'), param('content'), param('utm_content'), param('meta_ad_name')));
+        setField('campaign_term', first(param('campaign_term'), param('term'), param('utm_term'), param('meta_adset_name')));
+
+        var provider = first(param('campaign_provider'), param('provider'), param('attribution_provider'));
+        var providerSource = [
+            provider,
+            param('campaign_source'),
+            param('utm_source'),
+            param('campaign_external_id'),
+            param('utm_id')
+        ].join(' ').toLowerCase();
+        if (!provider && (providerSource.indexOf('meta') !== -1 || providerSource.indexOf('facebook') !== -1 || providerSource.indexOf('instagram') !== -1)) provider = 'meta';
+        if (!provider && (providerSource.indexOf('mailjet') !== -1 || providerSource.indexOf('mj-') !== -1 || providerSource.indexOf('mj.nl') !== -1)) provider = 'mailjet';
+        if (!provider && (param('utm_source') || param('utm_medium') || param('utm_campaign'))) provider = 'utm';
+        setField('campaign_provider', provider);
+    })();
+    </script>
+    <?php
+}
+
+function fc_sanitize_campaign_attribution_payload( array $source, string $landing_url = '', string $referer_url = '' ): array {
+    $fallback = fc_get_campaign_attribution_from_request( $landing_url, $referer_url );
+    $fields   = [];
+
+    foreach ( fc_get_campaign_attribution_field_names() as $name ) {
+        $raw_value = $source[ $name ] ?? ( $fallback[ $name ] ?? '' );
+
+        if ( is_array( $raw_value ) ) {
+            $raw_value = '';
+        }
+
+        if ( in_array( $name, [ 'landing_url', 'referrer_url' ], true ) ) {
+            $fields[ $name ] = esc_url_raw( (string) $raw_value );
+        } else {
+            $fields[ $name ] = sanitize_text_field( (string) $raw_value );
+        }
+    }
+
+    $attribution = [
+        'provider'    => $fields['campaign_provider'],
+        'source'      => $fields['campaign_source'] ?: $fields['utm_source'],
+        'medium'      => $fields['campaign_medium'] ?: $fields['utm_medium'],
+        'name'        => $fields['campaign_name'] ?: $fields['utm_campaign'],
+        'external_id' => $fields['campaign_external_id'] ?: $fields['utm_id'],
+        'content'     => $fields['campaign_content'] ?: $fields['utm_content'],
+        'term'        => $fields['campaign_term'] ?: $fields['utm_term'],
+    ];
+
+    $fields['campaign_provider'] = fc_detect_campaign_provider( $attribution );
+
+    if ( '' === $fields['campaign_source'] ) {
+        $fields['campaign_source'] = $fields['utm_source'];
+    }
+    if ( '' === $fields['campaign_medium'] ) {
+        $fields['campaign_medium'] = $fields['utm_medium'];
+    }
+    if ( '' === $fields['campaign_name'] ) {
+        $fields['campaign_name'] = $fields['utm_campaign'];
+    }
+    if ( '' === $fields['campaign_external_id'] ) {
+        $fields['campaign_external_id'] = $fields['utm_id'];
+    }
+    if ( '' === $fields['campaign_content'] ) {
+        $fields['campaign_content'] = $fields['utm_content'];
+    }
+    if ( '' === $fields['campaign_term'] ) {
+        $fields['campaign_term'] = $fields['utm_term'];
+    }
+
+    return $fields;
 }
 
 /**

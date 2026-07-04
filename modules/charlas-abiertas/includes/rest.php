@@ -689,6 +689,15 @@ function flacso_charlas_abiertas_receive_inscripcion(WP_REST_Request $request) {
             }
         }
 
+        $posted_attribution = [];
+        if (function_exists('fc_sanitize_campaign_attribution_payload')) {
+            $posted_attribution = fc_sanitize_campaign_attribution_payload(
+                $meta,
+                isset($meta['landing_url']) ? esc_url_raw($meta['landing_url']) : '',
+                isset($meta['referrer_url']) ? esc_url_raw($meta['referrer_url']) : esc_url_raw($device['referer'] ?? '')
+            );
+        }
+
         $clean_payload = [
             'evento' => [
                 'id' => is_numeric($evento_id_raw) ? $evento_id : sanitize_text_field((string) $evento_id_raw),
@@ -732,7 +741,22 @@ function flacso_charlas_abiertas_receive_inscripcion(WP_REST_Request $request) {
                 'timestamp_client' => sanitize_text_field($meta['timestamp_client'] ?? ''),
                 'host_post_id' => is_scalar($meta['host_post_id'] ?? null) ? absint($meta['host_post_id']) : 0,
                 'post_featured_image' => esc_url_raw($meta['post_featured_image'] ?? ''),
-            ],
+                'campaign_id' => sanitize_text_field(
+                    $posted_attribution['campaign_external_id']
+                    ?? $posted_attribution['utm_id']
+                    ?? $meta['campaign_id']
+                    ?? ''
+                ),
+                'attribution' => [
+                    'provider' => sanitize_text_field($posted_attribution['campaign_provider'] ?? ''),
+                    'source' => sanitize_text_field($posted_attribution['campaign_source'] ?? ''),
+                    'medium' => sanitize_text_field($posted_attribution['campaign_medium'] ?? ''),
+                    'name' => sanitize_text_field($posted_attribution['campaign_name'] ?? ''),
+                    'external_id' => sanitize_text_field($posted_attribution['campaign_external_id'] ?? ''),
+                    'content' => sanitize_text_field($posted_attribution['campaign_content'] ?? ''),
+                    'term' => sanitize_text_field($posted_attribution['campaign_term'] ?? ''),
+                ],
+            ] + $posted_attribution,
         ];
 
         $inscripcion_id = wp_generate_uuid4() . '-' . (string) round(microtime(true) * 1000);

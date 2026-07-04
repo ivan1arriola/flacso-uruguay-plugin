@@ -881,6 +881,19 @@ class FLACSO_Formulario_Preinscripcion_Final {
         // Capturar metadata de la solicitud
         $ip_address = $_SERVER['REMOTE_ADDR'] ?? '';
         $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+        $posted_attribution = array();
+        if (function_exists('fc_sanitize_campaign_attribution_payload')) {
+            $posted_attribution = fc_sanitize_campaign_attribution_payload(
+                wp_unslash($_POST),
+                isset($_POST['landing_url']) ? esc_url_raw(wp_unslash($_POST['landing_url'])) : (function_exists('fc_get_current_request_url') ? fc_get_current_request_url() : ''),
+                isset($_POST['referrer_url']) ? esc_url_raw(wp_unslash($_POST['referrer_url'])) : (wp_get_referer() ?: '')
+            );
+        }
+        $url_referer = $posted_attribution['referrer_url'] ?? '';
+        if ($url_referer === '') {
+            $url_referer = wp_get_referer() ?: '';
+        }
+        $campaign_id = $posted_attribution['campaign_external_id'] ?? '';
 
         $payload = array(
             'posgrado' => array(
@@ -931,8 +944,19 @@ class FLACSO_Formulario_Preinscripcion_Final {
                 'ip_address' => $ip_address,
                 'user_agent' => $user_agent,
                 'host_post_id' => $id_pagina,
-                'origen' => 'wordpress_formulario_preinscripcion'
-            )
+                'url_referer' => $url_referer,
+                'origen' => 'wordpress_formulario_preinscripcion',
+                'campaign_id' => $campaign_id,
+                'attribution' => array_filter(array(
+                    'provider' => $posted_attribution['campaign_provider'] ?? '',
+                    'source' => $posted_attribution['campaign_source'] ?? '',
+                    'medium' => $posted_attribution['campaign_medium'] ?? '',
+                    'name' => $posted_attribution['campaign_name'] ?? '',
+                    'external_id' => $posted_attribution['campaign_external_id'] ?? '',
+                    'content' => $posted_attribution['campaign_content'] ?? '',
+                    'term' => $posted_attribution['campaign_term'] ?? '',
+                )),
+            ) + $posted_attribution
         );
 
         // Log seguro del tamaño del payload antes del fetch
@@ -1174,5 +1198,4 @@ class FLACSO_Formulario_Preinscripcion_Final {
         fc_send_telegram_message($msg);
     }
 }
-
 

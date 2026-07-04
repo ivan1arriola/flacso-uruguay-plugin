@@ -59,6 +59,7 @@ function fc_render_form( $atts = [] ) {
                 <input type="hidden" name="fc_timestamp" value="<?php echo esc_attr( time() ); ?>" />
                 <input type="hidden" name="website" id="website" class="fc-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
                 <input type="hidden" name="fc_company" id="fc_company" class="fc-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+                <?php if ( function_exists( 'fc_render_campaign_attribution_hidden_fields' ) ) { fc_render_campaign_attribution_hidden_fields( function_exists( 'fc_get_current_request_url' ) ? fc_get_current_request_url() : '', wp_get_referer() ?: '' ); } ?>
 
                 <!-- Nombre y Apellido en fila (responsive) -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">

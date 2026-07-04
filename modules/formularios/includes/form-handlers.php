@@ -36,6 +36,18 @@ function fc_handle_form_submit() {
     $telefono = isset( $_POST['fc_telefono_full'] ) ? sanitize_text_field( wp_unslash( $_POST['fc_telefono_full'] ) ) : ( isset( $_POST['fc_telefono'] ) ? sanitize_text_field( wp_unslash( $_POST['fc_telefono'] ) ) : '' );
     $asunto   = isset( $_POST['fc_asunto'] ) ? sanitize_text_field( wp_unslash( $_POST['fc_asunto'] ) ) : '';
     $mensaje  = isset( $_POST['fc_mensaje'] ) ? wp_kses_post( wp_unslash( $_POST['fc_mensaje'] ) ) : '';
+    $posted_attribution = [];
+    if ( function_exists( 'fc_sanitize_campaign_attribution_payload' ) ) {
+        $posted_attribution = fc_sanitize_campaign_attribution_payload(
+            wp_unslash( $_POST ),
+            function_exists( 'fc_get_current_request_url' ) ? fc_get_current_request_url() : '',
+            wp_get_referer() ?: ''
+        );
+    }
+    $url_referer = $posted_attribution['referrer_url'] ?? '';
+    if ( '' === $url_referer ) {
+        $url_referer = wp_get_referer() ?: '';
+    }
 
     $text_min_2 = function( $str ) { return strlen( trim( (string) $str ) ) >= 2; };
     $phone_ok = function( $str ) {
@@ -60,21 +72,25 @@ function fc_handle_form_submit() {
     }
 
     // Webhook de consultas (se envía directamente a la app).
-    fc_send_consulta_webhook(
-        [
+    $webhook_payload = [
             'nombre'      => $nombre,
             'apellido'    => $apellido,
             'email'       => $email,
             'telefono'    => $telefono,
             'asunto'      => $asunto,
             'mensaje'     => wp_strip_all_tags( $mensaje ),
-            'url_referer' => wp_get_referer() ?: '',
+            'url_referer' => $url_referer,
             'ip'          => $_SERVER['REMOTE_ADDR'] ?? '',
             'user_agent'  => $_SERVER['HTTP_USER_AGENT'] ?? '',
             'fecha_envio' => current_time( 'c' ),
             'origen'      => 'wordpress_formulario_consultas',
-        ]
-    );
+    ];
+    $webhook_payload = array_merge( $webhook_payload, $posted_attribution );
+    if ( ! empty( $posted_attribution['campaign_external_id'] ) ) {
+        $webhook_payload['campaign_id'] = $posted_attribution['campaign_external_id'];
+    }
+
+    fc_send_consulta_webhook( $webhook_payload );
 
     $redirect_base = fc_get_gracias_url_from_referer();
     $redirect = add_query_arg(

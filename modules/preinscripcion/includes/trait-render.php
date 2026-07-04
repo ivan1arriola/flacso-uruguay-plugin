@@ -145,6 +145,7 @@ trait FLACSO_Formulario_Preinscripcion_Render {
         <input type="hidden" name="action" value="flacso_enviar_preinscripcion">
         <!-- Celular en E.164 (se completa en JS si es válido) -->
         <input type="hidden" name="celular_e164" id="celular_e164" value="">
+        <?php if (function_exists('fc_render_campaign_attribution_hidden_fields')) { fc_render_campaign_attribution_hidden_fields(function_exists('fc_get_current_request_url') ? fc_get_current_request_url() : '', wp_get_referer() ?: ''); } ?>
         <?php
     }
 

@@ -43,6 +43,61 @@
         return "desktop";
     }
 
+    function getCampaignAttribution() {
+        var current;
+        var referrer;
+        var currentUrl = window.location.href || "";
+        var referrerUrl = document.referrer || "";
+
+        try { current = new URL(currentUrl); } catch (e) { current = null; }
+        try { referrer = referrerUrl ? new URL(referrerUrl) : null; } catch (e) { referrer = null; }
+
+        function param(name) {
+            var value = current ? (current.searchParams.get(name) || "") : "";
+            if (!value && referrer) {
+                value = referrer.searchParams.get(name) || "";
+            }
+            return String(value || "").trim();
+        }
+
+        function first() {
+            for (var i = 0; i < arguments.length; i++) {
+                var value = String(arguments[i] || "").trim();
+                if (value) return value;
+            }
+            return "";
+        }
+
+        var campaignSource = first(param("campaign_source"), param("acquisition_source"), param("fuente"), param("utm_source"));
+        var campaignMedium = first(param("campaign_medium"), param("medium"), param("utm_medium"));
+        var campaignName = first(param("campaign_name"), param("campana"), param("campaign"), param("utm_campaign"));
+        var campaignExternalId = first(param("campaign_external_id"), param("campaign_id"), param("campana_id"), param("utm_id"), param("meta_campaign_id"), param("mailjet_campaign_id"), param("mj_campaign_id"));
+        var campaignProvider = first(param("campaign_provider"), param("provider"), param("attribution_provider"));
+        var providerSource = [campaignProvider, campaignSource, campaignExternalId].join(" ").toLowerCase();
+
+        if (!campaignProvider && (providerSource.indexOf("meta") !== -1 || providerSource.indexOf("facebook") !== -1 || providerSource.indexOf("instagram") !== -1)) campaignProvider = "meta";
+        if (!campaignProvider && (providerSource.indexOf("mailjet") !== -1 || providerSource.indexOf("mj-") !== -1 || providerSource.indexOf("mj.nl") !== -1)) campaignProvider = "mailjet";
+        if (!campaignProvider && (param("utm_source") || param("utm_medium") || param("utm_campaign"))) campaignProvider = "utm";
+
+        return {
+            landing_url: currentUrl,
+            referrer_url: referrerUrl,
+            campaign_provider: campaignProvider,
+            campaign_source: campaignSource,
+            campaign_medium: campaignMedium,
+            campaign_name: campaignName,
+            campaign_external_id: campaignExternalId,
+            campaign_content: first(param("campaign_content"), param("content"), param("utm_content"), param("meta_ad_name")),
+            campaign_term: first(param("campaign_term"), param("term"), param("utm_term"), param("meta_adset_name")),
+            utm_source: param("utm_source"),
+            utm_medium: param("utm_medium"),
+            utm_campaign: param("utm_campaign"),
+            utm_id: param("utm_id"),
+            utm_content: param("utm_content"),
+            utm_term: param("utm_term"),
+        };
+    }
+
     function bindIntlTelInput(input) {
         if (!input || !window.intlTelInput) {
             return null;
@@ -569,6 +624,7 @@
                 modalidad_asistencia: modalidadAsistencia,
             };
 
+            var attribution = getCampaignAttribution();
             var payload = {
                 evento: eventoData,
                 inscripcion: inscripcionData,
@@ -588,8 +644,19 @@
                     timestamp_client: toIsoWithOffset(new Date()),
                     host_post_id: Number(wrapper.dataset.hostPostId || 0),
                     post_featured_image: wrapper.dataset.hostPostFeaturedImage || "",
+                    campaign_id: attribution.campaign_external_id || attribution.utm_id || "",
+                    attribution: {
+                        provider: attribution.campaign_provider || "",
+                        source: attribution.campaign_source || "",
+                        medium: attribution.campaign_medium || "",
+                        name: attribution.campaign_name || "",
+                        external_id: attribution.campaign_external_id || "",
+                        content: attribution.campaign_content || "",
+                        term: attribution.campaign_term || "",
+                    },
                 },
             };
+            Object.assign(payload.meta, attribution);
 
             debugLog("Payload de inscripción", payload);
             debugLog("Endpoint", endpoint);
