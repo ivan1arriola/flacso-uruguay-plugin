@@ -90,7 +90,7 @@
 
     function EventosProximosSection(props) {
         var sectionId = props && props.sectionId ? String(props.sectionId) : 'flacso-eventos-react';
-        var title = props && props.title ? String(props.title) : 'Proximos eventos';
+        var title = props && props.title ? String(props.title) : 'Próximos eventos';
         var items = props && props.items && Array.isArray(props.items) ? props.items : [];
         var count = items.length;
         var titleId = sectionId + '-title';
@@ -331,7 +331,7 @@
                     if (component === 'eventos-proximos' && sectionData && Array.isArray(sectionData.items) && sectionData.items.length) {
                         body = createElement(EventosProximosSection, {
                             sectionId: 'flacso-eventos-react-' + key + '-' + index,
-                            title: 'Proximos eventos',
+                            title: 'Próximos eventos',
                             items: sectionData.items,
                         });
                     }

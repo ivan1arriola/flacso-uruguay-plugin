@@ -1352,12 +1352,7 @@
 @media (min-width: 1024px) {
     .flc-eventos-react__layout.has-list {
         grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
-        align-items: stretch;
-    }
-
-    .flc-eventos-react__layout.has-list .flc-eventos-react__featured {
-        height: 100%;
-        min-height: clamp(280px, 30vw, 390px);
+        align-items: start;
     }
 
     .flc-eventos-react__layout.has-list .flc-eventos-react__media {
@@ -1516,7 +1511,7 @@
 
 @media (min-width: 1024px) {
     .flc-eventos-react__layout.has-list .flc-eventos-react__list {
-        height: 100%;
+        height: auto;
         max-height: clamp(280px, 30vw, 390px);
         flex-direction: column;
         overflow-x: hidden;
