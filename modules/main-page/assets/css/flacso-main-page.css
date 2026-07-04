@@ -1349,6 +1349,22 @@
     grid-template-columns: minmax(0, 1fr);
 }
 
+@media (min-width: 1024px) {
+    .flc-eventos-react__layout.has-list {
+        grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+        align-items: stretch;
+    }
+
+    .flc-eventos-react__layout.has-list .flc-eventos-react__featured {
+        height: 100%;
+        min-height: clamp(280px, 30vw, 390px);
+    }
+
+    .flc-eventos-react__layout.has-list .flc-eventos-react__media {
+        flex-basis: clamp(220px, 34%, 330px);
+    }
+}
+
 .flc-eventos-react__featured {
     display: flex;
     flex-direction: row;
@@ -1478,6 +1494,13 @@
     width: 100%;
 }
 
+@media (min-width: 1024px) {
+    .flc-eventos-react__layout.has-list .flc-eventos-react__list-wrap {
+        min-height: 0;
+        height: 100%;
+    }
+}
+
 .flc-eventos-react__list {
     margin: 0;
     padding: 0;
@@ -1491,9 +1514,43 @@
     padding-bottom: 0.2rem;
 }
 
+@media (min-width: 1024px) {
+    .flc-eventos-react__layout.has-list .flc-eventos-react__list {
+        height: 100%;
+        max-height: clamp(280px, 30vw, 390px);
+        flex-direction: column;
+        overflow-x: hidden;
+        overflow-y: auto;
+        padding-right: 0.35rem;
+        padding-bottom: 0;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(29, 58, 114, 0.32) transparent;
+    }
+
+    .flc-eventos-react__layout.has-list .flc-eventos-react__list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .flc-eventos-react__layout.has-list .flc-eventos-react__list::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .flc-eventos-react__layout.has-list .flc-eventos-react__list::-webkit-scrollbar-thumb {
+        background: rgba(29, 58, 114, 0.28);
+        border-radius: 999px;
+    }
+}
+
 .flc-eventos-react__list-item {
     margin: 0;
     flex: 0 0 min(360px, 86vw);
+}
+
+@media (min-width: 1024px) {
+    .flc-eventos-react__layout.has-list .flc-eventos-react__list-item {
+        flex: 0 0 auto;
+        width: 100%;
+    }
 }
 
 .flc-eventos-react__event-btn {
