@@ -1,3 +1,13 @@
 package-plugin.sh
 *.zip
 .antigravityignore
+
+# Local/generated artifacts
+__pycache__/
+*.pyc
+*.orig
+*.rej
+
+# One-off debug scripts
+/debug-*.php
+/test-schema.php
