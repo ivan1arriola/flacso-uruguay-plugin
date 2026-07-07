@@ -110,14 +110,14 @@ function fc_register_cpt_dynamic_info_form() {
             'publicly_queryable' => true,
             'show_ui'            => true,
             'show_in_menu'       => true,
-            'query_var'          => true,
-            'rewrite'            => [ 'slug' => 'solicitar-info', 'with_front' => false ],
+            'query_var'          => 'formulario',
+            'rewrite'            => [ 'slug' => 'formularios', 'with_front' => false ],
             'capability_type'    => 'post',
             'has_archive'        => false,
             'hierarchical'       => false,
             'menu_position'      => 27,
             'menu_icon'          => 'dashicons-feedback',
-            'supports'           => [ 'title', 'editor', 'thumbnail', 'excerpt' ],
+            'supports'           => [ 'title' ],
             'show_in_rest'       => true,
         ]
     );
@@ -125,7 +125,7 @@ function fc_register_cpt_dynamic_info_form() {
 add_action( 'init', 'fc_register_cpt_dynamic_info_form' );
 
 function fc_dynamic_info_form_maybe_flush_rewrites() {
-    $version = '20260707_fc_info_form_v1';
+    $version = '20260707_fc_info_form_v2';
     if ( get_option( 'fc_dynamic_info_form_rewrite_version' ) === $version ) {
         return;
     }
@@ -195,7 +195,7 @@ function fc_dynamic_info_form_offers_metabox_render( $post ) {
         <?php endif; ?>
     </div>
     <p class="description">
-        <?php esc_html_e( 'La URL pública del formulario se genera como un post normal bajo /solicitar-info/{slug}/.', 'flacso-flacso-formulario-consultas' ); ?>
+        <?php esc_html_e( 'La URL pública del formulario se genera bajo /formularios/{slug}/.', 'flacso-flacso-formulario-consultas' ); ?>
     </p>
     <?php
 }
