@@ -462,6 +462,17 @@ if (!function_exists('flacso_section_hero_render')) {
             display: none;
         }
 
+        .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-fab.is-over-content .fab-link {
+            width: 46px !important;
+            min-width: 46px !important;
+            padding: 0;
+            justify-content: center;
+        }
+
+        .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-fab.is-over-content .fab-link span {
+            display: none;
+        }
+
 
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .fab-link,
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .fab-top {
@@ -666,6 +677,19 @@ if (!function_exists('flacso_section_hero_render')) {
             }
         }
 
+        @media (max-width: 1599.98px), (max-height: 820px) {
+            .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-fab .fab-link {
+                width: 46px !important;
+                min-width: 46px !important;
+                padding: 0;
+                justify-content: center;
+            }
+
+            .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-fab .fab-link span {
+                display: none;
+            }
+        }
+
         @media (prefers-reduced-motion: reduce) {
             .flacso-hero-<?php echo esc_attr($unique_id); ?> .hero-btn,
             .flacso-hero-<?php echo esc_attr($unique_id); ?> .fab-link,
@@ -800,6 +824,32 @@ if (!function_exists('flacso_section_hero_render')) {
                         scrollTicking = true;
                     }
                 }, { passive: true });
+
+                const denseSections = Array.prototype.slice.call(document.querySelectorAll('.flacso-instagram-section'));
+                if (denseSections.length && 'IntersectionObserver' in window) {
+                    const denseSectionStates = new WeakMap();
+                    const updateDenseState = function () {
+                        const overlapsDenseSection = denseSections.some(function (section) {
+                            return denseSectionStates.get(section) === true;
+                        });
+                        fab.classList.toggle('is-over-content', overlapsDenseSection);
+                    };
+
+                    const denseObserver = new IntersectionObserver(function (entries) {
+                        entries.forEach(function (entry) {
+                            denseSectionStates.set(entry.target, entry.isIntersecting);
+                        });
+                        updateDenseState();
+                    }, {
+                        rootMargin: '-12% 0px -12% 0px',
+                        threshold: 0.08
+                    });
+
+                    denseSections.forEach(function (section) {
+                        denseSectionStates.set(section, false);
+                        denseObserver.observe(section);
+                    });
+                }
 
                 if ('IntersectionObserver' in window) {
                     const observer = new IntersectionObserver(function (entries) {

@@ -135,6 +135,69 @@ function flacso_consultas_is_block_preview() {
 	return false;
 }
 
+function flacso_consultas_normalize_offer_ids( $offer_ids ) {
+	if ( ! is_array( $offer_ids ) ) {
+		return array();
+	}
+
+	return array_values(
+		array_unique(
+			array_filter(
+				array_map( 'absint', $offer_ids ),
+				static function ( $offer_id ) {
+					return $offer_id > 0 && get_post_type( $offer_id ) === 'oferta-academica' && get_post_status( $offer_id ) === 'publish';
+				}
+			)
+		)
+	);
+}
+
+function flacso_consultas_build_offer_choices( $offer_ids ) {
+	$offer_ids = flacso_consultas_normalize_offer_ids( $offer_ids );
+	$choices   = array();
+
+	foreach ( $offer_ids as $offer_id ) {
+		$choices[] = array(
+			'id'    => $offer_id,
+			'title' => get_the_title( $offer_id ),
+			'url'   => get_permalink( $offer_id ),
+		);
+	}
+
+	return $choices;
+}
+
+function flacso_consultas_dispatch_single_info_request( array $data ) {
+	if ( function_exists( 'fc_enrich_info_request_program_context' ) ) {
+		$data = fc_enrich_info_request_program_context( $data );
+	}
+
+	if ( function_exists( 'fc_record_info_request_entry' ) ) {
+		$stored_entry = fc_record_info_request_entry( array(
+			'nombre'          => $data['nombre'],
+			'apellido'        => $data['apellido'],
+			'correo'          => $data['correo'],
+			'pais'            => $data['pais'],
+			'nivel_academico' => $data['nivel_academico'],
+			'profesion'       => $data['profesion'],
+			'programa_id'     => $data['id_pagina'],
+			'programa_titulo' => $data['titulo_posgrado'],
+			'url_base'        => $data['url_base'],
+			'url_referer'     => $data['url_referer'],
+			'ip'              => $data['ip_usuario'],
+			'user_agent'      => $data['user_agent'],
+			'fecha_envio'     => $data['fecha_envio'],
+		) );
+		if ( ! empty( $stored_entry['error'] ) ) {
+			error_log( '[FLACSO] Error al guardar solicitud de información: ' . $stored_entry['error'] );
+		}
+	}
+
+	return function_exists( 'fc_send_info_request_webhook' )
+		? fc_send_info_request_webhook( $data )
+		: array( 'ok' => false, 'error' => 'fc_send_info_request_webhook no disponible', 'code' => 0, 'body' => '' );
+}
+
 /**
  * Render del formulario (bloque + shortcode legacy).
  *
@@ -156,6 +219,9 @@ function flacso_consultas_render_form( $attributes = array() ) {
 			'url_gracias'            => '',
 			'form_variant'           => '',
 			'intro_text'             => '',
+			'offer_choices'          => array(),
+			'dynamic_form_id'        => 0,
+			'heading_text'           => '',
 		),
 		$attributes,
 		'Consultas_Fase_1'
@@ -196,6 +262,16 @@ function flacso_consultas_render_form( $attributes = array() ) {
 	if ( $intro_text === '' ) {
 		$intro_text = __( 'Llená el formulario y recibí toda la información de cursada 2026.', 'flacso-consultas' );
 	}
+	$heading_text = trim( (string) $atts['heading_text'] );
+	if ( $heading_text === '' ) {
+		$heading_text = __( 'Solicitá información', 'flacso-consultas' );
+	}
+	$offer_choices = flacso_consultas_build_offer_choices( $atts['offer_choices'] );
+	$is_dynamic_info_form = ! empty( $offer_choices );
+	$dynamic_form_id = absint( $atts['dynamic_form_id'] );
+	if ( $is_dynamic_info_form ) {
+		$id_pagina = 0;
+	}
 
 	// ADAPTACIÓN CPT: Solo mostrar si las inscripciones están abiertas
 	if ( $mostrar_pre && get_post_type($id_pagina) === 'oferta-academica' ) {
@@ -210,7 +286,7 @@ function flacso_consultas_render_form( $attributes = array() ) {
 	ob_start();
 	?>
 	<div class="flacso-consultas-formulario shadow-sm mx-auto fade-in <?php echo $form_variant ? 'flacso-consultas-formulario--' . esc_attr( $form_variant ) : ''; ?>" id="form-consultas-container" role="region" aria-labelledby="consultas-title">
-		<h3 id="consultas-title" class="mb-1"><strong>Solicitá información</strong></h3>
+		<h3 id="consultas-title" class="mb-1"><strong><?php echo esc_html( $heading_text ); ?></strong></h3>
 		<p class="mb-4 text-muted" style="line-height:1.5">
 			<?php echo esc_html( $intro_text ); ?>
 		</p>
@@ -229,8 +305,27 @@ function flacso_consultas_render_form( $attributes = array() ) {
 			<input type="hidden" name="url_base" value="<?php echo esc_url( $url_actual ); ?>">
 			<input type="hidden" name="url_gracias" value="<?php echo esc_url( $gracias_url ); ?>">
 			<input type="hidden" name="url_referer" value="<?php echo esc_url( wp_get_referer() ?: $url_actual ); ?>">
+			<input type="hidden" name="dynamic_info_form_id" value="<?php echo esc_attr( $dynamic_form_id ); ?>">
 			<?php if ( function_exists( 'fc_render_campaign_attribution_hidden_fields' ) ) { fc_render_campaign_attribution_hidden_fields( fc_get_current_request_url(), wp_get_referer() ?: '' ); } ?>
 			<?php if ( FLACSO_USE_NONCE ) { wp_nonce_field( 'flacso_consultas_form', 'flacso_nonce' ); } ?>
+
+			<?php if ( $is_dynamic_info_form ) : ?>
+				<fieldset class="flacso-consultas-offers mb-3">
+					<legend>Ofertas de interés *</legend>
+					<p class="flacso-consultas-offers__hint">Podés seleccionar una o varias propuestas.</p>
+					<?php foreach ( $offer_choices as $choice ) : ?>
+						<label class="flacso-consultas-offer-choice">
+							<input
+								type="checkbox"
+								name="selected_offers[]"
+								value="<?php echo esc_attr( $choice['id'] ); ?>"
+								<?php echo count( $offer_choices ) === 1 ? 'required' : ''; ?>>
+							<span><?php echo esc_html( $choice['title'] ); ?></span>
+						</label>
+					<?php endforeach; ?>
+					<div class="invalid-feedback flacso-consultas-offers__feedback">Seleccioná al menos una oferta.</div>
+				</fieldset>
+			<?php endif; ?>
 
 			<div class="form-floating mb-3">
 				<input
@@ -476,23 +571,39 @@ function flacso_consultas_render_form( $attributes = array() ) {
 			validateField(this);
 		});
 
+		const validateOfferChoices = function() {
+			const $offerGroup = $form.find('.flacso-consultas-offers');
+			if (!$offerGroup.length) {
+				return true;
+			}
+
+			const hasSelectedOffer = $offerGroup.find('input[type="checkbox"]:checked').length > 0;
+			$offerGroup.toggleClass('is-invalid', !hasSelectedOffer).toggleClass('is-valid', hasSelectedOffer);
+			return hasSelectedOffer;
+		};
+
+		$form.find('[name="selected_offers[]"]').on('change', validateOfferChoices);
+
 		$form.on('submit', async function(e) {
 			e.preventDefault();
 			$form.find('input, select').each(function() {
 				normalizeField(this);
 				validateField(this);
 			});
+			const hasValidOfferChoices = validateOfferChoices();
 
-			if (!this.checkValidity()) {
+			if (!this.checkValidity() || !hasValidOfferChoices) {
 				$(this).addClass('was-validated');
 				const firstInvalid = this.querySelector(':invalid');
-				if (firstInvalid && typeof firstInvalid.focus === 'function') {
+				const offerGroup = !hasValidOfferChoices ? this.querySelector('.flacso-consultas-offers') : null;
+				const targetInvalid = firstInvalid || offerGroup;
+				if (targetInvalid && typeof targetInvalid.focus === 'function') {
 					try {
-						firstInvalid.focus({ preventScroll: true });
+						targetInvalid.focus({ preventScroll: true });
 					} catch (err) {
-						firstInvalid.focus();
+						targetInvalid.focus();
 					}
-					firstInvalid.scrollIntoView({ block: 'center', behavior: 'smooth' });
+					targetInvalid.scrollIntoView({ block: 'center', behavior: 'smooth' });
 				}
 				showMessage('Revisá los campos marcados en rojo.', 'danger', false);
 				return;
@@ -519,9 +630,12 @@ function flacso_consultas_render_form( $attributes = array() ) {
 					}
 					sessionStorage.setItem('consultaNombreCompleto',
 						$form.find('[name="nombre"]').val() + ' ' + $form.find('[name="apellido"]').val());
-					sessionStorage.setItem('consultaPrograma', $form.find('[name="titulo_posgrado"]').val());
+					const selectedOfferLabels = $form.find('[name="selected_offers[]"]:checked').map(function() {
+						return $(this).closest('label').text().trim().replace(/\s+/g, ' ');
+					}).get();
+					sessionStorage.setItem('consultaPrograma', selectedOfferLabels.length ? selectedOfferLabels.join(', ') : $form.find('[name="titulo_posgrado"]').val());
 					sessionStorage.setItem('consultaOrigen', $form.find('[name="url_base"]').val());
-					const pid = $form.find('[name="id_pagina"]').val();
+					const pid = (response.data && response.data.first_offer_id) ? response.data.first_offer_id : $form.find('[name="id_pagina"]').val();
 					const urlBase = $form.find('[name="url_base"]').val();
 					const gracias = $form.find('[name="url_gracias"]').val() || (urlBase ? urlBase.replace(/\/$/, '') + '/gracias/' : '<?php echo esc_js( home_url( '/gracias/' ) ); ?>');
 					try {
@@ -606,6 +720,50 @@ function flacso_consultas_render_form( $attributes = array() ) {
 	.was-validated .form-control:valid,
 	.was-validated .form-select:valid   { border-color: #198754; }
 	.invalid-feedback { font-size: .85rem; }
+	.flacso-consultas-offers {
+		border: 1px solid var(--global-palette6);
+		border-radius: 10px;
+		padding: 1rem;
+		background: rgba(255,255,255,.68);
+	}
+	.flacso-consultas-offers legend {
+		float: none;
+		width: auto;
+		margin: 0 0 .35rem;
+		font-size: .95rem;
+		font-weight: 700;
+		color: var(--global-palette3);
+	}
+	.flacso-consultas-offers__hint {
+		margin: 0 0 .75rem !important;
+		font-size: .85rem !important;
+		color: var(--global-palette5, #64748b);
+	}
+	.flacso-consultas-offer-choice {
+		display: flex;
+		align-items: flex-start;
+		gap: .55rem;
+		margin: 0 0 .65rem;
+		font-size: .94rem;
+		line-height: 1.35;
+		cursor: pointer;
+	}
+	.flacso-consultas-offer-choice:last-of-type {
+		margin-bottom: 0;
+	}
+	.flacso-consultas-offer-choice input {
+		flex: 0 0 auto;
+		width: 1.05rem;
+		height: 1.05rem;
+		margin-top: .08rem;
+	}
+	.flacso-consultas-offers.is-invalid {
+		border-color: #dc3545;
+	}
+	.flacso-consultas-offers.is-invalid .flacso-consultas-offers__feedback,
+	.was-validated .flacso-consultas-offers.is-invalid .flacso-consultas-offers__feedback {
+		display: block;
+	}
 	@media (max-width: 576px) {
 		.flacso-consultas-formulario { padding: 1.25rem; max-width: 100%; }
 	}
@@ -740,6 +898,7 @@ function flacso_enviar_consulta_func() {
 		'titulo_posgrado',
 		'url_base',
 		'url_referer',
+		'dynamic_info_form_id',
 		'campaign_provider',
 		'campaign_source',
 		'campaign_medium',
@@ -761,6 +920,8 @@ function flacso_enviar_consulta_func() {
 		$val = isset( $_POST[ $f ] ) ? wp_unslash( $_POST[ $f ] ) : '';
 		if ( 'id_pagina' === $f ) {
 			$data[ $f ] = absint( $val );
+		} elseif ( 'dynamic_info_form_id' === $f ) {
+			$data[ $f ] = absint( $val );
 		} elseif ( in_array( $f, array( 'url_base', 'url_referer', 'landing_url', 'referrer_url' ), true ) ) {
 			$data[ $f ] = esc_url_raw( $val );
 		} elseif ( 'correo' === $f ) {
@@ -773,9 +934,9 @@ function flacso_enviar_consulta_func() {
 	$data['fecha_envio'] = current_time( 'c' );
 	$data['ip_usuario']  = flacso_get_user_ip();
 	$data['user_agent']  = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
-	if ( function_exists( 'fc_enrich_info_request_program_context' ) ) {
-		$data = fc_enrich_info_request_program_context( $data );
-	}
+	$selected_offer_ids = isset( $_POST['selected_offers'] ) && is_array( $_POST['selected_offers'] )
+		? flacso_consultas_normalize_offer_ids( wp_unslash( $_POST['selected_offers'] ) )
+		: array();
 
 	$campos_obligatorios = array( 'nombre', 'apellido', 'pais', 'nivel_academico', 'correo', 'profesion' );
 	$faltan              = array();
@@ -794,48 +955,56 @@ function flacso_enviar_consulta_func() {
 		}
 		error_log( '[FLACSO] Correo inválido, RELAXED_MODE=on → seguimos.' );
 	}
-	if ( empty( $data['id_pagina'] ) ) {
+	if ( empty( $data['id_pagina'] ) && empty( $selected_offer_ids ) ) {
 		error_log( '[FLACSO] Solicitud de información sin ID de oferta académica.' );
 		wp_send_json_error( 'No se pudo identificar la oferta académica.' );
 	}
 
-	if ( function_exists( 'fc_record_info_request_entry' ) ) {
-		$stored_entry = fc_record_info_request_entry( array(
-			'nombre'          => $data['nombre'],
-			'apellido'        => $data['apellido'],
-			'correo'          => $data['correo'],
-			'pais'            => $data['pais'],
-			'nivel_academico' => $data['nivel_academico'],
-			'profesion'       => $data['profesion'],
-			'programa_id'     => $data['id_pagina'],
-			'programa_titulo' => $data['titulo_posgrado'],
-			'url_base'        => $data['url_base'],
-			'url_referer'     => $data['url_referer'],
-			'ip'              => $data['ip_usuario'],
-			'user_agent'      => $data['user_agent'],
-			'fecha_envio'     => $data['fecha_envio'],
-		) );
-		if ( ! empty( $stored_entry['error'] ) ) {
-			error_log( '[FLACSO] Error al guardar solicitud de información: ' . $stored_entry['error'] );
+	$offer_payloads = array();
+	if ( ! empty( $selected_offer_ids ) ) {
+		foreach ( $selected_offer_ids as $offer_id ) {
+			$offer_payload = $data;
+			$offer_payload['id_pagina']       = $offer_id;
+			$offer_payload['programa_id']     = $offer_id;
+			$offer_payload['titulo_posgrado'] = get_the_title( $offer_id );
+			$offer_payload['programa_titulo'] = get_the_title( $offer_id );
+			$offer_payload['url_base']        = get_permalink( $offer_id );
+			$offer_payload['source']          = 'Web - Formulario dinámico';
+			$offer_payload['dynamic_info_form_id'] = $data['dynamic_info_form_id'];
+			$offer_payloads[] = $offer_payload;
+		}
+	} else {
+		$offer_payloads[] = $data;
+	}
+
+	$deliveries = array();
+	$failures   = array();
+	foreach ( $offer_payloads as $offer_payload ) {
+		$delivery = flacso_consultas_dispatch_single_info_request( $offer_payload );
+		$deliveries[] = array(
+			'ok'       => ! empty( $delivery['ok'] ),
+			'offer_id' => (int) $offer_payload['id_pagina'],
+			'code'     => (int) ( $delivery['code'] ?? 0 ),
+		);
+
+		if ( empty( $delivery['ok'] ) ) {
+			$failures[] = $delivery;
+			error_log(
+				'[FLACSO] Error webhook solicitud de informacion: ' .
+				( $delivery['error'] ?? 'desconocido' ) .
+				' offer_id=' . (int) $offer_payload['id_pagina'] .
+				' code=' . (int) ( $delivery['code'] ?? 0 ) .
+				' body=' . substr( (string) ( $delivery['body'] ?? '' ), 0, 500 )
+			);
 		}
 	}
 
-	$delivery = function_exists( 'fc_send_info_request_webhook' )
-		? fc_send_info_request_webhook( $data )
-		: [ 'ok' => false, 'error' => 'fc_send_info_request_webhook no disponible', 'code' => 0, 'body' => '' ];
-
-	if ( empty( $delivery['ok'] ) ) {
-		error_log(
-			'[FLACSO] Error webhook solicitud de informacion: ' .
-			( $delivery['error'] ?? 'desconocido' ) .
-			' code=' . (int) ( $delivery['code'] ?? 0 ) .
-			' body=' . substr( (string) ( $delivery['body'] ?? '' ), 0, 500 )
-		);
+	if ( ! empty( $failures ) && count( $failures ) === count( $offer_payloads ) ) {
 		if ( FLACSO_RELAXED_MODE ) {
 			wp_send_json_success(
 				array(
-					'note' => ( (int) ( $delivery['code'] ?? 0 ) > 0 ) ? 'http_code_relajado' : 'webhook_error_relajado',
-					'code' => (int) ( $delivery['code'] ?? 0 ),
+					'note'       => 'webhook_error_relajado',
+					'deliveries' => $deliveries,
 				)
 			);
 		}
@@ -845,7 +1014,10 @@ function flacso_enviar_consulta_func() {
 
         wp_send_json_success(
                 array(
-                        'note' => 'ok',
+                        'note'           => empty( $failures ) ? 'ok' : 'partial_ok',
+                        'deliveries'     => $deliveries,
+                        'count'          => count( $offer_payloads ),
+                        'first_offer_id' => (int) ( $offer_payloads[0]['id_pagina'] ?? 0 ),
                 )
         );
 }
@@ -1282,6 +1454,191 @@ function flacso_render_solicitar_info_virtual() {
 	exit;
 }
 add_action( 'template_redirect', 'flacso_render_solicitar_info_virtual', 0 );
+
+function flacso_render_dynamic_info_form_single() {
+	if ( ! is_singular( 'fc_info_form' ) ) {
+		return;
+	}
+
+	$form_id = get_queried_object_id();
+	if ( ! $form_id ) {
+		return;
+	}
+
+	$offer_ids = function_exists( 'fc_dynamic_info_form_get_offer_ids' )
+		? fc_dynamic_info_form_get_offer_ids( $form_id )
+		: array();
+	$offer_ids = flacso_consultas_normalize_offer_ids( $offer_ids );
+
+	$form_title = get_the_title( $form_id );
+	$current_url = get_permalink( $form_id );
+	$gracias_url = add_query_arg( 'tipo', 'solicitud_informacion', trailingslashit( $current_url ) . 'gracias/' );
+	$thumb_url = get_the_post_thumbnail_url( $form_id, 'full' );
+
+	if ( ! $thumb_url && ! empty( $offer_ids ) ) {
+		$thumb_url = get_the_post_thumbnail_url( $offer_ids[0], 'full' );
+	}
+
+	$intro_text = trim( wp_strip_all_tags( get_the_excerpt( $form_id ) ) );
+	if ( $intro_text === '' ) {
+		$content = trim( wp_strip_all_tags( get_post_field( 'post_content', $form_id ) ) );
+		$intro_text = $content !== ''
+			? $content
+			: __( 'Seleccioná las propuestas de tu interés y completá tus datos. Te enviaremos información sobre cursada, inscripción y financiación.', 'flacso-consultas' );
+	}
+
+	status_header( 200 );
+	nocache_headers();
+	flacso_consultas_apply_virtual_page_title( $form_title );
+	add_filter(
+		'body_class',
+		static function ( $classes ) {
+			$classes[] = 'flacso-solicitar-info-template';
+			$classes[] = 'flacso-dynamic-info-form-template';
+			return $classes;
+		},
+		20
+	);
+
+	get_header();
+	?>
+	<header class="flacso-solicitar-info-brand" aria-label="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>">
+		<a class="flacso-solicitar-info-brand__link" href="<?php echo esc_url( home_url( '/' ) ); ?>" aria-label="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>">
+			<?php
+			$custom_logo_id = (int) get_theme_mod( 'custom_logo' );
+			if ( $custom_logo_id ) {
+				echo wp_get_attachment_image(
+					$custom_logo_id,
+					'medium',
+					false,
+					array(
+						'class'   => 'flacso-solicitar-info-brand__logo',
+						'loading' => 'eager',
+						'alt'     => get_bloginfo( 'name' ),
+					)
+				);
+			} else {
+				echo '<span class="flacso-solicitar-info-brand__text">FLACSO Uruguay</span>';
+			}
+			?>
+		</a>
+	</header>
+	<main class="flacso-solicitar-info-page" aria-labelledby="flacso-solicitar-info-title">
+		<h1 id="flacso-solicitar-info-title" class="screen-reader-text"><?php echo esc_html( $form_title ); ?></h1>
+		<?php if ( $thumb_url ) : ?>
+			<div class="flacso-solicitar-info-page__bg" aria-hidden="true" style="background-image: linear-gradient(rgba(8, 25, 58, .66), rgba(8, 25, 58, .72)), url('<?php echo esc_url( $thumb_url ); ?>');"></div>
+		<?php endif; ?>
+
+		<section class="flacso-solicitar-info-page__shell">
+			<div class="flacso-solicitar-info-page__form">
+				<?php
+				if ( empty( $offer_ids ) ) {
+					echo '<div class="flacso-consultas-formulario flacso-consultas-formulario--solicitar-info"><h3>' . esc_html( $form_title ) . '</h3><p>' . esc_html__( 'Este formulario todavía no tiene ofertas académicas asociadas.', 'flacso-consultas' ) . '</p></div>';
+				} else {
+					echo flacso_consultas_render_form(
+						array(
+							'mostrar_preinscripcion' => false,
+							'post_id'                => 0,
+							'titulo_posgrado'        => $form_title,
+							'url_base'               => $current_url,
+							'url_gracias'            => $gracias_url,
+							'form_variant'           => 'solicitar-info-dynamic',
+							'intro_text'             => $intro_text,
+							'offer_choices'          => $offer_ids,
+							'dynamic_form_id'        => $form_id,
+							'heading_text'           => $form_title,
+						)
+					);
+				}
+				?>
+			</div>
+		</section>
+	</main>
+	<style>
+	body.flacso-dynamic-info-form-template #masthead,
+	body.flacso-dynamic-info-form-template .site-header,
+	body.flacso-dynamic-info-form-template .flacso-nav-announcement,
+	body.flacso-dynamic-info-form-template .flacso-banner-full-clickable,
+	body.flacso-dynamic-info-form-template #colophon,
+	body.flacso-dynamic-info-form-template .site-footer {
+		display: none !important;
+	}
+	body.flacso-dynamic-info-form-template #inner-wrap,
+	body.flacso-dynamic-info-form-template .content-area,
+	body.flacso-dynamic-info-form-template .site-main {
+		min-height: 100vh;
+		margin: 0;
+		padding: 0;
+	}
+	body.flacso-dynamic-info-form-template .flacso-solicitar-info-brand {
+		position: fixed;
+		top: 1rem;
+		left: 1rem;
+		z-index: 20;
+	}
+	body.flacso-dynamic-info-form-template .flacso-solicitar-info-brand__link {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: .55rem .8rem;
+		border-radius: 999px;
+		background: rgba(255,255,255,.92);
+		box-shadow: 0 10px 30px rgba(8,25,58,.18);
+	}
+	body.flacso-dynamic-info-form-template .flacso-solicitar-info-brand__logo {
+		width: auto;
+		max-width: 180px;
+		max-height: 48px;
+	}
+	body.flacso-dynamic-info-form-template .flacso-solicitar-info-page {
+		position: relative;
+		min-height: 100vh;
+		display: grid;
+		place-items: center;
+		padding: clamp(5rem, 8vw, 7rem) 1rem 2rem;
+		background: #0d234a;
+		overflow: hidden;
+	}
+	body.flacso-dynamic-info-form-template .flacso-solicitar-info-page__bg {
+		position: absolute;
+		inset: 0;
+		background-size: cover;
+		background-position: center;
+		filter: saturate(.95);
+		transform: scale(1.02);
+	}
+	body.flacso-dynamic-info-form-template .flacso-solicitar-info-page__shell {
+		position: relative;
+		z-index: 1;
+		width: min(100%, 560px);
+	}
+	body.flacso-dynamic-info-form-template .flacso-solicitar-info-page__form {
+		width: 100%;
+	}
+	body.flacso-dynamic-info-form-template .flacso-consultas-formulario {
+		max-width: 560px;
+		margin-bottom: 0;
+		background: rgba(255,255,255,.96);
+		backdrop-filter: blur(10px);
+	}
+	@media (max-width: 576px) {
+		body.flacso-dynamic-info-form-template .flacso-solicitar-info-brand {
+			position: absolute;
+			left: .75rem;
+			top: .75rem;
+		}
+		body.flacso-dynamic-info-form-template .flacso-solicitar-info-page {
+			align-items: start;
+			padding-top: 5.75rem;
+		}
+	}
+	</style>
+	<?php
+	get_footer();
+	wp_reset_postdata();
+	exit;
+}
+add_action( 'template_redirect', 'flacso_render_dynamic_info_form_single', 0 );
 
 /**
  * Página /gracias virtual.
