@@ -90,6 +90,7 @@ jQuery(function($){
     let itiInstance  = null;
     let telefonoHaSidoInteractuado = false;
     let telefonoPaddingFrame = null;
+    let submissionInProgress = false;
 
     const obtenerPaddingBaseTelefono = () => {
         const input = document.getElementById('celular');
@@ -714,64 +715,16 @@ jQuery(function($){
         actualizarWizard();
     }
 
-    function normalizeMetaGender(value) {
-        const normalized = String(value || '').trim().toLowerCase();
-        if (!normalized) return '';
-        if (['f', 'female', 'mujer', 'mujer trans'].includes(normalized)) return 'f';
-        if (['m', 'male', 'varon', 'varón', 'varon trans', 'varón trans'].includes(normalized)) return 'm';
-        return '';
-    }
-
-    function normalizeMetaBirthDate(value) {
-        const raw = String(value || '').trim();
-        if (!raw) return '';
-
-        const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-        if (isoMatch) {
-            return `${isoMatch[1]}${isoMatch[2]}${isoMatch[3]}`;
-        }
-
-        const digits = raw.replace(/\D/g, '');
-        return digits.length === 8 ? digits : '';
-    }
-
-    function getCountryIsoForMeta($input) {
-        if (!$input || !$input.length) return '';
-
-        try {
-            if (typeof $input.countrySelect === 'function') {
-                const data = $input.countrySelect('getSelectedCountryData');
-                const iso = (data && data.iso2) ? String(data.iso2).trim().toLowerCase() : '';
-                if (iso) return iso;
-            }
-        } catch (e) {}
-
-        const raw = String($input.val() || '').trim().toLowerCase();
-        return /^[a-z]{2}$/.test(raw) ? raw : '';
-    }
-
-    async function hashForMeta(value, normalizer) {
-        const str = typeof normalizer === 'function'
-            ? normalizer(value)
-            : String(value || '').trim().toLowerCase();
-        if (!str || !window.crypto || !window.crypto.subtle || typeof window.TextEncoder !== 'function') {
-            return undefined;
-        }
-        try {
-            const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-            return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-        } catch (e) {
-            console.warn('[Preinscripcion] No se pudo hashear el valor', e);
-            return undefined;
-        }
-    }
-
     async function enviarFormulario(){
+        if(submissionInProgress){
+            return;
+        }
         if(preinscripcionesCerradas){
             mostrarAvisoCierre();
             btnSubmit.prop('disabled', true);
             return;
         }
+        submissionInProgress = true;
 
         // Validación del teléfono previa
         const vTel = validarTelefono();
@@ -823,27 +776,7 @@ jQuery(function($){
             if(data.success){
                 form.hide();
                 const nombreCompleto = [$('#nombre1').val(), $('#apellido1').val()].filter(Boolean).join(' ').trim() || 'Postulante';
-                const correo = ($('#correo').val() || '').trim();
-                const celularE164 = ($('#celular_e164').val() || '').trim();
                 const posgrado = config.tituloPosgrado || 'el posgrado seleccionado';
-                const countryIso = getCountryIsoForMeta($('#pais_residencia'));
-                const [
-                    em_hash,
-                    ph_hash,
-                    fn_hash,
-                    ln_hash,
-                    country_hash,
-                    db_hash,
-                    ge_hash
-                ] = await Promise.all([
-                    hashForMeta(correo),
-                    hashForMeta(celularE164, value => String(value || '').replace(/\D/g, '')),
-                    hashForMeta($('#nombre1').val()),
-                    hashForMeta($('#apellido1').val()),
-                    hashForMeta(countryIso, value => String(value || '').trim().toLowerCase()),
-                    hashForMeta($('#fecha_nacimiento').val(), normalizeMetaBirthDate),
-                    hashForMeta($('#genero').val(), normalizeMetaGender)
-                ]);
 
                 const pixelPayload = {
                     content_name: posgrado,
@@ -851,14 +784,6 @@ jQuery(function($){
                     status: 'completed',
                     flacso_stage: 'preinscripcion_enviada'
                 };
-                const userData = {};
-                if (em_hash) userData.em = em_hash;
-                if (ph_hash) userData.ph = ph_hash;
-                if (fn_hash) userData.fn = fn_hash;
-                if (ln_hash) userData.ln = ln_hash;
-                if (country_hash) userData.country = country_hash;
-                if (db_hash) userData.db = db_hash;
-                if (ge_hash) userData.ge = ge_hash;
 
                 if (config.idPosgrado) {
                     pixelPayload.content_ids = ['oferta-' + String(config.idPosgrado)];
@@ -871,11 +796,20 @@ jQuery(function($){
                     pixelPayload.currency = currency;
                 }
 
-                trackMetaEvent('SubmitApplication', pixelPayload, { userData });
+                // La analítica no debe bloquear la confirmación ni la redirección.
+                try {
+                    trackMetaEvent('SubmitApplication', pixelPayload);
+                } catch (trackingError) {
+                    console.warn('[Preinscripcion] No se pudo registrar SubmitApplication', trackingError);
+                }
 
                 // Guardar en sessionStorage por si falla la obtención por pid
-                sessionStorage.setItem('consultaPrograma', posgrado);
-                sessionStorage.setItem('consultaNombreCompleto', nombreCompleto);
+                try {
+                    sessionStorage.setItem('consultaPrograma', posgrado);
+                    sessionStorage.setItem('consultaNombreCompleto', nombreCompleto);
+                } catch (storageError) {
+                    console.warn('[Preinscripcion] sessionStorage no disponible', storageError);
+                }
 
                 // Redirigir a la página de gracias (hija de la URL actual)
                 let currentUrl = window.location.href.split('?')[0];
@@ -883,7 +817,8 @@ jQuery(function($){
                     currentUrl += '/';
                 }
                 const graciasUrl = currentUrl + 'gracias/?tipo=preinscripcion&pid=' + encodeURIComponent(config.idPosgrado || '');
-                window.location.href = appendMetaTestEventCode(graciasUrl);
+                window.location.assign(appendMetaTestEventCode(graciasUrl));
+                return;
             } else {
                 const msg = data.data || 'Error desconocido del servidor. Por favor, intente nuevamente.';
                 $('.flacso-submit-stage').remove();
@@ -901,6 +836,7 @@ jQuery(function($){
                     </div>
                 `);
                 btnSubmit.prop('disabled', false).html('<i class="bi bi-send-check me-2"></i>Enviar Postulación');
+                submissionInProgress = false;
             }
         } catch(e){
             console.error('Error en el envío:', e);
@@ -923,6 +859,7 @@ jQuery(function($){
                 </div>
             `);
             btnSubmit.prop('disabled', false).html('<i class="bi bi-send-check me-2"></i>Enviar Postulación');
+            submissionInProgress = false;
         } finally {
             window.clearTimeout(timeoutId);
         }

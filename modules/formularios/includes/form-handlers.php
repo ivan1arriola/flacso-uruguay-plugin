@@ -71,8 +71,30 @@ function fc_handle_form_submit() {
         exit;
     }
 
+    $request_ip       = sanitize_text_field( (string) ( $_SERVER['REMOTE_ADDR'] ?? '' ) );
+    $rate_limit_key   = 'fc_form_rate_' . md5( $request_ip ?: $email );
+    $rate_limit_count = (int) get_transient( $rate_limit_key );
+    if ( $rate_limit_count >= 5 ) {
+        status_header( 429 );
+        wp_die( esc_html__( 'Demasiadas solicitudes. Intenta nuevamente en unos minutos.', 'flacso-flacso-formulario-consultas' ) );
+    }
+    set_transient( $rate_limit_key, $rate_limit_count + 1, 10 * MINUTE_IN_SECONDS );
+
+    $submission_fingerprint = hash(
+        'sha256',
+        strtolower( $email ) . '|' . strtolower( trim( $asunto ) ) . '|' . strtolower( trim( wp_strip_all_tags( $mensaje ) ) )
+    );
+    $duplicate_key = 'fc_form_duplicate_' . $submission_fingerprint;
+    if ( get_transient( $duplicate_key ) ) {
+        wp_safe_redirect( add_query_arg( 'fc_exito', 1, fc_get_gracias_url_from_referer() ) );
+        exit;
+    }
+    set_transient( $duplicate_key, 1, 10 * MINUTE_IN_SECONDS );
+
     // Webhook de consultas (se envía directamente a la app).
+    $event_id = wp_generate_uuid4();
     $webhook_payload = [
+            'event_id'    => $event_id,
             'nombre'      => $nombre,
             'apellido'    => $apellido,
             'email'       => $email,
@@ -80,7 +102,7 @@ function fc_handle_form_submit() {
             'asunto'      => $asunto,
             'mensaje'     => wp_strip_all_tags( $mensaje ),
             'url_referer' => $url_referer,
-            'ip'          => $_SERVER['REMOTE_ADDR'] ?? '',
+            'ip'          => $request_ip,
             'user_agent'  => $_SERVER['HTTP_USER_AGENT'] ?? '',
             'fecha_envio' => current_time( 'c' ),
             'origen'      => 'wordpress_formulario_consultas',

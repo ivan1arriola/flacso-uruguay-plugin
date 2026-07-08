@@ -991,7 +991,7 @@ class FLACSO_Formulario_Preinscripcion_Final {
 
             error_log("Respuesta webhook preinscripciones [$candidate_source] - Status: $status, Body: " . substr($body, 0, 500));
 
-            if ($status === 200 && is_array($json) && ($json['ok'] ?? false)) {
+            if ($status >= 200 && $status < 300 && is_array($json) && ($json['ok'] ?? false)) {
                 $this->send_json_success(array(
                     'message' => 'Preinscripción enviada correctamente.',
                     'editor_response' => $json,
@@ -1198,4 +1198,3 @@ class FLACSO_Formulario_Preinscripcion_Final {
         fc_send_telegram_message($msg);
     }
 }
-

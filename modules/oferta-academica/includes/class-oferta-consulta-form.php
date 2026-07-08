@@ -426,7 +426,9 @@ class Oferta_Consulta_Form {
         $origin = isset($_SERVER['HTTP_REFERER']) ? esc_url_raw(wp_unslash($_SERVER['HTTP_REFERER'])) : '';
         $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : '';
 
+        $event_id = wp_generate_uuid4();
         $payload = [
+            'event_id' => $event_id,
             'nombre' => $nombre,
             'apellido' => $apellido,
             'correo' => $correo,
@@ -458,6 +460,7 @@ class Oferta_Consulta_Form {
             $headers['X-FLACSO-Webhook-Token'] = $webhook_token;
             $headers['Authorization'] = 'Bearer ' . $webhook_token;
         }
+        $headers['X-Idempotency-Key'] = $event_id;
 
         $response = wp_safe_remote_post($endpoint, [
             'timeout' => 20,

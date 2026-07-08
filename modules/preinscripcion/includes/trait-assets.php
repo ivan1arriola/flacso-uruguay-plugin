@@ -17,7 +17,7 @@ trait FLACSO_Formulario_Preinscripcion_Assets {
         wp_enqueue_script('country-select-js', 'https://cdn.jsdelivr.net/npm/country-select-js@2.0.1/build/js/countrySelect.min.js', array(), '2.0.1', true);
         
         // Enqueue custom script with dependencies
-        wp_enqueue_script('flacso-formulario-script', $assets_url . 'scripts.js', array('jquery', 'intl-tel-input-js', 'country-select-js'), '1.0.9', true);
+        wp_enqueue_script('flacso-formulario-script', $assets_url . 'scripts.js', array('jquery', 'intl-tel-input-js', 'country-select-js'), '1.0.10', true);
         
         // Localize script with PHP data
         wp_localize_script('flacso-formulario-script', 'flacsoFormConfig', array(

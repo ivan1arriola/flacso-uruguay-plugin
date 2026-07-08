@@ -310,7 +310,9 @@ class Seminario_REST_API
 
         $webhook_token = get_option('flacso_webhook_token', '');
 
+        $event_id = wp_generate_uuid4();
         $payload = [
+            'event_id' => $event_id,
             'seminario_id' => (string) $seminario_id,
             'seminario_titulo' => sanitize_text_field($params['seminario_titulo']),
             'nombre' => sanitize_text_field($params['nombre']),
@@ -330,6 +332,7 @@ class Seminario_REST_API
             $headers['X-FLACSO-Webhook-Token'] = $webhook_token;
             $headers['Authorization'] = 'Bearer ' . $webhook_token;
         }
+        $headers['X-Idempotency-Key'] = $event_id;
 
         $response = wp_remote_post($endpoint_url, [
             'body'    => wp_json_encode($payload),

@@ -104,6 +104,10 @@ function fc_dispatch_info_request_webhook( array $payload, array $extra_headers 
     }
 
     $headers = array_merge( fc_build_info_request_webhook_headers(), $extra_headers );
+    $event_id = isset( $payload['event_id'] ) ? sanitize_text_field( (string) $payload['event_id'] ) : '';
+    if ( '' !== $event_id ) {
+        $headers['X-Idempotency-Key'] = $event_id;
+    }
     $args    = [
         'body'        => wp_json_encode( $payload ),
         'headers'     => $headers,
@@ -715,6 +719,7 @@ function fc_build_info_request_webhook_payload( array $data ) {
 
     return [
         // Campos canónicos (PanelFLACSOConsultas /api/consultas)
+        'event_id'        => wp_generate_uuid4(),
         'email'           => isset( $data['correo'] ) ? sanitize_email( $data['correo'] ) : '',
         'first_name'      => isset( $data['nombre'] ) ? sanitize_text_field( $data['nombre'] ) : '',
         'last_name'       => isset( $data['apellido'] ) ? sanitize_text_field( $data['apellido'] ) : '',
