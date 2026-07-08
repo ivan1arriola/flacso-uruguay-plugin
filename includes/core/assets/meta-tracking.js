@@ -45,19 +45,7 @@
             return current;
         }
 
-        try {
-            var url = new URL(window.location.href);
-            var fbclid = (url.searchParams.get("fbclid") || "").trim();
-            if (!fbclid) {
-                return "";
-            }
-
-            current = "fb.1." + Date.now() + "." + fbclid;
-            setCookie("_fbc", current, 90 * 24 * 60 * 60);
-            return current;
-        } catch (error) {
-            return "";
-        }
+        return "";
     }
 
     function ensureExternalIdCookie() {
@@ -375,8 +363,6 @@
         if (!config.enabled || !config.pixelId) {
             return;
         }
-
-        ensureFbcCookie();
 
         if (typeof window.fbq !== "function") {
             (function (f, b, e, v, n, t, s) {
