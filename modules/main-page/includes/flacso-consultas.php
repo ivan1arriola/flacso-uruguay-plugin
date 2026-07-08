@@ -306,6 +306,7 @@ function flacso_consultas_render_form( $attributes = array() ) {
 			<input type="hidden" name="url_gracias" value="<?php echo esc_url( $gracias_url ); ?>">
 			<input type="hidden" name="url_referer" value="<?php echo esc_url( wp_get_referer() ?: $url_actual ); ?>">
 			<input type="hidden" name="dynamic_info_form_id" value="<?php echo esc_attr( $dynamic_form_id ); ?>">
+			<input type="hidden" name="selected_offer_ids" value="">
 			<?php if ( function_exists( 'fc_render_campaign_attribution_hidden_fields' ) ) { fc_render_campaign_attribution_hidden_fields( fc_get_current_request_url(), wp_get_referer() ?: '' ); } ?>
 			<?php if ( FLACSO_USE_NONCE ) { wp_nonce_field( 'flacso_consultas_form', 'flacso_nonce' ); } ?>
 
@@ -583,6 +584,11 @@ function flacso_consultas_render_form( $attributes = array() ) {
 			}
 
 			const hasSelectedOffer = $offerGroup.find('input[type="checkbox"]:checked').length > 0;
+			$form.find('[name="selected_offer_ids"]').val(
+				$offerGroup.find('input[type="checkbox"]:checked').map(function() {
+					return String($(this).val() || '').trim();
+				}).get().filter(Boolean).join(',')
+			);
 			$offerGroup.toggleClass('is-invalid', !hasSelectedOffer).toggleClass('is-valid', hasSelectedOffer);
 			return hasSelectedOffer;
 		};
@@ -704,16 +710,43 @@ function flacso_consultas_render_form( $attributes = array() ) {
 	}
 	.flacso-consultas-formulario h3 { font-size: 1.25rem; margin-bottom: .25rem; }
 	.flacso-consultas-formulario p  { font-size: .95rem; margin-bottom: 1.25rem; }
+	.flacso-consultas-formulario .form-floating {
+		position: relative;
+		display: block !important;
+		width: 100%;
+		min-width: 0;
+		margin-bottom: .85rem !important;
+		clear: both;
+	}
 	.flacso-consultas-formulario .form-floating > .form-control,
 	.flacso-consultas-formulario .form-floating > .form-select {
+		display: block;
+		width: 100% !important;
+		max-width: 100%;
 		height: calc(3.5rem + 2px);
 		line-height: 1.25;
+		margin: 0;
+		padding-top: 1.625rem;
+		padding-bottom: .625rem;
 	}
 	.flacso-consultas-formulario .form-floating > label {
+		position: absolute;
+		top: 0;
+		left: 0;
+		z-index: 2;
+		width: 100%;
+		max-width: 100%;
+		height: 100%;
+		margin: 0;
 		padding: .75rem .75rem;
 		font-size: .9rem;
 		color: var(--global-palette3);
 		pointer-events: none;
+		overflow: hidden;
+		text-align: start;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		transform-origin: 0 0;
 	}
 	.flacso-consultas-formulario .form-floating .form-select {
 		padding-top: 1.625rem;
@@ -736,7 +769,18 @@ function flacso_consultas_render_form( $attributes = array() ) {
 	.was-validated .form-select:invalid { border-color: #dc3545; }
 	.was-validated .form-control:valid,
 	.was-validated .form-select:valid   { border-color: #198754; }
-	.invalid-feedback { font-size: .85rem; }
+	.flacso-consultas-formulario .invalid-feedback {
+		display: none;
+		width: 100%;
+		margin-top: .35rem;
+		font-size: .85rem;
+	}
+	.flacso-consultas-formulario .was-validated .form-control:invalid ~ .invalid-feedback,
+	.flacso-consultas-formulario .was-validated .form-select:invalid ~ .invalid-feedback,
+	.flacso-consultas-formulario .form-control.is-invalid ~ .invalid-feedback,
+	.flacso-consultas-formulario .form-select.is-invalid ~ .invalid-feedback {
+		display: block;
+	}
 	.flacso-consultas-offers {
 		border: 1px solid rgba(8, 24, 50, .14);
 		border-radius: 10px;
@@ -802,6 +846,36 @@ function flacso_consultas_render_form( $attributes = array() ) {
 	.flacso-consultas-offers.is-invalid .flacso-consultas-offers__feedback,
 	.was-validated .flacso-consultas-offers.is-invalid .flacso-consultas-offers__feedback {
 		display: block;
+	}
+	.flacso-consultas-formulario .d-none {
+		display: none !important;
+	}
+	.flacso-consultas-formulario #btn-enviar {
+		display: flex !important;
+		align-items: center;
+		justify-content: center;
+		gap: .5rem;
+		width: 100% !important;
+		margin-top: .35rem !important;
+		white-space: normal;
+		text-align: center;
+	}
+	.flacso-consultas-formulario #btn-enviar .btn-text:not(.d-none),
+	.flacso-consultas-formulario #btn-enviar .btn-loading:not(.d-none) {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: .45rem;
+		min-width: 0;
+	}
+	.flacso-consultas-formulario #btn-enviar .btn-loading.d-none,
+	.flacso-consultas-formulario #btn-enviar .btn-text.d-none {
+		display: none !important;
+	}
+	.flacso-consultas-formulario #btn-enviar i,
+	.flacso-consultas-formulario #btn-enviar .spinner-border {
+		flex: 0 0 auto;
+		margin: 0 !important;
 	}
 	@media (max-width: 576px) {
 		.flacso-consultas-formulario { padding: 1.25rem; max-width: 100%; }
@@ -951,6 +1025,10 @@ function flacso_enviar_consulta_func() {
 		'utm_id',
 		'utm_content',
 		'utm_term',
+		'gclid',
+		'gbraid',
+		'wbraid',
+		'fbclid',
 		'landing_url',
 		'referrer_url',
 	);
@@ -978,6 +1056,11 @@ function flacso_enviar_consulta_func() {
 		: array();
 	if ( empty( $selected_offer_ids ) && isset( $_POST['selected_offers'] ) && ! is_array( $_POST['selected_offers'] ) ) {
 		$selected_offer_ids = flacso_consultas_normalize_offer_ids( array( wp_unslash( $_POST['selected_offers'] ) ) );
+	}
+	if ( empty( $selected_offer_ids ) && ! empty( $_POST['selected_offer_ids'] ) ) {
+		$selected_offer_ids = flacso_consultas_normalize_offer_ids(
+			preg_split( '/\s*,\s*/', (string) wp_unslash( $_POST['selected_offer_ids'] ), -1, PREG_SPLIT_NO_EMPTY )
+		);
 	}
 
 	$campos_obligatorios = array( 'nombre', 'apellido', 'pais', 'nivel_academico', 'correo', 'profesion' );
@@ -1012,9 +1095,21 @@ function flacso_enviar_consulta_func() {
 			error_log( '[FLACSO] Formulario dinámico con ofertas no asociadas. form_id=' . (int) $data['dynamic_info_form_id'] );
 			wp_send_json_error( 'La oferta seleccionada no pertenece a este formulario. Recargá la página e intentá nuevamente.' );
 		}
+	} elseif ( ! empty( $selected_offer_ids ) ) {
+		$selected_offer_ids = array_values(
+			array_filter(
+				$selected_offer_ids,
+				static function( $offer_id ) {
+					return 'oferta-academica' === get_post_type( $offer_id ) && 'publish' === get_post_status( $offer_id );
+				}
+			)
+		);
 	}
 	if ( empty( $data['id_pagina'] ) && empty( $selected_offer_ids ) ) {
-		error_log( '[FLACSO] Solicitud de información sin ID de oferta académica.' );
+		error_log(
+			'[FLACSO] Solicitud de información sin ID de oferta académica. post_keys=' .
+			implode( ',', array_map( 'sanitize_key', array_keys( $_POST ) ) )
+		);
 		wp_send_json_error( 'No se pudo identificar la oferta académica.' );
 	}
 
@@ -1058,6 +1153,17 @@ function flacso_enviar_consulta_func() {
 	}
 
 	if ( ! empty( $failures ) && count( $failures ) === count( $offer_payloads ) ) {
+		if ( FLACSO_RELAXED_MODE ) {
+			wp_send_json_success(
+				array(
+					'note'       => ( (int) ( $failures[0]['code'] ?? 0 ) > 0 ) ? 'http_code_relajado' : 'webhook_error_relajado',
+					'code'       => (int) ( $failures[0]['code'] ?? 0 ),
+					'deliveries' => $deliveries,
+					'count'      => count( $offer_payloads ),
+				)
+			);
+		}
+
 		wp_send_json_error( 'No se pudo procesar la consulta. Intentá más tarde.' );
 	}
 
@@ -1847,12 +1953,13 @@ function flacso_render_gracias_virtual() {
                                                         <span class="flacso-gracias-btn__text"><strong>Ver toda la oferta</strong></span>
                                                 </a>
                                                 <?php foreach ( $dynamic_offer_ids as $offer_id ) : ?>
+                                                        <?php $offer_title = get_the_title( $offer_id ); ?>
                                                         <a class="flacso-gracias-btn flacso-gracias-btn--secondary"
                                                            href="<?php echo esc_url( get_permalink( $offer_id ) ); ?>" target="_self" rel="noopener">
                                                                 <span class="flacso-gracias-btn__icon" aria-hidden="true">→</span>
                                                                 <span class="flacso-gracias-btn__text">
-                                                                        <strong>Ver esta oferta</strong>
-                                                                        <small><?php echo esc_html( get_the_title( $offer_id ) ); ?></small>
+                                                                        <strong><?php echo esc_html( $offer_title ?: 'Oferta académica' ); ?></strong>
+                                                                        <small>Ver oferta</small>
                                                                 </span>
                                                         </a>
                                                 <?php endforeach; ?>

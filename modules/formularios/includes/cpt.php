@@ -137,6 +137,15 @@ add_action( 'init', 'fc_dynamic_info_form_maybe_flush_rewrites', 20 );
 
 function fc_dynamic_info_form_add_metaboxes() {
     add_meta_box(
+        'fc_dynamic_info_form_slug',
+        __( 'URL pública', 'flacso-flacso-formulario-consultas' ),
+        'fc_dynamic_info_form_slug_metabox_render',
+        'fc_info_form',
+        'side',
+        'high'
+    );
+
+    add_meta_box(
         'fc_dynamic_info_form_offers',
         __( 'Ofertas académicas del formulario', 'flacso-flacso-formulario-consultas' ),
         'fc_dynamic_info_form_offers_metabox_render',
@@ -146,6 +155,44 @@ function fc_dynamic_info_form_add_metaboxes() {
     );
 }
 add_action( 'add_meta_boxes', 'fc_dynamic_info_form_add_metaboxes' );
+
+function fc_dynamic_info_form_slug_metabox_render( $post ) {
+    wp_nonce_field( 'fc_dynamic_info_form_slug', 'fc_dynamic_info_form_slug_nonce' );
+
+    $slug = $post->post_name ? $post->post_name : sanitize_title( $post->post_title );
+    $base_url = trailingslashit( home_url( '/formularios/' ) );
+    ?>
+    <p>
+        <label for="fc_info_form_slug">
+            <?php esc_html_e( 'Slug', 'flacso-flacso-formulario-consultas' ); ?>
+        </label>
+        <input
+            type="text"
+            id="fc_info_form_slug"
+            name="fc_info_form_slug"
+            class="widefat"
+            value="<?php echo esc_attr( $slug ); ?>"
+            placeholder="<?php echo esc_attr( sanitize_title( __( 'formulario-infancias', 'flacso-flacso-formulario-consultas' ) ) ); ?>">
+    </p>
+    <p class="description">
+        <?php esc_html_e( 'Usá minúsculas, números y guiones. Si queda vacío, se genera desde el título.', 'flacso-flacso-formulario-consultas' ); ?>
+    </p>
+    <p class="description" style="word-break:break-word;">
+        <strong><?php esc_html_e( 'URL:', 'flacso-flacso-formulario-consultas' ); ?></strong><br>
+        <code><?php echo esc_html( $base_url ); ?><span id="fc-info-form-slug-preview"><?php echo esc_html( $slug ); ?></span>/</code>
+    </p>
+    <script>
+    (function(){
+        var input = document.getElementById('fc_info_form_slug');
+        var preview = document.getElementById('fc-info-form-slug-preview');
+        if (!input || !preview) return;
+        input.addEventListener('input', function(){
+            preview.textContent = input.value.trim() || '<?php echo esc_js( sanitize_title( $post->post_title ) ); ?>';
+        });
+    })();
+    </script>
+    <?php
+}
 
 function fc_dynamic_info_form_get_offer_ids( $post_id ) {
     $raw = get_post_meta( (int) $post_id, '_fc_info_form_offer_ids', true );
@@ -207,17 +254,42 @@ function fc_dynamic_info_form_save_offers( $post_id ) {
     if ( get_post_type( $post_id ) !== 'fc_info_form' ) {
         return;
     }
-    if ( empty( $_POST['fc_dynamic_info_form_offers_nonce'] ) || ! wp_verify_nonce( wp_unslash( $_POST['fc_dynamic_info_form_offers_nonce'] ), 'fc_dynamic_info_form_offers' ) ) {
+    if ( ! current_user_can( 'edit_post', $post_id ) ) {
         return;
     }
-    if ( ! current_user_can( 'edit_post', $post_id ) ) {
+
+    if ( isset( $_POST['fc_dynamic_info_form_slug_nonce'] ) && wp_verify_nonce( wp_unslash( $_POST['fc_dynamic_info_form_slug_nonce'] ), 'fc_dynamic_info_form_slug' ) ) {
+        $raw_slug = isset( $_POST['fc_info_form_slug'] ) ? (string) wp_unslash( $_POST['fc_info_form_slug'] ) : '';
+        $slug = sanitize_title( $raw_slug );
+        if ( $slug === '' ) {
+            $slug = sanitize_title( get_the_title( $post_id ) );
+        }
+
+        if ( $slug !== '' ) {
+            $post_status = get_post_status( $post_id ) ?: 'draft';
+            $slug = wp_unique_post_slug( $slug, $post_id, $post_status, 'fc_info_form', 0 );
+            $current_slug = get_post_field( 'post_name', $post_id );
+
+            if ( $slug !== $current_slug ) {
+                remove_action( 'save_post_fc_info_form', 'fc_dynamic_info_form_save_offers' );
+                wp_update_post(
+                    [
+                        'ID'        => $post_id,
+                        'post_name' => $slug,
+                    ]
+                );
+                add_action( 'save_post_fc_info_form', 'fc_dynamic_info_form_save_offers' );
+            }
+        }
+    }
+
+    if ( empty( $_POST['fc_dynamic_info_form_offers_nonce'] ) || ! wp_verify_nonce( wp_unslash( $_POST['fc_dynamic_info_form_offers_nonce'] ), 'fc_dynamic_info_form_offers' ) ) {
         return;
     }
 
     $offer_ids = isset( $_POST['fc_info_form_offer_ids'] ) && is_array( $_POST['fc_info_form_offer_ids'] )
         ? array_values( array_unique( array_filter( array_map( 'absint', wp_unslash( $_POST['fc_info_form_offer_ids'] ) ) ) ) )
         : [];
-
     update_post_meta( $post_id, '_fc_info_form_offer_ids', $offer_ids );
 }
 add_action( 'save_post_fc_info_form', 'fc_dynamic_info_form_save_offers' );

@@ -259,6 +259,18 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
         }
 
         public static function handle_ajax(): void {
+            if (
+                function_exists('flacso_enviar_consulta_func')
+                && (
+                    !empty($_POST['dynamic_info_form_id'])
+                    || !empty($_POST['selected_offer_ids'])
+                    || isset($_POST['selected_offers'])
+                )
+            ) {
+                flacso_enviar_consulta_func();
+                return;
+            }
+
             if (FLACSO_USE_NONCE) {
                 $nonce = $_POST['flacso_nonce'] ?? '';
                 if (empty($nonce) || !wp_verify_nonce($nonce, 'flacso_consultas_form')) {
@@ -278,6 +290,7 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
                 'campaign_provider','campaign_source','campaign_medium','campaign_name',
                 'campaign_external_id','campaign_content','campaign_term',
                 'utm_source','utm_medium','utm_campaign','utm_id','utm_content','utm_term',
+                'gclid','gbraid','wbraid','fbclid',
                 'landing_url','referrer_url',
             ];
 

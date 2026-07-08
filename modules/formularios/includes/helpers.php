@@ -359,6 +359,10 @@ function fc_get_campaign_attribution_field_names(): array {
         'utm_id',
         'utm_content',
         'utm_term',
+        'gclid',
+        'gbraid',
+        'wbraid',
+        'fbclid',
         'landing_url',
         'referrer_url',
     ];
@@ -388,9 +392,15 @@ function fc_detect_campaign_provider( array $attribution, string $source = '' ):
         return sanitize_text_field( (string) $attribution['provider'] );
     }
 
-    $haystack = strtolower( implode( ' ', array_filter( [ $source, $attribution['source'] ?? '', $attribution['external_id'] ?? '' ] ) ) );
+    $haystack = strtolower( implode( ' ', array_filter( [ $source, $attribution['source'] ?? '', $attribution['external_id'] ?? '', $attribution['fbclid'] ?? '', $attribution['gclid'] ?? '', $attribution['gbraid'] ?? '', $attribution['wbraid'] ?? '' ] ) ) );
     if ( false !== strpos( $haystack, 'meta' ) || false !== strpos( $haystack, 'facebook' ) || false !== strpos( $haystack, 'instagram' ) ) {
         return 'meta';
+    }
+    if ( ! empty( $attribution['fbclid'] ) ) {
+        return 'meta';
+    }
+    if ( ! empty( $attribution['gclid'] ) || ! empty( $attribution['gbraid'] ) || ! empty( $attribution['wbraid'] ) || false !== strpos( $haystack, 'google' ) || false !== strpos( $haystack, 'gclid' ) ) {
+        return 'google';
     }
     if ( false !== strpos( $haystack, 'mailjet' ) || false !== strpos( $haystack, 'mj-' ) ) {
         return 'mailjet';
@@ -427,6 +437,10 @@ function fc_get_campaign_attribution_from_request( string $landing_url = '', str
         'campaign_external_id',
         'campaign_content',
         'campaign_term',
+        'gclid',
+        'gbraid',
+        'wbraid',
+        'fbclid',
     ] as $key ) {
         $url_query[ $key ] = fc_get_url_query_value( $candidate_url, $key );
     }
@@ -442,9 +456,13 @@ function fc_get_campaign_attribution_from_request( string $landing_url = '', str
         'source'      => fc_pick_campaign_value( $sources, [ 'campaign_source', 'acquisition_source', 'fuente', 'utm_source' ] ),
         'medium'      => fc_pick_campaign_value( $sources, [ 'campaign_medium', 'medium', 'utm_medium' ] ),
         'name'        => fc_pick_campaign_value( $sources, [ 'campaign_name', 'campana', 'utm_campaign', 'campaign' ] ),
-        'external_id' => fc_pick_campaign_value( $sources, [ 'campaign_external_id', 'campaign_id', 'campana_id', 'utm_id', 'meta_campaign_id', 'mailjet_campaign_id', 'mj_campaign_id' ] ),
+        'external_id' => fc_pick_campaign_value( $sources, [ 'campaign_external_id', 'campaign_id', 'campana_id', 'utm_id', 'meta_campaign_id', 'mailjet_campaign_id', 'mj_campaign_id', 'gclid', 'gbraid', 'wbraid', 'fbclid' ] ),
         'content'     => fc_pick_campaign_value( $sources, [ 'campaign_content', 'content', 'utm_content', 'meta_ad_name' ] ),
         'term'        => fc_pick_campaign_value( $sources, [ 'campaign_term', 'term', 'utm_term', 'meta_adset_name' ] ),
+        'gclid'       => fc_pick_campaign_value( $sources, [ 'gclid' ] ),
+        'gbraid'      => fc_pick_campaign_value( $sources, [ 'gbraid' ] ),
+        'wbraid'      => fc_pick_campaign_value( $sources, [ 'wbraid' ] ),
+        'fbclid'      => fc_pick_campaign_value( $sources, [ 'fbclid' ] ),
     ];
 
     $attribution['provider'] = fc_detect_campaign_provider( $attribution );
@@ -463,6 +481,10 @@ function fc_get_campaign_attribution_from_request( string $landing_url = '', str
         'utm_id'               => fc_pick_campaign_value( $sources, [ 'utm_id' ] ),
         'utm_content'          => fc_pick_campaign_value( $sources, [ 'utm_content' ] ),
         'utm_term'             => fc_pick_campaign_value( $sources, [ 'utm_term' ] ),
+        'gclid'                => fc_pick_campaign_value( $sources, [ 'gclid' ] ),
+        'gbraid'               => fc_pick_campaign_value( $sources, [ 'gbraid' ] ),
+        'wbraid'               => fc_pick_campaign_value( $sources, [ 'wbraid' ] ),
+        'fbclid'               => fc_pick_campaign_value( $sources, [ 'fbclid' ] ),
         'landing_url'          => esc_url_raw( $candidate_url ),
         'referrer_url'         => esc_url_raw( $referer_url ?: ( wp_get_referer() ?: '' ) ),
     ];
@@ -522,10 +544,14 @@ function fc_render_campaign_attribution_hidden_fields( string $landing_url = '',
         setField('utm_id', param('utm_id'));
         setField('utm_content', param('utm_content'));
         setField('utm_term', param('utm_term'));
+        setField('gclid', param('gclid'));
+        setField('gbraid', param('gbraid'));
+        setField('wbraid', param('wbraid'));
+        setField('fbclid', param('fbclid'));
         setField('campaign_source', first(param('campaign_source'), param('acquisition_source'), param('fuente'), param('utm_source')));
         setField('campaign_medium', first(param('campaign_medium'), param('medium'), param('utm_medium')));
         setField('campaign_name', first(param('campaign_name'), param('campana'), param('campaign'), param('utm_campaign')));
-        setField('campaign_external_id', first(param('campaign_external_id'), param('campaign_id'), param('campana_id'), param('utm_id'), param('meta_campaign_id'), param('mailjet_campaign_id'), param('mj_campaign_id')));
+        setField('campaign_external_id', first(param('campaign_external_id'), param('campaign_id'), param('campana_id'), param('utm_id'), param('meta_campaign_id'), param('mailjet_campaign_id'), param('mj_campaign_id'), param('gclid'), param('gbraid'), param('wbraid'), param('fbclid')));
         setField('campaign_content', first(param('campaign_content'), param('content'), param('utm_content'), param('meta_ad_name')));
         setField('campaign_term', first(param('campaign_term'), param('term'), param('utm_term'), param('meta_adset_name')));
 
@@ -535,9 +561,15 @@ function fc_render_campaign_attribution_hidden_fields( string $landing_url = '',
             param('campaign_source'),
             param('utm_source'),
             param('campaign_external_id'),
-            param('utm_id')
+            param('utm_id'),
+            param('gclid'),
+            param('gbraid'),
+            param('wbraid'),
+            param('fbclid')
         ].join(' ').toLowerCase();
         if (!provider && (providerSource.indexOf('meta') !== -1 || providerSource.indexOf('facebook') !== -1 || providerSource.indexOf('instagram') !== -1)) provider = 'meta';
+        if (!provider && param('fbclid')) provider = 'meta';
+        if (!provider && (param('gclid') || param('gbraid') || param('wbraid') || providerSource.indexOf('google') !== -1)) provider = 'google';
         if (!provider && (providerSource.indexOf('mailjet') !== -1 || providerSource.indexOf('mj-') !== -1 || providerSource.indexOf('mj.nl') !== -1)) provider = 'mailjet';
         if (!provider && (param('utm_source') || param('utm_medium') || param('utm_campaign'))) provider = 'utm';
         setField('campaign_provider', provider);
@@ -646,6 +678,18 @@ function fc_build_info_request_webhook_payload( array $data ) {
     if ( '' === $campaign_external_id ) {
         $campaign_external_id = fc_info_request_sanitize_text_value( $data, 'utm_id' );
     }
+    if ( '' === $campaign_external_id ) {
+        $campaign_external_id = fc_info_request_sanitize_text_value( $data, 'gclid' );
+    }
+    if ( '' === $campaign_external_id ) {
+        $campaign_external_id = fc_info_request_sanitize_text_value( $data, 'gbraid' );
+    }
+    if ( '' === $campaign_external_id ) {
+        $campaign_external_id = fc_info_request_sanitize_text_value( $data, 'wbraid' );
+    }
+    if ( '' === $campaign_external_id ) {
+        $campaign_external_id = fc_info_request_sanitize_text_value( $data, 'fbclid' );
+    }
     if ( '' === $campaign_content ) {
         $campaign_content = fc_info_request_sanitize_text_value( $data, 'utm_content' );
     }
@@ -661,6 +705,10 @@ function fc_build_info_request_webhook_payload( array $data ) {
         'external_id' => $campaign_external_id,
         'content'     => $campaign_content,
         'term'        => $campaign_term,
+        'gclid'       => fc_info_request_sanitize_text_value( $data, 'gclid' ),
+        'gbraid'      => fc_info_request_sanitize_text_value( $data, 'gbraid' ),
+        'wbraid'      => fc_info_request_sanitize_text_value( $data, 'wbraid' ),
+        'fbclid'      => fc_info_request_sanitize_text_value( $data, 'fbclid' ),
     ];
     $campaign_provider = fc_detect_campaign_provider( $attribution, $source );
     $attribution['provider'] = $campaign_provider;
@@ -688,6 +736,10 @@ function fc_build_info_request_webhook_payload( array $data ) {
         'utm_id'            => fc_info_request_sanitize_text_value( $data, 'utm_id' ),
         'utm_content'       => fc_info_request_sanitize_text_value( $data, 'utm_content' ),
         'utm_term'          => fc_info_request_sanitize_text_value( $data, 'utm_term' ),
+        'gclid'             => fc_info_request_sanitize_text_value( $data, 'gclid' ),
+        'gbraid'            => fc_info_request_sanitize_text_value( $data, 'gbraid' ),
+        'wbraid'            => fc_info_request_sanitize_text_value( $data, 'wbraid' ),
+        'fbclid'            => fc_info_request_sanitize_text_value( $data, 'fbclid' ),
         'landing_url'       => isset( $data['landing_url'] ) ? esc_url_raw( $data['landing_url'] ) : '',
         'referrer_url'      => isset( $data['referrer_url'] ) ? esc_url_raw( $data['referrer_url'] ) : '',
         'attribution'       => array_filter( $attribution ),
