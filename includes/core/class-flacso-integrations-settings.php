@@ -1959,7 +1959,8 @@ class FLACSO_Integrations_Settings {
         ?>
         <div class="flacso-meta-test-box">
             <h3><?php esc_html_e('Meta Lead Ads', 'flacso-uruguay'); ?></h3>
-            <p><?php esc_html_e('Recibe formularios instantáneos de Meta, descarga el lead original desde Graph API y lo deja listo para reenviar al flujo de solicitud de información.', 'flacso-uruguay'); ?></p>
+            <p><?php esc_html_e('Recibe formularios instantáneos de Meta, descarga el lead original desde Graph API, lo reenvía al flujo de solicitud de información y sube el evento CRM inicial a Conversions API para Conversion Leads.', 'flacso-uruguay'); ?></p>
+            <p class="flacso-integrations-note"><?php esc_html_e('El evento CRM usa el lead_id de Meta, event_source=crm, action_source=system_generated y event_name=initial_lead.', 'flacso-uruguay'); ?></p>
 
             <div class="flacso-integrations-field">
                 <label><?php esc_html_e('URL del webhook para Meta', 'flacso-uruguay'); ?></label>

@@ -1,3 +1,16 @@
+## Version 6.7.68 - 11 de julio de 2026
+
+### Resumen
+- Meta Lead Ads ahora sube el evento CRM inicial a Conversions API para Conversion Leads desde el plugin WordPress.
+- El evento usa `lead_id`, datos de contacto hasheados, `action_source=system_generated`, `event_source=crm` y `event_name=initial_lead`.
+- Se registra el resultado del envío en los metadatos del lead para auditar aceptación, error HTTP y `fbtrace_id`.
+
+### Cambios detallados
+- `includes/core/class-flacso-meta-leads-webhook.php`: envío server-side del evento CRM inicial al recibir un lead válido desde el webhook de Meta.
+- `includes/core/class-flacso-integrations-settings.php`: actualización del texto de configuración para indicar que Lead Ads también activa Conversion Leads CRM.
+
+---
+
 ## Version 6.3.0 - 25 de junio de 2026
 
 ### Resumen

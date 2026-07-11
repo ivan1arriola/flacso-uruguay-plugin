@@ -172,9 +172,18 @@ class FLACSO_Meta_Leads_Webhook {
         update_post_meta($post_id, '_flacso_meta_lead_forward_result', wp_json_encode($forward_result));
         update_post_meta($post_id, '_flacso_meta_lead_forwarded', !empty($forward_result['ok']) ? '1' : '0');
 
+        $crm_event_result = self::send_initial_crm_event($normalized, $leadgen_id);
+        update_post_meta($post_id, '_flacso_meta_lead_crm_capi_result', wp_json_encode($crm_event_result));
+        update_post_meta($post_id, '_flacso_meta_lead_crm_capi_sent', !empty($crm_event_result['ok']) ? '1' : '0');
+
         do_action('flacso_meta_lead_received', $normalized, $lead, $post_id, $forward_result);
 
-        return ['processed' => true, 'post_id' => $post_id, 'forwarded' => !empty($forward_result['ok'])];
+        return [
+            'processed' => true,
+            'post_id' => $post_id,
+            'forwarded' => !empty($forward_result['ok']),
+            'crm_capi_sent' => !empty($crm_event_result['ok']),
+        ];
     }
 
     private static function check_permissions(): array {
@@ -474,6 +483,184 @@ class FLACSO_Meta_Leads_Webhook {
         }
 
         return ['ok' => false, 'error' => 'webhook_helpers_unavailable'];
+    }
+
+    private static function send_initial_crm_event(array $normalized, string $leadgen_id): array {
+        $meta_settings = self::get_meta_capi_settings();
+
+        if (empty($meta_settings['enabled']) || empty($meta_settings['pixel_id']) || empty($meta_settings['access_token'])) {
+            return [
+                'ok' => false,
+                'skipped' => true,
+                'error' => 'meta_capi_not_configured',
+            ];
+        }
+
+        $event = self::build_crm_conversion_lead_event($normalized, $leadgen_id);
+        if (empty($event['user_data'])) {
+            return [
+                'ok' => false,
+                'skipped' => true,
+                'error' => 'missing_user_data',
+            ];
+        }
+
+        $endpoint = sprintf(
+            'https://graph.facebook.com/%s/%s/events',
+            self::sanitize_graph_version((string) ($meta_settings['graph_version'] ?? 'v25.0')),
+            rawurlencode((string) $meta_settings['pixel_id'])
+        );
+        $body = [
+            'data' => [$event],
+        ];
+
+        if (!empty($meta_settings['test_event_code'])) {
+            $body['test_event_code'] = (string) $meta_settings['test_event_code'];
+        }
+
+        $response = wp_remote_post(
+            add_query_arg(['access_token' => (string) $meta_settings['access_token']], $endpoint),
+            [
+                'timeout' => 15,
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                ],
+                'body' => wp_json_encode($body),
+            ]
+        );
+
+        if (is_wp_error($response)) {
+            self::log_error('crm_capi_request_failed', $response->get_error_message());
+
+            return [
+                'ok' => false,
+                'error' => $response->get_error_message(),
+            ];
+        }
+
+        $status_code = (int) wp_remote_retrieve_response_code($response);
+        $response_body = json_decode(wp_remote_retrieve_body($response), true);
+
+        if ($status_code < 200 || $status_code >= 300) {
+            $message = is_array($response_body) && !empty($response_body['error']['message'])
+                ? (string) $response_body['error']['message']
+                : sprintf('Meta devolvió HTTP %d al enviar el evento CRM.', $status_code);
+            self::log_error('crm_capi_http_' . $status_code, $message);
+
+            return [
+                'ok' => false,
+                'http_code' => $status_code,
+                'error' => $message,
+                'fbtrace_id' => is_array($response_body) ? (string) ($response_body['fbtrace_id'] ?? '') : '',
+            ];
+        }
+
+        return [
+            'ok' => true,
+            'http_code' => $status_code,
+            'events_received' => is_array($response_body) ? (int) ($response_body['events_received'] ?? 0) : 0,
+            'fbtrace_id' => is_array($response_body) ? (string) ($response_body['fbtrace_id'] ?? '') : '',
+            'event_name' => (string) $event['event_name'],
+            'test_mode' => !empty($meta_settings['test_event_code']),
+        ];
+    }
+
+    private static function build_crm_conversion_lead_event(array $normalized, string $leadgen_id): array {
+        $event_name = (string) apply_filters('flacso_meta_conversion_leads_initial_event_name', 'initial_lead', $normalized);
+        $event_name = self::sanitize_crm_event_name($event_name);
+        $lead_event_source = (string) apply_filters(
+            'flacso_meta_conversion_leads_event_source_name',
+            'FLACSO Uruguay WordPress CRM',
+            $normalized
+        );
+
+        $user_data = [];
+        $clean_lead_id = self::sanitize_meta_id($leadgen_id);
+        if (preg_match('/^\d{15,17}$/', $clean_lead_id)) {
+            $user_data['lead_id'] = $clean_lead_id;
+        }
+
+        $hashed_fields = [
+            'em' => self::hash_email((string) ($normalized['correo'] ?? '')),
+            'ph' => self::hash_phone((string) ($normalized['telefono'] ?? '')),
+            'fn' => self::hash_text((string) ($normalized['nombre'] ?? '')),
+            'ln' => self::hash_text((string) ($normalized['apellido'] ?? '')),
+            'country' => self::hash_text((string) ($normalized['pais'] ?? '')),
+        ];
+
+        foreach ($hashed_fields as $key => $hash) {
+            if ($hash !== '') {
+                $user_data[$key] = [$hash];
+            }
+        }
+
+        return [
+            'event_name' => $event_name !== '' ? $event_name : 'initial_lead',
+            'event_time' => time(),
+            'action_source' => 'system_generated',
+            'user_data' => $user_data,
+            'custom_data' => [
+                'lead_event_source' => sanitize_text_field($lead_event_source) ?: 'FLACSO Uruguay WordPress CRM',
+                'event_source' => 'crm',
+                'programa' => sanitize_text_field((string) ($normalized['programa'] ?? '')),
+                'meta_form_id' => self::sanitize_meta_id($normalized['meta_form_id'] ?? ''),
+                'meta_campaign_id' => self::sanitize_meta_id($normalized['meta_campaign_id'] ?? ''),
+                'meta_campaign_name' => sanitize_text_field((string) ($normalized['meta_campaign_name'] ?? '')),
+                'meta_adset_id' => self::sanitize_meta_id($normalized['meta_adset_id'] ?? ''),
+                'meta_ad_id' => self::sanitize_meta_id($normalized['meta_ad_id'] ?? ''),
+            ],
+        ];
+    }
+
+    private static function get_meta_capi_settings(): array {
+        $settings = [
+            'enabled' => false,
+            'pixel_id' => '',
+            'access_token' => '',
+            'test_event_code' => '',
+            'graph_version' => 'v25.0',
+        ];
+
+        if (class_exists('FLACSO_Integrations_Settings') && is_callable(['FLACSO_Integrations_Settings', 'get_meta_settings'])) {
+            $meta_settings = FLACSO_Integrations_Settings::get_meta_settings();
+            $settings['enabled'] = !empty($meta_settings['enabled']);
+            $settings['pixel_id'] = (string) ($meta_settings['pixel_id'] ?? '');
+            $settings['access_token'] = (string) ($meta_settings['access_token'] ?? '');
+            $settings['test_event_code'] = (string) ($meta_settings['test_event_code'] ?? '');
+        }
+
+        if (class_exists('FLACSO_Integrations_Settings') && is_callable(['FLACSO_Integrations_Settings', 'get_meta_leads_settings'])) {
+            $lead_settings = FLACSO_Integrations_Settings::get_meta_leads_settings();
+            $settings['graph_version'] = (string) ($lead_settings['graph_version'] ?? 'v25.0');
+        }
+
+        return $settings;
+    }
+
+    private static function sanitize_crm_event_name(string $value): string {
+        $value = trim($value);
+        $value = preg_replace('/[^A-Za-z0-9_\-\s]/', '', $value);
+
+        return is_string($value) ? substr($value, 0, 64) : '';
+    }
+
+    private static function hash_email(string $value): string {
+        $value = strtolower(trim($value));
+
+        return is_email($value) ? hash('sha256', $value) : '';
+    }
+
+    private static function hash_phone(string $value): string {
+        $value = preg_replace('/\D+/', '', $value);
+
+        return $value !== '' ? hash('sha256', $value) : '';
+    }
+
+    private static function hash_text(string $value): string {
+        $value = strtolower(trim($value));
+
+        return $value !== '' ? hash('sha256', $value) : '';
     }
 
     private static function find_lead_post_id(string $leadgen_id): int {
