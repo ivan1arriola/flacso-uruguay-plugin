@@ -6,6 +6,39 @@
     var queueMaxItems = 100;
     var queueTtlMs = 7 * 24 * 60 * 60 * 1000;
     var inflightEvents = {};
+    var advancedMatchingFingerprint = "";
+
+    function normalizeAdvancedMatching(userData) {
+        var allowedKeys = ["em", "ph", "fn", "ln", "ct", "st", "zp", "country", "db", "ge", "external_id"];
+        var normalized = {};
+
+        if (!userData || typeof userData !== "object" || Array.isArray(userData)) {
+            return normalized;
+        }
+
+        allowedKeys.forEach(function (key) {
+            var value = userData[key];
+            if (Array.isArray(value)) {
+                value = value.length > 0 ? value[0] : "";
+            }
+            if (typeof value !== "string" && typeof value !== "number") {
+                return;
+            }
+            value = String(value).trim();
+            if (value !== "") {
+                normalized[key] = value;
+            }
+        });
+
+        return normalized;
+    }
+
+    function advancedMatchingKey(userData) {
+        var keys = Object.keys(userData).sort();
+        return keys.map(function (key) {
+            return key + ":" + String(userData[key]);
+        }).join("|");
+    }
 
     function generateEventId() {
         if (window.crypto && typeof window.crypto.randomUUID === "function") {
@@ -45,7 +78,19 @@
             return current;
         }
 
+        var fbclid = getQueryParam("fbclid");
+        if (fbclid && config.pixelId) {
+            return "fb." + config.pixelId + "." + Math.floor(Date.now() / 1000) + "." + fbclid;
+        }
+
         return "";
+    }
+
+    function getQueryParam(name) {
+        var url = window.location && window.location.search;
+        if (!url) return "";
+        var match = url.match(new RegExp("[?&]" + name.replace(/[$()+.?[\\\]^{|}]/g, "\\$&") + "=([^&]*)"));
+        return match ? decodeURIComponent(match[1]) : "";
     }
 
     function ensureExternalIdCookie() {
@@ -342,7 +387,7 @@
         }
 
         fbp = getCookie("_fbp");
-        fbc = ensureFbcCookie() || getCookie("_fbc");
+        fbc = ensureFbcCookie();
 
         payload = upsertQueuedEvent({
             eventType: eventType,
@@ -359,7 +404,10 @@
         transportQueuedEvent(payload, true);
     }
 
-    function ensurePixelBootstrap() {
+    function ensurePixelBootstrap(userData) {
+        var advancedMatching = normalizeAdvancedMatching(userData);
+        var fingerprint = advancedMatchingKey(advancedMatching);
+
         if (!config.enabled || !config.pixelId) {
             return;
         }
@@ -396,11 +444,27 @@
 
         if (!window.__flacsoMetaInitialized) {
             try {
-                window.fbq("init", config.pixelId);
+                if (fingerprint) {
+                    window.fbq("init", config.pixelId, advancedMatching);
+                    advancedMatchingFingerprint = fingerprint;
+                } else {
+                    window.fbq("init", config.pixelId);
+                }
                 window.__flacsoMetaInitialized = true;
             } catch (error) {
                 if (config.debug && window.console && typeof window.console.warn === "function") {
                     console.warn("[FLACSO Meta] init falló", error);
+                }
+            }
+        } else if (fingerprint && fingerprint !== advancedMatchingFingerprint) {
+            try {
+                // Los valores se envían sin hash solo al SDK oficial; Meta Pixel
+                // los normaliza y aplica SHA-256 antes de transmitirlos.
+                window.fbq("init", config.pixelId, advancedMatching);
+                advancedMatchingFingerprint = fingerprint;
+            } catch (error) {
+                if (config.debug && window.console && typeof window.console.warn === "function") {
+                    console.warn("[FLACSO Meta] coincidencias avanzadas fallaron", error);
                 }
             }
         }
@@ -477,9 +541,9 @@
 
         var eventId = options.eventID;
 
-        ensurePixelBootstrap();
-
         var userData = options.userData && typeof options.userData === "object" ? options.userData : null;
+
+        ensurePixelBootstrap(userData);
 
         var pixelParams = Object.assign({}, params);
         if (userData) {

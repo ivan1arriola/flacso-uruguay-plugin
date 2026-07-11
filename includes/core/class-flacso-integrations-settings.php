@@ -1864,6 +1864,12 @@ class FLACSO_Integrations_Settings {
                     __('Mantiene un PageView global desde el plugin, además de los eventos específicos como ViewContent, Lead y SubmitApplication.', 'flacso-uruguay')
                 );
                 ?>
+                <div class="notice notice-info inline" style="margin:16px 0 0;padding:12px 14px;">
+                    <p style="margin:0 0 6px;"><strong><?php esc_html_e('Coincidencias avanzadas', 'flacso-uruguay'); ?></strong></p>
+                    <p style="margin:0;">
+                        <?php esc_html_e('El plugin envía al Pixel y a CAPI únicamente los datos que la persona proporciona en los formularios (por ejemplo correo, teléfono y nombre). Meta los normaliza y protege con SHA-256. Para habilitar también la modalidad automática, actívala en Events Manager → Configuración → Coincidencias avanzadas automáticas.', 'flacso-uruguay'); ?>
+                    </p>
+                </div>
                 <?php if ($include_test_box) : ?>
                     <?php self::render_meta_test_box($meta, $redirect_url); ?>
                 <?php endif; ?>

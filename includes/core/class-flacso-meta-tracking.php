@@ -404,6 +404,12 @@ class FLACSO_Meta_Tracking {
             $user_data['fbc'] = self::sanitize_meta_browser_id($context['fbc'], 'fbc');
         } elseif (!empty($_COOKIE['_fbc'])) {
             $user_data['fbc'] = self::sanitize_meta_browser_id($_COOKIE['_fbc'], 'fbc');
+        } else {
+            $pixel_id = self::get_settings()['pixel_id'] ?? '';
+            $fbc_from_url = self::build_fbc_from_fbclid($pixel_id);
+            if ($fbc_from_url !== '') {
+                $user_data['fbc'] = $fbc_from_url;
+            }
         }
 
         $custom_data = [];
@@ -490,14 +496,14 @@ class FLACSO_Meta_Tracking {
             return '';
         }
 
-        $value = preg_replace('/[\x00-\x20\x7F]+/', '', $value);
+        $value = preg_replace('/[\x00-\x1F\x7F]+/', '', $value);
         if (!is_string($value) || $value === '') {
             return '';
         }
 
         $value = substr($value, 0, 512);
 
-        if ($type === 'fbc' && !preg_match('/^fb\.\d+\.\d+\.[A-Za-z0-9_-]+$/', $value)) {
+        if ($type === 'fbc' && !preg_match('/^fb\.\d+\.\d+\.[A-Za-z0-9_.=-]+$/', $value)) {
             return '';
         }
 
@@ -506,6 +512,21 @@ class FLACSO_Meta_Tracking {
         }
 
         return $value;
+    }
+
+    /**
+     * Construye el parámetro fbc a partir del fbclid de la URL.
+     * Formato requerido por Meta: fb.{pixel_id}.{timestamp}.{fbclid}
+     * El fbclid se usa exactamente como viene en la URL, sin modificar.
+     */
+    private static function build_fbc_from_fbclid(string $pixel_id): string {
+        $fbclid = trim((string) ($_GET['fbclid'] ?? ''));
+        if ($fbclid === '' || $pixel_id === '') {
+            return '';
+        }
+
+        $timestamp = time();
+        return 'fb.' . $pixel_id . '.' . $timestamp . '.' . $fbclid;
     }
 
     private static function sanitize_custom_data_value($value, string $key = '') {
