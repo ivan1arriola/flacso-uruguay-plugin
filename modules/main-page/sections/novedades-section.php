@@ -438,7 +438,7 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
                 justify-content: center;
                 width: 100%;
                 height: auto;
-                aspect-ratio: 1 / 1;
+                aspect-ratio: 4 / 5;
                 flex: 0 0 auto;
                 background: #ffffff; /* Fondo integrado con la tarjeta */
                 overflow: hidden;
@@ -1500,7 +1500,7 @@ if (!function_exists('flacso_section_novedades_responsivas_render')) {
                 position: relative;
                 width: 100%;
                 min-height: 0;
-                aspect-ratio: 1 / 1;
+                aspect-ratio: 4 / 5;
                 overflow: hidden;
                 background: #ffffff; /* Fondo integrado */
                 padding: 0; /* Sin relleno extra */
@@ -2311,4 +2311,3 @@ if (!function_exists('flacso_section_novedades_get_posts')) {
         ];
     }
 }
-
