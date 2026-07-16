@@ -353,12 +353,10 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
                 --card-width-desktop: 22.5rem;
                 --card-width-tablet: 19rem;
                 --card-width-mobile: 16.2rem;
-                --card-height-desktop: clamp(33rem, 74vh, 39rem);
-                --card-height-desktop: clamp(33rem, 74dvh, 39rem);
-                --card-height-tablet: clamp(29rem, 70vh, 34rem);
-                --card-height-tablet: clamp(29rem, 70dvh, 34rem);
-                --card-height-mobile: clamp(24rem, 66vh, 28rem);
-                --card-height-mobile: clamp(24rem, 66dvh, 28rem);
+                /* Imagen 4:5 completa + espacio independiente para el contenido. */
+                --card-height-desktop: 43rem;
+                --card-height-tablet: 36.75rem;
+                --card-height-mobile: 33rem;
 
                 padding-top: 0;
                 padding-bottom: clamp(1.5rem, 3vw, 3rem); /* Aumentado ligeramente para dar aire a la sombra */
@@ -477,7 +475,7 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
                 display: flex;
                 flex-direction: column;
                 gap: 0.75rem;
-                flex: 1 1 auto;
+                flex: 1 0 12rem;
                 min-height: 0;
                 padding: 1rem;
                 overflow: hidden;
@@ -620,15 +618,6 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
             }
 
             @media (max-height: 860px) {
-                .flacso-novedades-3d {
-                    --card-height-desktop: clamp(31rem, 68vh, 36rem);
-                    --card-height-desktop: clamp(31rem, 68dvh, 36rem);
-                    --card-height-tablet: clamp(27rem, 66vh, 32rem);
-                    --card-height-tablet: clamp(27rem, 66dvh, 32rem);
-                    --card-height-mobile: clamp(23rem, 62vh, 26.8rem);
-                    --card-height-mobile: clamp(23rem, 62dvh, 26.8rem);
-                }
-
                 .flacso-novedades-3d__body {
                     gap: 0.7rem;
                 }
