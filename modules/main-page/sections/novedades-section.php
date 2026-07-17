@@ -315,6 +315,10 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
                             : wp_trim_words(wp_strip_all_tags((string) get_post_field('post_content', $post_id)), 24, '...');
                         $excerpt = wp_strip_all_tags((string) $excerpt);
                         $image_url = get_the_post_thumbnail_url($post_id, 'large');
+                        $image_id = get_post_thumbnail_id($post_id);
+                        if ($image_url && $image_id && function_exists('flacso_child_version_thumbnail_url')) {
+                            $image_url = flacso_child_version_thumbnail_url($image_url, $image_id);
+                        }
                         if (!$image_url) {
                             $image_url = 'https://via.placeholder.com/1024x1024/e9edf2/1d3a72?text=Novedad';
                         }
