@@ -515,14 +515,19 @@ function fc_render_campaign_attribution_hidden_fields( string $landing_url = '',
         var referrerUrl = document.referrer || '';
         var current;
         var referrer;
+        var stored = {};
 
         try { current = new URL(currentUrl); } catch (e) { current = null; }
         try { referrer = referrerUrl ? new URL(referrerUrl) : null; } catch (e) { referrer = null; }
+        try { stored = JSON.parse(window.sessionStorage.getItem('flacso_campaign_attribution') || '{}'); } catch (e) { stored = {}; }
 
         function param(name) {
             var value = current ? (current.searchParams.get(name) || '') : '';
             if (!value && referrer) {
                 value = referrer.searchParams.get(name) || '';
+            }
+            if (!value && stored && typeof stored[name] === 'string') {
+                value = stored[name];
             }
             return value.trim();
         }
@@ -540,8 +545,8 @@ function fc_render_campaign_attribution_hidden_fields( string $landing_url = '',
             return '';
         }
 
-        setField('landing_url', currentUrl);
-        setField('referrer_url', referrerUrl);
+        setField('landing_url', stored.landing_url || currentUrl);
+        setField('referrer_url', stored.referrer_url || referrerUrl);
         setField('utm_source', param('utm_source'));
         setField('utm_medium', param('utm_medium'));
         setField('utm_campaign', param('utm_campaign'));

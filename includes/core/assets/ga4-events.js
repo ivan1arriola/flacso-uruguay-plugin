@@ -9,6 +9,29 @@
     var config = window.flacsoGA4Config || {};
     var startedForms = {};
 
+    function captureCampaignAttribution() {
+        var keys = ["campaign_provider", "campaign_source", "campaign_medium", "campaign_name", "campaign_external_id", "campaign_content", "campaign_term", "utm_source", "utm_medium", "utm_campaign", "utm_id", "utm_content", "utm_term", "gclid", "gbraid", "wbraid", "fbclid"];
+        try {
+            var url = new URL(window.location.href);
+            var stored = JSON.parse(window.sessionStorage.getItem("flacso_campaign_attribution") || "{}");
+            var found = false;
+            keys.forEach(function (key) {
+                var value = (url.searchParams.get(key) || "").trim();
+                if (value) {
+                    stored[key] = value;
+                    found = true;
+                }
+            });
+            if (found) {
+                stored.landing_url = stored.landing_url || window.location.href;
+                stored.referrer_url = stored.referrer_url || document.referrer || "";
+                window.sessionStorage.setItem("flacso_campaign_attribution", JSON.stringify(stored));
+            }
+        } catch (error) {}
+    }
+
+    captureCampaignAttribution();
+
     function safeText(value) {
         if (value === null || value === undefined) {
             return "";
