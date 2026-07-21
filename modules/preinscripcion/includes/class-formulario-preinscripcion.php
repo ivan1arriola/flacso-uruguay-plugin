@@ -235,6 +235,42 @@ class FLACSO_Formulario_Preinscripcion_Final {
         ));
     }
 
+    private function check_existing_preinscription($webhook_candidates, $webhook_token, $oferta_id, $correo) {
+        $body_json = wp_json_encode(array(
+            'action' => 'check_duplicate',
+            'offer' => array('id' => (int) $oferta_id),
+            'applicant' => array('correo' => sanitize_email($correo)),
+        ));
+
+        if ($body_json === false) {
+            return array('checked' => false, 'exists' => false, 'response' => null);
+        }
+
+        foreach ($webhook_candidates as $candidate) {
+            $result = $this->post_preinscripciones_webhook(
+                (string) ($candidate['url'] ?? ''),
+                $body_json,
+                $webhook_token,
+                20
+            );
+            if (is_wp_error($result)) {
+                continue;
+            }
+
+            $status = (int) wp_remote_retrieve_response_code($result);
+            $json = json_decode(wp_remote_retrieve_body($result), true);
+            if ($status >= 200 && $status < 300 && is_array($json) && !empty($json['ok'])) {
+                return array(
+                    'checked' => true,
+                    'exists' => !empty($json['data']['exists']),
+                    'response' => $json,
+                );
+            }
+        }
+
+        return array('checked' => false, 'exists' => false, 'response' => null);
+    }
+
     private function archivo_obligatorio_presente($campo) {
         if (!isset($_FILES[$campo])) { return false; }
         $file = $_FILES[$campo];
@@ -694,6 +730,26 @@ class FLACSO_Formulario_Preinscripcion_Final {
         $campos_obligatorios = array('correo', 'nombre1', 'apellido1', 'celular');
         foreach ($campos_obligatorios as $campo) {
             if (empty($_POST[$campo])) { $this->send_json_error("El campo $campo es obligatorio."); }
+        }
+
+        // Consultar antes de subir archivos. Si el alta anterior se completo pero
+        // su respuesta no llego al navegador, esta comprobacion recupera el exito
+        // sin volver a guardar adjuntos ni reenviar notificaciones.
+        $duplicate_check = $this->check_existing_preinscription(
+            $webhook_candidates,
+            $webhook_token,
+            $oferta_id,
+            $_POST['correo'] ?? ''
+        );
+        if (!empty($duplicate_check['exists'])) {
+            $this->send_json_success(array(
+                'message' => 'La preinscripción ya estaba registrada correctamente.',
+                'duplicate_recovered' => true,
+                'editor_response' => $duplicate_check['response'],
+            ));
+        }
+        if (!empty($_POST['check_only'])) {
+            $this->send_json_error('No encontramos una preinscripción confirmada para este correo.', 404);
         }
 
         $documentacion_completa = sanitize_text_field($_POST['documentacion_completa'] ?? '');

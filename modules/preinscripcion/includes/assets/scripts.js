@@ -840,6 +840,31 @@ jQuery(function($){
             }
         } catch(e){
             console.error('Error en el envío:', e);
+            // La API puede haber confirmado el alta aunque su respuesta se haya
+            // perdido. Verificar el estado antes de invitar a reenviar archivos.
+            try {
+                const recoveryData = new FormData(form[0]);
+                for (const key of Array.from(recoveryData.keys())) {
+                    if (recoveryData.get(key) instanceof File) {
+                        recoveryData.delete(key);
+                    }
+                }
+                recoveryData.set('check_only', '1');
+                const recoveryResp = await fetch(config.ajaxUrl, {
+                    method: 'POST',
+                    body: recoveryData
+                });
+                const recoveryJson = await recoveryResp.json();
+                if (recoveryJson && recoveryJson.success) {
+                    let currentUrl = window.location.href.split('?')[0];
+                    if (!currentUrl.endsWith('/')) currentUrl += '/';
+                    const graciasUrl = currentUrl + 'gracias/?tipo=preinscripcion&pid=' + encodeURIComponent(config.idPosgrado || '');
+                    window.location.assign(appendMetaTestEventCode(graciasUrl));
+                    return;
+                }
+            } catch (recoveryError) {
+                console.warn('[Preinscripcion] No se pudo verificar el estado del envío', recoveryError);
+            }
             const timeoutError = e && e.name === 'AbortError';
             const errorTitle = timeoutError ? 'Tiempo de espera agotado' : 'Error de conexión';
             const errorMessage = timeoutError
