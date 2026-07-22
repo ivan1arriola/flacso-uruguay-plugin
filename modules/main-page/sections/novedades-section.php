@@ -314,20 +314,30 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
                             ? get_the_excerpt($post_id)
                             : wp_trim_words(wp_strip_all_tags((string) get_post_field('post_content', $post_id)), 24, '...');
                         $excerpt = wp_strip_all_tags((string) $excerpt);
-                        $image_url = get_the_post_thumbnail_url($post_id, 'large');
                         $image_id = get_post_thumbnail_id($post_id);
-                        if ($image_url && $image_id && function_exists('flacso_child_version_thumbnail_url')) {
-                            $image_url = flacso_child_version_thumbnail_url($image_url, $image_id);
-                        }
-                        if (!$image_url) {
-                            $image_url = 'https://via.placeholder.com/1024x1024/e9edf2/1d3a72?text=Novedad';
-                        }
                         $heading_id = 'novedad-title-' . $post_id;
                         $excerpt_id = 'novedad-excerpt-' . $post_id;
                         ?>
                             <article class="flacso-novedades-3d__card" role="article" aria-labelledby="<?php echo esc_attr($heading_id); ?>" aria-describedby="<?php echo esc_attr($excerpt_id); ?>">
                                 <a href="<?php echo esc_url($post_link); ?>" class="flacso-novedades-3d__image-link" aria-label="<?php echo esc_attr(sprintf(__('Leer mas: %s', 'flacso-main-page'), $post_title)); ?>">
-                                    <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($post_title); ?>" class="flacso-novedades-3d__image" loading="lazy">
+                                    <?php if ($image_id) : ?>
+                                        <?php
+                                        echo wp_get_attachment_image(
+                                            $image_id,
+                                            'medium_large',
+                                            false,
+                                            array(
+                                                'alt'      => $post_title,
+                                                'class'    => 'flacso-novedades-3d__image',
+                                                'loading'  => 'lazy',
+                                                'decoding' => 'async',
+                                                'sizes'    => '(max-width: 767px) 260px, (max-width: 991px) 304px, 360px',
+                                            )
+                                        );
+                                        ?>
+                                    <?php else : ?>
+                                        <span class="flacso-novedades-3d__image flacso-novedades-3d__image--placeholder" aria-hidden="true"></span>
+                                    <?php endif; ?>
                                 </a>
                                 <div class="flacso-novedades-3d__body">
                                     <h3 id="<?php echo esc_attr($heading_id); ?>" class="flacso-novedades-3d__title">
@@ -524,7 +534,7 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
             .flacso-novedades-3d__meta {
                 padding-top: 0.55rem;
                 border-top: 1px solid rgba(29, 58, 114, 0.08);
-                color: var(--global-palette5, #7a8696);
+                color: var(--global-palette5, #526174);
                 font-size: 0.88rem;
                 margin-top: auto;
             }
@@ -539,16 +549,16 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
             }
 
             .flacso-novedades-3d__dot {
-                width: 0.5rem;
-                height: 0.5rem;
-                min-width: 0.5rem;
-                min-height: 0.5rem;
+                width: 44px;
+                height: 44px;
+                min-width: 44px;
+                min-height: 44px;
                 padding: 0;
                 border: 0;
                 border-radius: 999px;
-                background: rgba(29, 58, 114, 0.24);
+                background: radial-gradient(circle, rgba(29, 58, 114, 0.42) 0 4px, transparent 5px);
                 cursor: pointer;
-                transition: width 220ms ease, background 220ms ease;
+                transition: background 220ms ease;
                 appearance: none;
                 -webkit-appearance: none;
                 line-height: 0;
@@ -557,9 +567,7 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
             }
 
             .flacso-novedades-3d__dot.is-active {
-                width: 0.95rem;
-                min-width: 0.95rem;
-                background: var(--global-palette1, #1d3a72);
+                background: radial-gradient(circle, var(--global-palette1, #1d3a72) 0 7px, transparent 8px);
             }
 
             @media (max-width: 991.98px) {
@@ -608,17 +616,6 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
                     font-size: 0.76rem;
                 }
 
-                .flacso-novedades-3d__dot {
-                    width: 0.44rem;
-                    height: 0.44rem;
-                    min-width: 0.44rem;
-                    min-height: 0.44rem;
-                }
-
-                .flacso-novedades-3d__dot.is-active {
-                    width: 0.82rem;
-                    min-width: 0.82rem;
-                }
             }
 
             @media (max-height: 860px) {
@@ -794,6 +791,9 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
                                 card.style.transform =
                                     'translate(-50%, -50%) translateX(' + state.x + 'px) scale(' + state.scale + ') rotateY(' + state.rotateY + 'deg)';
                                 card.setAttribute('aria-hidden', index === active ? 'false' : 'true');
+                                card.querySelectorAll('a, button, input, select, textarea, [tabindex]').forEach((control) => {
+                                    control.tabIndex = index === active ? 0 : -1;
+                                });
                             });
 
                             if (dotsWrap) {
@@ -1439,7 +1439,7 @@ if (!function_exists('flacso_section_novedades_responsivas_render')) {
                 --novedad-bg: #ffffff;
                 --novedad-bg-soft: linear-gradient(180deg, #ffffff 0%, #f7faff 100%);
                 --novedad-text: var(--global-palette3, #0f1a2d);
-                --novedad-muted: var(--global-palette5, #7a8696);
+                --novedad-muted: var(--global-palette5, #526174);
                 --novedad-line: rgba(17, 48, 96, 0.08);
                 --novedad-accent: var(--global-palette1, #1d3a72);
                 --novedad-accent-soft: rgba(29, 58, 114, 0.08);

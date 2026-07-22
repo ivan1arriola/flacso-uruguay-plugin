@@ -6,7 +6,8 @@ if (!defined('ABSPATH')) {
 
 if (!function_exists('flacso_eventos_get_uncropped_thumbnail_url')) {
     /**
-     * Devuelve una imagen destacada sin recorte forzado (prioriza original/full).
+     * Devuelve una imagen suficientemente grande para las tarjetas sin transferir
+     * el original de varios megapíxeles a todos los dispositivos.
      */
     function flacso_eventos_get_uncropped_thumbnail_url(int $post_id, string $placeholder = ''): string
     {
@@ -16,10 +17,9 @@ if (!function_exists('flacso_eventos_get_uncropped_thumbnail_url')) {
         }
 
         $candidates = [
-            wp_get_original_image_url($thumb_id),
-            wp_get_attachment_image_url($thumb_id, 'full'),
-            wp_get_attachment_image_url($thumb_id, 'large'),
             wp_get_attachment_image_url($thumb_id, 'medium_large'),
+            wp_get_attachment_image_url($thumb_id, 'large'),
+            wp_get_attachment_image_url($thumb_id, 'full'),
         ];
 
         foreach ($candidates as $candidate) {

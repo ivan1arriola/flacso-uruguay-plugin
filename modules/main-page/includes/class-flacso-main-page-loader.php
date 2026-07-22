@@ -11,6 +11,23 @@ class Flacso_Main_Page_Loader {
             self::load_shortcodes();
         }
         add_action('wp_enqueue_scripts', [__CLASS__, 'enqueue_assets']);
+        add_action('wp_head', [__CLASS__, 'render_front_page_meta_description'], 1);
+    }
+
+    public static function render_front_page_meta_description(): void {
+        if (!is_front_page()) {
+            return;
+        }
+
+        $description = apply_filters(
+            'flacso_front_page_meta_description',
+            __('Formación de posgrado, investigación, eventos y novedades de FLACSO Uruguay.', 'flacso-main-page')
+        );
+        $description = trim(wp_strip_all_tags((string) $description));
+
+        if ($description !== '') {
+            printf("<meta name=\"description\" content=\"%s\">\n", esc_attr($description));
+        }
     }
 
     private static function is_flacso_admin_request(): bool {

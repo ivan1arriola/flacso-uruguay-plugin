@@ -156,12 +156,28 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
             <?php
             $card_title_id = $instance_id . '-card-' . $index;
             $card_desc_id = $card_title_id . '-description';
-            $image_style = $card['image'] !== ''
-                ? sprintf("background-image: url('%s');", esc_url($card['image']))
-                : '';
+            $image_id = $card['image'] !== '' ? attachment_url_to_postid($card['image']) : 0;
             ?>
-            <a class="oferta-item oferta-item--action" href="<?php echo esc_url($card['url']); ?>" aria-labelledby="<?php echo esc_attr($card_title_id); ?>" aria-describedby="<?php echo esc_attr($card_desc_id); ?>">
-              <div class="oferta-imagen"<?php echo $image_style !== '' ? ' style="' . esc_attr($image_style) . '"' : ''; ?>></div>
+            <a class="oferta-item oferta-item--action" href="<?php echo esc_url($card['url']); ?>">
+              <div class="oferta-imagen">
+                <?php if ($image_id) : ?>
+                  <?php
+                  echo wp_get_attachment_image(
+                      $image_id,
+                      'medium_large',
+                      false,
+                      array(
+                          'alt'      => $card['title'],
+                          'loading'  => 'lazy',
+                          'decoding' => 'async',
+                          'sizes'    => '(max-width: 575px) 280px, (max-width: 991px) 318px, 360px',
+                      )
+                  );
+                  ?>
+                <?php elseif ($card['image'] !== '') : ?>
+                  <img src="<?php echo esc_url($card['image']); ?>" alt="<?php echo esc_attr($card['title']); ?>" loading="lazy" decoding="async" width="768" height="768">
+                <?php endif; ?>
+              </div>
               <div class="oferta-contenido">
                 <h3 class="oferta-titulo-card" id="<?php echo esc_attr($card_title_id); ?>"><?php echo esc_html($card['title']); ?></h3>
                 <p class="oferta-descripcion-card" id="<?php echo esc_attr($card_desc_id); ?>"><?php echo wp_kses_post($card['desc']); ?></p>
@@ -304,6 +320,13 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
       linear-gradient(180deg, rgba(15, 26, 45, 0.08) 0%, rgba(15, 26, 45, 0.34) 100%);
   }
 
+  .nuestra-oferta-educativa-3d .oferta-imagen img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
   .nuestra-oferta-educativa-3d .oferta-contenido {
     display: flex;
     flex: 1 1 auto;
@@ -383,10 +406,10 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
 
   .nuestra-oferta-educativa-3d .oferta-educativa-3d-dot {
     display: block;
-    min-width: 0;
-    min-height: 0;
-    width: 11px;
-    height: 11px;
+    min-width: 44px;
+    min-height: 44px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     border: 0;
     padding: 0;
@@ -396,13 +419,12 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
     -webkit-appearance: none;
     box-shadow: none;
     cursor: pointer;
-    background: rgba(29, 58, 114, 0.22);
+    background: radial-gradient(circle, rgba(29, 58, 114, 0.42) 0 5px, transparent 6px);
     transition: transform 200ms ease, background-color 200ms ease;
   }
 
   .nuestra-oferta-educativa-3d .oferta-educativa-3d-dot.is-active {
-    background: var(--global-palette2, #fed222);
-    transform: scale(1.3);
+    background: radial-gradient(circle, var(--global-palette1, #1d3a72) 0 7px, transparent 8px);
   }
 
   .nuestra-oferta-educativa-3d .oferta-educativa-3d-dot:focus-visible {
@@ -674,7 +696,7 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
           card.style.pointerEvents = pointerEvents;
           card.style.filter = filter;
           card.setAttribute('aria-hidden', diff === 0 ? 'false' : 'true');
-          card.tabIndex = 0;
+          card.tabIndex = diff === 0 ? 0 : -1;
           card.dataset.active = diff === 0 ? 'true' : 'false';
         });
 

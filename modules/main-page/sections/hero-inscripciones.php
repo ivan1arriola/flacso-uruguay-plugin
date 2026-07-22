@@ -751,14 +751,14 @@ if (!function_exists('flacso_section_hero_render')) {
 
             <div class="flacso-hero-fab" data-flacso-hero-fab>
                 <?php if ($bubble_primary_enabled && $bubble_primary_url !== '' && $bubble_primary_label !== '') : ?>
-                    <a class="fab-link <?php echo esc_attr($bubble_primary_class); ?>" href="<?php echo esc_url($bubble_primary_url); ?>">
+                    <a class="fab-link <?php echo esc_attr($bubble_primary_class); ?>" href="<?php echo esc_url($bubble_primary_url); ?>" aria-label="<?php echo esc_attr($bubble_primary_label); ?>">
                         <i class="bi bi-mortarboard-fill" aria-hidden="true"></i>
                         <span><?php echo esc_html($bubble_primary_label); ?></span>
                     </a>
                 <?php endif; ?>
 
                 <?php if ($bubble_secondary_enabled && $bubble_secondary_url !== '' && $bubble_secondary_label !== '') : ?>
-                    <a class="fab-link <?php echo esc_attr($bubble_secondary_class); ?>" href="<?php echo esc_url($bubble_secondary_url); ?>">
+                    <a class="fab-link <?php echo esc_attr($bubble_secondary_class); ?>" href="<?php echo esc_url($bubble_secondary_url); ?>" aria-label="<?php echo esc_attr($bubble_secondary_label); ?>">
                         <i class="bi bi-journal-text" aria-hidden="true"></i>
                         <span><?php echo esc_html($bubble_secondary_label); ?></span>
                     </a>

@@ -62,7 +62,10 @@ if (!function_exists('flacso_homepage_builder_render')) {
             ],
         ];
         $is_frontend_render = !is_admin() && !(defined('REST_REQUEST') && REST_REQUEST);
-        $use_react = $is_frontend_render && apply_filters('flacso_main_page_use_react', true);
+        // El marcado del servidor evita reconstruir toda la portada tras el primer
+        // pintado. React sigue disponible mediante el filtro para instalaciones que
+        // lo necesiten, pero deja de formar parte de la ruta crítica por defecto.
+        $use_react = $is_frontend_render && apply_filters('flacso_main_page_use_react', false);
 
         $section_blocks = [];
         foreach ($renderers as $renderer) {
@@ -125,7 +128,7 @@ if (!function_exists('flacso_homepage_builder_render')) {
 
         wp_enqueue_script('flacso-main-page-react');
 
-        $main_id = 'flacso-home-' . wp_generate_password(6, false);
+        $main_id = 'main';
         $app_id = 'flacso-main-page-react-' . wp_generate_password(8, false);
 
         $sections_payload = [];
@@ -193,7 +196,7 @@ if (!function_exists('flacso_homepage_builder_render')) {
 }
 
 if (!function_exists('flacso_homepage_builder_render_markup')) {
-    function flacso_homepage_builder_render_markup(array $ordered_blocks, string $main_id = 'flacso-home'): string
+    function flacso_homepage_builder_render_markup(array $ordered_blocks, string $main_id = 'main'): string
     {
         ob_start(); ?>
         <div class="flacso-main-page flacso-homepage-completa">
