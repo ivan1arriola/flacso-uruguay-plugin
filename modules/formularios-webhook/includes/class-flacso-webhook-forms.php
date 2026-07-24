@@ -1,0 +1,623 @@
+<?php
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+final class Flacso_Webhook_Forms {
+	const POST_TYPE  = 'flacso_hook_form';
+	const META_FIELDS = '_flacso_hook_fields';
+	const META_URL    = '_flacso_hook_url';
+	const NONCE       = 'flacso_hook_form_submit';
+	const MAX_FILE_SIZE = 10485760;
+
+	public static function init() {
+		add_action( 'init', [ __CLASS__, 'register_post_type' ] );
+		add_action( 'add_meta_boxes', [ __CLASS__, 'add_meta_boxes' ] );
+		add_action( 'save_post_' . self::POST_TYPE, [ __CLASS__, 'save_form' ] );
+		add_action( 'admin_enqueue_scripts', [ __CLASS__, 'admin_assets' ] );
+		add_action( 'wp_enqueue_scripts', [ __CLASS__, 'register_public_assets' ] );
+		add_filter( 'the_content', [ __CLASS__, 'render_single_content' ] );
+		add_shortcode( 'flacso_formulario_webhook', [ __CLASS__, 'shortcode' ] );
+		add_action( 'rest_api_init', [ __CLASS__, 'register_rest_routes' ] );
+		add_action( 'admin_post_nopriv_flacso_hook_form_submit', [ __CLASS__, 'handle_submit' ] );
+		add_action( 'admin_post_flacso_hook_form_submit', [ __CLASS__, 'handle_submit' ] );
+		add_action( 'init', [ __CLASS__, 'maybe_flush_rewrites' ], 20 );
+	}
+
+	public static function register_post_type() {
+		register_post_type(
+			self::POST_TYPE,
+			[
+				'labels' => [
+					'name'          => __( 'Formularios webhook', 'flacso-uruguay' ),
+					'singular_name' => __( 'Formulario webhook', 'flacso-uruguay' ),
+					'add_new_item'  => __( 'Crear formulario webhook', 'flacso-uruguay' ),
+					'edit_item'     => __( 'Editar formulario webhook', 'flacso-uruguay' ),
+					'all_items'     => __( 'Todos los formularios', 'flacso-uruguay' ),
+					'menu_name'     => __( 'Formularios webhook', 'flacso-uruguay' ),
+				],
+				'public'       => true,
+				'show_in_rest' => true,
+				'has_archive'  => false,
+				'rewrite'      => [ 'slug' => 'formularios-webhook', 'with_front' => false ],
+				'menu_icon'    => 'dashicons-forms',
+				'menu_position'=> 28,
+				'supports'     => [ 'title', 'editor', 'thumbnail', 'excerpt', 'revisions' ],
+				'rest_base'    => 'formularios-webhook',
+			]
+		);
+	}
+
+	public static function maybe_flush_rewrites() {
+		$version = '1';
+		if ( get_option( 'flacso_hook_forms_rewrite_version' ) === $version ) {
+			return;
+		}
+		flush_rewrite_rules( false );
+		update_option( 'flacso_hook_forms_rewrite_version', $version, false );
+	}
+
+	public static function add_meta_boxes() {
+		add_meta_box( 'flacso-hook-settings', __( 'Entrega al webhook', 'flacso-uruguay' ), [ __CLASS__, 'settings_box' ], self::POST_TYPE, 'normal', 'high' );
+		add_meta_box( 'flacso-hook-fields', __( 'Campos del formulario', 'flacso-uruguay' ), [ __CLASS__, 'fields_box' ], self::POST_TYPE, 'normal', 'high' );
+		add_meta_box( 'flacso-hook-embed', __( 'Publicación', 'flacso-uruguay' ), [ __CLASS__, 'embed_box' ], self::POST_TYPE, 'side', 'default' );
+	}
+
+	public static function settings_box( $post ) {
+		wp_nonce_field( 'flacso_hook_form_save', 'flacso_hook_form_nonce' );
+		$url = get_post_meta( $post->ID, self::META_URL, true );
+		?>
+		<p>
+			<label for="flacso-hook-url"><strong><?php esc_html_e( 'URL del webhook', 'flacso-uruguay' ); ?></strong></label>
+			<input class="widefat" type="url" id="flacso-hook-url" name="flacso_hook_url" value="<?php echo esc_attr( $url ); ?>" placeholder="https://sistema.ejemplo/webhooks/formularios">
+		</p>
+		<p class="description"><?php esc_html_e( 'El envío se realiza como multipart/form-data. Las respuestas se incluyen en fields y los archivos en files.', 'flacso-uruguay' ); ?></p>
+		<p class="description"><?php esc_html_e( 'La autenticación usa automáticamente el token global compartido por todos los formularios de FLACSO.', 'flacso-uruguay' ); ?></p>
+		<?php
+	}
+
+	public static function field_types() {
+		return [
+			'nombre'    => __( 'Nombre', 'flacso-uruguay' ),
+			'apellido'  => __( 'Apellido', 'flacso-uruguay' ),
+			'documento' => __( 'Documento de identidad (UY/extranjero)', 'flacso-uruguay' ),
+			'texto'     => __( 'Texto corto', 'flacso-uruguay' ),
+			'textarea'  => __( 'Texto largo', 'flacso-uruguay' ),
+			'archivo'   => __( 'Archivo (imagen o PDF)', 'flacso-uruguay' ),
+		];
+	}
+
+	public static function get_fields( $post_id ) {
+		$fields = get_post_meta( $post_id, self::META_FIELDS, true );
+		return is_array( $fields ) ? $fields : [];
+	}
+
+	public static function fields_box( $post ) {
+		$fields = self::get_fields( $post->ID );
+		?>
+		<div id="flacso-hook-fields-list">
+			<?php foreach ( $fields as $index => $field ) : ?>
+				<?php self::field_row( $index, $field ); ?>
+			<?php endforeach; ?>
+		</div>
+		<p><button type="button" class="button button-secondary" id="flacso-hook-add-field"><?php esc_html_e( 'Agregar campo', 'flacso-uruguay' ); ?></button></p>
+		<script type="text/html" id="tmpl-flacso-hook-field"><?php self::field_row( '{{data.index}}', [] ); ?></script>
+		<p class="description"><?php esc_html_e( 'Arrastrá los campos desde el asa de la izquierda para cambiar su orden.', 'flacso-uruguay' ); ?></p>
+		<?php
+	}
+
+	private static function field_row( $index, $field ) {
+		$type = isset( $field['type'] ) ? $field['type'] : 'texto';
+		?>
+		<div class="flacso-hook-field">
+			<span class="dashicons dashicons-move flacso-hook-field-handle" aria-hidden="true"></span>
+			<p>
+				<label><?php esc_html_e( 'Tipo', 'flacso-uruguay' ); ?>
+					<select name="flacso_hook_fields[<?php echo esc_attr( $index ); ?>][type]">
+						<?php foreach ( self::field_types() as $value => $label ) : ?>
+							<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $type, $value ); ?>><?php echo esc_html( $label ); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</label>
+				<label><?php esc_html_e( 'Etiqueta', 'flacso-uruguay' ); ?>
+					<input type="text" name="flacso_hook_fields[<?php echo esc_attr( $index ); ?>][label]" value="<?php echo esc_attr( isset( $field['label'] ) ? $field['label'] : '' ); ?>" required>
+				</label>
+				<label><?php esc_html_e( 'Nombre interno', 'flacso-uruguay' ); ?>
+					<input type="text" name="flacso_hook_fields[<?php echo esc_attr( $index ); ?>][name]" value="<?php echo esc_attr( isset( $field['name'] ) ? $field['name'] : '' ); ?>" placeholder="ej: motivacion">
+				</label>
+			</p>
+			<p>
+				<label class="flacso-hook-grow"><?php esc_html_e( 'Texto de ayuda', 'flacso-uruguay' ); ?>
+					<input class="widefat" type="text" name="flacso_hook_fields[<?php echo esc_attr( $index ); ?>][help]" value="<?php echo esc_attr( isset( $field['help'] ) ? $field['help'] : '' ); ?>">
+				</label>
+				<label><input type="checkbox" name="flacso_hook_fields[<?php echo esc_attr( $index ); ?>][required]" value="1" <?php checked( ! empty( $field['required'] ) ); ?>> <?php esc_html_e( 'Obligatorio', 'flacso-uruguay' ); ?></label>
+				<button type="button" class="button-link-delete flacso-hook-remove-field"><?php esc_html_e( 'Eliminar', 'flacso-uruguay' ); ?></button>
+			</p>
+		</div>
+		<?php
+	}
+
+	public static function embed_box( $post ) {
+		?>
+		<p><?php esc_html_e( 'El formulario tiene una página pública propia al publicarlo.', 'flacso-uruguay' ); ?></p>
+		<p><code>[flacso_formulario_webhook id="<?php echo esc_attr( $post->ID ); ?>"]</code></p>
+		<?php if ( 'publish' === $post->post_status ) : ?>
+			<p><a class="button" href="<?php echo esc_url( get_permalink( $post ) ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Ver formulario', 'flacso-uruguay' ); ?></a></p>
+		<?php endif; ?>
+		<?php
+	}
+
+	public static function save_form( $post_id ) {
+		if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+		if ( empty( $_POST['flacso_hook_form_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['flacso_hook_form_nonce'] ) ), 'flacso_hook_form_save' ) ) {
+			return;
+		}
+
+		$url = isset( $_POST['flacso_hook_url'] ) ? esc_url_raw( wp_unslash( $_POST['flacso_hook_url'] ), [ 'http', 'https' ] ) : '';
+		update_post_meta( $post_id, self::META_URL, $url );
+
+		$raw_fields = isset( $_POST['flacso_hook_fields'] ) && is_array( $_POST['flacso_hook_fields'] ) ? wp_unslash( $_POST['flacso_hook_fields'] ) : [];
+		update_post_meta( $post_id, self::META_FIELDS, self::normalize_fields( $raw_fields ) );
+	}
+
+	private static function normalize_fields( $raw_fields ) {
+		$fields = [];
+		$used_names = [];
+		foreach ( $raw_fields as $position => $raw ) {
+			if ( ! is_array( $raw ) ) {
+				continue;
+			}
+			$type = isset( $raw['type'] ) && array_key_exists( $raw['type'], self::field_types() ) ? $raw['type'] : 'texto';
+			$label = isset( $raw['label'] ) ? sanitize_text_field( $raw['label'] ) : '';
+			if ( '' === $label ) {
+				continue;
+			}
+			$name = isset( $raw['name'] ) ? sanitize_key( $raw['name'] ) : '';
+			if ( '' === $name ) {
+				$name = sanitize_key( remove_accents( $label ) );
+			}
+			if ( '' === $name ) {
+				$name = 'campo_' . ( (int) $position + 1 );
+			}
+			$base = $name;
+			$suffix = 2;
+			while ( isset( $used_names[ $name ] ) ) {
+				$name = $base . '_' . $suffix++;
+			}
+			$used_names[ $name ] = true;
+			$fields[] = [
+				'type'     => $type,
+				'label'    => $label,
+				'name'     => $name,
+				'help'     => isset( $raw['help'] ) ? sanitize_text_field( $raw['help'] ) : '',
+				'required' => ! empty( $raw['required'] ),
+			];
+		}
+		return $fields;
+	}
+
+	public static function admin_assets( $hook ) {
+		$screen = get_current_screen();
+		if ( ! $screen || self::POST_TYPE !== $screen->post_type ) {
+			return;
+		}
+		wp_enqueue_script( 'jquery-ui-sortable' );
+		wp_enqueue_script( 'flacso-hook-forms-admin', FLACSO_WEBHOOK_FORMS_URL . 'assets/admin.js', [ 'jquery', 'jquery-ui-sortable', 'wp-util' ], FLACSO_URUGUAY_VERSION, true );
+		wp_enqueue_style( 'flacso-hook-forms-admin', FLACSO_WEBHOOK_FORMS_URL . 'assets/admin.css', [], FLACSO_URUGUAY_VERSION );
+	}
+
+	public static function register_public_assets() {
+		wp_register_style( 'flacso-hook-forms', FLACSO_WEBHOOK_FORMS_URL . 'assets/form.css', [], FLACSO_URUGUAY_VERSION );
+		wp_register_script( 'flacso-hook-forms', FLACSO_WEBHOOK_FORMS_URL . 'assets/form.js', [], FLACSO_URUGUAY_VERSION, true );
+	}
+
+	public static function render_single_content( $content ) {
+		if ( is_singular( self::POST_TYPE ) && in_the_loop() && is_main_query() ) {
+			return '<div class="flacso-hook-intro">' . $content . '</div>' . self::render_form( get_the_ID(), false );
+		}
+		return $content;
+	}
+
+	public static function shortcode( $atts ) {
+		$atts = shortcode_atts( [ 'id' => 0 ], $atts );
+		return self::render_form( absint( $atts['id'] ) );
+	}
+
+	public static function render_form( $form_id, $show_title = true ) {
+		if ( self::POST_TYPE !== get_post_type( $form_id ) || 'publish' !== get_post_status( $form_id ) ) {
+			return current_user_can( 'edit_posts' ) ? '<p>' . esc_html__( 'El formulario no existe o todavía no está publicado.', 'flacso-uruguay' ) . '</p>' : '';
+		}
+		$fields = self::get_fields( $form_id );
+		wp_enqueue_style( 'flacso-hook-forms' );
+		wp_enqueue_script( 'flacso-hook-forms' );
+		$status = isset( $_GET['formulario_estado'] ) ? sanitize_key( wp_unslash( $_GET['formulario_estado'] ) ) : '';
+		ob_start();
+		?>
+		<section class="flacso-hook-form-wrap">
+			<?php if ( $show_title ) : ?><h1><?php echo esc_html( get_the_title( $form_id ) ); ?></h1><?php endif; ?>
+			<?php if ( 'enviado' === $status ) : ?>
+				<div class="flacso-hook-notice success" role="status"><?php esc_html_e( 'El formulario fue enviado correctamente.', 'flacso-uruguay' ); ?></div>
+			<?php elseif ( 'error' === $status ) : ?>
+				<div class="flacso-hook-notice error" role="alert"><?php esc_html_e( 'No pudimos enviar el formulario. Revisá los datos e intentá nuevamente.', 'flacso-uruguay' ); ?></div>
+			<?php endif; ?>
+			<form class="flacso-hook-form" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post" enctype="multipart/form-data">
+				<input type="hidden" name="action" value="flacso_hook_form_submit">
+				<input type="hidden" name="form_id" value="<?php echo esc_attr( $form_id ); ?>">
+				<input type="hidden" name="started_at" value="<?php echo esc_attr( time() ); ?>">
+				<input class="flacso-hook-hp" type="text" name="company_website" tabindex="-1" autocomplete="off" aria-hidden="true">
+				<?php wp_nonce_field( self::NONCE . '_' . $form_id, 'form_nonce' ); ?>
+				<?php foreach ( $fields as $field ) : ?>
+					<?php self::render_field( $field ); ?>
+				<?php endforeach; ?>
+				<button type="submit"><?php esc_html_e( 'Enviar', 'flacso-uruguay' ); ?></button>
+				<p class="flacso-hook-form-status" aria-live="polite"></p>
+			</form>
+		</section>
+		<?php
+		return ob_get_clean();
+	}
+
+	public static function register_rest_routes() {
+		register_rest_route(
+			'flacso/v1',
+			'/webhook-forms',
+			[
+				[
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => [ __CLASS__, 'rest_list_forms' ],
+					'permission_callback' => [ __CLASS__, 'rest_can_create_forms' ],
+					'args'                => [
+						'status'   => [ 'type' => 'string', 'default' => 'any' ],
+						'per_page' => [ 'type' => 'integer', 'default' => 20, 'minimum' => 1, 'maximum' => 100 ],
+						'page'     => [ 'type' => 'integer', 'default' => 1, 'minimum' => 1 ],
+					],
+				],
+				[
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => [ __CLASS__, 'rest_create_form' ],
+					'permission_callback' => [ __CLASS__, 'rest_can_create_forms' ],
+				],
+			]
+		);
+		register_rest_route(
+			'flacso/v1',
+			'/webhook-forms/(?P<id>\d+)',
+			[
+				'methods'             => WP_REST_Server::EDITABLE,
+				'callback'            => [ __CLASS__, 'rest_update_form' ],
+				'permission_callback' => [ __CLASS__, 'rest_can_edit_form' ],
+				'args'                => [ 'id' => [ 'type' => 'integer', 'required' => true ] ],
+			]
+		);
+		register_rest_route(
+			'flacso/v1',
+			'/webhook-forms/(?P<id>\d+)',
+			[
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => [ __CLASS__, 'rest_get_form' ],
+				'permission_callback' => [ __CLASS__, 'rest_can_edit_form' ],
+				'args'                => [ 'id' => [ 'type' => 'integer', 'required' => true ] ],
+			]
+		);
+	}
+
+	public static function rest_can_create_forms() {
+		return current_user_can( 'edit_posts' );
+	}
+
+	public static function rest_can_edit_form( $request ) {
+		$id = absint( $request['id'] );
+		return self::POST_TYPE === get_post_type( $id ) && current_user_can( 'edit_post', $id );
+	}
+
+	public static function rest_list_forms( $request ) {
+		$status = sanitize_key( $request->get_param( 'status' ) );
+		$allowed_statuses = [ 'any', 'publish', 'draft', 'pending', 'private' ];
+		if ( ! in_array( $status, $allowed_statuses, true ) ) {
+			$status = 'any';
+		}
+		$query = new WP_Query(
+			[
+				'post_type'      => self::POST_TYPE,
+				'post_status'    => $status,
+				'posts_per_page' => absint( $request->get_param( 'per_page' ) ),
+				'paged'          => absint( $request->get_param( 'page' ) ),
+				'orderby'        => 'modified',
+				'order'          => 'DESC',
+			]
+		);
+		$items = array_map( [ __CLASS__, 'rest_prepare_form' ], $query->posts );
+		$response = rest_ensure_response( $items );
+		$response->header( 'X-WP-Total', (int) $query->found_posts );
+		$response->header( 'X-WP-TotalPages', (int) $query->max_num_pages );
+		return $response;
+	}
+
+	public static function rest_get_form( $request ) {
+		return rest_ensure_response( self::rest_prepare_form( get_post( absint( $request['id'] ) ) ) );
+	}
+
+	public static function rest_create_form( $request ) {
+		return self::rest_save_form( $request, 0 );
+	}
+
+	public static function rest_update_form( $request ) {
+		return self::rest_save_form( $request, absint( $request['id'] ) );
+	}
+
+	private static function rest_save_form( $request, $post_id ) {
+		$data = $request->get_json_params();
+		if ( ! is_array( $data ) ) {
+			$data = $request->get_params();
+		}
+		$post_data = [
+			'post_type' => self::POST_TYPE,
+		];
+		if ( isset( $data['title'] ) ) {
+			$post_data['post_title'] = sanitize_text_field( $data['title'] );
+		}
+		if ( isset( $data['content'] ) ) {
+			$post_data['post_content'] = wp_kses_post( $data['content'] );
+		}
+		if ( isset( $data['excerpt'] ) ) {
+			$post_data['post_excerpt'] = sanitize_textarea_field( $data['excerpt'] );
+		}
+		if ( isset( $data['slug'] ) ) {
+			$post_data['post_name'] = sanitize_title( $data['slug'] );
+		}
+		if ( isset( $data['status'] ) ) {
+			$status = sanitize_key( $data['status'] );
+			if ( ! in_array( $status, [ 'draft', 'pending', 'publish', 'private' ], true ) ) {
+				return new WP_Error( 'invalid_status', __( 'Estado de formulario inválido.', 'flacso-uruguay' ), [ 'status' => 400 ] );
+			}
+			if ( 'publish' === $status && ! current_user_can( 'publish_posts' ) ) {
+				return new WP_Error( 'cannot_publish', __( 'No tenés permisos para publicar formularios.', 'flacso-uruguay' ), [ 'status' => 403 ] );
+			}
+			$post_data['post_status'] = $status;
+		} elseif ( ! $post_id ) {
+			$post_data['post_status'] = 'draft';
+		}
+
+		if ( $post_id ) {
+			$post_data['ID'] = $post_id;
+			$result = wp_update_post( wp_slash( $post_data ), true );
+		} else {
+			if ( empty( $post_data['post_title'] ) ) {
+				return new WP_Error( 'missing_title', __( 'El título es obligatorio.', 'flacso-uruguay' ), [ 'status' => 400 ] );
+			}
+			$result = wp_insert_post( wp_slash( $post_data ), true );
+		}
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		$post_id = (int) $result;
+
+		if ( isset( $data['fields'] ) ) {
+			if ( ! is_array( $data['fields'] ) ) {
+				return new WP_Error( 'invalid_fields', __( 'fields debe ser una lista.', 'flacso-uruguay' ), [ 'status' => 400 ] );
+			}
+			update_post_meta( $post_id, self::META_FIELDS, self::normalize_fields( $data['fields'] ) );
+		}
+		if ( isset( $data['webhook_url'] ) ) {
+			$url = esc_url_raw( $data['webhook_url'], [ 'http', 'https' ] );
+			if ( $url && ! wp_http_validate_url( $url ) ) {
+				return new WP_Error( 'invalid_webhook_url', __( 'La URL del webhook no es válida.', 'flacso-uruguay' ), [ 'status' => 400 ] );
+			}
+			update_post_meta( $post_id, self::META_URL, $url );
+		}
+		if ( isset( $data['featured_media'] ) ) {
+			$attachment_id = absint( $data['featured_media'] );
+			if ( $attachment_id && ! wp_attachment_is_image( $attachment_id ) ) {
+				return new WP_Error( 'invalid_featured_media', __( 'La imagen destacada debe ser un adjunto de imagen válido.', 'flacso-uruguay' ), [ 'status' => 400 ] );
+			}
+			if ( $attachment_id ) {
+				set_post_thumbnail( $post_id, $attachment_id );
+			} else {
+				delete_post_thumbnail( $post_id );
+			}
+		}
+		return new WP_REST_Response( self::rest_prepare_form( get_post( $post_id ) ), $post_id === absint( $request['id'] ) ? 200 : 201 );
+	}
+
+	public static function rest_prepare_form( $post ) {
+		return [
+			'id'             => (int) $post->ID,
+			'title'          => get_the_title( $post ),
+			'content'        => $post->post_content,
+			'excerpt'        => $post->post_excerpt,
+			'slug'           => $post->post_name,
+			'status'         => $post->post_status,
+			'link'           => get_permalink( $post ),
+			'featured_media' => (int) get_post_thumbnail_id( $post ),
+			'featured_media_url' => get_the_post_thumbnail_url( $post, 'large' ) ?: '',
+			'fields'         => self::get_fields( $post->ID ),
+			'webhook_url'    => get_post_meta( $post->ID, self::META_URL, true ),
+			'uses_global_webhook_token' => true,
+			'modified_gmt'   => get_post_modified_time( 'c', true, $post ),
+		];
+	}
+
+	private static function render_field( $field ) {
+		$id = 'flacso-field-' . $field['name'];
+		$required = ! empty( $field['required'] );
+		?>
+		<div class="flacso-hook-control">
+			<label for="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $field['label'] ); ?><?php echo $required ? ' *' : ''; ?></label>
+			<?php if ( 'textarea' === $field['type'] ) : ?>
+				<textarea id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" rows="6" <?php echo $required ? 'required' : ''; ?>></textarea>
+			<?php elseif ( 'documento' === $field['type'] ) : ?>
+				<div class="flacso-hook-document">
+					<select name="document_types[<?php echo esc_attr( $field['name'] ); ?>]" aria-label="<?php esc_attr_e( 'Tipo de documento', 'flacso-uruguay' ); ?>">
+						<option value="uy"><?php esc_html_e( 'Cédula uruguaya', 'flacso-uruguay' ); ?></option>
+						<option value="ext"><?php esc_html_e( 'Documento extranjero', 'flacso-uruguay' ); ?></option>
+					</select>
+					<input type="text" id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" inputmode="numeric" <?php echo $required ? 'required' : ''; ?>>
+				</div>
+			<?php elseif ( 'archivo' === $field['type'] ) : ?>
+				<input type="file" id="<?php echo esc_attr( $id ); ?>" name="files[<?php echo esc_attr( $field['name'] ); ?>]" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp" <?php echo $required ? 'required' : ''; ?>>
+				<small><?php esc_html_e( 'PDF, JPG, PNG o WebP. Máximo 10 MB.', 'flacso-uruguay' ); ?></small>
+			<?php else : ?>
+				<input type="text" id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" maxlength="250" <?php echo $required ? 'required' : ''; ?>>
+			<?php endif; ?>
+			<?php if ( ! empty( $field['help'] ) ) : ?><small><?php echo esc_html( $field['help'] ); ?></small><?php endif; ?>
+		</div>
+		<?php
+	}
+
+	public static function handle_submit() {
+		$form_id = isset( $_POST['form_id'] ) ? absint( $_POST['form_id'] ) : 0;
+		$redirect = $form_id ? get_permalink( $form_id ) : home_url( '/' );
+		if ( ! $form_id || self::POST_TYPE !== get_post_type( $form_id ) || 'publish' !== get_post_status( $form_id ) ) {
+			self::redirect( $redirect, 'error' );
+		}
+		if ( empty( $_POST['form_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['form_nonce'] ) ), self::NONCE . '_' . $form_id ) ) {
+			self::redirect( $redirect, 'error' );
+		}
+		if ( ! empty( $_POST['company_website'] ) || empty( $_POST['started_at'] ) || time() - absint( $_POST['started_at'] ) < 2 ) {
+			self::redirect( $redirect, 'error' );
+		}
+
+		$fields = self::get_fields( $form_id );
+		$posted = isset( $_POST['fields'] ) && is_array( $_POST['fields'] ) ? wp_unslash( $_POST['fields'] ) : [];
+		$document_types = isset( $_POST['document_types'] ) && is_array( $_POST['document_types'] ) ? wp_unslash( $_POST['document_types'] ) : [];
+		$values = [];
+		$files = [];
+		foreach ( $fields as $field ) {
+			$name = $field['name'];
+			if ( 'archivo' === $field['type'] ) {
+				$file = self::validated_file( $name, ! empty( $field['required'] ) );
+				if ( is_wp_error( $file ) ) {
+					self::redirect( $redirect, 'error' );
+				}
+				if ( $file ) {
+					$files[ $name ] = $file;
+				}
+				continue;
+			}
+			$value = isset( $posted[ $name ] ) && is_scalar( $posted[ $name ] )
+				? trim( sanitize_textarea_field( (string) $posted[ $name ] ) )
+				: '';
+			if ( ! empty( $field['required'] ) && '' === $value ) {
+				self::redirect( $redirect, 'error' );
+			}
+			if ( 'documento' === $field['type'] && '' !== $value ) {
+				$doc_type = isset( $document_types[ $name ] ) && is_scalar( $document_types[ $name ] ) && 'ext' === $document_types[ $name ] ? 'ext' : 'uy';
+				if ( ( 'uy' === $doc_type && ! self::valid_uy_document( $value ) ) || ( 'ext' === $doc_type && ( strlen( $value ) < 3 || strlen( $value ) > 40 ) ) ) {
+					self::redirect( $redirect, 'error' );
+				}
+				$values[ $name . '_tipo' ] = $doc_type;
+			}
+			$values[ $name ] = $value;
+		}
+
+		$url = get_post_meta( $form_id, self::META_URL, true );
+		if ( ! wp_http_validate_url( $url ) ) {
+			self::redirect( $redirect, 'error' );
+		}
+		$payload = [
+			'form_id'      => (string) $form_id,
+			'form_title'   => get_the_title( $form_id ),
+			'submitted_at' => gmdate( 'c' ),
+			'source_url'   => $redirect,
+			'fields'       => wp_json_encode( $values, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ),
+		];
+		foreach ( $values as $key => $value ) {
+			$payload[ 'field_' . $key ] = $value;
+		}
+		$boundary = '--------------------------' . wp_generate_password( 24, false, false );
+		$body = self::multipart_body( $payload, $files, $boundary );
+		$headers = [ 'Content-Type' => 'multipart/form-data; boundary=' . $boundary ];
+		$token = (string) get_option( 'flacso_webhook_token', '' );
+		if ( '' !== $token ) {
+			$headers['X-FLACSO-Webhook-Token'] = $token;
+			$headers['Authorization'] = 'Bearer ' . $token;
+		}
+		$response = wp_safe_remote_post(
+			$url,
+			[
+				'timeout'     => 30,
+				'redirection' => 2,
+				'headers'     => $headers,
+				'body'        => $body,
+				'data_format' => 'body',
+			]
+		);
+		if ( is_wp_error( $response ) || wp_remote_retrieve_response_code( $response ) < 200 || wp_remote_retrieve_response_code( $response ) >= 300 ) {
+			error_log( '[FLACSO webhook forms] Error de entrega del formulario ' . $form_id . ': ' . ( is_wp_error( $response ) ? $response->get_error_message() : wp_remote_retrieve_response_code( $response ) ) );
+			self::redirect( $redirect, 'error' );
+		}
+		self::redirect( $redirect, 'enviado' );
+	}
+
+	private static function validated_file( $name, $required ) {
+		if (
+			empty( $_FILES['files']['name'][ $name ] )
+			|| ! isset(
+				$_FILES['files']['type'][ $name ],
+				$_FILES['files']['tmp_name'][ $name ],
+				$_FILES['files']['error'][ $name ],
+				$_FILES['files']['size'][ $name ]
+			)
+		) {
+			return $required ? new WP_Error( 'required_file' ) : null;
+		}
+		$file = [
+			'name'     => sanitize_file_name( wp_unslash( $_FILES['files']['name'][ $name ] ) ),
+			'type'     => sanitize_mime_type( $_FILES['files']['type'][ $name ] ),
+			'tmp_name' => $_FILES['files']['tmp_name'][ $name ],
+			'error'    => (int) $_FILES['files']['error'][ $name ],
+			'size'     => (int) $_FILES['files']['size'][ $name ],
+		];
+		if ( UPLOAD_ERR_OK !== $file['error'] || $file['size'] < 1 || $file['size'] > self::MAX_FILE_SIZE || ! is_uploaded_file( $file['tmp_name'] ) ) {
+			return new WP_Error( 'invalid_file' );
+		}
+		$allowed = [ 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp', 'pdf' => 'application/pdf' ];
+		$checked = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'], $allowed );
+		if ( empty( $checked['type'] ) || ! in_array( $checked['type'], $allowed, true ) ) {
+			return new WP_Error( 'invalid_file_type' );
+		}
+		$file['type'] = $checked['type'];
+		return $file;
+	}
+
+	private static function multipart_body( $payload, $files, $boundary ) {
+		$eol = "\r\n";
+		$body = '';
+		foreach ( $payload as $name => $value ) {
+			$body .= '--' . $boundary . $eol;
+			$body .= 'Content-Disposition: form-data; name="' . str_replace( '"', '', $name ) . '"' . $eol . $eol;
+			$body .= (string) $value . $eol;
+		}
+		foreach ( $files as $name => $file ) {
+			$body .= '--' . $boundary . $eol;
+			$body .= 'Content-Disposition: form-data; name="files[' . str_replace( '"', '', $name ) . ']"; filename="' . str_replace( [ '"', "\r", "\n" ], '', $file['name'] ) . '"' . $eol;
+			$body .= 'Content-Type: ' . $file['type'] . $eol . $eol;
+			$body .= file_get_contents( $file['tmp_name'] ) . $eol; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		}
+		return $body . '--' . $boundary . '--' . $eol;
+	}
+
+	private static function valid_uy_document( $value ) {
+		$digits = preg_replace( '/\D+/', '', $value );
+		if ( 7 === strlen( $digits ) ) {
+			$digits = '0' . $digits;
+		}
+		if ( 8 !== strlen( $digits ) ) {
+			return false;
+		}
+		$factors = [ 2, 9, 8, 7, 6, 3, 4 ];
+		$sum = 0;
+		for ( $i = 0; $i < 7; $i++ ) {
+			$sum += (int) $digits[ $i ] * $factors[ $i ];
+		}
+		return ( ( 10 - ( $sum % 10 ) ) % 10 ) === (int) $digits[7];
+	}
+
+	private static function redirect( $url, $status ) {
+		wp_safe_redirect( add_query_arg( 'formulario_estado', $status, $url ) );
+		exit;
+	}
+}

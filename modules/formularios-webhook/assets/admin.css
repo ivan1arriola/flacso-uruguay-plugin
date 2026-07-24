@@ -1,0 +1,31 @@
+.flacso-hook-field {
+	position: relative;
+	margin: 0 0 12px;
+	padding: 14px 14px 8px 44px;
+	border: 1px solid #c3c4c7;
+	border-radius: 5px;
+	background: #fff;
+}
+.flacso-hook-field-handle {
+	position: absolute;
+	top: 17px;
+	left: 12px;
+	color: #646970;
+	cursor: move;
+}
+.flacso-hook-field p {
+	display: flex;
+	align-items: end;
+	gap: 14px;
+	margin: 0 0 10px;
+}
+.flacso-hook-field label {
+	display: grid;
+	gap: 4px;
+}
+.flacso-hook-field .flacso-hook-grow {
+	flex: 1;
+}
+@media (max-width: 782px) {
+	.flacso-hook-field p { align-items: stretch; flex-direction: column; }
+}
