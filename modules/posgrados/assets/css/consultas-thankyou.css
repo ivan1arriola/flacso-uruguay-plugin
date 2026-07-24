@@ -1,0 +1,152 @@
+.flacso-pos-consultas-thanks {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    min-height: 52vh;
+    width: 100%;
+    padding: clamp(3rem, 8vw, 6rem) 1.25rem;
+}
+
+.flacso-pos-consultas-thanks *,
+.flacso-pos-consultas-thanks *::before,
+.flacso-pos-consultas-thanks *::after {
+    box-sizing: inherit;
+}
+
+.flacso-pos-consultas-thanks__container {
+    width: 100%;
+    max-width: 1140px;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.flacso-pos-consultas-thanks__inner {
+    max-width: 820px;
+    margin: 0 auto;
+    text-align: center;
+    animation: flacso-pos-consultas-thanks-in 0.45s ease-out both;
+}
+
+.flacso-pos-consultas-thanks__message {
+    margin-bottom: 2rem;
+}
+
+.flacso-pos-consultas-thanks__check {
+    margin-bottom: 0.5rem;
+    color: #198754;
+    font-size: clamp(2.5rem, 6vw, 3.5rem);
+    font-weight: 700;
+    line-height: 1;
+}
+
+.flacso-pos-consultas-thanks h1 {
+    margin: 0 0 1rem;
+    color: var(--global-palette1, #163970);
+    font-size: clamp(2rem, 5vw, 3rem);
+    line-height: 1.15;
+}
+
+.flacso-pos-consultas-thanks p {
+    margin: 0;
+    font-size: 1.125rem;
+    line-height: 1.6;
+}
+
+.flacso-pos-consultas-thanks .flacso-pos-consultas-thanks__lead {
+    margin-bottom: 0.25rem;
+    font-size: 1.25rem;
+}
+
+.flacso-pos-consultas-thanks__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.flacso-pos-consultas-thanks__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    min-height: 52px;
+    padding: 0.75rem 1.4rem;
+    border: 2px solid transparent;
+    border-radius: 999px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.25;
+    text-decoration: none;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.flacso-pos-consultas-thanks__button:hover {
+    transform: translateY(-1px);
+}
+
+.flacso-pos-consultas-thanks__button:focus-visible {
+    outline: 3px solid #ffbf47;
+    outline-offset: 3px;
+}
+
+.flacso-pos-consultas-thanks__button--primary {
+    border-color: var(--global-palette1, #163970);
+    background: var(--global-palette1, #163970);
+    color: #fff;
+}
+
+.flacso-pos-consultas-thanks__button--primary:hover {
+    border-color: #0f2a55;
+    background: #0f2a55;
+    color: #fff;
+}
+
+.flacso-pos-consultas-thanks__button--secondary {
+    border-color: #5d6670;
+    background: #fff;
+    color: #3f4851;
+}
+
+.flacso-pos-consultas-thanks__button--secondary:hover {
+    border-color: #3f4851;
+    background: #f3f4f5;
+    color: #252a2f;
+}
+
+@keyframes flacso-pos-consultas-thanks-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 575px) {
+    .flacso-pos-consultas-thanks {
+        min-height: 46vh;
+        padding-right: 1rem;
+        padding-left: 1rem;
+    }
+
+    .flacso-pos-consultas-thanks__actions {
+        flex-direction: column;
+    }
+
+    .flacso-pos-consultas-thanks__button {
+        width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .flacso-pos-consultas-thanks__inner {
+        animation: none;
+    }
+
+    .flacso-pos-consultas-thanks__button {
+        transition: none;
+    }
+}

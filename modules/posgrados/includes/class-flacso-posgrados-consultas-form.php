@@ -478,30 +478,39 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
             status_header(200);
             nocache_headers();
             self::apply_virtual_page_title($page_title);
+
+            $thankyou_style_path = dirname(__DIR__) . '/assets/css/consultas-thankyou.css';
+            wp_enqueue_style(
+                'flacso-posgrados-consultas-thankyou',
+                FLACSO_POSGRADOS_PLUGIN_URL . 'assets/css/consultas-thankyou.css',
+                [],
+                file_exists($thankyou_style_path) ? (string) filemtime($thankyou_style_path) : null
+            );
+
             get_header();
             ?>
-            <main class="flacso-pos-consultas-thanks d-flex align-items-center">
-                <div class="container py-5">
-                    <div class="flacso-pos-consultas-thanks__inner fade-in">
-                        <div class="text-center mb-4">
-                            <div class="display-5 text-success mb-2" aria-hidden="true">✓</div>
-                            <h1 class="mb-3" style="color: var(--global-palette1);"><?php esc_html_e('¡Gracias por tu consulta!', 'flacso-posgrados-docentes'); ?></h1>
+            <main class="flacso-pos-consultas-thanks">
+                <div class="flacso-pos-consultas-thanks__container">
+                    <div class="flacso-pos-consultas-thanks__inner">
+                        <div class="flacso-pos-consultas-thanks__message">
+                            <div class="flacso-pos-consultas-thanks__check" aria-hidden="true">✓</div>
+                            <h1><?php esc_html_e('¡Gracias por tu consulta!', 'flacso-posgrados-docentes'); ?></h1>
 
                             <?php if ($title): ?>
-                                <p class="lead mb-1"><?php printf(esc_html__('Gracias por tu interés en %s de FLACSO Uruguay.', 'flacso-posgrados-docentes'), esc_html($title)); ?></p>
+                                <p class="flacso-pos-consultas-thanks__lead"><?php printf(esc_html__('Gracias por tu interés en %s de FLACSO Uruguay.', 'flacso-posgrados-docentes'), esc_html($title)); ?></p>
                             <?php else: ?>
-                                <p class="lead mb-1"><?php esc_html_e('Hemos recibido tu consulta correctamente.', 'flacso-posgrados-docentes'); ?></p>
+                                <p class="flacso-pos-consultas-thanks__lead"><?php esc_html_e('Hemos recibido tu consulta correctamente.', 'flacso-posgrados-docentes'); ?></p>
                             <?php endif; ?>
-                            <p class="mb-0"><?php esc_html_e('En breve recibirás un correo con toda la información detallada.', 'flacso-posgrados-docentes'); ?></p>
+                            <p><?php esc_html_e('En breve recibirás un correo con toda la información detallada.', 'flacso-posgrados-docentes'); ?></p>
                         </div>
 
-                        <div class="d-grid gap-2 d-sm-flex justify-content-center">
-                            <a class="btn btn-primary btn-lg rounded-pill me-sm-2 mb-2" href="<?php echo esc_url($back); ?>">
-                                <i class="bi bi-arrow-left-circle me-2" aria-hidden="true"></i>
+                        <div class="flacso-pos-consultas-thanks__actions">
+                            <a class="flacso-pos-consultas-thanks__button flacso-pos-consultas-thanks__button--primary" href="<?php echo esc_url($back); ?>">
+                                <span aria-hidden="true">←</span>
                                 <?php esc_html_e('Volver al programa', 'flacso-posgrados-docentes'); ?>
                             </a>
-                            <a class="btn btn-outline-secondary btn-lg rounded-pill mb-2" href="<?php echo esc_url(home_url('/formacion/')); ?>">
-                                <i class="bi bi-layers me-2" aria-hidden="true"></i>
+                            <a class="flacso-pos-consultas-thanks__button flacso-pos-consultas-thanks__button--secondary" href="<?php echo esc_url(home_url('/formacion/')); ?>">
+                                <span aria-hidden="true">◇</span>
                                 <?php esc_html_e('Ver todos los posgrados', 'flacso-posgrados-docentes'); ?>
                             </a>
                         </div>
