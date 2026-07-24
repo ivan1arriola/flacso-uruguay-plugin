@@ -1848,6 +1848,15 @@ function flacso_render_gracias_virtual() {
                 return;
         }
 
+        // Los CPT Formulario tienen su propia página de agradecimiento y contenido
+        // configurable. No deben heredar textos ni acciones de la oferta académica.
+        if (
+                is_singular( 'flacso_hook_form' )
+                && get_query_var( 'flacso_form_thanks' )
+        ) {
+                return;
+        }
+
         // Forzar estado 200 y marcar que no es 404 para que el tema no muestre título/estado erróneo.
         global $wp_query;
         if ( $wp_query ) {

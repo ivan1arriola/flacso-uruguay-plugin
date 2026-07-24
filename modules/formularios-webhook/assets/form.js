@@ -24,9 +24,30 @@ document.addEventListener('DOMContentLoaded', function () {
 		select.addEventListener('change', sync);
 		sync();
 	});
+	document.querySelectorAll('.flacso-hook-form input[type="email"]').forEach(function (input) {
+		function updateEmailValidity() {
+			var shouldShowError = input.dataset.flacsoTouched === 'true' && !input.validity.valid;
+			input.classList.toggle('flacso-hook-invalid', shouldShowError);
+			if (shouldShowError) {
+				input.setAttribute('aria-invalid', 'true');
+			} else {
+				input.removeAttribute('aria-invalid');
+			}
+		}
+		input.addEventListener('blur', function () {
+			input.dataset.flacsoTouched = 'true';
+			updateEmailValidity();
+		});
+		input.addEventListener('input', updateEmailValidity);
+	});
 	document.querySelectorAll('.flacso-hook-form').forEach(function (form) {
 		form.addEventListener('submit', function (event) {
 			form.classList.add('was-validated');
+			form.querySelectorAll('input[type="email"]').forEach(function (input) {
+				input.dataset.flacsoTouched = 'true';
+				input.classList.toggle('flacso-hook-invalid', !input.validity.valid);
+				if (!input.validity.valid) input.setAttribute('aria-invalid', 'true');
+			});
 			if (!form.checkValidity()) {
 				event.preventDefault();
 				var invalid = form.querySelector(':invalid');
@@ -39,9 +60,15 @@ document.addEventListener('DOMContentLoaded', function () {
 				}
 			});
 			var button = form.querySelector('button[type="submit"]');
+			var buttonLabel = form.querySelector('.flacso-hook-submit-label');
 			var status = form.querySelector('.flacso-hook-form-status');
-			if (button) button.disabled = true;
-			if (status) status.textContent = 'Enviando…';
+			if (button) {
+				button.disabled = true;
+				button.classList.add('is-loading');
+				button.setAttribute('aria-busy', 'true');
+			}
+			if (buttonLabel) buttonLabel.textContent = 'Enviando…';
+			if (status) status.textContent = 'Enviando el formulario. Por favor, esperá.';
 		});
 	});
 });

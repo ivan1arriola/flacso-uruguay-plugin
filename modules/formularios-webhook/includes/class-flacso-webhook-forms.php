@@ -9,6 +9,7 @@ final class Flacso_Webhook_Forms {
 	const META_FIELDS = '_flacso_hook_fields';
 	const META_AUTO_EMAIL = '_flacso_hook_auto_email';
 	const META_THANK_YOU = '_flacso_hook_thank_you';
+	const META_SHOW_ON_HOME = '_flacso_hook_show_on_home';
 	const NONCE       = 'flacso_hook_form_submit';
 	const MAX_FILE_SIZE = 10485760;
 
@@ -122,6 +123,11 @@ final class Flacso_Webhook_Forms {
 		?>
 		<p><?php esc_html_e( 'La app usa la carpeta global exclusiva de formularios y crea automáticamente una subcarpeta para este formulario.', 'flacso-uruguay' ); ?></p>
 		<p class="description"><?php esc_html_e( 'La autenticación usa automáticamente el token global compartido por todos los formularios de FLACSO.', 'flacso-uruguay' ); ?></p>
+		<hr>
+		<label>
+			<input type="checkbox" name="flacso_hook_show_on_home" value="1" <?php checked( '1', get_post_meta( $post->ID, self::META_SHOW_ON_HOME, true ) ); ?>>
+			<?php esc_html_e( 'Mostrar junto a las novedades de la página principal', 'flacso-uruguay' ); ?>
+		</label>
 		<?php
 	}
 
@@ -237,6 +243,7 @@ final class Flacso_Webhook_Forms {
 
 		$raw_fields = isset( $_POST['flacso_hook_fields'] ) && is_array( $_POST['flacso_hook_fields'] ) ? wp_unslash( $_POST['flacso_hook_fields'] ) : [];
 		update_post_meta( $post_id, self::META_FIELDS, self::normalize_fields( $raw_fields ) );
+		update_post_meta( $post_id, self::META_SHOW_ON_HOME, empty( $_POST['flacso_hook_show_on_home'] ) ? '0' : '1' );
 	}
 
 	private static function normalize_fields( $raw_fields ) {
@@ -340,8 +347,8 @@ final class Flacso_Webhook_Forms {
 				<?php foreach ( $fields as $field ) : ?>
 					<?php self::render_field( $field ); ?>
 				<?php endforeach; ?>
-				<button type="submit"><?php esc_html_e( 'Enviar', 'flacso-uruguay' ); ?></button>
-				<p class="flacso-hook-form-status" aria-live="polite"></p>
+				<button type="submit"><span class="flacso-hook-submit-label"><?php esc_html_e( 'Enviar', 'flacso-uruguay' ); ?></span></button>
+				<p class="flacso-hook-form-status screen-reader-text" aria-live="polite"></p>
 			</form>
 		</section>
 		<?php
@@ -497,6 +504,9 @@ final class Flacso_Webhook_Forms {
 		if ( isset( $data['thank_you'] ) && is_array( $data['thank_you'] ) ) {
 			update_post_meta( $post_id, self::META_THANK_YOU, self::normalize_thank_you( $data['thank_you'] ) );
 		}
+		if ( array_key_exists( 'show_on_home', $data ) ) {
+			update_post_meta( $post_id, self::META_SHOW_ON_HOME, rest_sanitize_boolean( $data['show_on_home'] ) ? '1' : '0' );
+		}
 		if ( isset( $data['featured_media'] ) ) {
 			$attachment_id = absint( $data['featured_media'] );
 			if ( $attachment_id && ! wp_attachment_is_image( $attachment_id ) ) {
@@ -522,6 +532,7 @@ final class Flacso_Webhook_Forms {
 			'link'           => get_permalink( $post ),
 			'featured_media' => (int) get_post_thumbnail_id( $post ),
 			'featured_media_url' => get_the_post_thumbnail_url( $post, 'large' ) ?: '',
+			'show_on_home'   => '1' === get_post_meta( $post->ID, self::META_SHOW_ON_HOME, true ),
 			'fields'         => self::get_fields( $post->ID ),
 			'auto_email'     => self::get_auto_email( $post->ID ),
 			'thank_you'      => self::get_thank_you( $post->ID ),
@@ -550,7 +561,8 @@ final class Flacso_Webhook_Forms {
 				<input type="file" id="<?php echo esc_attr( $id ); ?>" name="files[<?php echo esc_attr( $field['name'] ); ?>]" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp" <?php echo $required ? 'required' : ''; ?>>
 				<small><?php esc_html_e( 'PDF, JPG, PNG o WebP. Máximo 10 MB.', 'flacso-uruguay' ); ?></small>
 			<?php elseif ( 'email' === $field['type'] ) : ?>
-				<input type="email" id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" maxlength="254" autocomplete="email" inputmode="email" placeholder="ejemplo@correo.com" <?php echo $required ? 'required' : ''; ?>>
+				<input type="email" id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" maxlength="254" autocomplete="email" inputmode="email" placeholder="ejemplo@correo.com" aria-describedby="<?php echo esc_attr( $id ); ?>-error" <?php echo $required ? 'required' : ''; ?>>
+				<small class="flacso-hook-field-error" id="<?php echo esc_attr( $id ); ?>-error" aria-live="polite"><?php esc_html_e( 'Ingresá un correo electrónico válido (por ejemplo, nombre@dominio.com).', 'flacso-uruguay' ); ?></small>
 			<?php elseif ( 'pais' === $field['type'] ) : ?>
 				<select id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" autocomplete="country-name" <?php echo $required ? 'required' : ''; ?>>
 					<option value=""><?php esc_html_e( 'Seleccioná un país', 'flacso-uruguay' ); ?></option>
