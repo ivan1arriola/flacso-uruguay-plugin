@@ -116,6 +116,7 @@ class Oferta_Rest_API
                 'mensaje_bienvenida' => get_option('flacso_mensaje_bienvenida', ''),
                 'flacso_webhook_token' => $masked_token,
                 'flacso_google_drive_folder_id' => get_option('flacso_google_drive_folder_id', ''),
+                'flacso_webhook_forms_drive_folder_id' => get_option('flacso_webhook_forms_drive_folder_id', ''),
                 'flacso_preinscripciones_telegram_bot_token' => $masked_telegram_bot_token,
                 'flacso_preinscripciones_telegram_chat_id' => get_option('flacso_preinscripciones_telegram_chat_id', ''),
                 'correos_excluidos' => get_option('flacso_correos_excluidos', ''),
@@ -179,6 +180,9 @@ class Oferta_Rest_API
         }
         if (isset($payload['flacso_google_drive_folder_id'])) {
             update_option('flacso_google_drive_folder_id', sanitize_text_field($payload['flacso_google_drive_folder_id']));
+        }
+        if (isset($payload['flacso_webhook_forms_drive_folder_id'])) {
+            update_option('flacso_webhook_forms_drive_folder_id', sanitize_text_field($payload['flacso_webhook_forms_drive_folder_id']));
         }
         if (isset($payload['flacso_preinscripciones_telegram_bot_token'])) {
             $new_telegram_bot_token = sanitize_text_field($payload['flacso_preinscripciones_telegram_bot_token']);

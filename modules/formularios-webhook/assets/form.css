@@ -46,6 +46,44 @@
 .flacso-hook-control small {
 	color: #596875;
 }
+.flacso-hook-checkbox {
+	display: flex !important;
+	align-items: center;
+	gap: .65rem;
+}
+.flacso-hook-checkbox input {
+	width: auto;
+}
+.flacso-hook-scale {
+	display: flex;
+	flex-wrap: wrap;
+	gap: .65rem 1rem;
+}
+.flacso-hook-scale label {
+	display: flex;
+	align-items: center;
+	gap: .3rem;
+}
+.flacso-hook-scale input {
+	width: auto;
+}
+.flacso-hook-grid {
+	display: grid;
+	gap: .8rem;
+	overflow-x: auto;
+}
+.flacso-hook-grid fieldset {
+	display: flex;
+	flex-wrap: wrap;
+	gap: .65rem 1rem;
+	margin: 0;
+	padding: .8rem;
+	border: 1px solid #dfe4e8;
+	border-radius: 6px;
+}
+.flacso-hook-section {
+	border-top: 2px solid #146f6d;
+}
 .flacso-hook-form button {
 	padding: .85rem 1.25rem;
 	border: 0;
@@ -61,6 +99,15 @@
 .flacso-hook-notice { margin: 0 0 1rem; padding: 1rem; border-radius: 6px; }
 .flacso-hook-notice.success { background: #e8f6ee; color: #176536; }
 .flacso-hook-notice.error { background: #fdecec; color: #962424; }
+.flacso-hook-thanks {
+	max-width: 720px;
+	margin: 4rem auto;
+	padding: clamp(1.5rem, 5vw, 3rem);
+	border: 1px solid #cfe7dc;
+	border-radius: 14px;
+	background: #f2fbf6;
+	text-align: center;
+}
 @media (max-width: 560px) {
 	.flacso-hook-document { grid-template-columns: 1fr; }
 }

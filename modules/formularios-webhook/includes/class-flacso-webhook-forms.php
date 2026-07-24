@@ -7,8 +7,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 final class Flacso_Webhook_Forms {
 	const POST_TYPE  = 'flacso_hook_form';
 	const META_FIELDS = '_flacso_hook_fields';
-	const META_DRIVE_FOLDER = '_flacso_hook_drive_folder_id';
 	const META_AUTO_EMAIL = '_flacso_hook_auto_email';
+	const META_THANK_YOU = '_flacso_hook_thank_you';
 	const NONCE       = 'flacso_hook_form_submit';
 	const MAX_FILE_SIZE = 10485760;
 
@@ -24,6 +24,9 @@ final class Flacso_Webhook_Forms {
 		add_action( 'admin_post_nopriv_flacso_hook_form_submit', [ __CLASS__, 'handle_submit' ] );
 		add_action( 'admin_post_flacso_hook_form_submit', [ __CLASS__, 'handle_submit' ] );
 		add_action( 'init', [ __CLASS__, 'maybe_flush_rewrites' ], 20 );
+		add_action( 'template_redirect', [ __CLASS__, 'redirect_legacy_url' ], 1 );
+		add_filter( 'query_vars', [ __CLASS__, 'register_query_vars' ] );
+		add_filter( 'document_title_parts', [ __CLASS__, 'thank_you_document_title' ] );
 	}
 
 	public static function register_post_type() {
@@ -41,22 +44,57 @@ final class Flacso_Webhook_Forms {
 				'public'       => true,
 				'show_in_rest' => true,
 				'has_archive'  => false,
-				'rewrite'      => [ 'slug' => 'formularios-webhook', 'with_front' => false ],
+				'rewrite'      => [ 'slug' => 'formulario', 'with_front' => false ],
 				'menu_icon'    => 'dashicons-forms',
 				'menu_position'=> 28,
 				'supports'     => [ 'title', 'editor', 'thumbnail', 'excerpt', 'revisions' ],
 				'rest_base'    => 'formularios-webhook',
 			]
 		);
+		add_rewrite_rule(
+			'^formulario/([^/]+)/gracias/?$',
+			'index.php?post_type=' . self::POST_TYPE . '&name=$matches[1]&flacso_form_thanks=1',
+			'top'
+		);
 	}
 
 	public static function maybe_flush_rewrites() {
-		$version = '1';
+		$version = '3';
 		if ( get_option( 'flacso_hook_forms_rewrite_version' ) === $version ) {
 			return;
 		}
 		flush_rewrite_rules( false );
 		update_option( 'flacso_hook_forms_rewrite_version', $version, false );
+	}
+
+	public static function register_query_vars( $vars ) {
+		$vars[] = 'flacso_form_thanks';
+		return $vars;
+	}
+
+	public static function thank_you_document_title( $parts ) {
+		if ( is_singular( self::POST_TYPE ) && get_query_var( 'flacso_form_thanks' ) ) {
+			$config = self::get_thank_you( get_queried_object_id() );
+			$parts['title'] = $config['title'];
+		}
+		return $parts;
+	}
+
+	public static function redirect_legacy_url() {
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+		$path = (string) wp_parse_url( $request_uri, PHP_URL_PATH );
+		if ( ! preg_match( '#/formularios-webhook/([^/]+)/?$#', $path, $matches ) ) {
+			return;
+		}
+		$slug = sanitize_title( rawurldecode( $matches[1] ) );
+		if ( '' === $slug ) {
+			return;
+		}
+		$form = get_page_by_path( $slug, OBJECT, self::POST_TYPE );
+		if ( $form && 'publish' === $form->post_status ) {
+			wp_safe_redirect( get_permalink( $form ), 301 );
+			exit;
+		}
 	}
 
 	public static function add_meta_boxes() {
@@ -67,13 +105,8 @@ final class Flacso_Webhook_Forms {
 
 	public static function settings_box( $post ) {
 		wp_nonce_field( 'flacso_hook_form_save', 'flacso_hook_form_nonce' );
-		$folder_id = get_post_meta( $post->ID, self::META_DRIVE_FOLDER, true );
 		?>
-		<p>
-			<label for="flacso-hook-drive-folder"><strong><?php esc_html_e( 'ID de carpeta de Google Drive', 'flacso-uruguay' ); ?></strong></label>
-			<input class="widefat" type="text" id="flacso-hook-drive-folder" name="flacso_hook_drive_folder_id" value="<?php echo esc_attr( $folder_id ); ?>" placeholder="1AbCdEf...">
-		</p>
-		<p class="description"><?php esc_html_e( 'La app creará en esa carpeta una planilla de respuestas y las subcarpetas necesarias para los archivos.', 'flacso-uruguay' ); ?></p>
+		<p><?php esc_html_e( 'La app usa la carpeta global exclusiva de formularios y crea automáticamente una subcarpeta para este formulario.', 'flacso-uruguay' ); ?></p>
 		<p class="description"><?php esc_html_e( 'La autenticación usa automáticamente el token global compartido por todos los formularios de FLACSO.', 'flacso-uruguay' ); ?></p>
 		<?php
 	}
@@ -86,6 +119,17 @@ final class Flacso_Webhook_Forms {
 			'email'     => __( 'Correo electrónico', 'flacso-uruguay' ),
 			'pais'      => __( 'País', 'flacso-uruguay' ),
 			'telefono'  => __( 'Teléfono', 'flacso-uruguay' ),
+			'select'    => __( 'Selección', 'flacso-uruguay' ),
+			'booleano'  => __( 'Sí/No', 'flacso-uruguay' ),
+			'opcion_multiple' => __( 'Opción múltiple', 'flacso-uruguay' ),
+			'casillas' => __( 'Casillas múltiples', 'flacso-uruguay' ),
+			'escala' => __( 'Escala lineal', 'flacso-uruguay' ),
+			'valoracion' => __( 'Valoración', 'flacso-uruguay' ),
+			'cuadricula_opcion' => __( 'Cuadrícula de opción múltiple', 'flacso-uruguay' ),
+			'cuadricula_casillas' => __( 'Cuadrícula de casillas', 'flacso-uruguay' ),
+			'fecha' => __( 'Fecha', 'flacso-uruguay' ),
+			'hora' => __( 'Hora', 'flacso-uruguay' ),
+			'seccion' => __( 'Sección', 'flacso-uruguay' ),
 			'documento' => __( 'Documento de identidad (UY/extranjero)', 'flacso-uruguay' ),
 			'texto'     => __( 'Texto corto', 'flacso-uruguay' ),
 			'textarea'  => __( 'Texto largo', 'flacso-uruguay' ),
@@ -136,6 +180,21 @@ final class Flacso_Webhook_Forms {
 				<label class="flacso-hook-grow"><?php esc_html_e( 'Texto de ayuda', 'flacso-uruguay' ); ?>
 					<input class="widefat" type="text" name="flacso_hook_fields[<?php echo esc_attr( $index ); ?>][help]" value="<?php echo esc_attr( isset( $field['help'] ) ? $field['help'] : '' ); ?>">
 				</label>
+				<label class="flacso-hook-grow"><?php esc_html_e( 'Opciones (una por línea, sólo selección)', 'flacso-uruguay' ); ?>
+					<textarea class="widefat" rows="3" name="flacso_hook_fields[<?php echo esc_attr( $index ); ?>][options]"><?php echo esc_textarea( isset( $field['options'] ) && is_array( $field['options'] ) ? implode( "\n", $field['options'] ) : '' ); ?></textarea>
+				</label>
+				<label class="flacso-hook-grow"><?php esc_html_e( 'Filas (cuadrículas)', 'flacso-uruguay' ); ?>
+					<textarea class="widefat" rows="3" name="flacso_hook_fields[<?php echo esc_attr( $index ); ?>][rows]"><?php echo esc_textarea( isset( $field['rows'] ) && is_array( $field['rows'] ) ? implode( "\n", $field['rows'] ) : '' ); ?></textarea>
+				</label>
+				<label class="flacso-hook-grow"><?php esc_html_e( 'Columnas (cuadrículas)', 'flacso-uruguay' ); ?>
+					<textarea class="widefat" rows="3" name="flacso_hook_fields[<?php echo esc_attr( $index ); ?>][columns]"><?php echo esc_textarea( isset( $field['columns'] ) && is_array( $field['columns'] ) ? implode( "\n", $field['columns'] ) : '' ); ?></textarea>
+				</label>
+				<label><?php esc_html_e( 'Escala mínima', 'flacso-uruguay' ); ?>
+					<select name="flacso_hook_fields[<?php echo esc_attr( $index ); ?>][scale_min]"><option value="0" <?php selected( (int) ( $field['scale_min'] ?? 1 ), 0 ); ?>>0</option><option value="1" <?php selected( (int) ( $field['scale_min'] ?? 1 ), 1 ); ?>>1</option></select>
+				</label>
+				<label><?php esc_html_e( 'Escala máxima', 'flacso-uruguay' ); ?>
+					<input type="number" min="2" max="10" name="flacso_hook_fields[<?php echo esc_attr( $index ); ?>][scale_max]" value="<?php echo esc_attr( $field['scale_max'] ?? 5 ); ?>">
+				</label>
 				<label><input type="checkbox" name="flacso_hook_fields[<?php echo esc_attr( $index ); ?>][required]" value="1" <?php checked( ! empty( $field['required'] ) ); ?>> <?php esc_html_e( 'Obligatorio', 'flacso-uruguay' ); ?></label>
 				<button type="button" class="button-link-delete flacso-hook-remove-field"><?php esc_html_e( 'Eliminar', 'flacso-uruguay' ); ?></button>
 			</p>
@@ -161,8 +220,6 @@ final class Flacso_Webhook_Forms {
 			return;
 		}
 
-		$folder_id = isset( $_POST['flacso_hook_drive_folder_id'] ) ? self::sanitize_drive_folder_id( wp_unslash( $_POST['flacso_hook_drive_folder_id'] ) ) : '';
-		update_post_meta( $post_id, self::META_DRIVE_FOLDER, $folder_id );
 
 		$raw_fields = isset( $_POST['flacso_hook_fields'] ) && is_array( $_POST['flacso_hook_fields'] ) ? wp_unslash( $_POST['flacso_hook_fields'] ) : [];
 		update_post_meta( $post_id, self::META_FIELDS, self::normalize_fields( $raw_fields ) );
@@ -199,6 +256,11 @@ final class Flacso_Webhook_Forms {
 				'name'     => $name,
 				'help'     => isset( $raw['help'] ) ? sanitize_text_field( $raw['help'] ) : '',
 				'required' => ! empty( $raw['required'] ),
+				'options'  => self::normalize_options( isset( $raw['options'] ) ? $raw['options'] : [] ),
+				'rows'     => self::normalize_options( isset( $raw['rows'] ) ? $raw['rows'] : [] ),
+				'columns'  => self::normalize_options( isset( $raw['columns'] ) ? $raw['columns'] : [] ),
+				'scale_min'=> isset( $raw['scale_min'] ) && 0 === (int) $raw['scale_min'] ? 0 : 1,
+				'scale_max'=> isset( $raw['scale_max'] ) ? min( 10, max( 2, (int) $raw['scale_max'] ) ) : 5,
 			];
 		}
 		return $fields;
@@ -221,6 +283,11 @@ final class Flacso_Webhook_Forms {
 
 	public static function render_single_content( $content ) {
 		if ( is_singular( self::POST_TYPE ) && in_the_loop() && is_main_query() ) {
+			if ( get_query_var( 'flacso_form_thanks' ) ) {
+				$config = self::get_thank_you( get_the_ID() );
+				wp_enqueue_style( 'flacso-hook-forms' );
+				return '<section class="flacso-hook-thanks"><h1>' . esc_html( $config['title'] ) . '</h1><div>' . wp_kses_post( $config['body'] ) . '</div></section>';
+			}
 			return '<div class="flacso-hook-intro">' . $content . '</div>' . self::render_form( get_the_ID(), false );
 		}
 		return $content;
@@ -408,11 +475,11 @@ final class Flacso_Webhook_Forms {
 			}
 			update_post_meta( $post_id, self::META_FIELDS, self::normalize_fields( $data['fields'] ) );
 		}
-		if ( isset( $data['drive_folder_id'] ) ) {
-			update_post_meta( $post_id, self::META_DRIVE_FOLDER, self::sanitize_drive_folder_id( $data['drive_folder_id'] ) );
-		}
 		if ( isset( $data['auto_email'] ) && is_array( $data['auto_email'] ) ) {
 			update_post_meta( $post_id, self::META_AUTO_EMAIL, self::normalize_auto_email( $data['auto_email'] ) );
+		}
+		if ( isset( $data['thank_you'] ) && is_array( $data['thank_you'] ) ) {
+			update_post_meta( $post_id, self::META_THANK_YOU, self::normalize_thank_you( $data['thank_you'] ) );
 		}
 		if ( isset( $data['featured_media'] ) ) {
 			$attachment_id = absint( $data['featured_media'] );
@@ -440,8 +507,8 @@ final class Flacso_Webhook_Forms {
 			'featured_media' => (int) get_post_thumbnail_id( $post ),
 			'featured_media_url' => get_the_post_thumbnail_url( $post, 'large' ) ?: '',
 			'fields'         => self::get_fields( $post->ID ),
-			'drive_folder_id'=> get_post_meta( $post->ID, self::META_DRIVE_FOLDER, true ),
 			'auto_email'     => self::get_auto_email( $post->ID ),
+			'thank_you'      => self::get_thank_you( $post->ID ),
 			'uses_global_webhook_token' => true,
 			'modified_gmt'   => get_post_modified_time( 'c', true, $post ),
 		];
@@ -477,6 +544,48 @@ final class Flacso_Webhook_Forms {
 				</select>
 			<?php elseif ( 'telefono' === $field['type'] ) : ?>
 				<input type="tel" id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" maxlength="30" inputmode="tel" autocomplete="tel" pattern="[+0-9 ()-]{6,30}" placeholder="+598 99 123 456" <?php echo $required ? 'required' : ''; ?>>
+			<?php elseif ( 'select' === $field['type'] ) : ?>
+				<select id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" <?php echo $required ? 'required' : ''; ?>>
+					<option value=""><?php esc_html_e( 'Seleccioná una opción', 'flacso-uruguay' ); ?></option>
+					<?php foreach ( self::normalize_options( isset( $field['options'] ) ? $field['options'] : [] ) as $option ) : ?>
+						<option value="<?php echo esc_attr( $option ); ?>"><?php echo esc_html( $option ); ?></option>
+					<?php endforeach; ?>
+				</select>
+			<?php elseif ( 'booleano' === $field['type'] ) : ?>
+				<label class="flacso-hook-checkbox">
+					<input type="checkbox" id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" value="Sí" <?php echo $required ? 'required' : ''; ?>>
+					<span><?php esc_html_e( 'Sí', 'flacso-uruguay' ); ?></span>
+				</label>
+			<?php elseif ( 'opcion_multiple' === $field['type'] ) : ?>
+				<?php foreach ( self::normalize_options( $field['options'] ?? [] ) as $option_index => $option ) : ?>
+					<label class="flacso-hook-checkbox"><input type="radio" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" value="<?php echo esc_attr( $option ); ?>" <?php echo $required && 0 === $option_index ? 'required' : ''; ?>> <span><?php echo esc_html( $option ); ?></span></label>
+				<?php endforeach; ?>
+			<?php elseif ( 'casillas' === $field['type'] ) : ?>
+				<?php foreach ( self::normalize_options( $field['options'] ?? [] ) as $option ) : ?>
+					<label class="flacso-hook-checkbox"><input type="checkbox" name="fields[<?php echo esc_attr( $field['name'] ); ?>][]" value="<?php echo esc_attr( $option ); ?>"> <span><?php echo esc_html( $option ); ?></span></label>
+				<?php endforeach; ?>
+			<?php elseif ( 'escala' === $field['type'] || 'valoracion' === $field['type'] ) : ?>
+				<div class="flacso-hook-scale">
+					<?php for ( $number = (int) ( $field['scale_min'] ?? 1 ); $number <= (int) ( $field['scale_max'] ?? 5 ); $number++ ) : ?>
+						<label><input type="radio" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" value="<?php echo esc_attr( $number ); ?>" <?php echo $required && $number === (int) ( $field['scale_min'] ?? 1 ) ? 'required' : ''; ?>> <span><?php echo 'valoracion' === $field['type'] ? '★ ' : ''; ?><?php echo esc_html( $number ); ?></span></label>
+					<?php endfor; ?>
+				</div>
+			<?php elseif ( 'cuadricula_opcion' === $field['type'] || 'cuadricula_casillas' === $field['type'] ) : ?>
+				<div class="flacso-hook-grid">
+					<?php foreach ( self::normalize_options( $field['rows'] ?? [] ) as $row ) : ?>
+						<fieldset><legend><?php echo esc_html( $row ); ?></legend>
+							<?php foreach ( self::normalize_options( $field['columns'] ?? [] ) as $column_index => $column ) : ?>
+								<label class="flacso-hook-checkbox"><input type="<?php echo 'cuadricula_opcion' === $field['type'] ? 'radio' : 'checkbox'; ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>][<?php echo esc_attr( $row ); ?>]<?php echo 'cuadricula_casillas' === $field['type'] ? '[]' : ''; ?>" value="<?php echo esc_attr( $column ); ?>" <?php echo $required && 0 === $column_index ? 'required' : ''; ?>> <span><?php echo esc_html( $column ); ?></span></label>
+							<?php endforeach; ?>
+						</fieldset>
+					<?php endforeach; ?>
+				</div>
+			<?php elseif ( 'fecha' === $field['type'] ) : ?>
+				<input type="date" id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" <?php echo $required ? 'required' : ''; ?>>
+			<?php elseif ( 'hora' === $field['type'] ) : ?>
+				<input type="time" id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" <?php echo $required ? 'required' : ''; ?>>
+			<?php elseif ( 'seccion' === $field['type'] ) : ?>
+				<div class="flacso-hook-section" role="separator"></div>
 			<?php else : ?>
 				<input type="text" id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" maxlength="250" <?php echo $required ? 'required' : ''; ?>>
 			<?php endif; ?>
@@ -505,6 +614,9 @@ final class Flacso_Webhook_Forms {
 		$files = [];
 		foreach ( $fields as $field ) {
 			$name = $field['name'];
+			if ( 'seccion' === $field['type'] ) {
+				continue;
+			}
 			if ( 'archivo' === $field['type'] ) {
 				$file = self::validated_file( $name, ! empty( $field['required'] ) );
 				if ( is_wp_error( $file ) ) {
@@ -515,7 +627,39 @@ final class Flacso_Webhook_Forms {
 				}
 				continue;
 			}
+			if ( 'casillas' === $field['type'] ) {
+				$selected = isset( $posted[ $name ] ) && is_array( $posted[ $name ] ) ? array_map( 'sanitize_text_field', $posted[ $name ] ) : [];
+				$selected = array_values( array_intersect( $selected, self::normalize_options( $field['options'] ?? [] ) ) );
+				if ( ! empty( $field['required'] ) && empty( $selected ) ) {
+					self::redirect( $redirect, 'error' );
+				}
+				$values[ $name ] = implode( ', ', $selected );
+				continue;
+			}
+			if ( 'cuadricula_opcion' === $field['type'] || 'cuadricula_casillas' === $field['type'] ) {
+				$grid_posted = isset( $posted[ $name ] ) && is_array( $posted[ $name ] ) ? $posted[ $name ] : [];
+				$grid_value = [];
+				$columns = self::normalize_options( $field['columns'] ?? [] );
+				foreach ( self::normalize_options( $field['rows'] ?? [] ) as $row ) {
+					$answer = $grid_posted[ $row ] ?? ( 'cuadricula_casillas' === $field['type'] ? [] : '' );
+					if ( 'cuadricula_casillas' === $field['type'] ) {
+						$answer = is_array( $answer ) ? array_values( array_intersect( array_map( 'sanitize_text_field', $answer ), $columns ) ) : [];
+					} else {
+						$answer = is_scalar( $answer ) ? sanitize_text_field( (string) $answer ) : '';
+						$answer = in_array( $answer, $columns, true ) ? $answer : '';
+					}
+					if ( ! empty( $field['required'] ) && empty( $answer ) ) {
+						self::redirect( $redirect, 'error' );
+					}
+					$grid_value[ $row ] = $answer;
+				}
+				$values[ $name ] = wp_json_encode( $grid_value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
+				continue;
+			}
 			$raw_value = isset( $posted[ $name ] ) && is_scalar( $posted[ $name ] ) ? (string) $posted[ $name ] : '';
+			if ( 'booleano' === $field['type'] ) {
+				$raw_value = 'Sí' === $raw_value ? 'Sí' : 'No';
+			}
 			$value = 'email' === $field['type']
 				? sanitize_email( $raw_value )
 				: trim( sanitize_textarea_field( $raw_value ) );
@@ -529,6 +673,27 @@ final class Flacso_Webhook_Forms {
 				self::redirect( $redirect, 'error' );
 			}
 			if ( 'telefono' === $field['type'] && '' !== $value && ! preg_match( '/^[+0-9 ()-]{6,30}$/', $value ) ) {
+				self::redirect( $redirect, 'error' );
+			}
+			if ( 'select' === $field['type'] && '' !== $value && ! in_array( $value, self::normalize_options( isset( $field['options'] ) ? $field['options'] : [] ), true ) ) {
+				self::redirect( $redirect, 'error' );
+			}
+			if ( 'opcion_multiple' === $field['type'] && '' !== $value && ! in_array( $value, self::normalize_options( $field['options'] ?? [] ), true ) ) {
+				self::redirect( $redirect, 'error' );
+			}
+			if ( ( 'escala' === $field['type'] || 'valoracion' === $field['type'] ) && '' !== $value ) {
+				$number = (int) $value;
+				if ( (string) $number !== $value || $number < (int) ( $field['scale_min'] ?? 1 ) || $number > (int) ( $field['scale_max'] ?? 5 ) ) {
+					self::redirect( $redirect, 'error' );
+				}
+			}
+			if ( 'fecha' === $field['type'] && '' !== $value && ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $value ) ) {
+				self::redirect( $redirect, 'error' );
+			}
+			if ( 'hora' === $field['type'] && '' !== $value && ! preg_match( '/^(?:[01]\d|2[0-3]):[0-5]\d$/', $value ) ) {
+				self::redirect( $redirect, 'error' );
+			}
+			if ( 'booleano' === $field['type'] && ! empty( $field['required'] ) && 'Sí' !== $value ) {
 				self::redirect( $redirect, 'error' );
 			}
 			if ( 'documento' === $field['type'] && '' !== $value ) {
@@ -547,15 +712,11 @@ final class Flacso_Webhook_Forms {
 			self::redirect( $redirect, 'error' );
 		}
 
-		$drive_folder_id = get_post_meta( $form_id, self::META_DRIVE_FOLDER, true );
 		$editor_base_url = trim( (string) get_option( 'flacso_external_editor_url', 'https://editor-flacso-uy.vercel.app' ) );
 		if ( '' === $editor_base_url ) {
 			$editor_base_url = 'https://editor-flacso-uy.vercel.app';
 		}
 		$url = untrailingslashit( $editor_base_url ) . '/api/formularios/respuestas';
-		if ( '' === $drive_folder_id ) {
-			self::redirect( $redirect, 'error' );
-		}
 		if ( ! wp_http_validate_url( $url ) ) {
 			self::redirect( $redirect, 'error' );
 		}
@@ -574,7 +735,6 @@ final class Flacso_Webhook_Forms {
 			'source_url'   => $redirect,
 			'fields'       => wp_json_encode( $values, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ),
 			'field_labels' => wp_json_encode( $field_labels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ),
-			'drive_folder_id' => $drive_folder_id,
 		];
 		$auto_email = self::get_auto_email( $form_id );
 		if ( ! empty( $auto_email['enabled'] ) ) {
@@ -605,7 +765,8 @@ final class Flacso_Webhook_Forms {
 			error_log( '[FLACSO webhook forms] Error de entrega del formulario ' . $form_id . ': ' . ( is_wp_error( $response ) ? $response->get_error_message() : wp_remote_retrieve_response_code( $response ) ) );
 			self::redirect( $redirect, 'error' );
 		}
-		self::redirect( $redirect, 'enviado' );
+		wp_safe_redirect( trailingslashit( $redirect ) . 'gracias/' );
+		exit;
 	}
 
 	private static function validated_file( $name, $required ) {
@@ -672,10 +833,6 @@ final class Flacso_Webhook_Forms {
 		return ( ( 10 - ( $sum % 10 ) ) % 10 ) === (int) $digits[7];
 	}
 
-	private static function sanitize_drive_folder_id( $value ) {
-		return preg_replace( '/[^A-Za-z0-9_-]/', '', sanitize_text_field( (string) $value ) );
-	}
-
 	private static function countries() {
 		return [
 			'Uruguay', 'Argentina', 'Bolivia', 'Brasil', 'Chile', 'Colombia',
@@ -696,6 +853,28 @@ final class Flacso_Webhook_Forms {
 			'email_field' => isset( $config['email_field'] ) ? sanitize_key( $config['email_field'] ) : 'email',
 			'subject'     => isset( $config['subject'] ) ? sanitize_text_field( $config['subject'] ) : '',
 			'body'        => isset( $config['body'] ) ? wp_kses_post( $config['body'] ) : '',
+		];
+	}
+
+	private static function normalize_options( $options ) {
+		if ( is_string( $options ) ) {
+			$options = preg_split( '/\r\n|\r|\n/', $options );
+		}
+		if ( ! is_array( $options ) ) {
+			return [];
+		}
+		return array_values( array_unique( array_filter( array_map( 'sanitize_text_field', $options ) ) ) );
+	}
+
+	private static function get_thank_you( $post_id ) {
+		$config = get_post_meta( (int) $post_id, self::META_THANK_YOU, true );
+		return self::normalize_thank_you( is_array( $config ) ? $config : [] );
+	}
+
+	private static function normalize_thank_you( $config ) {
+		return [
+			'title' => ! empty( $config['title'] ) ? sanitize_text_field( $config['title'] ) : __( '¡Gracias!', 'flacso-uruguay' ),
+			'body'  => ! empty( $config['body'] ) ? wp_kses_post( $config['body'] ) : '<p>' . esc_html__( 'Recibimos correctamente tu información.', 'flacso-uruguay' ) . '</p>',
 		];
 	}
 
