@@ -1,4 +1,4 @@
-# Formularios webhook
+# Formularios
 
 Módulo independiente para crear formularios configurables desde WordPress y
 entregar sus respuestas directamente a un webhook. No guarda las respuestas ni
@@ -6,7 +6,7 @@ los archivos en WordPress.
 
 ## Uso
 
-1. En el administrador, abrir `Formularios webhook > Crear formulario webhook`.
+1. En el administrador, abrir `Formularios > Crear formulario`.
 2. Configurar una vez la carpeta exclusiva de Google Drive para formularios en
    los ajustes de la app.
 3. Agregar y ordenar los campos.

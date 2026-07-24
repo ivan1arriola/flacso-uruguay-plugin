@@ -34,12 +34,26 @@ final class Flacso_Webhook_Forms {
 			self::POST_TYPE,
 			[
 				'labels' => [
-					'name'          => __( 'Formularios webhook', 'flacso-uruguay' ),
-					'singular_name' => __( 'Formulario webhook', 'flacso-uruguay' ),
-					'add_new_item'  => __( 'Crear formulario webhook', 'flacso-uruguay' ),
-					'edit_item'     => __( 'Editar formulario webhook', 'flacso-uruguay' ),
-					'all_items'     => __( 'Todos los formularios', 'flacso-uruguay' ),
-					'menu_name'     => __( 'Formularios webhook', 'flacso-uruguay' ),
+					'name'                  => __( 'Formularios', 'flacso-uruguay' ),
+					'singular_name'         => __( 'Formulario', 'flacso-uruguay' ),
+					'add_new'               => __( 'Agregar nuevo', 'flacso-uruguay' ),
+					'add_new_item'          => __( 'Crear formulario', 'flacso-uruguay' ),
+					'edit_item'             => __( 'Editar formulario', 'flacso-uruguay' ),
+					'new_item'              => __( 'Nuevo formulario', 'flacso-uruguay' ),
+					'view_item'             => __( 'Ver formulario', 'flacso-uruguay' ),
+					'view_items'            => __( 'Ver formularios', 'flacso-uruguay' ),
+					'search_items'          => __( 'Buscar formularios', 'flacso-uruguay' ),
+					'not_found'             => __( 'No se encontraron formularios.', 'flacso-uruguay' ),
+					'not_found_in_trash'    => __( 'No hay formularios en la papelera.', 'flacso-uruguay' ),
+					'all_items'             => __( 'Todos los formularios', 'flacso-uruguay' ),
+					'archives'              => __( 'Formularios', 'flacso-uruguay' ),
+					'attributes'            => __( 'Atributos del formulario', 'flacso-uruguay' ),
+					'featured_image'        => __( 'Imagen destacada', 'flacso-uruguay' ),
+					'set_featured_image'    => __( 'Seleccionar imagen destacada', 'flacso-uruguay' ),
+					'remove_featured_image' => __( 'Quitar imagen destacada', 'flacso-uruguay' ),
+					'use_featured_image'    => __( 'Usar como imagen destacada', 'flacso-uruguay' ),
+					'menu_name'             => __( 'Formularios', 'flacso-uruguay' ),
+					'name_admin_bar'        => __( 'Formulario', 'flacso-uruguay' ),
 				],
 				'public'       => true,
 				'show_in_rest' => true,
@@ -277,8 +291,10 @@ final class Flacso_Webhook_Forms {
 	}
 
 	public static function register_public_assets() {
-		wp_register_style( 'flacso-hook-forms', FLACSO_WEBHOOK_FORMS_URL . 'assets/form.css', [], FLACSO_URUGUAY_VERSION );
-		wp_register_script( 'flacso-hook-forms', FLACSO_WEBHOOK_FORMS_URL . 'assets/form.js', [], FLACSO_URUGUAY_VERSION, true );
+		wp_register_style( 'flacso-hook-intl-tel-input', 'https://cdn.jsdelivr.net/npm/intl-tel-input@25.12.4/build/css/intlTelInput.css', [], '25.12.4' );
+		wp_register_script( 'flacso-hook-intl-tel-input', 'https://cdn.jsdelivr.net/npm/intl-tel-input@25.12.4/build/js/intlTelInput.min.js', [], '25.12.4', true );
+		wp_register_style( 'flacso-hook-forms', FLACSO_WEBHOOK_FORMS_URL . 'assets/form.css', [ 'flacso-hook-intl-tel-input' ], FLACSO_URUGUAY_VERSION );
+		wp_register_script( 'flacso-hook-forms', FLACSO_WEBHOOK_FORMS_URL . 'assets/form.js', [ 'flacso-hook-intl-tel-input' ], FLACSO_URUGUAY_VERSION, true );
 	}
 
 	public static function render_single_content( $content ) {
@@ -519,9 +535,9 @@ final class Flacso_Webhook_Forms {
 		$required = ! empty( $field['required'] );
 		?>
 		<div class="flacso-hook-control">
-			<label for="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $field['label'] ); ?><?php echo $required ? ' *' : ''; ?></label>
+			<label for="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $field['label'] ); ?><?php if ( $required ) : ?> <span class="flacso-hook-required" aria-hidden="true">*</span><span class="screen-reader-text"><?php esc_html_e( ' obligatorio', 'flacso-uruguay' ); ?></span><?php endif; ?></label>
 			<?php if ( 'textarea' === $field['type'] ) : ?>
-				<textarea id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" rows="6" <?php echo $required ? 'required' : ''; ?>></textarea>
+				<textarea id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" rows="6" placeholder="<?php esc_attr_e( 'Escribí tu respuesta', 'flacso-uruguay' ); ?>" <?php echo $required ? 'required' : ''; ?>></textarea>
 			<?php elseif ( 'documento' === $field['type'] ) : ?>
 				<div class="flacso-hook-document">
 					<select name="document_types[<?php echo esc_attr( $field['name'] ); ?>]" aria-label="<?php esc_attr_e( 'Tipo de documento', 'flacso-uruguay' ); ?>">
@@ -534,7 +550,7 @@ final class Flacso_Webhook_Forms {
 				<input type="file" id="<?php echo esc_attr( $id ); ?>" name="files[<?php echo esc_attr( $field['name'] ); ?>]" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp" <?php echo $required ? 'required' : ''; ?>>
 				<small><?php esc_html_e( 'PDF, JPG, PNG o WebP. Máximo 10 MB.', 'flacso-uruguay' ); ?></small>
 			<?php elseif ( 'email' === $field['type'] ) : ?>
-				<input type="email" id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" maxlength="254" autocomplete="email" <?php echo $required ? 'required' : ''; ?>>
+				<input type="email" id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" maxlength="254" autocomplete="email" inputmode="email" placeholder="ejemplo@correo.com" <?php echo $required ? 'required' : ''; ?>>
 			<?php elseif ( 'pais' === $field['type'] ) : ?>
 				<select id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" autocomplete="country-name" <?php echo $required ? 'required' : ''; ?>>
 					<option value=""><?php esc_html_e( 'Seleccioná un país', 'flacso-uruguay' ); ?></option>
@@ -543,7 +559,8 @@ final class Flacso_Webhook_Forms {
 					<?php endforeach; ?>
 				</select>
 			<?php elseif ( 'telefono' === $field['type'] ) : ?>
-				<input type="tel" id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" maxlength="30" inputmode="tel" autocomplete="tel" pattern="[+0-9 ()-]{6,30}" placeholder="+598 99 123 456" <?php echo $required ? 'required' : ''; ?>>
+				<input class="flacso-hook-phone" type="tel" id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" maxlength="30" inputmode="tel" autocomplete="tel" <?php echo $required ? 'required' : ''; ?>>
+				<small class="flacso-hook-phone-help"><?php esc_html_e( 'Seleccioná el país y escribí el número en formato nacional.', 'flacso-uruguay' ); ?></small>
 			<?php elseif ( 'select' === $field['type'] ) : ?>
 				<select id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" <?php echo $required ? 'required' : ''; ?>>
 					<option value=""><?php esc_html_e( 'Seleccioná una opción', 'flacso-uruguay' ); ?></option>
@@ -587,7 +604,7 @@ final class Flacso_Webhook_Forms {
 			<?php elseif ( 'seccion' === $field['type'] ) : ?>
 				<div class="flacso-hook-section" role="separator"></div>
 			<?php else : ?>
-				<input type="text" id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" maxlength="250" <?php echo $required ? 'required' : ''; ?>>
+				<input type="text" id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" maxlength="250" autocomplete="<?php echo esc_attr( 'nombre' === $field['type'] ? 'given-name' : ( 'apellido' === $field['type'] ? 'family-name' : ( 'nombre_completo' === $field['type'] ? 'name' : 'off' ) ) ); ?>" placeholder="<?php echo esc_attr( $field['label'] ); ?>" <?php echo $required ? 'required' : ''; ?>>
 			<?php endif; ?>
 			<?php if ( ! empty( $field['help'] ) ) : ?><small><?php echo esc_html( $field['help'] ); ?></small><?php endif; ?>
 		</div>
