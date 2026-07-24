@@ -73,6 +73,17 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
         global $post;
         if (!$post) return;
 
+        if (get_query_var('es_preinscripcion_gracias')) {
+            $style_path = __DIR__ . '/assets/preinscripcion-gracias.css';
+            wp_enqueue_style(
+                'flacso-preinscripcion-gracias',
+                FLACSO_URUGUAY_URL . 'modules/preinscripcion/includes/assets/preinscripcion-gracias.css',
+                array(),
+                file_exists($style_path) ? (string) filemtime($style_path) : FLACSO_URUGUAY_VERSION
+            );
+            return;
+        }
+
         // Cargar solo en la URL virtual /.../preinscripcion/.
         if (!get_query_var('es_preinscripcion')) return;
 
@@ -111,7 +122,13 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
         
         // Verificar si es una URL virtual de preinscripción
         $es_preinscripcion = get_query_var('es_preinscripcion');
+        $es_preinscripcion_gracias = get_query_var('es_preinscripcion_gracias');
         $es_carta = get_query_var('es_carta');
+
+        if ($es_preinscripcion_gracias && (is_singular('page') || is_singular('oferta-academica')) && $post) {
+            add_filter('document_title_parts', array($this, 'modificar_titulo_parts_gracias_preinscripcion'));
+            return dirname(__DIR__) . '/templates/preinscripcion-gracias.php';
+        }
         
         if (($es_preinscripcion || $es_carta) && (is_singular('page') || is_singular('oferta-academica')) && $post) {
             if ($es_preinscripcion) {
@@ -371,6 +388,11 @@ trait FLACSO_Formulario_Preinscripcion_Templates {
         if ($post) {
             $title_parts['title'] = 'Carta de Presentación - ' . get_the_title($post->ID);
         }
+        return $title_parts;
+    }
+
+    public function modificar_titulo_parts_gracias_preinscripcion($title_parts) {
+        $title_parts['title'] = 'Preinscripción recibida';
         return $title_parts;
     }
     

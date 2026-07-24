@@ -35,6 +35,7 @@ class FLACSO_Formulario_Preinscripcion_Final {
         // Template system y rewrite rules
         add_action('init', array($this, 'registrar_templates'));
         add_action('init', array($this, 'registrar_rewrite_rules'));
+        add_action('init', array($this, 'actualizar_rewrite_gracias_preinscripcion'), 20);
         add_filter('query_vars', array($this, 'agregar_query_vars'));
 
         // Test webhook
@@ -299,6 +300,13 @@ class FLACSO_Formulario_Preinscripcion_Final {
             'index.php?oferta-academica=$matches[1]&es_preinscripcion=1',
             'top'
         );
+
+        // Confirmación exclusiva del formulario de preinscripción.
+        add_rewrite_rule(
+            '^formacion/[^/]+/([^/]+)/preinscripcion/gracias/?$',
+            'index.php?oferta-academica=$matches[1]&es_preinscripcion_gracias=1',
+            'top'
+        );
         
         // Captura /formacion/tipo/slug/carta/ para el CPT
         add_rewrite_rule(
@@ -313,6 +321,12 @@ class FLACSO_Formulario_Preinscripcion_Final {
             'index.php?pagename=$matches[1]&es_preinscripcion=1',
             'top'
         );
+
+        add_rewrite_rule(
+            '^(.+?)/preinscripcion/gracias/?$',
+            'index.php?pagename=$matches[1]&es_preinscripcion_gracias=1',
+            'top'
+        );
         
         // Captura /cualquier-pagina/carta/ como página virtual (Legacy)
         add_rewrite_rule(
@@ -322,11 +336,23 @@ class FLACSO_Formulario_Preinscripcion_Final {
         );
     }
 
+    public function actualizar_rewrite_gracias_preinscripcion() {
+        $rewrite_version = '1';
+
+        if (get_option('flacso_preinscripcion_gracias_rewrite_version') === $rewrite_version) {
+            return;
+        }
+
+        flush_rewrite_rules(false);
+        update_option('flacso_preinscripcion_gracias_rewrite_version', $rewrite_version, false);
+    }
+
     /**
      * Agrega variables de consulta personalizadas
      */
     public function agregar_query_vars($vars) {
         $vars[] = 'es_preinscripcion';
+        $vars[] = 'es_preinscripcion_gracias';
         $vars[] = 'es_carta';
         return $vars;
     }
