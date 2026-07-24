@@ -7,7 +7,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 final class Flacso_Webhook_Forms {
 	const POST_TYPE  = 'flacso_hook_form';
 	const META_FIELDS = '_flacso_hook_fields';
-	const META_URL    = '_flacso_hook_url';
+	const META_DRIVE_FOLDER = '_flacso_hook_drive_folder_id';
+	const META_AUTO_EMAIL = '_flacso_hook_auto_email';
 	const NONCE       = 'flacso_hook_form_submit';
 	const MAX_FILE_SIZE = 10485760;
 
@@ -66,21 +67,25 @@ final class Flacso_Webhook_Forms {
 
 	public static function settings_box( $post ) {
 		wp_nonce_field( 'flacso_hook_form_save', 'flacso_hook_form_nonce' );
-		$url = get_post_meta( $post->ID, self::META_URL, true );
+		$folder_id = get_post_meta( $post->ID, self::META_DRIVE_FOLDER, true );
 		?>
 		<p>
-			<label for="flacso-hook-url"><strong><?php esc_html_e( 'URL del webhook', 'flacso-uruguay' ); ?></strong></label>
-			<input class="widefat" type="url" id="flacso-hook-url" name="flacso_hook_url" value="<?php echo esc_attr( $url ); ?>" placeholder="https://sistema.ejemplo/webhooks/formularios">
+			<label for="flacso-hook-drive-folder"><strong><?php esc_html_e( 'ID de carpeta de Google Drive', 'flacso-uruguay' ); ?></strong></label>
+			<input class="widefat" type="text" id="flacso-hook-drive-folder" name="flacso_hook_drive_folder_id" value="<?php echo esc_attr( $folder_id ); ?>" placeholder="1AbCdEf...">
 		</p>
-		<p class="description"><?php esc_html_e( 'El envío se realiza como multipart/form-data. Las respuestas se incluyen en fields y los archivos en files.', 'flacso-uruguay' ); ?></p>
+		<p class="description"><?php esc_html_e( 'La app creará en esa carpeta una planilla de respuestas y las subcarpetas necesarias para los archivos.', 'flacso-uruguay' ); ?></p>
 		<p class="description"><?php esc_html_e( 'La autenticación usa automáticamente el token global compartido por todos los formularios de FLACSO.', 'flacso-uruguay' ); ?></p>
 		<?php
 	}
 
 	public static function field_types() {
 		return [
+			'nombre_completo' => __( 'Nombre completo', 'flacso-uruguay' ),
 			'nombre'    => __( 'Nombre', 'flacso-uruguay' ),
 			'apellido'  => __( 'Apellido', 'flacso-uruguay' ),
+			'email'     => __( 'Correo electrónico', 'flacso-uruguay' ),
+			'pais'      => __( 'País', 'flacso-uruguay' ),
+			'telefono'  => __( 'Teléfono', 'flacso-uruguay' ),
 			'documento' => __( 'Documento de identidad (UY/extranjero)', 'flacso-uruguay' ),
 			'texto'     => __( 'Texto corto', 'flacso-uruguay' ),
 			'textarea'  => __( 'Texto largo', 'flacso-uruguay' ),
@@ -156,8 +161,8 @@ final class Flacso_Webhook_Forms {
 			return;
 		}
 
-		$url = isset( $_POST['flacso_hook_url'] ) ? esc_url_raw( wp_unslash( $_POST['flacso_hook_url'] ), [ 'http', 'https' ] ) : '';
-		update_post_meta( $post_id, self::META_URL, $url );
+		$folder_id = isset( $_POST['flacso_hook_drive_folder_id'] ) ? self::sanitize_drive_folder_id( wp_unslash( $_POST['flacso_hook_drive_folder_id'] ) ) : '';
+		update_post_meta( $post_id, self::META_DRIVE_FOLDER, $folder_id );
 
 		$raw_fields = isset( $_POST['flacso_hook_fields'] ) && is_array( $_POST['flacso_hook_fields'] ) ? wp_unslash( $_POST['flacso_hook_fields'] ) : [];
 		update_post_meta( $post_id, self::META_FIELDS, self::normalize_fields( $raw_fields ) );
@@ -367,6 +372,8 @@ final class Flacso_Webhook_Forms {
 		}
 		if ( isset( $data['slug'] ) ) {
 			$post_data['post_name'] = sanitize_title( $data['slug'] );
+		} elseif ( ! $post_id && ! empty( $post_data['post_title'] ) ) {
+			$post_data['post_name'] = sanitize_title( $post_data['post_title'] );
 		}
 		if ( isset( $data['status'] ) ) {
 			$status = sanitize_key( $data['status'] );
@@ -401,12 +408,11 @@ final class Flacso_Webhook_Forms {
 			}
 			update_post_meta( $post_id, self::META_FIELDS, self::normalize_fields( $data['fields'] ) );
 		}
-		if ( isset( $data['webhook_url'] ) ) {
-			$url = esc_url_raw( $data['webhook_url'], [ 'http', 'https' ] );
-			if ( $url && ! wp_http_validate_url( $url ) ) {
-				return new WP_Error( 'invalid_webhook_url', __( 'La URL del webhook no es válida.', 'flacso-uruguay' ), [ 'status' => 400 ] );
-			}
-			update_post_meta( $post_id, self::META_URL, $url );
+		if ( isset( $data['drive_folder_id'] ) ) {
+			update_post_meta( $post_id, self::META_DRIVE_FOLDER, self::sanitize_drive_folder_id( $data['drive_folder_id'] ) );
+		}
+		if ( isset( $data['auto_email'] ) && is_array( $data['auto_email'] ) ) {
+			update_post_meta( $post_id, self::META_AUTO_EMAIL, self::normalize_auto_email( $data['auto_email'] ) );
 		}
 		if ( isset( $data['featured_media'] ) ) {
 			$attachment_id = absint( $data['featured_media'] );
@@ -434,7 +440,8 @@ final class Flacso_Webhook_Forms {
 			'featured_media' => (int) get_post_thumbnail_id( $post ),
 			'featured_media_url' => get_the_post_thumbnail_url( $post, 'large' ) ?: '',
 			'fields'         => self::get_fields( $post->ID ),
-			'webhook_url'    => get_post_meta( $post->ID, self::META_URL, true ),
+			'drive_folder_id'=> get_post_meta( $post->ID, self::META_DRIVE_FOLDER, true ),
+			'auto_email'     => self::get_auto_email( $post->ID ),
 			'uses_global_webhook_token' => true,
 			'modified_gmt'   => get_post_modified_time( 'c', true, $post ),
 		];
@@ -459,6 +466,17 @@ final class Flacso_Webhook_Forms {
 			<?php elseif ( 'archivo' === $field['type'] ) : ?>
 				<input type="file" id="<?php echo esc_attr( $id ); ?>" name="files[<?php echo esc_attr( $field['name'] ); ?>]" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp" <?php echo $required ? 'required' : ''; ?>>
 				<small><?php esc_html_e( 'PDF, JPG, PNG o WebP. Máximo 10 MB.', 'flacso-uruguay' ); ?></small>
+			<?php elseif ( 'email' === $field['type'] ) : ?>
+				<input type="email" id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" maxlength="254" autocomplete="email" <?php echo $required ? 'required' : ''; ?>>
+			<?php elseif ( 'pais' === $field['type'] ) : ?>
+				<select id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" autocomplete="country-name" <?php echo $required ? 'required' : ''; ?>>
+					<option value=""><?php esc_html_e( 'Seleccioná un país', 'flacso-uruguay' ); ?></option>
+					<?php foreach ( self::countries() as $country ) : ?>
+						<option value="<?php echo esc_attr( $country ); ?>"><?php echo esc_html( $country ); ?></option>
+					<?php endforeach; ?>
+				</select>
+			<?php elseif ( 'telefono' === $field['type'] ) : ?>
+				<input type="tel" id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" maxlength="30" inputmode="tel" autocomplete="tel" pattern="[+0-9 ()-]{6,30}" placeholder="+598 99 123 456" <?php echo $required ? 'required' : ''; ?>>
 			<?php else : ?>
 				<input type="text" id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" maxlength="250" <?php echo $required ? 'required' : ''; ?>>
 			<?php endif; ?>
@@ -497,10 +515,20 @@ final class Flacso_Webhook_Forms {
 				}
 				continue;
 			}
-			$value = isset( $posted[ $name ] ) && is_scalar( $posted[ $name ] )
-				? trim( sanitize_textarea_field( (string) $posted[ $name ] ) )
-				: '';
+			$raw_value = isset( $posted[ $name ] ) && is_scalar( $posted[ $name ] ) ? (string) $posted[ $name ] : '';
+			$value = 'email' === $field['type']
+				? sanitize_email( $raw_value )
+				: trim( sanitize_textarea_field( $raw_value ) );
 			if ( ! empty( $field['required'] ) && '' === $value ) {
+				self::redirect( $redirect, 'error' );
+			}
+			if ( 'email' === $field['type'] && '' !== trim( $raw_value ) && ! is_email( $value ) ) {
+				self::redirect( $redirect, 'error' );
+			}
+			if ( 'pais' === $field['type'] && '' !== $value && ! in_array( $value, self::countries(), true ) ) {
+				self::redirect( $redirect, 'error' );
+			}
+			if ( 'telefono' === $field['type'] && '' !== $value && ! preg_match( '/^[+0-9 ()-]{6,30}$/', $value ) ) {
 				self::redirect( $redirect, 'error' );
 			}
 			if ( 'documento' === $field['type'] && '' !== $value ) {
@@ -512,18 +540,46 @@ final class Flacso_Webhook_Forms {
 			}
 			$values[ $name ] = $value;
 		}
+		$total_file_size = array_sum( array_map( static function( $file ) {
+			return isset( $file['size'] ) ? (int) $file['size'] : 0;
+		}, $files ) );
+		if ( $total_file_size > 12 * 1024 * 1024 ) {
+			self::redirect( $redirect, 'error' );
+		}
 
-		$url = get_post_meta( $form_id, self::META_URL, true );
+		$drive_folder_id = get_post_meta( $form_id, self::META_DRIVE_FOLDER, true );
+		$editor_base_url = trim( (string) get_option( 'flacso_external_editor_url', 'https://editor-flacso-uy.vercel.app' ) );
+		if ( '' === $editor_base_url ) {
+			$editor_base_url = 'https://editor-flacso-uy.vercel.app';
+		}
+		$url = untrailingslashit( $editor_base_url ) . '/api/formularios/respuestas';
+		if ( '' === $drive_folder_id ) {
+			self::redirect( $redirect, 'error' );
+		}
 		if ( ! wp_http_validate_url( $url ) ) {
 			self::redirect( $redirect, 'error' );
 		}
+		$field_labels = [];
+		foreach ( $fields as $field ) {
+			$field_labels[ $field['name'] ] = $field['label'];
+			if ( 'documento' === $field['type'] ) {
+				$field_labels[ $field['name'] . '_tipo' ] = $field['label'] . ' - tipo';
+			}
+		}
 		$payload = [
+			'submission_id'=> wp_generate_uuid4(),
 			'form_id'      => (string) $form_id,
 			'form_title'   => get_the_title( $form_id ),
 			'submitted_at' => gmdate( 'c' ),
 			'source_url'   => $redirect,
 			'fields'       => wp_json_encode( $values, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ),
+			'field_labels' => wp_json_encode( $field_labels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ),
+			'drive_folder_id' => $drive_folder_id,
 		];
+		$auto_email = self::get_auto_email( $form_id );
+		if ( ! empty( $auto_email['enabled'] ) ) {
+			$payload['auto_email'] = wp_json_encode( $auto_email, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
+		}
 		foreach ( $values as $key => $value ) {
 			$payload[ 'field_' . $key ] = $value;
 		}
@@ -614,6 +670,33 @@ final class Flacso_Webhook_Forms {
 			$sum += (int) $digits[ $i ] * $factors[ $i ];
 		}
 		return ( ( 10 - ( $sum % 10 ) ) % 10 ) === (int) $digits[7];
+	}
+
+	private static function sanitize_drive_folder_id( $value ) {
+		return preg_replace( '/[^A-Za-z0-9_-]/', '', sanitize_text_field( (string) $value ) );
+	}
+
+	private static function countries() {
+		return [
+			'Uruguay', 'Argentina', 'Bolivia', 'Brasil', 'Chile', 'Colombia',
+			'Costa Rica', 'Cuba', 'Ecuador', 'El Salvador', 'Guatemala', 'Haití',
+			'Honduras', 'México', 'Nicaragua', 'Panamá', 'Paraguay', 'Perú',
+			'República Dominicana', 'Venezuela', 'Otro',
+		];
+	}
+
+	private static function get_auto_email( $post_id ) {
+		$config = get_post_meta( (int) $post_id, self::META_AUTO_EMAIL, true );
+		return self::normalize_auto_email( is_array( $config ) ? $config : [] );
+	}
+
+	private static function normalize_auto_email( $config ) {
+		return [
+			'enabled'     => ! empty( $config['enabled'] ),
+			'email_field' => isset( $config['email_field'] ) ? sanitize_key( $config['email_field'] ) : 'email',
+			'subject'     => isset( $config['subject'] ) ? sanitize_text_field( $config['subject'] ) : '',
+			'body'        => isset( $config['body'] ) ? wp_kses_post( $config['body'] ) : '',
+		];
 	}
 
 	private static function redirect( $url, $status ) {
