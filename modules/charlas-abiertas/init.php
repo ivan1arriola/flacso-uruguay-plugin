@@ -26,7 +26,10 @@ if (!defined('FLACSO_CHARLAS_ABIERTAS_URL')) {
     define('FLACSO_CHARLAS_ABIERTAS_URL', FLACSO_URUGUAY_URL . 'modules/charlas-abiertas/');
 }
 
-flacso_safe_require('modules/charlas-abiertas/includes/cpt.php');
+// El formulario ya no tiene un CPT propio: sus campos viven en el CPT `evento`.
+// El archivo legacy se conserva en el paquete únicamente para poder reconocer y
+// migrar instalaciones anteriores.
+flacso_safe_require('modules/charlas-abiertas/includes/unified-events.php');
 flacso_safe_require('modules/charlas-abiertas/includes/frontend-assets.php');
 flacso_safe_require('modules/charlas-abiertas/includes/block.php');
 flacso_safe_require('modules/charlas-abiertas/includes/rest.php');

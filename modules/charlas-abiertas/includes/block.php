@@ -46,16 +46,16 @@ function flacso_charlas_abiertas_render_block($attributes) {
 
     $evento_id = isset($attributes['eventoId']) ? absint($attributes['eventoId']) : 0;
     if (!$evento_id) {
-        return '<p>Selecciona una charla para mostrar el formulario.</p>';
+        return '<p>Selecciona un evento para mostrar el formulario.</p>';
     }
 
     $evento = get_post($evento_id);
     if (
         !$evento ||
-        'charla_abierta' !== $evento->post_type ||
+        !in_array($evento->post_type, ['evento', 'charla_abierta'], true) ||
         in_array($evento->post_status, ['auto-draft', 'trash'], true)
     ) {
-        return '<p>La charla seleccionada no está disponible.</p>';
+        return '<p>El evento seleccionado no está disponible.</p>';
     }
 
     $stored_variant = function_exists('flacso_charlas_abiertas_normalize_form_variant')

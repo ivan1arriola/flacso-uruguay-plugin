@@ -58,6 +58,13 @@ if (!function_exists('flacso_section_eventos_get_items')) {
                 'order'          => 'ASC',
                 'meta_type'      => 'DATE',
                 'meta_query'     => [
+                    'relation' => 'AND',
+                    [
+                        'key'     => '_evento_mostrar_web',
+                        'value'   => '1',
+                        'compare' => '=',
+                    ],
+                    [
                     'relation' => 'OR',
                     [
                         'key'     => 'evento_fin_fecha',
@@ -77,6 +84,7 @@ if (!function_exists('flacso_section_eventos_get_items')) {
                             'compare' => '>=',
                             'type'    => 'DATE',
                         ],
+                    ],
                     ],
                 ],
                 'fields' => 'ids',
@@ -152,8 +160,7 @@ if (!function_exists('flacso_section_eventos_get_items')) {
                     $status_class = 'is-running';
                 }
 
-                $post_asociado = get_post_meta($evento_id, 'evento_post_asociado', true);
-                $detalle_id = ($post_asociado && get_post($post_asociado)) ? (int) $post_asociado : $evento_id;
+                $detalle_id = $evento_id;
 
                 $custom_title = trim((string) get_post_meta($evento_id, 'evento_display_title', true));
                 $title = $custom_title ?: get_the_title($detalle_id);
@@ -269,6 +276,13 @@ if (!function_exists('flacso_section_eventos_render')) {
                 'order'          => 'ASC',
                 'meta_type'      => 'DATE',
                 'meta_query'     => [
+                    'relation' => 'AND',
+                    [
+                        'key'     => '_evento_mostrar_web',
+                        'value'   => '1',
+                        'compare' => '=',
+                    ],
+                    [
                     'relation' => 'OR',
                     [
                         'key'     => 'evento_fin_fecha',
@@ -288,6 +302,7 @@ if (!function_exists('flacso_section_eventos_render')) {
                             'compare' => '>=',
                             'type'    => 'DATE',
                         ],
+                    ],
                     ],
                 ],
                 'fields' => 'ids',
@@ -369,9 +384,7 @@ if (!function_exists('flacso_section_eventos_render')) {
                     $status_class = 'is-running';
                 }
 
-                // Obtener el post asociado si existe, de lo contrario usar el evento mismo
-                $post_asociado = get_post_meta($evento_id, 'evento_post_asociado', true);
-                $detalle_id = ($post_asociado && get_post($post_asociado)) ? $post_asociado : $evento_id;
+                $detalle_id = $evento_id;
 
                 $custom_title = trim((string) get_post_meta($evento_id, 'evento_display_title', true));
                 $title        = $custom_title ?: get_the_title($detalle_id);

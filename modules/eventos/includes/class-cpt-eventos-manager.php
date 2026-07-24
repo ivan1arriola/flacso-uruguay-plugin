@@ -16,7 +16,6 @@ class CPT_Eventos_Manager {
         add_action('init', [$this, 'register_post_type']);
         add_action('add_meta_boxes', [$this, 'add_meta_boxes']);
         add_action('save_post', [$this, 'save_meta']);
-        add_action('wp_ajax_buscar_posts_evento', [$this, 'search_posts_ajax']);
         add_action('admin_menu', [$this, 'add_visualizer_menu']);
     }
 
@@ -40,7 +39,7 @@ class CPT_Eventos_Manager {
             'show_ui'            => true,
             'show_in_menu'       => true,
             'menu_icon'          => 'dashicons-calendar-alt',
-            'supports'           => ['title'],
+            'supports'           => ['title', 'editor', 'excerpt', 'thumbnail'],
             'capability_type'    => 'post',
             'show_in_rest'       => true,
             'has_archive'        => false,
@@ -71,12 +70,9 @@ class CPT_Eventos_Manager {
         $inicio_hora    = get_post_meta($post->ID, 'evento_inicio_hora', true);
         $fin_fecha      = get_post_meta($post->ID, 'evento_fin_fecha', true);
         $fin_hora       = get_post_meta($post->ID, 'evento_fin_hora', true);
-        $post_asociado  = get_post_meta($post->ID, 'evento_post_asociado', true);
-        $titulo_asociado = $post_asociado ? get_the_title($post_asociado) : '';
         $display_title = get_post_meta($post->ID, 'evento_display_title', true);
 
         wp_nonce_field('cpt_evento_save', 'cpt_evento_nonce');
-        $search_nonce = wp_create_nonce('flacso_buscar_posts_evento');
         ?>
         <p><strong><?php esc_html_e('Inicio', 'cpt-eventos'); ?>:</strong></p>
         <input type="date" name="evento_inicio_fecha" value="<?php echo esc_attr($inicio_fecha); ?>">
@@ -86,71 +82,10 @@ class CPT_Eventos_Manager {
         <input type="date" name="evento_fin_fecha" value="<?php echo esc_attr($fin_fecha); ?>">
         <input type="time" name="evento_fin_hora" value="<?php echo esc_attr($fin_hora); ?>">
 
-        <p><label for="buscar_post_asociado"><strong><?php esc_html_e('Buscar post o página asociada', 'cpt-eventos'); ?>:</strong></label></p>
-        <input type="hidden" name="evento_post_asociado" id="evento_post_asociado" value="<?php echo esc_attr($post_asociado); ?>">
-        <input type="text" id="buscar_post_asociado" value="<?php echo esc_attr($titulo_asociado); ?>" placeholder="<?php esc_attr_e('Escribí para buscar…', 'cpt-eventos'); ?>" style="width:100%">
-        <div id="resultados_busqueda_post" style="max-height:180px;overflow:auto;margin-top:5px;border:1px solid #ccc;border-radius:4px;display:none;"></div>
-
         <p>
-            <label for="evento_display_title"><strong><?php esc_html_e('Nombre visible en la landing', 'cpt-eventos'); ?></strong></label><br>
-            <input type="text" id="evento_display_title" name="evento_display_title" value="<?php echo esc_attr($display_title); ?>" style="width:100%" placeholder="<?php esc_attr_e('Si se deja vacío se usará el título del contenido asociado', 'cpt-eventos'); ?>">
+            <label for="evento_display_title"><strong><?php esc_html_e('Nombre visible en la portada', 'cpt-eventos'); ?></strong></label><br>
+            <input type="text" id="evento_display_title" name="evento_display_title" value="<?php echo esc_attr($display_title); ?>" style="width:100%" placeholder="<?php esc_attr_e('Opcional; si se deja vacío se usará el título del evento', 'cpt-eventos'); ?>">
         </p>
-
-        <script>
-        jQuery(document).ready(function($){
-            let timer;
-            const input = $('#buscar_post_asociado');
-            const resultados = $('#resultados_busqueda_post');
-            const campoID = $('#evento_post_asociado');
-
-            input.on('input', function(){
-                clearTimeout(timer);
-                const q = $(this).val().trim();
-                if(q.length < 2){
-                    resultados.hide();
-                    return;
-                }
-                timer = setTimeout(() => {
-                    $.ajax({
-                        url: ajaxurl,
-                        method: 'POST',
-                        data: {
-                            action: 'buscar_posts_evento',
-                            q: q,
-                            nonce: '<?php echo esc_js($search_nonce); ?>'
-                        },
-                        success: function(res){
-                            resultados.empty();
-                            if(res.success && res.data.length){
-                                res.data.forEach(item => {
-                                    resultados.append(
-                                        `<div class="opcion-post" data-id="${item.id}" style="padding:6px 8px;cursor:pointer;border-bottom:1px solid #eee;">${item.titulo} <small style="color:#666;">(${item.tipo})</small></div>`
-                                    );
-                                });
-                                resultados.show();
-                            } else {
-                                resultados.html('<div style="padding:6px 8px;color:#666;"><?php echo esc_js(__('Sin resultados', 'cpt-eventos')); ?></div>').show();
-                            }
-                        }
-                    });
-                }, 300);
-            });
-
-            resultados.on('click', '.opcion-post', function(){
-                const id = $(this).data('id');
-                const texto = $(this).text();
-                campoID.val(id);
-                input.val(texto);
-                resultados.hide();
-            });
-
-            $(document).on('click', function(e){
-                if(!$(e.target).closest('#buscar_post_asociado, #resultados_busqueda_post').length){
-                    resultados.hide();
-                }
-            });
-        });
-        </script>
         <?php
     }
 
@@ -174,7 +109,6 @@ class CPT_Eventos_Manager {
         update_post_meta($post_id, 'evento_inicio_hora', sanitize_text_field($_POST['evento_inicio_hora'] ?? ''));
         update_post_meta($post_id, 'evento_fin_fecha', sanitize_text_field($_POST['evento_fin_fecha'] ?? ''));
         update_post_meta($post_id, 'evento_fin_hora', sanitize_text_field($_POST['evento_fin_hora'] ?? ''));
-        update_post_meta($post_id, 'evento_post_asociado', isset($_POST['evento_post_asociado']) ? (int) $_POST['evento_post_asociado'] : 0);
         update_post_meta($post_id, 'evento_display_title', sanitize_text_field($_POST['evento_display_title'] ?? ''));
     }
 
@@ -658,12 +592,6 @@ class CPT_Eventos_Manager {
         $fin_fecha = (string) get_post_meta($evento->ID, 'evento_fin_fecha', true);
         $fin_hora = (string) get_post_meta($evento->ID, 'evento_fin_hora', true);
         $display_title = trim((string) get_post_meta($evento->ID, 'evento_display_title', true));
-        $post_asociado = (int) get_post_meta($evento->ID, 'evento_post_asociado', true);
-
-        if (!$post_asociado || get_post_status($post_asociado) !== 'publish') {
-            return null;
-        }
-
         $inicio_timestamp = $this->parse_evento_timestamp($inicio_fecha, $inicio_hora);
         $fin_timestamp = $this->parse_evento_timestamp($fin_fecha, $fin_hora);
         $duracion_dias = ($inicio_timestamp && $fin_timestamp)
@@ -724,9 +652,8 @@ class CPT_Eventos_Manager {
 
         return [
             'evento_id' => (int) $evento->ID,
-            'post_asociado' => $post_asociado,
-            'titulo' => '' !== $display_title ? $display_title : get_the_title($post_asociado),
-            'img' => get_the_post_thumbnail_url($post_asociado, 'medium') ?: 'https://via.placeholder.com/300x160?text=Evento',
+            'titulo' => '' !== $display_title ? $display_title : get_the_title($evento),
+            'img' => get_the_post_thumbnail_url($evento, 'medium') ?: 'https://via.placeholder.com/300x160?text=Evento',
             'inicio_hora' => $inicio_hora,
             'fin_fecha' => $fin_fecha,
             'inicio_timestamp' => $inicio_timestamp,
@@ -795,7 +722,7 @@ class CPT_Eventos_Manager {
         echo '</div>';
         echo '<div class="evento-acciones">';
         echo '<a href="' . esc_url(get_edit_post_link((int) $item['evento_id'])) . '">' . esc_html__('Editar evento', 'cpt-eventos') . '</a> · ';
-        echo '<a href="' . esc_url(get_permalink((int) $item['post_asociado'])) . '" target="_blank" rel="noopener">' . esc_html__('Ver post asociado', 'cpt-eventos') . '</a>';
+        echo '<a href="' . esc_url(get_permalink((int) $item['evento_id'])) . '" target="_blank" rel="noopener">' . esc_html__('Ver evento', 'cpt-eventos') . '</a>';
         echo '</div>';
         echo '</article>';
     }
