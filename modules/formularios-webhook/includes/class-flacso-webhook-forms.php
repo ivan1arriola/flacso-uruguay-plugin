@@ -11,7 +11,8 @@ final class Flacso_Webhook_Forms {
 	const META_THANK_YOU = '_flacso_hook_thank_you';
 	const META_SHOW_ON_HOME = '_flacso_hook_show_on_home';
 	const NONCE       = 'flacso_hook_form_submit';
-	const MAX_FILE_SIZE = 10485760;
+	const MAX_FILE_SIZE = 4 * 1024 * 1024;
+	const MAX_TOTAL_FILE_SIZE = 4 * 1024 * 1024;
 
 	public static function init() {
 		add_action( 'init', [ __CLASS__, 'register_post_type' ] );
@@ -561,7 +562,7 @@ final class Flacso_Webhook_Forms {
 				</div>
 			<?php elseif ( 'archivo' === $field['type'] ) : ?>
 				<input type="file" id="<?php echo esc_attr( $id ); ?>" name="files[<?php echo esc_attr( $field['name'] ); ?>]" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp" <?php echo $required ? 'required' : ''; ?>>
-				<small><?php esc_html_e( 'PDF, JPG, PNG o WebP. Máximo 10 MB.', 'flacso-uruguay' ); ?></small>
+				<small><?php esc_html_e( 'Formatos admitidos: PDF, JPG, PNG o WebP. Máximo total de archivos: 4 MB.', 'flacso-uruguay' ); ?></small>
 			<?php elseif ( 'email' === $field['type'] ) : ?>
 				<input type="email" id="<?php echo esc_attr( $id ); ?>" name="fields[<?php echo esc_attr( $field['name'] ); ?>]" maxlength="254" autocomplete="email" inputmode="email" placeholder="ejemplo@correo.com" aria-describedby="<?php echo esc_attr( $id ); ?>-error" <?php echo $required ? 'required' : ''; ?>>
 				<small class="flacso-hook-field-error" id="<?php echo esc_attr( $id ); ?>-error" aria-live="polite"><?php esc_html_e( 'Ingresá un correo electrónico válido (por ejemplo, nombre@dominio.com).', 'flacso-uruguay' ); ?></small>
@@ -739,7 +740,7 @@ final class Flacso_Webhook_Forms {
 		$total_file_size = array_sum( array_map( static function( $file ) {
 			return isset( $file['size'] ) ? (int) $file['size'] : 0;
 		}, $files ) );
-		if ( $total_file_size > 12 * 1024 * 1024 ) {
+		if ( $total_file_size > self::MAX_TOTAL_FILE_SIZE ) {
 			self::redirect_error( $redirect, 'files_too_large' );
 		}
 
@@ -929,9 +930,9 @@ final class Flacso_Webhook_Forms {
 			'invalid_time'        => 'Ingresá una hora válida' . $field_suffix . '.',
 			'required_acceptance' => 'Para enviar el formulario tenés que aceptar' . $field_suffix . '.',
 			'invalid_file'        => 'No pudimos leer el archivo' . $field_suffix . '. Volvé a seleccionarlo y comprobá que no esté vacío.',
-			'file_too_large'      => 'El archivo' . $field_suffix . ' supera los 10 MB. Reducí su tamaño y volvé a adjuntarlo.',
+			'file_too_large'      => 'El archivo' . $field_suffix . ' supera los 4 MB. Reducí su tamaño y volvé a adjuntarlo.',
 			'invalid_file_type'   => 'El archivo' . $field_suffix . ' debe ser PDF, JPG, PNG o WebP.',
-			'files_too_large'     => 'Los archivos adjuntos superan los 12 MB en total. Reducí su tamaño o adjuntá menos archivos.',
+			'files_too_large'     => 'Los archivos adjuntos superan los 4 MB en total. Reducí su tamaño o adjuntá menos archivos.',
 			'session_expired'     => 'La sesión del formulario venció. Recargá la página y volvé a completarlo.',
 			'submission_rejected' => 'No pudimos validar el envío. Esperá unos segundos y volvé a intentarlo.',
 			'form_unavailable'    => 'Este formulario ya no está disponible.',

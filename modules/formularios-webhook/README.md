@@ -113,7 +113,7 @@ personales ni el token.
 
 ## Archivos
 
-Se aceptan PDF, JPG, PNG y WebP de hasta 10 MB por archivo y 12 MB en total por
+Se aceptan PDF, JPG, PNG y WebP de hasta 4 MB por archivo y 4 MB en total por
 envío. El tipo real se valida en el servidor. Los temporales de PHP se leen
 únicamente para construir la solicitud y no se incorporan a la biblioteca de
 medios.

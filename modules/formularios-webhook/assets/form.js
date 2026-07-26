@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
-	var MAX_FILE_SIZE = 10 * 1024 * 1024;
-	var MAX_TOTAL_FILE_SIZE = 12 * 1024 * 1024;
+	var MAX_FILE_SIZE = 4 * 1024 * 1024;
+	var MAX_TOTAL_FILE_SIZE = 4 * 1024 * 1024;
 	var ALLOWED_FILE_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'webp'];
 
 	function validUyDocument(value) {
@@ -69,9 +69,9 @@ document.addEventListener('DOMContentLoaded', function () {
 			if (ALLOWED_FILE_EXTENSIONS.indexOf(extension) === -1) {
 				message = 'El archivo debe ser PDF, JPG, PNG o WebP.';
 			} else if (file.size > MAX_FILE_SIZE) {
-				message = 'Este archivo supera los 10 MB. Reducí su tamaño antes de continuar.';
+				message = 'Este archivo supera los 4 MB. Reducí su tamaño antes de continuar.';
 			} else if (totalFileSize(field.form) > MAX_TOTAL_FILE_SIZE) {
-				message = 'Los archivos adjuntos superan los 12 MB en total.';
+				message = 'Los archivos adjuntos superan los 4 MB en total.';
 			}
 		} else if (field.classList.contains('flacso-hook-phone') && value) {
 			if (field._flacsoPhone && typeof field._flacsoPhone.isValidNumber === 'function') {
