@@ -31,6 +31,7 @@ flacso_safe_require('modules/formularios/includes/settings.php');
 flacso_safe_require('modules/formularios/includes/validation.php');
 flacso_safe_require('modules/formularios/includes/telegram.php');
 flacso_safe_require('modules/formularios/includes/gmail.php');
+flacso_safe_require('modules/formularios/includes/error-policy.php');
 flacso_safe_require('modules/formularios/includes/form-handlers.php');
 flacso_safe_require('modules/formularios/includes/confirmacion-consulta.php');
 flacso_safe_require('modules/formularios/includes/form-render.php');

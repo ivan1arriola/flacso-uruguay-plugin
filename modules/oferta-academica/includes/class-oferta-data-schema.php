@@ -624,7 +624,16 @@ class Oferta_Data_Schema {
         if (is_string($value)) {
             $value = trim($value);
             if ($value === '') return '';
-            $decoded = json_decode(wp_unslash($value), true);
+            // REST JSON values are already unslashed by WordPress. Unslashing them
+            // again corrupts escaped quotes in nested JSON strings (for example,
+            // documentos.*.historico) and causes the complete documentos meta to
+            // be deleted as invalid JSON.
+            $decoded = json_decode($value, true);
+            if (!is_array($decoded)) {
+                // Keep compatibility with legacy/form payloads that may still
+                // arrive slash-escaped.
+                $decoded = json_decode(wp_unslash($value), true);
+            }
             if (!is_array($decoded)) return '';
             return wp_json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }
@@ -1287,7 +1296,10 @@ class Oferta_Data_Schema {
             return [];
         }
 
-        $decoded = json_decode(wp_unslash($value), true);
+        $decoded = json_decode($value, true);
+        if (!is_array($decoded)) {
+            $decoded = json_decode(wp_unslash($value), true);
+        }
         return is_array($decoded) ? $decoded : [];
     }
 

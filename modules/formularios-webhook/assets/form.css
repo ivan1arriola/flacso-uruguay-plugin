@@ -80,6 +80,19 @@
 	border-color: #dc3545;
 	box-shadow: 0 0 0 3px rgba(220, 53, 69, .08);
 }
+.flacso-hook-control textarea.flacso-hook-invalid,
+.flacso-hook-control select.flacso-hook-invalid {
+	border-color: #dc3545;
+	box-shadow: 0 0 0 3px rgba(220, 53, 69, .08);
+}
+.flacso-hook-live-error {
+	display: block;
+	color: #b42332 !important;
+	font-weight: 600;
+}
+.flacso-hook-live-error[hidden] {
+	display: none;
+}
 .flacso-hook-field-error {
 	display: none;
 	color: #b42332 !important;

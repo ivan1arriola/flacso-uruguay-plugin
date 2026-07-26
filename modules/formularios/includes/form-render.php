@@ -24,6 +24,8 @@ function fc_render_form( $atts = [] ) {
     $email    = isset( $_GET['fc_email'] ) ? sanitize_email( wp_unslash( $_GET['fc_email'] ) ) : '';
     $asunto   = isset( $_GET['fc_asunto'] ) ? sanitize_text_field( wp_unslash( $_GET['fc_asunto'] ) ) : '';
     $exito    = ( isset( $_GET['fc_exito'] ) && (int) $_GET['fc_exito'] === 1 ) || ( isset( $_GET['fc_confirmacion_consulta'] ) && (int) $_GET['fc_confirmacion_consulta'] === 1 );
+    $error_code = isset( $_GET['fc_error'] ) ? sanitize_key( wp_unslash( $_GET['fc_error'] ) ) : '';
+    $error_reference = isset( $_GET['fc_reference'] ) ? sanitize_text_field( wp_unslash( $_GET['fc_reference'] ) ) : '';
 
     ob_start();
     ?>
@@ -48,6 +50,16 @@ function fc_render_form( $atts = [] ) {
                     <div>
                         <strong style="color: #155724;"><?php esc_html_e( '¡Consulta enviada!', 'flacso-flacso-formulario-consultas' ); ?></strong>
                         <p style="color: #155724; margin: 0.25rem 0 0 0; font-size: 0.9rem;"><?php echo esc_html__( 'Recibimos tu consulta y te enviamos un correo de confirmación.', 'flacso-flacso-formulario-consultas' ); ?></p>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <?php if ( '' !== $error_code ) : ?>
+                <div role="alert" style="background: #fff3cd; border: 1px solid #ffecb5; border-radius: 6px; padding: 1rem; margin-bottom: 1.5rem; display: flex; gap: 0.75rem; align-items: flex-start;">
+                    <span aria-hidden="true" style="font-size: 1.25rem; flex-shrink: 0;">⚠️</span>
+                    <div>
+                        <strong style="color: #664d03;"><?php esc_html_e( 'No se pudo enviar la consulta', 'flacso-flacso-formulario-consultas' ); ?></strong>
+                        <p style="color: #664d03; margin: 0.25rem 0 0 0; font-size: 0.9rem;"><?php echo esc_html( fc_form_public_error_message( $error_code, $error_reference ) ); ?></p>
                     </div>
                 </div>
             <?php endif; ?>

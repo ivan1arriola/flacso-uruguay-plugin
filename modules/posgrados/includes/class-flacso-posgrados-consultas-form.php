@@ -158,7 +158,7 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
                         <button type="submit" class="btn btn-primary w-100 py-2 mt-2 fw-bold rounded-pill">
                             <span class="btn-text">
                                 <i class="bi bi-send-fill me-2" aria-hidden="true"></i>
-                                <?php esc_html_e('Enviar consulta', 'flacso-posgrados-docentes'); ?>
+                                <?php esc_html_e('Solicitar información', 'flacso-posgrados-docentes'); ?>
                             </span>
                             <span class="btn-loading d-none">
                                 <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
@@ -376,7 +376,7 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
                         'code' => (int) ($delivery['code'] ?? 0),
                     ]);
                 }
-                wp_send_json_error(__('No se pudo procesar la consulta. Intentá más tarde.', 'flacso-posgrados-docentes'));
+                wp_send_json_error(__('No pudimos procesar tu solicitud de información. Intentá nuevamente más tarde.', 'flacso-posgrados-docentes'));
             }
 
             wp_send_json_success(['note' => 'ok']);
@@ -454,6 +454,12 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
                 return;
             }
 
+            // Las páginas del CPT Formulario también terminan en /gracias, pero
+            // tienen una confirmación propia y no representan un único programa.
+            if (!empty($_GET['formulario'])) {
+                return;
+            }
+
             $pid = isset($_GET['pid']) ? absint($_GET['pid']) : 0;
             $title = $pid ? get_the_title($pid) : '';
             $thumb = ($pid && has_post_thumbnail($pid))
@@ -461,8 +467,8 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
                 : '';
             $back = $pid ? get_permalink($pid) : home_url('/');
             $page_title = $title
-                ? sprintf('Consulta enviada - %s', $title)
-                : 'Consulta enviada';
+                ? sprintf('Solicitud de información recibida - %s', $title)
+                : 'Solicitud de información recibida';
 
             global $wp_query;
             if ($wp_query) {
@@ -494,14 +500,14 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
                     <div class="flacso-pos-consultas-thanks__inner">
                         <div class="flacso-pos-consultas-thanks__message">
                             <div class="flacso-pos-consultas-thanks__check" aria-hidden="true">✓</div>
-                            <h1><?php esc_html_e('¡Gracias por tu consulta!', 'flacso-posgrados-docentes'); ?></h1>
+                            <h1><?php esc_html_e('¡Gracias por tu interés!', 'flacso-posgrados-docentes'); ?></h1>
 
                             <?php if ($title): ?>
-                                <p class="flacso-pos-consultas-thanks__lead"><?php printf(esc_html__('Gracias por tu interés en %s de FLACSO Uruguay.', 'flacso-posgrados-docentes'), esc_html($title)); ?></p>
+                                <p class="flacso-pos-consultas-thanks__lead"><?php printf(esc_html__('Recibimos tu solicitud de información sobre %s.', 'flacso-posgrados-docentes'), esc_html($title)); ?></p>
                             <?php else: ?>
-                                <p class="flacso-pos-consultas-thanks__lead"><?php esc_html_e('Hemos recibido tu consulta correctamente.', 'flacso-posgrados-docentes'); ?></p>
+                                <p class="flacso-pos-consultas-thanks__lead"><?php esc_html_e('Recibimos correctamente tu solicitud de información.', 'flacso-posgrados-docentes'); ?></p>
                             <?php endif; ?>
-                            <p><?php esc_html_e('En breve recibirás un correo con toda la información detallada.', 'flacso-posgrados-docentes'); ?></p>
+                            <p><?php esc_html_e('En breve recibirás por correo la información del programa.', 'flacso-posgrados-docentes'); ?></p>
                         </div>
 
                         <div class="flacso-pos-consultas-thanks__actions">

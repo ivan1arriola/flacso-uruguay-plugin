@@ -1230,6 +1230,17 @@ class FLACSO_Formulario_Preinscripcion_Final {
     }
 
     private function send_telegram_error_notification(string $error_type, string $error_msg, array $payload): void {
+        if (function_exists('fc_notify_form_admin_error')) {
+            fc_notify_form_admin_error(array(
+                'form' => 'Preinscripción',
+                'stage' => $error_type,
+                'detail' => $error_msg,
+                'url' => (string) ($payload['url_origen'] ?? $payload['url_referer'] ?? ''),
+                'user_email' => (string) ($payload['datos_basicos']['correo'] ?? $payload['correo'] ?? ''),
+                'send_telegram' => false,
+            ));
+        }
+
         if (!function_exists('fc_send_telegram_message')) {
             return;
         }

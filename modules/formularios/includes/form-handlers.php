@@ -112,7 +112,34 @@ function fc_handle_form_submit() {
         $webhook_payload['campaign_id'] = $posted_attribution['campaign_external_id'];
     }
 
-    fc_send_consulta_webhook( $webhook_payload );
+    $webhook_result = fc_send_consulta_webhook( $webhook_payload );
+    if ( empty( $webhook_result['ok'] ) ) {
+        delete_transient( $duplicate_key );
+        $reference = fc_form_error_reference( 'consulta' );
+        fc_notify_form_admin_error(
+            [
+                'reference'  => $reference,
+                'form'       => 'Consulta general',
+                'stage'      => 'entrega al sistema de consultas',
+                'detail'     => trim( (string) ( $webhook_result['error'] ?? '' ) . ' ' . (string) ( $webhook_result['message'] ?? '' ) ),
+                'url'        => $url_referer,
+                'user_email' => $email,
+            ]
+        );
+        $error_redirect = add_query_arg(
+            [
+                'fc_error'      => 'unavailable',
+                'fc_reference'  => rawurlencode( $reference ),
+                'fc_nombre'     => rawurlencode( $nombre ),
+                'fc_apellido'   => rawurlencode( $apellido ),
+                'fc_email'      => rawurlencode( $email ),
+                'fc_asunto'     => rawurlencode( $asunto ),
+            ],
+            wp_get_referer() ?: home_url()
+        );
+        wp_safe_redirect( $error_redirect );
+        exit;
+    }
 
     $redirect_base = fc_get_gracias_url_from_referer();
     $redirect = add_query_arg(
@@ -153,7 +180,12 @@ function fc_get_consulta_webhook_url() {
 function fc_send_consulta_webhook( array $payload ) {
     $webhook_url = fc_get_consulta_webhook_url();
     if ( '' === $webhook_url ) {
-        return;
+        return [
+            'ok'      => false,
+            'code'    => 0,
+            'error'   => 'No hay endpoint configurado para consultas.',
+            'message' => '',
+        ];
     }
 
     // Automatically append /general if the webhook is set to the main inquiries endpoint
@@ -166,7 +198,7 @@ function fc_send_consulta_webhook( array $payload ) {
         if ( ! $result['ok'] ) {
             error_log( '[FLACSO-FC] Webhook consultas ' . ( $result['error'] ?: 'error' ) . ( ! empty( $result['message'] ) ? ' message=' . $result['message'] : '' ) );
         }
-        return;
+        return $result;
     }
 
     $args = [
@@ -190,21 +222,39 @@ function fc_send_consulta_webhook( array $payload ) {
     $response = wp_remote_post( esc_url_raw( $webhook_url ), $args );
     if ( is_wp_error( $response ) ) {
         error_log( '[FLACSO-FC] Webhook consultas error: ' . $response->get_error_message() );
-        return;
+        return [
+            'ok'      => false,
+            'code'    => 0,
+            'error'   => $response->get_error_message(),
+            'message' => '',
+        ];
     }
 
     $code = (int) wp_remote_retrieve_response_code( $response );
     $body = (string) wp_remote_retrieve_body( $response );
     if ( $code < 200 || $code >= 300 ) {
         error_log( '[FLACSO-FC] Webhook consultas HTTP ' . $code . ' body=' . substr( $body, 0, 500 ) );
-        return;
+        return [
+            'ok'      => false,
+            'code'    => $code,
+            'error'   => 'HTTP ' . $code,
+            'message' => substr( wp_strip_all_tags( $body ), 0, 300 ),
+        ];
     }
 
     // Si responde JSON y marca error explícito, dejar registro.
     $json = json_decode( $body, true );
     if ( is_array( $json ) && isset( $json['success'] ) && false === $json['success'] ) {
         error_log( '[FLACSO-FC] Webhook consultas respondió success=false: ' . substr( $body, 0, 500 ) );
+        return [
+            'ok'      => false,
+            'code'    => $code,
+            'error'   => 'El webhook respondió success=false.',
+            'message' => substr( wp_strip_all_tags( $body ), 0, 300 ),
+        ];
     }
+
+    return [ 'ok' => true, 'code' => $code, 'error' => '', 'message' => '' ];
 }
 
 function fc_send_consulta_webhook_test() {

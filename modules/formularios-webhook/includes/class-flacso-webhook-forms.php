@@ -329,6 +329,8 @@ final class Flacso_Webhook_Forms {
 		wp_enqueue_style( 'flacso-hook-forms' );
 		wp_enqueue_script( 'flacso-hook-forms' );
 		$status = isset( $_GET['formulario_estado'] ) ? sanitize_key( wp_unslash( $_GET['formulario_estado'] ) ) : '';
+		$error_code = isset( $_GET['formulario_error'] ) ? sanitize_key( wp_unslash( $_GET['formulario_error'] ) ) : '';
+		$error_field = isset( $_GET['formulario_campo'] ) ? sanitize_text_field( wp_unslash( $_GET['formulario_campo'] ) ) : '';
 		ob_start();
 		?>
 		<section class="flacso-hook-form-wrap">
@@ -336,7 +338,7 @@ final class Flacso_Webhook_Forms {
 			<?php if ( 'enviado' === $status ) : ?>
 				<div class="flacso-hook-notice success" role="status"><?php esc_html_e( 'El formulario fue enviado correctamente.', 'flacso-uruguay' ); ?></div>
 			<?php elseif ( 'error' === $status ) : ?>
-				<div class="flacso-hook-notice error" role="alert"><?php esc_html_e( 'No pudimos enviar el formulario. Revisá los datos e intentá nuevamente.', 'flacso-uruguay' ); ?></div>
+				<div class="flacso-hook-notice error" role="alert"><?php echo esc_html( self::public_error_message( $error_code, $error_field ) ); ?></div>
 			<?php endif; ?>
 			<form class="flacso-hook-form" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post" enctype="multipart/form-data">
 				<input type="hidden" name="action" value="flacso_hook_form_submit">
@@ -627,13 +629,13 @@ final class Flacso_Webhook_Forms {
 		$form_id = isset( $_POST['form_id'] ) ? absint( $_POST['form_id'] ) : 0;
 		$redirect = $form_id ? get_permalink( $form_id ) : home_url( '/' );
 		if ( ! $form_id || self::POST_TYPE !== get_post_type( $form_id ) || 'publish' !== get_post_status( $form_id ) ) {
-			self::redirect( $redirect, 'error' );
+			self::redirect_error( $redirect, 'form_unavailable' );
 		}
 		if ( empty( $_POST['form_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['form_nonce'] ) ), self::NONCE . '_' . $form_id ) ) {
-			self::redirect( $redirect, 'error' );
+			self::redirect_error( $redirect, 'session_expired' );
 		}
 		if ( ! empty( $_POST['company_website'] ) || empty( $_POST['started_at'] ) || time() - absint( $_POST['started_at'] ) < 2 ) {
-			self::redirect( $redirect, 'error' );
+			self::redirect_error( $redirect, 'submission_rejected' );
 		}
 
 		$fields = self::get_fields( $form_id );
@@ -649,7 +651,7 @@ final class Flacso_Webhook_Forms {
 			if ( 'archivo' === $field['type'] ) {
 				$file = self::validated_file( $name, ! empty( $field['required'] ) );
 				if ( is_wp_error( $file ) ) {
-					self::redirect( $redirect, 'error' );
+					self::redirect_error( $redirect, $file->get_error_code(), $field['label'] );
 				}
 				if ( $file ) {
 					$files[ $name ] = $file;
@@ -660,7 +662,7 @@ final class Flacso_Webhook_Forms {
 				$selected = isset( $posted[ $name ] ) && is_array( $posted[ $name ] ) ? array_map( 'sanitize_text_field', $posted[ $name ] ) : [];
 				$selected = array_values( array_intersect( $selected, self::normalize_options( $field['options'] ?? [] ) ) );
 				if ( ! empty( $field['required'] ) && empty( $selected ) ) {
-					self::redirect( $redirect, 'error' );
+					self::redirect_error( $redirect, 'required', $field['label'] );
 				}
 				$values[ $name ] = implode( ', ', $selected );
 				continue;
@@ -678,7 +680,7 @@ final class Flacso_Webhook_Forms {
 						$answer = in_array( $answer, $columns, true ) ? $answer : '';
 					}
 					if ( ! empty( $field['required'] ) && empty( $answer ) ) {
-						self::redirect( $redirect, 'error' );
+						self::redirect_error( $redirect, 'required', $field['label'] . ': ' . $row );
 					}
 					$grid_value[ $row ] = $answer;
 				}
@@ -693,42 +695,42 @@ final class Flacso_Webhook_Forms {
 				? sanitize_email( $raw_value )
 				: trim( sanitize_textarea_field( $raw_value ) );
 			if ( ! empty( $field['required'] ) && '' === $value ) {
-				self::redirect( $redirect, 'error' );
+				self::redirect_error( $redirect, 'required', $field['label'] );
 			}
 			if ( 'email' === $field['type'] && '' !== trim( $raw_value ) && ! is_email( $value ) ) {
-				self::redirect( $redirect, 'error' );
+				self::redirect_error( $redirect, 'invalid_email', $field['label'] );
 			}
 			if ( 'pais' === $field['type'] && '' !== $value && ! in_array( $value, self::countries(), true ) ) {
-				self::redirect( $redirect, 'error' );
+				self::redirect_error( $redirect, 'invalid_option', $field['label'] );
 			}
 			if ( 'telefono' === $field['type'] && '' !== $value && ! preg_match( '/^[+0-9 ()-]{6,30}$/', $value ) ) {
-				self::redirect( $redirect, 'error' );
+				self::redirect_error( $redirect, 'invalid_phone', $field['label'] );
 			}
 			if ( 'select' === $field['type'] && '' !== $value && ! in_array( $value, self::normalize_options( isset( $field['options'] ) ? $field['options'] : [] ), true ) ) {
-				self::redirect( $redirect, 'error' );
+				self::redirect_error( $redirect, 'invalid_option', $field['label'] );
 			}
 			if ( 'opcion_multiple' === $field['type'] && '' !== $value && ! in_array( $value, self::normalize_options( $field['options'] ?? [] ), true ) ) {
-				self::redirect( $redirect, 'error' );
+				self::redirect_error( $redirect, 'invalid_option', $field['label'] );
 			}
 			if ( ( 'escala' === $field['type'] || 'valoracion' === $field['type'] ) && '' !== $value ) {
 				$number = (int) $value;
 				if ( (string) $number !== $value || $number < (int) ( $field['scale_min'] ?? 1 ) || $number > (int) ( $field['scale_max'] ?? 5 ) ) {
-					self::redirect( $redirect, 'error' );
+					self::redirect_error( $redirect, 'invalid_option', $field['label'] );
 				}
 			}
 			if ( 'fecha' === $field['type'] && '' !== $value && ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $value ) ) {
-				self::redirect( $redirect, 'error' );
+				self::redirect_error( $redirect, 'invalid_date', $field['label'] );
 			}
 			if ( 'hora' === $field['type'] && '' !== $value && ! preg_match( '/^(?:[01]\d|2[0-3]):[0-5]\d$/', $value ) ) {
-				self::redirect( $redirect, 'error' );
+				self::redirect_error( $redirect, 'invalid_time', $field['label'] );
 			}
 			if ( 'booleano' === $field['type'] && ! empty( $field['required'] ) && 'Sí' !== $value ) {
-				self::redirect( $redirect, 'error' );
+				self::redirect_error( $redirect, 'required_acceptance', $field['label'] );
 			}
 			if ( 'documento' === $field['type'] && '' !== $value ) {
 				$doc_type = isset( $document_types[ $name ] ) && is_scalar( $document_types[ $name ] ) && 'ext' === $document_types[ $name ] ? 'ext' : 'uy';
 				if ( ( 'uy' === $doc_type && ! self::valid_uy_document( $value ) ) || ( 'ext' === $doc_type && ( strlen( $value ) < 3 || strlen( $value ) > 40 ) ) ) {
-					self::redirect( $redirect, 'error' );
+					self::redirect_error( $redirect, 'invalid_document', $field['label'] );
 				}
 				$values[ $name . '_tipo' ] = $doc_type;
 			}
@@ -738,7 +740,7 @@ final class Flacso_Webhook_Forms {
 			return isset( $file['size'] ) ? (int) $file['size'] : 0;
 		}, $files ) );
 		if ( $total_file_size > 12 * 1024 * 1024 ) {
-			self::redirect( $redirect, 'error' );
+			self::redirect_error( $redirect, 'files_too_large' );
 		}
 
 		$editor_base_url = trim( (string) get_option( 'flacso_external_editor_url', 'https://editor-flacso-uy.vercel.app' ) );
@@ -747,7 +749,8 @@ final class Flacso_Webhook_Forms {
 		}
 		$url = untrailingslashit( $editor_base_url ) . '/api/formularios/respuestas';
 		if ( ! wp_http_validate_url( $url ) ) {
-			self::redirect( $redirect, 'error' );
+			self::notify_delivery_error( $form_id, 'URL del servicio receptor inválida.' );
+			self::redirect_error( $redirect, 'service_unavailable' );
 		}
 		$field_labels = [];
 		foreach ( $fields as $field ) {
@@ -791,8 +794,10 @@ final class Flacso_Webhook_Forms {
 			]
 		);
 		if ( is_wp_error( $response ) || wp_remote_retrieve_response_code( $response ) < 200 || wp_remote_retrieve_response_code( $response ) >= 300 ) {
-			error_log( '[FLACSO webhook forms] Error de entrega del formulario ' . $form_id . ': ' . ( is_wp_error( $response ) ? $response->get_error_message() : wp_remote_retrieve_response_code( $response ) ) );
-			self::redirect( $redirect, 'error' );
+			$delivery_error = is_wp_error( $response ) ? $response->get_error_message() : 'HTTP ' . wp_remote_retrieve_response_code( $response );
+			error_log( '[FLACSO webhook forms] Error de entrega del formulario ' . $form_id . ': ' . $delivery_error );
+			self::notify_delivery_error( $form_id, $delivery_error );
+			self::redirect_error( $redirect, 'service_unavailable' );
 		}
 		wp_safe_redirect( trailingslashit( $redirect ) . 'gracias/' );
 		exit;
@@ -817,7 +822,10 @@ final class Flacso_Webhook_Forms {
 			'error'    => (int) $_FILES['files']['error'][ $name ],
 			'size'     => (int) $_FILES['files']['size'][ $name ],
 		];
-		if ( UPLOAD_ERR_OK !== $file['error'] || $file['size'] < 1 || $file['size'] > self::MAX_FILE_SIZE || ! is_uploaded_file( $file['tmp_name'] ) ) {
+		if ( in_array( $file['error'], [ UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE ], true ) || $file['size'] > self::MAX_FILE_SIZE ) {
+			return new WP_Error( 'file_too_large' );
+		}
+		if ( UPLOAD_ERR_OK !== $file['error'] || $file['size'] < 1 || ! is_uploaded_file( $file['tmp_name'] ) ) {
 			return new WP_Error( 'invalid_file' );
 		}
 		$allowed = [ 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp', 'pdf' => 'application/pdf' ];
@@ -905,6 +913,56 @@ final class Flacso_Webhook_Forms {
 			'title' => ! empty( $config['title'] ) ? sanitize_text_field( $config['title'] ) : __( '¡Gracias!', 'flacso-uruguay' ),
 			'body'  => ! empty( $config['body'] ) ? wp_kses_post( $config['body'] ) : '<p>' . esc_html__( 'Recibimos correctamente tu información.', 'flacso-uruguay' ) . '</p>',
 		];
+	}
+
+	private static function public_error_message( $code, $field = '' ) {
+		$field = trim( (string) $field );
+		$field_suffix = '' !== $field ? ' en «' . $field . '»' : '';
+		$messages = [
+			'required'            => 'Completá el campo obligatorio' . $field_suffix . '.',
+			'required_file'       => 'Adjuntá el archivo obligatorio' . $field_suffix . '.',
+			'invalid_email'       => 'Ingresá un correo electrónico válido' . $field_suffix . ' (por ejemplo, nombre@dominio.com).',
+			'invalid_phone'       => 'Ingresá un teléfono válido' . $field_suffix . ', incluyendo el código de país.',
+			'invalid_document'    => 'Revisá el número de documento' . $field_suffix . '. Si es una cédula uruguaya, verificá el dígito final.',
+			'invalid_option'      => 'Seleccioná una opción válida' . $field_suffix . '.',
+			'invalid_date'        => 'Ingresá una fecha válida' . $field_suffix . '.',
+			'invalid_time'        => 'Ingresá una hora válida' . $field_suffix . '.',
+			'required_acceptance' => 'Para enviar el formulario tenés que aceptar' . $field_suffix . '.',
+			'invalid_file'        => 'No pudimos leer el archivo' . $field_suffix . '. Volvé a seleccionarlo y comprobá que no esté vacío.',
+			'file_too_large'      => 'El archivo' . $field_suffix . ' supera los 10 MB. Reducí su tamaño y volvé a adjuntarlo.',
+			'invalid_file_type'   => 'El archivo' . $field_suffix . ' debe ser PDF, JPG, PNG o WebP.',
+			'files_too_large'     => 'Los archivos adjuntos superan los 12 MB en total. Reducí su tamaño o adjuntá menos archivos.',
+			'session_expired'     => 'La sesión del formulario venció. Recargá la página y volvé a completarlo.',
+			'submission_rejected' => 'No pudimos validar el envío. Esperá unos segundos y volvé a intentarlo.',
+			'form_unavailable'    => 'Este formulario ya no está disponible.',
+			'service_unavailable' => 'Tus datos son válidos, pero el servicio de recepción no está disponible. Intentá nuevamente en unos minutos.',
+		];
+		return $messages[ $code ] ?? 'No pudimos completar el envío. Recargá la página e intentá nuevamente.';
+	}
+
+	private static function notify_delivery_error( $form_id, $detail ) {
+		if ( function_exists( 'fc_notify_form_admin_error' ) ) {
+			fc_notify_form_admin_error(
+				[
+					'form'   => 'CPT Formulario: ' . get_the_title( $form_id ),
+					'stage'  => 'entrega de respuesta',
+					'detail' => (string) $detail,
+					'url'    => get_permalink( $form_id ),
+				]
+			);
+		}
+	}
+
+	private static function redirect_error( $url, $code, $field = '' ) {
+		$args = [
+			'formulario_estado' => 'error',
+			'formulario_error'  => sanitize_key( $code ),
+		];
+		if ( '' !== trim( (string) $field ) ) {
+			$args['formulario_campo'] = sanitize_text_field( $field );
+		}
+		wp_safe_redirect( add_query_arg( $args, $url ) );
+		exit;
 	}
 
 	private static function redirect( $url, $status ) {

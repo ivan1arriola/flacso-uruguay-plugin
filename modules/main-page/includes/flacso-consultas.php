@@ -1870,12 +1870,14 @@ function flacso_render_gracias_virtual() {
         }
 
         $pid = isset( $_GET['pid'] ) ? absint( $_GET['pid'] ) : 0;
+        $dynamic_form_id = isset( $_GET['formulario'] ) ? absint( $_GET['formulario'] ) : 0;
+        $is_dynamic_form_gracias = $dynamic_form_id > 0;
         $dynamic_offer_ids = array();
         if ( isset( $_GET['ofertas'] ) ) {
                 $raw_offer_ids = explode( ',', sanitize_text_field( wp_unslash( $_GET['ofertas'] ) ) );
                 $dynamic_offer_ids = flacso_consultas_normalize_offer_ids( $raw_offer_ids );
         }
-        $is_dynamic_info_gracias = ! empty( $dynamic_offer_ids );
+        $is_dynamic_info_gracias = $is_dynamic_form_gracias || ! empty( $dynamic_offer_ids );
         $dynamic_offer_titles = array_map(
                 static function ( $offer_id ) {
                         return get_the_title( $offer_id );
@@ -1900,7 +1902,10 @@ function flacso_render_gracias_virtual() {
         }
 
         $intro = $titulo_programa ? flacso_intro_con_articulo( $titulo_programa ) : '';
-        if ( $is_dynamic_info_gracias ) {
+        if ( $is_dynamic_form_gracias ) {
+                // El CPT representa un formulario independiente, no un programa.
+                $intro = '';
+        } elseif ( $is_dynamic_info_gracias ) {
                 $intro = count( $dynamic_offer_ids ) === 1
                         ? flacso_intro_con_articulo( $dynamic_offer_titles[0] ?? '' )
                         : 'las ofertas seleccionadas';
@@ -1954,7 +1959,20 @@ function flacso_render_gracias_virtual() {
 						}
 					?>
 
-                                        <?php if ( $is_dynamic_info_gracias ) : ?>
+                                        <?php if ( $is_dynamic_form_gracias ) : ?>
+                                        <nav class="flacso-gracias-buttons flacso-gracias-buttons--dynamic" aria-label="Acciones posteriores">
+                                                <a class="flacso-gracias-btn flacso-gracias-btn--primary"
+                                                   href="<?php echo esc_url( home_url( '/' ) ); ?>">
+                                                        <span class="flacso-gracias-btn__icon" aria-hidden="true">←</span>
+                                                        <span class="flacso-gracias-btn__text"><strong>Volver al sitio</strong></span>
+                                                </a>
+                                                <a class="flacso-gracias-btn flacso-gracias-btn--secondary"
+                                                   href="<?php echo esc_url( home_url( '/formacion/' ) ); ?>">
+                                                        <span class="flacso-gracias-btn__icon" aria-hidden="true">▦</span>
+                                                        <span class="flacso-gracias-btn__text"><strong>Ver oferta académica</strong></span>
+                                                </a>
+                                        </nav>
+                                        <?php elseif ( $is_dynamic_info_gracias ) : ?>
                                         <nav class="flacso-gracias-buttons flacso-gracias-buttons--dynamic" aria-label="Acciones posteriores">
                                                 <a class="flacso-gracias-btn flacso-gracias-btn--primary"
                                                    href="<?php echo esc_url( home_url( '/formacion/' ) ); ?>" target="_self" rel="noopener">
