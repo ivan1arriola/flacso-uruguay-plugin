@@ -11,7 +11,7 @@ function flacso_instagram_select_dynamic_feed_items(array $feed): array {
         return [];
     }
 
-    $display_count = min($total, 5);
+    $display_count = min($total, 6);
 
     $display_count = (int) apply_filters('flacso_main_page_instagram_dynamic_display_count', $display_count, $feed);
     $display_count = max(1, min($total, $display_count));

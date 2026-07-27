@@ -157,7 +157,6 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
                                 <?php endif; ?>
                             </div>
                             <div class="flacso-oferta-mosaico__content">
-                                <span class="flacso-oferta-mosaico__number"><?php echo esc_html(str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT)); ?></span>
                                 <h3><?php echo esc_html($card['title']); ?></h3>
                                 <?php if (trim(wp_strip_all_tags($card['desc'])) !== '') : ?>
                                     <div class="flacso-oferta-mosaico__description"><?php echo wp_kses_post($card['desc']); ?></div>

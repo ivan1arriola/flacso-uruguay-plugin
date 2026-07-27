@@ -987,7 +987,7 @@
     position: absolute;
     inset: 0;
     background:
-        linear-gradient(180deg, rgba(8, 27, 60, 0.08) 10%, rgba(8, 27, 60, 0.9) 100%),
+        linear-gradient(180deg, rgba(8, 27, 60, 0.08) 10%, rgba(8, 27, 60, 0.96) 100%),
         linear-gradient(90deg, rgba(8, 27, 60, 0.48), transparent 75%);
 }
 
@@ -1011,29 +1011,17 @@
     padding: clamp(1.2rem, 2.6vw, 2.2rem);
 }
 
-.flacso-oferta-mosaico__number {
-    display: inline-flex;
-    margin-bottom: auto;
-    padding: 0.38rem 0.55rem;
-    border: 1px solid rgba(255, 255, 255, 0.32);
-    border-radius: 999px;
-    background: rgba(8, 27, 60, 0.36);
-    color: #fed222;
-    font-size: 0.72rem;
-    font-weight: 850;
-    backdrop-filter: blur(6px);
-}
-
-.flacso-oferta-mosaico__content h3 {
-    margin: clamp(2.5rem, 8vw, 6rem) 0 0;
-    color: #ffffff;
+.flacso-main-page .flacso-oferta-mosaico__content h3 {
+    margin: 0;
+    color: #ffffff !important;
     font-size: clamp(1.65rem, 3vw, 3rem);
     font-weight: 850;
     letter-spacing: -0.04em;
     line-height: 1;
+    text-shadow: 0 2px 14px rgba(5, 18, 42, 0.68);
 }
 
-.flacso-oferta-mosaico__card:not(.flacso-oferta-mosaico__card--featured) .flacso-oferta-mosaico__content h3 {
+.flacso-main-page .flacso-oferta-mosaico__card:not(.flacso-oferta-mosaico__card--featured) .flacso-oferta-mosaico__content h3 {
     font-size: clamp(1.45rem, 2vw, 2.15rem);
 }
 
@@ -1095,9 +1083,9 @@
         border-radius: 14px;
     }
 
-    .flacso-oferta-mosaico__content h3,
-    .flacso-oferta-mosaico__card:not(.flacso-oferta-mosaico__card--featured) .flacso-oferta-mosaico__content h3 {
-        margin-top: 3.5rem;
+    .flacso-main-page .flacso-oferta-mosaico__content h3,
+    .flacso-main-page .flacso-oferta-mosaico__card:not(.flacso-oferta-mosaico__card--featured) .flacso-oferta-mosaico__content h3 {
+        margin-top: 0;
         font-size: clamp(1.65rem, 9vw, 2.35rem);
     }
 
@@ -1135,7 +1123,31 @@
 .site-header,
 .navbar {
     position: relative;
-    z-index: 9999 !important;
+    z-index: 2147483600 !important;
+}
+
+/*
+ * Mantiene la navegación institucional por encima de modales, carruseles y
+ * elementos flotantes de los módulos cuando el menú lateral está abierto.
+ */
+@media (max-width: 1080px) {
+    .flacso-site-header {
+        z-index: 2147483600 !important;
+        -webkit-backdrop-filter: none !important;
+        backdrop-filter: none !important;
+    }
+
+    .flacso-navbar {
+        z-index: 2147483601 !important;
+    }
+
+    .flacso-navbar__overlay {
+        z-index: 2147483646 !important;
+    }
+
+    .flacso-navbar__navigation {
+        z-index: 2147483647 !important;
+    }
 }
 
 .flacso-main-page .spin-loader {
@@ -3478,6 +3490,24 @@
     background: #f4f7fb;
 }
 
+.flacso-main-page .flacso-home-block--eventos {
+    padding-block: clamp(1.25rem, 2.6vw, 2rem) !important;
+}
+
+.flacso-main-page .flacso-home-block__surface--eventos :is(
+    .flc-eventos-react,
+    .flc-eventos-grid
+) {
+    padding-block: 0;
+}
+
+.flacso-main-page .flacso-home-block__surface--eventos :is(
+    .flc-eventos-react__header,
+    .flc-eventos-grid__header
+) {
+    margin-bottom: clamp(0.85rem, 1.8vw, 1.25rem);
+}
+
 .flacso-main-page .flacso-home-block--seminarios,
 .flacso-main-page .flacso-home-block--quienes,
 .flacso-main-page .flacso-home-block--contacto {
@@ -3596,14 +3626,17 @@
 
 /* Cierre institucional de la portada: contacto + congreso */
 .flacso-main-page .flacso-home-block--contacto {
-    padding-bottom: clamp(1.25rem, 2.8vw, 2.25rem) !important;
+    padding-block: clamp(1.25rem, 2.6vw, 2rem) !important;
 }
 
 .flacso-main-page .flacso-home-block--congreso {
-    padding-top: clamp(1.25rem, 2.8vw, 2.25rem) !important;
+    padding-block: clamp(1.5rem, 3vw, 2.4rem) !important;
 }
 
 .flacso-main-page .flacso-contacto-section {
+    --flacso-unified-title-color: #ffffff;
+    --flacso-unified-title-line: rgba(255, 255, 255, 0.28);
+    --flacso-unified-title-accent: #fed222;
     isolation: isolate;
     padding: 0 !important;
     overflow: hidden;
@@ -3622,7 +3655,7 @@
 }
 
 .flacso-main-page .flacso-contacto-content {
-    padding: clamp(1.75rem, 4vw, 3rem);
+    padding: clamp(1.25rem, 2.6vw, 2rem);
 }
 
 .flacso-main-page .flacso-contacto-content > .row {
@@ -3643,7 +3676,8 @@
     padding: 0 !important;
     border: 0 !important;
     color: #ffffff !important;
-    font-size: clamp(2rem, 3.7vw, 3.25rem) !important;
+    -webkit-text-fill-color: #ffffff !important;
+    font-size: clamp(1.8rem, 3vw, 2.55rem) !important;
     line-height: 1.03 !important;
     letter-spacing: -0.04em !important;
 }
@@ -3680,10 +3714,10 @@
 }
 
 .flacso-main-page .flacso-congreso-section {
-    min-height: clamp(430px, 43vw, 560px);
+    min-height: clamp(340px, 32vw, 420px);
     display: grid;
-    align-items: end;
-    padding: clamp(2rem, 5vw, 4rem) !important;
+    align-items: center;
+    padding: clamp(2rem, 4vw, 3rem) !important;
     border-radius: 24px;
     text-align: left;
     box-shadow: 0 22px 54px rgba(9, 24, 52, 0.22);
@@ -3700,17 +3734,17 @@
 }
 
 .flacso-main-page .flacso-congreso-content {
-    width: min(100%, 760px);
+    width: min(100%, 900px);
     margin: 0;
     padding: 0;
     text-align: left;
 }
 
 .flacso-main-page .flacso-congreso-section .flacso-congreso-title {
-    max-width: 17ch;
-    margin: 0 0 1rem !important;
-    font-size: clamp(2.2rem, 4.2vw, 4rem) !important;
-    line-height: 0.98 !important;
+    max-width: 22ch;
+    margin: 0 0 0.8rem !important;
+    font-size: clamp(2rem, 3.4vw, 3.35rem) !important;
+    line-height: 1.02 !important;
     letter-spacing: -0.045em !important;
     text-align: left !important;
     text-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
@@ -3719,7 +3753,7 @@
 
 .flacso-main-page .flacso-congreso-text {
     max-width: 64ch;
-    margin: 0 0 1.5rem;
+    margin: 0 0 1.2rem;
     color: rgba(255, 255, 255, 0.9);
     font-size: clamp(1rem, 1.35vw, 1.16rem);
     line-height: 1.55;
@@ -3764,9 +3798,9 @@
     }
 
     .flacso-main-page .flacso-congreso-section {
-        min-height: 480px;
-        align-items: end;
-        padding: 1.5rem !important;
+        min-height: 0;
+        align-items: center;
+        padding: 2rem 1.25rem !important;
         background-position: center;
     }
 

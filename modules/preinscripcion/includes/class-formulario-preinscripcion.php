@@ -236,11 +236,12 @@ class FLACSO_Formulario_Preinscripcion_Final {
         ));
     }
 
-    private function check_existing_preinscription($webhook_candidates, $webhook_token, $oferta_id, $correo) {
+    private function check_existing_preinscription($webhook_candidates, $webhook_token, $oferta_id, $correo, $submission_id = '') {
         $body_json = wp_json_encode(array(
             'action' => 'check_duplicate',
             'offer' => array('id' => (int) $oferta_id),
             'applicant' => array('correo' => sanitize_email($correo)),
+            'meta' => array('submission_id' => sanitize_text_field($submission_id)),
         ));
 
         if ($body_json === false) {
@@ -285,9 +286,82 @@ class FLACSO_Formulario_Preinscripcion_Final {
     }
 
     public function configurar_limites_archivos() {
-        @ini_set('upload_max_size', '64M');
-        @ini_set('post_max_size', '64M');
+        // upload_max_filesize y post_max_size deben configurarse antes de que
+        // PHP reciba la solicitud (php.ini/.user.ini o configuración del host).
         @ini_set('max_execution_time', '300');
+    }
+
+    private function php_ini_size_to_bytes($value) {
+        $value = trim((string) $value);
+        if ($value === '') return 0;
+        $unit = strtolower(substr($value, -1));
+        $number = (float) $value;
+        if ($unit === 'g') return (int) ($number * 1024 * 1024 * 1024);
+        if ($unit === 'm') return (int) ($number * 1024 * 1024);
+        if ($unit === 'k') return (int) ($number * 1024);
+        return (int) $number;
+    }
+
+    private function validate_preinscription_upload($name, $tmp, $size) {
+        $extension = strtolower((string) pathinfo((string) $name, PATHINFO_EXTENSION));
+        $allowed = array(
+            'pdf' => 'application/pdf',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'webp' => 'image/webp',
+        );
+        $parts = explode('.', strtolower((string) $name));
+        array_pop($parts);
+        $dangerous = array('php', 'phtml', 'js', 'mjs', 'html', 'htm', 'exe', 'sh', 'svg');
+
+        if ((int) $size <= 0) {
+            return array('ok' => false, 'error' => 'El archivo está vacío.');
+        }
+        if (!isset($allowed[$extension]) || array_intersect($parts, $dangerous)) {
+            return array('ok' => false, 'error' => 'Solo se permiten PDF, JPEG, PNG o WEBP con una extensión segura.');
+        }
+
+        $detected = '';
+        if (function_exists('finfo_open')) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            if ($finfo) {
+                $detected = (string) finfo_file($finfo, $tmp);
+                finfo_close($finfo);
+            }
+        }
+        if ($detected === '' || $detected !== $allowed[$extension]) {
+            return array('ok' => false, 'error' => 'El contenido real del archivo no coincide con su extensión.');
+        }
+
+        return array('ok' => true, 'mime' => $detected);
+    }
+
+    private function check_preinscription_rate_limit($oferta_id, $correo, $submission_id) {
+        $ip = sanitize_text_field((string) ($_SERVER['REMOTE_ADDR'] ?? 'sin-ip'));
+        $email = strtolower(sanitize_email($correo));
+        $windows = array(
+            array('key' => 'flacso_preins_rate_identity_' . hash('sha256', $ip . '|' . $email . '|' . (int) $oferta_id), 'max' => 5),
+            array('key' => 'flacso_preins_rate_ip_' . hash('sha256', $ip), 'max' => 12),
+        );
+
+        foreach ($windows as $window) {
+            $state = get_transient($window['key']);
+            if (!is_array($state)) {
+                $state = array('count' => 0, 'submissions' => array());
+            }
+            $known = in_array($submission_id, $state['submissions'], true);
+            if (!$known && (int) $state['count'] >= (int) $window['max']) {
+                return false;
+            }
+            if (!$known) {
+                $state['count'] = (int) $state['count'] + 1;
+                $state['submissions'][] = $submission_id;
+                $state['submissions'] = array_slice(array_values(array_unique($state['submissions'])), -20);
+                set_transient($window['key'], $state, 15 * MINUTE_IN_SECONDS);
+            }
+        }
+        return true;
     }
 
     /**
@@ -572,7 +646,7 @@ class FLACSO_Formulario_Preinscripcion_Final {
         return rtrim($editor_url, '/') . '/files';
     }
 
-    private function upload_single_file_to_endpoint($file_data, $field_name, $offer_info, $applicant_info) {
+    private function upload_single_file_to_endpoint($file_data, $field_name, $offer_info, $applicant_info, $submission_id) {
         $webhook_token = sanitize_text_field((string) get_option('flacso_webhook_token', ''));
         $upload_url = $this->get_preinscripciones_files_upload_url();
 
@@ -582,6 +656,7 @@ class FLACSO_Formulario_Preinscripcion_Final {
 
         $body = array(
             'field' => $field_name,
+            'submissionId' => $submission_id,
             'file' => array(
                 'name' => $file_data['name'],
                 'type' => $file_data['type'],
@@ -597,6 +672,7 @@ class FLACSO_Formulario_Preinscripcion_Final {
                 'nombre2' => $applicant_info['nombre2'] ?? '',
                 'apellido2' => $applicant_info['apellido2'] ?? '',
                 'documento' => $applicant_info['documento'] ?? '',
+                'correo' => $applicant_info['correo'] ?? '',
             ),
         );
 
@@ -618,7 +694,7 @@ class FLACSO_Formulario_Preinscripcion_Final {
         $response = wp_remote_post($upload_url, array(
             'headers' => $headers,
             'body' => $body_json,
-            'timeout' => 120,
+            'timeout' => 60,
             'redirection' => 0,
             'blocking' => true,
             'httpversion' => '1.1',
@@ -640,6 +716,10 @@ class FLACSO_Formulario_Preinscripcion_Final {
                 'file_url' => $json['data']['file_url'] ?? '',
                 'file_name' => $json['data']['file_name'] ?? $file_data['name'],
                 'file_size' => $json['data']['file_size'] ?? null,
+                'folder_id' => $json['data']['folder_id'] ?? '',
+                'folder_url' => $json['data']['folder_url'] ?? '',
+                'offer_folder_id' => $json['data']['offer_folder_id'] ?? '',
+                'offer_folder_url' => $json['data']['offer_folder_url'] ?? '',
             );
         }
 
@@ -741,6 +821,19 @@ class FLACSO_Formulario_Preinscripcion_Final {
         }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') { $this->send_json_error('Método no permitido.'); }
+        $content_length = (int) ($_SERVER['CONTENT_LENGTH'] ?? 0);
+        $post_max_bytes = $this->php_ini_size_to_bytes(ini_get('post_max_size'));
+        if (
+            $post_max_bytes > 0 &&
+            $content_length > $post_max_bytes &&
+            empty($_POST) &&
+            empty($_FILES)
+        ) {
+            $this->send_json_error(
+                'El total enviado supera el límite del servidor. Reducí el tamaño o la cantidad de archivos.',
+                413
+            );
+        }
         if (!wp_verify_nonce($_POST['nonce'] ?? '', 'flacso_form_nonce')) { $this->send_json_error('Error de seguridad. Por favor, recargue la página.'); }
 
         $id_pagina       = (int)($_POST['id_pagina'] ?? 0);
@@ -752,8 +845,30 @@ class FLACSO_Formulario_Preinscripcion_Final {
         if ($this->formulario_preinscripcion_esta_cerrado($id_pagina)) {
             $this->send_json_error($this->obtener_mensaje_preinscripciones_cerradas(), 403);
         }
+        $submission_id = sanitize_text_field((string) ($_POST['submission_id'] ?? ''));
+        if (!preg_match('/^[A-Za-z0-9][A-Za-z0-9_-]{15,127}$/', $submission_id)) {
+            $submission_id = wp_generate_uuid4();
+        }
 
-        $campos_obligatorios = array('correo', 'nombre1', 'apellido1', 'celular');
+        $campos_obligatorios = array(
+            'correo',
+            'nombre1',
+            'apellido1',
+            'celular',
+            'fecha_nacimiento',
+            'tipo_documento',
+            'etnia',
+            'domicilio',
+            'ocupacion',
+            'estudios',
+            'pais_nacimiento',
+            'pais_residencia',
+            'posgrado_flacso',
+            'convenio_flacso',
+            'fuente',
+            'acepta_difusion',
+            'documentacion_completa',
+        );
         foreach ($campos_obligatorios as $campo) {
             if (empty($_POST[$campo])) { $this->send_json_error("El campo $campo es obligatorio."); }
         }
@@ -765,7 +880,8 @@ class FLACSO_Formulario_Preinscripcion_Final {
             $webhook_candidates,
             $webhook_token,
             $oferta_id,
-            $_POST['correo'] ?? ''
+            $_POST['correo'] ?? '',
+            $submission_id
         );
         if (!empty($duplicate_check['exists'])) {
             $this->send_json_success(array(
@@ -777,11 +893,57 @@ class FLACSO_Formulario_Preinscripcion_Final {
         if (!empty($_POST['check_only'])) {
             $this->send_json_error('No encontramos una preinscripción confirmada para este correo.', 404);
         }
+        if (!$this->check_preinscription_rate_limit($oferta_id, $_POST['correo'] ?? '', $submission_id)) {
+            $this->send_json_error('Demasiados intentos. Esperá 15 minutos antes de volver a intentar.', 429);
+        }
+
+        if (!is_email((string) ($_POST['correo'] ?? ''))) {
+            $this->send_json_error('El correo electrónico no es válido.');
+        }
+        $birth_date = sanitize_text_field((string) ($_POST['fecha_nacimiento'] ?? ''));
+        $birth_timestamp = strtotime($birth_date);
+        if (!$birth_timestamp || $birth_date > wp_date('Y-m-d', strtotime('-18 years'))) {
+            $this->send_json_error('La fecha de nacimiento no es válida o la persona es menor de 18 años.');
+        }
 
         $documentacion_completa = sanitize_text_field($_POST['documentacion_completa'] ?? '');
+        if (!in_array($documentacion_completa, array('Si', 'No'), true)) {
+            $this->send_json_error('Debe indicar si la documentación está completa.');
+        }
+        if (
+            $documentacion_completa === 'No' &&
+            trim((string) ($_POST['documentacion_faltante'] ?? '')) === ''
+        ) {
+            $this->send_json_error('Debe especificar qué documentación falta.');
+        }
+        if (
+            ($_POST['posgrado_flacso'] ?? '') === 'Si' &&
+            trim((string) ($_POST['posgrado_flacso_detalle'] ?? '')) === ''
+        ) {
+            $this->send_json_error('Debe especificar qué posgrado cursa actualmente.');
+        }
+        if (
+            ($_POST['convenio_flacso'] ?? '') === 'Si' &&
+            trim((string) ($_POST['convenio_flacso_detalle'] ?? '')) === ''
+        ) {
+            $this->send_json_error('Debe especificar el convenio.');
+        }
+        if (
+            ($_POST['genero'] ?? '') === 'Otra' &&
+            trim((string) ($_POST['genero_otra'] ?? '')) === ''
+        ) {
+            $this->send_json_error('Debe especificar la identidad de género.');
+        }
         if ($documentacion_completa !== 'No') {
-            if (!$this->archivo_obligatorio_presente('carta_motivacion')) {
-                $this->send_json_error('La carta de motivación es obligatoria para todos los posgrados.');
+            $required_files = array('documento_identidad', 'cv', 'carta_motivacion', 'titulo_grado');
+            if ($es_maestria) {
+                $required_files[] = 'carta_recomendacion_1';
+                $required_files[] = 'carta_recomendacion_2';
+            }
+            foreach ($required_files as $required_file) {
+                if (!$this->archivo_obligatorio_presente($required_file)) {
+                    $this->send_json_error('Falta documentación obligatoria para declarar la postulación como completa.');
+                }
             }
         }
 
@@ -819,6 +981,10 @@ class FLACSO_Formulario_Preinscripcion_Final {
         $file_upload_errors = array();
         $selected_files_count = 0;
         $uploaded_files_count = 0;
+        $total_file_size = 0;
+        $preflight_file_count = 0;
+        $identity_document_count = 0;
+        $preflight_errors = array();
         $offer_info = array(
             'id' => $oferta_id,
             'title' => $titulo_posgrado,
@@ -829,13 +995,57 @@ class FLACSO_Formulario_Preinscripcion_Final {
             'nombre2' => $datos_basicos['nombre2'] ?? '',
             'apellido2' => $datos_basicos['apellido2'] ?? '',
             'documento' => $datos_basicos['documento'] ?? '',
+            'correo' => $datos_basicos['correo'] ?? '',
         );
+
+        foreach ($_FILES as $preflight_field => $preflight_file) {
+            if (!$es_maestria && in_array($preflight_field, array('carta_recomendacion_1', 'carta_recomendacion_2'), true)) {
+                continue;
+            }
+            $names = is_array($preflight_file['name']) ? $preflight_file['name'] : array($preflight_file['name']);
+            $sizes = is_array($preflight_file['size']) ? $preflight_file['size'] : array($preflight_file['size']);
+            $tmp_names = is_array($preflight_file['tmp_name']) ? $preflight_file['tmp_name'] : array($preflight_file['tmp_name']);
+            $upload_errors = is_array($preflight_file['error']) ? $preflight_file['error'] : array($preflight_file['error']);
+            foreach ($names as $preflight_index => $preflight_name) {
+                if ((string) $preflight_name === '') continue;
+                $preflight_file_count++;
+                $preflight_size = (int) ($sizes[$preflight_index] ?? 0);
+                $preflight_tmp = (string) ($tmp_names[$preflight_index] ?? '');
+                $preflight_error = (int) ($upload_errors[$preflight_index] ?? UPLOAD_ERR_NO_FILE);
+                $total_file_size += $preflight_size;
+                if ($preflight_field === 'documento_identidad') $identity_document_count++;
+                if ($preflight_error !== UPLOAD_ERR_OK) {
+                    $preflight_errors[] = $this->get_php_upload_error_message($preflight_error);
+                    continue;
+                }
+                $preflight_identity = $this->validate_preinscription_upload(
+                    $preflight_name,
+                    $preflight_tmp,
+                    $preflight_size
+                );
+                if (!$preflight_identity['ok']) {
+                    $preflight_errors[] = $preflight_identity['error'];
+                }
+            }
+        }
+        if ($preflight_file_count > 7) {
+            $this->send_json_error('Se permiten como máximo 7 archivos por postulación.');
+        }
+        if ($identity_document_count > 2) {
+            $this->send_json_error('El documento de identidad admite como máximo dos archivos.');
+        }
+        if ($total_file_size > 25 * 1024 * 1024) {
+            $this->send_json_error('El total de archivos supera el límite de 25 MiB.', 413);
+        }
+        if (!empty($preflight_errors)) {
+            $this->send_json_error('Uno o más archivos fueron rechazados: ' . implode(' ', array_unique($preflight_errors)));
+        }
 
         if (!empty($_FILES)) {
             foreach ($_FILES as $campo => $file) {
                 if (!$es_maestria && in_array($campo, array('carta_recomendacion_1','carta_recomendacion_2'), true)) { continue; }
 
-                $collectFile = function($name, $type, $tmp, $error) use (&$archivos_con_drive, &$file_upload_errors, &$selected_files_count, &$uploaded_files_count, $campo, $max_file_size, $offer_info, $applicant_info) {
+                $collectFile = function($name, $type, $tmp, $error) use (&$archivos_con_drive, &$file_upload_errors, &$selected_files_count, &$uploaded_files_count, $campo, $max_file_size, $offer_info, $applicant_info, $submission_id) {
                     $name = (string) $name;
                     if ($name === '') {
                         return;
@@ -868,6 +1078,13 @@ class FLACSO_Formulario_Preinscripcion_Final {
                         error_log("[Preinscripcion] $error_msg");
                         return;
                     }
+                    $identity = $this->validate_preinscription_upload($name, $tmp, $file_size);
+                    if (!$identity['ok']) {
+                        $error_msg = $identity['error'];
+                        $file_upload_errors[] = "$campo/$name: $error_msg";
+                        error_log("[Preinscripcion] Archivo rechazado '$campo/$name': $error_msg");
+                        return;
+                    }
                     $content = file_get_contents($tmp);
                     if ($content === false) {
                         $error_msg = 'No se pudo leer el archivo temporal.';
@@ -877,7 +1094,7 @@ class FLACSO_Formulario_Preinscripcion_Final {
                     }
                     $b64_content = base64_encode($content);
                     $sanitized_name = sanitize_file_name($name);
-                    $sanitized_type = $type ?: 'application/octet-stream';
+                    $sanitized_type = $identity['mime'];
 
                     error_log("[Preinscripcion] Subiendo archivo '$campo/$name' ($file_size bytes) al endpoint de archivos...");
                     $upload_result = $this->upload_single_file_to_endpoint(
@@ -888,7 +1105,8 @@ class FLACSO_Formulario_Preinscripcion_Final {
                         ),
                         $campo,
                         $offer_info,
-                        $applicant_info
+                        $applicant_info,
+                        $submission_id
                     );
 
                     if ($upload_result['ok']) {
@@ -898,6 +1116,10 @@ class FLACSO_Formulario_Preinscripcion_Final {
                             'drive_url' => $upload_result['file_url'],
                             'drive_id' => $upload_result['file_id'],
                             'size' => $file_size,
+                            'folder_id' => $upload_result['folder_id'],
+                            'folder_url' => $upload_result['folder_url'],
+                            'offer_folder_id' => $upload_result['offer_folder_id'],
+                            'offer_folder_url' => $upload_result['offer_folder_url'],
                         );
                         $uploaded_files_count++;
                         error_log("[Preinscripcion] Archivo '$campo/$name' subido a Drive: " . $upload_result['file_url']);
@@ -1022,6 +1244,7 @@ class FLACSO_Formulario_Preinscripcion_Final {
             ),
             'archivos' => $archivos_con_drive,
             'meta' => array(
+                'submission_id' => $submission_id,
                 'timestamp_client' => current_time('c'),
                 'ip_address' => $ip_address,
                 'user_agent' => $user_agent,
@@ -1056,7 +1279,7 @@ class FLACSO_Formulario_Preinscripcion_Final {
         foreach ($webhook_candidates as $candidate) {
             $candidate_url = (string) ($candidate['url'] ?? '');
             $candidate_source = (string) ($candidate['source'] ?? 'configured');
-            $result = $this->post_preinscripciones_webhook($candidate_url, $body_json, $webhook_token, 100);
+            $result = $this->post_preinscripciones_webhook($candidate_url, $body_json, $webhook_token, 30);
 
             if (is_wp_error($result)) {
                 $last_wp_error_message = $result->get_error_message();

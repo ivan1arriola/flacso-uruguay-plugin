@@ -92,6 +92,33 @@ jQuery(function($){
     let telefonoPaddingFrame = null;
     let submissionInProgress = false;
 
+    function crearSubmissionId() {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+            return window.crypto.randomUUID();
+        }
+        const random = Math.random().toString(36).slice(2);
+        return 'legacy-' + Date.now().toString(36) + '-' + random + random;
+    }
+
+    function asegurarSubmissionId() {
+        const input = document.getElementById('flacso-preinscripcion-submission-id');
+        if (!input) return '';
+        const storageKey = 'flacsoPreinscripcionSubmission:' + String(config.idPosgrado || window.location.pathname);
+        let value = String(input.value || '').trim();
+        try {
+            const saved = sessionStorage.getItem(storageKey);
+            if (saved) value = saved;
+            if (!value) value = crearSubmissionId();
+            sessionStorage.setItem(storageKey, value);
+        } catch (storageError) {
+            if (!value) value = crearSubmissionId();
+        }
+        input.value = value;
+        return value;
+    }
+
+    asegurarSubmissionId();
+
     const obtenerPaddingBaseTelefono = () => {
         const input = document.getElementById('celular');
         if(!input) return 0;
@@ -349,7 +376,18 @@ jQuery(function($){
         const maxFileSizeMb = Number(config.maxFileSize) || 3;
         const maxFileSizeBytes = maxFileSizeMb * 1024 * 1024;
         const archivos = input.files ? Array.from(input.files) : [];
+        const extensionesPermitidas = ['pdf', 'jpg', 'jpeg', 'png', 'webp'];
+        const tiposPermitidos = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
         const demasiadoGrande = archivos.find(file => file && file.size > maxFileSizeBytes);
+        const tipoInvalido = archivos.find(file => {
+            if (!file) return false;
+            const partes = String(file.name || '').toLowerCase().split('.');
+            const extension = partes.length > 1 ? partes.pop() : '';
+            const doblePeligrosa = partes.some(part => ['php', 'phtml', 'js', 'html', 'exe', 'sh'].includes(part));
+            return !extensionesPermitidas.includes(extension) ||
+                !tiposPermitidos.includes(String(file.type || '').toLowerCase()) ||
+                doblePeligrosa;
+        });
         const $input = $(input);
 
         input.setCustomValidity('');
@@ -358,6 +396,20 @@ jQuery(function($){
 
         if(demasiadoGrande){
             const msg = 'El archivo "' + demasiadoGrande.name + '" supera el límite de ' + maxFileSizeMb + ' MB.';
+            input.setCustomValidity(msg);
+            $input.addClass('is-invalid');
+            if(feedback.length){ feedback.text(msg); }
+            return { label: obtenerLabelArchivo(input), msg };
+        }
+        if(tipoInvalido){
+            const msg = 'El archivo "' + tipoInvalido.name + '" no es un PDF, JPEG, PNG o WEBP válido.';
+            input.setCustomValidity(msg);
+            $input.addClass('is-invalid');
+            if(feedback.length){ feedback.text(msg); }
+            return { label: obtenerLabelArchivo(input), msg };
+        }
+        if(input.name === 'documento_identidad[]' && archivos.length > 2){
+            const msg = 'El documento de identidad admite como máximo dos archivos (frente y dorso).';
             input.setCustomValidity(msg);
             $input.addClass('is-invalid');
             if(feedback.length){ feedback.text(msg); }
@@ -379,10 +431,29 @@ jQuery(function($){
 
     function validarArchivosSeleccionados() {
         const errores = [];
+        let totalBytes = 0;
+        let totalArchivos = 0;
         form.find('input[type="file"]').each(function(){
             const error = validarArchivoInput(this);
             if(error){ errores.push(error); }
+            Array.from(this.files || []).forEach(file => {
+                totalBytes += Number(file.size) || 0;
+                totalArchivos++;
+            });
         });
+        const maxTotalMb = Number(config.maxTotalSize) || 25;
+        if(totalBytes > maxTotalMb * 1024 * 1024){
+            errores.push({
+                label: 'Archivos adjuntos',
+                msg: 'El total seleccionado supera el límite de ' + maxTotalMb + ' MiB.'
+            });
+        }
+        if(totalArchivos > 7){
+            errores.push({
+                label: 'Archivos adjuntos',
+                msg: 'Se permiten como máximo 7 archivos por postulación.'
+            });
+        }
         return errores;
     }
 
@@ -509,8 +580,7 @@ jQuery(function($){
 
     // Construir informe de errores tras intentar enviar
     function construirInformeErrores(){
-        validarArchivosSeleccionados();
-        const errores = [];
+        const errores = validarArchivosSeleccionados();
 
         // HTML5 invalids
         form.find(':input').each(function(){
@@ -586,8 +656,7 @@ jQuery(function($){
     }
 
     function validarCamposDeContenedor($scope){
-        validarArchivosSeleccionados();
-        const errores = [];
+        const errores = validarArchivosSeleccionados();
         const seen = new Set();
 
         $scope.find(':input').each(function(){
@@ -763,7 +832,7 @@ jQuery(function($){
         btnSubmit.prop('disabled', true).html('<i class="bi bi-hourglass-split me-2"></i>Enviando...');
 
         const controller = new AbortController();
-        const timeoutMs = Number(config.submitTimeoutMs) || 240000;
+        const timeoutMs = Number(config.submitTimeoutMs) || 300000;
         const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
 
         try{
@@ -807,6 +876,7 @@ jQuery(function($){
                 try {
                     sessionStorage.setItem('consultaPrograma', posgrado);
                     sessionStorage.setItem('consultaNombreCompleto', nombreCompleto);
+                    sessionStorage.removeItem('flacsoPreinscripcionSubmission:' + String(config.idPosgrado || window.location.pathname));
                 } catch (storageError) {
                     console.warn('[Preinscripcion] sessionStorage no disponible', storageError);
                 }

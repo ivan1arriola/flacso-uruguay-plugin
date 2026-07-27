@@ -484,7 +484,7 @@ if (!function_exists('flacso_section_eventos_render')) {
             $section_id  = wp_unique_id('flc-eventos-grid-');
 
             ob_start(); ?>
-            <section class="flc-eventos-grid flacso-home-block flacso-home-block--eventos" aria-labelledby="<?php echo esc_attr($section_id); ?>">
+            <section class="flc-eventos-grid" aria-labelledby="<?php echo esc_attr($section_id); ?>">
                 <div class="flacso-content-shell">
                     <header class="flacso-home-block__header flc-eventos-grid__header">
                         <h2 class="flc-eventos-grid__title" id="<?php echo esc_attr($section_id); ?>">
@@ -591,7 +591,7 @@ if (!function_exists('flacso_section_eventos_render')) {
             </section>
             <style>
                 .flc-eventos-grid {
-                    padding: clamp(2.5rem, 5vw, 4rem) 0;
+                    padding: 0;
                     background: linear-gradient(160deg, rgba(240, 245, 255, 0.6) 0%, rgba(255, 255, 255, 0.9) 50%, rgba(248, 250, 255, 0.7) 100%);
                     position: relative;
                     overflow: hidden;
@@ -623,7 +623,7 @@ if (!function_exists('flacso_section_eventos_render')) {
 
                 .flc-eventos-grid__header {
                     text-align: center;
-                    margin-bottom: clamp(2rem, 4vw, 3rem);
+                    margin-bottom: clamp(0.85rem, 1.8vw, 1.25rem);
                     position: relative;
                     z-index: 1;
                 }

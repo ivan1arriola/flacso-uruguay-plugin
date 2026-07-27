@@ -141,6 +141,7 @@ trait FLACSO_Formulario_Preinscripcion_Render {
         <input type="hidden" name="titulo_posgrado" value="<?php echo esc_attr($info['titulo_posgrado']); ?>">
         <input type="hidden" name="posgradoAlQuePostula" value="<?php echo esc_attr($info['titulo_posgrado']); ?>">
         <input type="hidden" name="es_maestria" value="<?php echo $info['es_maestria'] ? 'si' : 'no'; ?>">
+        <input type="hidden" name="submission_id" id="flacso-preinscripcion-submission-id" value="<?php echo esc_attr(wp_generate_uuid4()); ?>">
         <input type="hidden" name="nonce" value="<?php echo wp_create_nonce('flacso_form_nonce'); ?>">
         <input type="hidden" name="action" value="flacso_enviar_preinscripcion">
         <!-- Celular en E.164 (se completa en JS si es válido) -->
