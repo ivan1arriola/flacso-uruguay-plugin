@@ -52,7 +52,6 @@ function flacso_section_instagram_render() {
     );
     $cta_label = (string) apply_filters('flacso_main_page_instagram_cta_label', 'Ir a @flacsouruguay');
     $section_id = 'flacso-instagram-' . wp_generate_password(6, false);
-    $modal_id = $section_id . '-modal';
 
     ob_start();
     ?>
@@ -109,60 +108,30 @@ function flacso_section_instagram_render() {
                         <div class="flacso-instagram-api-feed">
                             <?php foreach ($feed as $item) : 
                                 $caption_preview = wp_trim_words($item['caption'] ?? '', 15);
-                                $caption_full = trim((string) ($item['caption'] ?? ''));
-                                $preview_image = (string) ($item['media_url'] ?? $item['thumbnail_url'] ?? '');
-                                $thumbnail_image = (string) ($item['thumbnail_url'] ?? $preview_image);
+                                $thumbnail_image = (string) ($item['thumbnail_url'] ?? $item['media_url'] ?? '');
                                 $media_type = (string) ($item['media_type'] ?? '');
-                                if ($media_type === 'VIDEO') {
-                                    $preview_image = $thumbnail_image;
-                                }
-                                if ($preview_image === '') {
-                                    $preview_image = $thumbnail_image;
-                                }
+                                $permalink = (string) ($item['permalink'] ?? $profile_url);
                             ?>
-                                <button
-                                    type="button"
+                                <a
                                     class="flacso-ig-feed-item"
-                                    aria-label="<?php echo esc_attr__('Ampliar publicacion de Instagram', 'flacso-main-page'); ?>"
-                                    data-flacso-ig-open
-                                    data-image="<?php echo esc_url($preview_image); ?>"
-                                    data-thumbnail="<?php echo esc_url($thumbnail_image); ?>"
-                                    data-permalink="<?php echo esc_url($item['permalink'] ?? $profile_url); ?>"
-                                    data-caption="<?php echo esc_attr($caption_full); ?>"
-                                    data-media-type="<?php echo esc_attr($media_type); ?>"
-                                    data-modal-id="<?php echo esc_attr($modal_id); ?>">
-                                    <span class="flacso-ig-feed-image" style="background-image: url('<?php echo esc_url($thumbnail_image); ?>');">
+                                    href="<?php echo esc_url($permalink); ?>"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label="<?php echo esc_attr__('Ver esta publicación en Instagram', 'flacso-main-page'); ?>">
+                                    <span class="flacso-ig-feed-image">
+                                        <img src="<?php echo esc_url($thumbnail_image); ?>" alt="<?php echo esc_attr($caption_preview ?: __('Publicación de FLACSO Uruguay en Instagram', 'flacso-main-page')); ?>" loading="lazy" decoding="async">
                                         <?php if ($media_type === 'VIDEO') : ?>
                                             <span class="flacso-ig-feed-type-icon"><i class="bi bi-play-fill"></i></span>
                                         <?php elseif ($media_type === 'CAROUSEL_ALBUM') : ?>
                                             <span class="flacso-ig-feed-type-icon"><i class="bi bi-images"></i></span>
                                         <?php endif; ?>
                                         <span class="flacso-ig-feed-overlay">
-                                            <i class="bi bi-arrows-fullscreen"></i>
+                                            <i class="bi bi-instagram"></i>
                                             <span class="flacso-ig-feed-overlay-caption"><?php echo esc_html($caption_preview); ?></span>
                                         </span>
                                     </span>
-                                </button>
+                                </a>
                             <?php endforeach; ?>
-                        </div>
-                        <div class="flacso-instagram-modal" id="<?php echo esc_attr($modal_id); ?>" hidden aria-hidden="true">
-                            <div class="flacso-instagram-modal__backdrop" data-flacso-ig-close></div>
-                            <div class="flacso-instagram-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="<?php echo esc_attr($modal_id); ?>-title">
-                                <button type="button" class="flacso-instagram-modal__close" data-flacso-ig-close aria-label="<?php echo esc_attr__('Cerrar vista ampliada', 'flacso-main-page'); ?>">
-                                    <i class="bi bi-x-lg" aria-hidden="true"></i>
-                                </button>
-                                <figure class="flacso-instagram-modal__figure">
-                                    <img src="" alt="" data-flacso-ig-modal-image>
-                                </figure>
-                                <div class="flacso-instagram-modal__content">
-                                    <p class="flacso-instagram-modal__kicker" id="<?php echo esc_attr($modal_id); ?>-title">@flacsouruguay</p>
-                                    <p class="flacso-instagram-modal__caption" data-flacso-ig-modal-caption></p>
-                                    <a href="<?php echo esc_url($profile_url); ?>" class="flacso-instagram-button flacso-instagram-button--primary" target="_blank" rel="noopener noreferrer" data-flacso-ig-modal-link>
-                                        <i class="bi bi-instagram" aria-hidden="true"></i>
-                                        <?php esc_html_e('Ver en Instagram', 'flacso-main-page'); ?>
-                                    </a>
-                                </div>
-                            </div>
                         </div>
                     <?php endif; ?>
                     </div>
@@ -170,97 +139,6 @@ function flacso_section_instagram_render() {
             </div>
         </div>
     </section>
-    <script>
-    (function () {
-        var root = document.currentScript.previousElementSibling;
-        if (!root || !root.classList || !root.classList.contains('flacso-instagram-section')) {
-            var title = document.getElementById('<?php echo esc_js($section_id); ?>');
-            root = title ? title.closest('.flacso-instagram-section') : null;
-        }
-        if (!root) {
-            return;
-        }
-
-        var activeModal = null;
-        var lastTrigger = null;
-
-        function closeModal() {
-            if (!activeModal) {
-                return;
-            }
-
-            activeModal.hidden = true;
-            activeModal.setAttribute('aria-hidden', 'true');
-            document.documentElement.classList.remove('flacso-instagram-modal-open');
-
-            if (lastTrigger && typeof lastTrigger.focus === 'function') {
-                lastTrigger.focus();
-            }
-
-            activeModal = null;
-        }
-
-        function openModal(trigger) {
-            var modalId = trigger.getAttribute('data-modal-id');
-            var modal = modalId ? document.getElementById(modalId) : null;
-            if (!modal) {
-                return;
-            }
-
-            var image = modal.querySelector('[data-flacso-ig-modal-image]');
-            var caption = modal.querySelector('[data-flacso-ig-modal-caption]');
-            var link = modal.querySelector('[data-flacso-ig-modal-link]');
-            var closeButton = modal.querySelector('[data-flacso-ig-close]');
-            var imageUrl = trigger.getAttribute('data-image') || trigger.getAttribute('data-thumbnail') || '';
-            var captionText = trigger.getAttribute('data-caption') || '';
-            var permalink = trigger.getAttribute('data-permalink') || '<?php echo esc_js($profile_url); ?>';
-            var mediaType = trigger.getAttribute('data-media-type') || '';
-
-            if (image) {
-                image.src = imageUrl;
-                image.alt = captionText || (mediaType === 'VIDEO' ? 'Video de Instagram de FLACSO Uruguay' : 'Publicacion de Instagram de FLACSO Uruguay');
-            }
-
-            if (caption) {
-                caption.textContent = captionText || 'Publicacion reciente de FLACSO Uruguay.';
-            }
-
-            if (link) {
-                link.href = permalink;
-            }
-
-            lastTrigger = trigger;
-            activeModal = modal;
-            modal.hidden = false;
-            modal.setAttribute('aria-hidden', 'false');
-            document.documentElement.classList.add('flacso-instagram-modal-open');
-
-            if (closeButton && typeof closeButton.focus === 'function') {
-                closeButton.focus();
-            }
-        }
-
-        root.addEventListener('click', function (event) {
-            var trigger = event.target.closest('[data-flacso-ig-open]');
-            if (trigger) {
-                event.preventDefault();
-                openModal(trigger);
-                return;
-            }
-
-            if (event.target.closest('[data-flacso-ig-close]')) {
-                event.preventDefault();
-                closeModal();
-            }
-        });
-
-        document.addEventListener('keydown', function (event) {
-            if (event.key === 'Escape') {
-                closeModal();
-            }
-        });
-    }());
-    </script>
     <?php
     return ob_get_clean();
 }

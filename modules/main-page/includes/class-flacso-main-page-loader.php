@@ -10,7 +10,9 @@ class Flacso_Main_Page_Loader {
         if (!is_admin() || $is_ajax_context || (defined('REST_REQUEST') && REST_REQUEST) || self::is_flacso_admin_request()) {
             self::load_shortcodes();
         }
-        add_action('wp_enqueue_scripts', [__CLASS__, 'enqueue_assets']);
+        // El tema carga primero la estructura base; el plugin agrega después
+        // los estilos de sus componentes dinámicos.
+        add_action('wp_enqueue_scripts', [__CLASS__, 'enqueue_assets'], 60);
         add_action('wp_head', [__CLASS__, 'render_front_page_meta_description'], 1);
     }
 
@@ -56,6 +58,7 @@ class Flacso_Main_Page_Loader {
         $base_css_version = self::asset_version('assets/css/flacso-main-page.css');
         $react_js_version = self::asset_version('assets/js/flacso-main-page-react.js');
         $convenios_js_version = self::asset_version('assets/js/flacso-convenios-react.js');
+        $theme_owns_layout = current_theme_supports('flacso-front-page-layout');
 
         wp_register_style(
             'flacso-main-page-fonts',
@@ -72,7 +75,7 @@ class Flacso_Main_Page_Loader {
         wp_register_style(
             'flacso-main-page-base',
             FLACSO_MAIN_PAGE_MODULE_URL . 'assets/css/flacso-main-page.css',
-            ['flacso-mobile-first'],
+            $theme_owns_layout ? [] : ['flacso-mobile-first'],
             $base_css_version
         );
 
@@ -98,7 +101,9 @@ class Flacso_Main_Page_Loader {
         wp_add_inline_style('flacso-main-page-base', implode("\n", $inline_styles));
 
         wp_enqueue_style('flacso-main-page-fonts');
-        wp_enqueue_style('flacso-mobile-first');
+        if (!$theme_owns_layout) {
+            wp_enqueue_style('flacso-mobile-first');
+        }
         self::enqueue_bootstrap_style();
         wp_enqueue_style('flacso-main-page-base');
         self::enqueue_bootstrap_icons_style();

@@ -151,14 +151,14 @@ if (!function_exists('flacso_section_hero_render')) {
             position: relative;
             display: flex;
             align-items: center;
-            min-height: clamp(420px, 68svh, 700px);
+            min-height: clamp(520px, 68svh, 720px);
             width: 100%;
             overflow: hidden;
             isolation: isolate;
             background:
-                linear-gradient(90deg, rgba(9, 35, 89, 0.95) 0%, rgba(12, 49, 117, 0.90) 42%, rgba(11, 48, 117, 0.72) 62%, rgba(11, 48, 117, 0.66) 100%),
-                url("<?php echo esc_url($background); ?>") center center / cover no-repeat;
-            box-shadow: 0 28px 54px rgba(6, 17, 39, 0.3);
+                linear-gradient(105deg, rgba(7, 28, 65, 0.98) 0%, rgba(13, 52, 112, 0.94) 48%, rgba(21, 72, 139, 0.76) 100%),
+                url("<?php echo esc_url($background); ?>") center 42% / cover no-repeat;
+            box-shadow: 0 24px 56px rgba(6, 17, 39, 0.22);
         }
 
         @supports (height: 100svh) {
@@ -172,8 +172,8 @@ if (!function_exists('flacso_section_hero_render')) {
             position: absolute;
             inset: 0;
             background:
-                radial-gradient(circle at 18% 20%, rgba(255, 255, 255, 0.09) 0, rgba(255, 255, 255, 0) 32%),
-                radial-gradient(circle at 80% 26%, rgba(255, 255, 255, 0.1) 0, rgba(255, 255, 255, 0) 24%);
+                radial-gradient(circle at 76% 40%, rgba(255, 255, 255, 0.14) 0, rgba(255, 255, 255, 0) 29%),
+                linear-gradient(112deg, transparent 0 58%, rgba(254, 210, 34, 0.08) 58% 64%, transparent 64%);
             z-index: -1;
         }
 
@@ -188,10 +188,10 @@ if (!function_exists('flacso_section_hero_render')) {
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-grid {
             display: grid;
             grid-template-columns: minmax(0, 1fr);
-            gap: clamp(1.2rem, 3vw, 2.4rem);
+            gap: clamp(2rem, 5vw, 5rem);
             align-items: center;
             width: 100%;
-            padding-block: clamp(2.2rem, 8svh, 4.8rem);
+            padding-block: clamp(3.5rem, 8svh, 6.5rem);
         }
 
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-copy {
@@ -201,23 +201,30 @@ if (!function_exists('flacso_section_hero_render')) {
         }
 
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-kicker {
-            margin: 0 0 clamp(0.7rem, 1.2vw, 1rem);
-            color: rgba(255, 255, 255, 0.9);
-            font-size: clamp(0.88rem, 1.15vw, 1.04rem);
-            font-weight: 700;
-            letter-spacing: -0.01em;
-            line-height: 1.4;
+            display: inline-flex;
+            width: fit-content;
+            margin: 0 0 clamp(1.15rem, 2vw, 1.7rem);
+            padding: 0.52rem 0.82rem;
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.09);
+            color: #ffffff;
+            font-size: clamp(0.78rem, 1vw, 0.9rem);
+            font-weight: 750;
+            letter-spacing: 0.01em;
+            line-height: 1.25;
+            backdrop-filter: blur(8px);
         }
 
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-title {
             margin: 0;
-            max-width: 11.5ch;
+            max-width: 13ch;
             color: #ffffff;
             font-family: "Sora", var(--global-heading-font-family, "Helvetica Neue", sans-serif);
-            font-size: clamp(2.35rem, 11.2vw, 5.8rem);
-            line-height: 0.94;
+            font-size: clamp(2.6rem, 6.2vw, 5.4rem);
+            line-height: 0.98;
             font-weight: 800;
-            letter-spacing: -0.055em;
+            letter-spacing: -0.052em;
             text-wrap: balance;
             word-break: normal;
             overflow-wrap: normal;
@@ -226,17 +233,17 @@ if (!function_exists('flacso_section_hero_render')) {
         }
 
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-year {
-            color: #f0b44b;
-            text-shadow: 0 0 20px rgba(240, 180, 75, 0.38);
+            color: #fed222;
+            text-shadow: 0 0 24px rgba(254, 210, 34, 0.22);
         }
 
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .flacso-hero-subtitle {
-            margin: clamp(0.95rem, 2.2vw, 1.55rem) 0 0;
-            max-width: 38ch;
-            color: rgba(244, 247, 253, 0.92);
-            font-size: clamp(1.02rem, 2.4vw, 1.75rem);
-            font-weight: 500;
-            line-height: 1.36;
+            margin: clamp(1.1rem, 2.2vw, 1.65rem) 0 0;
+            max-width: 46ch;
+            color: #dbe7f7;
+            font-size: clamp(1rem, 1.7vw, 1.25rem);
+            font-weight: 450;
+            line-height: 1.5;
             letter-spacing: -0.012em;
             text-shadow: 0 5px 16px rgba(0, 0, 0, 0.32);
         }
@@ -250,12 +257,12 @@ if (!function_exists('flacso_section_hero_render')) {
         }
 
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .hero-btn {
-            min-height: 50px;
+            min-height: 52px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             border-radius: 999px;
-            padding: 0.64rem 1.32rem;
+            padding: 0.72rem 1.4rem;
             text-decoration: none;
             font-size: 0.97rem;
             font-weight: 700;
@@ -266,10 +273,10 @@ if (!function_exists('flacso_section_hero_render')) {
         }
 
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .hero-btn--primary {
-            background: #e39a18;
-            border-color: #e39a18;
-            color: #17233d;
-            box-shadow: 0 12px 28px rgba(227, 154, 24, 0.32);
+            background: #fed222;
+            border-color: #fed222;
+            color: #0d203e;
+            box-shadow: 0 12px 28px rgba(254, 210, 34, 0.24);
         }
 
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .hero-btn--outline {
@@ -301,8 +308,8 @@ if (!function_exists('flacso_section_hero_render')) {
 
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .hero-btn--primary:hover,
         .flacso-hero-<?php echo esc_attr($unique_id); ?> .hero-btn--primary:focus-visible {
-            background: #f0aa2f;
-            border-color: #f0aa2f;
+            background: #ffe35e;
+            border-color: #ffe35e;
             color: #17233d;
         }
 

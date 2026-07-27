@@ -33,10 +33,6 @@ if (!function_exists('flacso_homepage_builder_render')) {
                 'function' => 'flacso_section_novedades_render',
             ],
             [
-                'key' => 'novedades_busqueda',
-                'function' => 'flacso_section_novedades_busqueda_render',
-            ],
-            [
                 'key' => 'quienes',
                 'function' => 'flacso_section_quienes_somos_render',
             ],

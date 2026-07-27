@@ -57,24 +57,52 @@ if (!function_exists('flacso_convenios_get_dataset')) {
             return $dataset;
         }
 
-        $query = new WP_Query([
-            'posts_per_page' => -1,
+        $cpt_query = new WP_Query([
+            'post_type'      => 'convenio',
             'post_status'    => 'publish',
-            'category_name'  => 'convenios',
+            'posts_per_page' => -1,
             'meta_query'     => [
                 [
                     'key'     => '_thumbnail_id',
                     'compare' => 'EXISTS',
                 ],
             ],
-            'orderby'        => 'title',
-            'order'          => 'ASC',
             'no_found_rows'  => true,
         ]);
 
+        $legacy_query = new WP_Query([
+            'post_type'      => 'post',
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+            'category_name'  => 'convenios',
+            'meta_query'     => [
+                'relation' => 'AND',
+                [
+                    'key'     => '_thumbnail_id',
+                    'compare' => 'EXISTS',
+                ],
+                [
+                    'key'     => '_flacso_convenio_migrated_id',
+                    'compare' => 'NOT EXISTS',
+                ],
+            ],
+            'no_found_rows'  => true,
+        ]);
+
+        $posts = array_merge($cpt_query->posts, $legacy_query->posts);
+        usort($posts, static function ($left, $right): int {
+            return strcasecmp(
+                limpiarTituloConvenio((string) $left->post_title),
+                limpiarTituloConvenio((string) $right->post_title)
+            );
+        });
+
         $dataset = [];
-        foreach ($query->posts as $post_item) {
-            $titulo = limpiarTituloConvenio($post_item->post_title);
+        foreach ($posts as $post_item) {
+            $uses_cpt = $post_item->post_type === 'convenio';
+            $titulo = $uses_cpt
+                ? trim(wp_strip_all_tags($post_item->post_title))
+                : limpiarTituloConvenio($post_item->post_title);
             $thumb_id = get_post_thumbnail_id($post_item->ID);
             $image_url = '';
             if ($thumb_id) {

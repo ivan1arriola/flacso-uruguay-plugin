@@ -881,6 +881,238 @@
     }
 }
 
+/* Oferta educativa: mosaico editorial sin carrusel */
+.flacso-oferta-mosaico {
+    color: #172033;
+}
+
+.flacso-oferta-mosaico__header {
+    display: grid;
+    grid-template-columns: minmax(240px, 0.72fr) minmax(0, 1.28fr);
+    align-items: end;
+    gap: clamp(1.25rem, 4vw, 4rem);
+    margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.flacso-main-page .flacso-oferta-mosaico__header h2 {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    color: #163970 !important;
+    font-size: clamp(2.2rem, 4.6vw, 4.5rem) !important;
+    font-weight: 850;
+    letter-spacing: -0.055em;
+    line-height: 0.98;
+    text-wrap: balance;
+}
+
+.flacso-main-page .flacso-oferta-mosaico__header h2::after {
+    width: 58px;
+    height: 4px;
+    margin-top: 1rem;
+    background: #fed222;
+}
+
+.flacso-oferta-mosaico__intro {
+    max-width: 64ch;
+    color: #46536a;
+    font-size: clamp(1rem, 1.3vw, 1.12rem);
+    line-height: 1.65;
+}
+
+.flacso-oferta-mosaico__intro > :last-child {
+    margin-bottom: 0;
+}
+
+.flacso-oferta-mosaico__grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-auto-flow: dense;
+    grid-auto-rows: minmax(190px, auto);
+    gap: clamp(0.8rem, 1.6vw, 1.15rem);
+}
+
+.flacso-oferta-mosaico__card {
+    position: relative;
+    isolation: isolate;
+    grid-column: span 5;
+    min-height: 300px;
+    display: grid;
+    align-items: end;
+    overflow: hidden;
+    border: 1px solid rgba(22, 57, 112, 0.16);
+    border-radius: 18px;
+    background: #12376d;
+    color: #ffffff;
+    text-decoration: none;
+    box-shadow: 0 14px 34px rgba(13, 32, 62, 0.12);
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.flacso-oferta-mosaico__card:nth-child(2n) {
+    grid-column: span 5;
+}
+
+.flacso-oferta-mosaico__card--featured {
+    grid-column: span 7;
+    grid-row: span 2;
+    min-height: 620px;
+}
+
+.flacso-oferta-mosaico__card--wide {
+    grid-column: span 7;
+    min-height: 310px;
+}
+
+.flacso-oferta-mosaico__card:hover,
+.flacso-oferta-mosaico__card:focus-visible {
+    color: #ffffff;
+    box-shadow: 0 22px 48px rgba(13, 32, 62, 0.2);
+    transform: translateY(-4px);
+}
+
+.flacso-oferta-mosaico__card:focus-visible {
+    outline: 3px solid #fed222;
+    outline-offset: 3px;
+}
+
+.flacso-oferta-mosaico__media {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+}
+
+.flacso-oferta-mosaico__media::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(180deg, rgba(8, 27, 60, 0.08) 10%, rgba(8, 27, 60, 0.9) 100%),
+        linear-gradient(90deg, rgba(8, 27, 60, 0.48), transparent 75%);
+}
+
+.flacso-oferta-mosaico__media img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.45s ease;
+}
+
+.flacso-oferta-mosaico__card:hover .flacso-oferta-mosaico__media img,
+.flacso-oferta-mosaico__card:focus-visible .flacso-oferta-mosaico__media img {
+    transform: scale(1.035);
+}
+
+.flacso-oferta-mosaico__content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: clamp(1.2rem, 2.6vw, 2.2rem);
+}
+
+.flacso-oferta-mosaico__number {
+    display: inline-flex;
+    margin-bottom: auto;
+    padding: 0.38rem 0.55rem;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    border-radius: 999px;
+    background: rgba(8, 27, 60, 0.36);
+    color: #fed222;
+    font-size: 0.72rem;
+    font-weight: 850;
+    backdrop-filter: blur(6px);
+}
+
+.flacso-oferta-mosaico__content h3 {
+    margin: clamp(2.5rem, 8vw, 6rem) 0 0;
+    color: #ffffff;
+    font-size: clamp(1.65rem, 3vw, 3rem);
+    font-weight: 850;
+    letter-spacing: -0.04em;
+    line-height: 1;
+}
+
+.flacso-oferta-mosaico__card:not(.flacso-oferta-mosaico__card--featured) .flacso-oferta-mosaico__content h3 {
+    font-size: clamp(1.45rem, 2vw, 2.15rem);
+}
+
+.flacso-oferta-mosaico__description {
+    display: -webkit-box;
+    max-width: 58ch;
+    margin-top: 0.7rem;
+    overflow: hidden;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+.flacso-oferta-mosaico__description > :last-child {
+    margin-bottom: 0;
+}
+
+.flacso-oferta-mosaico__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: 1rem;
+    color: #ffffff;
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+
+@media (max-width: 980px) {
+    .flacso-oferta-mosaico__header {
+        grid-template-columns: 1fr;
+        align-items: start;
+        gap: 1rem;
+    }
+
+    .flacso-oferta-mosaico__card,
+    .flacso-oferta-mosaico__card:nth-child(2n),
+    .flacso-oferta-mosaico__card--featured,
+    .flacso-oferta-mosaico__card--wide {
+        grid-column: span 6;
+        grid-row: auto;
+        min-height: 360px;
+    }
+}
+
+@media (max-width: 640px) {
+    .flacso-oferta-mosaico__grid {
+        grid-template-columns: 1fr;
+        grid-auto-rows: auto;
+    }
+
+    .flacso-oferta-mosaico__card,
+    .flacso-oferta-mosaico__card:nth-child(2n),
+    .flacso-oferta-mosaico__card--featured,
+    .flacso-oferta-mosaico__card--wide {
+        grid-column: 1;
+        min-height: clamp(280px, 92vw, 380px);
+        border-radius: 14px;
+    }
+
+    .flacso-oferta-mosaico__content h3,
+    .flacso-oferta-mosaico__card:not(.flacso-oferta-mosaico__card--featured) .flacso-oferta-mosaico__content h3 {
+        margin-top: 3.5rem;
+        font-size: clamp(1.65rem, 9vw, 2.35rem);
+    }
+
+    .flacso-oferta-mosaico__description {
+        -webkit-line-clamp: 2;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .flacso-oferta-mosaico__card,
+    .flacso-oferta-mosaico__media img {
+        transition: none;
+    }
+}
+
 /* Estilos adicionales heredados del tema */
 .flacso-hero-title {
     color: var(--global-palette7, #f0f0f0);
@@ -2058,7 +2290,6 @@
 .flacso-main-page .flacso-home-block--hero,
 .flacso-main-page .flacso-home-block--hero .flacso-home-block__surface {
     position: relative;
-    z-index: 30;
 }
 
 .flacso-main-page .flacso-home-block--hero .flacso-home-block__surface {
@@ -2748,7 +2979,9 @@
     overflow: hidden;
     background-color: var(--global-palette8, #f4f7fc);
     box-shadow: none;
-    cursor: zoom-in;
+    color: inherit;
+    cursor: pointer;
+    text-decoration: none;
     transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.3s ease;
 }
 
@@ -2767,14 +3000,23 @@
 }
 
 .flacso-ig-feed-image {
-    display: block;
+    display: grid;
+    place-items: center;
     width: 100%;
     height: 100%;
     min-height: inherit;
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center;
+    padding: 6px;
+    background: #ffffff;
     position: relative;
+}
+
+.flacso-ig-feed-image > img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    object-fit: contain;
+    object-position: center;
 }
 
 .flacso-ig-feed-type-icon {
@@ -2810,7 +3052,7 @@
 }
 
 .flacso-ig-feed-overlay::after {
-    content: "Ampliar";
+    content: "Ver en Instagram";
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -3349,5 +3591,186 @@
 
     .flacso-main-page .flacso-instagram-section .flacso-instagram-button {
         width: 100%;
+    }
+}
+
+/* Cierre institucional de la portada: contacto + congreso */
+.flacso-main-page .flacso-home-block--contacto {
+    padding-bottom: clamp(1.25rem, 2.8vw, 2.25rem) !important;
+}
+
+.flacso-main-page .flacso-home-block--congreso {
+    padding-top: clamp(1.25rem, 2.8vw, 2.25rem) !important;
+}
+
+.flacso-main-page .flacso-contacto-section {
+    isolation: isolate;
+    padding: 0 !important;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 24px;
+    background-color: #12376d;
+    box-shadow: 0 18px 42px rgba(12, 35, 72, 0.16);
+}
+
+.flacso-main-page .flacso-contacto-section::before {
+    z-index: -1;
+    background:
+        radial-gradient(circle at 82% 25%, rgba(254, 210, 34, 0.2), transparent 26%),
+        linear-gradient(112deg, rgba(10, 36, 78, 0.98), rgba(24, 76, 139, 0.94));
+    opacity: 1;
+}
+
+.flacso-main-page .flacso-contacto-content {
+    padding: clamp(1.75rem, 4vw, 3rem);
+}
+
+.flacso-main-page .flacso-contacto-content > .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: clamp(1.25rem, 4vw, 3rem);
+    margin: 0;
+}
+
+.flacso-main-page .flacso-contacto-content > .row > div {
+    width: auto;
+    padding: 0;
+}
+
+.flacso-main-page .flacso-contacto-title {
+    margin: 0 0 0.55rem !important;
+    padding: 0 !important;
+    border: 0 !important;
+    color: #ffffff !important;
+    font-size: clamp(2rem, 3.7vw, 3.25rem) !important;
+    line-height: 1.03 !important;
+    letter-spacing: -0.04em !important;
+}
+
+.flacso-main-page .flacso-contacto-title::after {
+    content: none !important;
+}
+
+.flacso-main-page .flacso-contacto-subtitle {
+    max-width: 48ch;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: clamp(1rem, 1.5vw, 1.18rem);
+    line-height: 1.5;
+}
+
+.flacso-main-page .flacso-contacto .flacso-btn {
+    min-width: 220px;
+    min-height: 54px;
+    margin: 0;
+    border: 1px solid #fed222;
+    border-radius: 999px;
+    background: #fed222;
+    color: #0d203e;
+    box-shadow: 0 12px 28px rgba(254, 210, 34, 0.2);
+    font-weight: 800;
+}
+
+.flacso-main-page .flacso-contacto .flacso-btn:hover,
+.flacso-main-page .flacso-contacto .flacso-btn:focus-visible {
+    background: #ffe363;
+    color: #0d203e;
+    transform: translateY(-2px);
+}
+
+.flacso-main-page .flacso-congreso-section {
+    min-height: clamp(430px, 43vw, 560px);
+    display: grid;
+    align-items: end;
+    padding: clamp(2rem, 5vw, 4rem) !important;
+    border-radius: 24px;
+    text-align: left;
+    box-shadow: 0 22px 54px rgba(9, 24, 52, 0.22);
+}
+
+.flacso-main-page .flacso-congreso-section::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+        linear-gradient(90deg, rgba(7, 25, 57, 0.96) 0%, rgba(10, 38, 82, 0.88) 48%, rgba(10, 38, 82, 0.32) 100%),
+        linear-gradient(0deg, rgba(5, 18, 42, 0.55), transparent 58%);
+}
+
+.flacso-main-page .flacso-congreso-content {
+    width: min(100%, 760px);
+    margin: 0;
+    padding: 0;
+    text-align: left;
+}
+
+.flacso-main-page .flacso-congreso-section .flacso-congreso-title {
+    max-width: 17ch;
+    margin: 0 0 1rem !important;
+    font-size: clamp(2.2rem, 4.2vw, 4rem) !important;
+    line-height: 0.98 !important;
+    letter-spacing: -0.045em !important;
+    text-align: left !important;
+    text-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+    animation: none;
+}
+
+.flacso-main-page .flacso-congreso-text {
+    max-width: 64ch;
+    margin: 0 0 1.5rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: clamp(1rem, 1.35vw, 1.16rem);
+    line-height: 1.55;
+    text-align: left;
+    animation: none;
+}
+
+.flacso-main-page .flacso-congreso-btn {
+    min-height: 52px;
+    padding: 0.8rem 1.4rem;
+    border: 1px solid #fed222;
+    border-radius: 999px;
+    background: #fed222;
+    color: #0d203e;
+    box-shadow: 0 12px 28px rgba(254, 210, 34, 0.22);
+    font-size: 0.96rem;
+    font-weight: 800;
+    letter-spacing: 0;
+}
+
+.flacso-main-page .flacso-congreso-btn:hover,
+.flacso-main-page .flacso-congreso-btn:focus-visible {
+    background: #ffe363;
+    color: #0d203e;
+}
+
+@media (max-width: 767.98px) {
+    .flacso-main-page .flacso-contacto-content > .row {
+        grid-template-columns: 1fr;
+        text-align: left;
+    }
+
+    .flacso-main-page .flacso-contacto .text-md-end {
+        margin: 0;
+        text-align: left !important;
+    }
+
+    .flacso-main-page .flacso-contacto .flacso-btn,
+    .flacso-main-page .flacso-congreso-btn {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .flacso-main-page .flacso-congreso-section {
+        min-height: 480px;
+        align-items: end;
+        padding: 1.5rem !important;
+        background-position: center;
+    }
+
+    .flacso-main-page .flacso-congreso-section::before {
+        background: linear-gradient(0deg, rgba(7, 25, 57, 0.98) 0%, rgba(10, 38, 82, 0.76) 70%, rgba(10, 38, 82, 0.42) 100%);
     }
 }
