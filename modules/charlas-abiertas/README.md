@@ -42,6 +42,8 @@ Respuesta:
         "inicio": "2026-03-15T18:00:00-03:00",
         "inicio_timestamp": 1773618000,
         "modalidad": "virtual",
+        "plataforma_reunion": "zoom",
+        "reunion_join_url": "https://zoom.us/j/123456789",
         "zoom_join_url": "https://zoom.us/j/123456789",
         "youtube_transmision_url": "https://www.youtube.com/watch?v=abc123",
         "duracion_minutos": 90,
@@ -54,6 +56,8 @@ Respuesta:
         "meta": {
           "_charla_inicio": "2026-03-15T18:00:00-03:00",
           "_charla_modalidad": "virtual",
+          "_charla_plataforma_reunion": "zoom",
+          "_charla_reunion_join_url": "https://zoom.us/j/123456789",
           "_charla_zoom_join_url": "https://zoom.us/j/123456789",
           "_charla_youtube_transmision_url": "https://www.youtube.com/watch?v=abc123",
           "_charla_duracion_minutos": 90,
@@ -105,6 +109,8 @@ Respuesta:
     "inicio": "2026-03-15T18:00:00-03:00",
     "inicio_timestamp": 1773618000,
     "modalidad": "virtual",
+    "plataforma_reunion": "zoom",
+    "reunion_join_url": "https://zoom.us/j/123456789",
     "zoom_join_url": "https://zoom.us/j/123456789",
     "youtube_transmision_url": "https://www.youtube.com/watch?v=abc123",
     "duracion_minutos": 90,
@@ -117,6 +123,8 @@ Respuesta:
     "meta": {
       "_charla_inicio": "2026-03-15T18:00:00-03:00",
       "_charla_modalidad": "virtual",
+      "_charla_plataforma_reunion": "zoom",
+      "_charla_reunion_join_url": "https://zoom.us/j/123456789",
       "_charla_zoom_join_url": "https://zoom.us/j/123456789",
       "_charla_youtube_transmision_url": "https://www.youtube.com/watch?v=abc123",
       "_charla_duracion_minutos": 90,
@@ -146,7 +154,9 @@ type Payload = {
     modalidad: string;                   // requerido
 
     // opcionales
-    zoom_join_url?: string;              // URL
+    plataforma_reunion?: "zoom"|"meet"; // plataforma online
+    reunion_join_url?: string;           // URL generica de acceso
+    zoom_join_url?: string;              // URL legacy, alias de reunion_join_url
     youtube_transmision_url?: string;    // URL
     duracion_minutos?: number;           // minutos
     direccion?: string;
@@ -197,7 +207,9 @@ type Payload = {
     "titulo": "string",
     "inicio": "string (ISO 8601 con TZ)",
     "modalidad": "string",
-    "zoom_join_url": "string (url) [opcional]",
+    "plataforma_reunion": "zoom|meet [opcional]",
+    "reunion_join_url": "string (url) [opcional]",
+    "zoom_join_url": "string (url) [opcional, legacy]",
     "youtube_transmision_url": "string (url) [opcional]",
     "duracion_minutos": "number [opcional, en minutos]",
     "direccion": "string [opcional]",

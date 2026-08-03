@@ -4,6 +4,13 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+if (!function_exists('flacso_charlas_abiertas_normalize_reunion_platform')) {
+    function flacso_charlas_abiertas_normalize_reunion_platform($value) {
+        $platform = sanitize_key((string) $value);
+        return in_array($platform, ['zoom', 'meet'], true) ? $platform : 'zoom';
+    }
+}
+
 if (!function_exists('flacso_charlas_abiertas_normalize_form_variant')) {
     function flacso_charlas_abiertas_normalize_form_variant($value) {
         $variant = sanitize_key((string) $value);
@@ -54,6 +61,22 @@ function flacso_charlas_abiertas_register_cpt() {
         'show_in_rest' => true,
         'auth_callback' => '__return_true',
         'sanitize_callback' => 'sanitize_text_field',
+    ]);
+
+    register_post_meta('charla_abierta', '_charla_plataforma_reunion', [
+        'single' => true,
+        'type' => 'string',
+        'show_in_rest' => true,
+        'auth_callback' => '__return_true',
+        'sanitize_callback' => 'flacso_charlas_abiertas_normalize_reunion_platform',
+    ]);
+
+    register_post_meta('charla_abierta', '_charla_reunion_join_url', [
+        'single' => true,
+        'type' => 'string',
+        'show_in_rest' => true,
+        'auth_callback' => '__return_true',
+        'sanitize_callback' => 'esc_url_raw',
     ]);
 
     register_post_meta('charla_abierta', '_charla_zoom_join_url', [
@@ -240,7 +263,12 @@ function flacso_charlas_abiertas_render_meta_box($post) {
 
     $inicio = get_post_meta($post->ID, '_charla_inicio', true);
     $modalidad = get_post_meta($post->ID, '_charla_modalidad', true);
+    $plataforma_reunion = flacso_charlas_abiertas_normalize_reunion_platform(get_post_meta($post->ID, '_charla_plataforma_reunion', true));
+    $reunion_join_url = get_post_meta($post->ID, '_charla_reunion_join_url', true);
     $zoom_join_url = get_post_meta($post->ID, '_charla_zoom_join_url', true);
+    if (!$reunion_join_url && $zoom_join_url) {
+        $reunion_join_url = $zoom_join_url;
+    }
     $youtube_transmision_url = get_post_meta($post->ID, '_charla_youtube_transmision_url', true);
     $duracion_minutos = get_post_meta($post->ID, '_charla_duracion_minutos', true);
     $duracion_hhmm = flacso_charlas_abiertas_format_duracion_hhmm_desde_minutos($duracion_minutos);
@@ -321,13 +349,20 @@ function flacso_charlas_abiertas_render_meta_box($post) {
         </select>
     </p>
     <p>
-        <label for="flacso_charla_zoom_join_url"><strong>Zoom Join URL</strong></label><br>
+        <label for="flacso_charla_plataforma_reunion"><strong>Plataforma online</strong></label><br>
+        <select id="flacso_charla_plataforma_reunion" name="flacso_charla_plataforma_reunion">
+            <option value="zoom" <?php selected($plataforma_reunion, 'zoom'); ?>>Zoom</option>
+            <option value="meet" <?php selected($plataforma_reunion, 'meet'); ?>>Google Meet</option>
+        </select>
+    </p>
+    <p>
+        <label for="flacso_charla_reunion_join_url"><strong>URL de acceso online</strong></label><br>
         <input
             type="url"
-            id="flacso_charla_zoom_join_url"
-            name="flacso_charla_zoom_join_url"
-            value="<?php echo esc_attr($zoom_join_url); ?>"
-            placeholder="https://zoom.us/j/123456789"
+            id="flacso_charla_reunion_join_url"
+            name="flacso_charla_reunion_join_url"
+            value="<?php echo esc_attr($reunion_join_url); ?>"
+            placeholder="https://zoom.us/j/123456789 o https://meet.google.com/abc-defg-hij"
             style="width:100%;"
         />
     </p>
@@ -826,8 +861,17 @@ function flacso_charlas_abiertas_save_meta($post_id, $post) {
         update_post_meta($post_id, '_charla_modalidad', $modalidad);
     }
 
-    if (isset($_POST['flacso_charla_zoom_join_url'])) {
-        update_post_meta($post_id, '_charla_zoom_join_url', esc_url_raw(wp_unslash($_POST['flacso_charla_zoom_join_url'])));
+    if (isset($_POST['flacso_charla_plataforma_reunion'])) {
+        update_post_meta($post_id, '_charla_plataforma_reunion', flacso_charlas_abiertas_normalize_reunion_platform(wp_unslash($_POST['flacso_charla_plataforma_reunion'])));
+    }
+    if (isset($_POST['flacso_charla_reunion_join_url'])) {
+        $reunion_join_url = esc_url_raw(wp_unslash($_POST['flacso_charla_reunion_join_url']));
+        update_post_meta($post_id, '_charla_reunion_join_url', $reunion_join_url);
+        update_post_meta($post_id, '_charla_zoom_join_url', $reunion_join_url);
+    } elseif (isset($_POST['flacso_charla_zoom_join_url'])) {
+        $legacy_join_url = esc_url_raw(wp_unslash($_POST['flacso_charla_zoom_join_url']));
+        update_post_meta($post_id, '_charla_reunion_join_url', $legacy_join_url);
+        update_post_meta($post_id, '_charla_zoom_join_url', $legacy_join_url);
     }
 
     if (isset($_POST['flacso_charla_youtube_transmision_url'])) {

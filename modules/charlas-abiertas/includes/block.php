@@ -74,7 +74,14 @@ function flacso_charlas_abiertas_render_block($attributes) {
 
     $inicio = get_post_meta($evento_id, '_charla_inicio', true);
     $modalidad = get_post_meta($evento_id, '_charla_modalidad', true);
+    $plataforma_reunion = function_exists('flacso_charlas_abiertas_normalize_reunion_platform')
+        ? flacso_charlas_abiertas_normalize_reunion_platform(get_post_meta($evento_id, '_charla_plataforma_reunion', true))
+        : 'zoom';
+    $reunion_join_url = get_post_meta($evento_id, '_charla_reunion_join_url', true);
     $zoom_join_url = get_post_meta($evento_id, '_charla_zoom_join_url', true);
+    if (!$reunion_join_url && $zoom_join_url) {
+        $reunion_join_url = $zoom_join_url;
+    }
     $youtube_transmision_url = get_post_meta($evento_id, '_charla_youtube_transmision_url', true);
     $duracion_minutos_raw = get_post_meta($evento_id, '_charla_duracion_minutos', true);
     $duracion_minutos = null;
@@ -120,7 +127,9 @@ function flacso_charlas_abiertas_render_block($attributes) {
         data-evento-titulo="<?php echo esc_attr(get_the_title($evento_id)); ?>"
         data-evento-inicio="<?php echo esc_attr((string) $inicio); ?>"
         data-evento-modalidad="<?php echo esc_attr((string) $modalidad); ?>"
-        data-evento-zoom-join-url="<?php echo esc_url($zoom_join_url ?: ''); ?>"
+        data-evento-plataforma-reunion="<?php echo esc_attr((string) $plataforma_reunion); ?>"
+        data-evento-reunion-join-url="<?php echo esc_url($reunion_join_url ?: ''); ?>"
+        data-evento-zoom-join-url="<?php echo esc_url($zoom_join_url ?: $reunion_join_url ?: ''); ?>"
         data-evento-youtube-transmision-url="<?php echo esc_url($youtube_transmision_url ?: ''); ?>"
         data-evento-duracion-minutos="<?php echo esc_attr(null === $duracion_minutos ? '' : (string) $duracion_minutos); ?>"
         data-evento-lugar-nombre="<?php echo esc_attr((string) $lugar_nombre); ?>"
