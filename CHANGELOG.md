@@ -1,3 +1,12 @@
+## Version 6.9.13 - 3 de agosto de 2026
+
+### Resumen
+- Se actualiza el paquete para publicar los cambios de charlas abiertas con soporte para eventos Zoom y Google Meet.
+- Se agrega soporte de datos genericos de reunion (`plataforma_reunion` y `reunion_join_url`) manteniendo compatibilidad con los campos legacy de Zoom.
+- Se ajusta el envio del formulario alternativo sin telefono y la visualizacion inmediata de errores de validacion.
+
+---
+
 ## Version 6.7.68 - 11 de julio de 2026
 
 ### Resumen
