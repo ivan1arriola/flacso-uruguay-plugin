@@ -203,8 +203,18 @@
         }
     }
 
-    function toPublicErrorMessage(message) {
+    function toPublicErrorMessage(message, data) {
         var msg = String(message || "").toLowerCase();
+        var details = data && data.error && Array.isArray(data.error.details) ? data.error.details : null;
+
+        if (details && details.length) {
+            return details
+                .map(function (item) {
+                    return item && item.message ? String(item.message) : "";
+                })
+                .filter(Boolean)
+                .join(" ") || "Revisa los datos ingresados e intenta nuevamente.";
+        }
 
         // Never expose infrastructure/configuration details in public UI.
         if (
@@ -552,7 +562,7 @@
             var nombre = "";
             var apellido = "";
             var nombreApellido = "";
-            if (formVariant === "nombre_apellido") {
+            if (formVariant === "nombre_apellido" || formVariant === "nombre_apellido_sin_telefono") {
                 nombreApellido = String(fd.get("nombre_apellido") || "").replace(/\s+/g, " ").trim();
                 var splitName = splitFullName(nombreApellido);
                 nombre = splitName.nombre;
@@ -618,7 +628,7 @@
                 nombre_apellido: nombreApellido,
                 correo: String(fd.get("correo") || "").trim(),
                 pais_residencia: paisResidencia,
-                profesion: formVariant === "nombre_apellido" ? "" : String(fd.get("profesion") || "").trim(),
+                profesion: (formVariant === "nombre_apellido" || formVariant === "nombre_apellido_sin_telefono") ? "" : String(fd.get("profesion") || "").trim(),
                 institucion: String(fd.get("institucion") || "").trim(),
                 telefono: telefono,
                 telefono_e164: telefonoE164,
@@ -766,7 +776,7 @@
                     var message = err && err.message ? err.message : String(err || "");
                     debugWarn("Flow ERROR message", message);
                     var elapsed = Date.now() - submitStartedAt;
-                    var remaining = Math.max(0, minErrorDelayMs - elapsed);
+                    var remaining = err && err.status === 422 ? 0 : Math.max(0, minErrorDelayMs - elapsed);
                     debugLog("Processing ms (frontend)", elapsed);
                     debugLog("Error delay ms", remaining);
                     if (err && err.data) {
@@ -776,7 +786,7 @@
                         }
                     }
                     setTimeout(function () {
-                        showFormWithError(toPublicErrorMessage(message));
+                        showFormWithError(toPublicErrorMessage(message, err && err.data ? err.data : null));
                     }, remaining);
                 });
         });
