@@ -117,7 +117,12 @@ class Seminario_REST_API
         }
 
         $seminarios_ids = array_values(array_unique(array_map('intval', $seminarios_ids)));
-        return array_values(array_filter($seminarios_ids));
+        $resolved_ids = array();
+        foreach (array_values(array_filter($seminarios_ids)) as $seminario_id) {
+            $parent = Seminario_Helpers::get_integrated_parent($seminario_id);
+            $resolved_ids[] = $parent ? (int) $parent->ID : (int) $seminario_id;
+        }
+        return array_values(array_unique($resolved_ids));
     }
 
     public static function get_collection(WP_REST_Request $request)
@@ -137,6 +142,14 @@ class Seminario_REST_API
             'posts_per_page' => $per_page > 0 ? $per_page : 10,
             'paged' => $page > 0 ? $page : 1,
         );
+
+        $include_components = (bool) $request->get_param('include_components') && current_user_can('edit_posts');
+        if (!$include_components) {
+            $component_ids = Seminario_Helpers::get_all_component_ids();
+            if (!empty($component_ids)) {
+                $args['post__not_in'] = $component_ids;
+            }
+        }
 
         $oferta_id = self::resolve_oferta_id($posgrado_value);
         if ($oferta_id > 0) {

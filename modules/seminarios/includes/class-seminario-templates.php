@@ -5,6 +5,28 @@ if (!defined('ABSPATH')) {
 
 class Seminario_Templates
 {
+    public static function integrated_preinscription_url($url, $seminario_id)
+    {
+        $parent = Seminario_Helpers::get_integrated_parent((int) $seminario_id);
+        if (!$parent) {
+            return $url;
+        }
+        return home_url('/formacion/seminarios/' . $parent->post_name . '/preinscripcion/');
+    }
+
+    public static function redirect_component_preinscription()
+    {
+        if (!get_query_var('flacso_preinscripcion')) {
+            return;
+        }
+        $seminario_id = get_queried_object_id();
+        $parent = $seminario_id ? Seminario_Helpers::get_integrated_parent($seminario_id) : null;
+        if ($parent) {
+            wp_safe_redirect(home_url('/formacion/seminarios/' . $parent->post_name . '/preinscripcion/'), 302);
+            exit;
+        }
+    }
+
     public static function register_preinscripcion_route()
     {
         add_rewrite_tag('%flacso_preinscripcion%', '([0-1])');

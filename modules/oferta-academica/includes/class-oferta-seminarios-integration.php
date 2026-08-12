@@ -116,10 +116,21 @@ class Oferta_Seminarios_Integration {
     public static function get_programa_seminarios_data($programa_id): array {
         $seminarios_ids = self::get_programa_seminarios($programa_id);
         $seminarios = [];
+        $included_ids = [];
 
         foreach ($seminarios_ids as $seminario_id) {
+            if (class_exists('Seminario_Helpers')) {
+                $parent = Seminario_Helpers::get_integrated_parent((int) $seminario_id);
+                if ($parent) {
+                    $seminario_id = (int) $parent->ID;
+                }
+            }
+            if (isset($included_ids[(int) $seminario_id])) {
+                continue;
+            }
             $seminario = get_post($seminario_id);
             if ($seminario && $seminario->post_status === 'publish') {
+                $meta = class_exists('Seminario_Helpers') ? Seminario_Helpers::get_display_meta($seminario->ID) : array();
                 $seminarios[] = [
                     'id' => $seminario->ID,
                     'titulo' => $seminario->post_title,
@@ -127,11 +138,12 @@ class Oferta_Seminarios_Integration {
                     'contenido' => $seminario->post_content,
                     'thumbnail' => get_post_thumbnail_id($seminario->ID),
                     'permalink' => get_permalink($seminario->ID),
-                    'fecha_inicio' => get_post_meta($seminario->ID, '_seminario_periodo_inicio', true),
-                    'fecha_fin' => get_post_meta($seminario->ID, '_seminario_periodo_fin', true),
-                    'modalidad' => get_post_meta($seminario->ID, '_seminario_modalidad', true),
-                    'costo' => get_post_meta($seminario->ID, '_seminario_valor_uyu', true),
+                    'fecha_inicio' => $meta['periodo_inicio'] ?? get_post_meta($seminario->ID, '_seminario_periodo_inicio', true),
+                    'fecha_fin' => $meta['periodo_fin'] ?? get_post_meta($seminario->ID, '_seminario_periodo_fin', true),
+                    'modalidad' => $meta['modalidad'] ?? get_post_meta($seminario->ID, '_seminario_modalidad', true),
+                    'costo' => $meta['valor_uyu'] ?? get_post_meta($seminario->ID, '_seminario_valor_uyu', true),
                 ];
+                $included_ids[(int) $seminario->ID] = true;
             }
         }
 

@@ -65,6 +65,8 @@ class Seminario_Plugin {
         add_action('init', ['Seminario_Templates', 'register_preinscripcion_route']);
         add_filter('query_vars', ['Seminario_Templates', 'add_query_vars']);
         add_filter('template_include', ['Seminario_Templates', 'preinscripcion_template'], 9);
+        add_action('template_redirect', ['Seminario_Templates', 'redirect_component_preinscription']);
+        add_filter('flacso_seminario_preinscripcion_url', ['Seminario_Templates', 'integrated_preinscription_url'], 10, 2);
 
         add_action('rest_api_init', ['Seminario_REST_API', 'register_routes']);
     }

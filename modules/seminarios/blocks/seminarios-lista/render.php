@@ -67,7 +67,11 @@ function flacso_render_seminarios_lista_block($attributes)
                 continue;
             }
 
-            $fecha_inicio = get_post_meta($seminario_id, '_seminario_periodo_inicio', true);
+            if (class_exists('Seminario_Helpers') && Seminario_Helpers::get_integrated_parent($seminario_id)) {
+                continue;
+            }
+            $display_meta = class_exists('Seminario_Helpers') ? Seminario_Helpers::get_display_meta($seminario_id) : array();
+            $fecha_inicio = isset($display_meta['periodo_inicio']) ? $display_meta['periodo_inicio'] : get_post_meta($seminario_id, '_seminario_periodo_inicio', true);
             if (empty($fecha_inicio)) {
                 continue;
             }
@@ -124,6 +128,23 @@ function flacso_render_seminarios_lista_block($attributes)
         if (is_array($seminarios_ids) && !empty($seminarios_ids)) {
             $seminarios_filtrados_por_oferta = array_values(array_filter(array_unique(array_map('intval', $seminarios_ids))));
         }
+        if (class_exists('Seminario_Helpers') && !empty($seminarios_filtrados_por_oferta)) {
+            $integrados_ids = get_posts(array(
+                'post_type' => 'seminario',
+                'post_status' => 'publish',
+                'posts_per_page' => -1,
+                'fields' => 'ids',
+                'meta_key' => '_seminario_es_integrado',
+                'meta_value' => '1',
+            ));
+            foreach ($integrados_ids as $integrado_id) {
+                $component_ids = array_map(static function ($post) { return (int) $post->ID; }, Seminario_Helpers::get_component_posts($integrado_id));
+                if (array_intersect($component_ids, $seminarios_filtrados_por_oferta)) {
+                    $seminarios_filtrados_por_oferta[] = (int) $integrado_id;
+                }
+            }
+            $seminarios_filtrados_por_oferta = array_values(array_unique($seminarios_filtrados_por_oferta));
+        }
     }
 
     $args = array(
@@ -136,8 +157,9 @@ function flacso_render_seminarios_lista_block($attributes)
     );
 
     if ($order_by === 'periodo_inicio') {
-        $args['meta_key'] = '_seminario_periodo_inicio';
-        $args['orderby'] = 'meta_value';
+        // Los integrados derivan la fecha de sus hijos y no tienen meta propia.
+        // El orden final se mantiene estable por fecha de publicación en este bloque.
+        $args['orderby'] = 'date';
     }
 
     if ($selected_posgrado_id > 0) {
@@ -223,14 +245,18 @@ function flacso_render_seminarios_lista_block($attributes)
                 <?php while ($query->have_posts()) : $query->the_post(); ?>
                     <?php
                     $seminario_id = get_the_ID();
-                    $nombre = get_post_meta($seminario_id, '_seminario_nombre', true);
-                    $periodo_inicio = get_post_meta($seminario_id, '_seminario_periodo_inicio', true);
-                    $periodo_fin = get_post_meta($seminario_id, '_seminario_periodo_fin', true);
-                    $creditos = get_post_meta($seminario_id, '_seminario_creditos', true);
-                    $modalidad = get_post_meta($seminario_id, '_seminario_modalidad', true);
-                    $presentacion = get_post_meta($seminario_id, '_seminario_presentacion_seminario', true);
-                    $posgrados_list = class_exists('Seminario_Taxonomies')
-                        ? Seminario_Taxonomies::get_related_ofertas($seminario_id)
+                    if (class_exists('Seminario_Helpers') && Seminario_Helpers::get_integrated_parent($seminario_id)) {
+                        continue;
+                    }
+                    $display_meta = class_exists('Seminario_Helpers') ? Seminario_Helpers::get_display_meta($seminario_id) : array();
+                    $nombre = isset($display_meta['nombre']) ? $display_meta['nombre'] : get_post_meta($seminario_id, '_seminario_nombre', true);
+                    $periodo_inicio = isset($display_meta['periodo_inicio']) ? $display_meta['periodo_inicio'] : '';
+                    $periodo_fin = isset($display_meta['periodo_fin']) ? $display_meta['periodo_fin'] : '';
+                    $creditos = isset($display_meta['creditos']) ? $display_meta['creditos'] : '';
+                    $modalidad = isset($display_meta['modalidad']) ? $display_meta['modalidad'] : '';
+                    $presentacion = isset($display_meta['presentacion_seminario']) ? $display_meta['presentacion_seminario'] : '';
+                    $posgrados_list = class_exists('Seminario_Helpers')
+                        ? Seminario_Helpers::get_related_offers($seminario_id)
                         : array();
                     ?>
 

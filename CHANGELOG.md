@@ -1,3 +1,14 @@
+## Version 6.9.14 - 12 de agosto de 2026
+
+### Resumen
+- Se incorpora el tipo lógico Seminario Integrado como wrapper de seminarios existentes.
+- El wrapper conserva nombre, descripción, imagen y arancel propios; fechas, créditos, carga horaria, modalidad, encuentros, docentes, objetivos y contenidos se derivan de sus hijos.
+- Los seminarios hijos heredan el arancel y la preinscripción del wrapper, mantienen su URL histórica y dejan de aparecer en los listados generales.
+- Los precios originales de los hijos se preservan y vuelven a quedar activos al desvincularlos del integrado.
+- Los listados públicos, la API, las ofertas académicas y el editor muestran únicamente seminarios independientes y wrappers.
+
+---
+
 ## Version 6.9.13 - 3 de agosto de 2026
 
 ### Resumen

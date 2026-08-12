@@ -9,6 +9,7 @@ class Seminario_Meta
     {
         return array(
             'nombre' => array('type' => 'string'),
+            'es_integrado' => array('type' => 'boolean'),
             'periodo_inicio' => array('type' => 'string'),
             'periodo_fin' => array('type' => 'string'),
             'creditos' => array('type' => 'number'),
@@ -68,6 +69,15 @@ class Seminario_Meta
                 ),
             ),
             'docentes' => array(
+                'type' => 'array',
+                'show_in_rest' => array(
+                    'schema' => array(
+                        'type' => 'array',
+                        'items' => array('type' => 'integer'),
+                    ),
+                ),
+            ),
+            'seminarios_componentes' => array(
                 'type' => 'array',
                 'show_in_rest' => array(
                     'schema' => array(
@@ -188,7 +198,7 @@ class Seminario_Meta
             return $clean;
         }
 
-        if ($key === 'docentes') {
+        if ($key === 'docentes' || $key === 'seminarios_componentes') {
             if (!is_array($value)) {
                 return array();
             }
@@ -204,7 +214,7 @@ class Seminario_Meta
             return array_values(array_unique($clean));
         }
 
-        if ($key === 'acredita_maestria' || $key === 'acredita_doctorado' || $key === 'mostrar_en_formulario' || $key === 'es_asincronico' || $key === 'abierto_publico') {
+        if ($key === 'es_integrado' || $key === 'acredita_maestria' || $key === 'acredita_doctorado' || $key === 'mostrar_en_formulario' || $key === 'es_asincronico' || $key === 'abierto_publico') {
             return $value ? '1' : '0';
         }
 
@@ -307,12 +317,40 @@ class Seminario_Meta
             return;
         }
 
+        $is_integrated = !empty($meta['es_integrado']) || (bool) get_post_meta($post_id, '_seminario_es_integrado', true);
+        $derived_integrated_fields = array(
+            'periodo_inicio', 'periodo_fin', 'creditos', 'carga_horaria',
+            'acredita_maestria', 'acredita_doctorado', 'forma_aprobacion', 'modalidad',
+            'objetivo_general', 'encuentros_sincronicos', 'objetivos_especificos',
+            'unidades_academicas', 'docentes', 'acreditacion', 'descripcion_horas', 'es_asincronico',
+        );
+        $has_integrated_parent = !$is_integrated && Seminario_Helpers::get_integrated_parent($post_id) !== null;
+        $price_fields = array('valor_uyu', 'valor_uyu_15_descuento', 'valor_usd', 'valor_usd_15_descuento');
+
         foreach (Seminario_Helpers::meta_keys() as $key) {
             if (!array_key_exists($key, $meta)) {
                 continue;
             }
+            if ($is_integrated && in_array($key, $derived_integrated_fields, true)) {
+                continue;
+            }
+            if ($has_integrated_parent && in_array($key, $price_fields, true)) {
+                continue;
+            }
             $meta_key = '_seminario_' . $key;
             $value = self::sanitize_value($meta[$key], $meta_key);
+            if ($key === 'seminarios_componentes') {
+                $value = array_values(array_filter($value, function ($component_id) use ($post_id) {
+                    if ((int) $component_id === (int) $post_id || get_post_type($component_id) !== 'seminario') {
+                        return false;
+                    }
+                    if ((bool) get_post_meta($component_id, '_seminario_es_integrado', true)) {
+                        return false;
+                    }
+                    $parent = Seminario_Helpers::get_integrated_parent($component_id);
+                    return $parent === null || (int) $parent->ID === (int) $post_id;
+                }));
+            }
             update_post_meta($post_id, $meta_key, $value);
         }
     }
