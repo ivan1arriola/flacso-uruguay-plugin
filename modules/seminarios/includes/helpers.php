@@ -236,7 +236,6 @@ class Seminario_Helpers
         $hours = 0;
         $meetings = array();
         $teachers = array();
-        $modalities = array();
         $general_objectives = array();
         $approval_methods = array();
         $specific_objectives = array();
@@ -252,14 +251,9 @@ class Seminario_Helpers
             $hours += is_numeric($meta['carga_horaria']) ? (int) $meta['carga_horaria'] : 0;
             $meetings = array_merge($meetings, is_array($meta['encuentros_sincronicos']) ? $meta['encuentros_sincronicos'] : array());
             $teachers = array_merge($teachers, is_array($meta['docentes']) ? $meta['docentes'] : array());
-            if (!empty($meta['modalidad'])) $modalities[] = wp_strip_all_tags($meta['modalidad']);
             $component_title = get_the_title($component);
-            if (!empty($meta['objetivo_general'])) {
-                $general_objectives[] = '<h3>' . esc_html($component_title) . '</h3>' . wp_kses_post($meta['objetivo_general']);
-            }
-            if (!empty($meta['forma_aprobacion'])) {
-                $approval_methods[] = '<h3>' . esc_html($component_title) . '</h3>' . wp_kses_post($meta['forma_aprobacion']);
-            }
+            if (!empty($meta['objetivo_general'])) $general_objectives[] = '<h3>' . esc_html($component_title) . '</h3>' . wp_kses_post($meta['objetivo_general']);
+            if (!empty($meta['forma_aprobacion'])) $approval_methods[] = '<h3>' . esc_html($component_title) . '</h3>' . wp_kses_post($meta['forma_aprobacion']);
             foreach (is_array($meta['objetivos_especificos']) ? $meta['objetivos_especificos'] : array() as $objective) {
                 if ($objective !== '') $specific_objectives[] = $objective;
             }
@@ -281,7 +275,6 @@ class Seminario_Helpers
         $wrapper_meta['carga_horaria'] = $hours > 0 ? $hours : '';
         $wrapper_meta['encuentros_sincronicos'] = $meetings;
         $wrapper_meta['docentes'] = array_values(array_unique(array_map('intval', $teachers)));
-        $wrapper_meta['modalidad'] = implode(' / ', array_values(array_unique(array_filter($modalities))));
         $wrapper_meta['objetivo_general'] = implode('', $general_objectives);
         $wrapper_meta['forma_aprobacion'] = implode('', $approval_methods);
         $wrapper_meta['objetivos_especificos'] = $specific_objectives;
