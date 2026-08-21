@@ -1,4 +1,4 @@
-name: Deploy Plugin
+name: Deploy WordPress Plugin
 
 on:
   push:
@@ -7,70 +7,45 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: deploy-plugin-production
-  cancel-in-progress: true
+  group: deploy-wordpress-plugin-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   deploy:
-    name: Build/Deploy Plugin
+    name: Deploy plugin to production
     runs-on: ubuntu-latest
-    env:
-      WP_FTP_HOST: ${{ secrets.WP_FTP_HOST }}
-      WP_FTP_USERNAME: ${{ secrets.WP_FTP_USERNAME }}
-      WP_FTP_PASSWORD: ${{ secrets.WP_FTP_PASSWORD }}
-      WP_FTP_SERVER_DIR: ${{ secrets.WP_FTP_SERVER_DIR }}
-      WP_FTP_PROTOCOL: ${{ secrets.WP_FTP_PROTOCOL }}
-      WP_FTP_PORT: ${{ secrets.WP_FTP_PORT }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Validate deploy secrets
-        id: deploy_secrets
+      - name: Validate PHP syntax
         shell: bash
-        run: |
-          set -euo pipefail
-          missing=()
-          required=(WP_FTP_HOST WP_FTP_USERNAME WP_FTP_PASSWORD WP_FTP_SERVER_DIR)
-          for key in "${required[@]}"; do
-            if [[ -z "${!key:-}" ]]; then
-              missing+=("$key")
-            fi
-          done
-
-          if [[ "${#missing[@]}" -gt 0 ]]; then
-            echo "can_deploy=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::FTP deploy deshabilitado: faltan secretos (${missing[*]})."
-            echo "::warning::Se generara solo el ZIP del plugin como artifact."
-          else
-            echo "can_deploy=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: PHP syntax check
         run: |
           set -euo pipefail
           while IFS= read -r -d '' file; do
             php -l "$file"
-          done < <(find . -type f -name "*.php" \
-            -not -path "./vendor/*" \
-            -not -path "./node_modules/*" \
+          done < <(find . -type f -name '*.php' \
+            -not -path './vendor/*' \
+            -not -path './node_modules/*' \
             -print0)
 
-      - name: Build plugin ZIP
+      - name: Build plugin ZIP artifact
         shell: bash
         run: |
           set -euo pipefail
-          PLUGIN_SLUG="flacso-uruguay-plugin"
-          ZIP_NAME="${PLUGIN_SLUG}-${GITHUB_SHA::7}.zip"
+          ZIP_NAME="flacso-uruguay-plugin-${GITHUB_SHA::7}.zip"
           zip -r "$ZIP_NAME" . \
-            -x ".git/*" \
-               ".github/*" \
-               "node_modules/*" \
-               "vendor/*" \
-               ".DS_Store" \
-               "Thumbs.db" \
-               "*.log"
+            -x '.git/*' \
+               '.github/*' \
+               'node_modules/*' \
+               'vendor/*' \
+               '.DS_Store' \
+               'Thumbs.db' \
+               '*.log'
           echo "ZIP_NAME=$ZIP_NAME" >> "$GITHUB_ENV"
 
       - name: Upload plugin ZIP artifact
@@ -80,26 +55,95 @@ jobs:
           path: ${{ env.ZIP_NAME }}
           if-no-files-found: error
 
-      - name: Deploy plugin files via FTP/SFTP
-        if: steps.deploy_secrets.outputs.can_deploy == 'true'
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ env.WP_FTP_HOST }}
-          username: ${{ env.WP_FTP_USERNAME }}
-          password: ${{ env.WP_FTP_PASSWORD }}
-          protocol: ${{ env.WP_FTP_PROTOCOL || 'ftps' }}
-          port: ${{ env.WP_FTP_PORT || 21 }}
-          local-dir: ./
-          server-dir: ${{ env.WP_FTP_SERVER_DIR }}
-          state-name: .ftp-deploy-sync-state.json
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/.github/**
-            **/node_modules/**
-            **/vendor/**
-            **/.DS_Store
-            **/Thumbs.db
-            **/README.md
-            **/CHANGELOG.md
-            **/*.log
+      - name: Configure SSH
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+          EC2_KNOWN_HOSTS: ${{ secrets.EC2_KNOWN_HOSTS }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${EC2_HOST:?Missing EC2_HOST secret}"
+          : "${EC2_SSH_KEY:?Missing EC2_SSH_KEY secret}"
+
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$EC2_SSH_KEY" > ~/.ssh/ec2_deploy_key
+          chmod 600 ~/.ssh/ec2_deploy_key
+
+          if [[ -n "${EC2_KNOWN_HOSTS:-}" ]]; then
+            printf '%s\n' "$EC2_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          else
+            ssh-keyscan -H "$EC2_HOST" > ~/.ssh/known_hosts
+          fi
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Upload plugin to staging directory
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${EC2_USER:?Missing EC2_USER secret}"
+
+          REMOTE_STAGE="/tmp/flacso-uruguay-plugin-${GITHUB_SHA}"
+
+          ssh \
+            -i ~/.ssh/ec2_deploy_key \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            "$EC2_USER@$EC2_HOST" \
+            "rm -rf '$REMOTE_STAGE' && mkdir -p '$REMOTE_STAGE'"
+
+          rsync -az --delete \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='node_modules/' \
+            --exclude='vendor/' \
+            --exclude='.githooks/' \
+            --exclude='.DS_Store' \
+            --exclude='Thumbs.db' \
+            --exclude='*.log' \
+            -e "ssh -i ~/.ssh/ec2_deploy_key -o BatchMode=yes -o IdentitiesOnly=yes" \
+            ./ "$EC2_USER@$EC2_HOST:$REMOTE_STAGE/"
+
+      - name: Activate plugin files
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ssh \
+            -i ~/.ssh/ec2_deploy_key \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            "$EC2_USER@$EC2_HOST" \
+            "DEPLOY_SHA='$GITHUB_SHA' bash -se" <<'REMOTE'
+          set -euo pipefail
+
+          SOURCE="/tmp/flacso-uruguay-plugin-${DEPLOY_SHA}"
+          TARGET="/var/www/flacso.edu.uy/web/wp-content/plugins/flacso-uruguay-plugin"
+          PARENT="$(dirname "$TARGET")"
+
+          cleanup() {
+            rm -rf "$SOURCE"
+          }
+          trap cleanup EXIT
+
+          test -f "$SOURCE/flacso-uruguay.php"
+          test -d "$PARENT"
+
+          if [[ -d "$TARGET" ]]; then
+            OWNER_GROUP="$(stat -c '%U:%G' "$TARGET")"
+          else
+            OWNER_GROUP="$(stat -c '%U:%G' "$PARENT")"
+            sudo mkdir -p "$TARGET"
+          fi
+
+          sudo rsync -a --delete --chown="$OWNER_GROUP" "$SOURCE/" "$TARGET/"
+
+          test -f "$TARGET/flacso-uruguay.php"
+          echo "Plugin deployed successfully to $TARGET"
+          REMOTE
