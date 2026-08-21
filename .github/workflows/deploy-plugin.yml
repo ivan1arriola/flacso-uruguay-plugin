@@ -124,8 +124,7 @@ jobs:
           set -euo pipefail
 
           SOURCE="/tmp/flacso-uruguay-plugin-${DEPLOY_SHA}"
-          TARGET="/var/www/flacso.edu.uy/web/wp-content/plugins/flacso-uruguay-plugin"
-          PARENT="$(dirname "$TARGET")"
+          TARGET="/var/www/flacso.edu.uy/web/wp-content/plugins/flacso-uruguay"
 
           cleanup() {
             rm -rf "$SOURCE"
@@ -133,15 +132,10 @@ jobs:
           trap cleanup EXIT
 
           test -f "$SOURCE/flacso-uruguay.php"
-          test -d "$PARENT"
+          test -d "$TARGET"
+          test -f "$TARGET/flacso-uruguay.php"
 
-          if [[ -d "$TARGET" ]]; then
-            OWNER_GROUP="$(stat -c '%U:%G' "$TARGET")"
-          else
-            OWNER_GROUP="$(stat -c '%U:%G' "$PARENT")"
-            sudo mkdir -p "$TARGET"
-          fi
-
+          OWNER_GROUP="$(stat -c '%U:%G' "$TARGET")"
           sudo rsync -a --delete --chown="$OWNER_GROUP" "$SOURCE/" "$TARGET/"
 
           test -f "$TARGET/flacso-uruguay.php"
