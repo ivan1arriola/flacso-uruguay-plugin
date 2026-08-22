@@ -2045,17 +2045,66 @@ table.tabla-calendario .hora { width: 15%; }
   transition: transform 0.18s ease;
 }
 
+.flacso-oa-catalog__featured-carousel {
+  position: relative;
+}
+
 .flacso-oa-catalog__featured {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: min(82vw, 20rem);
+  display: flex;
   gap: 0.9rem;
   margin-inline: -1rem;
   padding: 0 1rem 1.2rem;
   overflow-x: auto;
   scroll-padding-inline: 1rem;
   scroll-snap-type: x mandatory;
+  overscroll-behavior-inline: contain;
   scrollbar-color: var(--catalog-blue) transparent;
+}
+
+.flacso-oa-catalog__featured > .flacso-oa-program-card {
+  width: min(82vw, 20rem);
+  flex: 0 0 min(82vw, 20rem);
+}
+
+.flacso-oa-catalog__featured-carousel.is-looping .flacso-oa-catalog__featured {
+  scrollbar-width: none;
+}
+
+.flacso-oa-catalog__featured-carousel.is-looping .flacso-oa-catalog__featured::-webkit-scrollbar {
+  display: none;
+}
+
+.flacso-oa-catalog__carousel-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+}
+
+.flacso-oa-catalog__carousel-controls[hidden] {
+  display: none;
+}
+
+.flacso-oa-catalog__carousel-controls button {
+  display: grid;
+  width: 2.7rem;
+  height: 2.7rem;
+  margin: 0;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--catalog-border);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--catalog-blue);
+  box-shadow: 0 5px 15px rgba(17, 45, 91, 0.08);
+  cursor: pointer;
+}
+
+.flacso-oa-catalog__carousel-controls button:hover,
+.flacso-oa-catalog__carousel-controls button:focus-visible {
+  border-color: var(--catalog-blue);
+  background: var(--catalog-blue);
+  color: #fff;
 }
 
 .flacso-oa-program-card {
@@ -2339,13 +2388,43 @@ table.tabla-calendario .hora { width: 15%; }
 
 .flacso-oa-seminar-card > a {
   display: grid;
-  grid-template-columns: 3.3rem 1fr auto;
-  min-height: 6.2rem;
+  grid-template-columns: 5.5rem 3.3rem 1fr auto;
+  min-height: 7.2rem;
   align-items: center;
   gap: 0.85rem;
   padding: 0.85rem;
   color: #fff !important;
   text-decoration: none !important;
+}
+
+.flacso-oa-seminar-card__media {
+  display: block;
+  width: 5.5rem;
+  aspect-ratio: 4 / 3;
+  align-self: stretch;
+  overflow: hidden;
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.flacso-oa-seminar-card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.flacso-oa-seminar-card:hover .flacso-oa-seminar-card__media img {
+  transform: scale(1.04);
+}
+
+.flacso-oa-seminar-card__placeholder {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: var(--catalog-yellow);
+  font-size: 1.45rem;
 }
 
 .flacso-oa-seminar-card__date {
@@ -2439,12 +2518,14 @@ table.tabla-calendario .hora { width: 15%; }
   }
 
   .flacso-oa-catalog__featured {
-    grid-auto-flow: initial;
-    grid-auto-columns: initial;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     margin-inline: 0;
-    padding: 0;
-    overflow: visible;
+    padding: 0 0 0.2rem;
+    scroll-padding-inline: 0;
+  }
+
+  .flacso-oa-catalog__featured > .flacso-oa-program-card {
+    width: calc((100% - 0.9rem) / 2);
+    flex-basis: calc((100% - 0.9rem) / 2);
   }
 
   .flacso-oa-catalog__section--seminars {
@@ -2465,8 +2546,12 @@ table.tabla-calendario .hora { width: 15%; }
 }
 
 @media (min-width: 1050px) {
+  .flacso-oa-catalog__featured > .flacso-oa-program-card {
+    width: calc((100% - 2rem) / 3);
+    flex-basis: calc((100% - 2rem) / 3);
+  }
+
   .flacso-oa-catalog__featured {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1rem;
   }
 
@@ -2508,6 +2593,12 @@ table.tabla-calendario .hora { width: 15%; }
 
   .flacso-oa-seminar-card > a {
     grid-template-columns: 3.1rem 1fr;
+  }
+
+  .flacso-oa-seminar-card__media {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    grid-column: 1 / -1;
   }
 
   .flacso-oa-seminar-card > a > i {

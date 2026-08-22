@@ -614,6 +614,7 @@ class Oferta_Renderer {
             $items[] = [
                 'title' => (string) get_the_title($post_id),
                 'url' => (string) get_permalink($post_id),
+                'image' => (string) (get_the_post_thumbnail_url($post_id, 'medium_large') ?: ''),
                 'date_iso' => wp_date('Y-m-d', $timestamp, wp_timezone()),
                 'day' => wp_date('d', $timestamp, wp_timezone()),
                 'month' => rtrim($month, '.'),
@@ -671,7 +672,6 @@ class Oferta_Renderer {
             return $a_sort <=> $b_sort;
         });
 
-        $open_programs = array_slice($open_programs, 0, 3);
         $seminars = self::get_catalog_seminars(4);
         $hero_image_style = !empty($data['hero_image'])
             ? 'url(' . esc_url($data['hero_image']) . ')'
@@ -716,27 +716,33 @@ class Oferta_Renderer {
                             <a href="#toda-la-oferta"><?php esc_html_e('Ver toda la oferta', 'flacso-oferta-academica'); ?><i class="bi bi-arrow-right" aria-hidden="true"></i></a>
                         </header>
 
-                        <div class="flacso-oa-catalog__featured" data-offer-featured>
-                            <?php foreach ($open_programs as $program) : ?>
-                                <article class="flacso-oa-program-card" data-offer-item data-category="<?php echo esc_attr($program['term_slug']); ?>" data-search="<?php echo esc_attr($program['search_text']); ?>">
-                                    <a class="flacso-oa-program-card__media" href="<?php echo esc_url($program['url']); ?>" aria-label="<?php echo esc_attr(sprintf(__('Ver programa: %s', 'flacso-oferta-academica'), $program['title'])); ?>">
-                                        <?php if ($program['image']) : ?>
-                                            <img src="<?php echo esc_url($program['image']); ?>" alt="" loading="lazy" decoding="async">
-                                        <?php else : ?>
-                                            <span class="flacso-oa-program-card__placeholder"><i class="bi bi-mortarboard" aria-hidden="true"></i></span>
-                                        <?php endif; ?>
-                                    </a>
-                                    <div class="flacso-oa-program-card__body">
-                                        <span class="flacso-oa-program-card__type"><?php echo esc_html($program['term_name']); ?></span>
-                                        <h3><a href="<?php echo esc_url($program['url']); ?>"><?php echo esc_html($program['title']); ?></a></h3>
-                                        <div class="flacso-oa-program-card__meta">
-                                            <?php if ($program['start_label']) : ?><span><i class="bi bi-calendar3" aria-hidden="true"></i><?php echo esc_html($program['start_label']); ?></span><?php endif; ?>
-                                            <?php if ($program['modality']) : ?><span><i class="bi bi-laptop" aria-hidden="true"></i><?php echo esc_html($program['modality']); ?></span><?php endif; ?>
+                        <div class="flacso-oa-catalog__featured-carousel" data-offer-carousel>
+                            <div class="flacso-oa-catalog__featured" data-offer-featured>
+                                <?php foreach ($open_programs as $program) : ?>
+                                    <article class="flacso-oa-program-card" data-offer-item data-category="<?php echo esc_attr($program['term_slug']); ?>" data-search="<?php echo esc_attr($program['search_text']); ?>">
+                                        <a class="flacso-oa-program-card__media" href="<?php echo esc_url($program['url']); ?>" aria-label="<?php echo esc_attr(sprintf(__('Ver programa: %s', 'flacso-oferta-academica'), $program['title'])); ?>">
+                                            <?php if ($program['image']) : ?>
+                                                <img src="<?php echo esc_url($program['image']); ?>" alt="" loading="lazy" decoding="async">
+                                            <?php else : ?>
+                                                <span class="flacso-oa-program-card__placeholder"><i class="bi bi-mortarboard" aria-hidden="true"></i></span>
+                                            <?php endif; ?>
+                                        </a>
+                                        <div class="flacso-oa-program-card__body">
+                                            <span class="flacso-oa-program-card__type"><?php echo esc_html($program['term_name']); ?></span>
+                                            <h3><a href="<?php echo esc_url($program['url']); ?>"><?php echo esc_html($program['title']); ?></a></h3>
+                                            <div class="flacso-oa-program-card__meta">
+                                                <?php if ($program['start_label']) : ?><span><i class="bi bi-calendar3" aria-hidden="true"></i><?php echo esc_html($program['start_label']); ?></span><?php endif; ?>
+                                                <?php if ($program['modality']) : ?><span><i class="bi bi-laptop" aria-hidden="true"></i><?php echo esc_html($program['modality']); ?></span><?php endif; ?>
+                                            </div>
+                                            <a class="flacso-oa-program-card__cta" href="<?php echo esc_url($program['url']); ?>"><?php esc_html_e('Ver programa', 'flacso-oferta-academica'); ?><i class="bi bi-arrow-right" aria-hidden="true"></i></a>
                                         </div>
-                                        <a class="flacso-oa-program-card__cta" href="<?php echo esc_url($program['url']); ?>"><?php esc_html_e('Ver programa', 'flacso-oferta-academica'); ?><i class="bi bi-arrow-right" aria-hidden="true"></i></a>
-                                    </div>
-                                </article>
-                            <?php endforeach; ?>
+                                    </article>
+                                <?php endforeach; ?>
+                            </div>
+                            <div class="flacso-oa-catalog__carousel-controls">
+                                <button type="button" data-carousel-previous aria-label="<?php esc_attr_e('Ver propuestas anteriores', 'flacso-oferta-academica'); ?>"><i class="bi bi-arrow-left" aria-hidden="true"></i></button>
+                                <button type="button" data-carousel-next aria-label="<?php esc_attr_e('Ver propuestas siguientes', 'flacso-oferta-academica'); ?>"><i class="bi bi-arrow-right" aria-hidden="true"></i></button>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -800,6 +806,13 @@ class Oferta_Renderer {
                             <?php foreach ($seminars as $seminar) : ?>
                                 <article class="flacso-oa-seminar-card">
                                     <a href="<?php echo esc_url($seminar['url']); ?>">
+                                        <span class="flacso-oa-seminar-card__media">
+                                            <?php if ($seminar['image']) : ?>
+                                                <img src="<?php echo esc_url($seminar['image']); ?>" alt="" loading="lazy" decoding="async">
+                                            <?php else : ?>
+                                                <span class="flacso-oa-seminar-card__placeholder"><i class="bi bi-calendar-event" aria-hidden="true"></i></span>
+                                            <?php endif; ?>
+                                        </span>
                                         <time class="flacso-oa-seminar-card__date" datetime="<?php echo esc_attr($seminar['date_iso']); ?>">
                                             <strong><?php echo esc_html($seminar['day']); ?></strong>
                                             <span><?php echo esc_html($seminar['month']); ?></span>
