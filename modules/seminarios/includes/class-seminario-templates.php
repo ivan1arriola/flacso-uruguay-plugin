@@ -106,11 +106,17 @@ class Seminario_Templates
             }
 
             if ($is_seminarios_listing) {
+                $listing_css_relative = 'modules/seminarios/assets/css/seminarios-listado.css';
+                $listing_css_path = FLACSO_URUGUAY_PATH . $listing_css_relative;
+                $listing_css_version = file_exists($listing_css_path)
+                    ? (string) filemtime($listing_css_path)
+                    : FLACSO_SEMINARIO_VERSION;
+
                 wp_enqueue_style(
                     'flacso-seminarios-listado',
-                    plugins_url('modules/seminarios/assets/css/seminarios-listado.css', FLACSO_URUGUAY_FILE),
+                    plugins_url($listing_css_relative, FLACSO_URUGUAY_FILE),
                     array('flacso-kadence-compat'),
-                    FLACSO_SEMINARIO_VERSION
+                    $listing_css_version
                 );
 
                 if (wp_style_is('bootstrap-icons', 'registered') && !wp_style_is('bootstrap-icons', 'enqueued')) {
