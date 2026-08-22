@@ -2485,7 +2485,7 @@ table.tabla-calendario .hora { width: 15%; }
   justify-content: center;
   min-height: 3.5rem;
   border-radius: 0.85rem;
-  background: var(--catalog-green) !important;
+  background: #278c3b !important;
   color: #fff !important;
   box-shadow: 0 12px 26px rgba(21, 82, 45, 0.28);
   z-index: 10060 !important;

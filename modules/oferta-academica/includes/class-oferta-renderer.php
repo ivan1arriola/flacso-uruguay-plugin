@@ -664,15 +664,19 @@ class Oferta_Renderer {
             ];
         }
 
-        usort($open_programs, static function(array $a, array $b): int {
+        $today_timestamp = current_time('timestamp');
+        usort($open_programs, static function(array $a, array $b) use ($today_timestamp): int {
             $a_sort = $a['start_timestamp'] ?? PHP_INT_MAX;
             $b_sort = $b['start_timestamp'] ?? PHP_INT_MAX;
 
-            if ($a_sort === $b_sort) {
+            $a_distance = $a_sort === PHP_INT_MAX ? PHP_INT_MAX : abs($a_sort - $today_timestamp);
+            $b_distance = $b_sort === PHP_INT_MAX ? PHP_INT_MAX : abs($b_sort - $today_timestamp);
+
+            if ($a_distance === $b_distance) {
                 return strcasecmp((string) $a['title'], (string) $b['title']);
             }
 
-            return $a_sort <=> $b_sort;
+            return $a_distance <=> $b_distance;
         });
 
         $seminars = self::get_catalog_seminars(4);
@@ -714,7 +718,6 @@ class Oferta_Renderer {
                         <header class="flacso-oa-catalog__section-heading">
                             <div>
                                 <h2 id="flacso-open-programs-title"><i class="bi bi-stars" aria-hidden="true"></i><?php esc_html_e('Inscripciones abiertas', 'flacso-oferta-academica'); ?></h2>
-                                <p><?php esc_html_e('Elegí la propuesta que mejor se adapta a vos.', 'flacso-oferta-academica'); ?></p>
                             </div>
                             <div class="flacso-oa-catalog__section-actions">
                                 <a href="#toda-la-oferta"><?php esc_html_e('Ver toda la oferta', 'flacso-oferta-academica'); ?><i class="bi bi-arrow-right" aria-hidden="true"></i></a>
