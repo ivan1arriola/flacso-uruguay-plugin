@@ -320,7 +320,7 @@ class Seminario_Meta
         $is_integrated = !empty($meta['es_integrado']) || (bool) get_post_meta($post_id, '_seminario_es_integrado', true);
         $derived_integrated_fields = array(
             'periodo_inicio', 'periodo_fin', 'creditos', 'carga_horaria',
-            'acredita_maestria', 'acredita_doctorado', 'forma_aprobacion', 'modalidad',
+            'acredita_maestria', 'acredita_doctorado', 'forma_aprobacion',
             'objetivo_general', 'encuentros_sincronicos', 'objetivos_especificos',
             'unidades_academicas', 'docentes', 'acreditacion', 'descripcion_horas', 'es_asincronico',
         );
