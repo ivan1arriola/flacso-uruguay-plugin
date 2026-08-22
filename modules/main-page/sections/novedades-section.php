@@ -348,6 +348,10 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
                                     </div>
                                     <footer class="flacso-novedades-3d__meta">
                                         <time datetime="<?php echo esc_attr($post_date_iso); ?>"><?php echo esc_html($post_date_human); ?></time>
+                                        <a href="<?php echo esc_url($post_link); ?>" class="flacso-novedades-3d__read-more">
+                                            <?php esc_html_e('Leer noticia', 'flacso-main-page'); ?>
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+                                        </a>
                                     </footer>
                                 </div>
                             </article>
@@ -492,6 +496,7 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
             .flacso-novedades-3d__card:hover .flacso-novedades-3d__image,
             .flacso-novedades-3d__card:focus-within .flacso-novedades-3d__image {
                 opacity: 0.95;
+                transform: scale(1.035);
             }
 
             .flacso-novedades-3d__body {
@@ -669,28 +674,32 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
 
             .flacso-novedades-3d__stage {
                 overflow: hidden;
-                padding: clamp(1.25rem, 3vw, 2.4rem);
-                border: 1px solid rgba(22, 57, 112, 0.09);
+                padding: clamp(1.5rem, 3vw, 2.6rem);
+                border: 1px solid rgba(255, 255, 255, 0.12);
                 border-radius: 32px;
                 background:
-                    radial-gradient(circle at 50% 15%, rgba(254, 210, 34, 0.17), transparent 24rem),
-                    linear-gradient(145deg, #edf3f9 0%, #f8fafc 52%, #eef6ef 100%);
+                    radial-gradient(circle at 88% 8%, rgba(254, 210, 34, 0.28), transparent 22rem),
+                    radial-gradient(circle at 5% 95%, rgba(36, 129, 56, 0.3), transparent 24rem),
+                    linear-gradient(135deg, #0b254c 0%, #163970 52%, #214f82 100%);
+                box-shadow: 0 26px 64px rgba(12, 35, 72, 0.2);
             }
 
             .flacso-novedades-3d__viewport {
                 min-height: var(--card-height-desktop);
                 overflow: visible;
                 perspective: 2200px;
+                z-index: 1;
             }
 
             .flacso-novedades-3d__card {
-                width: min(56rem, calc(100% - 8rem));
-                height: 27rem;
+                width: min(64rem, calc(100% - 7rem));
+                height: 28rem;
                 display: grid;
-                grid-template-columns: minmax(19rem, 42%) minmax(0, 1fr);
+                grid-template-columns: minmax(20rem, 50%) minmax(0, 1fr);
                 flex-direction: initial;
-                border-radius: 24px;
-                box-shadow: 0 24px 60px rgba(15, 35, 67, 0.16);
+                border: 1px solid rgba(255, 255, 255, 0.52);
+                border-radius: 26px;
+                box-shadow: 0 30px 70px rgba(4, 17, 39, 0.34);
             }
 
             .flacso-main-page .flacso-novedades-3d__image-link {
@@ -703,13 +712,17 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
             }
 
             .flacso-novedades-3d__image {
-                object-fit: contain;
-                background: #e8eef6;
+                object-fit: cover;
+                background: #dfe7f1;
             }
 
             .flacso-novedades-3d__body {
-                gap: 1rem;
+                justify-content: center;
+                gap: 1.1rem;
                 padding: clamp(1.6rem, 3vw, 2.5rem);
+                background:
+                    linear-gradient(90deg, rgba(254, 210, 34, 0.12), transparent 10px),
+                    #ffffff;
             }
 
             .flacso-novedades-3d__title {
@@ -726,10 +739,57 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
             }
 
             .flacso-novedades-3d__meta {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.85rem;
                 color: #607087;
                 font-size: 0.84rem;
                 font-weight: 700;
                 letter-spacing: 0.04em;
+            }
+
+            .flacso-novedades-3d__meta time {
+                display: inline-flex;
+                align-items: center;
+                min-height: 34px;
+                padding: 0.4rem 0.72rem;
+                border-radius: 999px;
+                background: #edf3f9;
+                color: #45566e;
+            }
+
+            .flacso-novedades-3d__read-more {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.45rem;
+                min-height: 42px;
+                padding: 0.62rem 0.85rem;
+                border-radius: 999px;
+                background: #163970;
+                color: #ffffff !important;
+                font-size: 0.82rem;
+                font-weight: 800;
+                letter-spacing: 0;
+                text-decoration: none !important;
+                transition: background 180ms ease, transform 180ms ease;
+            }
+
+            .flacso-novedades-3d__read-more svg {
+                width: 17px;
+                height: 17px;
+                fill: none;
+                stroke: currentColor;
+                stroke-linecap: round;
+                stroke-linejoin: round;
+                stroke-width: 2;
+            }
+
+            .flacso-novedades-3d__read-more:hover,
+            .flacso-novedades-3d__read-more:focus-visible {
+                background: #248138;
+                transform: translateX(2px);
             }
 
             .flacso-novedades-3d__navigation {
@@ -737,7 +797,16 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
                 align-items: center;
                 justify-content: center;
                 gap: 0.65rem;
-                margin-top: 1rem;
+                position: relative;
+                z-index: 3;
+                width: fit-content;
+                margin: -1.35rem auto 0;
+                padding: 0.38rem 0.5rem;
+                border: 1px solid rgba(22, 57, 112, 0.12);
+                border-radius: 999px;
+                background: rgba(255, 255, 255, 0.96);
+                box-shadow: 0 12px 30px rgba(12, 35, 72, 0.18);
+                backdrop-filter: blur(12px);
             }
 
             .flacso-novedades-3d__dots {
@@ -810,7 +879,7 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
                 .flacso-novedades-3d__card {
                     width: min(44rem, calc(100% - 4rem));
                     height: 24rem;
-                    grid-template-columns: minmax(16rem, 42%) minmax(0, 1fr);
+                    grid-template-columns: minmax(16rem, 46%) minmax(0, 1fr);
                 }
 
                 .flacso-novedades-3d__body {
@@ -832,15 +901,13 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
                 }
 
                 .flacso-novedades-3d {
-                    --card-height-mobile: 37rem;
+                    --card-height-mobile: 33rem;
                     padding-top: 0;
                 }
 
                 .flacso-novedades-3d__stage {
-                    padding: 0.5rem;
-                    border: 0;
+                    padding: 0.75rem;
                     border-radius: 22px;
-                    background: transparent;
                 }
 
                 .flacso-novedades-3d__viewport {
@@ -851,23 +918,22 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
 
                 .flacso-novedades-3d__card {
                     width: calc(100% - 0.25rem);
-                    height: 36rem;
+                    height: 32rem;
                     grid-template-columns: 1fr;
-                    grid-template-rows: auto minmax(0, 1fr);
+                    grid-template-rows: minmax(13rem, 44%) minmax(0, 1fr);
                     border-radius: 20px;
                 }
 
                 .flacso-main-page .flacso-novedades-3d__image-link {
-                    height: auto !important;
-                    max-height: 22rem;
-                    aspect-ratio: 4 / 5 !important;
+                    height: 100% !important;
+                    max-height: none;
+                    aspect-ratio: auto !important;
                     border-right: 0;
                     border-bottom: 1px solid rgba(22, 57, 112, 0.08);
                 }
 
                 .flacso-novedades-3d__image {
-                    object-fit: contain;
-                    background: #eef3f8;
+                    object-fit: cover;
                 }
 
                 .flacso-novedades-3d__body {
@@ -889,7 +955,7 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
 
                 .flacso-novedades-3d__navigation {
                     gap: 0.35rem;
-                    margin-top: 0.65rem;
+                    margin-top: -1rem;
                 }
 
                 .flacso-novedades-3d__arrow {
@@ -909,6 +975,22 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
 
                 .flacso-novedades-3d__counter {
                     display: none;
+                }
+
+                .flacso-novedades-3d__meta {
+                    gap: 0.5rem;
+                }
+
+                .flacso-novedades-3d__meta time {
+                    min-height: 32px;
+                    padding-inline: 0.6rem;
+                    font-size: 0.72rem;
+                }
+
+                .flacso-novedades-3d__read-more {
+                    min-height: 38px;
+                    padding: 0.55rem 0.7rem;
+                    font-size: 0.76rem;
                 }
             }
 
