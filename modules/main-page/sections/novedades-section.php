@@ -669,7 +669,7 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
 
             .flacso-novedades-3d {
                 --card-height-desktop: 29rem;
-                padding-bottom: 0;
+                padding-bottom: clamp(2.5rem, 4vw, 4rem);
             }
 
             .flacso-novedades-3d__stage {
