@@ -1,126 +1,134 @@
-# FLACSO Uruguay - Plataforma Integrada
+# FLACSO Uruguay Plugin
 
-Plugin unificado para FLACSO Uruguay con modulos de:
-- oferta academica
-- seminarios
-- preinscripciones
-- formularios de consulta
-- charlas abiertas
-- docentes
-- eventos
-- shortcodes
-- bloques Gutenberg
+Plugin de WordPress que reúne las funcionalidades propias del sitio institucional de FLACSO Uruguay.
 
-## Version
+Incluye, entre otros módulos:
 
-`1.1.7`
+- oferta académica;
+- seminarios;
+- preinscripciones;
+- formularios de consulta;
+- charlas abiertas;
+- docentes y eventos;
+- shortcodes y bloques de Gutenberg.
 
 ## Requisitos
 
-- WordPress `6.0+`
-- PHP `7.4+`
+- WordPress 6.0 o posterior;
+- PHP 7.4 o posterior;
+- WP-CLI para las validaciones posteriores al despliegue.
 
-## Cambios recientes (1.1.7)
+El archivo principal del plugin es `flacso-uruguay.php` y el slug de instalación es `flacso-uruguay-plugin`.
 
-- Nueva opción en admin para mostrar/ocultar el botón flotante "Solicitar información".
-- Ajustes UX del formulario flotante (mantener modal abierto tras éxito y mejor feedback).
-- Envío de consulta en JSON al webhook y aceptación de códigos 4xx según integración actual.
-- Correcciones ortográficas en textos visibles del formulario.
+## Versionado automático
 
-## Cambios previos (1.0.4)
+La versión desplegada se calcula automáticamente para cada commit de `main` con el formato:
 
-- Integracion de eventos Meta Pixel estandarizada en flujos clave.
-- `Lead` en paginas de gracias/confirmacion.
-- `SubmitApplication` en preinscripciones (posgrado y seminario).
-- `ViewContent` en:
-  - formulario de solicitud de informacion de oferta academica
-  - pagina individual de seminario
-  - shortcode hero de cartas
-- Nuevo bloque Gutenberg independiente:
-  - `flacso-uruguay/preinscripcion-button`
-  - renderiza solo el boton "Preinscripcion 2026"
-- Se mantiene el bloque anterior de consultas sin cambios funcionales.
-- Ajustes en listado de seminarios:
-  - grid responsivo fijo `3/2/1` (desktop/tablet/mobile)
-  - soporte de filtro por programa via relacion:
-    - `oferta-academica` -> `_oferta_seminarios_ids` -> `area_tematica`
-  - fallback legacy para datos antiguos.
-- Correccion masiva de codificacion:
-  - normalizacion a UTF-8 sin BOM
-  - limpieza de mojibake en archivos afectados
+```text
+<versión base>.<cantidad de commits>
+```
+
+Por ejemplo, si `flacso-uruguay.php` declara la versión base `6.9.15` y el commit es el número 412 del historial, la versión efectiva será `6.9.15.412`.
+
+La versión se deriva del historial Git del commit, por lo que el workflow de despliegue y el workflow de release producen exactamente la misma versión para un mismo SHA. Durante el proceso se actualizan en la copia de distribución:
+
+- la cabecera `Version:` del plugin;
+- la constante `FLACSO_URUGUAY_VERSION`.
+
+No se crean commits automáticos para modificar la versión base. Esta solo debe cambiarse manualmente cuando corresponda iniciar una nueva línea de versión.
+
+## Desarrollo local
+
+No se utiliza `./build`, `package-plugin.sh` ni otro script local para preparar entregas.
+
+Antes de publicar cambios se recomienda ejecutar:
+
+```bash
+python3 .github/scripts/check_encoding.py
+
+while IFS= read -r -d '' file; do
+  php -l "$file"
+done < <(find . -type f -name '*.php' \
+  -not -path './vendor/*' \
+  -not -path './node_modules/*' \
+  -print0)
+
+php tests/oferta-inscripciones-year-test.php
+```
+
+El hook opcional de `.githooks/pre-commit` ejecuta únicamente el control de encoding. Se habilita con:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+## Despliegue a producción
+
+Cada push a `main` activa `.github/workflows/deploy-plugin.yml`.
+
+El flujo oficial es:
+
+1. checkout del SHA que activó el workflow;
+2. cálculo de la versión efectiva;
+3. controles de encoding, archivos requeridos y sintaxis PHP;
+4. creación y publicación del ZIP como artifact;
+5. copia por SSH a un staging exclusivo bajo `/tmp`;
+6. sincronización con `rsync --delete` sobre la carpeta del plugin;
+7. asignación de propietario y grupo `web5:client2`;
+8. smoke test de WordPress con WP-CLI como usuario `web5`;
+9. comprobación del plugin activo y de la versión desplegada.
+
+WordPress está instalado en:
+
+```text
+/var/www/clients/client2/web5/web
+```
+
+El plugin se despliega exclusivamente en:
+
+```text
+/var/www/clients/client2/web5/web/wp-content/plugins/flacso-uruguay-plugin
+```
+
+El servidor no ejecuta `git pull` dentro de WordPress.
+
+### GitHub Secrets
+
+El workflow requiere:
+
+- `EC2_HOST`;
+- `EC2_USER`;
+- `EC2_SSH_KEY`.
+
+## Workflows
+
+- `deploy-plugin.yml`: mecanismo oficial de despliegue a producción.
+- `encoding-check.yml`: valida UTF-8, BOM y patrones de mojibake.
+- `release-auto-update.yml`: publica un release y su ZIP con la misma versión derivada del commit; no despliega archivos en WordPress.
 
 ## Estructura principal
 
 ```text
-flacso-uruguay/
-|- flacso-uruguay.php
-|- includes/
-|  |- core/
-|  |- admin/
-|  |- blocks/
-|  |- cpt/
-|- modules/
-|  |- main-page/
-|  |- shortcodes/
-|  |- oferta-academica/
-|  |- seminarios/
-|  |- formularios/
-|  |- charlas-abiertas/
-|  |- preinscripcion/
-|  |- posgrados/
-|  |- docentes/
-|  |- eventos/
-|- assets/
-|- CHANGELOG.md
+flacso-uruguay-plugin/
+├── flacso-uruguay.php
+├── includes/
+│   └── core/
+├── modules/
+│   ├── oferta-academica/
+│   ├── seminarios/
+│   ├── preinscripcion/
+│   ├── formularios/
+│   ├── shortcodes/
+│   ├── docentes/
+│   └── eventos/
+├── tests/
+├── API.md
+└── CHANGELOG.md
 ```
 
-## Instalacion
+## Documentación
 
-1. Copiar la carpeta `flacso-uruguay` a `wp-content/plugins/`.
-2. Activar el plugin en WordPress.
-3. Guardar enlaces permanentes en:
-   `Ajustes -> Enlaces permanentes -> Guardar`.
-
-## Validacion de encoding antes de commit
-
-El repositorio incluye un chequeo de:
-- BOM (UTF-8/UTF-16/UTF-32)
-- UTF-8 invalido
-- patrones tipicos de mojibake
-
-Para que se ejecute automaticamente antes de cada commit local:
-
-1. Ejecutar en PowerShell:
-  `powershell -ExecutionPolicy Bypass -File scripts/setup-git-hooks.ps1`
-2. Verificar configuracion:
-  `git config --get core.hooksPath`
-
-Resultado esperado: `.githooks`
-
-Desde ese momento, cada `git commit`:
-1. corre `.github/scripts/check_encoding.py`,
-2. bloquea el commit si encuentra problemas de encoding.
-
-## Actualizacion del plugin
-
-La actualizacion del plugin se realiza por los canales habituales de despliegue del sitio (por ejemplo, copia del plugin en servidor o pipeline de deploy propio).
-
-## Notas de tracking (Meta Pixel)
-
-Eventos usados por el plugin:
-- `ViewContent`
-- `Lead`
-- `SubmitApplication`
-
-No se usan eventos custom (`trackCustom`) en los flujos actuales.
-
-## Documentación de la API
-
-La documentación técnica completa de los endpoints REST disponibles se encuentra en [API.md](file:///home/ivan/repositorios/flacso-uruguay-plugin/API.md).
-
-## Soporte
-
-Para diagnostico y mantenimiento, revisar:
-- `CHANGELOG.md`
-- `API.md` (Documentación de la API REST)
-- documentacion de cada modulo en `modules/*`
+- `API.md`: endpoints REST.
+- `CHANGELOG.md`: historial funcional.
+- `docs/`: notas operativas específicas.
+- `modules/*/README.md`: documentación de módulos cuando exista.

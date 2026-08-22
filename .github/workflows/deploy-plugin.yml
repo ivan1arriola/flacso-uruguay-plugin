@@ -29,6 +29,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ github.sha }}
+          fetch-depth: 0
 
       - name: Verify checkout and required files
         shell: bash
@@ -43,6 +44,31 @@ jobs:
             echo "::error::Production package must not contain symbolic links: $symlink"
             exit 1
           fi
+
+      - name: Calculate and apply software version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          current_version="$(grep -m1 -E '^\s*\* Version:\s*' "$PLUGIN_FILE" | sed -E 's/^\s*\* Version:\s*//')"
+          if [[ ! "$current_version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(\.[0-9]+)?$ ]]; then
+            echo "::error::Invalid plugin version in $PLUGIN_FILE: $current_version"
+            exit 1
+          fi
+
+          base_version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}"
+          revision="$(git rev-list --count HEAD)"
+          software_version="${base_version}.${revision}"
+
+          sed -i -E "s/^(\s*\* Version:\s*).*/\1${software_version}/" "$PLUGIN_FILE"
+          sed -i -E "s/define\('FLACSO_URUGUAY_VERSION', '[^']*'\);/define('FLACSO_URUGUAY_VERSION', '${software_version}');/" "$PLUGIN_FILE"
+
+          grep -Fq " * Version: ${software_version}" "$PLUGIN_FILE"
+          grep -Fq "define('FLACSO_URUGUAY_VERSION', '${software_version}');" "$PLUGIN_FILE"
+
+          echo "SOFTWARE_VERSION=$software_version" >> "$GITHUB_ENV"
+          echo "software_version=$software_version" >> "$GITHUB_OUTPUT"
+          echo "Software version for $GITHUB_SHA: $software_version"
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -68,7 +94,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ZIP_NAME="${PLUGIN_SLUG}-${GITHUB_SHA::7}.zip"
+          ZIP_NAME="${PLUGIN_SLUG}-${SOFTWARE_VERSION}-${GITHUB_SHA::7}.zip"
           zip -r "$ZIP_NAME" . \
             -x "$ZIP_NAME" \
                '.git/*' \
@@ -95,7 +121,7 @@ jobs:
       - name: Upload plugin ZIP artifact
         uses: actions/upload-artifact@v6
         with:
-          name: plugin-zip-${{ github.sha }}
+          name: plugin-zip-${{ steps.version.outputs.software_version }}-${{ github.sha }}
           path: ${{ env.ZIP_NAME }}
           if-no-files-found: error
 
@@ -165,10 +191,11 @@ jobs:
           SSH_OPTIONS=(-i ~/.ssh/ec2_deploy_key -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes)
 
           ssh "${SSH_OPTIONS[@]}" "$EC2_USER@$EC2_HOST" \
-            bash -se -- "$GITHUB_SHA" <<'REMOTE'
+            bash -se -- "$GITHUB_SHA" "$SOFTWARE_VERSION" <<'REMOTE'
           set -euo pipefail
 
           DEPLOY_SHA="$1"
+          EXPECTED_VERSION="$2"
           SOURCE="/tmp/flacso-uruguay-plugin-${DEPLOY_SHA}"
           WP_ROOT="/var/www/clients/client2/web5/web"
           TARGET="${WP_ROOT}/wp-content/plugins/flacso-uruguay-plugin"
@@ -202,6 +229,12 @@ jobs:
             cd "$WP_ROOT"
             sudo -n -u web5 -- "$WP_BIN" core is-installed
             sudo -n -u web5 -- "$WP_BIN" plugin is-active flacso-uruguay-plugin
+            deployed_version="$(sudo -n -u web5 -- "$WP_BIN" plugin get flacso-uruguay-plugin --field=version)"
+            if [[ "$deployed_version" != "$EXPECTED_VERSION" ]]; then
+              echo "Expected plugin version $EXPECTED_VERSION, found $deployed_version." >&2
+              return 1
+            fi
+            echo "Deployed plugin version: $deployed_version"
           }
 
           if ! validation_output="$(validate_wordpress 2>&1)"; then
@@ -216,5 +249,5 @@ jobs:
             exit 1
           fi
 
-          echo "Commit $DEPLOY_SHA deployed successfully to $TARGET"
+          echo "Commit $DEPLOY_SHA (version $EXPECTED_VERSION) deployed successfully to $TARGET"
           REMOTE
