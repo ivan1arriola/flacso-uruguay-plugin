@@ -121,7 +121,7 @@ function flacso_section_contacto_render() {
                     <svg viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-8 7.48 8.5 8.5 0 0 1-3.5-.98L4 20l1.4-4.2A7.5 7.5 0 1 1 20 11.5Z"></path><path d="M8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01"></path></svg>
                 </span>
                 <div class="flacso-contacto-copy">
-                    <h2 class="flacso-contacto-title"><?php echo $title; ?></h2>
+                    <h2 class="flacso-contacto-heading"><?php echo $title; ?></h2>
                     <p class="flacso-contacto-subtitle"><?php echo $subtitle; ?></p>
                 </div>
                 <?php if ($cta_url): ?>

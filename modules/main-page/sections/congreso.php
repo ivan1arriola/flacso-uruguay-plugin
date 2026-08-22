@@ -19,7 +19,7 @@ function flacso_section_congreso_render() {
     <section class="flacso-congreso-section" style="<?php echo esc_attr($background_style); ?>">
         <div class="flacso-congreso-media" aria-hidden="true"></div>
         <div class="flacso-congreso-content flacso-fade-in">
-            <h2 class="flacso-congreso-title"><?php echo $title; ?></h2>
+            <h2 class="flacso-congreso-heading"><?php echo $title; ?></h2>
             <p class="flacso-congreso-text"><?php echo $content; ?></p>
             <?php if ($cta_url): ?>
                 <a href="<?php echo esc_url($cta_url); ?>" class="flacso-btn flacso-congreso-btn">
