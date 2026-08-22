@@ -2026,7 +2026,8 @@ table.tabla-calendario .hora { width: 15%; }
   font-size: 0.9rem;
 }
 
-.flacso-oa-catalog__section-heading > a {
+.flacso-oa-catalog__section-heading > a,
+.flacso-oa-catalog__section-actions > a {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
@@ -2037,12 +2038,21 @@ table.tabla-calendario .hora { width: 15%; }
   text-decoration: none !important;
 }
 
-.flacso-oa-catalog__section-heading > a:hover i {
+.flacso-oa-catalog__section-heading > a:hover i,
+.flacso-oa-catalog__section-actions > a:hover i {
   transform: translateX(3px);
 }
 
-.flacso-oa-catalog__section-heading > a i {
+.flacso-oa-catalog__section-heading > a i,
+.flacso-oa-catalog__section-actions > a i {
   transition: transform 0.18s ease;
+}
+
+.flacso-oa-catalog__section-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 1rem;
 }
 
 .flacso-oa-catalog__featured-carousel {
@@ -2066,19 +2076,17 @@ table.tabla-calendario .hora { width: 15%; }
   flex: 0 0 min(82vw, 20rem);
 }
 
-.flacso-oa-catalog__featured-carousel.is-looping .flacso-oa-catalog__featured {
+[data-offer-carousel].is-looping .flacso-oa-catalog__featured {
   scrollbar-width: none;
 }
 
-.flacso-oa-catalog__featured-carousel.is-looping .flacso-oa-catalog__featured::-webkit-scrollbar {
+[data-offer-carousel].is-looping .flacso-oa-catalog__featured::-webkit-scrollbar {
   display: none;
 }
 
 .flacso-oa-catalog__carousel-controls {
   display: flex;
-  justify-content: flex-end;
-  gap: 0.55rem;
-  margin-top: 0.75rem;
+  gap: 0.4rem;
 }
 
 .flacso-oa-catalog__carousel-controls[hidden] {
@@ -2087,24 +2095,26 @@ table.tabla-calendario .hora { width: 15%; }
 
 .flacso-oa-catalog__carousel-controls button {
   display: grid;
-  width: 2.7rem;
-  height: 2.7rem;
+  width: 2.45rem;
+  height: 2.45rem;
   margin: 0;
   padding: 0;
   place-items: center;
-  border: 1px solid var(--catalog-border);
+  border: 1px solid #b9c7da;
   border-radius: 50%;
-  background: #fff;
-  color: var(--catalog-blue);
-  box-shadow: 0 5px 15px rgba(17, 45, 91, 0.08);
+  background: #fff !important;
+  color: var(--catalog-blue) !important;
+  font-size: 1rem;
+  line-height: 1;
+  box-shadow: none;
   cursor: pointer;
 }
 
 .flacso-oa-catalog__carousel-controls button:hover,
 .flacso-oa-catalog__carousel-controls button:focus-visible {
   border-color: var(--catalog-blue);
-  background: var(--catalog-blue);
-  color: #fff;
+  background: var(--catalog-blue) !important;
+  color: #fff !important;
 }
 
 .flacso-oa-program-card {
@@ -2366,7 +2376,8 @@ table.tabla-calendario .hora { width: 15%; }
 }
 
 .flacso-oa-catalog__section--seminars .flacso-oa-catalog__section-heading h2,
-.flacso-oa-catalog__section--seminars .flacso-oa-catalog__section-heading > a {
+.flacso-oa-catalog__section--seminars .flacso-oa-catalog__section-heading > a,
+.flacso-oa-catalog__section--seminars .flacso-oa-catalog__section-actions > a {
   color: #fff !important;
 }
 
@@ -2467,16 +2478,29 @@ table.tabla-calendario .hora { width: 15%; }
   background: rgba(255, 255, 255, 0.12);
 }
 
-.flacso-oa-catalog + .flacso-oa-consulta .flacso-oa-consulta__fab {
+.flacso-oa-catalog ~ .flacso-oa-consulta .flacso-oa-consulta__fab {
   right: 1rem;
   bottom: 1rem;
   left: 1rem;
   justify-content: center;
   min-height: 3.5rem;
   border-radius: 0.85rem;
-  background: var(--catalog-green);
-  color: #fff;
+  background: var(--catalog-green) !important;
+  color: #fff !important;
   box-shadow: 0 12px 26px rgba(21, 82, 45, 0.28);
+  z-index: 10060 !important;
+}
+
+@media (max-width: 767px) {
+  .flacso-oa-catalog__section-heading {
+    align-items: flex-start;
+  }
+
+  .flacso-oa-catalog__section-actions {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.65rem;
+  }
 }
 
 @media (min-width: 768px) {
@@ -2536,7 +2560,7 @@ table.tabla-calendario .hora { width: 15%; }
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .flacso-oa-catalog + .flacso-oa-consulta .flacso-oa-consulta__fab {
+  .flacso-oa-catalog ~ .flacso-oa-consulta .flacso-oa-consulta__fab {
     right: 1.5rem;
     bottom: 1.5rem;
     left: auto;
@@ -2556,19 +2580,36 @@ table.tabla-calendario .hora { width: 15%; }
   }
 
   .flacso-oa-catalog__categories {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    align-items: stretch;
-    gap: 0.8rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 1.1rem;
   }
 
   .flacso-oa-category {
-    display: flex;
+    display: block;
     min-width: 0;
-    flex-direction: column;
+    border-radius: 1rem;
+    box-shadow: 0 10px 28px rgba(17, 45, 91, 0.07);
   }
 
   .flacso-oa-category summary {
+    min-height: 4.7rem;
+    padding: 1rem 1.2rem;
     cursor: default;
+  }
+
+  .flacso-oa-category__icon {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .flacso-oa-category__heading {
+    font-size: 1.02rem;
+  }
+
+  .flacso-oa-category__heading small {
+    margin-top: 0.08rem;
+    font-size: 0.72rem;
   }
 
   .flacso-oa-category__chevron {
@@ -2577,14 +2618,30 @@ table.tabla-calendario .hora { width: 15%; }
 
   .flacso-oa-category__content,
   .flacso-oa-category:not([open]) .flacso-oa-category__content {
-    display: flex;
-    flex: 1 1 auto;
-    flex-direction: column;
+    display: block;
+    padding: 0 1.2rem 1.2rem;
+  }
+
+  .flacso-oa-category__content ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 1.3rem;
+  }
+
+  .flacso-oa-category__content li {
+    min-width: 0;
+  }
+
+  .flacso-oa-category__content li > a {
+    height: 100%;
+    padding: 0.9rem 0;
+    font-size: 0.9rem;
   }
 
   .flacso-oa-category__all {
-    margin-top: auto;
-    padding-top: 1rem;
+    margin-top: 1rem;
+    padding: 0.62rem 0.82rem;
+    border-radius: 0.55rem;
+    background: var(--catalog-blue-soft);
   }
 
   .flacso-oa-catalog__seminars {

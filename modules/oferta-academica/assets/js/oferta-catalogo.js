@@ -16,8 +16,11 @@
         var chips = Array.prototype.slice.call(root.querySelectorAll('[data-offer-category]'));
         var panels = Array.prototype.slice.call(root.querySelectorAll('[data-offer-panel]'));
         var featuredSection = root.querySelector('.flacso-oa-catalog__section--open');
+        var catalogSection = root.querySelector('.flacso-oa-catalog__section--all');
+        var seminarSection = root.querySelector('[data-offer-seminars-section]');
         var featuredItems = Array.prototype.slice.call(root.querySelectorAll('[data-offer-featured] [data-offer-item]'));
         var catalogItems = Array.prototype.slice.call(root.querySelectorAll('.flacso-oa-category [data-offer-item]'));
+        var seminarItems = Array.prototype.slice.call(root.querySelectorAll('[data-seminar-item]'));
         var carousel = setupInfiniteCarousel(root.querySelector('[data-offer-carousel]'), featuredItems);
         var activeCategory = 'all';
 
@@ -31,6 +34,7 @@
             var term = normalize(search ? search.value : '');
             var visibleCatalogItems = 0;
             var visibleFeaturedItems = 0;
+            var visibleSeminarItems = 0;
 
             catalogItems.forEach(function (item) {
                 var visible = itemMatches(item, term);
@@ -45,6 +49,14 @@
                 item.hidden = !visible;
                 if (visible) {
                     visibleFeaturedItems += 1;
+                }
+            });
+
+            seminarItems.forEach(function (item) {
+                var visible = !term || normalize(item.getAttribute('data-search')).indexOf(term) !== -1;
+                item.hidden = !visible;
+                if (visible) {
+                    visibleSeminarItems += 1;
                 }
             });
 
@@ -65,14 +77,29 @@
                 featuredSection.hidden = visibleFeaturedItems === 0;
             }
 
+            if (seminarSection) {
+                seminarSection.hidden = seminarItems.length > 0 && visibleSeminarItems === 0;
+            }
+
+            if (catalogSection) {
+                catalogSection.hidden = !!term && visibleCatalogItems === 0 && visibleSeminarItems > 0;
+            }
+
             if (empty) {
-                empty.hidden = visibleCatalogItems !== 0;
+                empty.hidden = visibleCatalogItems + visibleSeminarItems !== 0;
             }
 
             if (count) {
-                count.textContent = visibleCatalogItems === 1
-                    ? '1 propuesta'
-                    : visibleCatalogItems + ' propuestas';
+                if (term) {
+                    var totalResults = visibleCatalogItems + visibleSeminarItems;
+                    count.textContent = totalResults === 1
+                        ? '1 resultado'
+                        : totalResults + ' resultados';
+                } else {
+                    count.textContent = visibleCatalogItems === 1
+                        ? '1 propuesta'
+                        : visibleCatalogItems + ' propuestas';
+                }
             }
 
             if (carousel) {

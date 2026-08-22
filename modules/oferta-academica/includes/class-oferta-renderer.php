@@ -610,15 +610,18 @@ class Oferta_Renderer {
             $meta_parts = array_values(array_filter([$hour, $modality]));
             $month = wp_date('M', $timestamp, wp_timezone());
             $month = function_exists('mb_strtoupper') ? mb_strtoupper($month, 'UTF-8') : strtoupper($month);
+            $title = (string) get_the_title($post_id);
+            $excerpt = trim((string) get_the_excerpt($post_id));
 
             $items[] = [
-                'title' => (string) get_the_title($post_id),
+                'title' => $title,
                 'url' => (string) get_permalink($post_id),
                 'image' => (string) (get_the_post_thumbnail_url($post_id, 'medium_large') ?: ''),
                 'date_iso' => wp_date('Y-m-d', $timestamp, wp_timezone()),
                 'day' => wp_date('d', $timestamp, wp_timezone()),
                 'month' => rtrim($month, '.'),
                 'meta' => implode(' · ', $meta_parts),
+                'search_text' => implode(' ', array_filter([$title, $modality, $hour, $excerpt])),
             ];
         }
 
@@ -707,16 +710,22 @@ class Oferta_Renderer {
 
             <?php if ($open_programs) : ?>
                 <section class="flacso-oa-catalog__section flacso-oa-catalog__section--open" aria-labelledby="flacso-open-programs-title">
-                    <div class="flacso-oa-catalog__container">
+                    <div class="flacso-oa-catalog__container" data-offer-carousel>
                         <header class="flacso-oa-catalog__section-heading">
                             <div>
                                 <h2 id="flacso-open-programs-title"><i class="bi bi-stars" aria-hidden="true"></i><?php esc_html_e('Inscripciones abiertas', 'flacso-oferta-academica'); ?></h2>
-                                <p><?php esc_html_e('Propuestas que requieren una decisión próxima.', 'flacso-oferta-academica'); ?></p>
+                                <p><?php esc_html_e('Elegí la propuesta que mejor se adapta a vos.', 'flacso-oferta-academica'); ?></p>
                             </div>
-                            <a href="#toda-la-oferta"><?php esc_html_e('Ver toda la oferta', 'flacso-oferta-academica'); ?><i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                            <div class="flacso-oa-catalog__section-actions">
+                                <a href="#toda-la-oferta"><?php esc_html_e('Ver toda la oferta', 'flacso-oferta-academica'); ?><i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                                <div class="flacso-oa-catalog__carousel-controls">
+                                    <button type="button" data-carousel-previous aria-label="<?php esc_attr_e('Ver propuestas anteriores', 'flacso-oferta-academica'); ?>"><i class="bi bi-arrow-left" aria-hidden="true"></i></button>
+                                    <button type="button" data-carousel-next aria-label="<?php esc_attr_e('Ver propuestas siguientes', 'flacso-oferta-academica'); ?>"><i class="bi bi-arrow-right" aria-hidden="true"></i></button>
+                                </div>
+                            </div>
                         </header>
 
-                        <div class="flacso-oa-catalog__featured-carousel" data-offer-carousel>
+                        <div class="flacso-oa-catalog__featured-carousel">
                             <div class="flacso-oa-catalog__featured" data-offer-featured>
                                 <?php foreach ($open_programs as $program) : ?>
                                     <article class="flacso-oa-program-card" data-offer-item data-category="<?php echo esc_attr($program['term_slug']); ?>" data-search="<?php echo esc_attr($program['search_text']); ?>">
@@ -738,10 +747,6 @@ class Oferta_Renderer {
                                         </div>
                                     </article>
                                 <?php endforeach; ?>
-                            </div>
-                            <div class="flacso-oa-catalog__carousel-controls">
-                                <button type="button" data-carousel-previous aria-label="<?php esc_attr_e('Ver propuestas anteriores', 'flacso-oferta-academica'); ?>"><i class="bi bi-arrow-left" aria-hidden="true"></i></button>
-                                <button type="button" data-carousel-next aria-label="<?php esc_attr_e('Ver propuestas siguientes', 'flacso-oferta-academica'); ?>"><i class="bi bi-arrow-right" aria-hidden="true"></i></button>
                             </div>
                         </div>
                     </div>
@@ -792,7 +797,7 @@ class Oferta_Renderer {
             </section>
 
             <?php if ($seminars) : ?>
-                <section class="flacso-oa-catalog__section flacso-oa-catalog__section--seminars" aria-labelledby="flacso-seminars-title">
+                <section class="flacso-oa-catalog__section flacso-oa-catalog__section--seminars" aria-labelledby="flacso-seminars-title" data-offer-seminars-section>
                     <div class="flacso-oa-catalog__container">
                         <header class="flacso-oa-catalog__section-heading">
                             <div>
@@ -804,7 +809,7 @@ class Oferta_Renderer {
 
                         <div class="flacso-oa-catalog__seminars">
                             <?php foreach ($seminars as $seminar) : ?>
-                                <article class="flacso-oa-seminar-card">
+                                <article class="flacso-oa-seminar-card" data-seminar-item data-search="<?php echo esc_attr($seminar['search_text']); ?>">
                                     <a href="<?php echo esc_url($seminar['url']); ?>">
                                         <span class="flacso-oa-seminar-card__media">
                                             <?php if ($seminar['image']) : ?>
