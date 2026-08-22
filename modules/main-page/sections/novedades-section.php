@@ -24,7 +24,6 @@ if (!function_exists('flacso_section_novedades_render')) {
         <section class="flacso-novedades-section position-relative" id="<?php echo esc_attr($unique_id); ?>">
             <div class="flacso-content-shell">
                 <header class="flacso-novedades-header">
-                    <p class="flacso-novedades-header__eyebrow"><?php esc_html_e('Actualidad FLACSO', 'flacso-main-page'); ?></p>
                     <h2><?php esc_html_e('Novedades', 'flacso-main-page'); ?></h2>
                 </header>
             </div>
@@ -646,26 +645,6 @@ if (!function_exists('flacso_section_novedades_destacadas_render')) {
             .flacso-novedades-header {
                 margin-bottom: clamp(1.25rem, 2.5vw, 2rem);
                 text-align: left;
-            }
-
-            .flacso-novedades-header__eyebrow {
-                display: flex;
-                align-items: center;
-                gap: 0.55rem;
-                margin: 0 0 0.45rem;
-                color: #248138;
-                font-size: 0.76rem;
-                font-weight: 800;
-                letter-spacing: 0.1em;
-                text-transform: uppercase;
-            }
-
-            .flacso-novedades-header__eyebrow::before {
-                content: "";
-                width: 28px;
-                height: 2px;
-                border-radius: 999px;
-                background: currentColor;
             }
 
             .flacso-novedades-header h2 {

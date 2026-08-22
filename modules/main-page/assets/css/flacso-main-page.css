@@ -3804,3 +3804,322 @@
         background: linear-gradient(0deg, rgba(7, 25, 57, 0.98) 0%, rgba(10, 38, 82, 0.76) 70%, rgba(10, 38, 82, 0.42) 100%);
     }
 }
+
+/* Cierre institucional v2: contacto de servicio + archivo editorial */
+.flacso-main-page .flacso-home-block--contacto {
+    padding-block: clamp(2rem, 4vw, 3.5rem) !important;
+    background: #f3f7f4;
+}
+
+.flacso-main-page .flacso-contacto-section {
+    padding: 0 !important;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.flacso-main-page .flacso-contacto-section::before {
+    content: none;
+}
+
+.flacso-main-page .flacso-contacto-content {
+    padding: 0;
+}
+
+.flacso-main-page .flacso-contacto-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: clamp(1.1rem, 2.5vw, 2rem);
+    overflow: hidden;
+    padding: clamp(1.4rem, 3vw, 2.25rem);
+    border: 1px solid rgba(22, 57, 112, 0.1);
+    border-radius: 24px;
+    background: #ffffff;
+    box-shadow: 0 18px 48px rgba(20, 47, 82, 0.09);
+}
+
+.flacso-main-page .flacso-contacto-card::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: clamp(90px, 13vw, 180px);
+    aspect-ratio: 1;
+    border-radius: 0 0 0 100%;
+    background: linear-gradient(135deg, rgba(254, 210, 34, 0.13), rgba(36, 129, 56, 0.08));
+    pointer-events: none;
+}
+
+.flacso-main-page .flacso-contacto-icon {
+    width: clamp(58px, 6vw, 72px);
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    border-radius: 20px;
+    background: #eaf5ec;
+    color: #248138;
+}
+
+.flacso-main-page .flacso-contacto-icon svg {
+    width: 30px;
+    height: 30px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.7;
+}
+
+.flacso-main-page .flacso-contacto-copy {
+    min-width: 0;
+}
+
+.flacso-main-page .flacso-contacto-title {
+    margin: 0 0 0.35rem !important;
+    padding: 0 !important;
+    border: 0 !important;
+    color: #163970 !important;
+    -webkit-text-fill-color: #163970 !important;
+    font-size: clamp(1.75rem, 3vw, 2.5rem) !important;
+    line-height: 1.05 !important;
+    letter-spacing: -0.035em !important;
+}
+
+.flacso-main-page .flacso-contacto-title::after {
+    content: none !important;
+}
+
+.flacso-main-page .flacso-contacto-subtitle {
+    max-width: 54ch;
+    margin: 0;
+    color: #5a697d;
+    font-size: clamp(0.98rem, 1.3vw, 1.1rem);
+    line-height: 1.5;
+}
+
+.flacso-main-page .flacso-contacto .flacso-contacto-cta,
+.flacso-main-page .flacso-congreso-btn {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+    min-height: 50px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0.75rem 0.85rem 0.75rem 1.2rem;
+    border: 1px solid #163970;
+    border-radius: 14px;
+    background: #163970;
+    color: #ffffff;
+    box-shadow: 0 10px 24px rgba(22, 57, 112, 0.16);
+    font-size: 0.9rem;
+    font-weight: 800;
+    text-decoration: none;
+    transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.flacso-main-page .flacso-contacto-cta svg,
+.flacso-main-page .flacso-congreso-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.9;
+    transition: transform 180ms ease;
+}
+
+.flacso-main-page .flacso-contacto .flacso-contacto-cta:hover,
+.flacso-main-page .flacso-contacto .flacso-contacto-cta:focus-visible,
+.flacso-main-page .flacso-congreso-btn:hover,
+.flacso-main-page .flacso-congreso-btn:focus-visible {
+    border-color: #248138;
+    background: #248138;
+    color: #ffffff;
+    transform: translateY(-2px);
+}
+
+.flacso-main-page .flacso-contacto-cta:hover svg,
+.flacso-main-page .flacso-contacto-cta:focus-visible svg,
+.flacso-main-page .flacso-congreso-btn:hover svg,
+.flacso-main-page .flacso-congreso-btn:focus-visible svg {
+    transform: translateX(3px);
+}
+
+.flacso-main-page .flacso-home-block--congreso {
+    padding-block: clamp(2.5rem, 5vw, 5rem) !important;
+    background: #fff9ef;
+}
+
+.flacso-main-page .flacso-congreso-section {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(300px, 0.95fr) minmax(0, 1.05fr);
+    align-items: stretch;
+    overflow: hidden;
+    padding: 0 !important;
+    border: 1px solid rgba(22, 57, 112, 0.1);
+    border-radius: 28px;
+    background: #ffffff;
+    color: #1f3048;
+    text-align: left;
+    box-shadow: 0 24px 60px rgba(41, 47, 57, 0.12);
+}
+
+.flacso-main-page .flacso-congreso-section::before {
+    content: none;
+}
+
+.flacso-main-page .flacso-congreso-media {
+    position: relative;
+    min-height: 430px;
+    background-color: #163970;
+    background-image: var(--flacso-congreso-bg-image, none);
+    background-position: center;
+    background-size: cover;
+}
+
+.flacso-main-page .flacso-congreso-media::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(180deg, transparent 50%, rgba(7, 25, 57, 0.34)),
+        linear-gradient(90deg, transparent 72%, rgba(7, 25, 57, 0.12));
+}
+
+.flacso-main-page .flacso-congreso-content {
+    width: auto;
+    max-width: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin: 0;
+    padding: clamp(2rem, 4vw, 4rem);
+    text-align: left;
+}
+
+.flacso-main-page .flacso-congreso-section .flacso-congreso-title {
+    max-width: 17ch;
+    margin: 0 0 1rem !important;
+    padding: 0 !important;
+    border: 0 !important;
+    color: #163970 !important;
+    -webkit-text-fill-color: #163970 !important;
+    font-size: clamp(2rem, 3.5vw, 3.35rem) !important;
+    line-height: 1.02 !important;
+    letter-spacing: -0.045em !important;
+    text-align: left !important;
+    text-shadow: none;
+}
+
+.flacso-main-page .flacso-congreso-section .flacso-congreso-title::after {
+    content: none !important;
+}
+
+.flacso-main-page .flacso-congreso-text {
+    max-width: 55ch;
+    margin: 0 0 1.5rem;
+    color: #4a5b71;
+    font-size: clamp(0.98rem, 1.25vw, 1.08rem);
+    line-height: 1.65;
+    text-align: left;
+    text-shadow: none;
+}
+
+.flacso-main-page .flacso-congreso-text strong {
+    color: #1d365d;
+}
+
+.flacso-main-page .flacso-congreso-btn {
+    width: fit-content;
+}
+
+@media (max-width: 820px) {
+    .flacso-main-page .flacso-contacto-card {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .flacso-main-page .flacso-contacto-cta {
+        grid-column: 2;
+        justify-self: start;
+    }
+
+    .flacso-main-page .flacso-congreso-section {
+        grid-template-columns: 1fr;
+    }
+
+    .flacso-main-page .flacso-congreso-media {
+        min-height: 0;
+        aspect-ratio: 16 / 9;
+    }
+}
+
+@media (max-width: 560px) {
+    .flacso-main-page .flacso-home-block--contacto,
+    .flacso-main-page .flacso-home-block--congreso {
+        padding: 1rem 0.75rem 1.75rem !important;
+    }
+
+    .flacso-main-page .flacso-contacto-card {
+        grid-template-columns: 48px minmax(0, 1fr);
+        gap: 0.9rem;
+        padding: 1.15rem;
+        border-radius: 20px;
+    }
+
+    .flacso-main-page .flacso-contacto-icon {
+        width: 48px;
+        border-radius: 15px;
+    }
+
+    .flacso-main-page .flacso-contacto-icon svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .flacso-main-page .flacso-contacto-title {
+        font-size: clamp(1.65rem, 9vw, 2.1rem) !important;
+    }
+
+    .flacso-main-page .flacso-contacto-cta {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    .flacso-main-page .flacso-congreso-section {
+        border-radius: 20px;
+    }
+
+    .flacso-main-page .flacso-congreso-media {
+        aspect-ratio: 4 / 3;
+    }
+
+    .flacso-main-page .flacso-congreso-content {
+        padding: 1.5rem 1.2rem 1.65rem;
+    }
+
+    .flacso-main-page .flacso-congreso-section .flacso-congreso-title {
+        font-size: clamp(1.8rem, 9vw, 2.45rem) !important;
+    }
+
+    .flacso-main-page .flacso-congreso-btn {
+        width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .flacso-main-page .flacso-contacto-cta,
+    .flacso-main-page .flacso-congreso-btn,
+    .flacso-main-page .flacso-contacto-cta svg,
+    .flacso-main-page .flacso-congreso-btn svg {
+        transition: none;
+    }
+}

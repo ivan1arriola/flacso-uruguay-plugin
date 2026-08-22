@@ -37,7 +37,6 @@ if (!function_exists('flacso_section_quienes_somos_render')) {
                     </div>
 
                     <div class="flacso-quienes-copy">
-                        <p class="flacso-quienes-eyebrow">Institución académica regional</p>
                         <h2 id="<?php echo esc_attr($unique_id); ?>" class="flacso-quienes-title"><?php echo $title; ?></h2>
                         <div class="flacso-quienes-text">
                             <?php echo $content; ?>
@@ -60,4 +59,3 @@ if (!function_exists('flacso_section_quienes_somos_render')) {
         return ob_get_clean();
     }
 }
-

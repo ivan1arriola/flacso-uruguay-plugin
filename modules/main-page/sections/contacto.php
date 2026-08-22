@@ -116,18 +116,20 @@ function flacso_section_contacto_render() {
     ?>
     <section class="flacso-contacto flacso-contacto-section flacso-contacto-<?php echo esc_attr($unique_id); ?>" id="<?php echo esc_attr($unique_id); ?>" style="<?php echo esc_attr($css_variables); ?>">
         <div class="flacso-content-shell flacso-contacto-content">
-            <div class="row align-items-center">
-                <div class="col-md-6">
+            <div class="flacso-contacto-card">
+                <span class="flacso-contacto-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-8 7.48 8.5 8.5 0 0 1-3.5-.98L4 20l1.4-4.2A7.5 7.5 0 1 1 20 11.5Z"></path><path d="M8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01"></path></svg>
+                </span>
+                <div class="flacso-contacto-copy">
                     <h2 class="flacso-contacto-title"><?php echo $title; ?></h2>
                     <p class="flacso-contacto-subtitle"><?php echo $subtitle; ?></p>
                 </div>
-                <div class="col-md-6 text-md-end">
-                    <?php if ($cta_url): ?>
-                        <a href="<?php echo esc_url($cta_url); ?>" class="flacso-btn flacso-btn-primary flacso-btn-anim">
-                            <?php echo $cta_label; ?>
-                        </a>
-                    <?php endif; ?>
-                </div>
+                <?php if ($cta_url): ?>
+                    <a href="<?php echo esc_url($cta_url); ?>" class="flacso-btn flacso-contacto-cta">
+                        <span><?php echo $cta_label; ?></span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+                    </a>
+                <?php endif; ?>
             </div>
         </div>
     </section>
