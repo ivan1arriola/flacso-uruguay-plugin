@@ -50,6 +50,18 @@ class Oferta_Renderer {
             true
         );
 
+        $catalog_js_relative = 'modules/oferta-academica/assets/js/oferta-catalogo.js';
+        $catalog_js_path = FLACSO_URUGUAY_PATH . $catalog_js_relative;
+        $catalog_js_version = file_exists($catalog_js_path) ? filemtime($catalog_js_path) : FLACSO_OFERTA_ACADEMICA_VERSION;
+
+        wp_enqueue_script(
+            'flacso-oferta-catalogo',
+            plugins_url($catalog_js_relative, FLACSO_URUGUAY_FILE),
+            [],
+            $catalog_js_version,
+            true
+        );
+
         self::$styles_enqueued = true;
     }
 
@@ -398,31 +410,9 @@ class Oferta_Renderer {
             'hide_empty' => false,
         ]);
 
-        $order_preferida = ['maestria', 'especializacion', 'diplomado', 'diploma'];
+        $order_preferida = ['maestria', 'especializacion', 'diploma', 'diplomado'];
         if (!is_wp_error($terms)) {
-            $term_start_dates = [];
-            foreach ($terms as $term) {
-                $term_start_dates[(int) $term->term_id] = self::get_term_earliest_inicio_timestamp((int) $term->term_id);
-            }
-
-            usort($terms, function($a, $b) use ($order_preferida, $term_start_dates) {
-                $a_start = $term_start_dates[(int) $a->term_id] ?? null;
-                $b_start = $term_start_dates[(int) $b->term_id] ?? null;
-
-                if ($a_start !== null || $b_start !== null) {
-                    if ($a_start === null) {
-                        return 1;
-                    }
-
-                    if ($b_start === null) {
-                        return -1;
-                    }
-
-                    if ($a_start !== $b_start) {
-                        return $a_start <=> $b_start;
-                    }
-                }
-
+            usort($terms, function($a, $b) use ($order_preferida) {
                 $ai = array_search($a->slug, $order_preferida, true);
                 $bi = array_search($b->slug, $order_preferida, true);
                 $ai = ($ai === false) ? 999 : $ai;
@@ -462,7 +452,9 @@ class Oferta_Renderer {
             ];
         }
 
-        $seminarios_html = self::render_seminarios_bootstrap();
+        // Se conserva la clave por compatibilidad con consumidores anteriores.
+        // La página nueva consulta los seminarios como datos estructurados.
+        $seminarios_html = '';
         $floating_form_html = '';
         if (class_exists('Oferta_Consulta_Form') && method_exists('Oferta_Consulta_Form', 'render_floating_form')) {
             $floating_form_html = Oferta_Consulta_Form::render_floating_form();
@@ -482,146 +474,351 @@ class Oferta_Renderer {
     }
 
     /**
+     * Normaliza los datos de un programa para el catálogo interactivo.
+     */
+    private static function get_catalog_program_data(int $post_id, WP_Term $term): ?array {
+        if ($post_id <= 0 || self::is_password_protected_program($post_id)) {
+            return null;
+        }
+
+        if (self::is_private_program($post_id) && !self::should_include_private_programs()) {
+            return null;
+        }
+
+        $title = trim((string) get_the_title($post_id));
+        $url = get_permalink($post_id);
+        if ($title === '' || !$url) {
+            return null;
+        }
+
+        $image = get_the_post_thumbnail_url($post_id, 'large');
+        $associated_page_id = (int) get_post_meta($post_id, '_oferta_page_id', true);
+        if (!$image && $associated_page_id > 0) {
+            $image = get_the_post_thumbnail_url($associated_page_id, 'large');
+        }
+
+        $start_raw = get_post_meta($post_id, 'proximo_inicio', true);
+        if (is_array($start_raw)) {
+            $start_raw = reset($start_raw);
+        }
+        $start_raw = trim((string) $start_raw);
+        $start_precision = (string) get_post_meta($post_id, 'proximo_inicio_precision', true);
+        $start_text = self::format_proximo_inicio_text($start_raw, $start_precision);
+        $start_timestamp = self::resolve_proximo_inicio_timestamp($start_raw, $start_precision);
+
+        $modality = trim((string) get_post_meta($post_id, 'modalidad_resumen', true));
+        if ($modality === '') {
+            $modality_html = (string) get_post_meta($post_id, 'modalidad_html', true);
+            $modality = trim((string) preg_replace('/\s+/u', ' ', wp_strip_all_tags($modality_html)));
+            if (function_exists('wp_html_excerpt')) {
+                $modality = wp_html_excerpt($modality, 64, '…');
+            }
+        }
+
+        $excerpt = trim((string) get_the_excerpt($post_id));
+        $search_text = implode(' ', array_filter([
+            $title,
+            $term->name,
+            $modality,
+            $excerpt,
+        ]));
+
+        return [
+            'id' => $post_id,
+            'title' => $title,
+            'url' => (string) $url,
+            'image' => $image ? (string) $image : '',
+            'term_slug' => $term->slug,
+            'term_name' => $term->name,
+            'is_open' => (bool) get_post_meta($post_id, 'inscripciones_abiertas', true),
+            'start_label' => $start_text !== '' ? sprintf(__('Inicio: %s', 'flacso-oferta-academica'), $start_text) : '',
+            'start_short' => $start_text,
+            'start_timestamp' => $start_timestamp ?? PHP_INT_MAX,
+            'modality' => $modality,
+            'search_text' => $search_text,
+        ];
+    }
+
+    private static function get_catalog_category_icon(string $slug): string {
+        $icons = [
+            'maestria' => 'bi-mortarboard-fill',
+            'especializacion' => 'bi-star',
+            'diploma' => 'bi-file-earmark-text',
+            'diplomado' => 'bi-award',
+        ];
+
+        return $icons[$slug] ?? 'bi-book';
+    }
+
+    /**
+     * Devuelve los próximos seminarios como eventos, separados de la oferta formal.
+     */
+    private static function get_catalog_seminars(int $limit = 4): array {
+        if ($limit <= 0 || !post_type_exists('seminario')) {
+            return [];
+        }
+
+        $query = new WP_Query([
+            'post_type' => 'seminario',
+            'post_status' => 'publish',
+            'posts_per_page' => 40,
+            'meta_key' => '_seminario_periodo_inicio',
+            'orderby' => 'meta_value',
+            'meta_type' => 'DATE',
+            'order' => 'ASC',
+            'no_found_rows' => true,
+        ]);
+
+        $items = [];
+        $minimum_timestamp = strtotime('-8 days', current_time('timestamp'));
+
+        while ($query->have_posts() && count($items) < $limit) {
+            $query->the_post();
+            $post_id = get_the_ID();
+            $date_raw = '';
+            foreach (['_seminario_periodo_inicio', '_seminario_fecha_inicio', 'fecha_inicio', 'periodo_inicio'] as $meta_key) {
+                $candidate = trim((string) get_post_meta($post_id, $meta_key, true));
+                if ($candidate !== '') {
+                    $date_raw = $candidate;
+                    break;
+                }
+            }
+
+            $timestamp = $date_raw !== '' ? strtotime($date_raw) : false;
+            if (!$timestamp || $timestamp < $minimum_timestamp) {
+                continue;
+            }
+
+            $modality = '';
+            foreach (['_seminario_modalidad', 'modalidad_cursada', 'modalidad'] as $meta_key) {
+                $candidate = trim((string) get_post_meta($post_id, $meta_key, true));
+                if ($candidate !== '') {
+                    $modality = $candidate;
+                    break;
+                }
+            }
+
+            $hour = '';
+            foreach (['_seminario_hora_inicio', 'hora_inicio'] as $meta_key) {
+                $candidate = trim((string) get_post_meta($post_id, $meta_key, true));
+                if ($candidate !== '') {
+                    $hour = $candidate;
+                    break;
+                }
+            }
+
+            $meta_parts = array_values(array_filter([$hour, $modality]));
+            $month = wp_date('M', $timestamp, wp_timezone());
+            $month = function_exists('mb_strtoupper') ? mb_strtoupper($month, 'UTF-8') : strtoupper($month);
+
+            $items[] = [
+                'title' => (string) get_the_title($post_id),
+                'url' => (string) get_permalink($post_id),
+                'date_iso' => wp_date('Y-m-d', $timestamp, wp_timezone()),
+                'day' => wp_date('d', $timestamp, wp_timezone()),
+                'month' => rtrim($month, '.'),
+                'meta' => implode(' · ', $meta_parts),
+            ];
+        }
+
+        wp_reset_postdata();
+        return $items;
+    }
+
+    /**
      * Render de página completa (hero + categorías + secciones + seminarios)
      */
     public static function render_oferta_pagina(array $attributes = []): string {
         $data = self::get_oferta_pagina_data($attributes);
 
-        $hero_title = $data['hero_title'];
-        $hero_subtitle = $data['hero_subtitle'];
-        $hero_image = $data['hero_image'];
-        $terms = $data['terms'];
-        $link_seminarios = $data['link_seminarios'];
-        $link_convenios = $data['link_convenios'];
-        $sections = $data['sections'];
+        $categories = [];
+        $open_programs = [];
+
+        foreach ($data['sections'] as $section_data) {
+            $term = $section_data['term'];
+            $query = new WP_Query($section_data['query_args']);
+            $items = [];
+
+            while ($query->have_posts()) {
+                $query->the_post();
+                $item = self::get_catalog_program_data(get_the_ID(), $term);
+                if (!$item) {
+                    continue;
+                }
+
+                $items[] = $item;
+                if (!empty($item['is_open'])) {
+                    $open_programs[] = $item;
+                }
+            }
+            wp_reset_postdata();
+
+            $categories[] = [
+                'term' => $term,
+                'link' => $section_data['term_link'],
+                'items' => $items,
+            ];
+        }
+
+        usort($open_programs, static function(array $a, array $b): int {
+            $a_sort = $a['start_timestamp'] ?? PHP_INT_MAX;
+            $b_sort = $b['start_timestamp'] ?? PHP_INT_MAX;
+
+            if ($a_sort === $b_sort) {
+                return strcasecmp((string) $a['title'], (string) $b['title']);
+            }
+
+            return $a_sort <=> $b_sort;
+        });
+
+        $open_programs = array_slice($open_programs, 0, 3);
+        $seminars = self::get_catalog_seminars(4);
+        $hero_image_style = !empty($data['hero_image'])
+            ? 'url(' . esc_url($data['hero_image']) . ')'
+            : 'none';
 
         ob_start();
         ?>
-        <section class="flacso-oferta-hero flacso-oferta-hero--full" style="--flacso-oferta-hero-image: <?php echo $hero_image ? 'url(' . esc_url($hero_image) . ')' : 'none'; ?>;">
-            <div class="container">
-                <div class="flacso-oferta-hero__content text-center">
-                    <h1 class="flacso-oferta-hero__title mb-3"><?php echo esc_html($hero_title); ?></h1>
-                    <p class="flacso-oferta-hero__subtitle mb-4"><?php echo esc_html($hero_subtitle); ?></p>
-                    <div class="flacso-oferta-hero__actions" role="navigation" aria-label="<?php esc_attr_e('Navegación de la oferta académica', 'flacso-oferta-academica'); ?>">
-                        <?php foreach ($sections as $section_data) : ?>
-                            <?php if (!empty($section_data['term_link'])) : ?>
-                            <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url($section_data['term_link']); ?>">
-                                <?php echo esc_html($section_data['term']->name); ?>
-                            </a>
-                            <?php endif; ?>
+        <div class="flacso-oa-catalog" data-flacso-offer-catalog>
+            <section class="flacso-oa-catalog__hero" style="--flacso-oa-catalog-hero-image: <?php echo esc_attr($hero_image_style); ?>;">
+                <div class="flacso-oa-catalog__container">
+                    <div class="flacso-oa-catalog__hero-content">
+                        <h1><?php echo esc_html($data['hero_title']); ?></h1>
+                        <p><?php esc_html_e('Encontrá la formación adecuada para vos.', 'flacso-oferta-academica'); ?></p>
+
+                        <div class="flacso-oa-catalog__search">
+                            <i class="bi bi-search" aria-hidden="true"></i>
+                            <label class="screen-reader-text" for="flacso-offer-search"><?php esc_html_e('Buscar en la oferta académica', 'flacso-oferta-academica'); ?></label>
+                            <input id="flacso-offer-search" type="search" placeholder="<?php esc_attr_e('Buscar por programa, tema o palabra clave', 'flacso-oferta-academica'); ?>" autocomplete="off" data-offer-search>
+                            <span class="flacso-oa-catalog__search-count" data-offer-search-count aria-live="polite"></span>
+                        </div>
+
+                        <nav class="flacso-oa-catalog__chips" aria-label="<?php esc_attr_e('Filtrar por tipo de formación', 'flacso-oferta-academica'); ?>">
+                            <button class="is-active" type="button" data-offer-category="all" aria-pressed="true"><?php esc_html_e('Toda la oferta', 'flacso-oferta-academica'); ?></button>
+                            <?php foreach ($categories as $category) : ?>
+                                <button type="button" data-offer-category="<?php echo esc_attr($category['term']->slug); ?>" aria-pressed="false">
+                                    <?php echo esc_html($category['term']->name); ?>
+                                </button>
+                            <?php endforeach; ?>
+                        </nav>
+                    </div>
+                </div>
+            </section>
+
+            <?php if ($open_programs) : ?>
+                <section class="flacso-oa-catalog__section flacso-oa-catalog__section--open" aria-labelledby="flacso-open-programs-title">
+                    <div class="flacso-oa-catalog__container">
+                        <header class="flacso-oa-catalog__section-heading">
+                            <div>
+                                <h2 id="flacso-open-programs-title"><i class="bi bi-stars" aria-hidden="true"></i><?php esc_html_e('Inscripciones abiertas', 'flacso-oferta-academica'); ?></h2>
+                                <p><?php esc_html_e('Propuestas que requieren una decisión próxima.', 'flacso-oferta-academica'); ?></p>
+                            </div>
+                            <a href="#toda-la-oferta"><?php esc_html_e('Ver toda la oferta', 'flacso-oferta-academica'); ?><i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                        </header>
+
+                        <div class="flacso-oa-catalog__featured" data-offer-featured>
+                            <?php foreach ($open_programs as $program) : ?>
+                                <article class="flacso-oa-program-card" data-offer-item data-category="<?php echo esc_attr($program['term_slug']); ?>" data-search="<?php echo esc_attr($program['search_text']); ?>">
+                                    <a class="flacso-oa-program-card__media" href="<?php echo esc_url($program['url']); ?>" aria-label="<?php echo esc_attr(sprintf(__('Ver programa: %s', 'flacso-oferta-academica'), $program['title'])); ?>">
+                                        <?php if ($program['image']) : ?>
+                                            <img src="<?php echo esc_url($program['image']); ?>" alt="" loading="lazy" decoding="async">
+                                        <?php else : ?>
+                                            <span class="flacso-oa-program-card__placeholder"><i class="bi bi-mortarboard" aria-hidden="true"></i></span>
+                                        <?php endif; ?>
+                                    </a>
+                                    <div class="flacso-oa-program-card__body">
+                                        <span class="flacso-oa-program-card__type"><?php echo esc_html($program['term_name']); ?></span>
+                                        <h3><a href="<?php echo esc_url($program['url']); ?>"><?php echo esc_html($program['title']); ?></a></h3>
+                                        <div class="flacso-oa-program-card__meta">
+                                            <?php if ($program['start_label']) : ?><span><i class="bi bi-calendar3" aria-hidden="true"></i><?php echo esc_html($program['start_label']); ?></span><?php endif; ?>
+                                            <?php if ($program['modality']) : ?><span><i class="bi bi-laptop" aria-hidden="true"></i><?php echo esc_html($program['modality']); ?></span><?php endif; ?>
+                                        </div>
+                                        <a class="flacso-oa-program-card__cta" href="<?php echo esc_url($program['url']); ?>"><?php esc_html_e('Ver programa', 'flacso-oferta-academica'); ?><i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                                    </div>
+                                </article>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </section>
+            <?php endif; ?>
+
+            <section class="flacso-oa-catalog__section flacso-oa-catalog__section--all" id="toda-la-oferta" aria-labelledby="flacso-all-programs-title">
+                <div class="flacso-oa-catalog__container">
+                    <header class="flacso-oa-catalog__section-heading">
+                        <div>
+                            <h2 id="flacso-all-programs-title"><?php esc_html_e('Toda la oferta', 'flacso-oferta-academica'); ?></h2>
+                            <p><?php esc_html_e('Explorá las propuestas según el tipo de formación.', 'flacso-oferta-academica'); ?></p>
+                        </div>
+                    </header>
+
+                    <div class="flacso-oa-catalog__categories">
+                        <?php foreach ($categories as $index => $category) : ?>
+                            <details class="flacso-oa-category" data-offer-panel="<?php echo esc_attr($category['term']->slug); ?>" <?php echo $index === 0 ? 'open' : ''; ?>>
+                                <summary>
+                                    <span class="flacso-oa-category__heading">
+                                        <span class="flacso-oa-category__icon"><i class="bi <?php echo esc_attr(self::get_catalog_category_icon($category['term']->slug)); ?>" aria-hidden="true"></i></span>
+                                        <span><?php echo esc_html($category['term']->name); ?><small><?php echo esc_html(sprintf(_n('%d propuesta', '%d propuestas', count($category['items']), 'flacso-oferta-academica'), count($category['items']))); ?></small></span>
+                                    </span>
+                                    <i class="bi bi-chevron-down flacso-oa-category__chevron" aria-hidden="true"></i>
+                                </summary>
+
+                                <div class="flacso-oa-category__content">
+                                    <ul>
+                                        <?php foreach ($category['items'] as $program) : ?>
+                                            <li data-offer-item data-category="<?php echo esc_attr($program['term_slug']); ?>" data-is-open="<?php echo $program['is_open'] ? '1' : '0'; ?>" data-search="<?php echo esc_attr($program['search_text']); ?>">
+                                                <a href="<?php echo esc_url($program['url']); ?>">
+                                                    <span><?php echo esc_html($program['title']); ?></span>
+                                                    <?php if ($program['start_short']) : ?><small><?php echo esc_html($program['start_short']); ?></small><?php endif; ?>
+                                                </a>
+                                            </li>
+                                        <?php endforeach; ?>
+                                    </ul>
+                                    <?php if ($category['link']) : ?>
+                                        <a class="flacso-oa-category__all" href="<?php echo esc_url($category['link']); ?>"><?php echo esc_html(sprintf(__('Ver todas las %s', 'flacso-oferta-academica'), strtolower($category['term']->name))); ?><i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                                    <?php endif; ?>
+                                </div>
+                            </details>
                         <?php endforeach; ?>
-                        <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--solid" href="<?php echo esc_url($link_seminarios); ?>">
-                            <?php esc_html_e('Seminarios', 'flacso-oferta-academica'); ?>
-                        </a>
-                        <a class="flacso-oferta-hero__btn flacso-oferta-hero__btn--convenios" href="<?php echo esc_url($link_convenios); ?>">
-                            <?php esc_html_e('Convenios', 'flacso-oferta-academica'); ?>
-                        </a>
                     </div>
+
+                    <p class="flacso-oa-catalog__empty" data-offer-empty hidden><?php esc_html_e('No encontramos propuestas con esos criterios.', 'flacso-oferta-academica'); ?></p>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <section class="flacso-oferta-body">
-            <div class="container">
-                <?php
-                foreach ($sections as $section_data) :
-                    $term = $section_data['term'];
-                    $query = new WP_Query($section_data['query_args']);
-                    ?>
-                    <div class="flacso-oferta-section" id="<?php echo esc_attr($term->slug); ?>">
-                        <div class="d-flex justify-content-between align-items-center mb-3 gap-3">
-                            <div class="text-center w-100">
-                                <h2 class="flacso-oferta-section__title mb-0"><?php echo esc_html($term->name); ?></h2>
+            <?php if ($seminars) : ?>
+                <section class="flacso-oa-catalog__section flacso-oa-catalog__section--seminars" aria-labelledby="flacso-seminars-title">
+                    <div class="flacso-oa-catalog__container">
+                        <header class="flacso-oa-catalog__section-heading">
+                            <div>
+                                <h2 id="flacso-seminars-title"><?php esc_html_e('Seminarios', 'flacso-oferta-academica'); ?></h2>
+                                <p><?php esc_html_e('Actividades de corta duración, con agenda y fechas específicas.', 'flacso-oferta-academica'); ?></p>
                             </div>
-                        </div>
+                            <a href="<?php echo esc_url($data['link_seminarios']); ?>"><?php esc_html_e('Ver todos', 'flacso-oferta-academica'); ?><i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                        </header>
 
-                        <?php if ($query->have_posts()) : ?>
-                            <?php
-                            $rendered_cards = 0;
-                            ob_start();
-                            while ($query->have_posts()) {
-                                $query->the_post();
-                                if (self::render_program_card(get_the_ID(), $term)) {
-                                    $rendered_cards++;
-                                }
-                            }
-                            $cards_markup = ob_get_clean();
-                            wp_reset_postdata();
-                            ?>
-                            <?php if ($rendered_cards > 0) : ?>
-                                <div class="row g-4">
-                                    <?php echo $cards_markup; ?>
-                                </div>
-                            <?php else : ?>
-                                <div class="alert alert-info mb-4">
-                                    <?php esc_html_e('No hay programas disponibles en esta categoría.', 'flacso-oferta-academica'); ?>
-                                </div>
-                            <?php endif; ?>
-                        <?php else : ?>
-                            <div class="alert alert-info mb-4">
-                                <?php esc_html_e('No hay programas disponibles en esta categoría.', 'flacso-oferta-academica'); ?>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
-
-                <div class="flacso-oferta-section" id="seminarios">
-                    <div class="d-flex justify-content-between align-items-center mb-3 gap-3">
-                        <div class="text-center w-100">
-                            <h2 class="flacso-oferta-section__title mb-0"><?php esc_html_e('Seminarios', 'flacso-oferta-academica'); ?></h2>
+                        <div class="flacso-oa-catalog__seminars">
+                            <?php foreach ($seminars as $seminar) : ?>
+                                <article class="flacso-oa-seminar-card">
+                                    <a href="<?php echo esc_url($seminar['url']); ?>">
+                                        <time class="flacso-oa-seminar-card__date" datetime="<?php echo esc_attr($seminar['date_iso']); ?>">
+                                            <strong><?php echo esc_html($seminar['day']); ?></strong>
+                                            <span><?php echo esc_html($seminar['month']); ?></span>
+                                        </time>
+                                        <div class="flacso-oa-seminar-card__body">
+                                            <h3><?php echo esc_html($seminar['title']); ?></h3>
+                                            <?php if ($seminar['meta']) : ?><p><?php echo esc_html($seminar['meta']); ?></p><?php endif; ?>
+                                        </div>
+                                        <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                                    </a>
+                                </article>
+                            <?php endforeach; ?>
                         </div>
                     </div>
-                    <?php echo $data['seminarios_html']; ?>
-                    <div class="flacso-oferta-section__actions">
-                        <a class="flacso-oferta-section__btn flacso-oferta-section__btn--primary" href="<?php echo esc_url($link_seminarios); ?>">
-                            <?php esc_html_e('Ver todos los seminarios abiertos', 'flacso-oferta-academica'); ?>
-                        </a>
-                        <a class="flacso-oferta-section__btn flacso-oferta-section__btn--outline" href="https://flacso.edu.uy/preguntas-frecuentes/">
-                            <?php esc_html_e('Preguntas frecuentes', 'flacso-oferta-academica'); ?>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </section>
+                </section>
+            <?php endif; ?>
+        </div>
 
         <?php echo $data['floating_form_html']; ?>
-
-        <script>
-        (function() {
-            const links = document.querySelectorAll('.flacso-oferta-hero__actions a[href^="#"]');
-            links.forEach(link => {
-                link.addEventListener('click', (e) => {
-                    const href = link.getAttribute('href');
-                    if (!href || !href.startsWith('#')) return;
-                    const target = document.querySelector(href);
-                    if (!target) return;
-                    e.preventDefault();
-                    window.scrollTo({ top: target.offsetTop - 96, behavior: 'smooth' });
-                });
-            });
-
-            const countdowns = document.querySelectorAll('[data-countdown]');
-            countdowns.forEach(el => {
-                const dateStr = el.getAttribute('data-countdown');
-                const normalizedDateStr = /^\d{4}-\d{2}-\d{2}$/.test(dateStr) ? `${dateStr}T00:00:00` : dateStr;
-                const target = new Date(normalizedDateStr);
-                if (!target.getTime()) return;
-                const today = new Date();
-                today.setHours(0,0,0,0);
-                const diff = Math.ceil((target - today) / (1000*60*60*24));
-                const label = el.querySelector('.flacso-oferta-countdown__text');
-                if (!label) return;
-                if (diff > 0) {
-                    label.textContent = '<?php echo esc_js(__('Faltan', 'flacso-oferta-academica')); ?> ' + diff + ' <?php echo esc_js(__('días', 'flacso-oferta-academica')); ?>';
-                } else if (diff === 0) {
-                    label.textContent = '<?php echo esc_js(__('Comienza hoy', 'flacso-oferta-academica')); ?>';
-                } else {
-                    el.style.display = 'none';
-                    el.setAttribute('aria-hidden', 'true');
-                }
-            });
-        })();
-        </script>
         <?php
         return ob_get_clean();
     }
