@@ -13,14 +13,45 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  PLUGIN_SLUG: flacso-uruguay-plugin
+  PLUGIN_FILE: flacso-uruguay.php
+  WP_ROOT: /var/www/clients/client2/web5/web
+  PLUGIN_TARGET: /var/www/clients/client2/web5/web/wp-content/plugins/flacso-uruguay-plugin
+
 jobs:
   deploy:
-    name: Deploy plugin to production
+    name: Validate and deploy plugin to production
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout triggering commit
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Verify checkout and required files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test -f "$PLUGIN_FILE"
+          test -f modules/shortcodes/includes/shortcodes-programa.php
+
+          symlink="$(find . -path './.git' -prune -o -type l -print -quit)"
+          if [[ -n "$symlink" ]]; then
+            echo "::error::Production package must not contain symbolic links: $symlink"
+            exit 1
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Check encoding
+        shell: bash
+        run: python .github/scripts/check_encoding.py
 
       - name: Validate PHP syntax
         shell: bash
@@ -37,107 +68,153 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ZIP_NAME="flacso-uruguay-plugin-${GITHUB_SHA::7}.zip"
+          ZIP_NAME="${PLUGIN_SLUG}-${GITHUB_SHA::7}.zip"
           zip -r "$ZIP_NAME" . \
-            -x '.git/*' \
+            -x "$ZIP_NAME" \
+               '.git/*' \
                '.github/*' \
+               '.githooks/*' \
                'node_modules/*' \
                'vendor/*' \
+               'docs/*' \
+               'tests/*' \
+               '.gitignore' \
                '.DS_Store' \
                'Thumbs.db' \
+               'README.md' \
+               '*/README.md' \
+               'CHANGELOG.md' \
+               '*/CHANGELOG.md' \
+               'API.md' \
+               '*/API.md' \
+               'debug-*.php' \
+               'test-schema.php' \
                '*.log'
           echo "ZIP_NAME=$ZIP_NAME" >> "$GITHUB_ENV"
 
       - name: Upload plugin ZIP artifact
         uses: actions/upload-artifact@v4
         with:
-          name: plugin-zip
+          name: plugin-zip-${{ github.sha }}
           path: ${{ env.ZIP_NAME }}
           if-no-files-found: error
 
       - name: Configure SSH
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
-          EC2_KNOWN_HOSTS: ${{ secrets.EC2_KNOWN_HOSTS }}
         shell: bash
         run: |
           set -euo pipefail
           : "${EC2_HOST:?Missing EC2_HOST secret}"
+          : "${EC2_USER:?Missing EC2_USER secret}"
           : "${EC2_SSH_KEY:?Missing EC2_SSH_KEY secret}"
 
           install -m 700 -d ~/.ssh
           printf '%s\n' "$EC2_SSH_KEY" > ~/.ssh/ec2_deploy_key
           chmod 600 ~/.ssh/ec2_deploy_key
-
-          if [[ -n "${EC2_KNOWN_HOSTS:-}" ]]; then
-            printf '%s\n' "$EC2_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          else
-            ssh-keyscan -H "$EC2_HOST" > ~/.ssh/known_hosts
-          fi
+          ssh-keyscan -H "$EC2_HOST" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
-      - name: Upload plugin to staging directory
+      - name: Upload triggering commit to remote staging
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_USER: ${{ secrets.EC2_USER }}
         shell: bash
         run: |
           set -euo pipefail
-          : "${EC2_USER:?Missing EC2_USER secret}"
+          REMOTE_STAGE="/tmp/${PLUGIN_SLUG}-${GITHUB_SHA}"
+          SSH_OPTIONS=(-i ~/.ssh/ec2_deploy_key -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes)
+          RSYNC_RSH="ssh ${SSH_OPTIONS[*]}"
 
-          REMOTE_STAGE="/tmp/flacso-uruguay-plugin-${GITHUB_SHA}"
-
-          ssh \
-            -i ~/.ssh/ec2_deploy_key \
-            -o BatchMode=yes \
-            -o IdentitiesOnly=yes \
-            "$EC2_USER@$EC2_HOST" \
-            "rm -rf '$REMOTE_STAGE' && mkdir -p '$REMOTE_STAGE'"
+          ssh "${SSH_OPTIONS[@]}" "$EC2_USER@$EC2_HOST" \
+            bash -se -- "$REMOTE_STAGE" <<'REMOTE'
+          remote_stage="$1"
+          rm -rf -- "$remote_stage"
+          install -m 700 -d "$remote_stage"
+          REMOTE
 
           rsync -az --delete \
             --exclude='.git/' \
             --exclude='.github/' \
+            --exclude='.githooks/' \
             --exclude='node_modules/' \
             --exclude='vendor/' \
-            --exclude='.githooks/' \
+            --exclude='docs/' \
+            --exclude='tests/' \
+            --exclude='.gitignore' \
             --exclude='.DS_Store' \
             --exclude='Thumbs.db' \
+            --exclude='README.md' \
+            --exclude='CHANGELOG.md' \
+            --exclude='API.md' \
+            --exclude='debug-*.php' \
+            --exclude='test-schema.php' \
             --exclude='*.log' \
-            -e "ssh -i ~/.ssh/ec2_deploy_key -o BatchMode=yes -o IdentitiesOnly=yes" \
+            -e "$RSYNC_RSH" \
             ./ "$EC2_USER@$EC2_HOST:$REMOTE_STAGE/"
 
-      - name: Activate plugin files
+      - name: Activate files and smoke-test WordPress
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_USER: ${{ secrets.EC2_USER }}
         shell: bash
         run: |
           set -euo pipefail
+          SSH_OPTIONS=(-i ~/.ssh/ec2_deploy_key -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes)
 
-          ssh \
-            -i ~/.ssh/ec2_deploy_key \
-            -o BatchMode=yes \
-            -o IdentitiesOnly=yes \
-            "$EC2_USER@$EC2_HOST" \
-            "DEPLOY_SHA='$GITHUB_SHA' bash -se" <<'REMOTE'
+          ssh "${SSH_OPTIONS[@]}" "$EC2_USER@$EC2_HOST" \
+            bash -se -- "$GITHUB_SHA" <<'REMOTE'
           set -euo pipefail
 
+          DEPLOY_SHA="$1"
           SOURCE="/tmp/flacso-uruguay-plugin-${DEPLOY_SHA}"
-          TARGET="/var/www/flacso.edu.uy/web/wp-content/plugins/flacso-uruguay"
+          WP_ROOT="/var/www/clients/client2/web5/web"
+          TARGET="${WP_ROOT}/wp-content/plugins/flacso-uruguay-plugin"
+          PLUGIN_FILE="flacso-uruguay.php"
+          MISSING_SHORTCODE='[FLACSO] Archivo no encontrado: modules/shortcodes/includes/shortcodes-programa.php'
 
           cleanup() {
             rm -rf "$SOURCE"
           }
           trap cleanup EXIT
 
-          test -f "$SOURCE/flacso-uruguay.php"
+          test -f "$SOURCE/$PLUGIN_FILE"
+          test -f "$SOURCE/modules/shortcodes/includes/shortcodes-programa.php"
+          test -d "$WP_ROOT"
           test -d "$TARGET"
-          test -f "$TARGET/flacso-uruguay.php"
+          test -f "$TARGET/$PLUGIN_FILE"
 
-          OWNER_GROUP="$(stat -c '%U:%G' "$TARGET")"
-          sudo rsync -a --delete --chown="$OWNER_GROUP" "$SOURCE/" "$TARGET/"
+          sudo -n /usr/bin/rsync \
+            -a --delete --delay-updates \
+            --chown=web5:client2 \
+            --chmod=D755,F644 \
+            "$SOURCE/" "$TARGET/"
 
-          test -f "$TARGET/flacso-uruguay.php"
-          echo "Plugin deployed successfully to $TARGET"
+          test -f "$TARGET/$PLUGIN_FILE"
+          test -f "$TARGET/modules/shortcodes/includes/shortcodes-programa.php"
+
+          WP_BIN="$(command -v wp)"
+          test -n "$WP_BIN"
+
+          validate_wordpress() {
+            cd "$WP_ROOT"
+            sudo -n -u web5 -- "$WP_BIN" core is-installed
+            sudo -n -u web5 -- "$WP_BIN" plugin is-active flacso-uruguay-plugin
+          }
+
+          if ! validation_output="$(validate_wordpress 2>&1)"; then
+            printf '%s\n' "$validation_output"
+            echo 'WordPress smoke test or plugin activation check failed.' >&2
+            exit 1
+          fi
+          printf '%s\n' "$validation_output"
+
+          if grep -Fq "$MISSING_SHORTCODE" <<< "$validation_output"; then
+            echo "Shortcode file warning is still present after deployment." >&2
+            exit 1
+          fi
+
+          echo "Commit $DEPLOY_SHA deployed successfully to $TARGET"
           REMOTE
