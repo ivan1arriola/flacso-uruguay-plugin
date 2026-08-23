@@ -18,18 +18,21 @@ if (!defined('FLACSO_SEMINARIO_VERSION')) {
     define('FLACSO_SEMINARIO_VERSION', FLACSO_URUGUAY_VERSION);
 }
 
-flacso_safe_require('modules/seminarios/includes/helpers.php');
-flacso_safe_require('modules/seminarios/includes/class-seminario-cpt.php');
-flacso_safe_require('modules/seminarios/includes/class-seminario-taxonomies.php');
-flacso_safe_require('modules/seminarios/includes/class-seminario-meta.php');
-flacso_safe_require('modules/seminarios/includes/class-seminario-seeder.php');
-flacso_safe_require('modules/seminarios/includes/class-seminario-admin.php');
-flacso_safe_require('modules/seminarios/includes/class-seminario-rest-api.php');
-flacso_safe_require('modules/seminarios/includes/class-seminario-templates.php');
-flacso_safe_require('modules/seminarios/includes/class-seminario-docentes.php');
-flacso_safe_require('modules/seminarios/includes/homepage.php');
-
-flacso_safe_require('modules/seminarios/blocks/seminarios-lista/render.php');
+foreach ([
+    'includes/helpers.php',
+    'includes/class-seminario-cpt.php',
+    'includes/class-seminario-taxonomies.php',
+    'includes/class-seminario-meta.php',
+    'includes/class-seminario-admin.php',
+    'includes/class-seminario-rest-api.php',
+    'includes/class-seminario-templates.php',
+    'includes/class-seminario-docentes.php',
+    'includes/homepage.php',
+    'blocks/seminarios-lista/render.php',
+] as $file) {
+    flacso_require('modules/seminarios/' . $file);
+}
+flacso_optional_require('modules/seminarios/includes/class-seminario-seeder.php');
 
 class Seminario_Plugin {
     public function __construct() {
@@ -46,7 +49,6 @@ class Seminario_Plugin {
         add_action('admin_enqueue_scripts', ['Seminario_Admin', 'enqueue_admin_assets']);
         add_action('save_post_seminario', ['Seminario_Admin', 'save_meta']);
         add_action('wp_ajax_flacso_seminario_search_docentes', ['Seminario_Admin', 'search_docentes']);
-
         add_filter('manage_seminario_posts_columns', ['Seminario_Admin', 'add_list_columns']);
         add_filter('manage_edit-seminario_sortable_columns', ['Seminario_Admin', 'make_list_columns_sortable']);
         add_action('manage_seminario_posts_custom_column', ['Seminario_Admin', 'render_list_columns'], 10, 2);
@@ -57,7 +59,6 @@ class Seminario_Plugin {
         add_filter('template_include', ['Seminario_Templates', 'seminarios_template'], 10);
         add_filter('template_include', ['Seminario_Templates', 'consulta_template'], 11);
         add_action('wp_enqueue_scripts', ['Seminario_Templates', 'enqueue_public_assets']);
-
         add_action('init', ['Seminario_Templates', 'register_preinscripcion_route']);
         add_filter('query_vars', ['Seminario_Templates', 'add_query_vars']);
         add_filter('template_include', ['Seminario_Templates', 'preinscripcion_template'], 9);
@@ -72,9 +73,7 @@ class Seminario_Plugin {
             return;
         }
 
-        register_block_type($block_path, [
-            'render_callback' => 'flacso_render_seminarios_lista_block',
-        ]);
+        register_block_type($block_path, ['render_callback' => 'flacso_render_seminarios_lista_block']);
         wp_register_script(
             'flacso-seminarios-lista-editor',
             plugins_url('modules/seminarios/blocks/seminarios-lista/editor.js', FLACSO_URUGUAY_FILE),
