@@ -4,28 +4,27 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class Flacso_Main_Page_REST_API {
+final class Flacso_Main_Page_REST_API {
     private const REST_NAMESPACE = 'flacso/v1';
     private const REST_ROUTE = '/main-page/settings';
+    private const SCHEMA_VERSION = 2;
 
     private const EXTRA_SECTION_LABELS = [
         'sections_visibility' => 'Visibilidad de secciones',
         'sections_order' => 'Orden de la portada',
         'section_heading_color' => 'Color base de encabezados',
         'section_heading_colors' => 'Colores por sección',
-        'posgrados' => 'Oferta académica',
     ];
 
     private const SECTION_DESCRIPTIONS = [
         'hero' => 'Mensaje principal de la portada, imagen y llamados a la acción.',
         'eventos' => 'Próximas actividades y eventos institucionales mostrados en la portada.',
-        'novedades_destacadas' => 'Selección y despliegue de novedades destacadas.',
         'novedades_busqueda' => 'Buscador y filtros del módulo de novedades.',
         'novedades' => 'Configuración general del listado cronológico de novedades.',
-        'seminarios' => 'Ajustes del bloque de seminarios que se muestra en la portada.',
+        'seminarios' => 'Seminarios próximos. Son unidades académicas que también pueden integrar otras ofertas.',
         'quienes' => 'Contenido institucional del bloque “Quiénes somos”.',
         'instagram' => 'Contenido social e integración con Instagram.',
-        'posgrados' => 'Accesos y textos de Maestrías, Especializaciones, Diplomas y Diplomados. La clave interna se conserva por compatibilidad.',
+        'oferta_academica' => 'Accesos y presentación de Maestrías, Especializaciones, Diplomas, Diplomados y Seminarios.',
         'mailing' => 'Suscripción a la lista de difusión institucional.',
         'congreso' => 'Bloque histórico y llamada a la acción del Congreso.',
         'contacto' => 'Bloque final de contacto de la portada.',
@@ -37,10 +36,9 @@ class Flacso_Main_Page_REST_API {
 
     private const SECTION_GROUPS = [
         'hero' => 'principal',
-        'posgrados' => 'formacion',
+        'oferta_academica' => 'formacion',
         'seminarios' => 'formacion',
         'eventos' => 'actualidad',
-        'novedades_destacadas' => 'actualidad',
         'novedades_busqueda' => 'actualidad',
         'novedades' => 'actualidad',
         'quienes' => 'institucional',
@@ -56,10 +54,9 @@ class Flacso_Main_Page_REST_API {
 
     private const SECTION_ICONS = [
         'hero' => 'home',
-        'posgrados' => 'graduation-cap',
+        'oferta_academica' => 'graduation-cap',
         'seminarios' => 'book-open',
         'eventos' => 'calendar',
-        'novedades_destacadas' => 'star',
         'novedades_busqueda' => 'search',
         'novedades' => 'newspaper',
         'quienes' => 'building',
@@ -78,22 +75,18 @@ class Flacso_Main_Page_REST_API {
     }
 
     public static function register_routes(): void {
-        register_rest_route(
-            self::REST_NAMESPACE,
-            self::REST_ROUTE,
+        register_rest_route(self::REST_NAMESPACE, self::REST_ROUTE, [
             [
-                [
-                    'methods' => WP_REST_Server::READABLE,
-                    'callback' => [self::class, 'get_settings'],
-                    'permission_callback' => [self::class, 'can_manage_settings'],
-                ],
-                [
-                    'methods' => WP_REST_Server::EDITABLE,
-                    'callback' => [self::class, 'update_settings'],
-                    'permission_callback' => [self::class, 'can_manage_settings'],
-                ],
-            ]
-        );
+                'methods' => WP_REST_Server::READABLE,
+                'callback' => [self::class, 'get_settings'],
+                'permission_callback' => [self::class, 'can_manage_settings'],
+            ],
+            [
+                'methods' => WP_REST_Server::EDITABLE,
+                'callback' => [self::class, 'update_settings'],
+                'permission_callback' => [self::class, 'can_manage_settings'],
+            ],
+        ]);
     }
 
     public static function can_manage_settings(): bool {
@@ -107,76 +100,47 @@ class Flacso_Main_Page_REST_API {
     public static function update_settings(WP_REST_Request $request) {
         $payload = $request->get_json_params();
         if (!is_array($payload)) {
-            return new WP_Error(
-                'flacso_main_page_invalid_payload',
-                __('El body debe ser un objeto JSON.', 'flacso-main-page'),
-                ['status' => 400]
-            );
+            return new WP_Error('flacso_main_page_invalid_payload', __('El body debe ser un objeto JSON.', 'flacso-main-page'), ['status' => 400]);
         }
 
         $settings_input = $payload['settings'] ?? $payload;
         if (!is_array($settings_input)) {
-            return new WP_Error(
-                'flacso_main_page_invalid_settings',
-                __('La clave "settings" debe contener un objeto.', 'flacso-main-page'),
-                ['status' => 400]
-            );
+            return new WP_Error('flacso_main_page_invalid_settings', __('La clave "settings" debe contener un objeto.', 'flacso-main-page'), ['status' => 400]);
         }
 
         $sanitized = Flacso_Main_Page_Settings::sanitize($settings_input);
-        $saved = update_option(Flacso_Main_Page_Settings::OPTION_KEY, $sanitized);
-
+        $saved = update_option(Flacso_Main_Page_Settings::OPTION_KEY, $sanitized, false);
         if ($saved || $sanitized === get_option(Flacso_Main_Page_Settings::OPTION_KEY)) {
             wp_cache_delete(Flacso_Main_Page_Settings::OPTION_KEY, 'options');
         }
-
         Flacso_Main_Page_Settings::invalidate_cache();
 
-        return rest_ensure_response(
-            self::build_response_payload([
-                'message' => __('Configuración de la portada guardada correctamente.', 'flacso-main-page'),
-            ])
-        );
-    }
-
-    private static function remove_retired_sections(array $settings): array {
-        unset($settings['festejos']);
-
-        if (isset($settings['sections_order']) && is_array($settings['sections_order'])) {
-            $settings['sections_order'] = array_values(array_filter(
-                $settings['sections_order'],
-                static fn($section_key): bool => $section_key !== 'festejos'
-            ));
-        }
-
-        if (isset($settings['sections_visibility']) && is_array($settings['sections_visibility'])) {
-            unset($settings['sections_visibility']['festejos']);
-        }
-
-        if (isset($settings['section_heading_colors']) && is_array($settings['section_heading_colors'])) {
-            unset($settings['section_heading_colors']['festejos']);
-        }
-
-        return $settings;
+        return rest_ensure_response(self::build_response_payload([
+            'message' => __('Configuración de la portada guardada correctamente.', 'flacso-main-page'),
+        ]));
     }
 
     private static function build_response_payload(array $extra_data = []): array {
-        $settings = self::remove_retired_sections(Flacso_Main_Page_Settings::get_settings());
-        $defaults = self::remove_retired_sections(Flacso_Main_Page_Settings::get_defaults());
+        $settings = Flacso_Main_Page_Settings::get_settings();
+        $defaults = Flacso_Main_Page_Settings::get_defaults();
 
         return [
             'ok' => true,
-            'data' => array_merge(
-                [
-                    'optionKey' => Flacso_Main_Page_Settings::OPTION_KEY,
-                    'homepageUrl' => home_url('/'),
-                    'settings' => $settings,
-                    'defaults' => $defaults,
-                    'sections' => self::build_sections($settings),
-                    'groups' => self::build_groups(),
-                ],
-                $extra_data
-            ),
+            'data' => array_merge([
+                'schemaVersion' => self::SCHEMA_VERSION,
+                'optionKey' => Flacso_Main_Page_Settings::OPTION_KEY,
+                'homepageUrl' => home_url('/'),
+                'settings' => $settings,
+                'defaults' => $defaults,
+                'sections' => self::build_sections($settings),
+                'groups' => self::build_groups(),
+                'sectionAliases' => class_exists('Flacso_Main_Page_Section_Keys')
+                    ? Flacso_Main_Page_Section_Keys::aliases()
+                    : [],
+                'retiredSections' => class_exists('Flacso_Main_Page_Section_Keys')
+                    ? Flacso_Main_Page_Section_Keys::retired()
+                    : [],
+            ], $extra_data),
         ];
     }
 
@@ -185,14 +149,11 @@ class Flacso_Main_Page_REST_API {
         $visibility = isset($settings['sections_visibility']) && is_array($settings['sections_visibility'])
             ? $settings['sections_visibility']
             : [];
-        $order = isset($settings['sections_order']) && is_array($settings['sections_order'])
-            ? array_values($settings['sections_order'])
-            : [];
+        $order = Flacso_Main_Page_Settings::get_homepage_section_order();
 
         foreach (array_keys($settings) as $key) {
-            $is_system = 0 === strpos($key, 'section_') || 0 === strpos($key, 'sections_');
+            $is_system = strpos($key, 'section_') === 0 || strpos($key, 'sections_') === 0;
             $position = array_search($key, $order, true);
-
             $sections[] = [
                 'key' => $key,
                 'label' => self::get_section_label($key),
@@ -201,7 +162,7 @@ class Flacso_Main_Page_REST_API {
                 'group' => self::SECTION_GROUPS[$key] ?? ($is_system ? 'configuracion' : 'otros'),
                 'icon' => self::SECTION_ICONS[$key] ?? 'settings',
                 'visible' => $is_system ? true : !isset($visibility[$key]) || (bool) $visibility[$key],
-                'position' => false === $position ? null : (int) $position,
+                'position' => $position === false ? null : (int) $position,
             ];
         }
 
@@ -214,7 +175,6 @@ class Flacso_Main_Page_REST_API {
             }
             return strcasecmp((string) $a['label'], (string) $b['label']);
         });
-
         return $sections;
     }
 
@@ -231,11 +191,7 @@ class Flacso_Main_Page_REST_API {
     }
 
     private static function get_section_label(string $key): string {
-        if (isset(self::EXTRA_SECTION_LABELS[$key])) {
-            return self::EXTRA_SECTION_LABELS[$key];
-        }
-
-        return Flacso_Main_Page_Settings::get_section_label($key);
+        return self::EXTRA_SECTION_LABELS[$key] ?? Flacso_Main_Page_Settings::get_section_label($key);
     }
 }
 
