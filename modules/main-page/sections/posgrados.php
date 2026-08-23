@@ -173,10 +173,35 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
     }
 }
 
+if (!function_exists('flacso_section_home_academic_shortcuts_slug')) {
+    function flacso_section_home_academic_shortcuts_slug(string $title): string
+    {
+        $normalized = strtolower(remove_accents($title));
+        if (strpos($normalized, 'maestr') !== false) {
+            return 'maestrias';
+        }
+        if (strpos($normalized, 'especial') !== false) {
+            return 'especializaciones';
+        }
+        if (strpos($normalized, 'diplomado') !== false) {
+            return 'diplomados';
+        }
+        if (strpos($normalized, 'diploma') !== false) {
+            return 'diplomas';
+        }
+        if (strpos($normalized, 'seminar') !== false) {
+            return 'seminarios';
+        }
+
+        return sanitize_title($title);
+    }
+}
+
 if (!function_exists('flacso_section_home_academic_shortcuts_render')) {
     /**
      * Accesos breves de la portada alimentados por la misma configuración
-     * de la oferta educativa. Evita duplicar títulos y destinos.
+     * de Oferta Académica. No duplica URLs ni títulos: cualquier cambio hecho
+     * desde el editor se refleja tanto aquí como en el mosaico completo.
      */
     function flacso_section_home_academic_shortcuts_render(): string
     {
@@ -185,52 +210,70 @@ if (!function_exists('flacso_section_home_academic_shortcuts_render')) {
             return '';
         }
 
-        $degree_cards = [];
-        $seminar_card = null;
+        $cards_by_type = [];
         foreach ($cards as $card) {
-            if (stripos($card['title'], 'seminario') !== false) {
-                $seminar_card = $card;
-                continue;
-            }
-            if (count($degree_cards) < 4) {
-                $degree_cards[] = $card;
+            $slug = flacso_section_home_academic_shortcuts_slug($card['title']);
+            if ($slug !== '') {
+                $cards_by_type[$slug] = $card;
             }
         }
 
-        if (!$degree_cards) {
+        $desired_order = ['maestrias', 'especializaciones', 'diplomados', 'diplomas', 'seminarios'];
+        $ordered_cards = [];
+        foreach ($desired_order as $slug) {
+            if (isset($cards_by_type[$slug])) {
+                $ordered_cards[] = [
+                    'slug' => $slug,
+                    'card' => $cards_by_type[$slug],
+                ];
+            }
+        }
+
+        if (!$ordered_cards) {
             return '';
         }
 
+        $icon_map = [
+            'maestrias' => 'bi-mortarboard',
+            'especializaciones' => 'bi-journal-bookmark',
+            'diplomados' => 'bi-award',
+            'diplomas' => 'bi-file-earmark-text',
+            'seminarios' => 'bi-people',
+        ];
+
+        $section_id = 'flacso-academic-shortcuts-' . wp_generate_password(6, false);
+
         ob_start();
         ?>
-        <nav class="flacso-academic-shortcuts" aria-label="<?php esc_attr_e('Accesos a la oferta académica', 'flacso-main-page'); ?>">
+        <section class="flacso-academic-shortcuts" aria-labelledby="<?php echo esc_attr($section_id); ?>">
             <div class="flacso-content-shell">
-                <div class="flacso-academic-shortcuts__panel">
-                    <div class="flacso-academic-shortcuts__header">
-                        <strong><?php esc_html_e('Encontrá tu formación', 'flacso-main-page'); ?></strong>
-                        <span><?php esc_html_e('Accesos directos a la oferta académica', 'flacso-main-page'); ?></span>
-                    </div>
-                    <div class="flacso-academic-shortcuts__grid">
-                        <?php foreach ($degree_cards as $card) : ?>
-                            <?php $type_label = strcasecmp($card['title'], 'Diplomas') === 0 ? __('Formación', 'flacso-main-page') : __('Posgrado', 'flacso-main-page'); ?>
-                            <a class="flacso-academic-shortcuts__link" href="<?php echo esc_url($card['url']); ?>">
-                                <span><?php echo esc_html($type_label); ?></span>
-                                <strong><?php echo esc_html($card['title']); ?> <span aria-hidden="true">↗</span></strong>
-                            </a>
-                        <?php endforeach; ?>
-                    </div>
-                    <?php if ($seminar_card) : ?>
-                        <a class="flacso-academic-shortcuts__seminars" href="<?php echo esc_url($seminar_card['url']); ?>">
-                            <span>
-                                <strong><?php echo esc_html($seminar_card['title']); ?></strong>
-                                <small><?php esc_html_e('Formación intensiva y de corta duración · consultá los próximos inicios', 'flacso-main-page'); ?></small>
+                <header class="flacso-academic-shortcuts__header">
+                    <span class="flacso-academic-shortcuts__eyebrow"><?php esc_html_e('Formación', 'flacso-main-page'); ?></span>
+                    <h2 id="<?php echo esc_attr($section_id); ?>"><?php esc_html_e('Explorá la Oferta Académica', 'flacso-main-page'); ?></h2>
+                    <p><?php esc_html_e('Encontrá la propuesta que mejor se adapta a tu recorrido.', 'flacso-main-page'); ?></p>
+                </header>
+
+                <nav class="flacso-academic-shortcuts__grid" aria-label="<?php esc_attr_e('Tipos de oferta académica', 'flacso-main-page'); ?>">
+                    <?php foreach ($ordered_cards as $item) : ?>
+                        <?php
+                        $slug = $item['slug'];
+                        $card = $item['card'];
+                        $icon_class = $icon_map[$slug] ?? 'bi-arrow-right-circle';
+                        ?>
+                        <a class="flacso-academic-shortcuts__link flacso-academic-shortcuts__link--<?php echo esc_attr($slug); ?>" href="<?php echo esc_url($card['url']); ?>">
+                            <span class="flacso-academic-shortcuts__icon" aria-hidden="true">
+                                <i class="bi <?php echo esc_attr($icon_class); ?>"></i>
                             </span>
-                            <span aria-hidden="true">→</span>
+                            <span class="flacso-academic-shortcuts__copy">
+                                <strong><?php echo esc_html($card['title']); ?></strong>
+                                <small><?php esc_html_e('Ver programas', 'flacso-main-page'); ?></small>
+                            </span>
+                            <i class="bi bi-chevron-right flacso-academic-shortcuts__arrow" aria-hidden="true"></i>
                         </a>
-                    <?php endif; ?>
-                </div>
+                    <?php endforeach; ?>
+                </nav>
             </div>
-        </nav>
+        </section>
         <?php
         return (string) ob_get_clean();
     }
