@@ -2,7 +2,7 @@
 /**
  * Plugin Name: FLACSO Uruguay - Plataforma Integrada
  * Plugin URI: https://flacso.edu.uy
- * Description: Plataforma integrada de FLACSO Uruguay con gestion de docentes, seminarios, eventos, oferta academica y formularios. Consolida multiples plugins en una arquitectura modular.
+ * Description: Plataforma integrada de FLACSO Uruguay con gestión de docentes, seminarios, eventos, oferta académica y formularios.
  * Version: 6.9.15
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -18,110 +18,71 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// ============================================
-// Constantes Globales
-// ============================================
+// El bootstrap define únicamente constantes verdaderamente globales. Cada
+// dominio es responsable de sus propias rutas/constantes de compatibilidad.
 define('FLACSO_URUGUAY_VERSION', '6.9.15');
 define('FLACSO_URUGUAY_FILE', __FILE__);
 define('FLACSO_URUGUAY_PATH', plugin_dir_path(__FILE__));
 define('FLACSO_URUGUAY_URL', plugin_dir_url(__FILE__));
 
-// Compatibilidad con plugins antiguos
-define('CPT_DOCENTES_VERSION', FLACSO_URUGUAY_VERSION);
-define('CPT_DOCENTES_PATH', FLACSO_URUGUAY_PATH);
-define('CPT_DOCENTES_URL', FLACSO_URUGUAY_URL);
-
-define('FLACSO_SEMINARIO_VERSION', FLACSO_URUGUAY_VERSION);
-// En el plugin unificado, los assets y templates de seminarios
-// viven dentro del modulo `modules/seminarios/`, no en la raiz.
-// Ajustamos las constantes de compatibilidad para que apunten ahi,
-// de modo que `Seminario_Templates` encuentre correctamente
-// `templates/single-seminario.php`, `seminarios-listado.php`, etc.
-define('FLACSO_SEMINARIO_PATH', FLACSO_URUGUAY_PATH . 'modules/seminarios/');
-define('FLACSO_SEMINARIO_URL', FLACSO_URUGUAY_URL . 'modules/seminarios/');
-
-define('CPT_EVENTOS_VERSION', FLACSO_URUGUAY_VERSION);
-define('CPT_EVENTOS_PATH', FLACSO_URUGUAY_PATH);
-define('CPT_EVENTOS_URL', FLACSO_URUGUAY_URL);
-
-define('FLACSO_OFERTA_ACADEMICA_VERSION', FLACSO_URUGUAY_VERSION);
-define('FLACSO_OFERTA_ACADEMICA_PATH', FLACSO_URUGUAY_PATH);
-define('FLACSO_OFERTA_ACADEMICA_URL', FLACSO_URUGUAY_URL);
-
-define('FLACSO_POSGRADOS_SLUG', 'flacso-posgrados-docentes');
-define('FLACSO_POSGRADOS_PLUGIN_PATH', FLACSO_URUGUAY_PATH);
-
-// ============================================
-// Carga de funciones principales
-// ============================================
 require_once FLACSO_URUGUAY_PATH . 'includes/core/helpers.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-editor-admin-mode.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-integrations-settings.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-meta-tracking.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-meta-leads-webhook.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/loader.php';
+require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-module-registry.php';
 
-// ============================================
-// Inicializacion del Plugin
-// ============================================
-class FLACSO_Uruguay_Plugin {
-    
+final class FLACSO_Uruguay_Plugin {
     private static $instance = null;
-    
+
+    /** @var bool */
+    private $modules_loaded = false;
+
     public static function instance() {
         if (is_null(self::$instance)) {
             self::$instance = new self();
         }
         return self::$instance;
     }
-    
-    public function __construct() {
-        // Cargar modulos
-        add_action('plugins_loaded', [$this, 'load_modules'], 10);
-        
-        // Cargar idiomas
-        add_action('plugins_loaded', [$this, 'load_textdomain'], 5);
-        
-        // Registrar categorias de bloques
-        add_filter('block_categories_all', [$this, 'register_block_categories'], 10, 2);
 
-        // Ayuda a precalentar dominios externos usados frecuentemente por el sitio.
+    private function __construct() {
+        add_action('plugins_loaded', [$this, 'load_textdomain'], 5);
+        add_action('plugins_loaded', [$this, 'load_modules'], 10);
+        add_filter('block_categories_all', [$this, 'register_block_categories'], 10, 2);
         add_filter('wp_resource_hints', [$this, 'add_resource_hints'], 10, 2);
-        
-        // Auto-flush rewrite rules temporal para limpiar la caché de es_carta
-        add_action('init', function() {
-            if (!get_transient('flacso_flushed_carta_rules_fix')) {
-                flush_rewrite_rules(false);
-                set_transient('flacso_flushed_carta_rules_fix', 1, 30 * DAY_IN_SECONDS);
-            }
-        }, 99);
     }
-    
-    public function load_textdomain() {
+
+    public function load_textdomain(): void {
         load_plugin_textdomain(
             'flacso-uruguay',
             false,
             dirname(plugin_basename(__FILE__)) . '/languages'
         );
     }
-    
-    public function register_block_categories($categories, $context) {
-        // Obtener slugs existentes para evitar duplicados
+
+    public function load_modules(): void {
+        if ($this->modules_loaded) {
+            return;
+        }
+
+        $this->modules_loaded = true;
+        FLACSO_Uruguay_Module_Registry::boot(FLACSO_Uruguay_Loader::instance());
+    }
+
+    public function register_block_categories(array $categories, $context): array {
         $existing_slugs = wp_list_pluck($categories, 'slug');
-        
-        // Registrar categoria principal de FLACSO Uruguay
         if (!in_array('flacso-uruguay', $existing_slugs, true)) {
             array_unshift($categories, [
-                'slug'  => 'flacso-uruguay',
+                'slug' => 'flacso-uruguay',
                 'title' => __('FLACSO Uruguay', 'flacso-uruguay'),
-                'icon'  => null
+                'icon' => null,
             ]);
         }
-        
         return $categories;
     }
 
-    public function add_resource_hints($hints, $relation_type) {
+    public function add_resource_hints(array $hints, string $relation_type): array {
         if ('preconnect' !== $relation_type) {
             return $hints;
         }
@@ -138,42 +99,21 @@ class FLACSO_Uruguay_Plugin {
 
         return $hints;
     }
-    
-    public function load_modules() {
-        $loader = FLACSO_Uruguay_Loader::instance();
-        
-        // Cargar modulos en orden de dependencias
-        $loader->load_module('core');      // Funciones base
-        $loader->load_module('docentes');  // CPT Docentes
-        $loader->load_module('autoridades'); // Autoridades FLACSO
-        $loader->load_module('seminarios'); // CPT Seminarios
-        $loader->load_module('eventos');    // CPT Eventos
-        $loader->load_module('convenios');  // CPT Convenios y migracion desde entradas
-        $loader->load_module('oferta-academica'); // Oferta Academica
-        $loader->load_module('formularios'); // Formularios
-        $loader->load_module('formularios-webhook'); // Formularios configurables enviados por webhook
-        $loader->load_module('charlas-abiertas'); // Charlas Abiertas
-        $loader->load_module('posgrados');  // Posgrados
-        $loader->load_module('shortcodes'); // Shortcodes
-        $loader->load_module('mailing'); // Suscripciones al mailing
-        $loader->load_module('main-page');  // Landing Page y Secciones
-        $loader->load_module('preinscripcion'); // Formularios de Preinscripcion
-    }
-    
-    public static function activate() {
-        // Logica de activacion
+
+    public static function activate(): void {
+        // Los módulos pueden enganchar tareas de activación sin acoplar el
+        // bootstrap a sus clases concretas.
+        do_action('flacso_uruguay_activate');
         flush_rewrite_rules();
     }
-    
-    public static function deactivate() {
-        // Logica de desactivacion
+
+    public static function deactivate(): void {
+        do_action('flacso_uruguay_deactivate');
         flush_rewrite_rules();
     }
 }
 
-// Inicializar el plugin
 FLACSO_Uruguay_Plugin::instance();
 
-// Hooks de activacion/desactivacion
 register_activation_hook(__FILE__, ['FLACSO_Uruguay_Plugin', 'activate']);
 register_deactivation_hook(__FILE__, ['FLACSO_Uruguay_Plugin', 'deactivate']);
