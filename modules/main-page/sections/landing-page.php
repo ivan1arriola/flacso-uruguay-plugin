@@ -1,133 +1,81 @@
 <?php
-
-// ==================================================
-// HOMEPAGE COMPLETA FLACSO
-// ==================================================
+/**
+ * Builder de la portada FLACSO.
+ *
+ * Las secciones ya no se conocen aquí una por una: se obtienen del registry y
+ * el orden/visibilidad proviene de Flacso_Main_Page_Settings.
+ */
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
 add_shortcode('flacso_homepage_builder', 'flacso_homepage_builder_render');
+
 if (!function_exists('flacso_homepage_builder_render')) {
-    function flacso_homepage_builder_render() {
-        $renderers = [
-            [
-                'key' => 'hero',
-                'function' => 'flacso_section_hero_render',
-            ],
-            [
-                'key' => 'festejos',
-                'function' => 'flacso_section_festejos_render',
-            ],
-            [
-                'key' => 'eventos',
-                'function' => 'flacso_section_eventos_render',
-            ],
-            [
-                'key' => 'seminarios',
-                'function' => 'flacso_section_seminarios_proximos_render',
-            ],
-            [
-                'key' => 'novedades',
-                'function' => 'flacso_section_novedades_render',
-            ],
-            [
-                'key' => 'quienes',
-                'function' => 'flacso_section_quienes_somos_render',
-            ],
-            [
-                'key' => 'instagram',
-                'function' => 'flacso_section_instagram_render',
-            ],
-            [
-                'key' => 'posgrados',
-                'function' => 'flacso_section_oferta_educativa_render',
-            ],
-            [
-                'key' => 'mailing',
-                'function' => 'flacso_section_mailing_render',
-            ],
-            [
-                'key' => 'congreso',
-                'function' => 'flacso_section_congreso_render',
-            ],
-            [
-                'key' => 'contacto',
-                'function' => 'flacso_section_contacto_render',
-            ],
-        ];
+    function flacso_homepage_builder_render(): string {
+        if (!class_exists('Flacso_Homepage_Section_Registry')) {
+            return '';
+        }
+
+        $registry = Flacso_Homepage_Section_Registry::all();
         $is_frontend_render = !is_admin() && !(defined('REST_REQUEST') && REST_REQUEST);
-        // El marcado del servidor evita reconstruir toda la portada tras el primer
-        // pintado. React sigue disponible mediante el filtro para instalaciones que
-        // lo necesiten, pero deja de formar parte de la ruta crítica por defecto.
         $use_react = $is_frontend_render && apply_filters('flacso_main_page_use_react', false);
 
-        $section_blocks = [];
-        foreach ($renderers as $renderer) {
-            if (!is_callable($renderer['function'])) {
+        $blocks_by_key = [];
+        foreach ($registry as $section_key => $definition) {
+            $section_key = class_exists('Flacso_Main_Page_Section_Keys')
+                ? Flacso_Main_Page_Section_Keys::canonicalize((string) $section_key)
+                : sanitize_key((string) $section_key);
+
+            if ($section_key === '' || !Flacso_Main_Page_Settings::is_section_visible($section_key)) {
                 continue;
             }
 
-            if (!Flacso_Main_Page_Settings::is_section_visible($renderer['key'])) {
+            $renderer = (string) ($definition['function'] ?? '');
+            if ($renderer === '' || !is_callable($renderer)) {
+                do_action('flacso_homepage_renderer_missing', $section_key, $definition);
                 continue;
             }
 
-            $is_react_events = $use_react && $renderer['key'] === 'eventos' && function_exists('flacso_section_eventos_get_items');
-            $content = $is_react_events ? '' : (string) call_user_func($renderer['function']);
+            $react_component = (string) ($definition['react_component'] ?? '');
+            $is_react_events = $use_react
+                && $react_component === 'eventos-proximos'
+                && function_exists('flacso_section_eventos_get_items');
+            $content = $is_react_events ? '' : (string) call_user_func($renderer);
             if ($content === '' && !$is_react_events) {
                 continue;
             }
 
-            $section_blocks[] = [
-                'key' => $renderer['key'],
-                'label' => Flacso_Main_Page_Settings::get_section_label($renderer['key']),
+            $blocks_by_key[$section_key] = [
+                'key' => $section_key,
+                'label' => Flacso_Main_Page_Settings::get_section_label($section_key),
                 'content' => $content,
+                'react_component' => $react_component,
+                'owner' => (string) ($definition['owner'] ?? ''),
             ];
         }
 
-        $blocks_by_key = [];
-        foreach ($section_blocks as $section) {
-            $blocks_by_key[$section['key']] = $section;
-        }
-
-        $preferred_order = Flacso_Main_Page_Settings::get_homepage_section_order();
         $ordered_blocks = [];
-        foreach ($preferred_order as $order_key) {
-            if (isset($blocks_by_key[$order_key])) {
-                $ordered_blocks[] = $blocks_by_key[$order_key];
-                unset($blocks_by_key[$order_key]);
+        foreach (Flacso_Main_Page_Settings::get_homepage_section_order() as $section_key) {
+            if (isset($blocks_by_key[$section_key])) {
+                $ordered_blocks[] = $blocks_by_key[$section_key];
+                unset($blocks_by_key[$section_key]);
             }
         }
-
-        if (!empty($blocks_by_key)) {
-            foreach ($blocks_by_key as $remaining_block) {
-                $ordered_blocks[] = $remaining_block;
-            }
+        foreach ($blocks_by_key as $remaining) {
+            $ordered_blocks[] = $remaining;
         }
-
-        // --- COMBINAR NOVEDADES DESTACADAS Y NOVEDADES ---
-        $destacadas_idx = array_search('novedades_destacadas', array_column($ordered_blocks, 'key'));
-        $novedades_idx = array_search('novedades', array_column($ordered_blocks, 'key'));
-        
-        if ($destacadas_idx !== false && $novedades_idx !== false) {
-            // Append novedades content to novedades_destacadas
-            $ordered_blocks[$destacadas_idx]['content'] .= $ordered_blocks[$novedades_idx]['content'];
-            // Remove the stand-alone novedades block
-            array_splice($ordered_blocks, $novedades_idx, 1);
-        }
-        // -------------------------------------------------
 
         if (!$use_react) {
             return flacso_homepage_builder_render_markup($ordered_blocks);
         }
 
         wp_enqueue_script('flacso-main-page-react');
-
         $main_id = 'main';
         $app_id = 'flacso-main-page-react-' . wp_generate_password(8, false);
-
         $sections_payload = [];
+
         foreach ($ordered_blocks as $section) {
             $payload_section = [
                 'key' => (string) ($section['key'] ?? ''),
@@ -135,9 +83,12 @@ if (!function_exists('flacso_homepage_builder_render')) {
                 'content' => (string) ($section['content'] ?? ''),
             ];
 
-            if ($payload_section['key'] === 'eventos' && function_exists('flacso_section_eventos_get_items')) {
-                $events_items = flacso_section_eventos_get_items(10);
-                if (empty($events_items) || !is_array($events_items)) {
+            if (
+                ($section['react_component'] ?? '') === 'eventos-proximos'
+                && function_exists('flacso_section_eventos_get_items')
+            ) {
+                $items = flacso_section_eventos_get_items(10);
+                if (empty($items) || !is_array($items)) {
                     continue;
                 }
 
@@ -160,120 +111,99 @@ if (!function_exists('flacso_homepage_builder_render')) {
                             'thumbnail' => esc_url_raw((string) ($item['thumbnail'] ?? '')),
                             'datetime_iso' => wp_strip_all_tags((string) ($item['datetime_iso'] ?? '')),
                         ];
-                    }, $events_items)),
+                    }, $items)),
                 ];
-                // Evita duplicar marcado pesado cuando React ya tiene datos estructurados.
                 $payload_section['content'] = '';
             }
 
             $sections_payload[] = $payload_section;
         }
 
-        $payload = [
-            'main_id' => $main_id,
-            'sections' => $sections_payload,
-        ];
-
-        $payload_json = wp_json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $payload_json = wp_json_encode(
+            ['main_id' => $main_id, 'sections' => $sections_payload],
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        );
         if (!is_string($payload_json) || $payload_json === '') {
             return flacso_homepage_builder_render_markup($ordered_blocks, $main_id);
         }
-
-        // Evita cerrar el bloque <script> si el contenido incluye "</script>".
         $payload_json = str_replace('</script', '<\\/script', $payload_json);
 
-        ob_start(); ?>
+        ob_start();
+        ?>
         <div id="<?php echo esc_attr($app_id); ?>" class="flacso-main-page-react-root" data-flacso-app="<?php echo esc_attr($app_id); ?>"></div>
         <script type="application/json" id="<?php echo esc_attr($app_id . '-data'); ?>"><?php echo $payload_json; ?></script>
         <noscript><?php echo flacso_homepage_builder_render_markup($ordered_blocks, $main_id); ?></noscript>
         <?php
-        return ob_get_clean();
+        return (string) ob_get_clean();
     }
 }
 
 if (!function_exists('flacso_homepage_builder_render_markup')) {
-    function flacso_homepage_builder_render_markup(array $ordered_blocks, string $main_id = 'main'): string
-    {
-        ob_start(); ?>
+    function flacso_homepage_builder_render_markup(array $ordered_blocks, string $main_id = 'main'): string {
+        ob_start();
+        ?>
         <div class="flacso-main-page flacso-homepage-completa">
             <main class="flacso-home-layout" role="main" id="<?php echo esc_attr($main_id); ?>">
                 <?php foreach ($ordered_blocks as $section) : ?>
                     <?php
                     $section_key = sanitize_key((string) ($section['key'] ?? ''));
-                    $is_bleed_surface = $section_key === 'hero';
-                    $surface_variant = $is_bleed_surface ? 'flacso-home-block__surface--bleed' : 'flacso-home-block__surface--card';
+                    $surface_variant = $section_key === 'hero'
+                        ? 'flacso-home-block__surface--bleed'
+                        : 'flacso-home-block__surface--card';
                     ?>
-                    <article class="flacso-home-block flacso-home-block--<?php echo esc_attr($section['key']); ?>"
-                             data-section-key="<?php echo esc_attr($section['key']); ?>"
-                             data-section-label="<?php echo esc_attr($section['label']); ?>">
+                    <article class="flacso-home-block flacso-home-block--<?php echo esc_attr($section_key); ?>"
+                             data-section-key="<?php echo esc_attr($section_key); ?>"
+                             data-section-label="<?php echo esc_attr((string) ($section['label'] ?? '')); ?>"
+                             data-section-owner="<?php echo esc_attr((string) ($section['owner'] ?? '')); ?>">
                         <div class="flacso-home-block__surface <?php echo esc_attr($surface_variant); ?> flacso-home-block__surface--<?php echo esc_attr($section_key); ?>">
-                            <?php echo $section['content']; ?>
+                            <?php echo (string) ($section['content'] ?? ''); ?>
                         </div>
                     </article>
                 <?php endforeach; ?>
             </main>
         </div>
         <?php
-        return ob_get_clean();
+        return (string) ob_get_clean();
     }
 }
 
 if (!function_exists('flacso_homepage_builder_page_has_builder')) {
-    function flacso_homepage_builder_page_has_builder(int $post_id): bool
-    {
+    function flacso_homepage_builder_page_has_builder(int $post_id): bool {
         if ($post_id <= 0) {
             return false;
         }
-
         $post = get_post($post_id);
         if (!$post instanceof WP_Post) {
             return false;
         }
-
         $content = (string) $post->post_content;
         if ($content === '') {
             return false;
         }
-
         if (has_shortcode($content, 'flacso_homepage_builder')) {
             return true;
         }
-
         if (function_exists('has_block') && has_block('flacso-uruguay/homepage-builder', $content)) {
             return true;
         }
-
         return strpos($content, 'wp:flacso-uruguay/homepage-builder') !== false;
     }
 }
 
 if (!function_exists('flacso_homepage_builder_template_takeover')) {
-    function flacso_homepage_builder_template_takeover(string $template): string
-    {
-        if (is_admin() || wp_doing_ajax() || (defined('REST_REQUEST') && REST_REQUEST)) {
+    function flacso_homepage_builder_template_takeover(string $template): string {
+        if (is_admin() || wp_doing_ajax() || (defined('REST_REQUEST') && REST_REQUEST) || !is_front_page()) {
             return $template;
         }
-
-        if (!is_front_page()) {
+        if (!apply_filters('flacso_main_page_template_takeover_enabled', true)) {
             return $template;
         }
-
-        $enabled = apply_filters('flacso_main_page_template_takeover_enabled', true);
-        if (!$enabled) {
-            return $template;
-        }
-
         $post_id = (int) get_queried_object_id();
         if (!flacso_homepage_builder_page_has_builder($post_id)) {
             return $template;
         }
-
         $theme_front_page = locate_template('front-page.php');
-        if ($theme_front_page !== '') {
-            return $theme_front_page;
-        }
-
-        return $template;
+        return $theme_front_page !== '' ? $theme_front_page : $template;
     }
 }
 
