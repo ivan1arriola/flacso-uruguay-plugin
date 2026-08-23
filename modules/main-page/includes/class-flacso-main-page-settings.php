@@ -180,9 +180,9 @@ class Flacso_Main_Page_Settings {
             ],
             'instagram' => [
                 'profile_url' => 'https://www.instagram.com/flacsouruguay/',
-                'title' => 'Seguinos en Instagram',
-                'description' => 'Publicamos novedades institucionales, actividades academicas, lanzamientos y contenidos destacados de FLACSO Uruguay.',
-                'cta_label' => 'Ir a @flacsouruguay',
+                'title' => 'La actividad cotidiana, en Instagram.',
+                'description' => 'Publicamos novedades institucionales, actividades académicas, lanzamientos y contenidos destacados de FLACSO Uruguay.',
+                'cta_label' => 'Seguir @flacsouruguay',
                 'access_token' => '',
                 'api_type' => 'basic', // 'basic' or 'graph'
             ],

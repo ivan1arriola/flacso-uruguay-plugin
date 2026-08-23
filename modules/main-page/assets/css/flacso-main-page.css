@@ -3639,79 +3639,108 @@
     padding-block: clamp(1.5rem, 3vw, 2.4rem) !important;
 }
 
-/* Instagram: cabecera compacta y publicaciones en una sola fila. */
+/* Instagram: bloque editorial liviano con el feed como contenido secundario. */
 .flacso-main-page .flacso-instagram-panel {
-    display: block;
+    display: grid;
+    grid-template-columns: minmax(17rem, 0.72fr) minmax(0, 1.28fr);
+    gap: clamp(1.75rem, 3vw, 3rem);
+    align-items: center;
     min-height: 0;
-    padding: clamp(1.35rem, 3vw, 2.4rem);
-    border-radius: 24px;
-    background:
-        radial-gradient(circle at 92% 0%, rgba(247, 183, 51, 0.2), transparent 28%),
-        linear-gradient(135deg, #0c2348 0%, #163970 68%, #18545b 100%);
+    padding: clamp(1.5rem, 3vw, 2.35rem);
+    border-radius: clamp(1.75rem, 3vw, 2.5rem);
+    background: #f0f3f7;
+    box-shadow: none;
 }
 
+.flacso-main-page .flacso-instagram-panel::before,
 .flacso-main-page .flacso-instagram-panel::after {
-    height: 4px;
+    display: none;
+    content: none;
 }
 
 .flacso-main-page .flacso-instagram-copy {
-    display: grid;
-    grid-template-columns: minmax(230px, 0.8fr) minmax(300px, 1.25fr) auto;
-    grid-template-rows: auto auto auto;
-    gap: 0.6rem clamp(1.5rem, 3vw, 3rem);
-    align-items: center;
-    margin-bottom: clamp(1.4rem, 3vw, 2rem);
-}
-
-.flacso-main-page .flacso-instagram-eyebrow {
-    grid-column: 1;
-    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: clamp(1rem, 1.8vw, 1.35rem);
+    margin: 0;
+    padding-inline: clamp(0.15rem, 1.2vw, 1rem);
+    color: #163970;
 }
 
 .flacso-main-page .flacso-instagram-section .flacso-instagram-title {
-    grid-column: 1;
-    grid-row: 2 / 4;
-    max-width: 11em !important;
-    font-size: clamp(2rem, 3.2vw, 3.2rem) !important;
-    line-height: 1.02 !important;
+    width: min(100%, 9.6em) !important;
+    max-width: 9.6em !important;
+    color: #173c74 !important;
+    font-size: clamp(2.25rem, 3.4vw, 3.35rem) !important;
+    font-weight: 800 !important;
+    line-height: 1.08 !important;
+    text-wrap: balance;
 }
 
 .flacso-main-page .flacso-instagram-description {
-    grid-column: 2;
-    grid-row: 1 / 3;
-    max-width: 42rem;
-    font-size: clamp(0.95rem, 1.35vw, 1.08rem);
-    line-height: 1.6;
-}
-
-.flacso-main-page .flacso-instagram-tags {
-    grid-column: 2;
-    grid-row: 3;
-    margin-top: 0;
+    max-width: 28rem;
+    color: #6a7b96;
+    font-size: clamp(1rem, 1.35vw, 1.18rem);
+    line-height: 1.65;
 }
 
 .flacso-main-page .flacso-instagram-actions {
-    grid-column: 3;
-    grid-row: 1 / 4;
     margin-top: 0;
+}
+
+.flacso-main-page .flacso-instagram-section .flacso-instagram-button,
+.flacso-main-page .flacso-instagram-section .flacso-instagram-button--primary {
+    min-height: auto;
+    padding: 0.25rem 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: #173c74 !important;
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.flacso-main-page .flacso-instagram-section .flacso-instagram-button:hover,
+.flacso-main-page .flacso-instagram-section .flacso-instagram-button:focus-visible {
+    transform: none;
+    background: transparent;
+    box-shadow: none;
+    color: #248138 !important;
+}
+
+.flacso-main-page .flacso-instagram-section .flacso-instagram-button span {
+    transition: transform 0.2s ease;
+}
+
+.flacso-main-page .flacso-instagram-section .flacso-instagram-button:hover span,
+.flacso-main-page .flacso-instagram-section .flacso-instagram-button:focus-visible span {
+    transform: translateX(0.2rem);
 }
 
 .flacso-main-page .flacso-instagram-showcase {
     width: 100%;
     max-width: none;
-    border-radius: 16px;
-    box-shadow: 0 18px 42px rgba(4, 17, 39, 0.26);
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.flacso-main-page .flacso-instagram-embed {
+    overflow: visible;
+    background: transparent;
 }
 
 .flacso-main-page .flacso-instagram-api-feed {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    grid-auto-rows: auto;
-    gap: clamp(0.55rem, 1vw, 0.85rem);
-    padding: clamp(0.65rem, 1.2vw, 0.9rem);
-    overflow-x: auto;
-    scroll-snap-type: x proximity;
-    scrollbar-color: rgba(22, 57, 112, 0.45) transparent;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(0.55rem, 0.9vw, 0.8rem);
+    padding: 0;
+    overflow: visible;
+    background: transparent;
 }
 
 .flacso-main-page .flacso-ig-feed-item,
@@ -3719,9 +3748,8 @@
     grid-column: auto;
     grid-row: auto;
     min-width: 0;
-    aspect-ratio: 4 / 5;
-    border-radius: 10px;
-    scroll-snap-align: start;
+    aspect-ratio: 1;
+    border-radius: clamp(0.85rem, 1.4vw, 1.2rem);
 }
 
 .flacso-main-page .flacso-ig-feed-image {
@@ -3732,51 +3760,50 @@
     object-fit: cover;
 }
 
-@media (max-width: 1099.98px) {
+@media (max-width: 959.98px) {
+    .flacso-main-page .flacso-instagram-panel {
+        grid-template-columns: 1fr;
+    }
+
     .flacso-main-page .flacso-instagram-copy {
-        grid-template-columns: minmax(220px, 0.75fr) minmax(0, 1.25fr);
+        max-width: 38rem;
+        padding-inline: 0;
     }
 
-    .flacso-main-page .flacso-instagram-actions {
-        grid-column: 1 / -1;
-        grid-row: 4;
-    }
-
-    .flacso-main-page .flacso-instagram-actions .flacso-instagram-button {
-        width: auto;
+    .flacso-main-page .flacso-instagram-section .flacso-instagram-title {
+        width: min(100%, 12em) !important;
+        max-width: 12em !important;
     }
 }
 
 @media (max-width: 767.98px) {
     .flacso-main-page .flacso-instagram-panel {
-        padding: 1rem;
-        border-radius: 20px;
+        gap: 1.35rem;
+        padding: 1.15rem;
+        border-radius: 1.5rem;
     }
 
     .flacso-main-page .flacso-instagram-copy {
-        display: flex;
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 0.8rem;
-        margin-bottom: 1.2rem;
+        gap: 0.85rem;
     }
 
     .flacso-main-page .flacso-instagram-section .flacso-instagram-title {
-        font-size: clamp(2rem, 10vw, 2.8rem) !important;
+        font-size: clamp(2rem, 10.5vw, 2.8rem) !important;
     }
 
     .flacso-main-page .flacso-instagram-actions,
     .flacso-main-page .flacso-instagram-actions .flacso-instagram-button {
-        width: 100%;
+        width: auto;
     }
 
     .flacso-main-page .flacso-instagram-api-feed {
-        grid-template-columns: none;
-        grid-auto-flow: column;
-        grid-auto-columns: min(72vw, 16rem);
-        overflow-x: auto;
-        overscroll-behavior-inline: contain;
-        scroll-snap-type: x mandatory;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.55rem;
+    }
+
+    .flacso-main-page .flacso-ig-feed-item,
+    .flacso-main-page .flacso-ig-feed-item:first-child {
+        border-radius: 0.85rem;
     }
 }
 

@@ -563,7 +563,7 @@ class Flacso_Main_Page_Unified_Settings {
                 id="instagram_title" 
                 name="instagram[title]" 
                 class="regular-text" 
-                value="<?php echo esc_attr($instagram['title'] ?? 'Seguinos en Instagram'); ?>">
+                value="<?php echo esc_attr($instagram['title'] ?? 'La actividad cotidiana, en Instagram.'); ?>">
         </div>
 
         <div class="flacso-form-group">
@@ -592,7 +592,7 @@ class Flacso_Main_Page_Unified_Settings {
                 id="instagram_cta_label" 
                 name="instagram[cta_label]" 
                 class="regular-text" 
-                value="<?php echo esc_attr($instagram['cta_label'] ?? 'Ir a @flacsouruguay'); ?>">
+                value="<?php echo esc_attr($instagram['cta_label'] ?? 'Seguir @flacsouruguay'); ?>">
         </div>
 
         <h3><?php esc_html_e('Integración con la API', 'flacso-main-page'); ?></h3>
