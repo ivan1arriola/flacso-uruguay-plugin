@@ -41,6 +41,23 @@ function flacso_main_page_enqueue_novedades_45_style(): void {
 }
 add_action('wp_enqueue_scripts', 'flacso_main_page_enqueue_novedades_45_style', 65);
 
+/**
+ * La cabecera de Seminarios Próximos no necesita una bajada adicional.
+ * Se mantiene el texto fuente por compatibilidad con versiones anteriores del
+ * renderer, pero se evita que llegue al HTML público de la portada.
+ */
+function flacso_main_page_remove_seminarios_proximos_tagline($translated_text, $text, $domain) {
+    if (
+        'flacso-main-page' === $domain
+        && 'Formación intensiva con enfoque práctico' === $text
+    ) {
+        return '';
+    }
+
+    return $translated_text;
+}
+add_filter('gettext', 'flacso_main_page_remove_seminarios_proximos_tagline', 10, 3);
+
 // Cargar clases principales (siempre necesarias)
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-settings.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-blocks.php';
