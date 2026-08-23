@@ -69,6 +69,29 @@
     .flacso-homepage-completa {
         padding-bottom: calc(92px + env(safe-area-inset-bottom));
     }
+
+    .flacso-front-hero-fab {
+        right: 12px;
+        bottom: calc(10px + env(safe-area-inset-bottom));
+        left: 12px;
+        gap: 0.3rem;
+        padding: 0.3rem;
+        border-radius: 16px;
+    }
+
+    .flacso-front-hero-fab__link {
+        min-height: 46px;
+        padding: 0.38rem 0.5rem;
+        gap: 0.38rem;
+        font-size: clamp(0.68rem, 3vw, 0.78rem);
+        line-height: 1.1;
+    }
+
+    .flacso-front-hero-fab__icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+    }
 }
 
 @media (max-width: 420px) {
