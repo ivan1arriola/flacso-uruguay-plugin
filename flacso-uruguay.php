@@ -25,6 +25,7 @@ define('FLACSO_URUGUAY_FILE', __FILE__);
 define('FLACSO_URUGUAY_PATH', plugin_dir_path(__FILE__));
 define('FLACSO_URUGUAY_URL', plugin_dir_url(__FILE__));
 
+require_once FLACSO_URUGUAY_PATH . 'includes/core/requires.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/helpers.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-editor-admin-mode.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-integrations-settings.php';
@@ -54,18 +55,13 @@ final class FLACSO_Uruguay_Plugin {
     }
 
     public function load_textdomain(): void {
-        load_plugin_textdomain(
-            'flacso-uruguay',
-            false,
-            dirname(plugin_basename(__FILE__)) . '/languages'
-        );
+        load_plugin_textdomain('flacso-uruguay', false, dirname(plugin_basename(__FILE__)) . '/languages');
     }
 
     public function load_modules(): void {
         if ($this->modules_loaded) {
             return;
         }
-
         $this->modules_loaded = true;
         FLACSO_Uruguay_Module_Registry::boot(FLACSO_Uruguay_Loader::instance());
     }
@@ -86,23 +82,13 @@ final class FLACSO_Uruguay_Plugin {
         if ('preconnect' !== $relation_type) {
             return $hints;
         }
-
         $hints[] = 'https://fonts.googleapis.com';
-        $hints[] = [
-            'href' => 'https://fonts.gstatic.com',
-            'crossorigin' => 'anonymous',
-        ];
-        $hints[] = [
-            'href' => 'https://cdn.jsdelivr.net',
-            'crossorigin' => 'anonymous',
-        ];
-
+        $hints[] = ['href' => 'https://fonts.gstatic.com', 'crossorigin' => 'anonymous'];
+        $hints[] = ['href' => 'https://cdn.jsdelivr.net', 'crossorigin' => 'anonymous'];
         return $hints;
     }
 
     public static function activate(): void {
-        // Los módulos pueden enganchar tareas de activación sin acoplar el
-        // bootstrap a sus clases concretas.
         do_action('flacso_uruguay_activate');
         flush_rewrite_rules();
     }
@@ -114,6 +100,5 @@ final class FLACSO_Uruguay_Plugin {
 }
 
 FLACSO_Uruguay_Plugin::instance();
-
 register_activation_hook(__FILE__, ['FLACSO_Uruguay_Plugin', 'activate']);
 register_deactivation_hook(__FILE__, ['FLACSO_Uruguay_Plugin', 'deactivate']);
