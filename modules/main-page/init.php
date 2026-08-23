@@ -23,7 +23,6 @@ if (!defined('FLACSO_MAIN_PAGE_VERSION')) {
     define('FLACSO_MAIN_PAGE_VERSION', FLACSO_URUGUAY_VERSION);
 }
 
-// Núcleo canónico de configuración/composición.
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-section-keys.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-settings.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-settings-migration.php';
@@ -34,9 +33,7 @@ require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-mig
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-rest-api.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/flacso-raw-content-api.php';
 
-// Integraciones históricas aún consumidas por la portada. Se mantienen aquí
-// hasta completar su extracción a módulos propios, pero ya no forman parte del
-// contrato de configuración de main-page.
+// Integraciones históricas pendientes de extraer físicamente de main-page.
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-instagram-api.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-telegram-manager.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/flacso-consultas.php';
@@ -46,8 +43,8 @@ $is_admin_context = is_admin()
     || (defined('REST_REQUEST') && REST_REQUEST);
 
 if ($is_admin_context) {
+    require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-editor-bridge.php';
     require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-admin.php';
-    require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-unified-settings.php';
     require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-ajax-settings.php';
     require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-ajax-handler.php';
     require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-seminarios.php';
