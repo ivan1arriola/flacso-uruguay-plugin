@@ -4,14 +4,15 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class Flacso_Main_Page_Loader {
+final class Flacso_Main_Page_Loader {
+    private static $components_loaded = false;
+
     public static function init(): void {
         $is_ajax_context = function_exists('wp_doing_ajax') && wp_doing_ajax();
         if (!is_admin() || $is_ajax_context || (defined('REST_REQUEST') && REST_REQUEST) || self::is_flacso_admin_request()) {
-            self::load_shortcodes();
+            self::load_components();
         }
-        // El tema carga primero la estructura base; el plugin agrega después
-        // los estilos de sus componentes dinámicos.
+
         add_action('wp_enqueue_scripts', [__CLASS__, 'enqueue_assets'], 60);
         add_action('wp_head', [__CLASS__, 'render_front_page_meta_description'], 1);
     }
@@ -23,7 +24,7 @@ class Flacso_Main_Page_Loader {
 
         $description = apply_filters(
             'flacso_front_page_meta_description',
-            __('Formación de posgrado, investigación, eventos y novedades de FLACSO Uruguay.', 'flacso-main-page')
+            __('Oferta académica, investigación, eventos y novedades de FLACSO Uruguay.', 'flacso-main-page')
         );
         $description = trim(wp_strip_all_tags((string) $description));
 
@@ -33,20 +34,11 @@ class Flacso_Main_Page_Loader {
     }
 
     private static function is_flacso_admin_request(): bool {
-        if (!is_admin()) {
+        if (!is_admin() || !isset($_GET['page'])) {
             return false;
         }
-
-        if (!isset($_GET['page'])) {
-            return false;
-        }
-
         $page = sanitize_key((string) wp_unslash($_GET['page']));
-        if ($page === '') {
-            return false;
-        }
-
-        return strpos($page, 'flacso-main-page') === 0;
+        return $page !== '' && strpos($page, 'flacso-main-page') === 0;
     }
 
     public static function enqueue_assets(): void {
@@ -92,10 +84,8 @@ class Flacso_Main_Page_Loader {
                 ? 'var(--global-palette7, #ffffff)'
                 : 'var(--global-palette1, #1d3a72)';
         };
-        $inline_styles = [];
-        $inline_styles[] = sprintf(':root { --flacso-section-heading-color: %s; }', $resolve_value($heading_color_choice));
-        $section_colors = Flacso_Main_Page_Settings::get_section_heading_colors();
-        foreach ($section_colors as $section_key => $choice) {
+        $inline_styles = [sprintf(':root { --flacso-section-heading-color: %s; }', $resolve_value($heading_color_choice))];
+        foreach (Flacso_Main_Page_Settings::get_section_heading_colors() as $section_key => $choice) {
             if ($section_key === 'hero' || $choice === $heading_color_choice) {
                 continue;
             }
@@ -123,7 +113,6 @@ class Flacso_Main_Page_Loader {
             $react_js_version,
             true
         );
-
         wp_register_script(
             'flacso-convenios-react',
             FLACSO_MAIN_PAGE_MODULE_URL . 'assets/js/flacso-convenios-react.js',
@@ -135,22 +124,16 @@ class Flacso_Main_Page_Loader {
 
     private static function asset_version(string $relative_path): string {
         $absolute_path = FLACSO_MAIN_PAGE_MODULE_PATH . ltrim($relative_path, '/');
-        if (file_exists($absolute_path)) {
-            return (string) filemtime($absolute_path);
-        }
-
-        return (string) FLACSO_MAIN_PAGE_VERSION;
+        return file_exists($absolute_path) ? (string) filemtime($absolute_path) : (string) FLACSO_MAIN_PAGE_VERSION;
     }
 
     private static function should_enqueue_assets(): bool {
         if (is_admin()) {
             return false;
         }
-
         if (is_front_page()) {
             return true;
         }
-
         if (!is_singular()) {
             return false;
         }
@@ -161,7 +144,7 @@ class Flacso_Main_Page_Loader {
         }
 
         $content = (string) $post->post_content;
-        $shortcodes = [
+        foreach ([
             'flacso_homepage_builder',
             'lista_seminarios',
             'listar_paginas',
@@ -170,109 +153,107 @@ class Flacso_Main_Page_Loader {
             'listar_categoria',
             'oferta_academica',
             'Consultas_Fase_1',
-        ];
-
-        foreach ($shortcodes as $shortcode) {
+        ] as $shortcode) {
             if (has_shortcode($content, $shortcode)) {
                 return true;
             }
         }
 
-        if (function_exists('has_block') && strpos($content, 'wp:flacso-uruguay/') !== false) {
-            return true;
-        }
-
-        return false;
+        return function_exists('has_block') && strpos($content, 'wp:flacso-uruguay/') !== false;
     }
 
     private static function enqueue_bootstrap_style(): void {
-        $bootstrap_handle = null;
-
+        $handle = null;
         if (wp_style_is('bootstrap', 'registered') || wp_style_is('bootstrap', 'enqueued')) {
-            $bootstrap_handle = 'bootstrap';
+            $handle = 'bootstrap';
         } else {
-            $bootstrap_handle = self::find_registered_style_handle_by_src_fragment('bootstrap@5');
-            if (!$bootstrap_handle) {
-                $bootstrap_handle = self::find_registered_style_handle_by_src_fragment('/bootstrap.min.css');
-            }
+            $handle = self::find_registered_style_handle_by_src_fragment('bootstrap@5')
+                ?: self::find_registered_style_handle_by_src_fragment('/bootstrap.min.css');
         }
 
-        if (!$bootstrap_handle) {
-            $bootstrap_handle = 'bootstrap';
-            wp_register_style(
-                $bootstrap_handle,
-                'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
-                [],
-                '5.3.3'
-            );
+        if (!$handle) {
+            $handle = 'bootstrap';
+            wp_register_style($handle, 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css', [], '5.3.3');
         }
-
-        wp_enqueue_style($bootstrap_handle);
+        wp_enqueue_style($handle);
     }
 
     private static function enqueue_bootstrap_icons_style(): void {
-        $icons_handle = null;
-
+        $handle = null;
         if (wp_style_is('bootstrap-icons', 'registered') || wp_style_is('bootstrap-icons', 'enqueued')) {
-            $icons_handle = 'bootstrap-icons';
+            $handle = 'bootstrap-icons';
         } elseif (wp_style_is('bootstrap-icons-css', 'registered') || wp_style_is('bootstrap-icons-css', 'enqueued')) {
-            $icons_handle = 'bootstrap-icons-css';
+            $handle = 'bootstrap-icons-css';
         } else {
-            $icons_handle = self::find_registered_style_handle_by_src_fragment('bootstrap-icons');
+            $handle = self::find_registered_style_handle_by_src_fragment('bootstrap-icons');
         }
 
-        if (!$icons_handle) {
-            $icons_handle = 'flacso-main-page-icons';
-            wp_register_style(
-                $icons_handle,
-                'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css',
-                [],
-                '1.11.3'
-            );
+        if (!$handle) {
+            $handle = 'flacso-main-page-icons';
+            wp_register_style($handle, 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css', [], '1.11.3');
         }
-
-        wp_enqueue_style($icons_handle);
+        wp_enqueue_style($handle);
     }
 
     private static function find_registered_style_handle_by_src_fragment(string $fragment): ?string {
         global $wp_styles;
-
         if (!($wp_styles instanceof WP_Styles) || empty($wp_styles->registered)) {
             return null;
         }
-
         foreach ($wp_styles->registered as $handle => $dependency) {
-            if (!isset($dependency->src)) {
-                continue;
-            }
-            if (stripos((string) $dependency->src, $fragment) !== false) {
+            if (isset($dependency->src) && stripos((string) $dependency->src, $fragment) !== false) {
                 return (string) $handle;
             }
         }
-
         return null;
     }
 
+    /**
+     * Carga los componentes propiedad de main-page. Los módulos de dominio
+     * pueden agregar sus adaptadores mediante `flacso_main_page_component_files`.
+     */
+    public static function load_components(): void {
+        if (self::$components_loaded) {
+            return;
+        }
+        self::$components_loaded = true;
+
+        $files = [
+            'sections/hero-inscripciones.php',
+            'sections/listar-paginas.php',
+            'sections/preguntas-frecuentes.php',
+            'sections/convenios-responsivos.php',
+            'sections/novedades-section.php',
+            'sections/quienes-somos.php',
+            'sections/instagram.php',
+            'includes/blocks/instagram/block.php',
+            'sections/congreso.php',
+            'sections/contacto.php',
+            'sections/landing-page.php',
+            'sections/listar-categoria.php',
+        ];
+
+        $files = apply_filters('flacso_main_page_component_files', $files);
+        $seen = [];
+        foreach ((array) $files as $file) {
+            $file = ltrim((string) $file, '/');
+            if ($file === '' || isset($seen[$file])) {
+                continue;
+            }
+            $seen[$file] = true;
+            $absolute = strpos($file, FLACSO_URUGUAY_PATH) === 0
+                ? $file
+                : FLACSO_MAIN_PAGE_MODULE_PATH . $file;
+            if (file_exists($absolute)) {
+                require_once $absolute;
+            } else {
+                error_log('[FLACSO main-page] Componente no encontrado: ' . $absolute);
+            }
+        }
+    }
+
+    /** @deprecated Usar load_components(). */
     public static function load_shortcodes(): void {
-        require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/hero-inscripciones.php';
-        require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/lista-seminarios.php';
-        // REMOVED: oferta-academica.php - Movido a plugin separado flacso-formacion
-        require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/listar-paginas.php';
-        require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/eventos-carousel.php';
-        require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/preguntas-frecuentes.php';
-        require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/convenios-responsivos.php';
-        require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/novedades-section.php';
-        require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/quienes-somos.php';
-        require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-instagram-api.php';
-        require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/instagram.php';
-        require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/blocks/instagram/block.php';
-        require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/posgrados.php';
-        require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/mailing.php';
-        require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/congreso.php';
-        require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/contacto.php';
-        require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/landing-page.php';
-        require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/flacso-raw-content-api.php';
-        // Nuevo shortcode genérico de categoría
-        require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/listar-categoria.php';
+        self::load_components();
     }
 }
