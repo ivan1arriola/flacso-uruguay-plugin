@@ -1,19 +1,17 @@
 <?php
 /**
- * Módulo de Eventos - FLACSO Uruguay
- * Integración de CPT Eventos
+ * Módulo de Eventos - FLACSO Uruguay.
  */
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-// Cargar clases
 flacso_safe_require('modules/eventos/includes/class-cpt-eventos-manager.php');
+flacso_safe_require('modules/eventos/includes/homepage.php');
 
-// Inicializar
-add_action('init', function() {
+add_action('init', static function (): void {
     if (class_exists('CPT_Eventos_Manager')) {
-        new CPT_Eventos_Manager(); // Instanciar la clase en lugar de llamar init()
+        new CPT_Eventos_Manager();
     }
 }, 5);
