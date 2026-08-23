@@ -18,7 +18,6 @@ class Flacso_Main_Page_REST_API {
 
     private const SECTION_DESCRIPTIONS = [
         'hero' => 'Mensaje principal de la portada, imagen y llamados a la acción.',
-        'festejos' => 'Historias y contenidos destacados vinculados a los 20 años de FLACSO Uruguay.',
         'eventos' => 'Próximas actividades y eventos institucionales mostrados en la portada.',
         'novedades_destacadas' => 'Selección y despliegue de novedades destacadas.',
         'novedades_busqueda' => 'Buscador y filtros del módulo de novedades.',
@@ -44,7 +43,6 @@ class Flacso_Main_Page_REST_API {
         'novedades_destacadas' => 'actualidad',
         'novedades_busqueda' => 'actualidad',
         'novedades' => 'actualidad',
-        'festejos' => 'institucional',
         'quienes' => 'institucional',
         'instagram' => 'institucional',
         'congreso' => 'institucional',
@@ -64,7 +62,6 @@ class Flacso_Main_Page_REST_API {
         'novedades_destacadas' => 'star',
         'novedades_busqueda' => 'search',
         'novedades' => 'newspaper',
-        'festejos' => 'sparkles',
         'quienes' => 'building',
         'instagram' => 'instagram',
         'congreso' => 'archive',
@@ -142,9 +139,30 @@ class Flacso_Main_Page_REST_API {
         );
     }
 
+    private static function remove_retired_sections(array $settings): array {
+        unset($settings['festejos']);
+
+        if (isset($settings['sections_order']) && is_array($settings['sections_order'])) {
+            $settings['sections_order'] = array_values(array_filter(
+                $settings['sections_order'],
+                static fn($section_key): bool => $section_key !== 'festejos'
+            ));
+        }
+
+        if (isset($settings['sections_visibility']) && is_array($settings['sections_visibility'])) {
+            unset($settings['sections_visibility']['festejos']);
+        }
+
+        if (isset($settings['section_heading_colors']) && is_array($settings['section_heading_colors'])) {
+            unset($settings['section_heading_colors']['festejos']);
+        }
+
+        return $settings;
+    }
+
     private static function build_response_payload(array $extra_data = []): array {
-        $settings = Flacso_Main_Page_Settings::get_settings();
-        $defaults = Flacso_Main_Page_Settings::get_defaults();
+        $settings = self::remove_retired_sections(Flacso_Main_Page_Settings::get_settings());
+        $defaults = self::remove_retired_sections(Flacso_Main_Page_Settings::get_defaults());
 
         return [
             'ok' => true,

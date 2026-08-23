@@ -1,0 +1,113 @@
+/* Ajustes específicos de la portada en móviles. */
+@media (max-width: 700px) {
+    .flacso-oferta-mosaico__card,
+    .flacso-oferta-mosaico__card:nth-child(2n),
+    .flacso-oferta-mosaico__card--featured,
+    .flacso-oferta-mosaico__card--wide {
+        min-height: 200px;
+        aspect-ratio: 16 / 9;
+        border-radius: 18px;
+    }
+
+    .flacso-oferta-mosaico__media img {
+        object-fit: cover;
+        object-position: center 42%;
+    }
+
+    .flacso-oferta-mosaico__media::after {
+        background: linear-gradient(
+            90deg,
+            rgba(7, 25, 55, 0.90) 0%,
+            rgba(7, 25, 55, 0.72) 38%,
+            rgba(7, 25, 55, 0.30) 68%,
+            rgba(7, 25, 55, 0.08) 100%
+        );
+    }
+
+    .flacso-oferta-mosaico__content {
+        width: min(72%, 310px);
+        justify-content: flex-end;
+        align-items: flex-start;
+        padding: 1.15rem 1.2rem;
+        gap: 0.45rem;
+    }
+
+    .flacso-main-page .flacso-oferta-mosaico__content h3,
+    .flacso-main-page .flacso-oferta-mosaico__card:not(.flacso-oferta-mosaico__card--featured) .flacso-oferta-mosaico__content h3 {
+        margin: 0;
+        color: #fff;
+        font-size: clamp(1.35rem, 7vw, 1.8rem);
+        line-height: 1.05;
+        text-shadow: 0 2px 14px rgba(5, 18, 42, 0.58);
+    }
+
+    .flacso-oferta-mosaico__description {
+        display: -webkit-box;
+        margin: 0;
+        overflow: hidden;
+        color: rgba(255, 255, 255, 0.88);
+        font-size: 0.82rem;
+        line-height: 1.35;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
+    .flacso-oferta-mosaico__link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        width: max-content;
+        max-width: 100%;
+        margin-top: 0.1rem;
+        color: #fff;
+        font-size: 0.82rem;
+        font-weight: 800;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+
+    .flacso-homepage-completa {
+        padding-bottom: calc(92px + env(safe-area-inset-bottom));
+    }
+
+    .flacso-front-hero-fab {
+        right: 12px;
+        bottom: calc(10px + env(safe-area-inset-bottom));
+        left: 12px;
+        gap: 0.3rem;
+        padding: 0.3rem;
+        border-radius: 16px;
+    }
+
+    .flacso-front-hero-fab__link {
+        min-height: 46px;
+        padding: 0.38rem 0.5rem;
+        gap: 0.38rem;
+        font-size: clamp(0.68rem, 3vw, 0.78rem);
+        line-height: 1.1;
+    }
+
+    .flacso-front-hero-fab__icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+    }
+}
+
+@media (max-width: 420px) {
+    .flacso-oferta-mosaico__card,
+    .flacso-oferta-mosaico__card:nth-child(2n),
+    .flacso-oferta-mosaico__card--featured,
+    .flacso-oferta-mosaico__card--wide {
+        min-height: 185px;
+    }
+
+    .flacso-oferta-mosaico__content {
+        width: 76%;
+        padding: 1rem;
+    }
+
+    .flacso-oferta-mosaico__description {
+        -webkit-line-clamp: 1;
+    }
+}

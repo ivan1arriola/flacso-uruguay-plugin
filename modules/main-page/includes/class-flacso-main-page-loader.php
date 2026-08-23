@@ -56,6 +56,7 @@ class Flacso_Main_Page_Loader {
 
         $mobile_first_version = self::asset_version('assets/css/flacso-mobile-first.css');
         $base_css_version = self::asset_version('assets/css/flacso-main-page.css');
+        $mobile_fixes_version = self::asset_version('assets/css/flacso-main-page-mobile-fixes.css');
         $react_js_version = self::asset_version('assets/js/flacso-main-page-react.js');
         $convenios_js_version = self::asset_version('assets/js/flacso-convenios-react.js');
         $theme_owns_layout = current_theme_supports('flacso-front-page-layout');
@@ -77,6 +78,12 @@ class Flacso_Main_Page_Loader {
             FLACSO_MAIN_PAGE_MODULE_URL . 'assets/css/flacso-main-page.css',
             $theme_owns_layout ? [] : ['flacso-mobile-first'],
             $base_css_version
+        );
+        wp_register_style(
+            'flacso-main-page-mobile-fixes',
+            FLACSO_MAIN_PAGE_MODULE_URL . 'assets/css/flacso-main-page-mobile-fixes.css',
+            ['flacso-main-page-base'],
+            $mobile_fixes_version
         );
 
         $heading_color_choice = Flacso_Main_Page_Settings::get_section_heading_color_choice();
@@ -106,6 +113,7 @@ class Flacso_Main_Page_Loader {
         }
         self::enqueue_bootstrap_style();
         wp_enqueue_style('flacso-main-page-base');
+        wp_enqueue_style('flacso-main-page-mobile-fixes');
         self::enqueue_bootstrap_icons_style();
 
         wp_register_script(
@@ -257,7 +265,6 @@ class Flacso_Main_Page_Loader {
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/quienes-somos.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-instagram-api.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/instagram.php';
-        require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/festejos.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/blocks/instagram/block.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/posgrados.php';
         require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'sections/mailing.php';
