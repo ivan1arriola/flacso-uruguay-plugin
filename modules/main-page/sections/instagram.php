@@ -46,12 +46,12 @@ function flacso_section_instagram_render() {
         $embed_url = 'https://www.instagram.com/flacsouruguay/embed/';
     }
 
-    $title = (string) apply_filters('flacso_main_page_instagram_title', 'La actividad cotidiana, en Instagram.');
+    $title = (string) apply_filters('flacso_main_page_instagram_title', 'Formación, encuentros y comunidad.');
     $description = (string) apply_filters(
         'flacso_main_page_instagram_description',
-        'Publicamos novedades institucionales, actividades académicas, lanzamientos y contenidos destacados de FLACSO Uruguay.'
+        'En Instagram compartimos seminarios, convocatorias, actividades académicas y momentos de la comunidad FLACSO Uruguay.'
     );
-    $cta_label = (string) apply_filters('flacso_main_page_instagram_cta_label', 'Seguir @flacsouruguay');
+    $cta_label = (string) apply_filters('flacso_main_page_instagram_cta_label', 'Ver más en @flacsouruguay');
     $section_id = 'flacso-instagram-' . wp_generate_password(6, false);
 
     ob_start();

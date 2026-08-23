@@ -3640,6 +3640,10 @@
 }
 
 /* Instagram: bloque editorial liviano con el feed como contenido secundario. */
+.flacso-main-page .flacso-home-block--instagram {
+    background: #ffffff;
+}
+
 .flacso-main-page .flacso-instagram-panel {
     display: grid;
     grid-template-columns: minmax(17rem, 0.72fr) minmax(0, 1.28fr);
@@ -3648,8 +3652,9 @@
     min-height: 0;
     padding: clamp(1.5rem, 3vw, 2.35rem);
     border-radius: clamp(1.75rem, 3vw, 2.5rem);
-    background: #f0f3f7;
-    box-shadow: none;
+    border: 1px solid rgba(22, 57, 112, 0.08);
+    background: linear-gradient(145deg, #fbf8f1 0%, #f3f0e7 100%);
+    box-shadow: 0 16px 40px rgba(22, 57, 112, 0.06);
 }
 
 .flacso-main-page .flacso-instagram-panel::before,
@@ -3669,18 +3674,18 @@
 }
 
 .flacso-main-page .flacso-instagram-section .flacso-instagram-title {
-    width: min(100%, 9.6em) !important;
-    max-width: 9.6em !important;
-    color: #173c74 !important;
-    font-size: clamp(2.25rem, 3.4vw, 3.35rem) !important;
+    width: min(100%, 10.4em) !important;
+    max-width: 10.4em !important;
+    color: #163970 !important;
+    font-size: clamp(2.15rem, 3.05vw, 3rem) !important;
     font-weight: 800 !important;
-    line-height: 1.08 !important;
+    line-height: 1.1 !important;
     text-wrap: balance;
 }
 
 .flacso-main-page .flacso-instagram-description {
     max-width: 28rem;
-    color: #6a7b96;
+    color: #59697f;
     font-size: clamp(1rem, 1.35vw, 1.18rem);
     line-height: 1.65;
 }
@@ -3697,7 +3702,7 @@
     border-radius: 0;
     background: transparent;
     box-shadow: none;
-    color: #173c74 !important;
+    color: #24763a !important;
     font-size: 1rem;
     font-weight: 800;
 }
@@ -3707,7 +3712,7 @@
     transform: none;
     background: transparent;
     box-shadow: none;
-    color: #248138 !important;
+    color: #163970 !important;
 }
 
 .flacso-main-page .flacso-instagram-section .flacso-instagram-button span {
