@@ -1,14 +1,12 @@
 <?php
 /**
- * Módulo de Oferta Académica - FLACSO Uruguay
- * Integración de Oferta Académica
+ * Módulo de Oferta Académica - FLACSO Uruguay.
  */
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-// Definir constantes del módulo
 if (!defined('FLACSO_OFERTA_ACADEMICA_PATH')) {
     define('FLACSO_OFERTA_ACADEMICA_PATH', __DIR__ . '/');
 }
@@ -22,28 +20,33 @@ if (!defined('FLACSO_OFERTA_ACADEMICA_DATA_ONLY')) {
     define('FLACSO_OFERTA_ACADEMICA_DATA_ONLY', true);
 }
 
-// Cargar clases principales
-flacso_safe_require('modules/oferta-academica/includes/class-cpt-oferta-academica.php');
-flacso_safe_require('modules/oferta-academica/includes/class-cpt-tabla-precio.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-taxonomies.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-page-adapter.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-renderer.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-blocks.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-data-importer.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-data-admin.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-data-migration.php');
-flacso_safe_require('modules/oferta-academica/includes/class-tabla-precio-schema.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-data-schema.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-docentes-integration.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-seminarios-integration.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-data-metabox.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-consulta-form.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-seminarios-routes.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-seminarios-admin-links.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-rest-api.php');
+$required_files = [
+    'class-cpt-oferta-academica.php',
+    'class-cpt-tabla-precio.php',
+    'class-oferta-taxonomies.php',
+    'class-oferta-page-adapter.php',
+    'class-oferta-renderer.php',
+    'class-oferta-blocks.php',
+    'class-oferta-data-importer.php',
+    'class-oferta-data-admin.php',
+    'class-oferta-data-migration.php',
+    'class-tabla-precio-schema.php',
+    'class-oferta-data-schema.php',
+    'class-oferta-docentes-integration.php',
+    'class-oferta-seminarios-integration.php',
+    'class-oferta-data-metabox.php',
+    'class-oferta-consulta-form.php',
+    'class-oferta-seminarios-routes.php',
+    'class-oferta-seminarios-admin-links.php',
+    'class-oferta-rest-api.php',
+    'homepage.php',
+];
 
-// Inicializar
-add_action('init', function() {
+foreach ($required_files as $file) {
+    flacso_safe_require('modules/oferta-academica/includes/' . $file);
+}
+
+add_action('init', static function (): void {
     CPT_Oferta_Academica::init();
     CPT_Tabla_Precio::init();
     Oferta_Taxonomies::init();
@@ -60,8 +63,8 @@ add_action('init', function() {
     Oferta_Seminarios_Routes::init();
     Oferta_Seminarios_Admin_Links::init();
     Oferta_Rest_API::init();
-}, 5); // Prioridad 5 para que se ejecute antes
+}, 5);
 
-add_action('after_setup_theme', function() {
+add_action('after_setup_theme', static function (): void {
     add_theme_support('post-thumbnails', ['oferta-academica']);
 });
