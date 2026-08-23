@@ -26,34 +26,24 @@ class FLACSO_Uruguay_Loader {
         return self::$instance;
     }
 
-    /**
-     * Compatibilidad con el API anterior: carga un módulo físico por nombre.
-     */
+    /** Compatibilidad con el API anterior. */
     public function load_module(string $module_name): bool {
-        return $this->load_module_definition(
-            $module_name,
-            [
-                'path' => $module_name,
-                'depends' => [],
-                'required' => false,
-                'legacy' => false,
-            ],
-            []
-        );
+        return $this->load_module_definition($module_name, [
+            'path' => $module_name,
+            'depends' => [],
+            'optional_depends' => [],
+            'required' => false,
+            'legacy' => false,
+        ], []);
     }
 
-    /**
-     * Carga todas las definiciones resolviendo sus dependencias antes de cada
-     * módulo. El orden del array deja de ser una dependencia implícita.
-     */
     public function load_registered_modules(array $definitions): bool {
         $all_required_loaded = true;
 
         foreach ($definitions as $module_key => $definition) {
-            if (!$this->load_module_definition((string) $module_key, (array) $definition, $definitions)) {
-                if (!empty($definition['required'])) {
-                    $all_required_loaded = false;
-                }
+            if (!$this->load_module_definition((string) $module_key, (array) $definition, $definitions)
+                && !empty($definition['required'])) {
+                $all_required_loaded = false;
             }
         }
 
@@ -68,11 +58,9 @@ class FLACSO_Uruguay_Loader {
         if (isset($this->loaded_modules[$module_key])) {
             return true;
         }
-
         if (isset($this->failed_modules[$module_key])) {
             return false;
         }
-
         if (isset($this->loading_modules[$module_key])) {
             return $this->fail(
                 $module_key,
@@ -82,12 +70,8 @@ class FLACSO_Uruguay_Loader {
         }
 
         $this->loading_modules[$module_key] = true;
-        $dependencies = isset($definition['depends']) && is_array($definition['depends'])
-            ? $definition['depends']
-            : [];
 
-        foreach ($dependencies as $dependency_key) {
-            $dependency_key = (string) $dependency_key;
+        foreach ($this->dependency_list($definition, 'depends') as $dependency_key) {
             if (!isset($definitions[$dependency_key])) {
                 unset($this->loading_modules[$module_key]);
                 return $this->fail(
@@ -107,6 +91,16 @@ class FLACSO_Uruguay_Loader {
             }
         }
 
+        // Una dependencia opcional se intenta cargar para que pueda registrar
+        // hooks/adaptadores, pero nunca bloquea el módulo consumidor.
+        foreach ($this->dependency_list($definition, 'optional_depends') as $dependency_key) {
+            if (!isset($definitions[$dependency_key])) {
+                error_log(sprintf('[FLACSO] Dependencia opcional inexistente "%s" declarada por "%s".', $dependency_key, $module_key));
+                continue;
+            }
+            $this->load_module_definition($dependency_key, (array) $definitions[$dependency_key], $definitions);
+        }
+
         $module_path_key = isset($definition['path']) && is_string($definition['path']) && $definition['path'] !== ''
             ? $definition['path']
             : $module_key;
@@ -118,7 +112,6 @@ class FLACSO_Uruguay_Loader {
             unset($this->loading_modules[$module_key]);
             return $this->fail($module_key, "Módulo no encontrado: {$module_path_key}", $required);
         }
-
         if (!file_exists($init_file)) {
             unset($this->loading_modules[$module_key]);
             return $this->fail($module_key, "No se encontró init.php en: {$module_path}", $required);
@@ -128,7 +121,6 @@ class FLACSO_Uruguay_Loader {
             require_once $init_file;
             unset($this->loading_modules[$module_key]);
             $this->loaded_modules[$module_key] = true;
-
             do_action('flacso_module_loaded', $module_key, $definition);
             return true;
         } catch (Throwable $e) {
@@ -141,12 +133,18 @@ class FLACSO_Uruguay_Loader {
         }
     }
 
+    private function dependency_list(array $definition, string $key): array {
+        if (!isset($definition[$key]) || !is_array($definition[$key])) {
+            return [];
+        }
+        return array_values(array_unique(array_filter(array_map('strval', $definition[$key]))));
+    }
+
     private function fail(string $module_key, string $message, bool $required): bool {
         $this->failed_modules[$module_key] = [
             'message' => $message,
             'required' => $required,
         ];
-
         error_log('[FLACSO] ' . $message);
         do_action('flacso_module_load_failed', $module_key, $message, $required);
         return false;
