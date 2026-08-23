@@ -43,7 +43,7 @@ $required_files = [
 ];
 
 foreach ($required_files as $file) {
-    flacso_safe_require('modules/oferta-academica/includes/' . $file);
+    flacso_require('modules/oferta-academica/includes/' . $file);
 }
 
 add_action('init', static function (): void {
