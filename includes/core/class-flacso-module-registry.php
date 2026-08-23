@@ -15,12 +15,14 @@ final class FLACSO_Uruguay_Module_Registry {
      * Definiciones canónicas de módulos.
      *
      * `path` permite mantener temporalmente carpetas históricas sin convertir
-     * su nombre en parte del dominio actual (por ejemplo posgrados/shortcodes).
+     * su nombre en parte del dominio actual (por ejemplo core/posgrados/shortcodes).
      */
     public static function definitions(): array {
         return [
             'site' => [
-                'path' => 'site',
+                // La clave canónica ya es `site`; la carpeta `core` queda como
+                // detalle físico transitorio hasta completar su movimiento.
+                'path' => 'core',
                 'depends' => [],
                 'required' => true,
                 'legacy' => false,
