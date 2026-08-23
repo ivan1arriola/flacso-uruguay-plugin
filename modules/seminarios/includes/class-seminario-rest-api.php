@@ -188,6 +188,9 @@ class Seminario_REST_API
             'post_content' => (string) $request->get_param('content'),
             'post_status' => $request->get_param('status') ? (string) $request->get_param('status') : 'publish',
         );
+        if ($request->get_param('slug') !== null) {
+            $data['post_name'] = sanitize_title((string) $request->get_param('slug'));
+        }
 
         $post_id = wp_insert_post($data, true);
         if (is_wp_error($post_id)) {
@@ -225,6 +228,9 @@ class Seminario_REST_API
         }
         if ($request->get_param('status') !== null) {
             $data['post_status'] = (string) $request->get_param('status');
+        }
+        if ($request->get_param('slug') !== null) {
+            $data['post_name'] = sanitize_title((string) $request->get_param('slug'));
         }
 
         $updated = wp_update_post($data, true);
