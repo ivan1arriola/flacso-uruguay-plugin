@@ -26,28 +26,48 @@
         object-position: center 42%;
     }
 
-    .flacso-oferta-mosaico__media::after {
+    /*
+     * Capa de contraste a nivel de tarjeta. La versión anterior dependía del
+     * ::after del contenedor de imagen, que queda en un stacking context bajo
+     * el contenido y podía verse demasiado tenue según la foto. Esta capa vive
+     * explícitamente entre la imagen (z-index -2) y el texto.
+     */
+    .flacso-oferta-mosaico__card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
         background:
             linear-gradient(
                 90deg,
-                rgba(7, 25, 55, 0.94) 0%,
-                rgba(7, 25, 55, 0.80) 38%,
-                rgba(7, 25, 55, 0.38) 68%,
-                rgba(7, 25, 55, 0.10) 100%
+                rgba(3, 15, 35, 0.97) 0%,
+                rgba(3, 15, 35, 0.93) 30%,
+                rgba(3, 15, 35, 0.78) 52%,
+                rgba(3, 15, 35, 0.36) 76%,
+                rgba(3, 15, 35, 0.10) 100%
             ),
             linear-gradient(
                 0deg,
-                rgba(7, 25, 55, 0.34) 0%,
-                transparent 55%
+                rgba(3, 15, 35, 0.62) 0%,
+                rgba(3, 15, 35, 0.20) 48%,
+                transparent 76%
             );
     }
 
+    /* Evita sumar una segunda capa distinta y mantiene un único contraste predecible. */
+    .flacso-oferta-mosaico__media::after {
+        background: none;
+    }
+
     .flacso-oferta-mosaico__content {
-        width: min(72%, 310px);
+        position: relative;
+        z-index: 1;
+        width: min(78%, 330px);
         justify-content: flex-end;
         align-items: flex-start;
         padding: 1.15rem 1.2rem;
-        gap: 0.45rem;
+        gap: 0.48rem;
         color: #ffffff !important;
     }
 
@@ -56,8 +76,11 @@
         margin: 0;
         color: #ffffff !important;
         font-size: clamp(1.35rem, 7vw, 1.8rem);
+        font-weight: 850;
         line-height: 1.05;
-        text-shadow: 0 2px 14px rgba(5, 18, 42, 0.68);
+        text-shadow:
+            0 2px 3px rgba(0, 0, 0, 0.92),
+            0 7px 18px rgba(0, 0, 0, 0.52);
     }
 
     .flacso-main-page .flacso-oferta-mosaico__description,
@@ -65,17 +88,20 @@
     .flacso-main-page .flacso-oferta-mosaico__description span,
     .flacso-main-page .flacso-oferta-mosaico__description strong,
     .flacso-main-page .flacso-oferta-mosaico__description em {
-        color: rgba(255, 255, 255, 0.92) !important;
+        color: #ffffff !important;
     }
 
     .flacso-oferta-mosaico__description {
         display: -webkit-box;
         margin: 0;
         overflow: hidden;
-        color: rgba(255, 255, 255, 0.92) !important;
-        font-size: 0.82rem;
-        line-height: 1.35;
-        text-shadow: 0 1px 8px rgba(5, 18, 42, 0.48);
+        color: #ffffff !important;
+        font-size: 0.86rem;
+        font-weight: 600;
+        line-height: 1.38;
+        text-shadow:
+            0 1px 2px rgba(0, 0, 0, 0.96),
+            0 5px 14px rgba(0, 0, 0, 0.55);
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
     }
@@ -91,13 +117,20 @@
         gap: 0.35rem;
         width: max-content;
         max-width: 100%;
-        margin-top: 0.1rem;
+        min-height: 34px;
+        margin-top: 0.08rem;
+        padding: 0.38rem 0.58rem;
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        border-radius: 999px;
+        background: rgba(3, 15, 35, 0.58);
         color: #ffffff !important;
-        font-size: 0.82rem;
-        font-weight: 800;
+        font-size: 0.84rem;
+        font-weight: 850;
         line-height: 1.2;
         white-space: nowrap;
-        text-shadow: 0 1px 8px rgba(5, 18, 42, 0.52);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+        backdrop-filter: blur(2px);
     }
 
     .flacso-homepage-completa {
@@ -137,7 +170,7 @@
     }
 
     .flacso-oferta-mosaico__content {
-        width: 76%;
+        width: 80%;
         padding: 1rem;
     }
 
