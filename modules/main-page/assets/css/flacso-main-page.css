@@ -3753,7 +3753,7 @@
     grid-column: auto;
     grid-row: auto;
     min-width: 0;
-    aspect-ratio: 1;
+    aspect-ratio: 4 / 5;
     border-radius: clamp(0.85rem, 1.4vw, 1.2rem);
 }
 
