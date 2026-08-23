@@ -7,29 +7,73 @@ if (!defined('ABSPATH')) {
 class Flacso_Main_Page_REST_API {
     private const REST_NAMESPACE = 'flacso/v1';
     private const REST_ROUTE = '/main-page/settings';
+
     private const EXTRA_SECTION_LABELS = [
         'sections_visibility' => 'Visibilidad de secciones',
-        'sections_order' => 'Orden del home',
+        'sections_order' => 'Orden de la portada',
         'section_heading_color' => 'Color base de encabezados',
         'section_heading_colors' => 'Colores por sección',
+        'posgrados' => 'Oferta académica',
     ];
+
     private const SECTION_DESCRIPTIONS = [
-        'hero' => 'Encabezado principal, imagen de fondo y botones destacados.',
-        'eventos' => 'Bloque de eventos y parámetros vinculados a su visualización.',
+        'hero' => 'Mensaje principal de la portada, imagen y llamados a la acción.',
+        'festejos' => 'Historias y contenidos destacados vinculados a los 20 años de FLACSO Uruguay.',
+        'eventos' => 'Próximas actividades y eventos institucionales mostrados en la portada.',
         'novedades_destacadas' => 'Selección y despliegue de novedades destacadas.',
         'novedades_busqueda' => 'Buscador y filtros del módulo de novedades.',
-        'novedades' => 'Configuración general del listado de novedades.',
-        'seminarios' => 'Ajustes del bloque de seminarios en la home.',
+        'novedades' => 'Configuración general del listado cronológico de novedades.',
+        'seminarios' => 'Ajustes del bloque de seminarios que se muestra en la portada.',
         'quienes' => 'Contenido institucional del bloque “Quiénes somos”.',
-        'instagram' => 'Datos del bloque social e integración con Instagram.',
-        'posgrados' => 'Tarjetas y textos de la oferta educativa principal.',
-        'mailing' => 'Formulario de suscripción a la lista de difusión institucional conectado con Mailjet.',
-        'congreso' => 'Hero y llamada a la acción del congreso.',
-        'contacto' => 'Bloque de contacto y estilos de fondo.',
-        'sections_visibility' => 'Activa u oculta bloques del home sin borrar su configuración.',
-        'sections_order' => 'Define el orden con el que se renderizan las secciones de la portada.',
+        'instagram' => 'Contenido social e integración con Instagram.',
+        'posgrados' => 'Accesos y textos de Maestrías, Especializaciones, Diplomas y Diplomados. La clave interna se conserva por compatibilidad.',
+        'mailing' => 'Suscripción a la lista de difusión institucional.',
+        'congreso' => 'Bloque histórico y llamada a la acción del Congreso.',
+        'contacto' => 'Bloque final de contacto de la portada.',
+        'sections_visibility' => 'Activa u oculta bloques sin borrar su contenido.',
+        'sections_order' => 'Define el orden real con el que se renderizan las secciones de la portada.',
         'section_heading_color' => 'Color base para los encabezados de las secciones.',
-        'section_heading_colors' => 'Overrides por sección para los colores de encabezado.',
+        'section_heading_colors' => 'Ajustes de color específicos por sección.',
+    ];
+
+    private const SECTION_GROUPS = [
+        'hero' => 'principal',
+        'posgrados' => 'formacion',
+        'seminarios' => 'formacion',
+        'eventos' => 'actualidad',
+        'novedades_destacadas' => 'actualidad',
+        'novedades_busqueda' => 'actualidad',
+        'novedades' => 'actualidad',
+        'festejos' => 'institucional',
+        'quienes' => 'institucional',
+        'instagram' => 'institucional',
+        'congreso' => 'institucional',
+        'mailing' => 'conversion',
+        'contacto' => 'conversion',
+        'sections_visibility' => 'configuracion',
+        'sections_order' => 'configuracion',
+        'section_heading_color' => 'configuracion',
+        'section_heading_colors' => 'configuracion',
+    ];
+
+    private const SECTION_ICONS = [
+        'hero' => 'home',
+        'posgrados' => 'graduation-cap',
+        'seminarios' => 'book-open',
+        'eventos' => 'calendar',
+        'novedades_destacadas' => 'star',
+        'novedades_busqueda' => 'search',
+        'novedades' => 'newspaper',
+        'festejos' => 'sparkles',
+        'quienes' => 'building',
+        'instagram' => 'instagram',
+        'congreso' => 'archive',
+        'mailing' => 'mail',
+        'contacto' => 'message-circle',
+        'sections_visibility' => 'eye',
+        'sections_order' => 'list',
+        'section_heading_color' => 'palette',
+        'section_heading_colors' => 'palette',
     ];
 
     public static function init(): void {
@@ -107,9 +151,11 @@ class Flacso_Main_Page_REST_API {
             'data' => array_merge(
                 [
                     'optionKey' => Flacso_Main_Page_Settings::OPTION_KEY,
+                    'homepageUrl' => home_url('/'),
                     'settings' => $settings,
                     'defaults' => $defaults,
                     'sections' => self::build_sections($settings),
+                    'groups' => self::build_groups(),
                 ],
                 $extra_data
             ),
@@ -118,19 +164,52 @@ class Flacso_Main_Page_REST_API {
 
     private static function build_sections(array $settings): array {
         $sections = [];
+        $visibility = isset($settings['sections_visibility']) && is_array($settings['sections_visibility'])
+            ? $settings['sections_visibility']
+            : [];
+        $order = isset($settings['sections_order']) && is_array($settings['sections_order'])
+            ? array_values($settings['sections_order'])
+            : [];
 
         foreach (array_keys($settings) as $key) {
+            $is_system = 0 === strpos($key, 'section_') || 0 === strpos($key, 'sections_');
+            $position = array_search($key, $order, true);
+
             $sections[] = [
                 'key' => $key,
                 'label' => self::get_section_label($key),
                 'description' => self::SECTION_DESCRIPTIONS[$key] ?? '',
-                'kind' => 0 === strpos($key, 'section_') || 0 === strpos($key, 'sections_')
-                    ? 'system'
-                    : 'content',
+                'kind' => $is_system ? 'system' : 'content',
+                'group' => self::SECTION_GROUPS[$key] ?? ($is_system ? 'configuracion' : 'otros'),
+                'icon' => self::SECTION_ICONS[$key] ?? 'settings',
+                'visible' => $is_system ? true : !isset($visibility[$key]) || (bool) $visibility[$key],
+                'position' => false === $position ? null : (int) $position,
             ];
         }
 
+        usort($sections, static function (array $a, array $b): int {
+            if ($a['kind'] !== $b['kind']) {
+                return $a['kind'] === 'content' ? -1 : 1;
+            }
+            if ($a['position'] !== null || $b['position'] !== null) {
+                return ($a['position'] ?? PHP_INT_MAX) <=> ($b['position'] ?? PHP_INT_MAX);
+            }
+            return strcasecmp((string) $a['label'], (string) $b['label']);
+        });
+
         return $sections;
+    }
+
+    private static function build_groups(): array {
+        return [
+            ['key' => 'principal', 'label' => 'Portada'],
+            ['key' => 'formacion', 'label' => 'Formación'],
+            ['key' => 'actualidad', 'label' => 'Actualidad'],
+            ['key' => 'institucional', 'label' => 'Institucional'],
+            ['key' => 'conversion', 'label' => 'Conversión y contacto'],
+            ['key' => 'otros', 'label' => 'Otros contenidos'],
+            ['key' => 'configuracion', 'label' => 'Configuración avanzada'],
+        ];
     }
 
     private static function get_section_label(string $key): string {
