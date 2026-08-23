@@ -1,9 +1,6 @@
 <?php
 /**
  * Registro declarativo de módulos de FLACSO Uruguay.
- *
- * Este archivo es la única fuente de verdad para dependencias y carácter
- * obligatorio/legacy de los módulos. El orden real lo resuelve el loader.
  */
 
 if (!defined('ABSPATH')) {
@@ -11,18 +8,9 @@ if (!defined('ABSPATH')) {
 }
 
 final class FLACSO_Uruguay_Module_Registry {
-    /**
-     * Definiciones canónicas de módulos.
-     *
-     * `path` permite mantener temporalmente carpetas históricas sin convertir
-     * su nombre en parte del dominio actual (por ejemplo core/posgrados/shortcodes).
-     */
     public static function definitions(): array {
         return [
             'site' => [
-                // La clave canónica ya es `site`; la carpeta `core` queda como
-                // detalle físico transitorio hasta completar su movimiento.
-                'path' => 'core',
                 'depends' => [],
                 'required' => true,
                 'legacy' => false,
@@ -78,7 +66,10 @@ final class FLACSO_Uruguay_Module_Registry {
                 'legacy' => false,
             ],
             'main-page' => [
-                'depends' => ['eventos', 'seminarios', 'convenios', 'oferta-academica', 'mailing'],
+                // La portada funciona aunque falle una integración opcional;
+                // el registry simplemente omite la sección correspondiente.
+                'depends' => [],
+                'optional_depends' => ['eventos', 'seminarios', 'convenios', 'oferta-academica', 'mailing'],
                 'required' => true,
                 'legacy' => false,
             ],
@@ -88,8 +79,6 @@ final class FLACSO_Uruguay_Module_Registry {
                 'legacy' => false,
             ],
 
-            // Compatibilidad histórica. Estos módulos no representan dominios
-            // actuales y deben poder retirarse cuando ya no tengan consumidores.
             'legacy-posgrados' => [
                 'path' => 'posgrados',
                 'depends' => ['docentes', 'oferta-academica'],
