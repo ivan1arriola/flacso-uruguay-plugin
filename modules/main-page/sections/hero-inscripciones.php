@@ -17,6 +17,7 @@ if (!function_exists('flacso_section_hero_render')) {
         if ($background === '') {
             $background = 'https://flacso.edu.uy/wp-content/uploads/2025/11/primer-plano-de-ejecutivos-de-negocios-en-la-oficina-scaled.jpg';
         }
+        $background_style = sprintf("--flacso-hero-image: url('%s');", $background);
 
         $title_plain = trim(wp_strip_all_tags((string) ($settings['title'] ?? ($hero_defaults['title'] ?? ''))));
         if ($title_plain === '') {
@@ -712,7 +713,7 @@ if (!function_exists('flacso_section_hero_render')) {
         </style>
 
         <div class="flacso-hero-<?php echo esc_attr($unique_id); ?>">
-            <section class="flacso-hero-shell" id="hero-<?php echo esc_attr($unique_id); ?>">
+            <section class="flacso-hero-shell" id="hero-<?php echo esc_attr($unique_id); ?>" style="<?php echo esc_attr($background_style); ?>">
                 <div class="flacso-content-shell">
                     <div class="flacso-hero-grid">
                         <header class="flacso-hero-copy">
@@ -755,6 +756,12 @@ if (!function_exists('flacso_section_hero_render')) {
                     </div>
                 </div>
             </section>
+
+            <?php
+            if (function_exists('flacso_section_home_academic_shortcuts_render')) {
+                echo flacso_section_home_academic_shortcuts_render();
+            }
+            ?>
 
             <div class="flacso-hero-fab" data-flacso-hero-fab>
                 <?php if ($bubble_primary_enabled && $bubble_primary_url !== '' && $bubble_primary_label !== '') : ?>

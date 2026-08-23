@@ -173,6 +173,69 @@ if (!function_exists('flacso_section_oferta_educativa_render')) {
     }
 }
 
+if (!function_exists('flacso_section_home_academic_shortcuts_render')) {
+    /**
+     * Accesos breves de la portada alimentados por la misma configuración
+     * de la oferta educativa. Evita duplicar títulos y destinos.
+     */
+    function flacso_section_home_academic_shortcuts_render(): string
+    {
+        $cards = flacso_section_oferta_educativa_get_cards();
+        if (!$cards) {
+            return '';
+        }
+
+        $degree_cards = [];
+        $seminar_card = null;
+        foreach ($cards as $card) {
+            if (stripos($card['title'], 'seminario') !== false) {
+                $seminar_card = $card;
+                continue;
+            }
+            if (count($degree_cards) < 4) {
+                $degree_cards[] = $card;
+            }
+        }
+
+        if (!$degree_cards) {
+            return '';
+        }
+
+        ob_start();
+        ?>
+        <nav class="flacso-academic-shortcuts" aria-label="<?php esc_attr_e('Accesos a la oferta académica', 'flacso-main-page'); ?>">
+            <div class="flacso-content-shell">
+                <div class="flacso-academic-shortcuts__panel">
+                    <div class="flacso-academic-shortcuts__header">
+                        <strong><?php esc_html_e('Encontrá tu formación', 'flacso-main-page'); ?></strong>
+                        <span><?php esc_html_e('Accesos directos a la oferta académica', 'flacso-main-page'); ?></span>
+                    </div>
+                    <div class="flacso-academic-shortcuts__grid">
+                        <?php foreach ($degree_cards as $card) : ?>
+                            <?php $type_label = strcasecmp($card['title'], 'Diplomas') === 0 ? __('Formación', 'flacso-main-page') : __('Posgrado', 'flacso-main-page'); ?>
+                            <a class="flacso-academic-shortcuts__link" href="<?php echo esc_url($card['url']); ?>">
+                                <span><?php echo esc_html($type_label); ?></span>
+                                <strong><?php echo esc_html($card['title']); ?> <span aria-hidden="true">↗</span></strong>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php if ($seminar_card) : ?>
+                        <a class="flacso-academic-shortcuts__seminars" href="<?php echo esc_url($seminar_card['url']); ?>">
+                            <span>
+                                <strong><?php echo esc_html($seminar_card['title']); ?></strong>
+                                <small><?php esc_html_e('Formación intensiva y de corta duración · consultá los próximos inicios', 'flacso-main-page'); ?></small>
+                            </span>
+                            <span aria-hidden="true">→</span>
+                        </a>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </nav>
+        <?php
+        return (string) ob_get_clean();
+    }
+}
+
 if (!function_exists('flacso_section_posgrados_normalize_card')) {
     function flacso_section_posgrados_normalize_card(array $card): array
     {

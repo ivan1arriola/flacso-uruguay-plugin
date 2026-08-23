@@ -4306,3 +4306,479 @@
         transition: none;
     }
 }
+
+/* ==========================================================================
+   Portada alineada con preview.html
+   Mantiene los renderers y datos reales; unifica ritmo, jerarquía y superficies.
+   ========================================================================== */
+
+.flacso-main-page {
+    --flacso-section-max-width: 1180px;
+    --flacso-preview-blue: #163970;
+    --flacso-preview-blue-deep: #102b56;
+    --flacso-preview-blue-soft: #eaf0f8;
+    --flacso-preview-yellow: #fed222;
+    --flacso-preview-green: #248138;
+    --flacso-preview-ink: #152033;
+    --flacso-preview-muted: #66758a;
+    --flacso-preview-line: #dfe5ed;
+    --flacso-preview-wash: #f6f7f9;
+    background: #ffffff;
+    color: var(--flacso-preview-ink);
+}
+
+.flacso-main-page .flacso-home-block:not(.flacso-home-block--hero) {
+    padding: clamp(3.5rem, 6vw, 4.875rem) clamp(0.75rem, 2vw, 1rem) !important;
+}
+
+.flacso-main-page .flacso-home-block--festejos { background: #fbfaf7; }
+.flacso-main-page .flacso-home-block--eventos,
+.flacso-main-page .flacso-home-block--novedades,
+.flacso-main-page .flacso-home-block--instagram,
+.flacso-main-page .flacso-home-block--posgrados,
+.flacso-main-page .flacso-home-block--congreso { background: #ffffff; }
+.flacso-main-page .flacso-home-block--seminarios { background: var(--flacso-preview-blue); }
+.flacso-main-page .flacso-home-block--quienes { background: #f4f7fb; }
+.flacso-main-page .flacso-home-block--mailing { background: var(--flacso-preview-yellow); }
+.flacso-main-page .flacso-home-block--contacto { background: #edf2f8; }
+
+.flacso-main-page :is(
+    .flc-eventos-grid__title,
+    .flacso-festejos-title,
+    .flacso-novedades-header h2,
+    .flacso-oferta-mosaico__header h2,
+    .flacso-quienes-title
+) {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    color: var(--flacso-preview-blue) !important;
+    font-family: "Sora", var(--global-heading-font-family, sans-serif) !important;
+    font-size: clamp(1.9rem, 3.8vw, 3.2rem) !important;
+    font-weight: 700 !important;
+    line-height: 1.02 !important;
+    letter-spacing: -0.045em !important;
+    text-wrap: balance;
+}
+
+.flacso-main-page :is(
+    .flc-eventos-grid__title,
+    .flacso-festejos-title,
+    .flacso-novedades-header h2,
+    .flacso-oferta-mosaico__header h2,
+    .flacso-quienes-title
+)::after {
+    display: none !important;
+    content: none !important;
+}
+
+/* Hero editorial dividido */
+.flacso-main-page .flacso-home-block--hero {
+    padding: clamp(0.75rem, 2vw, 1.75rem) 0 0 !important;
+    background: #ffffff;
+}
+
+.flacso-main-page .flacso-home-block--hero .flacso-hero-shell {
+    width: min(1180px, calc(100% - 32px));
+    min-height: 570px !important;
+    margin-inline: auto;
+    border-radius: 30px;
+    background: var(--flacso-preview-blue) !important;
+    box-shadow: 0 18px 55px rgba(18, 47, 91, 0.1) !important;
+}
+
+.flacso-main-page .flacso-home-block--hero .flacso-hero-shell::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 0 52% !important;
+    z-index: 0 !important;
+    background:
+        linear-gradient(90deg, rgba(22, 57, 112, 0.3), transparent 45%),
+        var(--flacso-hero-image) center / cover no-repeat !important;
+}
+
+.flacso-main-page .flacso-home-block--hero .flacso-hero-shell::after {
+    display: none !important;
+    content: none !important;
+}
+
+.flacso-main-page .flacso-home-block--hero .flacso-hero-shell > .flacso-content-shell {
+    width: 100%;
+    max-width: none;
+    padding: 0 clamp(2rem, 4.6vw, 3.4rem);
+}
+
+.flacso-main-page .flacso-home-block--hero .flacso-hero-grid {
+    position: relative;
+    z-index: 1;
+    grid-template-columns: minmax(0, 1.03fr) minmax(360px, 0.97fr) !important;
+    gap: clamp(2rem, 4vw, 4rem) !important;
+    min-height: 570px;
+    padding: 0 !important;
+}
+
+.flacso-main-page .flacso-home-block--hero .flacso-hero-copy {
+    max-width: 42rem !important;
+    padding-block: clamp(2.75rem, 5vw, 3.75rem);
+}
+
+.flacso-main-page .flacso-home-block--hero .flacso-hero-kicker {
+    margin: 0 0 0.9rem !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: #c8d9ee !important;
+    font-size: 0.74rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.13em !important;
+    text-transform: uppercase;
+    backdrop-filter: none !important;
+}
+
+.flacso-main-page .flacso-home-block--hero .flacso-hero-title {
+    max-width: 13ch !important;
+    margin: 0 !important;
+    font-size: clamp(2.8rem, 4.8vw, 4.8rem) !important;
+    font-weight: 700 !important;
+    line-height: 0.94 !important;
+    letter-spacing: -0.06em !important;
+}
+
+.flacso-main-page .flacso-home-block--hero .flacso-hero-subtitle {
+    max-width: 36rem !important;
+    margin-top: 1.35rem !important;
+    color: #dae6f4 !important;
+    font-size: clamp(1rem, 1.35vw, 1.12rem) !important;
+    line-height: 1.65 !important;
+}
+
+.flacso-main-page .flacso-home-block--hero .flacso-hero-buttons {
+    margin-top: 1.75rem !important;
+    gap: 0.75rem !important;
+}
+
+.flacso-main-page .flacso-home-block--hero .hero-btn {
+    min-height: 46px !important;
+    padding: 0.78rem 1.05rem !important;
+    border-radius: 12px !important;
+    font-size: 0.84rem !important;
+}
+
+.flacso-main-page .flacso-home-block--hero .flacso-hero-visual {
+    display: block !important;
+    min-height: 570px;
+}
+
+.flacso-main-page .flacso-home-block--hero .flacso-hero-globe-3d,
+.flacso-main-page .flacso-home-block--hero .flacso-hero-fab {
+    display: none !important;
+}
+
+/* Accesos académicos alimentados por la configuración de la oferta */
+.flacso-academic-shortcuts {
+    padding: 0 0 clamp(2rem, 4vw, 2.875rem);
+    background: #ffffff;
+}
+
+.flacso-academic-shortcuts .flacso-content-shell {
+    padding-inline: clamp(0.75rem, 2vw, 1rem);
+}
+
+.flacso-academic-shortcuts__panel {
+    overflow: hidden;
+    border: 1px solid var(--flacso-preview-line);
+    border-radius: 24px;
+    background: #ffffff;
+}
+
+.flacso-academic-shortcuts__header {
+    min-height: 62px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--flacso-preview-line);
+}
+
+.flacso-academic-shortcuts__header strong { color: var(--flacso-preview-blue); }
+.flacso-academic-shortcuts__header span { color: var(--flacso-preview-muted); font-size: 0.82rem; }
+
+.flacso-academic-shortcuts__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.flacso-academic-shortcuts__link {
+    min-height: 118px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1.25rem;
+    border-right: 1px solid var(--flacso-preview-line);
+    color: inherit;
+    text-decoration: none;
+    transition: background 180ms ease;
+}
+
+.flacso-academic-shortcuts__link:last-child { border-right: 0; }
+.flacso-academic-shortcuts__link:hover,
+.flacso-academic-shortcuts__link:focus-visible { background: var(--flacso-preview-blue-soft); }
+.flacso-academic-shortcuts__link > span { color: #8190a3; font-size: 0.72rem; font-weight: 800; }
+.flacso-academic-shortcuts__link strong { color: var(--flacso-preview-blue); font-family: "Sora", sans-serif; font-size: 1.05rem; }
+
+.flacso-academic-shortcuts__seminars {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.15rem;
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--flacso-preview-line);
+    background: #f7f9fc;
+    color: var(--flacso-preview-blue);
+    text-decoration: none;
+}
+
+.flacso-academic-shortcuts__seminars > span:first-child { display: grid; gap: 0.15rem; }
+.flacso-academic-shortcuts__seminars small { color: var(--flacso-preview-muted); font-size: 0.8rem; }
+
+/* Festejos como selección editorial visual */
+.flacso-main-page .flacso-home-block--festejos .flacso-festejos-section {
+    padding: 0 !important;
+    background: transparent;
+}
+
+.flacso-main-page .flacso-festejos-header {
+    margin-bottom: 1.75rem !important;
+}
+
+.flacso-main-page .flacso-festejos-description {
+    max-width: 35rem;
+    color: var(--flacso-preview-muted);
+    font-size: 1rem;
+    line-height: 1.65;
+}
+
+.flacso-main-page .flacso-festejos-carousel-wrapper {
+    margin: 0;
+    padding: 0;
+}
+
+.flacso-main-page .flacso-festejos-carousel {
+    display: grid;
+    grid-template-columns: minmax(340px, 1.35fr);
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(230px, 0.75fr);
+    gap: 0.875rem;
+    padding: 0;
+}
+
+.flacso-main-page .flacso-festejos-slide {
+    width: auto;
+    min-width: 0;
+    flex: none;
+}
+
+.flacso-main-page .flacso-festejos-card {
+    position: relative;
+    min-height: 330px;
+    border: 0;
+    border-radius: 20px;
+    background: #dfe5ed;
+    color: #ffffff;
+    box-shadow: none;
+}
+
+.flacso-main-page .flacso-festejos-card:hover { transform: translateY(-3px); box-shadow: 0 16px 34px rgba(18, 47, 91, 0.14); }
+.flacso-main-page .flacso-festejos-media { position: absolute; inset: 0; aspect-ratio: auto; }
+.flacso-main-page .flacso-festejos-media::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 38%, rgba(10, 30, 58, 0.88)); }
+.flacso-main-page .flacso-festejos-content { position: absolute; inset: auto 0 0; z-index: 2; padding: 1.1rem; }
+.flacso-main-page .flacso-festejos-card-title { margin: 0; color: #ffffff; font-family: "Sora", sans-serif; font-size: 1.08rem; line-height: 1.2; }
+.flacso-main-page .flacso-festejos-slide:first-child .flacso-festejos-card-title { font-size: 1.55rem; }
+.flacso-main-page .flacso-festejos-action { margin-top: 0.7rem; color: #dce8f5; font-size: 0.78rem; }
+.flacso-main-page .flacso-festejos-badge { color: #ffffff; font-size: 0.68rem; }
+.flacso-main-page .flacso-festejos-play-overlay { width: 46px; height: 46px; font-size: 1.35rem; }
+
+/* Eventos: superficies más planas y lectura de agenda */
+.flacso-main-page .flacso-home-block--eventos { padding-block: clamp(3.5rem, 6vw, 4.875rem) !important; }
+.flacso-main-page .flc-eventos-grid { overflow: visible !important; background: transparent !important; }
+.flacso-main-page .flc-eventos-grid::before,
+.flacso-main-page .flc-eventos-grid::after { display: none !important; content: none !important; }
+.flacso-main-page .flc-eventos-grid__header { margin-bottom: 1.75rem !important; }
+.flacso-main-page :is(.flc-eventos-hero-card, .evento-card) {
+    border: 1px solid var(--flacso-preview-line) !important;
+    border-radius: 18px !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+}
+.flacso-main-page :is(.flc-eventos-hero-card, .evento-card):hover { box-shadow: 0 14px 30px rgba(18, 47, 91, 0.1) !important; transform: translateY(-2px); }
+.flacso-main-page :is(.status-pill, .evento-card__status-pill, .hora-pill, .duration-pill) { border-radius: 999px !important; }
+
+/* Seminarios: bloque propio en azul y afiches 4:5 */
+.flacso-main-page .flacso-home-block--seminarios .flacso-seminarios-proximos {
+    padding: 0 !important;
+    overflow: visible !important;
+    background: transparent !important;
+}
+
+.flacso-main-page .flacso-home-block--seminarios .flacso-seminarios-proximos::before { display: none !important; content: none !important; }
+.flacso-main-page .flacso-home-block--seminarios .flacso-seminarios-proximos .text-center {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 0.72fr);
+    align-items: end;
+    gap: 2rem;
+    margin-bottom: 1.75rem !important;
+    text-align: left !important;
+}
+.flacso-main-page .flacso-home-block--seminarios .flacso-seminarios-proximos .h2 {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    color: #ffffff !important;
+    font-family: "Sora", sans-serif !important;
+    font-size: clamp(1.9rem, 3.8vw, 3.2rem) !important;
+    line-height: 1.02 !important;
+    letter-spacing: -0.045em !important;
+    text-align: left !important;
+}
+.flacso-main-page .flacso-home-block--seminarios .flacso-seminarios-proximos .h2::after { display: none !important; content: none !important; }
+.flacso-main-page .flacso-home-block--seminarios .flacso-seminarios-proximos .lead { margin: 0 !important; color: #c9d8e9 !important; text-align: left; }
+.flacso-main-page .flacso-home-block--seminarios .flacso-seminarios-proximos .row { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem !important; }
+.flacso-main-page .flacso-home-block--seminarios .flacso-seminarios-proximos .col { width: auto !important; max-width: none !important; padding: 0 !important; }
+.flacso-main-page .flacso-home-block--seminarios .seminario-card {
+    border: 0 !important;
+    border-radius: 20px !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+}
+.flacso-main-page .flacso-home-block--seminarios .seminario-card > div:first-child { height: auto !important; aspect-ratio: 4 / 5 !important; background: #dfe5ed !important; }
+.flacso-main-page .flacso-home-block--seminarios .seminario-card > div:first-child img { opacity: 1 !important; object-fit: cover !important; }
+.flacso-main-page .flacso-home-block--seminarios .seminario-card > div:last-child { padding: 1.15rem !important; }
+.flacso-main-page .flacso-home-block--seminarios .seminario-card h3 { color: var(--flacso-preview-blue) !important; font-family: "Sora", sans-serif; font-size: 1.08rem !important; line-height: 1.26 !important; }
+.flacso-main-page .flacso-home-block--seminarios .seminario-card a { border-radius: 12px !important; background: var(--flacso-preview-blue) !important; }
+
+/* Novedades: retícula editorial 4:5, sin volumen excesivo */
+.flacso-main-page .flacso-home-block--novedades .flacso-novedades-header { margin-bottom: 1.75rem; }
+.flacso-main-page .flacso-home-block--novedades .novedades-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.875rem; }
+.flacso-main-page .flacso-home-block--novedades .novedades-grid .card {
+    border: 1px solid var(--flacso-preview-line);
+    border-radius: 18px;
+    box-shadow: none;
+}
+.flacso-main-page .flacso-home-block--novedades .novedades-grid .card:hover { box-shadow: 0 14px 30px rgba(18, 47, 91, 0.1); transform: translateY(-2px); }
+.flacso-main-page .flacso-home-block--novedades .novedades-grid .card-img-container { aspect-ratio: 4 / 5; }
+.flacso-main-page .flacso-home-block--novedades .novedades-grid .card-img-container img { object-fit: cover; }
+.flacso-main-page .flacso-home-block--novedades .novedades-grid .card-body { padding: 0.9rem; }
+.flacso-main-page .flacso-home-block--novedades .novedades-grid .card-text { display: none; }
+.flacso-main-page .flacso-home-block--novedades .novedades-grid footer { border: 0; padding-top: 0; font-size: 0.72rem; order: -1; }
+.flacso-main-page .flacso-home-block--novedades .novedades-grid footer::before { display: none; }
+
+/* Institucional: composición abierta, sin tarjeta pesada */
+.flacso-main-page .flacso-home-block--quienes .flacso-quienes-card {
+    grid-template-columns: minmax(220px, 0.72fr) minmax(0, 1.28fr);
+    gap: clamp(2.5rem, 5vw, 4rem);
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+.flacso-main-page .flacso-home-block--quienes .flacso-quienes-card::after,
+.flacso-main-page .flacso-home-block--quienes .flacso-quienes-brand::before,
+.flacso-main-page .flacso-home-block--quienes .flacso-quienes-brand::after,
+.flacso-main-page .flacso-home-block--quienes .flacso-quienes-brand__orb { display: none; content: none; }
+.flacso-main-page .flacso-home-block--quienes .flacso-quienes-brand {
+    align-items: flex-start;
+    padding: 0;
+    background: transparent;
+    color: var(--flacso-preview-blue);
+    text-align: left;
+}
+.flacso-main-page .flacso-home-block--quienes .flacso-quienes-brand__logo { width: min(190px, 100%); padding: 1.25rem; border-color: rgba(22, 57, 112, 0.13); background: #ffffff; box-shadow: none; }
+.flacso-main-page .flacso-home-block--quienes .flacso-quienes-brand__name { color: var(--flacso-preview-muted); text-align: left; }
+.flacso-main-page .flacso-home-block--quienes .flacso-quienes-copy { padding: 0; }
+.flacso-main-page .flacso-home-block--quienes .flacso-quienes-text { color: #56667a; }
+.flacso-main-page .flacso-home-block--quienes .flacso-quienes-cta { border: 0; border-radius: 0; padding: 0.3rem 0; background: transparent; color: var(--flacso-preview-blue); box-shadow: none; }
+.flacso-main-page .flacso-home-block--quienes .flacso-quienes-cta:hover { background: transparent; color: var(--flacso-preview-green); box-shadow: none; transform: none; }
+
+/* Oferta educativa como listado compacto y escaneable */
+.flacso-main-page .flacso-home-block--posgrados .flacso-oferta-mosaico { padding: 0; }
+.flacso-main-page .flacso-home-block--posgrados .flacso-oferta-mosaico__header { display: grid; grid-template-columns: minmax(260px, 0.7fr) minmax(0, 1.3fr); align-items: end; gap: 2rem; margin-bottom: 1.75rem; }
+.flacso-main-page .flacso-home-block--posgrados .flacso-oferta-mosaico__intro { margin: 0; color: var(--flacso-preview-muted); }
+.flacso-main-page .flacso-home-block--posgrados .flacso-oferta-mosaico__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.flacso-main-page .flacso-home-block--posgrados .flacso-oferta-mosaico__card,
+.flacso-main-page .flacso-home-block--posgrados .flacso-oferta-mosaico__card:nth-child(2n),
+.flacso-main-page .flacso-home-block--posgrados .flacso-oferta-mosaico__card--featured,
+.flacso-main-page .flacso-home-block--posgrados .flacso-oferta-mosaico__card--wide {
+    grid-column: auto !important;
+    grid-row: auto !important;
+    grid-template-columns: 120px minmax(0, 1fr);
+    min-height: 118px;
+    border: 1px solid var(--flacso-preview-line);
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: none;
+}
+.flacso-main-page .flacso-home-block--posgrados .flacso-oferta-mosaico__card:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(18, 47, 91, 0.09); }
+.flacso-main-page .flacso-home-block--posgrados .flacso-oferta-mosaico__media { min-height: 100%; aspect-ratio: auto; }
+.flacso-main-page .flacso-home-block--posgrados .flacso-oferta-mosaico__media::after { display: none; }
+.flacso-main-page .flacso-home-block--posgrados .flacso-oferta-mosaico__media img { object-fit: cover; }
+.flacso-main-page .flacso-home-block--posgrados .flacso-oferta-mosaico__content { padding: 1rem; }
+.flacso-main-page .flacso-home-block--posgrados .flacso-oferta-mosaico__content h3,
+.flacso-main-page .flacso-home-block--posgrados .flacso-oferta-mosaico__card:not(.flacso-oferta-mosaico__card--featured) .flacso-oferta-mosaico__content h3 { color: var(--flacso-preview-blue); font-size: 1.08rem; }
+.flacso-main-page .flacso-home-block--posgrados .flacso-oferta-mosaico__description { color: var(--flacso-preview-muted); font-size: 0.78rem; line-height: 1.45; }
+.flacso-main-page .flacso-home-block--posgrados .flacso-oferta-mosaico__link { margin-top: 0.45rem; color: var(--flacso-preview-blue); font-size: 0.78rem; }
+
+/* Cierre con el mismo ritmo del preview */
+.flacso-main-page .flacso-home-block--congreso,
+.flacso-main-page .flacso-home-block--contacto { padding-block: clamp(3.5rem, 6vw, 4.875rem) !important; }
+
+@media (max-width: 980px) {
+    .flacso-main-page .flacso-home-block--hero .flacso-hero-grid { grid-template-columns: 1fr !important; }
+    .flacso-main-page .flacso-home-block--hero .flacso-hero-shell::before { inset: 56% 0 0 !important; background: var(--flacso-hero-image) center / cover no-repeat !important; }
+    .flacso-main-page .flacso-home-block--hero .flacso-hero-copy { padding-bottom: 1.5rem; }
+    .flacso-main-page .flacso-home-block--hero .flacso-hero-visual { min-height: 300px; }
+    .flacso-academic-shortcuts__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .flacso-academic-shortcuts__link:nth-child(2) { border-right: 0; }
+    .flacso-academic-shortcuts__link:nth-child(-n + 2) { border-bottom: 1px solid var(--flacso-preview-line); }
+    .flacso-main-page .flacso-home-block--seminarios .flacso-seminarios-proximos .row { display: flex !important; flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x mandatory; }
+    .flacso-main-page .flacso-home-block--seminarios .flacso-seminarios-proximos .col { flex: 0 0 43% !important; scroll-snap-align: start; }
+    .flacso-main-page .flacso-home-block--novedades .novedades-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .flacso-main-page .flacso-home-block--posgrados .flacso-oferta-mosaico__grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 680px) {
+    .flacso-main-page .flacso-home-block:not(.flacso-home-block--hero) { padding: 3.5rem 0.75rem !important; }
+    .flacso-main-page .flacso-home-block--hero { padding-top: 0.75rem !important; }
+    .flacso-main-page .flacso-home-block--hero .flacso-hero-shell { width: calc(100% - 24px); min-height: 0 !important; border-radius: 20px; }
+    .flacso-main-page .flacso-home-block--hero .flacso-hero-shell > .flacso-content-shell { padding-inline: 1.5rem; }
+    .flacso-main-page .flacso-home-block--hero .flacso-hero-grid { min-height: 0; }
+    .flacso-main-page .flacso-home-block--hero .flacso-hero-copy { margin: 0 !important; padding: 2.2rem 0 1.4rem; text-align: left !important; }
+    .flacso-main-page .flacso-home-block--hero .flacso-hero-title { max-width: 14ch !important; margin: 0 !important; font-size: clamp(2.45rem, 12vw, 3.6rem) !important; }
+    .flacso-main-page .flacso-home-block--hero .flacso-hero-subtitle { margin-inline: 0 !important; }
+    .flacso-main-page .flacso-home-block--hero .flacso-hero-buttons { align-items: stretch !important; }
+    .flacso-main-page .flacso-home-block--hero .hero-btn { width: 100% !important; max-width: none !important; }
+    .flacso-main-page .flacso-home-block--hero .flacso-hero-visual { min-height: 280px; }
+    .flacso-academic-shortcuts { padding-top: 0.75rem; }
+    .flacso-academic-shortcuts__header { align-items: flex-start; flex-direction: column; gap: 0.2rem; }
+    .flacso-academic-shortcuts__link { min-height: 105px; padding: 0.95rem; }
+    .flacso-academic-shortcuts__link strong { font-size: 0.9rem; }
+    .flacso-academic-shortcuts__seminars { align-items: flex-start; }
+    .flacso-main-page .flacso-festejos-carousel { display: flex; gap: 0.875rem; }
+    .flacso-main-page .flacso-festejos-slide,
+    .flacso-main-page .flacso-festejos-slide:first-child { flex: 0 0 82%; }
+    .flacso-main-page .flacso-festejos-card { min-height: 0; aspect-ratio: 4 / 5; }
+    .flacso-main-page .flacso-home-block--seminarios .flacso-seminarios-proximos .text-center { grid-template-columns: 1fr; gap: 0.75rem; }
+    .flacso-main-page .flacso-home-block--seminarios .flacso-seminarios-proximos .col { flex-basis: 82% !important; }
+    .flacso-main-page .flacso-home-block--novedades .novedades-grid { display: flex; grid-template-columns: none; overflow-x: auto; scroll-snap-type: x mandatory; }
+    .flacso-main-page .flacso-home-block--novedades .novedades-grid > .novedad-item { flex: 0 0 72%; }
+    .flacso-main-page .flacso-home-block--quienes .flacso-quienes-card { grid-template-columns: 1fr; gap: 1.75rem; }
+    .flacso-main-page .flacso-home-block--quienes .flacso-quienes-brand { display: grid; grid-template-columns: 92px minmax(0, 1fr); align-items: center; gap: 1rem; }
+    .flacso-main-page .flacso-home-block--quienes .flacso-quienes-brand__logo { width: 92px; grid-row: auto; padding: 0.65rem; }
+    .flacso-main-page .flacso-home-block--posgrados .flacso-oferta-mosaico__header { grid-template-columns: 1fr; gap: 0.85rem; }
+    .flacso-main-page .flacso-home-block--posgrados .flacso-oferta-mosaico__card,
+    .flacso-main-page .flacso-home-block--posgrados .flacso-oferta-mosaico__card:nth-child(2n),
+    .flacso-main-page .flacso-home-block--posgrados .flacso-oferta-mosaico__card--featured,
+    .flacso-main-page .flacso-home-block--posgrados .flacso-oferta-mosaico__card--wide { grid-template-columns: 88px minmax(0, 1fr); min-height: 112px; }
+}

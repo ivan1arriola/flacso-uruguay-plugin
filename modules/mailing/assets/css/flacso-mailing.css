@@ -401,3 +401,83 @@
         width: 100%;
     }
 }
+
+/* Portada: variante clara alineada con preview.html */
+.flacso-main-page .flacso-home-block--mailing .flacso-mailing-home-section {
+    padding: 0;
+}
+
+.flacso-main-page .flacso-home-block--mailing .flacso-mailing-home-card {
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #17345e;
+    box-shadow: none;
+}
+
+.flacso-main-page .flacso-home-block--mailing .flacso-mailing-home-card::before,
+.flacso-main-page .flacso-home-block--mailing .flacso-mailing-home-card::after {
+    display: none;
+    content: none;
+}
+
+.flacso-main-page .flacso-home-block--mailing .flacso-mailing-home-copy {
+    gap: 0.75rem;
+}
+
+.flacso-main-page .flacso-home-block--mailing .flacso-mailing-home-eyebrow {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #17345e;
+    font-size: 0.74rem;
+    letter-spacing: 0.13em;
+    backdrop-filter: none;
+}
+
+.flacso-main-page .flacso-home-block--mailing .flacso-mailing-home-eyebrow::before {
+    background: #248138;
+    box-shadow: none;
+}
+
+.flacso-main-page .flacso-home-block--mailing .flacso-mailing-home-title {
+    max-width: 17ch;
+    color: #17345e !important;
+    font-size: clamp(2rem, 3.8vw, 3.2rem);
+    font-weight: 700;
+    line-height: 1.04;
+    letter-spacing: -0.045em;
+}
+
+.flacso-main-page .flacso-home-block--mailing .flacso-mailing-home-subtitle,
+.flacso-main-page .flacso-home-block--mailing .flacso-mailing-home-note {
+    color: #3c4b5f;
+}
+
+.flacso-main-page .flacso-home-block--mailing .flacso-mailing-home-points li {
+    border-color: rgba(23, 52, 94, 0.12);
+    background: rgba(255, 255, 255, 0.42);
+    color: #17345e;
+    box-shadow: none;
+}
+
+.flacso-main-page .flacso-home-block--mailing .flacso-mailing-home-points li::before {
+    background: #248138;
+}
+
+.flacso-main-page .flacso-home-block--mailing .flacso-mailing-form-shell {
+    border-color: rgba(23, 52, 94, 0.12);
+    border-radius: 20px;
+    background: #ffffff;
+    box-shadow: 0 16px 36px rgba(23, 52, 94, 0.12);
+}
+
+@media (max-width: 767px) {
+    .flacso-main-page .flacso-home-block--mailing .flacso-mailing-home-card {
+        padding: 0;
+        border-radius: 0;
+    }
+}
