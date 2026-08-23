@@ -2,7 +2,7 @@
 /**
  * Main Page Module
  * Gestiona la landing page, secciones y bloques de la página principal
- * 
+ *
  * @package FLACSO_Uruguay
  * @subpackage Main_Page
  */
@@ -15,6 +15,31 @@ if (!defined('ABSPATH')) {
 define('FLACSO_MAIN_PAGE_MODULE_PATH', __DIR__ . '/');
 define('FLACSO_MAIN_PAGE_MODULE_URL', plugin_dir_url(__FILE__));
 define('FLACSO_MAIN_PAGE_VERSION', FLACSO_URUGUAY_VERSION); // Usar la versión del plugin principal
+
+/**
+ * La portada es dueña de la geometría de sus tarjetas de novedades.
+ * Se carga después de los estilos base del módulo y usa filemtime para evitar
+ * que una versión cacheada mantenga la relación de aspecto anterior.
+ */
+function flacso_main_page_enqueue_novedades_45_style(): void {
+    if (is_admin() || !is_front_page()) {
+        return;
+    }
+
+    $relative_path = 'assets/css/flacso-novedades-45.css';
+    $absolute_path = FLACSO_MAIN_PAGE_MODULE_PATH . $relative_path;
+    $version = file_exists($absolute_path)
+        ? (string) filemtime($absolute_path)
+        : (string) FLACSO_MAIN_PAGE_VERSION;
+
+    wp_enqueue_style(
+        'flacso-main-page-novedades-45',
+        FLACSO_MAIN_PAGE_MODULE_URL . $relative_path,
+        array('flacso-main-page-base'),
+        $version
+    );
+}
+add_action('wp_enqueue_scripts', 'flacso_main_page_enqueue_novedades_45_style', 65);
 
 // Cargar clases principales (siempre necesarias)
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-settings.php';
