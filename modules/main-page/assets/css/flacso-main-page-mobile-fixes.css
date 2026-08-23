@@ -27,10 +27,9 @@
     }
 
     /*
-     * Capa de contraste a nivel de tarjeta. La versión anterior dependía del
-     * ::after del contenedor de imagen, que queda en un stacking context bajo
-     * el contenido y podía verse demasiado tenue según la foto. Esta capa vive
-     * explícitamente entre la imagen (z-index -2) y el texto.
+     * Contraste localizado: oscurece principalmente la zona izquierda, donde
+     * vive el texto, y deja visible la mayor parte de la fotografía. Evita que
+     * el overlay convierta toda la tarjeta en una superficie casi negra.
      */
     .flacso-oferta-mosaico__card::before {
         content: "";
@@ -41,17 +40,17 @@
         background:
             linear-gradient(
                 90deg,
-                rgba(3, 15, 35, 0.97) 0%,
-                rgba(3, 15, 35, 0.93) 30%,
-                rgba(3, 15, 35, 0.78) 52%,
-                rgba(3, 15, 35, 0.36) 76%,
-                rgba(3, 15, 35, 0.10) 100%
+                rgba(3, 15, 35, 0.78) 0%,
+                rgba(3, 15, 35, 0.62) 32%,
+                rgba(3, 15, 35, 0.42) 55%,
+                rgba(3, 15, 35, 0.18) 78%,
+                rgba(3, 15, 35, 0.02) 100%
             ),
             linear-gradient(
                 0deg,
-                rgba(3, 15, 35, 0.62) 0%,
-                rgba(3, 15, 35, 0.20) 48%,
-                transparent 76%
+                rgba(3, 15, 35, 0.28) 0%,
+                rgba(3, 15, 35, 0.08) 45%,
+                transparent 72%
             );
     }
 
@@ -63,7 +62,7 @@
     .flacso-oferta-mosaico__content {
         position: relative;
         z-index: 1;
-        width: min(78%, 330px);
+        width: min(76%, 325px);
         justify-content: flex-end;
         align-items: flex-start;
         padding: 1.15rem 1.2rem;
@@ -78,9 +77,7 @@
         font-size: clamp(1.35rem, 7vw, 1.8rem);
         font-weight: 850;
         line-height: 1.05;
-        text-shadow:
-            0 2px 3px rgba(0, 0, 0, 0.92),
-            0 7px 18px rgba(0, 0, 0, 0.52);
+        text-shadow: 0 2px 9px rgba(0, 0, 0, 0.58);
     }
 
     .flacso-main-page .flacso-oferta-mosaico__description,
@@ -88,20 +85,18 @@
     .flacso-main-page .flacso-oferta-mosaico__description span,
     .flacso-main-page .flacso-oferta-mosaico__description strong,
     .flacso-main-page .flacso-oferta-mosaico__description em {
-        color: #ffffff !important;
+        color: rgba(255, 255, 255, 0.94) !important;
     }
 
     .flacso-oferta-mosaico__description {
         display: -webkit-box;
         margin: 0;
         overflow: hidden;
-        color: #ffffff !important;
+        color: rgba(255, 255, 255, 0.94) !important;
         font-size: 0.86rem;
         font-weight: 600;
         line-height: 1.38;
-        text-shadow:
-            0 1px 2px rgba(0, 0, 0, 0.96),
-            0 5px 14px rgba(0, 0, 0, 0.55);
+        text-shadow: 0 1px 7px rgba(0, 0, 0, 0.48);
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
     }
@@ -117,20 +112,20 @@
         gap: 0.35rem;
         width: max-content;
         max-width: 100%;
-        min-height: 34px;
+        min-height: 32px;
         margin-top: 0.08rem;
-        padding: 0.38rem 0.58rem;
-        border: 1px solid rgba(255, 255, 255, 0.24);
+        padding: 0.28rem 0.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.28);
         border-radius: 999px;
-        background: rgba(3, 15, 35, 0.58);
+        background: rgba(3, 15, 35, 0.12);
         color: #ffffff !important;
         font-size: 0.84rem;
         font-weight: 850;
         line-height: 1.2;
         white-space: nowrap;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
-        backdrop-filter: blur(2px);
+        text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+        box-shadow: none;
+        backdrop-filter: none;
     }
 
     .flacso-homepage-completa {
@@ -170,7 +165,7 @@
     }
 
     .flacso-oferta-mosaico__content {
-        width: 80%;
+        width: 78%;
         padding: 1rem;
     }
 
