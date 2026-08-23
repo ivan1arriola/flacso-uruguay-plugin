@@ -2,8 +2,8 @@
 /**
  * Main Page Module
  *
- * Compone la portada y expone su configuración. Los datos de cada dominio
- * permanecen en sus módulos; main-page sólo coordina presentación/orden.
+ * Compone la portada y expone su configuración. Los datos e integraciones de
+ * cada dominio permanecen en sus módulos.
  *
  * @package FLACSO_Uruguay
  * @subpackage Main_Page
@@ -33,11 +33,6 @@ require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-mig
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-rest-api.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/flacso-raw-content-api.php';
 
-// Integraciones históricas pendientes de extraer físicamente de main-page.
-require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-instagram-api.php';
-require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-telegram-manager.php';
-require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/flacso-consultas.php';
-
 $is_admin_context = is_admin()
     || (function_exists('wp_doing_ajax') && wp_doing_ajax())
     || (defined('REST_REQUEST') && REST_REQUEST);
@@ -47,8 +42,6 @@ if ($is_admin_context) {
     require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-admin.php';
     require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-ajax-settings.php';
     require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-ajax-handler.php';
-    require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-seminarios.php';
-    require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-instagram-post-importer.php';
 }
 
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/blocks/listar-paginas/block.php';
@@ -67,8 +60,6 @@ add_action('init', static function (): void {
         'Flacso_Main_Page_Unified_Settings',
         'Flacso_AJAX_Settings',
         'Flacso_AJAX_Handler',
-        'Flacso_Main_Page_Seminarios',
-        'Flacso_Instagram_Post_Importer',
         'Flacso_Main_Page_Migrations',
     ] as $class_name) {
         if (class_exists($class_name) && method_exists($class_name, 'init')) {
@@ -76,9 +67,3 @@ add_action('init', static function (): void {
         }
     }
 });
-
-add_action('plugins_loaded', static function (): void {
-    if (class_exists('FLACSO_Telegram_Manager')) {
-        FLACSO_Telegram_Manager::get_instance();
-    }
-}, 20);
