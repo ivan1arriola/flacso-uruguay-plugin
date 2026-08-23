@@ -1,14 +1,13 @@
 <?php
 /**
- * Modulo de convenios.
- *
- * @package FLACSO_Uruguay
+ * Módulo de Convenios.
  */
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-require_once __DIR__ . '/includes/class-flacso-convenios.php';
+flacso_require('modules/convenios/includes/class-flacso-convenios.php');
+flacso_require('modules/convenios/includes/main-page.php');
 
 Flacso_Convenios::init();
