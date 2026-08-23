@@ -1,0 +1,48 @@
+/*
+ * Novedades destacadas: la pieza visual de cada tarjeta se presenta en 4:5.
+ * Esta geometría pertenece al componente del plugin, no al normalizador global
+ * de imágenes destacadas del tema.
+ */
+.flacso-novedades-3d__image-link {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 5 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: hidden;
+    background: #eef2f7;
+}
+
+.flacso-novedades-3d__image-link > .flacso-novedades-3d__image,
+.flacso-novedades-3d__image-link > picture > .flacso-novedades-3d__image {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none;
+    object-fit: cover !important;
+    object-position: center !important;
+}
+
+/*
+ * Compatibilidad durante despliegues escalonados: versiones anteriores del
+ * tema podían envolver esta imagen con .flacso-featured-image-45. El wrapper
+ * no debe crear una segunda relación de aspecto dentro de la tarjeta.
+ */
+.flacso-novedades-3d__image-link > .flacso-featured-image-45 {
+    width: 100%;
+    height: 100% !important;
+    aspect-ratio: auto !important;
+    background: #eef2f7;
+}
+
+.flacso-novedades-3d__image-link > .flacso-featured-image-45::before,
+.flacso-novedades-3d__image-link > .flacso-featured-image-45::after {
+    content: none;
+}
+
+.flacso-novedades-3d__image-link > .flacso-featured-image-45 > .flacso-novedades-3d__image {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+}
