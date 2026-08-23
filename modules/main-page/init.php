@@ -1,8 +1,10 @@
 <?php
 /**
  * Main Page Module
- * Gestiona la landing page, secciones y bloques de la página principal
- * 
+ *
+ * Compone la portada y expone su configuración. Los datos de cada dominio
+ * permanecen en sus módulos; main-page sólo coordina presentación/orden.
+ *
  * @package FLACSO_Uruguay
  * @subpackage Main_Page
  */
@@ -11,26 +13,38 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Definir constantes del módulo
-define('FLACSO_MAIN_PAGE_MODULE_PATH', __DIR__ . '/');
-define('FLACSO_MAIN_PAGE_MODULE_URL', plugin_dir_url(__FILE__));
-define('FLACSO_MAIN_PAGE_VERSION', FLACSO_URUGUAY_VERSION); // Usar la versión del plugin principal
+if (!defined('FLACSO_MAIN_PAGE_MODULE_PATH')) {
+    define('FLACSO_MAIN_PAGE_MODULE_PATH', __DIR__ . '/');
+}
+if (!defined('FLACSO_MAIN_PAGE_MODULE_URL')) {
+    define('FLACSO_MAIN_PAGE_MODULE_URL', plugin_dir_url(__FILE__));
+}
+if (!defined('FLACSO_MAIN_PAGE_VERSION')) {
+    define('FLACSO_MAIN_PAGE_VERSION', FLACSO_URUGUAY_VERSION);
+}
 
-// Cargar clases principales (siempre necesarias)
+// Núcleo canónico de configuración/composición.
+require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-section-keys.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-settings.php';
+require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-settings-migration.php';
+require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-homepage-section-registry.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-blocks.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-loader.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-migrations.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-rest-api.php';
+require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/flacso-raw-content-api.php';
+
+// Integraciones históricas aún consumidas por la portada. Se mantienen aquí
+// hasta completar su extracción a módulos propios, pero ya no forman parte del
+// contrato de configuración de main-page.
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-instagram-api.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-telegram-manager.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/flacso-consultas.php';
-require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/flacso-raw-content-api.php';
 
-// Cargar clases de gestión/admin solo en contexto administrativo.
 $is_admin_context = is_admin()
     || (function_exists('wp_doing_ajax') && wp_doing_ajax())
     || (defined('REST_REQUEST') && REST_REQUEST);
+
 if ($is_admin_context) {
     require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-admin.php';
     require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-unified-settings.php';
@@ -40,42 +54,34 @@ if ($is_admin_context) {
     require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-instagram-post-importer.php';
 }
 
-// Cargar bloques
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/blocks/listar-paginas/block.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/blocks/otros-contactos/block.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/blocks/mapa-contacto/block.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/blocks/contacto-seccion/block.php';
 
-// Inicializar módulo
-add_action('init', function() {
-    // Inicializar clases
+Flacso_Main_Page_Settings_Migration::init();
+
+add_action('init', static function (): void {
     Flacso_Main_Page_Loader::init();
     Flacso_Main_Page_Blocks::init();
 
-    if (class_exists('Flacso_Main_Page_Admin')) {
-        Flacso_Main_Page_Admin::init();
-    }
-    if (class_exists('Flacso_Main_Page_Unified_Settings')) {
-        Flacso_Main_Page_Unified_Settings::init();
-    }
-    if (class_exists('Flacso_AJAX_Settings')) {
-        Flacso_AJAX_Settings::init();
-    }
-    if (class_exists('Flacso_AJAX_Handler')) {
-        Flacso_AJAX_Handler::init();
-    }
-    if (class_exists('Flacso_Main_Page_Seminarios')) {
-        Flacso_Main_Page_Seminarios::init();
-    }
-    if (class_exists('Flacso_Instagram_Post_Importer')) {
-        Flacso_Instagram_Post_Importer::init();
-    }
-    if (class_exists('Flacso_Main_Page_Migrations')) {
-        Flacso_Main_Page_Migrations::init();
+    foreach ([
+        'Flacso_Main_Page_Admin',
+        'Flacso_Main_Page_Unified_Settings',
+        'Flacso_AJAX_Settings',
+        'Flacso_AJAX_Handler',
+        'Flacso_Main_Page_Seminarios',
+        'Flacso_Instagram_Post_Importer',
+        'Flacso_Main_Page_Migrations',
+    ] as $class_name) {
+        if (class_exists($class_name) && method_exists($class_name, 'init')) {
+            $class_name::init();
+        }
     }
 });
 
-// Inicializar Telegram Manager después de que todos los plugins estén cargados
-add_action('plugins_loaded', function() {
-    FLACSO_Telegram_Manager::get_instance();
+add_action('plugins_loaded', static function (): void {
+    if (class_exists('FLACSO_Telegram_Manager')) {
+        FLACSO_Telegram_Manager::get_instance();
+    }
 }, 20);
