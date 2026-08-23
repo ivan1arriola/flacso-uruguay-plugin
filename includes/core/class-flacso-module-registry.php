@@ -55,6 +55,11 @@ final class FLACSO_Uruguay_Module_Registry {
                 'required' => false,
                 'legacy' => false,
             ],
+            'consultas' => [
+                'depends' => ['formularios'],
+                'required' => false,
+                'legacy' => false,
+            ],
             'charlas-abiertas' => [
                 'depends' => ['eventos'],
                 'required' => false,
@@ -65,11 +70,26 @@ final class FLACSO_Uruguay_Module_Registry {
                 'required' => false,
                 'legacy' => false,
             ],
-            'main-page' => [
-                // La portada funciona aunque falle una integración opcional;
-                // el registry simplemente omite la sección correspondiente.
+            'instagram' => [
                 'depends' => [],
-                'optional_depends' => ['eventos', 'seminarios', 'convenios', 'oferta-academica', 'mailing'],
+                'required' => false,
+                'legacy' => false,
+            ],
+            'telegram' => [
+                'depends' => [],
+                'required' => false,
+                'legacy' => false,
+            ],
+            'main-page' => [
+                'depends' => [],
+                'optional_depends' => [
+                    'eventos',
+                    'seminarios',
+                    'convenios',
+                    'oferta-academica',
+                    'mailing',
+                    'instagram',
+                ],
                 'required' => true,
                 'legacy' => false,
             ],
@@ -79,6 +99,7 @@ final class FLACSO_Uruguay_Module_Registry {
                 'legacy' => false,
             ],
 
+            // Compatibilidad histórica. No agregar funcionalidad nueva aquí.
             'legacy-posgrados' => [
                 'path' => 'posgrados',
                 'depends' => ['docentes', 'oferta-academica'],
