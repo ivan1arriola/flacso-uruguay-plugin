@@ -21,13 +21,11 @@ final class Flacso_Main_Page_Loader {
         if (!is_front_page()) {
             return;
         }
-
         $description = apply_filters(
             'flacso_front_page_meta_description',
             __('Oferta académica, investigación, eventos y novedades de FLACSO Uruguay.', 'flacso-main-page')
         );
         $description = trim(wp_strip_all_tags((string) $description));
-
         if ($description !== '') {
             printf("<meta name=\"description\" content=\"%s\">\n", esc_attr($description));
         }
@@ -137,7 +135,6 @@ final class Flacso_Main_Page_Loader {
         if (!is_singular()) {
             return false;
         }
-
         $post = get_post();
         if (!$post instanceof WP_Post) {
             return false;
@@ -158,7 +155,6 @@ final class Flacso_Main_Page_Loader {
                 return true;
             }
         }
-
         return function_exists('has_block') && strpos($content, 'wp:flacso-uruguay/') !== false;
     }
 
@@ -170,7 +166,6 @@ final class Flacso_Main_Page_Loader {
             $handle = self::find_registered_style_handle_by_src_fragment('bootstrap@5')
                 ?: self::find_registered_style_handle_by_src_fragment('/bootstrap.min.css');
         }
-
         if (!$handle) {
             $handle = 'bootstrap';
             wp_register_style($handle, 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css', [], '5.3.3');
@@ -187,7 +182,6 @@ final class Flacso_Main_Page_Loader {
         } else {
             $handle = self::find_registered_style_handle_by_src_fragment('bootstrap-icons');
         }
-
         if (!$handle) {
             $handle = 'flacso-main-page-icons';
             wp_register_style($handle, 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css', [], '1.11.3');
@@ -209,8 +203,8 @@ final class Flacso_Main_Page_Loader {
     }
 
     /**
-     * Carga los componentes propiedad de main-page. Los módulos de dominio
-     * pueden agregar sus adaptadores mediante `flacso_main_page_component_files`.
+     * Carga únicamente componentes propiedad de main-page. Los dominios anexan
+     * sus adaptadores con `flacso_main_page_component_files`.
      */
     public static function load_components(): void {
         if (self::$components_loaded) {
@@ -225,8 +219,6 @@ final class Flacso_Main_Page_Loader {
             'sections/convenios-responsivos.php',
             'sections/novedades-section.php',
             'sections/quienes-somos.php',
-            'sections/instagram.php',
-            'includes/blocks/instagram/block.php',
             'sections/congreso.php',
             'sections/contacto.php',
             'sections/landing-page.php',
