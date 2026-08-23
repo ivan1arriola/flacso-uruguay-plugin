@@ -2,8 +2,8 @@
 /**
  * Registro de secciones de portada.
  *
- * `main-page` compone la página; los dominios pueden declarar sus secciones
- * mediante el filtro `flacso_homepage_sections` sin acoplarse al builder.
+ * `main-page` compone la página; cada dominio declara su propia sección
+ * mediante `flacso_homepage_sections`.
  */
 
 if (!defined('ABSPATH')) {
@@ -23,6 +23,7 @@ final class Flacso_Homepage_Section_Registry {
             return self::$sections;
         }
 
+        // Sólo contenido cuyo propietario real es main-page.
         $sections = [
             'hero' => [
                 'function' => 'flacso_section_hero_render',
@@ -36,10 +37,6 @@ final class Flacso_Homepage_Section_Registry {
                 'function' => 'flacso_section_quienes_somos_render',
                 'owner' => 'main-page',
             ],
-            'instagram' => [
-                'function' => 'flacso_section_instagram_render',
-                'owner' => 'main-page',
-            ],
             'congreso' => [
                 'function' => 'flacso_section_congreso_render',
                 'owner' => 'main-page',
@@ -50,8 +47,7 @@ final class Flacso_Homepage_Section_Registry {
             ],
         ];
 
-        $sections = apply_filters('flacso_homepage_sections', $sections);
-        self::$sections = self::normalize($sections);
+        self::$sections = self::normalize(apply_filters('flacso_homepage_sections', $sections));
         return self::$sections;
     }
 
@@ -73,7 +69,6 @@ final class Flacso_Homepage_Section_Registry {
             $key = class_exists('Flacso_Main_Page_Section_Keys')
                 ? Flacso_Main_Page_Section_Keys::canonicalize((string) $key)
                 : sanitize_key((string) $key);
-
             if ($key === '') {
                 continue;
             }
@@ -96,7 +91,6 @@ final class Flacso_Homepage_Section_Registry {
                 'react_component' => sanitize_key((string) ($definition['react_component'] ?? '')),
             ];
         }
-
         return $normalized;
     }
 }
