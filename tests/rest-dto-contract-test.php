@@ -80,27 +80,41 @@ function dto_assert_missing(string $key, array $payload, string $label): void {
     }
 }
 
-// Docente PublicDTO: oculta correos, conserva datos publicos y redes.
+// Docente PublicDTO: solo expone el correo principal y conserva redes.
 $docente = [
     'id' => 7,
     'title' => 'Ada Lovelace',
     'status' => 'publish',
-    'correos' => [['email' => 'interno@example.org']],
+    'correos' => [
+        ['email' => 'principal@example.org', 'label' => 'Institucional', 'principal' => true],
+        ['email' => 'privado@example.org', 'label' => 'Personal', 'principal' => false],
+    ],
     'redes' => [['url' => 'https://example.org']],
     'meta' => [
         'nombre' => 'Ada',
         'apellido' => 'Lovelace',
         'cv' => '<p>CV</p>',
-        'docente_correos' => [['email' => 'interno@example.org']],
+        'docente_correos' => [
+            ['email' => 'principal@example.org', 'label' => 'Institucional', 'principal' => true],
+            ['email' => 'privado@example.org', 'label' => 'Personal', 'principal' => false],
+        ],
         'docente_redes' => [['url' => 'https://example.org']],
     ],
 ];
 $public_docente = Docente_Public_DTO::from_legacy($docente);
-dto_assert_missing('correos', $public_docente, 'docente publico sin correos top-level');
-dto_assert_missing('docente_correos', $public_docente['meta'], 'docente publico sin correos en meta');
+dto_assert_same(1, count($public_docente['correos']), 'docente publico expone un solo correo');
+dto_assert_same('principal@example.org', $public_docente['correos'][0]['email'], 'docente publico expone correo principal');
+dto_assert_same(1, count($public_docente['meta']['docente_correos']), 'docente meta publica un solo correo');
+dto_assert_same('principal@example.org', $public_docente['meta']['docente_correos'][0]['email'], 'docente meta publica correo principal');
 dto_assert_true(isset($public_docente['meta']['docente_redes']), 'docente publico conserva redes');
 $admin_docente = Docente_Admin_DTO::from_legacy($docente);
-dto_assert_true(isset($admin_docente['correos']), 'docente admin conserva correos');
+dto_assert_same(2, count($admin_docente['correos']), 'docente admin conserva todos los correos');
+
+// Si no hay correo marcado como principal no se filtra otro correo por accidente.
+$sin_principal = Docente_Public_DTO::principal_email_only([
+    ['email' => 'privado@example.org', 'principal' => false],
+]);
+dto_assert_same([], $sin_principal, 'docente publico no adivina correo principal');
 
 // Seminario PublicDTO: conserva contacto publico y oculta flags operativos.
 $seminario = [
@@ -176,8 +190,8 @@ $result = Oferta_REST_DTO::transform_custom_response(
 dto_assert_true($result instanceof WP_Error, 'oferta draft publica responde error');
 dto_assert_same(404, $result->get_error_data()['status'] ?? null, 'oferta draft publica responde 404');
 
-// Un editor con permiso sobre el post conserva el AdminDTO completo.
-$GLOBALS['flacso_test_caps'] = ['edit_posts' => true, 'edit_post:33' => true];
+// Un usuario con permiso sobre el item conserva el AdminDTO completo.
+$GLOBALS['flacso_test_caps'] = ['edit_post:33' => true];
 $response = new FakeDTOResponse($oferta + ['id' => 33]);
 $result = Oferta_REST_DTO::transform_custom_response(
     $response,
