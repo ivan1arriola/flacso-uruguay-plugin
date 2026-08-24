@@ -66,6 +66,7 @@ final class Oferta_REST_DTO {
             return $response;
         }
 
+        $post_id = 0;
         if ($is_item) {
             $post_id = (int) $matches['id'];
             $post = get_post($post_id);
@@ -79,7 +80,9 @@ final class Oferta_REST_DTO {
         }
 
         $data = $response->get_data();
-        $admin = current_user_can('edit_posts');
+        $admin = $is_item
+            ? current_user_can('edit_post', $post_id)
+            : current_user_can('edit_posts');
 
         if ($is_collection) {
             if (!is_array($data)) {
@@ -110,7 +113,11 @@ final class Oferta_REST_DTO {
             return $response;
         }
 
-        $admin = current_user_can('edit_posts');
+        $post_id = is_object($post) && isset($post->ID) ? (int) $post->ID : 0;
+        $admin = $post_id > 0
+            ? current_user_can('edit_post', $post_id)
+            : current_user_can('edit_posts');
+
         $response->set_data(
             $admin
                 ? Oferta_Admin_DTO::from_wp_rest($data)
