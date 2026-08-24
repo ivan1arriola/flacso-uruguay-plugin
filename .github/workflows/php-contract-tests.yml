@@ -1,0 +1,53 @@
+name: PHP Contract Tests
+
+on:
+  pull_request:
+    paths:
+      - '**/*.php'
+      - '.github/workflows/php-contract-tests.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - '**/*.php'
+      - '.github/workflows/php-contract-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Run PHP contract tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Show PHP version
+        run: php -v
+
+      - name: Validate test syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            php -l "$file"
+          done < <(find tests -type f -name '*-test.php' -print0)
+
+      - name: Run tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          found=0
+          while IFS= read -r -d '' test_file; do
+            found=1
+            echo "==> $test_file"
+            php "$test_file"
+          done < <(find tests -type f -name '*-test.php' -print0 | sort -z)
+
+          if [[ "$found" -eq 0 ]]; then
+            echo "No contract tests found." >&2
+            exit 1
+          fi
