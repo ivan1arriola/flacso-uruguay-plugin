@@ -116,6 +116,22 @@ $sin_principal = Docente_Public_DTO::principal_email_only([
 ]);
 dto_assert_same([], $sin_principal, 'docente publico no adivina correo principal');
 
+// wp/v2/docente aplica la misma frontera sobre post meta.
+$wp_docente = [
+    'id' => 7,
+    'meta' => [
+        'docente_correos' => [
+            ['email' => 'principal@example.org', 'label' => 'Institucional', 'principal' => true],
+            ['email' => 'privado@example.org', 'label' => 'Personal', 'principal' => false],
+        ],
+        'docente_redes' => [['url' => 'https://example.org']],
+    ],
+];
+$public_wp_docente = Docente_Public_DTO::from_wp_rest($wp_docente);
+dto_assert_same(1, count($public_wp_docente['meta']['docente_correos']), 'wp docente publica un correo');
+dto_assert_same('principal@example.org', $public_wp_docente['meta']['docente_correos'][0]['email'], 'wp docente publica principal');
+dto_assert_true(isset($public_wp_docente['meta']['docente_redes']), 'wp docente conserva redes');
+
 // Seminario PublicDTO: conserva contacto publico y oculta flags operativos.
 $seminario = [
     'id' => 8,
@@ -142,6 +158,19 @@ dto_assert_missing('mostrar_en_formulario', $public_seminario['seminarios_compon
 dto_assert_same(5, $public_seminario['meta']['creditos'], 'seminario publico conserva dato academico');
 $admin_seminario = Seminario_Admin_DTO::from_legacy($seminario);
 dto_assert_true(isset($admin_seminario['meta']['mostrar_en_formulario']), 'seminario admin conserva flag operativo');
+
+// wp/v2/seminario oculta el meta prefijado equivalente.
+$wp_seminario = [
+    'id' => 8,
+    'meta' => [
+        '_seminario_mostrar_en_formulario' => true,
+        '_seminario_mail_contacto' => 'contacto@example.org',
+        '_seminario_creditos' => 5,
+    ],
+];
+$public_wp_seminario = Seminario_Public_DTO::from_wp_rest($wp_seminario);
+dto_assert_missing('_seminario_mostrar_en_formulario', $public_wp_seminario['meta'], 'wp seminario sin flag operativo');
+dto_assert_same('contacto@example.org', $public_wp_seminario['meta']['_seminario_mail_contacto'], 'wp seminario conserva contacto');
 
 // Oferta PublicDTO: oculta integracion Mailjet y diagnostico interno.
 $oferta = [
