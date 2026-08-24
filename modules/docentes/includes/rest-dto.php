@@ -43,6 +43,18 @@ final class Docente_Public_DTO {
         return $payload;
     }
 
+    public static function from_wp_rest(array $payload): array {
+        if (isset($payload['meta']) && is_array($payload['meta'])) {
+            $payload['meta']['docente_correos'] = self::principal_email_only(
+                isset($payload['meta']['docente_correos']) && is_array($payload['meta']['docente_correos'])
+                    ? $payload['meta']['docente_correos']
+                    : []
+            );
+        }
+
+        return $payload;
+    }
+
     public static function principal_email_only(array $correos): array {
         foreach ($correos as $correo) {
             if (!is_array($correo) || empty($correo['principal']) || empty($correo['email'])) {
@@ -69,11 +81,16 @@ final class Docente_Admin_DTO {
     public static function from_legacy(array $payload): array {
         return $payload;
     }
+
+    public static function from_wp_rest(array $payload): array {
+        return $payload;
+    }
 }
 
 final class Docente_REST_DTO {
     public static function init(): void {
         add_filter('rest_request_after_callbacks', [self::class, 'transform_response'], 20, 3);
+        add_filter('rest_prepare_docente', [self::class, 'transform_wp_response'], 20, 3);
     }
 
     public static function transform_response($response, $handler, $request) {
@@ -110,6 +127,30 @@ final class Docente_REST_DTO {
         }
 
         $response->set_data($data);
+        return $response;
+    }
+
+    public static function transform_wp_response($response, $post, $request) {
+        if (!self::is_read_request($request) || is_wp_error($response) || !is_object($response) || !method_exists($response, 'get_data') || !method_exists($response, 'set_data')) {
+            return $response;
+        }
+
+        $data = $response->get_data();
+        if (!is_array($data)) {
+            return $response;
+        }
+
+        $post_id = is_object($post) && isset($post->ID) ? (int) $post->ID : 0;
+        $admin = $post_id > 0
+            ? current_user_can('edit_post', $post_id)
+            : current_user_can('edit_posts');
+
+        $response->set_data(
+            $admin
+                ? Docente_Admin_DTO::from_wp_rest($data)
+                : Docente_Public_DTO::from_wp_rest($data)
+        );
+
         return $response;
     }
 
