@@ -12,7 +12,6 @@ if (!defined('ABSPATH')) {
  */
 final class Seminario_Public_DTO {
     private const PRIVATE_META_FIELDS = [
-        'mail_contacto',
         'mostrar_en_formulario',
     ];
 
