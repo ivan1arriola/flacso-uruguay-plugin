@@ -65,14 +65,16 @@ final class Seminario_REST_DTO {
 
         $route = (string) $request->get_route();
         $is_collection = preg_match('#^/flacso/v1/seminarios/?$#', $route) === 1;
-        $is_item = preg_match('#^/flacso/v1/seminarios/\d+/?$#', $route) === 1;
+        $is_item = preg_match('#^/flacso/v1/seminarios/(?P<id>\d+)/?$#', $route, $matches) === 1;
 
         if (!$is_collection && !$is_item) {
             return $response;
         }
 
         $data = $response->get_data();
-        $admin = current_user_can('edit_posts');
+        $admin = $is_item
+            ? current_user_can('edit_post', (int) $matches['id'])
+            : current_user_can('edit_posts');
 
         if ($is_collection) {
             if (!is_array($data)) {
