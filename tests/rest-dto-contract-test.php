@@ -102,13 +102,13 @@ dto_assert_true(isset($public_docente['meta']['docente_redes']), 'docente public
 $admin_docente = Docente_Admin_DTO::from_legacy($docente);
 dto_assert_true(isset($admin_docente['correos']), 'docente admin conserva correos');
 
-// Seminario PublicDTO: oculta operativa tanto en el seminario como en componentes.
+// Seminario PublicDTO: conserva contacto publico y oculta flags operativos.
 $seminario = [
     'id' => 8,
     'title' => 'Seminario',
     'meta' => [
         'creditos' => 5,
-        'mail_contacto' => 'interno@example.org',
+        'mail_contacto' => 'contacto@example.org',
         'mostrar_en_formulario' => '1',
     ],
     'seminarios_componentes_data' => [[
@@ -121,12 +121,13 @@ $seminario = [
     ]],
 ];
 $public_seminario = Seminario_Public_DTO::from_legacy($seminario);
-dto_assert_missing('mail_contacto', $public_seminario['meta'], 'seminario publico sin mail operativo');
+dto_assert_same('contacto@example.org', $public_seminario['meta']['mail_contacto'], 'seminario publico conserva correo de contacto');
 dto_assert_missing('mostrar_en_formulario', $public_seminario['meta'], 'seminario publico sin flag operativo');
-dto_assert_missing('mail_contacto', $public_seminario['seminarios_componentes_data'][0]['meta'], 'componente publico sin mail operativo');
+dto_assert_same('otro@example.org', $public_seminario['seminarios_componentes_data'][0]['meta']['mail_contacto'], 'componente conserva correo de contacto');
+dto_assert_missing('mostrar_en_formulario', $public_seminario['seminarios_componentes_data'][0]['meta'], 'componente publico sin flag operativo');
 dto_assert_same(5, $public_seminario['meta']['creditos'], 'seminario publico conserva dato academico');
 $admin_seminario = Seminario_Admin_DTO::from_legacy($seminario);
-dto_assert_true(isset($admin_seminario['meta']['mail_contacto']), 'seminario admin conserva mail operativo');
+dto_assert_true(isset($admin_seminario['meta']['mostrar_en_formulario']), 'seminario admin conserva flag operativo');
 
 // Oferta PublicDTO: oculta integracion Mailjet y diagnostico interno.
 $oferta = [
