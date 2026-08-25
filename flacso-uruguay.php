@@ -55,6 +55,7 @@ define('FLACSO_POSGRADOS_PLUGIN_PATH', FLACSO_URUGUAY_PATH);
 // Carga de funciones principales
 // ============================================
 require_once FLACSO_URUGUAY_PATH . 'includes/core/helpers.php';
+require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-rest-visibility.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-editor-admin-mode.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-integrations-settings.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-meta-tracking.php';

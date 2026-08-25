@@ -1,4 +1,4 @@
-name: Encoding Guard
+name: Repository Guard
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  encoding-check:
+  repository-checks:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -21,3 +21,27 @@ jobs:
 
       - name: Check for BOM, mojibake and UTF-8 issues
         run: python .github/scripts/check_encoding.py
+
+      - name: Validate PHP contract test syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            php -l "$file"
+          done < <(find tests -type f -name '*-test.php' -print0)
+
+      - name: Run PHP contract tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          found=0
+          while IFS= read -r -d '' test_file; do
+            found=1
+            echo "==> $test_file"
+            php "$test_file"
+          done < <(find tests -type f -name '*-test.php' -print0 | sort -z)
+
+          if [[ "$found" -eq 0 ]]; then
+            echo "No contract tests found." >&2
+            exit 1
+          fi
