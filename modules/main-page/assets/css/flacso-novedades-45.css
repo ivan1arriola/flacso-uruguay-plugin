@@ -1,11 +1,13 @@
 /*
  * Novedades destacadas: la pieza visual de cada tarjeta se presenta en 4:5.
+ * La relación pertenece al marco, no a la imagen original: una imagen cuadrada
+ * se conserva completa y el espacio faltante aparece arriba y abajo como relleno.
  * Esta geometría pertenece al componente del plugin, no al normalizador global
  * de imágenes destacadas del tema.
  *
  * novedades-section.php contiene estilos históricos dentro del propio markup.
  * Por eso estas reglas usan una especificidad mayor: deben prevalecer también
- * cuando ese bloque inline intente volver la imagen horizontal.
+ * cuando ese bloque inline intente volver la imagen horizontal o recortarla.
  */
 .flacso-main-page .flacso-novedades-section .flacso-novedades-3d__image-link {
     display: block !important;
@@ -24,8 +26,9 @@
     width: 100% !important;
     height: 100% !important;
     max-width: none;
-    object-fit: cover !important;
+    object-fit: contain !important;
     object-position: center !important;
+    background: #eef2f7;
 }
 
 /*
@@ -55,8 +58,8 @@
 
 /*
  * En móvil la imagen ocupa todo el ancho de la tarjeta y crece en vertical.
- * La tarjeta gana altura para que el 4:5 no sea recortado por la fila de 44%
- * que definía el estilo editorial anterior.
+ * El marco sigue siendo 4:5, pero la imagen ya no se recorta: si su relación
+ * original es cuadrada quedan bandas de relleno simétricas arriba y abajo.
  */
 @media (max-width: 767.98px) {
     .flacso-main-page .flacso-novedades-section .flacso-novedades-3d {
@@ -101,6 +104,7 @@
 .flacso-main-page .flacso-novedades-section .flacso-novedades-3d__image-link > .flacso-featured-image-45 > .flacso-novedades-3d__image {
     width: 100% !important;
     height: 100% !important;
-    object-fit: cover !important;
+    object-fit: contain !important;
     object-position: center !important;
+    background: #eef2f7;
 }
