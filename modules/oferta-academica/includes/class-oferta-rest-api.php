@@ -483,6 +483,32 @@ class Oferta_Rest_API
             ],
         ]);
 
+        // Contrato de dominio: los nuevos consumidores usan `program`.
+        // La taxonomía interna se mantiene en la respuesta por compatibilidad.
+        register_rest_field('oferta-academica', 'program', [
+            'get_callback' => function ($post_array) {
+                return Oferta_Taxonomies::get_program((int) $post_array['id']);
+            },
+            'update_callback' => function ($value, $post_obj) {
+                $id = is_array($value) ? absint($value['id'] ?? 0) : absint($value);
+                if ($id <= 0) {
+                    return new WP_Error('oferta_program_required', 'Debés seleccionar un Programa.', ['status' => 400]);
+                }
+                return wp_set_object_terms($post_obj->ID, [$id], 'area_tematica');
+            },
+            'schema' => [
+                'description' => 'Programa institucional responsable de la oferta.',
+                'type' => 'object',
+                'properties' => [
+                    'id' => ['type' => 'integer'],
+                    'name' => ['type' => 'string', 'readonly' => true],
+                    'slug' => ['type' => 'string', 'readonly' => true],
+                    'description' => ['type' => 'string', 'readonly' => true],
+                ],
+                'context' => ['view', 'edit'],
+            ],
+        ]);
+
         // Registrar campo para la imagen destacada enriquecida
         register_rest_field('oferta-academica', 'featured_image_data', [
             'get_callback' => function ($post_array) {

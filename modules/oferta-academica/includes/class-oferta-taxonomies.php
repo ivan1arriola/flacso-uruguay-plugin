@@ -74,7 +74,9 @@ class Oferta_Taxonomies {
             'rewrite'           => ['slug' => 'area-tematica'],
         ];
 
-        register_taxonomy('area_tematica', ['oferta-academica'], $args_area);
+        // `area_tematica` se conserva como slug interno por compatibilidad, pero
+        // representa el Programa institucional y es compartido por todo el catálogo.
+        register_taxonomy('area_tematica', ['oferta-academica', 'seminario'], $args_area);
     }
 
     public static function register_term_meta_fields(): void {
@@ -319,6 +321,21 @@ class Oferta_Taxonomies {
             'featured_image_id' => self::get_term_featured_image_id((int) $term->term_id),
             'featured_image_url' => self::get_term_featured_image_url((int) $term->term_id),
             'featured_image_data' => self::get_term_featured_image_data((int) $term->term_id),
+        ];
+    }
+
+    public static function get_program(int $post_id): ?array {
+        $terms = wp_get_post_terms($post_id, 'area_tematica', ['fields' => 'all']);
+        if (is_wp_error($terms) || empty($terms)) {
+            return null;
+        }
+
+        $term = reset($terms);
+        return [
+            'id' => (int) $term->term_id,
+            'name' => $term->name,
+            'slug' => $term->slug,
+            'description' => (string) $term->description,
         ];
     }
 

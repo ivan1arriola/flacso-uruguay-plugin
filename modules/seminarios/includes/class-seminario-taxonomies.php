@@ -6,10 +6,12 @@ if (!defined('ABSPATH')) {
 class Seminario_Taxonomies
 {
     private const LEGACY_CLEANUP_OPTION = 'flacso_seminario_legacy_taxonomies_removed';
+    private const PROGRAM_BACKFILL_OPTION = 'flacso_seminario_program_backfill_v1';
 
     public static function register()
     {
         self::maybe_cleanup_legacy_taxonomies();
+        add_filter('rest_pre_insert_seminario', array(__CLASS__, 'validate_program_before_rest_insert'), 9, 2);
     }
 
     public static function register_term_meta()
@@ -19,13 +21,37 @@ class Seminario_Taxonomies
 
     public static function get_taxonomies($post_id)
     {
-        return array();
+        $terms = wp_get_post_terms((int) $post_id, 'area_tematica', array('fields' => 'all'));
+        if (is_wp_error($terms)) {
+            $terms = array();
+        }
+
+        return array(
+            'area_tematica' => array_map(array(__CLASS__, 'term_response'), (array) $terms),
+        );
     }
 
-    public static function set_terms_from_request($post_id, $taxonomies)
+    public static function get_program($post_id)
     {
-        if (!is_array($taxonomies)) {
+        $taxonomies = self::get_taxonomies($post_id);
+        return $taxonomies['area_tematica'][0] ?? null;
+    }
+
+    public static function set_terms_from_request($post_id, $taxonomies, $program = null, $area_tematica = null)
+    {
+        if (!is_array($taxonomies) && $program === null && $area_tematica === null) {
             return;
+        }
+
+        if (!is_array($taxonomies)) {
+            $taxonomies = array();
+        }
+
+        $program_value = $program
+            ?? ($taxonomies['area_tematica'] ?? ($taxonomies['program'] ?? $area_tematica));
+        if ($program_value !== null) {
+            $program_ids = self::normalize_program_term_ids($program_value);
+            wp_set_object_terms($post_id, $program_ids, 'area_tematica');
         }
 
         // --- Ofertas Académicas (CPT Relation) ---
@@ -74,6 +100,199 @@ class Seminario_Taxonomies
         }
     }
 
+    public static function normalize_program_term_ids($value): array
+    {
+        return array_slice(self::normalize_all_program_term_ids($value), 0, 1);
+    }
+
+    public static function normalize_all_program_term_ids($value): array
+    {
+        $values = is_array($value) && array_key_exists('id', $value)
+            ? array($value)
+            : (is_array($value) ? $value : array($value));
+        $ids = array();
+
+        foreach ($values as $term) {
+            if (is_array($term) && isset($term['id'])) {
+                $ids[] = absint($term['id']);
+            } elseif (is_object($term) && isset($term->term_id)) {
+                $ids[] = absint($term->term_id);
+            } elseif (is_numeric($term)) {
+                $ids[] = absint($term);
+            }
+        }
+
+        return array_values(array_unique(array_filter($ids)));
+    }
+
+    public static function validate_program_request($taxonomies, bool $required = true, $program = null, $area_tematica = null)
+    {
+        $representations = array();
+        if ($program !== null) {
+            $representations[] = $program;
+        }
+        if (is_array($taxonomies) && array_key_exists('area_tematica', $taxonomies)) {
+            $representations[] = $taxonomies['area_tematica'];
+        } elseif (is_array($taxonomies) && array_key_exists('program', $taxonomies)) {
+            $representations[] = $taxonomies['program'];
+        }
+        if ($area_tematica !== null) {
+            $representations[] = $area_tematica;
+        }
+
+        if (empty($representations)) {
+            return $required
+                ? new WP_Error('seminario_program_required', 'Debés seleccionar un Programa para el seminario.', array('status' => 400))
+                : true;
+        }
+
+        $all_ids = array();
+        foreach ($representations as $value) {
+            $ids = self::normalize_all_program_term_ids($value);
+            if (count($ids) !== 1) {
+                return new WP_Error('seminario_program_invalid', 'Cada seminario debe pertenecer a un único Programa.', array('status' => 400));
+            }
+            $all_ids[] = $ids[0];
+        }
+
+        if (count(array_unique($all_ids)) !== 1) {
+            return new WP_Error('seminario_program_invalid', 'Cada seminario debe pertenecer a un único Programa.', array('status' => 400));
+        }
+
+        return true;
+    }
+
+    public static function validate_program_before_rest_insert($prepared_post, WP_REST_Request $request)
+    {
+        $current_id = $prepared_post instanceof WP_Post
+            ? (int) $prepared_post->ID
+            : (int) $request->get_param('id');
+        $taxonomies = $request->get_param('taxonomies');
+        $program = $request->get_param('program');
+        $area_tematica = $request->get_param('area_tematica');
+        $supplied = $taxonomies !== null || $program !== null || $area_tematica !== null;
+        $validation = self::validate_program_request(
+            $taxonomies,
+            $current_id <= 0 || $supplied,
+            $program,
+            $area_tematica
+        );
+
+        return is_wp_error($validation) ? $validation : $prepared_post;
+    }
+
+    public static function resolve_single_program_id(array $candidate_ids): int
+    {
+        $ids = array_values(array_unique(array_filter(array_map('absint', $candidate_ids))));
+        return count($ids) === 1 ? (int) $ids[0] : 0;
+    }
+
+    public static function maybe_backfill_program_relationships(): void
+    {
+        if (get_option(self::PROGRAM_BACKFILL_OPTION, false) !== false) {
+            return;
+        }
+
+        $statuses = array('publish', 'draft', 'private', 'pending', 'future');
+        $seminar_ids = get_posts(array(
+            'post_type' => 'seminario',
+            'post_status' => $statuses,
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+        ));
+        $assigned = array();
+        $unresolved = array();
+
+        foreach ((array) $seminar_ids as $seminar_id) {
+            $seminar_id = absint($seminar_id);
+            $current_ids = wp_get_post_terms($seminar_id, 'area_tematica', array('fields' => 'ids'));
+            if (!is_wp_error($current_ids) && count($current_ids) === 1) {
+                continue;
+            }
+            if (!is_wp_error($current_ids) && count($current_ids) > 1) {
+                $unresolved[] = $seminar_id;
+                continue;
+            }
+
+            $candidate_ids = self::get_program_candidates_for_backfill($seminar_id, $statuses);
+            $program_id = self::resolve_single_program_id($candidate_ids);
+
+            if ($program_id > 0) {
+                $result = wp_set_object_terms($seminar_id, array($program_id), 'area_tematica');
+                if (!is_wp_error($result)) {
+                    $assigned[] = $seminar_id;
+                    continue;
+                }
+            }
+
+            $unresolved[] = $seminar_id;
+        }
+
+        update_option(self::PROGRAM_BACKFILL_OPTION, array(
+            'completed_at' => current_time('mysql', true),
+            'assigned' => $assigned,
+            'unresolved' => $unresolved,
+        ), false);
+    }
+
+    public static function get_program_integrity_report(): array
+    {
+        $seminar_ids = get_posts(array(
+            'post_type' => 'seminario',
+            'post_status' => array('publish', 'draft', 'private', 'pending', 'future'),
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+        ));
+        $missing = 0;
+        $multiple = 0;
+
+        foreach ((array) $seminar_ids as $seminar_id) {
+            $program_ids = wp_get_post_terms((int) $seminar_id, 'area_tematica', array('fields' => 'ids'));
+            $count = is_wp_error($program_ids) ? 0 : count($program_ids);
+            if ($count === 0) {
+                $missing++;
+            } elseif ($count > 1) {
+                $multiple++;
+            }
+        }
+
+        return array(
+            'seminars_total' => count($seminar_ids),
+            'seminars_missing_program' => $missing,
+            'seminars_multiple_programs' => $multiple,
+            'valid' => $missing === 0 && $multiple === 0,
+        );
+    }
+
+    private static function get_program_candidates_for_backfill(int $seminar_id, array $statuses): array
+    {
+        $candidate_ids = array();
+        $offer_ids = self::get_related_oferta_ids($seminar_id, $statuses);
+        $component_ids = get_post_meta($seminar_id, '_seminario_seminarios_componentes', true);
+
+        foreach ((array) $component_ids as $component_id) {
+            $component_id = absint($component_id);
+            if ($component_id <= 0) {
+                continue;
+            }
+
+            $component_program_ids = wp_get_post_terms($component_id, 'area_tematica', array('fields' => 'ids'));
+            if (!is_wp_error($component_program_ids)) {
+                $candidate_ids = array_merge($candidate_ids, (array) $component_program_ids);
+            }
+            $offer_ids = array_merge($offer_ids, self::get_related_oferta_ids($component_id, $statuses));
+        }
+
+        foreach (array_unique(array_map('absint', $offer_ids)) as $offer_id) {
+            $program_ids = wp_get_post_terms($offer_id, 'area_tematica', array('fields' => 'ids'));
+            if (!is_wp_error($program_ids)) {
+                $candidate_ids = array_merge($candidate_ids, (array) $program_ids);
+            }
+        }
+
+        return $candidate_ids;
+    }
+
     public static function term_response($term)
     {
         if (!($term instanceof WP_Term)) {
@@ -98,15 +317,17 @@ class Seminario_Taxonomies
         // Legacy: sin persistencia de color para taxonomia removida.
     }
 
-    public static function get_related_oferta_ids(int $seminario_id): array
+    public static function get_related_oferta_ids(int $seminario_id, ?array $statuses = null): array
     {
         if ($seminario_id <= 0 || !post_type_exists('oferta-academica')) {
             return array();
         }
 
-        $statuses = current_user_can('manage_options')
-            ? array('publish', 'private')
-            : array('publish');
+        if ($statuses === null) {
+            $statuses = current_user_can('manage_options')
+                ? array('publish', 'private')
+                : array('publish');
+        }
 
         $ofertas_ids = get_posts(array(
             'post_type'      => 'oferta-academica',

@@ -79,6 +79,7 @@ class Oferta_Data_Schema {
         add_action('rest_api_init', [self::class, 'register_rest_routes']);
         add_action('rest_after_insert_oferta-academica', [self::class, 'sync_documentos_after_rest_insert'], 10, 3);
         add_filter('rest_pre_insert_oferta-academica', [self::class, 'validate_cycle_chain_before_rest_insert'], 10, 2);
+        add_filter('rest_pre_insert_oferta-academica', [self::class, 'validate_program_before_rest_insert'], 9, 2);
         add_action('save_post_oferta-academica', [self::class, 'clear_all_oferta_transients']);
         add_action('deleted_post', [self::class, 'clear_all_oferta_transients']);
         add_action('trash_post', [self::class, 'clear_all_oferta_transients']);
@@ -769,6 +770,12 @@ class Oferta_Data_Schema {
             'permission_callback' => '__return_true',
         ]);
 
+        register_rest_route('flacso/v1', '/programs', [
+            'methods' => \WP_REST_Server::READABLE,
+            'callback' => [self::class, 'rest_get_programs'],
+            'permission_callback' => '__return_true',
+        ]);
+
         register_rest_route('flacso/v1', '/oferta-academica/(?P<id>\d+)', [
             'methods' => \WP_REST_Server::EDITABLE,
             'callback' => [self::class, 'rest_update_oferta'],
@@ -813,6 +820,40 @@ class Oferta_Data_Schema {
         }
 
         return rest_ensure_response($response);
+    }
+
+    public static function rest_get_programs() {
+        $terms = get_terms([
+            'taxonomy' => 'area_tematica',
+            'hide_empty' => false,
+        ]);
+        $items = [];
+
+        if (!is_wp_error($terms)) {
+            foreach ((array) $terms as $term) {
+                $items[] = [
+                    'id' => (int) $term->term_id,
+                    'name' => $term->name,
+                    'slug' => $term->slug,
+                    'description' => (string) $term->description,
+                ];
+            }
+        }
+
+        $integrity = class_exists('Seminario_Taxonomies')
+            ? Seminario_Taxonomies::get_program_integrity_report()
+            : [
+                'seminars_total' => 0,
+                'seminars_missing_program' => 0,
+                'seminars_multiple_programs' => 0,
+                'valid' => false,
+            ];
+
+        return rest_ensure_response([
+            'items' => $items,
+            'total' => count($items),
+            'integrity' => $integrity,
+        ]);
     }
 
     public static function rest_get_oferta(\WP_REST_Request $request) {
@@ -860,6 +901,7 @@ class Oferta_Data_Schema {
         $schema = [
             'id' => $post->ID,
             'titulo' => get_the_title($post),
+            'program' => Oferta_Taxonomies::get_program($post->ID),
             'duracion_meses' => self::get_meta_value($post_id, 'duracion_meses'),
             'proximo_inicio' => self::build_proximo_inicio($post_id),
             'calendario' => self::get_meta_value($post_id, 'calendario'),
@@ -1040,6 +1082,67 @@ class Oferta_Data_Schema {
             'La trayectoria de ciclos es inconsistente: ' . implode(' ', $issues),
             ['status' => 400]
         );
+    }
+
+    public static function validate_program_before_rest_insert($prepared_post, \WP_REST_Request $request) {
+        $taxonomies = $request->get_param('taxonomies');
+        $program = $request->get_param('program');
+        $area_tematica = $request->get_param('area_tematica');
+        $current_id = $prepared_post instanceof \WP_Post ? (int) $prepared_post->ID : (int) $request->get_param('id');
+        $representations = [];
+
+        if ($request->has_param('program')) {
+            $representations[] = $program;
+        }
+        if (is_array($taxonomies) && array_key_exists('area_tematica', $taxonomies)) {
+            $representations[] = $taxonomies['area_tematica'];
+        }
+        if ($request->has_param('area_tematica')) {
+            $representations[] = $area_tematica;
+        }
+
+        if (empty($representations) && $current_id > 0) {
+            return $prepared_post;
+        }
+
+        $all_ids = [];
+        foreach ($representations as $value) {
+            $ids = self::normalize_program_ids($value);
+            if (count($ids) !== 1) {
+                return new \WP_Error(
+                    'oferta_program_required',
+                    'Cada oferta académica debe pertenecer a un único Programa.',
+                    array('status' => 400)
+                );
+            }
+            $all_ids[] = $ids[0];
+        }
+
+        if (count(array_unique($all_ids)) !== 1) {
+            return new \WP_Error(
+                'oferta_program_required',
+                'Cada oferta académica debe pertenecer a un único Programa.',
+                array('status' => 400)
+            );
+        }
+
+        return $prepared_post;
+    }
+
+    public static function normalize_program_ids($value): array {
+        $values = is_array($value) && array_key_exists('id', $value)
+            ? [$value]
+            : (is_array($value) ? $value : [$value]);
+        $ids = [];
+
+        foreach ($values as $item) {
+            $id = is_array($item) ? absint($item['id'] ?? 0) : absint($item);
+            if ($id > 0) {
+                $ids[] = $id;
+            }
+        }
+
+        return array_values(array_unique($ids));
     }
 
     public static function rest_update_oferta(\WP_REST_Request $request) {

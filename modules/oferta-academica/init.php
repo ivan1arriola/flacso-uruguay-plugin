@@ -47,6 +47,9 @@ add_action('init', function() {
     CPT_Oferta_Academica::init();
     CPT_Tabla_Precio::init();
     Oferta_Taxonomies::init();
+    if (class_exists('Seminario_Taxonomies')) {
+        Seminario_Taxonomies::maybe_backfill_program_relationships();
+    }
     Oferta_Page_Adapter::init();
     Tabla_Precio_Schema::init();
     Oferta_Data_Schema::init();

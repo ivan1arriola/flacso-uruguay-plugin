@@ -98,6 +98,7 @@ class Seminario_Helpers
             'featured_image' => get_the_post_thumbnail_url($post->ID, 'full') ?: null,
             'featured_media' => (int) get_post_thumbnail_id($post->ID),
             'ofertas_academicas' => self::get_related_offers($post->ID),
+            'program' => Seminario_Taxonomies::get_program($post->ID),
             'taxonomies' => Seminario_Taxonomies::get_taxonomies($post->ID),
         );
     }

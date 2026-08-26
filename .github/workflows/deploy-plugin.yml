@@ -90,6 +90,15 @@ jobs:
             -not -path './node_modules/*' \
             -print0)
 
+      - name: Run PHP contract tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' test_file; do
+            echo "==> $test_file"
+            php "$test_file"
+          done < <(find tests -type f -name '*-test.php' -print0 | sort -z)
+
       - name: Build plugin ZIP artifact
         shell: bash
         run: |
@@ -197,13 +206,26 @@ jobs:
           DEPLOY_SHA="$1"
           EXPECTED_VERSION="$2"
           SOURCE="/tmp/flacso-uruguay-plugin-${DEPLOY_SHA}"
+          BACKUP="/tmp/flacso-uruguay-plugin-backup-${DEPLOY_SHA}"
           WP_ROOT="/var/www/clients/client2/web5/web"
           TARGET="${WP_ROOT}/wp-content/plugins/flacso-uruguay-plugin"
           PLUGIN_FILE="flacso-uruguay.php"
           MISSING_SHORTCODE='[FLACSO] Archivo no encontrado: modules/shortcodes/includes/shortcodes-programa.php'
 
+          activated=0
           cleanup() {
-            rm -rf "$SOURCE"
+            exit_code=$?
+            if [[ "$exit_code" -ne 0 && "$activated" -eq 1 && -d "$BACKUP" ]]; then
+              echo "Plugin validation failed; restoring previous files." >&2
+              sudo -n /usr/bin/rsync \
+                -a --delete --delay-updates \
+                --chown=web5:client2 \
+                --chmod=D755,F644 \
+                "$BACKUP/" "$TARGET/" || true
+            fi
+            rm -rf -- "$SOURCE"
+            rm -rf -- "$BACKUP" || true
+            exit "$exit_code"
           }
           trap cleanup EXIT
 
@@ -213,11 +235,15 @@ jobs:
           test -d "$TARGET"
           test -f "$TARGET/$PLUGIN_FILE"
 
+          install -d -m 700 "$BACKUP"
+          /usr/bin/rsync -rt "$TARGET/" "$BACKUP/"
+
           sudo -n /usr/bin/rsync \
             -a --delete --delay-updates \
             --chown=web5:client2 \
             --chmod=D755,F644 \
             "$SOURCE/" "$TARGET/"
+          activated=1
 
           test -f "$TARGET/$PLUGIN_FILE"
           test -f "$TARGET/modules/shortcodes/includes/shortcodes-programa.php"
@@ -244,10 +270,30 @@ jobs:
           fi
           printf '%s\n' "$validation_output"
 
+          sudo -n -u web5 -- "$WP_BIN" eval '
+          $taxonomy = get_taxonomy("area_tematica");
+          if (!$taxonomy || !in_array("oferta-academica", $taxonomy->object_type, true) || !in_array("seminario", $taxonomy->object_type, true)) {
+              fwrite(STDERR, "Program taxonomy is not attached to the complete academic catalog.\n");
+              exit(1);
+          }
+          $response = rest_do_request(new WP_REST_Request("GET", "/flacso/v1/programs"));
+          if ($response->is_error() || $response->get_status() !== 200) {
+              fwrite(STDERR, "Canonical Program API is unavailable.\n");
+              exit(1);
+          }
+          $data = $response->get_data();
+          if (!is_array($data) || !isset($data["items"], $data["integrity"])) {
+              fwrite(STDERR, "Canonical Program API response is incomplete.\n");
+              exit(1);
+          }
+          echo wp_json_encode($data["integrity"]) . "\n";
+          '
+
           if grep -Fq "$MISSING_SHORTCODE" <<< "$validation_output"; then
             echo "Shortcode file warning is still present after deployment." >&2
             exit 1
           fi
 
           echo "Commit $DEPLOY_SHA (version $EXPECTED_VERSION) deployed successfully to $TARGET"
+          activated=0
           REMOTE

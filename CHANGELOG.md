@@ -1,3 +1,14 @@
+## Version 6.10.0 - 25 de agosto de 2026
+
+### Resumen
+- Programa pasa a ser la entidad canónica compartida por ofertas académicas y seminarios.
+- La API incorpora `/flacso/v1/programs` y el campo semántico `program`, manteniendo compatibilidad con `area_tematica`.
+- Se migran automáticamente solo las relaciones de seminarios cuyo Programa puede inferirse sin ambigüedad y se publica un reporte de integridad para los casos manuales.
+- Las escrituras REST rechazan contenidos sin Programa, con varios Programas o con representaciones contradictorias.
+- El despliegue ejecuta las pruebas contractuales, valida el contrato REST y restaura los archivos anteriores si falla el smoke test.
+
+---
+
 ## Version 6.9.14 - 12 de agosto de 2026
 
 ### Resumen

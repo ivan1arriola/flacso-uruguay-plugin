@@ -182,6 +182,16 @@ class Seminario_REST_API
 
     public static function create_item(WP_REST_Request $request)
     {
+        $program_validation = Seminario_Taxonomies::validate_program_request(
+            $request->get_param('taxonomies'),
+            true,
+            $request->get_param('program'),
+            $request->get_param('area_tematica')
+        );
+        if (is_wp_error($program_validation)) {
+            return $program_validation;
+        }
+
         $data = array(
             'post_type' => 'seminario',
             'post_title' => (string) $request->get_param('title'),
@@ -198,7 +208,12 @@ class Seminario_REST_API
         }
 
         Seminario_Meta::update_from_request($post_id, $request->get_param('meta'));
-        Seminario_Taxonomies::set_terms_from_request($post_id, $request->get_param('taxonomies'));
+        Seminario_Taxonomies::set_terms_from_request(
+            $post_id,
+            $request->get_param('taxonomies'),
+            $request->get_param('program'),
+            $request->get_param('area_tematica')
+        );
 
         $featured_id = absint($request->get_param('featured_media'));
         if ($featured_id > 0) {
@@ -217,6 +232,19 @@ class Seminario_REST_API
         $post = get_post((int) $request['id']);
         if (!$post || $post->post_type !== 'seminario') {
             return new WP_Error('seminario_not_found', 'Seminario no encontrado', array('status' => 404));
+        }
+
+        $taxonomies = $request->get_param('taxonomies');
+        $program = $request->get_param('program');
+        $area_tematica = $request->get_param('area_tematica');
+        $program_validation = Seminario_Taxonomies::validate_program_request(
+            $taxonomies,
+            $taxonomies !== null || $program !== null,
+            $program,
+            $area_tematica
+        );
+        if (is_wp_error($program_validation)) {
+            return $program_validation;
         }
 
         $data = array('ID' => $post->ID);
@@ -239,7 +267,7 @@ class Seminario_REST_API
         }
 
         Seminario_Meta::update_from_request($post->ID, $request->get_param('meta'));
-        Seminario_Taxonomies::set_terms_from_request($post->ID, $request->get_param('taxonomies'));
+        Seminario_Taxonomies::set_terms_from_request($post->ID, $taxonomies, $program, $area_tematica);
 
         if ($request->get_param('featured_media') !== null) {
             $featured_id = absint($request->get_param('featured_media'));
@@ -351,6 +379,7 @@ class Seminario_REST_API
             $headers['X-FLACSO-Webhook-Token'] = $webhook_token;
             $headers['Authorization'] = 'Bearer ' . $webhook_token;
         }
+
         $headers['X-Idempotency-Key'] = $event_id;
 
         $response = wp_remote_post($endpoint_url, [
