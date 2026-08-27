@@ -41,6 +41,7 @@ flacso_safe_require('modules/oferta-academica/includes/class-oferta-consulta-for
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-seminarios-routes.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-seminarios-admin-links.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-rest-api.php');
+flacso_safe_require('modules/oferta-academica/includes/class-academic-offer-api.php');
 
 // Inicializar
 add_action('init', function() {

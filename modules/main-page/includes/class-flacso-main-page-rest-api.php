@@ -6,7 +6,8 @@ if (!defined('ABSPATH')) {
 
 class Flacso_Main_Page_REST_API {
     private const REST_NAMESPACE = 'flacso/v1';
-    private const REST_ROUTE = '/main-page/settings';
+    private const REST_ROUTE = '/main-page';
+    private const LEGACY_REST_ROUTE = '/main-page/settings';
 
     private const EXTRA_SECTION_LABELS = [
         'sections_visibility' => 'Visibilidad de secciones',
@@ -78,10 +79,11 @@ class Flacso_Main_Page_REST_API {
     }
 
     public static function register_routes(): void {
-        register_rest_route(
-            self::REST_NAMESPACE,
-            self::REST_ROUTE,
-            [
+        foreach ([self::REST_ROUTE, self::LEGACY_REST_ROUTE] as $route) {
+            register_rest_route(
+                self::REST_NAMESPACE,
+                $route,
+                [
                 [
                     'methods' => WP_REST_Server::READABLE,
                     'callback' => [self::class, 'get_settings'],
@@ -92,8 +94,9 @@ class Flacso_Main_Page_REST_API {
                     'callback' => [self::class, 'update_settings'],
                     'permission_callback' => [self::class, 'can_manage_settings'],
                 ],
-            ]
-        );
+                ]
+            );
+        }
     }
 
     public static function can_manage_settings(): bool {
