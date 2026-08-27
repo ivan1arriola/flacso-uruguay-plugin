@@ -1,0 +1,12 @@
+{
+  "id": 101,
+  "slug": "maestria-en-educacion",
+  "title": "Maestría en Educación, Sociedad y Política",
+  "type": "Maestría",
+  "status": "publish",
+  "description": "<p>Descripción del programa académico</p>",
+  "featuredImage": "https://example.org/image.jpg",
+  "inscriptionsOpen": true,
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "updatedAt": "2026-01-01T00:00:00.000Z"
+}
