@@ -48,4 +48,31 @@ add_action('wp_enqueue_scripts', function() {
         is_readable($absolute_path) ? (string) filemtime($absolute_path) : FLACSO_URUGUAY_VERSION,
         true
     );
+
+    $seminario_id = isset($_GET['ID']) ? absint(wp_unslash($_GET['ID'])) : 0;
+    if ($seminario_id > 0 && get_post_type($seminario_id) === 'seminario') {
+        $valor_usd = get_post_meta($seminario_id, '_seminario_valor_usd', true);
+        $valor_uyu = get_post_meta($seminario_id, '_seminario_valor_uyu', true);
+        $value = 0.0;
+        $currency = 'USD';
+
+        if ($valor_usd !== '' && $valor_usd !== null && (float) $valor_usd > 0) {
+            $value = (float) $valor_usd;
+            $currency = 'USD';
+        } elseif ($valor_uyu !== '' && $valor_uyu !== null && (float) $valor_uyu > 0) {
+            $value = (float) $valor_uyu;
+            $currency = 'UYU';
+        }
+
+        wp_add_inline_script(
+            'flacso-preinscripcion-analytics',
+            'window.flacsoMetaMonetaryContext = ' . wp_json_encode([
+                'content_type' => 'seminario',
+                'content_id' => $seminario_id,
+                'value' => $value,
+                'currency' => $currency,
+            ]) . ';',
+            'before'
+        );
+    }
 }, 50);
