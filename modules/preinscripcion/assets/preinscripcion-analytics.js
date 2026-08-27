@@ -9,9 +9,12 @@
 
     var form = document.getElementById("form-preinscripcion");
     var titleNode = root.querySelector(".preinsc-title");
-    var seminarTitle = titleNode ? String(titleNode.textContent || "").trim() : document.title;
+    var monetaryContext = window.flacsoMetaMonetaryContext && typeof window.flacsoMetaMonetaryContext === "object"
+        ? window.flacsoMetaMonetaryContext
+        : {};
+    var seminarTitle = String(monetaryContext.content_name || (titleNode ? String(titleNode.textContent || "").trim() : document.title)).trim();
     var query = new URLSearchParams(window.location.search || "");
-    var seminarId = query.get("ID") || "";
+    var seminarId = String(monetaryContext.content_id || query.get("ID") || "").trim();
     var started = false;
     var submitAttempted = false;
     var viewedSections = {};
