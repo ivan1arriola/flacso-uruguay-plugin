@@ -96,6 +96,26 @@
         var payload = Object.assign({}, params || {});
         if (eventName !== "Lead" && eventName !== "SubmitApplication") return payload;
 
+        var monetaryContext = window.flacsoMetaMonetaryContext && typeof window.flacsoMetaMonetaryContext === "object"
+            ? window.flacsoMetaMonetaryContext
+            : null;
+
+        if (monetaryContext) {
+            var contextValue = Number(monetaryContext.value);
+            var contextCurrency = String(monetaryContext.currency || "").trim().toUpperCase();
+            if (Number.isFinite(contextValue) && contextValue >= 0 && /^[A-Z]{3}$/.test(contextCurrency)) {
+                payload.value = contextValue;
+                payload.currency = contextCurrency;
+                if (monetaryContext.content_type && !payload.content_type) {
+                    payload.content_type = String(monetaryContext.content_type);
+                }
+                if (monetaryContext.content_id && (!Array.isArray(payload.content_ids) || !payload.content_ids.length)) {
+                    payload.content_ids = [String(monetaryContext.content_type || "content") + "-" + String(monetaryContext.content_id)];
+                }
+                return payload;
+            }
+        }
+
         var numericValue = Number(payload.value);
         payload.value = Number.isFinite(numericValue) && numericValue >= 0 ? numericValue : 0;
 
