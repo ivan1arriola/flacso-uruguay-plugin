@@ -49,7 +49,7 @@ add_action('wp_enqueue_scripts', function() {
         true
     );
 
-    $seminario_id = isset($_GET['ID']) ? absint(wp_unslash($_GET['ID'])) : 0;
+    $seminario_id = isset($_GET['ID']) ? absint(wp_unslash($_GET['ID'])) : get_queried_object_id();
     if ($seminario_id > 0 && get_post_type($seminario_id) === 'seminario') {
         $valor_usd = get_post_meta($seminario_id, '_seminario_valor_usd', true);
         $valor_uyu = get_post_meta($seminario_id, '_seminario_valor_uyu', true);
@@ -69,6 +69,7 @@ add_action('wp_enqueue_scripts', function() {
             'window.flacsoMetaMonetaryContext = ' . wp_json_encode([
                 'content_type' => 'seminario',
                 'content_id' => $seminario_id,
+                'content_name' => get_the_title($seminario_id),
                 'value' => $value,
                 'currency' => $currency,
             ]) . ';',
