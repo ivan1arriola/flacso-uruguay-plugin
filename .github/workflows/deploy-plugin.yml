@@ -252,10 +252,9 @@ jobs:
           test -n "$WP_BIN"
 
           validate_wordpress() {
-            cd "$WP_ROOT"
-            sudo -n -u web5 -- "$WP_BIN" core is-installed
-            sudo -n -u web5 -- "$WP_BIN" plugin is-active flacso-uruguay-plugin
-            deployed_version="$(sudo -n -u web5 -- "$WP_BIN" plugin get flacso-uruguay-plugin --field=version)"
+            sudo -n -u web5 -- "$WP_BIN" --path="$WP_ROOT" core is-installed
+            sudo -n -u web5 -- "$WP_BIN" --path="$WP_ROOT" plugin is-active flacso-uruguay-plugin
+            deployed_version="$(sudo -n -u web5 -- "$WP_BIN" --path="$WP_ROOT" plugin get flacso-uruguay-plugin --field=version)"
             if [[ "$deployed_version" != "$EXPECTED_VERSION" ]]; then
               echo "Expected plugin version $EXPECTED_VERSION, found $deployed_version." >&2
               return 1
@@ -270,7 +269,7 @@ jobs:
           fi
           printf '%s\n' "$validation_output"
 
-          sudo -n -u web5 -- "$WP_BIN" eval '
+          sudo -n -u web5 -- "$WP_BIN" --path="$WP_ROOT" eval '
           $taxonomy = get_taxonomy("area_tematica");
           if (!$taxonomy || !in_array("oferta-academica", $taxonomy->object_type, true) || !in_array("seminario", $taxonomy->object_type, true)) {
               fwrite(STDERR, "Program taxonomy is not attached to the complete academic catalog.\n");
