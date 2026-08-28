@@ -28,6 +28,7 @@ flacso_safe_require('modules/seminarios/includes/class-seminario-seeder.php');
 flacso_safe_require('modules/seminarios/includes/class-seminario-admin.php');
 flacso_safe_require('modules/seminarios/includes/class-seminario-rest-api.php');
 flacso_safe_require('modules/seminarios/includes/class-seminario-templates.php');
+flacso_safe_require('modules/seminarios/includes/class-seminario-public-visibility.php');
 flacso_safe_require('modules/seminarios/includes/class-seminario-docentes.php');
 
 // Cargar bloques
