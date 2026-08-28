@@ -42,6 +42,8 @@ flacso_safe_require('modules/oferta-academica/includes/class-oferta-seminarios-r
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-seminarios-admin-links.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-rest-api.php');
 flacso_safe_require('modules/oferta-academica/includes/class-academic-offer-api.php');
+flacso_safe_require('modules/oferta-academica/includes/class-cohorte-api.php');
+flacso_safe_require('modules/oferta-academica/includes/class-cohorte-auto-migration.php');
 
 // Inicializar
 add_action('init', function() {
@@ -64,6 +66,8 @@ add_action('init', function() {
     Oferta_Seminarios_Routes::init();
     Oferta_Seminarios_Admin_Links::init();
     Oferta_Rest_API::init();
+    FLACSO_Cohorte_API::init();
+    FLACSO_Cohorte_Auto_Migration::init();
 }, 5); // Prioridad 5 para que se ejecute antes
 
 add_action('after_setup_theme', function() {
