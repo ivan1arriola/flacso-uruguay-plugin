@@ -1,5 +1,27 @@
 # API REST - FLACSO Uruguay
 
+## Cohortes y Ediciones
+
+La API administrativa semántica de instancias es:
+
+```text
+GET|POST  /wp-json/flacso/v1/instancias-oferta
+GET|PATCH /wp-json/flacso/v1/instancias-oferta/{instancia_wp_id}
+```
+
+El campo `preinscriptionFlow` admite `legacy_editor` y
+`gestor_preinscripciones`; el default es `legacy_editor`. WordPress bloquea el
+cambio de flujo después de que la instancia haya abierto preinscripciones.
+
+El contrato público mínimo consumido por Django es:
+
+```text
+GET /wp-json/flacso/v1/preinscripciones/catalogo
+```
+
+Devuelve `schema_version: 1` y sólo instancias abiertas, públicas y asignadas a
+`gestor_preinscripciones`. Ver `docs/preinscription-flow-transition.md`.
+
 Esta documentación describe todos los endpoints disponibles en la API REST del plugin unificado de FLACSO Uruguay.
 
 ## Información General

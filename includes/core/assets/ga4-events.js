@@ -8,14 +8,14 @@
 
     var config = window.flacsoGA4Config || {};
     var startedForms = {};
+    var campaignAttributionKeys = ["campaign_provider", "campaign_source", "campaign_medium", "campaign_name", "campaign_external_id", "campaign_content", "campaign_term", "utm_source", "utm_medium", "utm_campaign", "utm_id", "utm_content", "utm_term", "gclid", "gbraid", "wbraid", "fbclid"];
 
     function captureCampaignAttribution() {
-        var keys = ["campaign_provider", "campaign_source", "campaign_medium", "campaign_name", "campaign_external_id", "campaign_content", "campaign_term", "utm_source", "utm_medium", "utm_campaign", "utm_id", "utm_content", "utm_term", "gclid", "gbraid", "wbraid", "fbclid"];
         try {
             var url = new URL(window.location.href);
             var stored = JSON.parse(window.sessionStorage.getItem("flacso_campaign_attribution") || "{}");
             var found = false;
-            keys.forEach(function (key) {
+            campaignAttributionKeys.forEach(function (key) {
                 var value = (url.searchParams.get(key) || "").trim();
                 if (value) {
                     stored[key] = value;
@@ -174,6 +174,19 @@
         });
     }
 
+    function appendCampaignAttribution(link) {
+        try {
+            var stored = JSON.parse(window.sessionStorage.getItem("flacso_campaign_attribution") || "{}");
+            var destination = new URL(link.href, window.location.href);
+            campaignAttributionKeys.forEach(function (key) {
+                if (!destination.searchParams.has(key) && safeText(stored[key])) {
+                    destination.searchParams.set(key, safeText(stored[key]));
+                }
+            });
+            link.href = destination.toString();
+        } catch (error) {}
+    }
+
     function trackFormStart(form) {
         var formId = safeText(form.id || form.getAttribute("name") || form.className || "formulario");
         if (startedForms[formId]) {
@@ -243,7 +256,8 @@
             trackContactClick(link);
         }
 
-        if (/\/preinscripcion\/?(?:[?#].*)?$/i.test(link.pathname || "") || link.href.indexOf("/preinscripcion/") !== -1) {
+        if (link.hasAttribute("data-flacso-preinscription-cta") || /\/preinscripcion\/?(?:[?#].*)?$/i.test(link.pathname || "") || link.href.indexOf("/preinscripcion/") !== -1) {
+            appendCampaignAttribution(link);
             trackPreinscriptionClick(link);
         }
     }, true);

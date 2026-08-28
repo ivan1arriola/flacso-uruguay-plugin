@@ -425,7 +425,8 @@ function flacso_consultas_render_form( $attributes = array() ) {
 	<?php if ( $mostrar_pre ) : ?>
 	<div class="d-grid gap-2 mt-4">
 		<a
-		   href="<?php echo esc_url( trailingslashit( $url_actual ) . 'preinscripcion' ); ?>"
+		   href="<?php echo esc_url( function_exists( 'flacso_get_preinscription_url' ) ? flacso_get_preinscription_url( 0, $id_pagina ) : trailingslashit( $url_actual ) . 'preinscripcion' ); ?>"
+		   data-flacso-preinscription-cta="1"
 		   class="btn btn-preinsc btn-lg rounded-pill py-3 fw-bold"
 		   aria-label="Ir a Preinscripción 2026"
 		   onclick="if(typeof window.flacsoMetaTrack === 'function'){ window.flacsoMetaTrack('InitiateCheckout', { content_name: '<?php echo esc_js($titulo_posgrado); ?>', content_category: 'oferta_academica' }); }">
@@ -936,13 +937,16 @@ function flacso_consultas_render_preinscripcion_button() {
 
 	$id_pagina = get_the_ID();
 	$url_actual = $id_pagina ? get_permalink( $id_pagina ) : home_url( '/' );
-	$href_preinscripcion = trailingslashit( $url_actual ) . 'preinscripcion';
+	$href_preinscripcion = function_exists( 'flacso_get_preinscription_url' )
+		? flacso_get_preinscription_url( 0, $id_pagina )
+		: trailingslashit( $url_actual ) . 'preinscripcion';
 
 	ob_start();
 	?>
 	<div class="d-grid gap-2 mt-2">
 		<a
 			href="<?php echo esc_url( $href_preinscripcion ); ?>"
+			data-flacso-preinscription-cta="1"
 			class="btn btn-preinsc btn-lg rounded-pill py-3 fw-bold flacso-preinsc-standalone"
 			aria-label="Ir a Preinscripción 2026"
 			onclick="if(typeof window.flacsoMetaTrack === 'function'){ window.flacsoMetaTrack('InitiateCheckout', { content_name: '<?php echo esc_js(get_the_title($id_pagina)); ?>', content_category: 'oferta_academica' }); }">

@@ -13,20 +13,30 @@ if (!defined('ABSPATH')) {
  * migran al nuevo contrato.
  */
 final class FLACSO_Cohorte_API {
-    private const POST_TYPE = 'cohorte';
+    public const POST_TYPE = 'cohorte';
     private const REST_NAMESPACE = 'flacso/v1';
     private const ROUTE = '/cohortes';
     private const MIGRATION_ACTION = 'flacso_migrate_offer_cohorts';
     private const MIGRATION_MARKER = '_flacso_cohorte_migrated_post_id';
 
-    private const META_OFFER_ID = 'oferta_academica_id';
-    private const META_START_DATE = 'start_date';
-    private const META_START_PRECISION = 'start_date_precision';
-    private const META_END_DATE = 'end_date';
-    private const META_STATUS = 'cohort_status';
-    private const META_OPEN = 'is_inscriptions_open';
-    private const META_OPEN_MESSAGE = 'open_message';
-    private const META_CLOSED_MESSAGE = 'closed_message';
+    public const META_OFFER_ID = 'oferta_academica_id';
+    public const META_START_DATE = 'start_date';
+    public const META_START_PRECISION = 'start_date_precision';
+    public const META_END_DATE = 'end_date';
+    public const META_STATUS = 'cohort_status';
+    public const META_OPEN = 'is_inscriptions_open';
+    public const META_OPEN_MESSAGE = 'open_message';
+    public const META_CLOSED_MESSAGE = 'closed_message';
+    public const META_YEAR = 'year';
+    public const META_SEMESTER = 'semester';
+    public const META_NUMBER = 'cohort_number';
+    public const META_PREINSCRIPTION_FLOW = 'flujo_preinscripcion';
+    public const META_PREINSCRIPTION_START = 'preinscription_start_date';
+    public const META_PREINSCRIPTION_END = 'preinscription_end_date';
+    public const META_FLOW_LOCKED = '_flujo_preinscripcion_bloqueado';
+
+    private const PREINSCRIPTION_SCHEMA_OPTION = 'flacso_cohorte_preinscription_schema_version';
+    private const PREINSCRIPTION_SCHEMA_VERSION = 1;
 
     private static bool $syncing = false;
 
@@ -35,6 +45,7 @@ final class FLACSO_Cohorte_API {
         add_action('init', [self::class, 'register_meta'], 8);
         add_action('rest_api_init', [self::class, 'register_routes']);
         add_action('save_post_' . self::POST_TYPE, [self::class, 'sync_legacy_offer_meta'], 20, 3);
+        add_action('init', [self::class, 'migrate_preinscription_defaults'], 32);
 
         if (is_admin()) {
             add_action('admin_menu', [self::class, 'register_migration_page'], 20);
@@ -96,6 +107,34 @@ final class FLACSO_Cohorte_API {
             'type' => 'string',
             'sanitize_callback' => 'sanitize_text_field',
         ]);
+        register_post_meta(self::POST_TYPE, self::META_YEAR, $common + [
+            'type' => 'integer',
+            'sanitize_callback' => 'absint',
+        ]);
+        register_post_meta(self::POST_TYPE, self::META_SEMESTER, $common + [
+            'type' => 'string',
+            'sanitize_callback' => [self::class, 'sanitize_semester'],
+        ]);
+        register_post_meta(self::POST_TYPE, self::META_NUMBER, $common + [
+            'type' => 'integer',
+            'sanitize_callback' => 'absint',
+        ]);
+        register_post_meta(self::POST_TYPE, self::META_PREINSCRIPTION_FLOW, $common + [
+            'type' => 'string',
+            'sanitize_callback' => [FLACSO_Preinscription_Flow::class, 'normalize'],
+        ]);
+        register_post_meta(self::POST_TYPE, self::META_PREINSCRIPTION_START, $common + [
+            'type' => 'string',
+            'sanitize_callback' => [self::class, 'sanitize_date_value'],
+        ]);
+        register_post_meta(self::POST_TYPE, self::META_PREINSCRIPTION_END, $common + [
+            'type' => 'string',
+            'sanitize_callback' => [self::class, 'sanitize_date_value'],
+        ]);
+        register_post_meta(self::POST_TYPE, self::META_FLOW_LOCKED, $common + [
+            'type' => 'boolean',
+            'sanitize_callback' => [self::class, 'sanitize_boolean'],
+        ]);
     }
 
     public static function register_routes(): void {
@@ -127,7 +166,7 @@ final class FLACSO_Cohorte_API {
     }
 
     public static function list_items(WP_REST_Request $request) {
-        $offer_id = absint($request->get_param('offerWpId'));
+        $offer_id = absint($request->get_param('offerWpId') ?: $request->get_param('academicOfferId'));
         $args = [
             'post_type' => self::POST_TYPE,
             'post_status' => ['publish', 'draft', 'private'],
@@ -193,7 +232,7 @@ final class FLACSO_Cohorte_API {
         $offer_id = absint($payload['offerWpId'] ?? ($existing ? get_post_meta($existing->ID, self::META_OFFER_ID, true) : 0));
         $name = sanitize_text_field((string) ($payload['name'] ?? ($existing ? $existing->post_title : '')));
 
-        if ($offer_id <= 0 || get_post_type($offer_id) !== 'oferta-academica') {
+        if ($offer_id <= 0 || !in_array(get_post_type($offer_id), ['oferta-academica', 'seminario'], true)) {
             return new WP_Error('flacso_cohort_offer_required', __('La cohorte debe pertenecer a una Oferta Academica valida.', 'flacso-oferta-academica'), ['status' => 400]);
         }
         if (!current_user_can('edit_post', $offer_id)) {
@@ -202,6 +241,22 @@ final class FLACSO_Cohorte_API {
         if ($name === '') {
             return new WP_Error('flacso_cohort_name_required', __('El nombre de la cohorte es obligatorio.', 'flacso-oferta-academica'), ['status' => 400]);
         }
+
+        $current_flow = $existing instanceof WP_Post ? self::get_preinscription_flow((int) $existing->ID) : FLACSO_Preinscription_Flow::LEGACY_EDITOR;
+        $requested_flow = array_key_exists('preinscriptionFlow', $payload)
+            ? (string) $payload['preinscriptionFlow']
+            : $current_flow;
+        if (!FLACSO_Preinscription_Flow::is_valid($requested_flow)) {
+            return new WP_Error('flacso_cohort_invalid_flow', __('El sistema de preinscripcion no es valido.', 'flacso-oferta-academica'), ['status' => 400]);
+        }
+        if ($existing instanceof WP_Post && self::is_flow_locked((int) $existing->ID) && $requested_flow !== $current_flow) {
+            return new WP_Error(
+                'flacso_cohort_flow_locked',
+                __('No se puede cambiar el sistema porque esta convocatoria ya abrio preinscripciones.', 'flacso-oferta-academica'),
+                ['status' => 409]
+            );
+        }
+        $payload['preinscriptionFlow'] = $requested_flow;
 
         $postarr = [
             'post_type' => self::POST_TYPE,
@@ -225,6 +280,7 @@ final class FLACSO_Cohorte_API {
         $is_open = self::sanitize_boolean($payload['isInscriptionsOpen'] ?? get_post_meta($saved_id, self::META_OPEN, true));
         if ($is_open) {
             self::close_other_cohorts($offer_id, (int) $saved_id);
+            update_post_meta($saved_id, self::META_FLOW_LOCKED, true);
         }
 
         self::sync_legacy_offer_meta((int) $saved_id, get_post($saved_id), true);
@@ -240,6 +296,12 @@ final class FLACSO_Cohorte_API {
             'isInscriptionsOpen' => [self::META_OPEN, [self::class, 'sanitize_boolean']],
             'openMessage' => [self::META_OPEN_MESSAGE, 'sanitize_text_field'],
             'closedMessage' => [self::META_CLOSED_MESSAGE, 'sanitize_text_field'],
+            'year' => [self::META_YEAR, 'absint'],
+            'semester' => [self::META_SEMESTER, [self::class, 'sanitize_semester']],
+            'number' => [self::META_NUMBER, 'absint'],
+            'preinscriptionFlow' => [self::META_PREINSCRIPTION_FLOW, [FLACSO_Preinscription_Flow::class, 'normalize']],
+            'preinscriptionStartDate' => [self::META_PREINSCRIPTION_START, [self::class, 'sanitize_date_value']],
+            'preinscriptionEndDate' => [self::META_PREINSCRIPTION_END, [self::class, 'sanitize_date_value']],
         ];
         foreach ($map as $key => [$meta_key, $sanitize]) {
             if (!array_key_exists($key, $payload)) {
@@ -266,6 +328,7 @@ final class FLACSO_Cohorte_API {
         foreach ($ids as $id) {
             if (self::sanitize_boolean(get_post_meta($id, self::META_OPEN, true))) {
                 update_post_meta($id, self::META_OPEN, false);
+                update_post_meta($id, self::META_FLOW_LOCKED, true);
             }
         }
     }
@@ -275,7 +338,7 @@ final class FLACSO_Cohorte_API {
             return;
         }
         $offer_id = absint(get_post_meta($post_id, self::META_OFFER_ID, true));
-        if ($offer_id <= 0 || get_post_type($offer_id) !== 'oferta-academica') {
+        if ($offer_id <= 0 || !in_array(get_post_type($offer_id), ['oferta-academica', 'seminario'], true)) {
             return;
         }
 
@@ -284,12 +347,16 @@ final class FLACSO_Cohorte_API {
             return;
         }
 
-        update_post_meta($offer_id, 'cohorte', $source->post_title);
-        update_post_meta($offer_id, 'proximo_inicio', (string) get_post_meta($source->ID, self::META_START_DATE, true));
-        update_post_meta($offer_id, 'proximo_inicio_precision', (string) (get_post_meta($source->ID, self::META_START_PRECISION, true) ?: 'day'));
-        update_post_meta($offer_id, 'inscripciones_abiertas', self::sanitize_boolean(get_post_meta($source->ID, self::META_OPEN, true)));
-        update_post_meta($offer_id, 'inscripciones_mensaje', (string) get_post_meta($source->ID, self::META_OPEN_MESSAGE, true));
-        update_post_meta($offer_id, 'inscripciones_mensaje_cerrado', (string) get_post_meta($source->ID, self::META_CLOSED_MESSAGE, true));
+        if (get_post_type($offer_id) === 'seminario') {
+            update_post_meta($offer_id, '_seminario_abierto_publico', self::sanitize_boolean(get_post_meta($source->ID, self::META_OPEN, true)));
+        } else {
+            update_post_meta($offer_id, 'cohorte', $source->post_title);
+            update_post_meta($offer_id, 'proximo_inicio', (string) get_post_meta($source->ID, self::META_START_DATE, true));
+            update_post_meta($offer_id, 'proximo_inicio_precision', (string) (get_post_meta($source->ID, self::META_START_PRECISION, true) ?: 'day'));
+            update_post_meta($offer_id, 'inscripciones_abiertas', self::sanitize_boolean(get_post_meta($source->ID, self::META_OPEN, true)));
+            update_post_meta($offer_id, 'inscripciones_mensaje', (string) get_post_meta($source->ID, self::META_OPEN_MESSAGE, true));
+            update_post_meta($offer_id, 'inscripciones_mensaje_cerrado', (string) get_post_meta($source->ID, self::META_CLOSED_MESSAGE, true));
+        }
         clean_post_cache($offer_id);
     }
 
@@ -322,7 +389,7 @@ final class FLACSO_Cohorte_API {
     }
 
     private static function to_domain_item(WP_Post $post): array {
-        return [
+        $item = [
             'wpId' => (int) $post->ID,
             'offerWpId' => absint(get_post_meta($post->ID, self::META_OFFER_ID, true)),
             'name' => (string) $post->post_title,
@@ -333,9 +400,19 @@ final class FLACSO_Cohorte_API {
             'isInscriptionsOpen' => self::sanitize_boolean(get_post_meta($post->ID, self::META_OPEN, true)),
             'openMessage' => (string) get_post_meta($post->ID, self::META_OPEN_MESSAGE, true),
             'closedMessage' => (string) get_post_meta($post->ID, self::META_CLOSED_MESSAGE, true),
+            'year' => self::get_year((int) $post->ID),
+            'semester' => (string) get_post_meta($post->ID, self::META_SEMESTER, true),
+            'number' => max(1, absint(get_post_meta($post->ID, self::META_NUMBER, true))),
+            'preinscriptionFlow' => self::get_preinscription_flow((int) $post->ID),
+            'preinscriptionStartDate' => (string) get_post_meta($post->ID, self::META_PREINSCRIPTION_START, true),
+            'preinscriptionEndDate' => (string) get_post_meta($post->ID, self::META_PREINSCRIPTION_END, true),
+            'flowLocked' => self::is_flow_locked((int) $post->ID),
             'createdAt' => get_post_time(DATE_ATOM, true, $post),
             'updatedAt' => get_post_modified_time(DATE_ATOM, true, $post),
         ];
+        $item['pageUrl'] = FLACSO_Preinscription_URL_Resolver::resolve((int) $post->ID);
+        $item['backofficeUrl'] = FLACSO_Preinscription_URL_Resolver::resolve_backoffice((int) $post->ID);
+        return $item;
     }
 
     public static function migrate_legacy_offer_meta(): array {
@@ -407,6 +484,15 @@ final class FLACSO_Cohorte_API {
             update_post_meta($cohort_id, self::META_OPEN_MESSAGE, $open_message);
             update_post_meta($cohort_id, self::META_CLOSED_MESSAGE, $closed_message);
             update_post_meta($cohort_id, self::META_STATUS, 'upcoming');
+            update_post_meta($cohort_id, self::META_PREINSCRIPTION_FLOW, FLACSO_Preinscription_Flow::LEGACY_EDITOR);
+            update_post_meta($cohort_id, self::META_NUMBER, 1);
+            $year = absint(substr($start, 0, 4));
+            if ($year > 0) {
+                update_post_meta($cohort_id, self::META_YEAR, $year);
+            }
+            if (self::sanitize_boolean(get_post_meta($offer->ID, 'inscripciones_abiertas', true))) {
+                update_post_meta($cohort_id, self::META_FLOW_LOCKED, true);
+            }
             update_post_meta($offer->ID, self::MIGRATION_MARKER, $cohort_id);
             self::sync_legacy_offer_meta((int) $cohort_id, get_post($cohort_id), true);
             $result['created']++;
@@ -477,6 +563,93 @@ final class FLACSO_Cohorte_API {
             return $value;
         }
         return in_array(strtolower(trim((string) $value)), ['1', 'true', 'yes', 'si', 'on'], true);
+    }
+
+    public static function sanitize_semester($value): string {
+        $value = strtoupper(str_replace(' ', '', sanitize_text_field((string) $value)));
+        if (in_array($value, ['1', 'S1', '1S'], true)) {
+            return '1S';
+        }
+        if (in_array($value, ['2', 'S2', '2S'], true)) {
+            return '2S';
+        }
+        return '';
+    }
+
+    public static function get_offer_id(int $cohort_id): int {
+        return absint(get_post_meta($cohort_id, self::META_OFFER_ID, true));
+    }
+
+    public static function get_preinscription_flow(int $cohort_id): string {
+        return FLACSO_Preinscription_Flow::normalize(get_post_meta($cohort_id, self::META_PREINSCRIPTION_FLOW, true));
+    }
+
+    public static function is_flow_locked(int $cohort_id): bool {
+        return self::sanitize_boolean(get_post_meta($cohort_id, self::META_OPEN, true))
+            || self::sanitize_boolean(get_post_meta($cohort_id, self::META_FLOW_LOCKED, true));
+    }
+
+    public static function get_year(int $cohort_id): int {
+        $year = absint(get_post_meta($cohort_id, self::META_YEAR, true));
+        if ($year > 0) {
+            return $year;
+        }
+        return absint(substr((string) get_post_meta($cohort_id, self::META_START_DATE, true), 0, 4));
+    }
+
+    public static function find_open_for_offer(int $offer_id): int {
+        return self::find_for_offer($offer_id, true);
+    }
+
+    public static function find_latest_for_offer(int $offer_id): int {
+        return self::find_for_offer($offer_id, false);
+    }
+
+    private static function find_for_offer(int $offer_id, bool $open_only): int {
+        $meta_query = [[
+            'key' => self::META_OFFER_ID,
+            'value' => $offer_id,
+            'compare' => '=',
+            'type' => 'NUMERIC',
+        ]];
+        if ($open_only) {
+            $meta_query[] = ['key' => self::META_OPEN, 'value' => '1', 'compare' => '='];
+        }
+        $ids = get_posts([
+            'post_type' => self::POST_TYPE,
+            'post_status' => ['publish', 'draft', 'private'],
+            'posts_per_page' => 1,
+            'fields' => 'ids',
+            'orderby' => 'modified',
+            'order' => 'DESC',
+            'meta_query' => $meta_query,
+        ]);
+        return !empty($ids) ? absint($ids[0]) : 0;
+    }
+
+    public static function migrate_preinscription_defaults(): void {
+        if (absint(get_option(self::PREINSCRIPTION_SCHEMA_OPTION, 0)) >= self::PREINSCRIPTION_SCHEMA_VERSION) {
+            return;
+        }
+        $ids = get_posts([
+            'post_type' => self::POST_TYPE,
+            'post_status' => ['publish', 'draft', 'private'],
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+        ]);
+        foreach ($ids as $id) {
+            $id = absint($id);
+            if (!FLACSO_Preinscription_Flow::is_valid(get_post_meta($id, self::META_PREINSCRIPTION_FLOW, true))) {
+                update_post_meta($id, self::META_PREINSCRIPTION_FLOW, FLACSO_Preinscription_Flow::LEGACY_EDITOR);
+            }
+            if (self::sanitize_boolean(get_post_meta($id, self::META_OPEN, true))) {
+                update_post_meta($id, self::META_FLOW_LOCKED, true);
+            }
+            if (absint(get_post_meta($id, self::META_NUMBER, true)) <= 0) {
+                update_post_meta($id, self::META_NUMBER, 1);
+            }
+        }
+        update_option(self::PREINSCRIPTION_SCHEMA_OPTION, self::PREINSCRIPTION_SCHEMA_VERSION, false);
     }
 }
 

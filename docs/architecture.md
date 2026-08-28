@@ -5,14 +5,17 @@
 
 ## 2. Fuentes de Verdad Asignadas
 - **Contenido Público y Publicación de WordPress**: Ofertas Académicas base, Seminarios base, Novedades y Configuración de Portada (`main-page`).
+- **Instancias de Oferta**: identidad WordPress, relación Oferta → Cohortes/Ediciones, estado y `flujo_preinscripcion`.
 - **Contratos REST API**: Exposición de DTOs diferenciados para consumo público (`PublicDTO`) y administrativo (`AdminDTO`).
 - **Tracking Centralizado**: API JavaScript única (`flacsoMetaTrackCustom`) encargada de sincronizar identificadores (`event_id`) entre Pixel, CAPI y GA4.
 
 ## 3. Lo que NO debe hacer este repositorio
-- **NO tomar decisiones sobre reglas de negocio complejas de inscripciones** (como el control de unicidad de cohortes o ediciones abiertas que pertenecen al Editor).
+- **NO almacenar postulaciones**. WordPress decide el destino y la apertura; cada postulación pertenece exclusivamente al Editor legacy o al Gestor nuevo.
 - **NO definir estilos de diseño detallados o layout visual propio del tema**.
 
 ## 4. Comunicación e Integraciones
 - **Hacia el Editor (`flacso-uruguay-editor`)**: Provee endpoints REST protegidos con contratos `AdminDTO`.
 - **Hacia el Tema (`kadence-child-flacso`)**: Provee datos, estructuras semánticas, shortcodes y API de tracking JS.
+- **Hacia Preinscripciones**: publica únicamente el catálogo mínimo v1 de instancias abiertas cuyo flujo es `gestor_preinscripciones`.
 
+Ver [transición de preinscripciones](preinscription-flow-transition.md) para contratos, migración y operación.
