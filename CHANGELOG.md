@@ -6,6 +6,7 @@
 - Incorpora migración WP-CLI v1 idempotente con dry-run, snapshots, verificación y rollback report no destructivo.
 - Preserva el CPT, endpoints y URLs legacy durante Release A sin ejecutar migraciones desde deploy, activación o `init`.
 - Migra relaciones a la autorrelación canónica `integra`, `compuesto_por` y `precede`.
+- Mantiene CRUD administrativo de `OfertaAcademica` e incorpora CRUD completo de `InstanciaOferta`, con eliminación recuperable por defecto.
 
 ---
 
