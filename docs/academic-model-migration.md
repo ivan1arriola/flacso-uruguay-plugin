@@ -126,6 +126,20 @@ El seminario integrado 27212 no genera instancia porque carece de temporalidad.
 El dry-run calcula los valores a partir de la base y debe explicar cualquier
 otra diferencia.
 
+
+### Precedencia de contenido académico
+
+Cuando varias ediciones legacy se canonicalizan a una misma `OfertaAcademica`,
+el contenido académico no vacío de la oferta canónica tiene precedencia y nunca
+se reemplaza por contenido coyuntural de una edición absorbida. Una edición
+absorbida solo puede completar un campo académico que esté realmente vacío en
+el canónico. Las diferencias entre valores no vacíos quedan auditadas como
+`conflictos_academicos_resueltos` con resolución `CANONICAL_WINS`.
+
+La referencia legacy `24162 -> 23911` apunta a un post inexistente y se trata
+como `referencias_huerfanas_conocidas` con acción `OMITIR`; no se considera un
+conflicto pendiente ni se fabrica un destino.
+
 ## Checklist pre-deploy
 
 - Ejecutar todos los tests y controles de sintaxis/encoding.
