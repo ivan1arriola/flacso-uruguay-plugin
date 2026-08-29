@@ -187,6 +187,53 @@ function migration_instances_for_origin(int $legacy_id): array {
     }));
 }
 
+function migration_relation_fixture(array $destinations, array $canonical_map): array {
+    $relations = [];
+    foreach ($destinations as $order => $destination) {
+        $relations[] = [
+            'oferta_origen' => 999,
+            'oferta_destino' => $destination,
+            'tipo_relacion' => FLACSO_Relacion_Oferta_Academica::INTEGRA,
+            'orden' => $order,
+        ];
+    }
+    return FLACSO_Academic_Model_Migrator::canonicalize_relationships($relations, $canonical_map);
+}
+
+$canonical_map = [
+    24299 => 24299,
+    27242 => 24299,
+    24432 => 24432,
+    27245 => 24432,
+    25623 => 25623,
+    27256 => 25623,
+    23904 => 23904,
+    27258 => 23904,
+    26285 => 26285,
+    23902 => 23902,
+    27254 => 23902,
+];
+
+$relations_24169 = migration_relation_fixture([24299, 24432, 27242, 27245], $canonical_map);
+migration_assert_same([24299, 24432], array_column($relations_24169['final'], 'oferta_destino'), '24169 deduplica ediciones canonicalizadas');
+migration_assert_same([0, 1], array_column($relations_24169['final'], 'orden'), '24169 conserva primera aparicion');
+migration_assert_same(2, count($relations_24169['absorbed']), '24169 reporta relaciones absorbidas');
+
+$relations_24170 = migration_relation_fixture([25623, 23904, 26285, 27256, 27258], $canonical_map);
+migration_assert_same([25623, 23904, 26285], array_column($relations_24170['final'], 'oferta_destino'), '24170 deduplica ediciones canonicalizadas');
+migration_assert_same(2, count($relations_24170['absorbed']), '24170 reporta relaciones absorbidas');
+
+$relations_24173 = migration_relation_fixture([23902, 27254], $canonical_map);
+migration_assert_same([23902], array_column($relations_24173['final'], 'oferta_destino'), '24173 deduplica ediciones canonicalizadas');
+migration_assert_same(1, count($relations_24173['absorbed']), '24173 reporta relacion absorbida');
+
+$normalized_relations = FLACSO_Relacion_Oferta_Academica::normalize([
+    ['oferta_destino' => 24299, 'tipo_relacion' => 'integra', 'orden' => 0],
+    ['oferta_destino' => 24432, 'tipo_relacion' => 'integra', 'orden' => 1],
+    ['oferta_destino' => 24299, 'tipo_relacion' => 'integra', 'orden' => 2],
+]);
+migration_assert_same([0, 1], array_column($normalized_relations, 'orden'), 'persistencia conserva el orden de la primera relacion');
+
 $before = serialize([$GLOBALS['migration_posts'], $GLOBALS['migration_meta'], $GLOBALS['migration_terms'], $GLOBALS['migration_options']]);
 $dry = FLACSO_Academic_Model_Migrator::run(true);
 $after = serialize([$GLOBALS['migration_posts'], $GLOBALS['migration_meta'], $GLOBALS['migration_terms'], $GLOBALS['migration_options']]);
@@ -198,7 +245,10 @@ migration_assert_same(23911, $dry['referencias_rotas'][0]['missing_id'], 'refere
 migration_assert_same(27212, $dry['registros_sin_fechas'][0]['id'], 'integrado sin instancia');
 migration_assert_same(['_seminario_presentacion_seminario'], $dry['conflictos_academicos'][0]['fields'], 'conflicto academico reportado');
 migration_assert_same(5, $dry['expected_final_counts']['oferta_academica'], 'conteo final ofertas fixture');
-migration_assert_same(5, $dry['expected_final_counts']['instancia_oferta_aplicando_regla_temporal'], 'conteo final instancias fixture');
+migration_assert_same(5, $dry['expected_final_counts']['instancia_oferta'], 'conteo final instancias fixture');
+migration_assert_same(4, $dry['resumen_relaciones']['legacy_leidas'], 'dry-run cuenta relaciones legacy incluidas las rotas');
+migration_assert_same(3, $dry['resumen_relaciones']['finales_deduplicadas'], 'dry-run cuenta relaciones finales');
+migration_assert_same(0, $dry['resumen_relaciones']['absorbidas_por_canonicalizacion'], 'fixture base sin relaciones repetidas');
 
 $applied = FLACSO_Academic_Model_Migrator::run(false);
 migration_assert_same('instancia-oferta', get_post_type(27261), 'cohorte conserva ID');

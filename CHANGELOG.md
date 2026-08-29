@@ -7,6 +7,8 @@
 - Preserva el CPT, endpoints y URLs legacy durante Release A sin ejecutar migraciones desde deploy, activación o `init`.
 - Migra relaciones a la autorrelación canónica `integra`, `compuesto_por` y `precede`.
 - Mantiene CRUD administrativo de `OfertaAcademica` e incorpora CRUD completo de `InstanciaOferta`, con eliminación recuperable por defecto.
+- Deduplica relaciones después de canonicalizar seminarios, conserva el primer orden válido y reporta las relaciones absorbidas.
+- Retira las páginas administrativas legacy `flacso-oferta-data` y `flacso-oferta-migracion`.
 
 ---
 

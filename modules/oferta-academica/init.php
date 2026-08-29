@@ -34,7 +34,6 @@ flacso_safe_require('modules/oferta-academica/includes/class-oferta-renderer.php
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-blocks.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-data-importer.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-data-admin.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-data-migration.php');
 flacso_safe_require('modules/oferta-academica/includes/class-tabla-precio-schema.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-data-schema.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-docentes-integration.php');
@@ -61,7 +60,6 @@ add_action('init', function() {
     Oferta_Data_Schema::init();
     Oferta_Blocks::init();
     Oferta_Data_Admin::init();
-    Oferta_Data_Migration::init();
     Oferta_Docentes_Integration::init();
     Oferta_Seminarios_Integration::init();
     FLACSO_Oferta_Seminario_Admin::init();
