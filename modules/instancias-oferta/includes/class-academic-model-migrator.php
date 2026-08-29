@@ -13,6 +13,9 @@ final class FLACSO_Academic_Model_Migrator {
     public const MAP_OPTION = 'flacso_academic_model_migration_v1_map';
 
     private const INVALID_SEMINAR_IDS = [27240];
+    private const KNOWN_ORPHAN_RELATIONS = [
+        ['source_id' => 24162, 'missing_id' => 23911, 'meta_key' => '_oferta_seminarios_ids'],
+    ];
     private const DUPLICATE_GROUPS = [
         24299 => [24299, 27242],
         23902 => [23902, 27254],
@@ -46,7 +49,7 @@ final class FLACSO_Academic_Model_Migrator {
         $canonical_map = [];
         $duplicate_groups = [];
         $absorbed = [];
-        $conflicts = [];
+        $resolved_conflicts = [];
         foreach ($valid as $id => $seminar) {
             $canonical_map[$id] = $id;
         }
@@ -63,20 +66,22 @@ final class FLACSO_Academic_Model_Migrator {
                     $absorbed[] = $member_id;
                 }
             }
-            $academic_source = max($present);
+            $academic_source = $canonical_id;
             $group_conflicts = self::academic_conflicts($present);
             $duplicate_groups[] = [
                 'canonical_id' => $canonical_id,
                 'members' => $present,
                 'academic_source' => $academic_source,
                 'conflicts' => $group_conflicts,
+                'conflict_resolution' => 'CANONICAL_WINS',
             ];
             if (!empty($group_conflicts)) {
-                $conflicts[] = [
+                $resolved_conflicts[] = [
                     'canonical_id' => $canonical_id,
                     'members' => $present,
                     'academic_source' => $academic_source,
                     'fields' => $group_conflicts,
+                    'resolution' => 'CANONICAL_WINS',
                 ];
             }
         }
@@ -143,9 +148,12 @@ final class FLACSO_Academic_Model_Migrator {
                 'legacy_leidas' => count($relations['legacy']),
                 'finales_deduplicadas' => count($relations['valid']),
                 'absorbidas_por_canonicalizacion' => count($relations['absorbed']),
+                'huerfanas_conocidas' => count($relations['known_orphans']),
             ],
+            'referencias_huerfanas_conocidas' => $relations['known_orphans'],
             'referencias_rotas' => $relations['broken'],
-            'conflictos_academicos' => $conflicts,
+            'conflictos_academicos' => [],
+            'conflictos_academicos_resueltos' => $resolved_conflicts,
             'expected_final_counts' => [
                 'oferta_academica' => $existing_offer_count + count($canonical_ids),
                 'instancia_oferta' => $existing_instance_count + count($cohorts) + count($seminar_instances),
@@ -310,12 +318,8 @@ final class FLACSO_Academic_Model_Migrator {
             foreach ($member_ids as $member_id) {
                 self::backup_post($member_id);
             }
-            $academic_source = max($member_ids);
-            foreach (FLACSO_Oferta_Academica::seminar_academic_meta_keys() as $meta_key) {
-                if (metadata_exists('post', $academic_source, $meta_key)) {
-                    update_post_meta($canonical_id, $meta_key, get_post_meta($academic_source, $meta_key, true));
-                }
-            }
+            $academic_source = $canonical_id;
+            $completed_academic_fields = self::merge_academic_meta_into_canonical($canonical_id, $member_ids);
             self::checked_update_post(['ID' => $canonical_id, 'post_type' => FLACSO_Oferta_Academica::POST_TYPE]);
             $term_result = wp_set_object_terms($canonical_id, FLACSO_Oferta_Academica::TIPO_SEMINARIO, FLACSO_Oferta_Academica::TYPE_TAXONOMY, false);
             if (is_wp_error($term_result)) {
@@ -323,6 +327,7 @@ final class FLACSO_Academic_Model_Migrator {
             }
             $canonical_record = self::record($canonical_id, $canonical_id, 'OFERTA_CANONICA', 0);
             $canonical_record['fuente_academica'] = $academic_source;
+            $canonical_record['campos_academicos_completados'] = $completed_academic_fields;
             update_post_meta($canonical_id, self::RECORD_META_KEY, $canonical_record);
             $map[] = $canonical_record;
 
@@ -427,6 +432,7 @@ final class FLACSO_Academic_Model_Migrator {
         $legacy = [];
         $migratable = [];
         $broken = [];
+        $known_orphans = [];
         foreach ($offers as $offer) {
             $ids = get_post_meta($offer->ID, '_oferta_seminarios_ids', true);
             if (!is_array($ids)) {
@@ -442,7 +448,13 @@ final class FLACSO_Academic_Model_Migrator {
                 ];
                 $legacy[] = $relation;
                 if (!isset($valid_seminars[$legacy_id]) && !isset($canonical_map[$legacy_id])) {
-                    $broken[] = ['source_id' => absint($offer->ID), 'missing_id' => $legacy_id, 'meta_key' => '_oferta_seminarios_ids'];
+                    $missing = ['source_id' => absint($offer->ID), 'missing_id' => $legacy_id, 'meta_key' => '_oferta_seminarios_ids'];
+                    if (self::is_known_orphan_relation($missing)) {
+                        $missing['action'] = 'OMITIR';
+                        $known_orphans[] = $missing;
+                    } else {
+                        $broken[] = $missing;
+                    }
                     continue;
                 }
                 $migratable[] = $relation;
@@ -474,6 +486,7 @@ final class FLACSO_Academic_Model_Migrator {
             'legacy' => $legacy,
             'valid' => $canonicalized['final'],
             'absorbed' => $canonicalized['absorbed'],
+            'known_orphans' => $known_orphans,
             'broken' => $broken,
         ];
     }
@@ -536,13 +549,68 @@ final class FLACSO_Academic_Model_Migrator {
         foreach (FLACSO_Oferta_Academica::seminar_academic_meta_keys() as $key) {
             $values = [];
             foreach ($member_ids as $member_id) {
-                $values[] = maybe_serialize(get_post_meta($member_id, $key, true));
+                $value = get_post_meta($member_id, $key, true);
+                if (!self::has_meaningful_meta_value($value)) {
+                    continue;
+                }
+                $values[] = maybe_serialize($value);
             }
             if (count(array_unique($values)) > 1) {
                 $conflicts[] = $key;
             }
         }
         return $conflicts;
+    }
+
+    /**
+     * El contenido academico existente del canonico tiene precedencia. Las
+     * ediciones absorbidas solo completan campos realmente vacios.
+     *
+     * @return array<string, int> meta_key => legacy source id
+     */
+    private static function merge_academic_meta_into_canonical(int $canonical_id, array $member_ids): array {
+        $sources = array_values(array_filter(array_map('absint', $member_ids), static function (int $member_id) use ($canonical_id): bool {
+            return $member_id > 0 && $member_id !== $canonical_id;
+        }));
+        rsort($sources);
+
+        $completed = [];
+        foreach (FLACSO_Oferta_Academica::seminar_academic_meta_keys() as $meta_key) {
+            if (self::has_meaningful_meta_value(get_post_meta($canonical_id, $meta_key, true))) {
+                continue;
+            }
+            foreach ($sources as $source_id) {
+                $value = get_post_meta($source_id, $meta_key, true);
+                if (!self::has_meaningful_meta_value($value)) {
+                    continue;
+                }
+                update_post_meta($canonical_id, $meta_key, $value);
+                $completed[$meta_key] = $source_id;
+                break;
+            }
+        }
+        return $completed;
+    }
+
+    private static function has_meaningful_meta_value($value): bool {
+        if (is_array($value)) {
+            return !empty($value);
+        }
+        if (is_object($value)) {
+            return !empty((array) $value);
+        }
+        return trim((string) $value) !== '';
+    }
+
+    private static function is_known_orphan_relation(array $relation): bool {
+        foreach (self::KNOWN_ORPHAN_RELATIONS as $known) {
+            if (absint($relation['source_id'] ?? 0) === $known['source_id']
+                && absint($relation['missing_id'] ?? 0) === $known['missing_id']
+                && (string) ($relation['meta_key'] ?? '') === $known['meta_key']) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static function diagnose_ambiguous_duplicates(array $valid): array {

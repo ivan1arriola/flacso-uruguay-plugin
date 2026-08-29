@@ -44,6 +44,7 @@ $GLOBALS['migration_meta'] = [
     27254 => [
         '_seminario_presentacion_seminario' => 'Presentación nueva',
         '_seminario_objetivo_general' => 'Objetivo común',
+        '_seminario_forma_aprobacion' => 'Ensayo final',
         '_seminario_periodo_inicio' => '2026-10-19',
         '_seminario_periodo_fin' => '2026-11-01',
     ],
@@ -241,14 +242,19 @@ migration_assert_same($before, $after, 'dry-run no modifica DB');
 migration_assert_same(0, $GLOBALS['migration_writes'], 'dry-run no llama APIs de escritura');
 migration_assert_same([27254], $dry['duplicados_absorbidos'], 'duplicado explicito absorbido');
 migration_assert_same(27240, $dry['seminarios_invalidos'][0]['id'], 'invalido omitido');
-migration_assert_same(23911, $dry['referencias_rotas'][0]['missing_id'], 'referencia rota reportada');
+migration_assert_same([], $dry['referencias_rotas'], 'no quedan referencias rotas desconocidas');
+migration_assert_same(23911, $dry['referencias_huerfanas_conocidas'][0]['missing_id'], 'referencia huerfana conocida auditada');
+migration_assert_same('OMITIR', $dry['referencias_huerfanas_conocidas'][0]['action'], 'referencia huerfana conocida se omite');
 migration_assert_same(27212, $dry['registros_sin_fechas'][0]['id'], 'integrado sin instancia');
-migration_assert_same(['_seminario_presentacion_seminario'], $dry['conflictos_academicos'][0]['fields'], 'conflicto academico reportado');
+migration_assert_same([], $dry['conflictos_academicos'], 'no quedan conflictos academicos sin resolver');
+migration_assert_same(['_seminario_presentacion_seminario'], $dry['conflictos_academicos_resueltos'][0]['fields'], 'diferencia academica resuelta por canonico');
+migration_assert_same(23902, $dry['conflictos_academicos_resueltos'][0]['academic_source'], 'canonico es fuente academica');
 migration_assert_same(5, $dry['expected_final_counts']['oferta_academica'], 'conteo final ofertas fixture');
 migration_assert_same(5, $dry['expected_final_counts']['instancia_oferta'], 'conteo final instancias fixture');
 migration_assert_same(4, $dry['resumen_relaciones']['legacy_leidas'], 'dry-run cuenta relaciones legacy incluidas las rotas');
 migration_assert_same(3, $dry['resumen_relaciones']['finales_deduplicadas'], 'dry-run cuenta relaciones finales');
 migration_assert_same(0, $dry['resumen_relaciones']['absorbidas_por_canonicalizacion'], 'fixture base sin relaciones repetidas');
+migration_assert_same(1, $dry['resumen_relaciones']['huerfanas_conocidas'], 'dry-run cuenta referencia huerfana conocida');
 
 $applied = FLACSO_Academic_Model_Migrator::run(false);
 migration_assert_same('instancia-oferta', get_post_type(27261), 'cohorte conserva ID');
@@ -262,7 +268,9 @@ migration_assert_same('ABSORBIDO_COMO_EDICION', get_post_meta(27254, FLACSO_Acad
 migration_assert_same(1, count(migration_instances_for_origin(23902)), 'seminario canonico crea una instancia');
 migration_assert_same(1, count(migration_instances_for_origin(27254)), 'duplicado crea segunda instancia');
 migration_assert_same(0, count(migration_instances_for_origin(27212)), 'integrado sin temporalidad no crea instancia');
-migration_assert_same('Presentación nueva', get_post_meta(23902, '_seminario_presentacion_seminario', true), 'fuente academica reciente elegida');
+migration_assert_same('Presentación anterior', get_post_meta(23902, '_seminario_presentacion_seminario', true), 'contenido academico canonico preservado');
+migration_assert_same('Ensayo final', get_post_meta(23902, '_seminario_forma_aprobacion', true), 'campo academico vacio completado desde edicion absorbida');
+migration_assert_same(23902, get_post_meta(23902, FLACSO_Academic_Model_Migrator::RECORD_META_KEY, true)['fuente_academica'], 'registro audita fuente academica canonica');
 $components = FLACSO_Relacion_Oferta_Academica::get(27212, FLACSO_Relacion_Oferta_Academica::COMPUESTO_POR);
 migration_assert_same([23913, 23918], array_column($components, 'oferta_destino'), 'seminario integrado conserva componentes');
 $integrates = FLACSO_Relacion_Oferta_Academica::get(24162, FLACSO_Relacion_Oferta_Academica::INTEGRA);
