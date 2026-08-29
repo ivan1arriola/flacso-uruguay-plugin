@@ -1,0 +1,227 @@
+name: Apply canonical academic content fix
+
+on:
+  push:
+    branches:
+      - fix/preserve-canonical-academic-content
+
+permissions:
+  contents: write
+
+jobs:
+  apply-fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/preserve-canonical-academic-content
+          fetch-depth: 0
+
+      - name: Patch migrator and contract test
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              if old not in text:
+                  raise SystemExit(f"missing replacement target: {label}")
+              return text.replace(old, new, 1)
+
+          migrator_path = Path('modules/instancias-oferta/includes/class-academic-model-migrator.php')
+          s = migrator_path.read_text(encoding='utf-8')
+
+          s = replace_once(s,
+              "    private const INVALID_SEMINAR_IDS = [27240];\n    private const DUPLICATE_GROUPS = [",
+              "    private const INVALID_SEMINAR_IDS = [27240];\n    private const KNOWN_ORPHAN_RELATIONS = [\n        ['source_id' => 24162, 'missing_id' => 23911, 'meta_key' => '_oferta_seminarios_ids'],\n    ];\n    private const DUPLICATE_GROUPS = [",
+              'known orphan constant')
+
+          s = replace_once(s,
+              "        $absorbed = [];\n        $conflicts = [];",
+              "        $absorbed = [];\n        $resolved_conflicts = [];",
+              'resolved conflict accumulator')
+
+          s = replace_once(s,
+              "            $academic_source = max($present);\n            $group_conflicts = self::academic_conflicts($present);",
+              "            $academic_source = $canonical_id;\n            $group_conflicts = self::academic_conflicts($present);",
+              'canonical academic source')
+
+          s = replace_once(s,
+              "                'academic_source' => $academic_source,\n                'conflicts' => $group_conflicts,\n            ];\n            if (!empty($group_conflicts)) {\n                $conflicts[] = [\n                    'canonical_id' => $canonical_id,\n                    'members' => $present,\n                    'academic_source' => $academic_source,\n                    'fields' => $group_conflicts,\n                ];\n            }",
+              "                'academic_source' => $academic_source,\n                'conflicts' => $group_conflicts,\n                'conflict_resolution' => 'CANONICAL_WINS',\n            ];\n            if (!empty($group_conflicts)) {\n                $resolved_conflicts[] = [\n                    'canonical_id' => $canonical_id,\n                    'members' => $present,\n                    'academic_source' => $academic_source,\n                    'fields' => $group_conflicts,\n                    'resolution' => 'CANONICAL_WINS',\n                ];\n            }",
+              'resolved conflict report')
+
+          s = replace_once(s,
+              "                'absorbidas_por_canonicalizacion' => count($relations['absorbed']),\n            ],\n            'referencias_rotas' => $relations['broken'],\n            'conflictos_academicos' => $conflicts,",
+              "                'absorbidas_por_canonicalizacion' => count($relations['absorbed']),\n                'huerfanas_conocidas' => count($relations['known_orphans']),\n            ],\n            'referencias_huerfanas_conocidas' => $relations['known_orphans'],\n            'referencias_rotas' => $relations['broken'],\n            'conflictos_academicos' => [],\n            'conflictos_academicos_resueltos' => $resolved_conflicts,",
+              'dry run diagnostics')
+
+          s = replace_once(s,
+              "            $academic_source = max($member_ids);\n            foreach (FLACSO_Oferta_Academica::seminar_academic_meta_keys() as $meta_key) {\n                if (metadata_exists('post', $academic_source, $meta_key)) {\n                    update_post_meta($canonical_id, $meta_key, get_post_meta($academic_source, $meta_key, true));\n                }\n            }",
+              "            $academic_source = $canonical_id;\n            $completed_academic_fields = self::merge_academic_meta_into_canonical($canonical_id, $member_ids);",
+              'fill only canonical merge')
+
+          s = replace_once(s,
+              "            $canonical_record['fuente_academica'] = $academic_source;\n            update_post_meta($canonical_id, self::RECORD_META_KEY, $canonical_record);",
+              "            $canonical_record['fuente_academica'] = $academic_source;\n            $canonical_record['campos_academicos_completados'] = $completed_academic_fields;\n            update_post_meta($canonical_id, self::RECORD_META_KEY, $canonical_record);",
+              'audit completed fields')
+
+          s = replace_once(s,
+              "        $legacy = [];\n        $migratable = [];\n        $broken = [];",
+              "        $legacy = [];\n        $migratable = [];\n        $broken = [];\n        $known_orphans = [];",
+              'known orphan accumulator')
+
+          s = replace_once(s,
+              "                if (!isset($valid_seminars[$legacy_id]) && !isset($canonical_map[$legacy_id])) {\n                    $broken[] = ['source_id' => absint($offer->ID), 'missing_id' => $legacy_id, 'meta_key' => '_oferta_seminarios_ids'];\n                    continue;\n                }",
+              "                if (!isset($valid_seminars[$legacy_id]) && !isset($canonical_map[$legacy_id])) {\n                    $missing = ['source_id' => absint($offer->ID), 'missing_id' => $legacy_id, 'meta_key' => '_oferta_seminarios_ids'];\n                    if (self::is_known_orphan_relation($missing)) {\n                        $missing['action'] = 'OMITIR';\n                        $known_orphans[] = $missing;\n                    } else {\n                        $broken[] = $missing;\n                    }\n                    continue;\n                }",
+              'classify known orphan')
+
+          s = replace_once(s,
+              "            'absorbed' => $canonicalized['absorbed'],\n            'broken' => $broken,",
+              "            'absorbed' => $canonicalized['absorbed'],\n            'known_orphans' => $known_orphans,\n            'broken' => $broken,",
+              'return known orphans')
+
+          old_conflicts = """    private static function academic_conflicts(array $member_ids): array {
+        $conflicts = [];
+        foreach (FLACSO_Oferta_Academica::seminar_academic_meta_keys() as $key) {
+            $values = [];
+            foreach ($member_ids as $member_id) {
+                $values[] = maybe_serialize(get_post_meta($member_id, $key, true));
+            }
+            if (count(array_unique($values)) > 1) {
+                $conflicts[] = $key;
+            }
+        }
+        return $conflicts;
+    }
+"""
+          new_conflicts = """    private static function academic_conflicts(array $member_ids): array {
+        $conflicts = [];
+        foreach (FLACSO_Oferta_Academica::seminar_academic_meta_keys() as $key) {
+            $values = [];
+            foreach ($member_ids as $member_id) {
+                $value = get_post_meta($member_id, $key, true);
+                if (!self::has_meaningful_meta_value($value)) {
+                    continue;
+                }
+                $values[] = maybe_serialize($value);
+            }
+            if (count(array_unique($values)) > 1) {
+                $conflicts[] = $key;
+            }
+        }
+        return $conflicts;
+    }
+
+    /**
+     * El contenido academico existente del canonico tiene precedencia. Las
+     * ediciones absorbidas solo completan campos realmente vacios.
+     *
+     * @return array<string, int> meta_key => legacy source id
+     */
+    private static function merge_academic_meta_into_canonical(int $canonical_id, array $member_ids): array {
+        $sources = array_values(array_filter(array_map('absint', $member_ids), static function (int $member_id) use ($canonical_id): bool {
+            return $member_id > 0 && $member_id !== $canonical_id;
+        }));
+        rsort($sources);
+
+        $completed = [];
+        foreach (FLACSO_Oferta_Academica::seminar_academic_meta_keys() as $meta_key) {
+            if (self::has_meaningful_meta_value(get_post_meta($canonical_id, $meta_key, true))) {
+                continue;
+            }
+            foreach ($sources as $source_id) {
+                $value = get_post_meta($source_id, $meta_key, true);
+                if (!self::has_meaningful_meta_value($value)) {
+                    continue;
+                }
+                update_post_meta($canonical_id, $meta_key, $value);
+                $completed[$meta_key] = $source_id;
+                break;
+            }
+        }
+        return $completed;
+    }
+
+    private static function has_meaningful_meta_value($value): bool {
+        if (is_array($value)) {
+            return !empty($value);
+        }
+        if (is_object($value)) {
+            return !empty((array) $value);
+        }
+        return trim((string) $value) !== '';
+    }
+
+    private static function is_known_orphan_relation(array $relation): bool {
+        foreach (self::KNOWN_ORPHAN_RELATIONS as $known) {
+            if (absint($relation['source_id'] ?? 0) === $known['source_id']
+                && absint($relation['missing_id'] ?? 0) === $known['missing_id']
+                && (string) ($relation['meta_key'] ?? '') === $known['meta_key']) {
+                return true;
+            }
+        }
+        return false;
+    }
+"""
+          s = replace_once(s, old_conflicts, new_conflicts, 'academic merge helpers')
+          migrator_path.write_text(s, encoding='utf-8')
+
+          test_path = Path('tests/academic-model-migration-test.php')
+          t = test_path.read_text(encoding='utf-8')
+          t = replace_once(t,
+              "        '_seminario_objetivo_general' => 'Objetivo común',\n        '_seminario_periodo_inicio' => '2026-10-19',",
+              "        '_seminario_objetivo_general' => 'Objetivo común',\n        '_seminario_forma_aprobacion' => 'Ensayo final',\n        '_seminario_periodo_inicio' => '2026-10-19',",
+              'fillable academic field fixture')
+          t = replace_once(t,
+              "migration_assert_same(23911, $dry['referencias_rotas'][0]['missing_id'], 'referencia rota reportada');\nmigration_assert_same(27212, $dry['registros_sin_fechas'][0]['id'], 'integrado sin instancia');\nmigration_assert_same(['_seminario_presentacion_seminario'], $dry['conflictos_academicos'][0]['fields'], 'conflicto academico reportado');",
+              "migration_assert_same([], $dry['referencias_rotas'], 'no quedan referencias rotas desconocidas');\nmigration_assert_same(23911, $dry['referencias_huerfanas_conocidas'][0]['missing_id'], 'referencia huerfana conocida auditada');\nmigration_assert_same('OMITIR', $dry['referencias_huerfanas_conocidas'][0]['action'], 'referencia huerfana conocida se omite');\nmigration_assert_same(27212, $dry['registros_sin_fechas'][0]['id'], 'integrado sin instancia');\nmigration_assert_same([], $dry['conflictos_academicos'], 'no quedan conflictos academicos sin resolver');\nmigration_assert_same(['_seminario_presentacion_seminario'], $dry['conflictos_academicos_resueltos'][0]['fields'], 'diferencia academica resuelta por canonico');\nmigration_assert_same(23902, $dry['conflictos_academicos_resueltos'][0]['academic_source'], 'canonico es fuente academica');",
+              'dry run assertions')
+          t = replace_once(t,
+              "migration_assert_same(0, $dry['resumen_relaciones']['absorbidas_por_canonicalizacion'], 'fixture base sin relaciones repetidas');",
+              "migration_assert_same(0, $dry['resumen_relaciones']['absorbidas_por_canonicalizacion'], 'fixture base sin relaciones repetidas');\nmigration_assert_same(1, $dry['resumen_relaciones']['huerfanas_conocidas'], 'dry-run cuenta referencia huerfana conocida');",
+              'orphan summary assertion')
+          t = replace_once(t,
+              "migration_assert_same('Presentación nueva', get_post_meta(23902, '_seminario_presentacion_seminario', true), 'fuente academica reciente elegida');",
+              "migration_assert_same('Presentación anterior', get_post_meta(23902, '_seminario_presentacion_seminario', true), 'contenido academico canonico preservado');\nmigration_assert_same('Ensayo final', get_post_meta(23902, '_seminario_forma_aprobacion', true), 'campo academico vacio completado desde edicion absorbida');\nmigration_assert_same(23902, get_post_meta(23902, FLACSO_Academic_Model_Migrator::RECORD_META_KEY, true)['fuente_academica'], 'registro audita fuente academica canonica');",
+              'applied canonical assertions')
+          test_path.write_text(t, encoding='utf-8')
+
+          doc_path = Path('docs/academic-model-migration.md')
+          d = doc_path.read_text(encoding='utf-8')
+          marker = "El dry-run calcula los valores a partir de la base y debe explicar cualquier\notra diferencia.\n"
+          addition = """
+
+### Precedencia de contenido académico
+
+Cuando varias ediciones legacy se canonicalizan a una misma `OfertaAcademica`,
+el contenido académico no vacío de la oferta canónica tiene precedencia y nunca
+se reemplaza por contenido coyuntural de una edición absorbida. Una edición
+absorbida solo puede completar un campo académico que esté realmente vacío en
+el canónico. Las diferencias entre valores no vacíos quedan auditadas como
+`conflictos_academicos_resueltos` con resolución `CANONICAL_WINS`.
+
+La referencia legacy `24162 -> 23911` apunta a un post inexistente y se trata
+como `referencias_huerfanas_conocidas` con acción `OMITIR`; no se considera un
+conflicto pendiente ni se fabrica un destino.
+"""
+          if addition.strip() not in d:
+              d = replace_once(d, marker, marker + addition, 'migration documentation')
+          doc_path.write_text(d, encoding='utf-8')
+          PY
+
+          php -l modules/instancias-oferta/includes/class-academic-model-migrator.php
+          php -l tests/academic-model-migration-test.php
+          php tests/academic-model-migration-test.php
+
+      - name: Commit generated fix
+        shell: bash
+        run: |
+          rm -f .github/workflows/apply-canonical-content-fix.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add modules/instancias-oferta/includes/class-academic-model-migrator.php tests/academic-model-migration-test.php docs/academic-model-migration.md .github/workflows/apply-canonical-content-fix.yml
+          git diff --cached --check
+          git commit -m "fix: preserve canonical academic content"
+          git push origin HEAD:fix/preserve-canonical-academic-content
