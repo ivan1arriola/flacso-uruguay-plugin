@@ -75,6 +75,13 @@ se convierte en OfertaAcademica y mantiene relaciones `compuesto_por` hacia
 `compuesto_por` y `precede`, con destino y orden. `_oferta_seminarios_ids` se
 mantiene únicamente como proyección legacy durante Release A.
 
+## Contratos API durante la transición
+
+Los proyectos consumidores conservan sus contratos legacy durante Release A.
+Para integraciones nuevas, los CRUD canónicos son `/flacso/v1/ofertas` y
+`/flacso/v1/instancias-oferta`. Ambos admiten lectura, creación, actualización
+y eliminación recuperable; `force=true` es siempre una decisión explícita.
+
 ## Seguridad, backup e idempotencia
 
 No hay activation hook ni hook `init` que ejecute esta migración. Antes de cada
