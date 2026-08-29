@@ -147,10 +147,7 @@ final class FLACSO_Instancia_Oferta_API {
         return rest_ensure_response(self::to_domain_item(get_post($post_id)));
     }
 
-    /**
-     * Elimina una instancia de forma recuperable. El borrado permanente exige
-     * que el consumidor envie force=true de manera explicita.
-     */
+    /** Elimina una instancia de forma recuperable salvo force=true. */
     public static function delete_item(WP_REST_Request $request) {
         $post_id = absint($request['id']);
         $post = get_post($post_id);
@@ -170,9 +167,7 @@ final class FLACSO_Instancia_Oferta_API {
             ]);
         }
 
-        $deleted = $force
-            ? wp_delete_post($post_id, true)
-            : wp_trash_post($post_id);
+        $deleted = $force ? wp_delete_post($post_id, true) : wp_trash_post($post_id);
         if (!$deleted) {
             return new WP_Error(
                 'flacso_instance_not_deleted',
@@ -227,14 +222,8 @@ final class FLACSO_Instancia_Oferta_API {
             }
         }
 
-        $opening = $payload['preinscriptionOpening']
-            ?? $payload['preinscriptionStartDate']
-            ?? null;
-        $manual_closing = $payload['preinscriptionManualClosing']
-            ?? $payload['preinscriptionEndDate']
-            ?? null;
-        // Compatibilidad de entrada del Editor: una accion explicita de abrir o
-        // cerrar si tiene un instante real (ahora). No se usa para datos migrados.
+        $opening = $payload['preinscriptionOpening'] ?? $payload['preinscriptionStartDate'] ?? null;
+        $manual_closing = $payload['preinscriptionManualClosing'] ?? $payload['preinscriptionEndDate'] ?? null;
         if ($requested_state === FLACSO_Instancia_Oferta::LEGACY_ESTADO_ABIERTA && empty($opening)) {
             $opening = gmdate(DATE_ATOM);
             $manual_closing = null;
@@ -256,6 +245,15 @@ final class FLACSO_Instancia_Oferta_API {
             'endDate' => self::date_value($payload['endDate'] ?? ''),
             'startDatePrecision' => self::precision_value($payload['startDatePrecision'] ?? ''),
             'status' => $state,
+            'meetings' => self::meetings_value($payload['meetings'] ?? []),
+            'teachers' => self::id_list($payload['teachers'] ?? []),
+            'modality' => sanitize_text_field((string) ($payload['modality'] ?? '')),
+            'isAsync' => rest_sanitize_boolean($payload['isAsync'] ?? false),
+            'priceUyu' => self::amount_value($payload['priceUyu'] ?? null),
+            'priceUsd' => self::amount_value($payload['priceUsd'] ?? null),
+            'discountedPriceUyu' => self::amount_value($payload['discountedPriceUyu'] ?? null),
+            'discountedPriceUsd' => self::amount_value($payload['discountedPriceUsd'] ?? null),
+            'showInForm' => rest_sanitize_boolean($payload['showInForm'] ?? false),
             'preinscriptionFlow' => $flow,
             'preinscriptionOpening' => FLACSO_Instancia_Oferta::normalize_datetime($opening),
             'preinscriptionManualClosing' => FLACSO_Instancia_Oferta::normalize_datetime($manual_closing),
@@ -285,6 +283,7 @@ final class FLACSO_Instancia_Oferta_API {
         if (!empty($payload['preinscriptionOpening']) && empty($payload['preinscriptionManualClosing'])) {
             FLACSO_Instancia_Oferta::close_other_open_instances($payload['academicOfferId'], $post_id);
         }
+
         $meta = [
             FLACSO_Instancia_Oferta::META_OFERTA_ID => $payload['academicOfferId'],
             FLACSO_Instancia_Oferta::META_ANIO => $payload['year'],
@@ -294,12 +293,22 @@ final class FLACSO_Instancia_Oferta_API {
             FLACSO_Instancia_Oferta::META_FECHA_FIN => $payload['endDate'],
             FLACSO_Instancia_Oferta::META_PRECISION_FECHA_INICIO => $payload['startDatePrecision'],
             FLACSO_Instancia_Oferta::META_ESTADO => $payload['status'],
+            FLACSO_Instancia_Oferta::META_ENCUENTROS => $payload['meetings'],
+            FLACSO_Instancia_Oferta::META_DOCENTES => $payload['teachers'],
+            FLACSO_Instancia_Oferta::META_MODALIDAD => $payload['modality'],
+            FLACSO_Instancia_Oferta::META_ES_ASINCRONICO => $payload['isAsync'],
+            FLACSO_Instancia_Oferta::META_VALOR_UYU => $payload['priceUyu'],
+            FLACSO_Instancia_Oferta::META_VALOR_USD => $payload['priceUsd'],
+            FLACSO_Instancia_Oferta::META_VALOR_UYU_DESCUENTO => $payload['discountedPriceUyu'],
+            FLACSO_Instancia_Oferta::META_VALOR_USD_DESCUENTO => $payload['discountedPriceUsd'],
+            FLACSO_Instancia_Oferta::META_MOSTRAR_FORMULARIO => $payload['showInForm'],
             FLACSO_Instancia_Oferta::META_FLUJO => $payload['preinscriptionFlow'],
             FLACSO_Instancia_Oferta::META_PREINSCRIPCION_APERTURA => $payload['preinscriptionOpening'],
             FLACSO_Instancia_Oferta::META_PREINSCRIPCION_CIERRE_MANUAL => $payload['preinscriptionManualClosing'],
             FLACSO_Instancia_Oferta::META_MENSAJE_ABIERTA => $payload['openMessage'],
             FLACSO_Instancia_Oferta::META_MENSAJE_CERRADA => $payload['closedMessage'],
         ];
+
         foreach ($meta as $key => $value) {
             update_post_meta($post_id, $key, $value);
         }
@@ -320,6 +329,15 @@ final class FLACSO_Instancia_Oferta_API {
             'endDate' => (string) get_post_meta($post_id, FLACSO_Instancia_Oferta::META_FECHA_FIN, true),
             'startDatePrecision' => (string) get_post_meta($post_id, FLACSO_Instancia_Oferta::META_PRECISION_FECHA_INICIO, true),
             'status' => FLACSO_Instancia_Oferta::get_state($post_id),
+            'meetings' => self::array_meta($post_id, FLACSO_Instancia_Oferta::META_ENCUENTROS),
+            'teachers' => self::id_list(get_post_meta($post_id, FLACSO_Instancia_Oferta::META_DOCENTES, true)),
+            'modality' => (string) get_post_meta($post_id, FLACSO_Instancia_Oferta::META_MODALIDAD, true),
+            'isAsync' => rest_sanitize_boolean(get_post_meta($post_id, FLACSO_Instancia_Oferta::META_ES_ASINCRONICO, true)),
+            'priceUyu' => self::stored_amount($post_id, FLACSO_Instancia_Oferta::META_VALOR_UYU),
+            'priceUsd' => self::stored_amount($post_id, FLACSO_Instancia_Oferta::META_VALOR_USD),
+            'discountedPriceUyu' => self::stored_amount($post_id, FLACSO_Instancia_Oferta::META_VALOR_UYU_DESCUENTO),
+            'discountedPriceUsd' => self::stored_amount($post_id, FLACSO_Instancia_Oferta::META_VALOR_USD_DESCUENTO),
+            'showInForm' => rest_sanitize_boolean(get_post_meta($post_id, FLACSO_Instancia_Oferta::META_MOSTRAR_FORMULARIO, true)),
             'preinscriptionFlow' => FLACSO_Instancia_Oferta::get_flow($post_id),
             'preinscriptionOpening' => (string) get_post_meta($post_id, FLACSO_Instancia_Oferta::META_PREINSCRIPCION_APERTURA, true),
             'preinscriptionManualClosing' => (string) get_post_meta($post_id, FLACSO_Instancia_Oferta::META_PREINSCRIPCION_CIERRE_MANUAL, true),
@@ -354,7 +372,71 @@ final class FLACSO_Instancia_Oferta_API {
         return in_array($value, ['day', 'month', 'year'], true) ? $value : '';
     }
 
+    private static function meetings_value($value): array {
+        if (!is_array($value)) {
+            return [];
+        }
+        $clean = [];
+        foreach ($value as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $date = sanitize_text_field((string) ($row['fecha'] ?? $row['date'] ?? ''));
+            $start = sanitize_text_field((string) ($row['hora_inicio'] ?? $row['startTime'] ?? ''));
+            $end = sanitize_text_field((string) ($row['hora_fin'] ?? $row['endTime'] ?? ''));
+            if ($date !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+                $date = '';
+            }
+            if ($start !== '' && !preg_match('/^\d{2}:\d{2}$/', $start)) {
+                $start = '';
+            }
+            if ($end !== '' && !preg_match('/^\d{2}:\d{2}$/', $end)) {
+                $end = '';
+            }
+            if ($date === '' && $start === '' && $end === '') {
+                continue;
+            }
+            $clean[] = [
+                'fecha' => $date,
+                'hora_inicio' => $start,
+                'hora_fin' => $end,
+                'plataforma' => sanitize_text_field((string) ($row['plataforma'] ?? $row['platform'] ?? '')),
+                'plataforma_otro' => sanitize_text_field((string) ($row['plataforma_otro'] ?? $row['otherPlatform'] ?? '')),
+            ];
+        }
+        return $clean;
+    }
+
+    private static function id_list($value): array {
+        if (!is_array($value)) {
+            return [];
+        }
+        return array_values(array_unique(array_filter(array_map('absint', $value))));
+    }
+
+    private static function amount_value($value): ?float {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        if (is_string($value)) {
+            $value = str_replace(',', '.', trim($value));
+        }
+        return is_numeric($value) && (float) $value >= 0 ? round((float) $value, 2) : null;
+    }
+
+    private static function array_meta(int $post_id, string $key): array {
+        $value = get_post_meta($post_id, $key, true);
+        return is_array($value) ? $value : [];
+    }
+
+    private static function stored_amount(int $post_id, string $key): ?float {
+        $value = get_post_meta($post_id, $key, true);
+        return $value === '' || $value === null ? null : (float) $value;
+    }
+
     private static function not_found(): WP_Error {
         return new WP_Error('flacso_instance_not_found', __('La Cohorte o Edicion no existe.', 'flacso-uruguay'), ['status' => 404]);
     }
 }
+
+FLACSO_Instancia_Oferta_API::init();
