@@ -101,9 +101,18 @@ final class FLACSO_Instancia_Oferta {
         return in_array($state, self::estados(), true) ? $state : self::ESTADO_PLANIFICADA;
     }
 
+    /**
+     * Sanitizador compatible con la firma de sanitize_meta().
+     * WordPress puede pasar value, meta_key, object_type y object_subtype.
+     */
+    public static function sanitize_number($value, $meta_key = '', $object_type = '', $object_subtype = ''): float {
+        return (float) $value;
+    }
+
     public static function meta_schema(): array {
         $text = ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'];
         $boolean = ['type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean'];
+        $number = ['type' => 'number', 'sanitize_callback' => [self::class, 'sanitize_number']];
         return [
             self::META_OFERTA_ID => ['type' => 'integer', 'sanitize_callback' => 'absint'],
             self::META_ANIO => ['type' => 'integer', 'sanitize_callback' => 'absint'],
@@ -126,10 +135,10 @@ final class FLACSO_Instancia_Oferta {
             self::META_DOCENTES => ['type' => 'array', 'sanitize_callback' => null],
             self::META_MODALIDAD => $text,
             self::META_ES_ASINCRONICO => $boolean,
-            self::META_VALOR_UYU => ['type' => 'number', 'sanitize_callback' => 'floatval'],
-            self::META_VALOR_USD => ['type' => 'number', 'sanitize_callback' => 'floatval'],
-            self::META_VALOR_UYU_DESCUENTO => ['type' => 'number', 'sanitize_callback' => 'floatval'],
-            self::META_VALOR_USD_DESCUENTO => ['type' => 'number', 'sanitize_callback' => 'floatval'],
+            self::META_VALOR_UYU => $number,
+            self::META_VALOR_USD => $number,
+            self::META_VALOR_UYU_DESCUENTO => $number,
+            self::META_VALOR_USD_DESCUENTO => $number,
             self::META_MOSTRAR_FORMULARIO => $boolean,
         ];
     }
