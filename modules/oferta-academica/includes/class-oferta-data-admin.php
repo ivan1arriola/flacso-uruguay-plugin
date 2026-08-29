@@ -4,29 +4,15 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-/**
- * Página admin para importar datos
- */
+/** Página administrativa de documentación de la API académica. */
 class Oferta_Data_Admin {
-    private const MENU_SLUG = 'flacso-oferta-data';
-
     public static function init(): void {
         if (is_admin()) {
             add_action('admin_menu', [self::class, 'add_admin_menu'], 11);
-            add_action('admin_init', [self::class, 'handle_import']);
         }
     }
 
     public static function add_admin_menu(): void {
-        add_submenu_page(
-            'edit.php?post_type=oferta-academica',
-            __('Importar Datos', 'flacso-oferta-academica'),
-            __('Importar Datos', 'flacso-oferta-academica'),
-            'manage_options',
-            self::MENU_SLUG,
-            [self::class, 'render_page']
-        );
-
         add_submenu_page(
             'edit.php?post_type=oferta-academica',
             __('API Oferta Académica', 'flacso-oferta-academica'),
@@ -35,62 +21,6 @@ class Oferta_Data_Admin {
             'flacso-oferta-api-docs',
             [self::class, 'render_api_doc_page']
         );
-    }
-
-    public static function handle_import(): void {
-        if (!isset($_POST['flacso_import_nonce']) || !wp_verify_nonce($_POST['flacso_import_nonce'], 'flacso_import_action')) {
-            return;
-        }
-
-        if (!current_user_can('manage_options')) {
-            return;
-        }
-
-        if (isset($_POST['import_data'])) {
-            require_once plugin_dir_path(__FILE__) . 'class-oferta-data-importer.php';
-            Oferta_Data_Importer::import_data();
-            wp_safe_remote_post(admin_url('admin.php?page=' . self::MENU_SLUG), [
-                'blocking' => false,
-            ]);
-        }
-    }
-
-    public static function render_page(): void {
-        ?>
-        <div class="wrap">
-            <h1><?php esc_html_e('Importar Datos de Ofertas Académicas', 'flacso-oferta-academica'); ?></h1>
-            
-            <div class="notice notice-info">
-                <p><?php esc_html_e('Esta herramienta importará todas las ofertas académicas (maestrías, especializaciones, diplomados y diplomas) con sus datos asociados.', 'flacso-oferta-academica'); ?></p>
-            </div>
-
-            <form method="post" action="">
-                <?php wp_nonce_field('flacso_import_action', 'flacso_import_nonce'); ?>
-                <table class="form-table">
-                    <tr>
-                        <th scope="row">
-                            <label for="import_data"><?php esc_html_e('Importar Datos', 'flacso-oferta-academica'); ?></label>
-                        </th>
-                        <td>
-                            <input type="checkbox" name="import_data" id="import_data" value="1" />
-                            <label for="import_data"><?php esc_html_e('Marcar para confirmar que deseas importar los datos', 'flacso-oferta-academica'); ?></label>
-                        </td>
-                    </tr>
-                </table>
-
-                <?php submit_button(__('Importar Ahora', 'flacso-oferta-academica'), 'primary', 'submit', true); ?>
-            </form>
-
-            <h2><?php esc_html_e('Información de Importación', 'flacso-oferta-academica'); ?></h2>
-            <ul>
-                <li><?php esc_html_e('Se crearán 3 Maestrías', 'flacso-oferta-academica'); ?></li>
-                <li><?php esc_html_e('Se crearán 2 Especializaciones', 'flacso-oferta-academica'); ?></li>
-                <li><?php esc_html_e('Se crearán 4 Diplomados', 'flacso-oferta-academica'); ?></li>
-                <li><?php esc_html_e('Se crearán 8 Diplomas', 'flacso-oferta-academica'); ?></li>
-                <li><?php esc_html_e('Cada oferta académica se asociará a su página de WordPress correspondiente', 'flacso-oferta-academica'); ?></li>
-            </ul>
-        </div>
-        <?php
     }
 
     public static function render_api_doc_page(): void {

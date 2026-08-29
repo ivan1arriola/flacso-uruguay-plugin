@@ -135,13 +135,20 @@ final class FLACSO_Academic_Model_Migrator {
             'cohortes_a_convertir' => $cohorts_to_convert,
             'instancias_desde_seminarios' => $seminar_instances,
             'registros_sin_fechas' => $without_temporality,
+            'relaciones_legacy_leidas' => $relations['legacy'],
             'relaciones_a_migrar' => $relations['valid'],
+            'relaciones_finales_deduplicadas' => $relations['valid'],
+            'relaciones_absorbidas_por_canonicalizacion' => $relations['absorbed'],
+            'resumen_relaciones' => [
+                'legacy_leidas' => count($relations['legacy']),
+                'finales_deduplicadas' => count($relations['valid']),
+                'absorbidas_por_canonicalizacion' => count($relations['absorbed']),
+            ],
             'referencias_rotas' => $relations['broken'],
             'conflictos_academicos' => $conflicts,
             'expected_final_counts' => [
                 'oferta_academica' => $existing_offer_count + count($canonical_ids),
-                'instancia_oferta_maxima' => $existing_instance_count + count($cohorts) + count($valid),
-                'instancia_oferta_aplicando_regla_temporal' => $existing_instance_count + count($cohorts) + count($seminar_instances),
+                'instancia_oferta' => $existing_instance_count + count($cohorts) + count($seminar_instances),
                 'desde_cohortes' => count($cohorts),
                 'desde_seminarios' => count($seminar_instances),
             ],
@@ -382,34 +389,43 @@ final class FLACSO_Academic_Model_Migrator {
             $legacy_ids = get_post_meta($source_id, '_oferta_seminarios_ids', true);
             if (is_array($legacy_ids)) {
                 self::backup_post($source_id);
-                $destinations = [];
-                foreach ($legacy_ids as $legacy_id) {
+                $planned = [];
+                foreach ($legacy_ids as $order => $legacy_id) {
                     $legacy_id = absint($legacy_id);
                     $destination = $canonical_map[$legacy_id] ?? $legacy_id;
                     if (get_post_type($destination) === FLACSO_Oferta_Academica::POST_TYPE) {
-                        $destinations[] = $destination;
+                        $planned[] = [
+                            'oferta_destino' => $destination,
+                            'tipo_relacion' => FLACSO_Relacion_Oferta_Academica::INTEGRA,
+                            'orden' => absint($order),
+                        ];
                     }
                 }
-                FLACSO_Relacion_Oferta_Academica::replace_type($source_id, FLACSO_Relacion_Oferta_Academica::INTEGRA, $destinations);
+                FLACSO_Relacion_Oferta_Academica::replace_type_relations($source_id, FLACSO_Relacion_Oferta_Academica::INTEGRA, $planned);
             }
             $components = get_post_meta($source_id, '_seminario_seminarios_componentes', true);
             if (is_array($components)) {
                 self::backup_post($source_id);
-                $destinations = [];
-                foreach ($components as $component_id) {
+                $planned = [];
+                foreach ($components as $order => $component_id) {
                     $component_id = absint($component_id);
                     $destination = $canonical_map[$component_id] ?? $component_id;
                     if (get_post_type($destination) === FLACSO_Oferta_Academica::POST_TYPE) {
-                        $destinations[] = $destination;
+                        $planned[] = [
+                            'oferta_destino' => $destination,
+                            'tipo_relacion' => FLACSO_Relacion_Oferta_Academica::COMPUESTO_POR,
+                            'orden' => absint($order),
+                        ];
                     }
                 }
-                FLACSO_Relacion_Oferta_Academica::replace_type($source_id, FLACSO_Relacion_Oferta_Academica::COMPUESTO_POR, $destinations);
+                FLACSO_Relacion_Oferta_Academica::replace_type_relations($source_id, FLACSO_Relacion_Oferta_Academica::COMPUESTO_POR, $planned);
             }
         }
     }
 
     private static function analyze_relationships(array $offers, array $valid_seminars, array $canonical_map): array {
-        $valid = [];
+        $legacy = [];
+        $migratable = [];
         $broken = [];
         foreach ($offers as $offer) {
             $ids = get_post_meta($offer->ID, '_oferta_seminarios_ids', true);
@@ -418,16 +434,18 @@ final class FLACSO_Academic_Model_Migrator {
             }
             foreach ($ids as $order => $legacy_id) {
                 $legacy_id = absint($legacy_id);
+                $relation = [
+                    'oferta_origen' => absint($offer->ID),
+                    'oferta_destino' => $legacy_id,
+                    'tipo_relacion' => FLACSO_Relacion_Oferta_Academica::INTEGRA,
+                    'orden' => absint($order),
+                ];
+                $legacy[] = $relation;
                 if (!isset($valid_seminars[$legacy_id]) && !isset($canonical_map[$legacy_id])) {
                     $broken[] = ['source_id' => absint($offer->ID), 'missing_id' => $legacy_id, 'meta_key' => '_oferta_seminarios_ids'];
                     continue;
                 }
-                $valid[] = [
-                    'oferta_origen' => absint($offer->ID),
-                    'oferta_destino' => $canonical_map[$legacy_id] ?? $legacy_id,
-                    'tipo_relacion' => FLACSO_Relacion_Oferta_Academica::INTEGRA,
-                    'orden' => absint($order),
-                ];
+                $migratable[] = $relation;
             }
         }
         foreach ($valid_seminars as $seminar_id => $seminar) {
@@ -437,19 +455,80 @@ final class FLACSO_Academic_Model_Migrator {
             }
             foreach ($components as $order => $component_id) {
                 $component_id = absint($component_id);
+                $relation = [
+                    'oferta_origen' => absint($seminar_id),
+                    'oferta_destino' => $component_id,
+                    'tipo_relacion' => FLACSO_Relacion_Oferta_Academica::COMPUESTO_POR,
+                    'orden' => absint($order),
+                ];
+                $legacy[] = $relation;
                 if (!isset($valid_seminars[$component_id])) {
                     $broken[] = ['source_id' => $seminar_id, 'missing_id' => $component_id, 'meta_key' => '_seminario_seminarios_componentes'];
                     continue;
                 }
-                $valid[] = [
-                    'oferta_origen' => $canonical_map[$seminar_id],
-                    'oferta_destino' => $canonical_map[$component_id],
-                    'tipo_relacion' => FLACSO_Relacion_Oferta_Academica::COMPUESTO_POR,
-                    'orden' => absint($order),
-                ];
+                $migratable[] = $relation;
             }
         }
-        return ['valid' => $valid, 'broken' => $broken];
+        $canonicalized = self::canonicalize_relationships($migratable, $canonical_map);
+        return [
+            'legacy' => $legacy,
+            'valid' => $canonicalized['final'],
+            'absorbed' => $canonicalized['absorbed'],
+            'broken' => $broken,
+        ];
+    }
+
+    /**
+     * Canonicaliza y deduplica por origen, destino y tipo. La primera aparicion
+     * valida conserva su orden; las siguientes quedan en el reporte auditado.
+     */
+    public static function canonicalize_relationships(array $legacy_relations, array $canonical_map): array {
+        $final = [];
+        $absorbed = [];
+        $seen = [];
+
+        foreach ($legacy_relations as $relation) {
+            if (!is_array($relation)) {
+                continue;
+            }
+            $legacy_origin = absint($relation['oferta_origen'] ?? 0);
+            $legacy_destination = absint($relation['oferta_destino'] ?? 0);
+            $type = sanitize_key((string) ($relation['tipo_relacion'] ?? ''));
+            $order = max(0, absint($relation['orden'] ?? 0));
+            if ($legacy_origin <= 0 || $legacy_destination <= 0 || !in_array($type, FLACSO_Relacion_Oferta_Academica::tipos(), true)) {
+                continue;
+            }
+
+            $origin = absint($canonical_map[$legacy_origin] ?? $legacy_origin);
+            $destination = absint($canonical_map[$legacy_destination] ?? $legacy_destination);
+            $key = $origin . ':' . $destination . ':' . $type;
+            if (isset($seen[$key])) {
+                $absorbed[] = [
+                    'oferta_origen' => $origin,
+                    'oferta_destino' => $destination,
+                    'tipo_relacion' => $type,
+                    'origen_legacy' => $legacy_origin,
+                    'destino_legacy' => $legacy_destination,
+                    'orden_absorbido' => $order,
+                    'destino_legacy_conservado' => $seen[$key]['destino_legacy'],
+                    'orden_conservado' => $seen[$key]['orden'],
+                ];
+                continue;
+            }
+
+            $seen[$key] = [
+                'destino_legacy' => $legacy_destination,
+                'orden' => $order,
+            ];
+            $final[] = [
+                'oferta_origen' => $origin,
+                'oferta_destino' => $destination,
+                'tipo_relacion' => $type,
+                'orden' => $order,
+            ];
+        }
+
+        return ['final' => $final, 'absorbed' => $absorbed];
     }
 
     private static function academic_conflicts(array $member_ids): array {

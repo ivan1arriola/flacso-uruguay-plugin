@@ -75,6 +75,11 @@ se convierte en OfertaAcademica y mantiene relaciones `compuesto_por` hacia
 `compuesto_por` y `precede`, con destino y orden. `_oferta_seminarios_ids` se
 mantiene únicamente como proyección legacy durante Release A.
 
+La canonicalización puede hacer que dos IDs legacy apunten a una misma oferta.
+El plan conserva una única relación por `(origen, destino canónico, tipo)` y el
+`orden` de su primera aparición válida. El dry-run expone las relaciones legacy
+leídas, las finales deduplicadas y las absorbidas por canonicalización.
+
 ## Contratos API durante la transición
 
 Los proyectos consumidores conservan sus contratos legacy durante Release A.
@@ -110,16 +115,16 @@ del deploy.
 
 ### Conteos esperados en producción
 
-| Entidad | Máximo histórico | Aplicando regla temporal |
-|---|---:|---:|
-| OfertaAcademica | 64 | 64 |
-| InstanciaOferta desde cohortes | 16 | 16 |
-| InstanciaOferta desde seminarios | 53 | 52 |
-| InstanciaOferta total | 69 | 68 |
+| Entidad | Resultado esperado |
+|---|---:|
+| OfertaAcademica | 64 |
+| InstanciaOferta desde cohortes | 16 |
+| InstanciaOferta desde seminarios | 52 |
+| InstanciaOferta total | 68 |
 
-La diferencia es 27212, oferta integrada sin instancia temporal migrable. El
-dry-run calcula los valores a partir de la base y debe explicar cualquier otra
-diferencia.
+El seminario integrado 27212 no genera instancia porque carece de temporalidad.
+El dry-run calcula los valores a partir de la base y debe explicar cualquier
+otra diferencia.
 
 ## Checklist pre-deploy
 
