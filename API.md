@@ -6,12 +6,28 @@
 `especializacion`, `diplomado`, `diploma` y `seminario`. No se crea una entidad
 de dominio separada para seminarios.
 
-La API administrativa semántica de instancias es:
+Las APIs administrativas canónicas mantienen CRUD completo para los proyectos
+que gestionan el dominio académico:
 
 ```text
-GET|POST  /wp-json/flacso/v1/instancias-oferta
-GET|PATCH /wp-json/flacso/v1/instancias-oferta/{instancia_wp_id}
+GET|POST             /wp-json/flacso/v1/ofertas
+GET|PUT|PATCH|DELETE /wp-json/flacso/v1/ofertas/{oferta_wp_id}
+
+GET|POST             /wp-json/flacso/v1/instancias-oferta
+GET|PUT|PATCH|DELETE /wp-json/flacso/v1/instancias-oferta/{instancia_wp_id}
 ```
+
+En ambas APIs, `DELETE` mueve a la papelera por defecto y devuelve el objeto
+anterior en `previous`. El borrado permanente requiere `?force=true` y el
+permiso WordPress correspondiente. Una oferta con instancias no puede borrarse
+permanentemente: la API responde `409` para evitar referencias huérfanas. Los
+IDs siguen siendo los IDs de WordPress.
+
+Durante Release A continúan disponibles, sin cambios de ruta, los contratos
+legacy `/flacso/v1/seminarios`, `/flacso/v1/cohortes` y
+`/flacso-posgrados/v1/posgrados`. Los consumidores deben migrar gradualmente a
+`/ofertas` e `/instancias-oferta`; no es necesario coordinarlos en un único
+despliegue.
 
 `status` es sólo el estado académico: `planificada`, `en_curso`, `finalizada` o
 `cancelada`. `preinscriptionOpening` y `preinscriptionManualClosing` gobiernan la
@@ -146,6 +162,17 @@ Listado rápido de ofertas académicas para selectores.
 
 ### Oferta Académica (Gestión)
 
+#### CRUD canónico `/flacso/v1/ofertas`
+
+* `GET /flacso/v1/ofertas`: lista ofertas editables, incluidos borradores y privadas.
+* `POST /flacso/v1/ofertas`: crea una OfertaAcademica de cualquiera de los seis tipos.
+* `GET /flacso/v1/ofertas/{id}`: obtiene el DTO administrativo.
+* `PUT|PATCH /flacso/v1/ofertas/{id}`: actualiza parcialmente la oferta.
+* `DELETE /flacso/v1/ofertas/{id}`: mueve la oferta a la papelera.
+* `DELETE /flacso/v1/ofertas/{id}?force=true`: borrado permanente explícito.
+
+El endpoint histórico singular se conserva como contrato de compatibilidad:
+
 #### GET `/flacso/v1/oferta-academica`
 Listado de programas con metadatos completos.
 *   **Filtros:** `tipo` (slug de la taxonomía `tipo-oferta-academica`).
@@ -155,6 +182,15 @@ Obtiene los datos estructurados de un programa.
 
 #### PUT `/flacso/v1/oferta-academica/{id}`
 Actualiza los metadatos de un programa (requiere permisos).
+
+### Instancias de Oferta (Gestión)
+
+* `GET /flacso/v1/instancias-oferta`: lista cohortes y ediciones.
+* `POST /flacso/v1/instancias-oferta`: crea una instancia.
+* `GET /flacso/v1/instancias-oferta/{id}`: obtiene una instancia.
+* `PUT|PATCH /flacso/v1/instancias-oferta/{id}`: actualiza una instancia.
+* `DELETE /flacso/v1/instancias-oferta/{id}`: mueve la instancia a la papelera.
+* `DELETE /flacso/v1/instancias-oferta/{id}?force=true`: borrado permanente explícito.
 
 ---
 

@@ -31,7 +31,10 @@ el flujo queda bloqueado. Cerrar la convocatoria no lo desbloquea.
 ## API administrativa
 
 - `GET|POST /wp-json/flacso/v1/instancias-oferta`
-- `GET|PATCH /wp-json/flacso/v1/instancias-oferta/{instancia_wp_id}`
+- `GET|PUT|PATCH|DELETE /wp-json/flacso/v1/instancias-oferta/{instancia_wp_id}`
+
+`DELETE` mueve la instancia a la papelera. Un borrado permanente sólo ocurre
+si el consumidor envía `force=true` explícitamente y tiene permisos.
 
 DTO principal:
 

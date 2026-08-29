@@ -237,8 +237,24 @@ final class FLACSO_Academic_Offer_API {
 
     public static function delete_item(WP_REST_Request $request) {
         $post_id = absint($request['id']);
+        $previous_response = self::dispatch_item_read($post_id);
+        if (self::is_error_response($previous_response)) {
+            return $previous_response;
+        }
+        $previous_data = $previous_response->get_data();
+        $previous = is_array($previous_data) ? $previous_data : null;
+
+        $force = rest_sanitize_boolean($request->get_param('force'));
+        if ($force && self::has_instances($post_id)) {
+            return new WP_Error(
+                'flacso_academic_offer_has_instances',
+                __('No se puede borrar permanentemente una oferta que conserva instancias.', 'flacso-oferta-academica'),
+                ['status' => 409]
+            );
+        }
+
         $core_request = new WP_REST_Request('DELETE', self::CORE_COLLECTION_ROUTE . '/' . $post_id);
-        $core_request->set_query_params(['force' => true]);
+        $core_request->set_query_params(['force' => $force]);
         $response = rest_do_request($core_request);
 
         if (self::is_error_response($response)) {
@@ -246,12 +262,14 @@ final class FLACSO_Academic_Offer_API {
         }
 
         $data = $response->get_data();
-        $previous = is_array($data['previous'] ?? null)
-            ? self::to_domain_item($data['previous'])
-            : null;
+        if ($force && is_array($data['previous'] ?? null)) {
+            $previous = self::to_domain_item($data['previous']);
+        }
 
         return rest_ensure_response([
-            'deleted' => !empty($data['deleted']),
+            'id' => $post_id,
+            'deleted' => $force ? !empty($data['deleted']) : true,
+            'trashed' => !$force,
             'previous' => $previous,
         ]);
     }
@@ -503,6 +521,19 @@ final class FLACSO_Academic_Offer_API {
     private static function is_error_response($response): bool {
         return is_wp_error($response)
             || (is_object($response) && method_exists($response, 'is_error') && $response->is_error());
+    }
+
+    private static function has_instances(int $post_id): bool {
+        $instances = get_posts([
+            'post_type' => 'instancia-oferta',
+            'post_status' => ['publish', 'draft', 'private', 'pending', 'future', 'trash'],
+            'posts_per_page' => 1,
+            'fields' => 'ids',
+            'meta_key' => 'oferta_academica_id',
+            'meta_value' => $post_id,
+            'no_found_rows' => true,
+        ]);
+        return !empty($instances);
     }
 
     private static function has_academic_scope(): bool {

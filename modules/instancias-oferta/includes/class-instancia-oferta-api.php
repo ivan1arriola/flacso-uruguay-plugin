@@ -38,6 +38,11 @@ final class FLACSO_Instancia_Oferta_API {
                 'callback' => [self::class, 'update_item'],
                 'permission_callback' => [self::class, 'can_edit_item'],
             ],
+            [
+                'methods' => WP_REST_Server::DELETABLE,
+                'callback' => [self::class, 'delete_item'],
+                'permission_callback' => [self::class, 'can_delete_item'],
+            ],
         ]);
     }
 
@@ -59,11 +64,17 @@ final class FLACSO_Instancia_Oferta_API {
         return self::can_read_item($request);
     }
 
+    public static function can_delete_item(WP_REST_Request $request): bool {
+        $post = get_post(absint($request['id']));
+        return $post && $post->post_type === FLACSO_Instancia_Oferta::POST_TYPE
+            && current_user_can('delete_post', $post->ID);
+    }
+
     public static function list_items(WP_REST_Request $request) {
         $offer_id = absint($request->get_param('academicOfferId'));
         $args = [
             'post_type' => FLACSO_Instancia_Oferta::POST_TYPE,
-            'post_status' => 'publish',
+            'post_status' => ['publish', 'draft', 'private', 'pending', 'future'],
             'posts_per_page' => -1,
             'orderby' => 'modified',
             'order' => 'DESC',
@@ -134,6 +145,48 @@ final class FLACSO_Instancia_Oferta_API {
 
         self::persist($post_id, $validated);
         return rest_ensure_response(self::to_domain_item(get_post($post_id)));
+    }
+
+    /**
+     * Elimina una instancia de forma recuperable. El borrado permanente exige
+     * que el consumidor envie force=true de manera explicita.
+     */
+    public static function delete_item(WP_REST_Request $request) {
+        $post_id = absint($request['id']);
+        $post = get_post($post_id);
+        if (!$post || $post->post_type !== FLACSO_Instancia_Oferta::POST_TYPE) {
+            return self::not_found();
+        }
+
+        $previous = self::to_domain_item($post);
+        $force = rest_sanitize_boolean($request->get_param('force'));
+
+        if (!$force && $post->post_status === 'trash') {
+            return rest_ensure_response([
+                'id' => $post_id,
+                'deleted' => true,
+                'trashed' => true,
+                'previous' => $previous,
+            ]);
+        }
+
+        $deleted = $force
+            ? wp_delete_post($post_id, true)
+            : wp_trash_post($post_id);
+        if (!$deleted) {
+            return new WP_Error(
+                'flacso_instance_not_deleted',
+                __('No se pudo eliminar la Cohorte o Edicion.', 'flacso-uruguay'),
+                ['status' => 500]
+            );
+        }
+
+        return rest_ensure_response([
+            'id' => $post_id,
+            'deleted' => true,
+            'trashed' => !$force,
+            'previous' => $previous,
+        ]);
     }
 
     public static function validate_payload(array $payload, int $post_id = 0) {
