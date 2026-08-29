@@ -1,3 +1,14 @@
+## Version 6.12.0 - 29 de agosto de 2026
+
+### Resumen
+- Unifica seminarios y programas en `OfertaAcademica`, con seis tipos incluido `doctorado`.
+- Consolida cohortes y ediciones en `InstanciaOferta` y separa el estado académico de la apertura de preinscripciones.
+- Incorpora migración WP-CLI v1 idempotente con dry-run, snapshots, verificación y rollback report no destructivo.
+- Preserva el CPT, endpoints y URLs legacy durante Release A sin ejecutar migraciones desde deploy, activación o `init`.
+- Migra relaciones a la autorrelación canónica `integra`, `compuesto_por` y `precede`.
+
+---
+
 ## Version 6.10.0 - 25 de agosto de 2026
 
 ### Resumen

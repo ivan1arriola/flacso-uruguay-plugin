@@ -1,6 +1,10 @@
 # API REST - FLACSO Uruguay
 
-## Cohortes y Ediciones
+## OfertaAcademica e InstanciaOferta
+
+`oferta-academica` admite seis tipos: `doctorado`, `maestria`,
+`especializacion`, `diplomado`, `diploma` y `seminario`. No se crea una entidad
+de dominio separada para seminarios.
 
 La API administrativa semántica de instancias es:
 
@@ -9,9 +13,14 @@ GET|POST  /wp-json/flacso/v1/instancias-oferta
 GET|PATCH /wp-json/flacso/v1/instancias-oferta/{instancia_wp_id}
 ```
 
+`status` es sólo el estado académico: `planificada`, `en_curso`, `finalizada` o
+`cancelada`. `preinscriptionOpening` y `preinscriptionManualClosing` gobiernan la
+apertura; para seminarios el cierre efectivo se deriva siete días después de la
+apertura. `number`, fechas y precisiones pueden ser `null`.
+
 El campo `preinscriptionFlow` admite `legacy_editor` y
 `gestor_preinscripciones`; el default es `legacy_editor`. WordPress bloquea el
-cambio de flujo después de que la instancia haya abierto preinscripciones.
+cambio de flujo después de una apertura real.
 
 El contrato público mínimo consumido por Django es:
 
@@ -19,8 +28,9 @@ El contrato público mínimo consumido por Django es:
 GET /wp-json/flacso/v1/preinscripciones/catalogo
 ```
 
-Devuelve `schema_version: 1` y sólo instancias abiertas, públicas y asignadas a
-`gestor_preinscripciones`. Ver `docs/preinscription-flow-transition.md`.
+Devuelve `schema_version: 1` y sólo instancias que
+`acepta_preinscripciones()`, públicas y asignadas a `gestor_preinscripciones`.
+Consume únicamente OfertaAcademica e InstanciaOferta.
 
 Esta documentación describe todos los endpoints disponibles en la API REST del plugin unificado de FLACSO Uruguay.
 
@@ -36,7 +46,11 @@ Esta documentación describe todos los endpoints disponibles en la API REST del 
 
 ## 1. Módulo de Seminarios y Oferta (`flacso/v1`)
 
-### Seminarios
+### Seminarios (compatibilidad Release A)
+
+Los endpoints siguientes permanecen temporalmente para el CPT legacy. No deben
+usarse para crear seminarios nuevos. Un seminario nuevo se crea en la API de
+OfertaAcademica con tipo `seminario`, y su edición en `/instancias-oferta`.
 
 #### GET `/flacso/v1/seminarios`
 Obtiene el listado de seminarios.

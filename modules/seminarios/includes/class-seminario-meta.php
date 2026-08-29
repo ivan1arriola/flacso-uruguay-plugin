@@ -107,6 +107,10 @@ class Seminario_Meta
             );
 
             register_post_meta('seminario', '_seminario_' . $key, $args);
+            if (class_exists('FLACSO_Oferta_Academica')
+                && in_array('_seminario_' . $key, FLACSO_Oferta_Academica::seminar_academic_meta_keys(), true)) {
+                register_post_meta(FLACSO_Oferta_Academica::POST_TYPE, '_seminario_' . $key, $args);
+            }
         }
     }
 

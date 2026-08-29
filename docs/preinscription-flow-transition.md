@@ -16,14 +16,17 @@ gestor_preinscripciones   -> postulaciones en Django
 Ofertas que todavía no tienen instancias explícitas conservan los campos y las
 rutas legacy; no se crea ni migra una postulación automáticamente.
 
+Las postulaciones y sus documentos viven exclusivamente en
+`preinscripciones.flacso.edu.uy`; el plugin sólo publica el catálogo y el flujo
+transitorio.
+
 ## Valores y compatibilidad
 
 - `legacy_editor`: default y destino de toda instancia previa sin valor.
 - `gestor_preinscripciones`: activación manual para nuevas cohortes piloto.
 
-El backfill `flacso_instancias_oferta_schema_version=1` sólo completa valores
-faltantes con `legacy_editor`. Al abrir una instancia se registra de forma
-persistente que el flujo quedó bloqueado. Cerrar la convocatoria no lo desbloquea.
+No hay backfill automático. Al abrir una instancia se registra una fecha real y
+el flujo queda bloqueado. Cerrar la convocatoria no lo desbloquea.
 
 ## API administrativa
 
@@ -40,8 +43,10 @@ DTO principal:
   "name": "Cohorte 2027",
   "year": 2027,
   "semester": "1S",
-  "number": 2,
-  "status": "preinscripciones_abiertas",
+  "number": null,
+  "status": "planificada",
+  "preinscriptionOpening": "2027-01-15T12:00:00+00:00",
+  "preinscriptionManualClosing": null,
   "isInscriptionsOpen": true,
   "preinscriptionFlow": "gestor_preinscripciones",
   "flowLocked": true,
@@ -50,15 +55,15 @@ DTO principal:
 }
 ```
 
-Abrir una instancia cierra cualquier otra abierta de la misma oferta. Intentar
-cambiar el flujo de una instancia que ya abrió devuelve HTTP 409.
+Intentar cambiar el flujo de una instancia que ya abrió devuelve HTTP 409. El
+estado académico nunca se usa para representar apertura o cierre.
 
 ## Catálogo mínimo
 
 `GET /wp-json/flacso/v1/preinscripciones/catalogo` es público y devuelve
 `schema_version: 1`. Incluye sólo instancias publicadas con estado
-`preinscripciones_abiertas`, flujo `gestor_preinscripciones` y oferta pública sin
-contraseña. No expone `post_meta` ni el campo de flujo.
+apertura efectiva, flujo `gestor_preinscripciones` y oferta pública sin contraseña.
+No expone `post_meta` ni el campo de flujo.
 
 ## URLs
 

@@ -45,12 +45,8 @@ final class FLACSO_Cohorte_API {
         add_action('init', [self::class, 'register_meta'], 8);
         add_action('rest_api_init', [self::class, 'register_routes']);
         add_action('save_post_' . self::POST_TYPE, [self::class, 'sync_legacy_offer_meta'], 20, 3);
-        add_action('init', [self::class, 'migrate_preinscription_defaults'], 32);
-
-        if (is_admin()) {
-            add_action('admin_menu', [self::class, 'register_migration_page'], 20);
-            add_action('admin_post_' . self::MIGRATION_ACTION, [self::class, 'handle_migration']);
-        }
+        // El CPT/endpoints legacy permanecen en Release A. Sus migraciones
+        // anteriores quedan deliberadamente sin hooks: solo se migra por WP-CLI.
     }
 
     public static function register_post_type(): void {

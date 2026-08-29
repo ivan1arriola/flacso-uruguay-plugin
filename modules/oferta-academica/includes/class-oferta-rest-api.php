@@ -321,7 +321,11 @@ class Oferta_Rest_API
             'tabla_precios_tipo', 'carta_presentacion_html', 'precios_filas', 'precios_nota',
             'titulos_intermedios', 'convenio_iin_oea', 'mostrar_costos_envio', 'modalidad_resumen',
             'carta_cta_titulo', 'asistente_academica_docente_id', 'asistente_academica_rol', 'tabla_precio_id',
-            'asistente_academica_correo', 'documentos', 'visibilidad_carta', 'mailjet_contact_list_ids'
+            'asistente_academica_correo', 'documentos', 'visibilidad_carta', 'mailjet_contact_list_ids',
+            '_seminario_nombre', '_seminario_presentacion_seminario', '_seminario_objetivo_general',
+            '_seminario_objetivos_especificos', '_seminario_unidades_academicas',
+            '_seminario_forma_aprobacion', '_seminario_carga_horaria', '_seminario_creditos',
+            '_seminario_acreditacion', '_seminario_acredita_maestria', '_seminario_acredita_doctorado'
         ];
 
         foreach ($meta_keys as $key) {
@@ -405,14 +409,23 @@ class Oferta_Rest_API
         // Registrar seminarios asociados a la oferta
         register_rest_field('oferta-academica', '_oferta_seminarios_ids', [
             'get_callback' => function ($post_array) {
-                $val = get_post_meta($post_array['id'], '_oferta_seminarios_ids', true);
-                return is_array($val) ? array_values(array_map('intval', $val)) : [];
+                return Oferta_Seminarios_Integration::get_programa_seminarios((int) $post_array['id']);
             },
             'update_callback' => function ($value, $post_obj) {
                 if (is_array($value)) {
                     $cleaned = array_values(array_unique(array_map('intval', $value)));
+                    FLACSO_Relacion_Oferta_Academica::replace_type(
+                        (int) $post_obj->ID,
+                        FLACSO_Relacion_Oferta_Academica::INTEGRA,
+                        $cleaned
+                    );
                     update_post_meta($post_obj->ID, '_oferta_seminarios_ids', $cleaned);
                 } else {
+                    FLACSO_Relacion_Oferta_Academica::replace_type(
+                        (int) $post_obj->ID,
+                        FLACSO_Relacion_Oferta_Academica::INTEGRA,
+                        []
+                    );
                     delete_post_meta($post_obj->ID, '_oferta_seminarios_ids');
                 }
                 return true;
@@ -422,6 +435,40 @@ class Oferta_Rest_API
                 'items' => [
                     'type' => 'integer'
                 ]
+            ],
+        ]);
+
+        register_rest_field('oferta-academica', 'relaciones_oferta_academica', [
+            'get_callback' => static function ($post_array): array {
+                $origin_id = absint($post_array['id'] ?? 0);
+                return array_map(static function (array $relation) use ($origin_id): array {
+                    return ['oferta_origen' => $origin_id] + $relation;
+                }, FLACSO_Relacion_Oferta_Academica::get($origin_id));
+            },
+            'update_callback' => static function ($value, $post_obj): bool {
+                if (!is_array($value)) {
+                    return false;
+                }
+                $relations = FLACSO_Relacion_Oferta_Academica::normalize($value);
+                foreach ($relations as $relation) {
+                    if (get_post_type($relation['oferta_destino']) !== FLACSO_Oferta_Academica::POST_TYPE) {
+                        return false;
+                    }
+                }
+                update_post_meta((int) $post_obj->ID, FLACSO_Relacion_Oferta_Academica::META_KEY, $relations);
+                return true;
+            },
+            'schema' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'oferta_origen' => ['type' => 'integer', 'readonly' => true],
+                        'oferta_destino' => ['type' => 'integer'],
+                        'tipo_relacion' => ['type' => 'string', 'enum' => ['integra', 'compuesto_por', 'precede']],
+                        'orden' => ['type' => 'integer'],
+                    ],
+                ],
             ],
         ]);
 

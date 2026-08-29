@@ -130,5 +130,23 @@ flacso-uruguay-plugin/
 
 - `API.md`: endpoints REST.
 - `CHANGELOG.md`: historial funcional.
+- `docs/academic-model-migration.md`: modelo unificado, dry-run, migración y rollback.
 - `docs/`: notas operativas específicas.
 - `modules/*/README.md`: documentación de módulos cuando exista.
+
+## Dominio académico
+
+Toda propuesta se modela como `oferta-academica`, incluidos los seminarios. Los
+tipos soportados son `doctorado`, `maestria`, `especializacion`, `diplomado`,
+`diploma` y `seminario`. Cohortes y ediciones se modelan exclusivamente como
+`instancia-oferta`; la etiqueta se deriva del tipo y no se persiste un
+`tipo_instancia`.
+
+La migración nunca se ejecuta al activar o desplegar el plugin. Primero se debe
+usar:
+
+```bash
+wp flacso migrate academic-model --dry-run
+```
+
+Véase [Migración del modelo académico](docs/academic-model-migration.md).

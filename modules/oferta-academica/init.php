@@ -24,6 +24,9 @@ if (!defined('FLACSO_OFERTA_ACADEMICA_DATA_ONLY')) {
 
 // Cargar clases principales
 flacso_safe_require('modules/oferta-academica/includes/class-cpt-oferta-academica.php');
+flacso_safe_require('modules/oferta-academica/includes/class-oferta-academica.php');
+flacso_safe_require('modules/oferta-academica/includes/class-relacion-oferta-academica.php');
+flacso_safe_require('modules/oferta-academica/includes/class-oferta-seminario-admin.php');
 flacso_safe_require('modules/oferta-academica/includes/class-cpt-tabla-precio.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-taxonomies.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-page-adapter.php');
@@ -61,13 +64,15 @@ add_action('init', function() {
     Oferta_Data_Migration::init();
     Oferta_Docentes_Integration::init();
     Oferta_Seminarios_Integration::init();
+    FLACSO_Oferta_Seminario_Admin::init();
     Oferta_Data_MetaBox::init();
     Oferta_Consulta_Form::init();
     Oferta_Seminarios_Routes::init();
     Oferta_Seminarios_Admin_Links::init();
     Oferta_Rest_API::init();
+    // Release A: el CPT y endpoint legacy siguen disponibles, pero ninguna
+    // migracion se ejecuta desde init/activation. El cambio es solo por WP-CLI.
     FLACSO_Cohorte_API::init();
-    FLACSO_Cohorte_Auto_Migration::init();
 }, 5); // Prioridad 5 para que se ejecute antes
 
 add_action('after_setup_theme', function() {
