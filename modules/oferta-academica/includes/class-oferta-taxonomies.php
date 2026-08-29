@@ -147,12 +147,7 @@ class Oferta_Taxonomies {
     }
 
     public static function create_default_terms(): void {
-        $tipos = [
-            'Maestrías' => 'maestria',
-            'Especializaciones' => 'especializacion',
-            'Diplomados' => 'diplomado',
-            'Diplomas' => 'diploma',
-        ];
+        $tipos = array_flip(FLACSO_Oferta_Academica::tipos());
 
         foreach ($tipos as $name => $slug) {
             $term = get_term_by('slug', $slug, 'tipo-oferta-academica');
@@ -181,12 +176,7 @@ class Oferta_Taxonomies {
     }
 
     public static function register_rewrite_rules(): void {
-        $tipos = [
-            'maestrias' => 'maestria',
-            'especializaciones' => 'especializacion',
-            'diplomados' => 'diplomado',
-            'diplomas' => 'diploma',
-        ];
+        $tipos = array_flip(FLACSO_Oferta_Academica::segmentos_url());
 
         foreach ($tipos as $plural => $singular) {
             add_rewrite_rule(
@@ -207,12 +197,7 @@ class Oferta_Taxonomies {
             return $url;
         }
 
-        $tipos = [
-            'maestria' => 'maestrias',
-            'especializacion' => 'especializaciones',
-            'diplomado' => 'diplomados',
-            'diploma' => 'diplomas',
-        ];
+        $tipos = FLACSO_Oferta_Academica::segmentos_url();
 
         if (isset($tipos[$term->slug])) {
             return home_url('/formacion/' . $tipos[$term->slug] . '/');
@@ -231,12 +216,7 @@ class Oferta_Taxonomies {
             return;
         }
 
-        $tipos = [
-            'maestria' => 'maestrias',
-            'especializacion' => 'especializaciones',
-            'diplomado' => 'diplomados',
-            'diploma' => 'diplomas',
-        ];
+        $tipos = FLACSO_Oferta_Academica::segmentos_url();
 
         if (!isset($tipos[$term->slug])) {
             return;

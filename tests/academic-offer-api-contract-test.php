@@ -20,6 +20,7 @@ $wordpress_payload = FLACSO_Academic_Offer_API::to_wordpress_payload([
     'featuredMediaId' => 91,
     'associatedPostId' => 301,
     'seminarIds' => [7, 8],
+    'relations' => [['oferta_destino' => 8, 'tipo_relacion' => 'precede', 'orden' => 0]],
     'program' => ['id' => 17],
     'type' => ['id' => 4],
     'fields' => [
@@ -32,6 +33,7 @@ academic_offer_assert_same('Diploma de prueba', $wordpress_payload['title'], 'ti
 academic_offer_assert_same(91, $wordpress_payload['featured_media'], 'media traducida dentro del plugin');
 academic_offer_assert_same(301, $wordpress_payload['associated_post_id'], 'pagina legacy traducida dentro del plugin');
 academic_offer_assert_same([7, 8], $wordpress_payload['_oferta_seminarios_ids'], 'seminarios traducidos dentro del plugin');
+academic_offer_assert_same('precede', $wordpress_payload['relaciones_oferta_academica'][0]['tipo_relacion'], 'autorrelacion canonica traducida');
 academic_offer_assert_same(['id' => 17], $wordpress_payload['program'], 'Programa canonico');
 academic_offer_assert_same([17], $wordpress_payload['taxonomies']['area_tematica'], 'slug interno confinado al plugin');
 academic_offer_assert_same([4], $wordpress_payload['taxonomies']['tipo-oferta-academica'], 'tipo interno confinado al plugin');

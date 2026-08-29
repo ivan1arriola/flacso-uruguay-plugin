@@ -35,6 +35,10 @@ final class FLACSO_Academic_Offer_API {
         'convenio_iin_oea', 'mostrar_costos_envio', 'carta_instancias_presenciales',
         'visibilidad_carta', 'asistente_academica_docente_id', 'tabla_precio_id',
         'precios_filas', 'documentos', 'mailjet_contact_list_ids',
+        '_seminario_nombre', '_seminario_presentacion_seminario', '_seminario_objetivo_general',
+        '_seminario_objetivos_especificos', '_seminario_unidades_academicas',
+        '_seminario_forma_aprobacion', '_seminario_carga_horaria', '_seminario_creditos',
+        '_seminario_acreditacion', '_seminario_acredita_maestria', '_seminario_acredita_doctorado',
     ];
 
     public static function init(): void {
@@ -297,6 +301,7 @@ final class FLACSO_Academic_Offer_API {
             'featuredMediaId' => 'featured_media',
             'associatedPostId' => 'associated_post_id',
             'seminarIds' => '_oferta_seminarios_ids',
+            'relations' => 'relaciones_oferta_academica',
         ];
         $wordpress = [];
 
@@ -383,6 +388,7 @@ final class FLACSO_Academic_Offer_API {
             ],
             'associatedPostId' => absint($raw['associated_post_id'] ?? 0),
             'seminarIds' => array_values(array_map('absint', (array) ($raw['_oferta_seminarios_ids'] ?? []))),
+            'relations' => array_values((array) ($raw['relaciones_oferta_academica'] ?? [])),
             'program' => $program,
             'type' => $types[0] ?? null,
             'fields' => $fields,

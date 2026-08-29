@@ -15,10 +15,6 @@ class Oferta_Seminarios_Integration {
     }
 
     public static function add_meta_box(): void {
-        if (!post_type_exists('seminario')) {
-            return;
-        }
-
         add_meta_box(
             'oferta_seminarios',
             'Seminarios Asociados',
@@ -36,11 +32,28 @@ class Oferta_Seminarios_Integration {
         $selected_map = array_fill_keys($selected_ids, true);
 
         $all_seminarios = get_posts([
-            'post_type' => 'seminario',
+            'post_type' => FLACSO_Oferta_Academica::POST_TYPE,
+            'post_status' => ['publish', 'draft', 'private'],
             'posts_per_page' => -1,
             'orderby' => 'title',
             'order' => 'ASC',
+            'tax_query' => [[
+                'taxonomy' => FLACSO_Oferta_Academica::TYPE_TAXONOMY,
+                'field' => 'slug',
+                'terms' => [FLACSO_Oferta_Academica::TIPO_SEMINARIO],
+            ]],
         ]);
+        // Release A: los no migrados siguen seleccionables hasta ejecutar WP-CLI.
+        $all_seminarios = array_merge($all_seminarios, get_posts([
+            'post_type' => FLACSO_Oferta_Academica::LEGACY_SEMINAR_POST_TYPE,
+            'post_status' => ['publish', 'draft', 'private'],
+            'posts_per_page' => -1,
+            'orderby' => 'title',
+            'order' => 'ASC',
+        ]));
+        usort($all_seminarios, static function ($a, $b): int {
+            return strcasecmp((string) $a->post_title, (string) $b->post_title);
+        });
 
         self::render_picker_assets();
 
@@ -92,10 +105,21 @@ class Oferta_Seminarios_Integration {
 
         if (isset($_POST['oferta_seminarios_ids']) && is_array($_POST['oferta_seminarios_ids'])) {
             $seminarios_ids = array_values(array_unique(array_map('intval', $_POST['oferta_seminarios_ids'])));
+            FLACSO_Relacion_Oferta_Academica::replace_type(
+                absint($post_id),
+                FLACSO_Relacion_Oferta_Academica::INTEGRA,
+                $seminarios_ids
+            );
+            // Proyeccion legacy para consumidores que se retiran en Release B.
             update_post_meta($post_id, '_oferta_seminarios_ids', $seminarios_ids);
             return;
         }
 
+        FLACSO_Relacion_Oferta_Academica::replace_type(
+            absint($post_id),
+            FLACSO_Relacion_Oferta_Academica::INTEGRA,
+            []
+        );
         delete_post_meta($post_id, '_oferta_seminarios_ids');
     }
 
@@ -103,6 +127,14 @@ class Oferta_Seminarios_Integration {
      * Obtener seminarios asociados a un programa.
      */
     public static function get_programa_seminarios($programa_id): array {
+        if (metadata_exists('post', $programa_id, FLACSO_Relacion_Oferta_Academica::META_KEY)) {
+            return array_map(static function (array $relation): int {
+                return absint($relation['oferta_destino']);
+            }, FLACSO_Relacion_Oferta_Academica::get(
+                absint($programa_id),
+                FLACSO_Relacion_Oferta_Academica::INTEGRA
+            ));
+        }
         $value = get_post_meta($programa_id, '_oferta_seminarios_ids', true);
         if (!is_array($value)) {
             return [];

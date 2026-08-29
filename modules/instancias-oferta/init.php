@@ -9,9 +9,9 @@ flacso_safe_require('modules/instancias-oferta/includes/class-instancia-oferta.p
 flacso_safe_require('modules/instancias-oferta/includes/class-preinscription-url-resolver.php');
 flacso_safe_require('modules/instancias-oferta/includes/class-instancia-oferta-api.php');
 flacso_safe_require('modules/instancias-oferta/includes/class-preinscription-catalog-api.php');
+flacso_safe_require('modules/instancias-oferta/includes/class-academic-model-migrator.php');
 
 add_action('init', [FLACSO_Instancia_Oferta::class, 'init'], 6);
-add_action('init', [FLACSO_Instancia_Oferta::class, 'migrate_defaults'], 20);
 FLACSO_Instancia_Oferta_API::init();
 FLACSO_Preinscription_Catalog_API::init();
 

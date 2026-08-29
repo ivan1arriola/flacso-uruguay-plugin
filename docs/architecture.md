@@ -4,13 +4,13 @@
 `flacso-uruguay-plugin` actúa como la frontera explícita entre WordPress, el Editor administrativo, la web pública y los servicios de tracking.
 
 ## 2. Fuentes de Verdad Asignadas
-- **Contenido Público y Publicación de WordPress**: Ofertas Académicas base, Seminarios base, Novedades y Configuración de Portada (`main-page`).
+- **Contenido Público y Publicación de WordPress**: una única `OfertaAcademica` (incluido tipo seminario), Novedades y Configuración de Portada (`main-page`).
 - **Instancias de Oferta**: identidad WordPress, relación Oferta → Cohortes/Ediciones, estado y `flujo_preinscripcion`.
 - **Contratos REST API**: Exposición de DTOs diferenciados para consumo público (`PublicDTO`) y administrativo (`AdminDTO`).
 - **Tracking Centralizado**: API JavaScript única (`flacsoMetaTrackCustom`) encargada de sincronizar identificadores (`event_id`) entre Pixel, CAPI y GA4.
 
 ## 3. Lo que NO debe hacer este repositorio
-- **NO almacenar postulaciones**. WordPress decide el destino y la apertura; cada postulación pertenece exclusivamente al Editor legacy o al Gestor nuevo.
+- **NO almacenar postulaciones**. WordPress publica catálogo, apertura y destino transitorio; las postulaciones viven exclusivamente fuera del plugin.
 - **NO definir estilos de diseño detallados o layout visual propio del tema**.
 
 ## 4. Comunicación e Integraciones
