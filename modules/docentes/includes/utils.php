@@ -227,32 +227,11 @@ function dp_safe_cv_html($html) {
 }
 }
 function dp_get_docente_emails($docente_id) {
-    $correos = get_post_meta($docente_id, 'docente_correos', true);
-    if (!is_array($correos)) {
-        return [];
-    }
-
-    $limpios = [];
-    foreach ($correos as $correo) {
-        $email = isset($correo['email']) ? sanitize_email($correo['email']) : '';
-        if (!$email) continue;
-        $limpios[] = [
-            'email' => $email,
-            'label' => isset($correo['label']) ? sanitize_text_field($correo['label']) : '',
-            'principal' => !empty($correo['principal']),
-        ];
-    }
-    return $limpios;
+    return [];
 }
 
 function dp_get_docente_principal_email($docente_id) {
-    $correos = dp_get_docente_emails($docente_id);
-    foreach ($correos as $correo) {
-        if (!empty($correo['principal'])) {
-            return $correo;
-        }
-    }
-    return isset($correos[0]) ? $correos[0] : null;
+    return null;
 }
 
 function dp_get_docente_socials($docente_id) {

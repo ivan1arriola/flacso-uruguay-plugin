@@ -130,7 +130,6 @@ if (!function_exists('dp_rest_build_docente_payload')) {
             return [];
         }
 
-        $correos = get_post_meta($post->ID, 'docente_correos', true);
         $redes = get_post_meta($post->ID, 'docente_redes', true);
         $featured_image = dp_rest_featured_image_payload($post->ID);
 
@@ -149,7 +148,6 @@ if (!function_exists('dp_rest_build_docente_payload')) {
                 'nombre' => get_post_meta($post->ID, 'nombre', true),
                 'apellido' => get_post_meta($post->ID, 'apellido', true),
                 'cv' => get_post_meta($post->ID, 'cv', true),
-                'docente_correos' => is_array($correos) ? $correos : [],
                 'docente_redes' => is_array($redes) ? $redes : [],
             ],
             // Compatibilidad
@@ -159,7 +157,6 @@ if (!function_exists('dp_rest_build_docente_payload')) {
             'nombre' => get_post_meta($post->ID, 'nombre', true),
             'apellido' => get_post_meta($post->ID, 'apellido', true),
             'cv' => get_post_meta($post->ID, 'cv', true),
-            'correos' => is_array($correos) ? $correos : [],
             'redes' => is_array($redes) ? $redes : [],
             'featured_image' => $featured_image['url'] ?? '',
             'featured_media' => (int) ($featured_image['id'] ?? 0),
@@ -287,11 +284,6 @@ if (!function_exists('dp_rest_create_docente')) {
         update_post_meta($doc_id, 'apellido', $apellido);
         update_post_meta($doc_id, 'cv', $cv);
 
-        $correos = $params['correos'] ?? ($params['docente_correos'] ?? null);
-        if ($correos !== null) {
-            update_post_meta($doc_id, 'docente_correos', dp_rest_sanitize_docente_correos($correos));
-        }
-
         $redes = $params['redes'] ?? ($params['docente_redes'] ?? null);
         if ($redes !== null) {
             update_post_meta($doc_id, 'docente_redes', dp_rest_sanitize_docente_redes($redes));
@@ -371,11 +363,6 @@ if (!function_exists('dp_rest_update_docente')) {
         }
         if (array_key_exists('cv', $params)) {
             update_post_meta($doc_id, 'cv', wp_kses_post($params['cv']));
-        }
-
-        $correos = $params['correos'] ?? ($params['docente_correos'] ?? null);
-        if ($correos !== null) {
-            update_post_meta($doc_id, 'docente_correos', dp_rest_sanitize_docente_correos($correos));
         }
 
         $redes = $params['redes'] ?? ($params['docente_redes'] ?? null);

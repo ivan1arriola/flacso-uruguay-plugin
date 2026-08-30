@@ -64,9 +64,6 @@ add_shortcode('flacso_autoridades', function () {
                 }
             }
 
-            if (function_exists('dp_get_docente_emails')) {
-                $correos = dp_get_docente_emails($doc_id);
-            }
             if (function_exists('dp_get_docente_socials')) {
                 $redes = dp_get_docente_socials($doc_id);
             }
@@ -87,7 +84,7 @@ add_shortcode('flacso_autoridades', function () {
 
         if ($programa) {
             if ($enlace) {
-                $out .= '<a href="' . $enlace . '" target="_blank" rel="noopener" class="flacso-autoridad__programa" style="margin-bottom: 1.5rem;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:middle;"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 58h14M6 12h14"/></svg> ' . $programa . '</a>';
+                $out .= '<a href="' . $enlace . '" target="_blank" rel="noopener noreferrer" class="flacso-autoridad__programa" style="margin-bottom: 1.5rem;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:middle;"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 58h14M6 12h14"/></svg> ' . $programa . '</a>';
             } else {
                 $out .= '<div class="flacso-autoridad__programa" style="margin-bottom: 1.5rem;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:middle;"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> ' . $programa . '</div>';
             }
@@ -105,16 +102,11 @@ add_shortcode('flacso_autoridades', function () {
             $out .= '<div class="flacso-autoridad__cv">' . $clean_cv . '</div>';
         }
 
-        if (!empty($correos) || !empty($redes)) {
+        if (!empty($redes)) {
             $out .= '<div class="flacso-autoridad__contact-bar">';
-            foreach ($correos as $c) {
-                if (!empty($c['email'])) {
-                    $out .= '<a href="mailto:' . esc_attr($c['email']) . '" class="flacso-contact-tag" title="' . esc_attr($c['label'] ? $c['label'] : 'Correo') . '"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;vertical-align:middle;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>' . esc_html($c['email']) . '</a>';
-                }
-            }
             foreach ($redes as $r) {
                 if (!empty($r['url'])) {
-                    $out .= '<a href="' . esc_url($r['url']) . '" target="_blank" rel="noopener" class="flacso-contact-tag" title="' . esc_attr($r['label'] ?: 'Red social') . '"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;vertical-align:middle;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>' . esc_html($r['label'] ?: 'Perfil') . '</a>';
+                    $out .= '<a href="' . esc_url($r['url']) . '" target="_blank" rel="noopener noreferrer" class="flacso-contact-tag" title="' . esc_attr($r['label'] ?: 'Red social') . '"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;vertical-align:middle;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>' . esc_html($r['label'] ?: 'Perfil') . '</a>';
                 }
             }
             $out .= '</div>';
