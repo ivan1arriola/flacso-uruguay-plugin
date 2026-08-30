@@ -15,6 +15,10 @@ Flacso_Kadence_Compat::init();
 Flacso_Nav_Announcement::init();
 
 add_action( 'wp_enqueue_scripts', static function () {
+	if ( function_exists( 'wp_get_environment_type' ) && wp_get_environment_type() === 'local' ) {
+		return;
+	}
+
 	if ( is_admin() ) {
 		return;
 	}

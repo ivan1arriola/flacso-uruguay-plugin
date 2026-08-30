@@ -21,6 +21,10 @@ class FLACSO_Meta_Tracking {
     }
 
     public static function enqueue_frontend_assets(): void {
+        if (function_exists('wp_get_environment_type') && wp_get_environment_type() === 'local') {
+            return;
+        }
+
         if (!self::should_boot_frontend_tracking()) {
             return;
         }
@@ -70,6 +74,10 @@ class FLACSO_Meta_Tracking {
     }
 
     public static function handle_track_event(): void {
+        if (function_exists('wp_get_environment_type') && wp_get_environment_type() === 'local') {
+            wp_send_json_success(['sent' => false, 'reason' => 'local_environment']);
+        }
+
         if (!self::should_accept_event_request()) {
             wp_send_json_error(['message' => 'forbidden'], 403);
         }
@@ -250,6 +258,10 @@ class FLACSO_Meta_Tracking {
     }
 
     public static function render_noscript_pixel(): void {
+        if (function_exists('wp_get_environment_type') && wp_get_environment_type() === 'local') {
+            return;
+        }
+
         if (self::$noscript_rendered) {
             return;
         }
@@ -281,6 +293,10 @@ class FLACSO_Meta_Tracking {
     }
 
     private static function should_boot_frontend_tracking(): bool {
+        if (function_exists('wp_get_environment_type') && wp_get_environment_type() === 'local') {
+            return false;
+        }
+
         if (is_admin()) {
             return false;
         }
