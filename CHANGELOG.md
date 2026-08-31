@@ -9,6 +9,7 @@
 - Elimina `InstanciaOferta`, formularios locales, migradores, backfills, APIs y archivos de compatibilidad.
 - Publica CRUD REST del esquema final para cargar datos transformados localmente con IDs nuevos.
 - Documenta el contrato completo en `docs/modelo-academico-final.md`.
+- Reemplaza los menús académicos dispersos por un Panel FLACSO organizado según los dos recorridos del modelo final, con métricas, próximos comienzos y alertas de calidad.
 
 ---
 

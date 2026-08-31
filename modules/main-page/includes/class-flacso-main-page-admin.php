@@ -52,51 +52,18 @@ class Flacso_Main_Page_Admin {
         return array_column(self::SECTION_PAGES, 'slug');
     }
 
-    public static function register_admin_bar_menu(WP_Admin_Bar $wp_admin_bar): void {
-        if (!is_admin_bar_showing() || !current_user_can('manage_options')) {
-            return;
-        }
-
-        $wp_admin_bar->add_node([
-            'id'    => 'flacso-main-page-bar',
-            'title' => __('Panel FLACSO', 'flacso-main-page'),
-            'href'  => admin_url('admin.php?page=flacso-main-page'),
-            'meta'  => ['title' => __('Panel FLACSO', 'flacso-main-page')],
-        ]);
-    }
     public static function init(): void {
         add_action('admin_menu', [__CLASS__, 'register_menu']);
-        add_action('admin_bar_menu', [__CLASS__, 'register_admin_bar_menu'], 1);
     }
 
     public static function register_menu(): void {
-        add_menu_page(
-            __('Panel FLACSO', 'flacso-main-page'),
-            __('Panel FLACSO', 'flacso-main-page'),
-            'manage_options',
-            'flacso-main-page',
-            [__CLASS__, 'render_section_page'],
-            'dashicons-admin-site-alt3',
-            1
-        );
-
         add_submenu_page(
-            'flacso-main-page',
-            __('Inicio', 'flacso-main-page'),
-            __('Inicio', 'flacso-main-page'),
+            FLACSO_Admin_Panel::PAGE_SLUG,
+            __('Portada del sitio', 'flacso-main-page'),
+            __('Portada', 'flacso-main-page'),
             'manage_options',
             'flacso-main-page',
             [__CLASS__, 'render_section_page']
-        );
-        
-        // Agregar página separada para Oferta Académica dentro del panel principal.
-        add_submenu_page(
-            'flacso-main-page',
-            __('Oferta Académica', 'flacso-main-page'),
-            __('Oferta Académica', 'flacso-main-page'),
-            'manage_options',
-            'flacso-main-page-oferta-academica',
-            [__CLASS__, 'render_oferta_academica_page']
         );
     }
 
@@ -1578,7 +1545,7 @@ class Flacso_Main_Page_Admin {
                 <ul class="flacso-info-links">
                     <li>
                         <a href="<?php echo esc_url(admin_url('admin.php?page=flacso-main-page')); ?>" class="button button-primary">
-                            <?php esc_html_e('Ir al Panel FLACSO', 'flacso-main-page'); ?>
+                            <?php esc_html_e('Editar la portada', 'flacso-main-page'); ?>
                         </a>
                     </li>
                     <li>
@@ -1818,93 +1785,6 @@ class Flacso_Main_Page_Admin {
             });
         });
         </script>
-        <?php
-    }
-
-    /**
-     * Renderiza la página de administración de Oferta Académica
-     */
-    public static function render_oferta_academica_page(): void {
-        if (!current_user_can('manage_options')) {
-            return;
-        }
-
-        if (function_exists('wp_enqueue_editor')) {
-            wp_enqueue_editor();
-        }
-        if (function_exists('wp_enqueue_media')) {
-            wp_enqueue_media();
-        }
-
-        self::maybe_save_settings();
-        settings_errors('flacso-main-page_messages');
-        $settings = Flacso_Main_Page_Settings::get_settings();
-        $oa = $settings['oferta_academica'] ?? [];
-        ?>
-        <div class="wrap">
-            <h1><?php esc_html_e('Oferta Académica', 'flacso-main-page'); ?></h1>
-            <p class="description"><?php esc_html_e('Controla qué categorías y elementos se muestran dentro de la página de oferta académica.', 'flacso-main-page'); ?></p>
-            
-            <form method="post">
-                <?php wp_nonce_field('flacso-main-page_save', 'flacso-main-page_nonce'); ?>
-                
-                <div class="postbox">
-                    <h2 class="hndle"><span><?php esc_html_e('Visibilidad de bloques', 'flacso-main-page'); ?></span></h2>
-                    <div class="inside">
-                        <p>
-                            <label>
-                                <input type="checkbox" name="Flacso_Main_Page_Settings[oferta_academica][show_filters]" value="1" <?php checked(!empty($oa['show_filters'])); ?>>
-                                <?php esc_html_e('Mostrar barra de filtros / navegación superior', 'flacso-main-page'); ?>
-                            </label>
-                        </p>
-                        <p>
-                            <label>
-                                <input type="checkbox" name="Flacso_Main_Page_Settings[oferta_academica][show_maestrias]" value="1" <?php checked(!empty($oa['show_maestrias'])); ?>>
-                                <?php esc_html_e('Mostrar Maestrías', 'flacso-main-page'); ?>
-                            </label>
-                        </p>
-                        <p>
-                            <label>
-                                <input type="checkbox" name="Flacso_Main_Page_Settings[oferta_academica][show_especializaciones]" value="1" <?php checked(!empty($oa['show_especializaciones'])); ?>>
-                                <?php esc_html_e('Mostrar Especializaciones', 'flacso-main-page'); ?>
-                            </label>
-                        </p>
-                        <p>
-                            <label>
-                                <input type="checkbox" name="Flacso_Main_Page_Settings[oferta_academica][show_diplomados]" value="1" <?php checked(!empty($oa['show_diplomados'])); ?>>
-                                <?php esc_html_e('Mostrar Diplomados', 'flacso-main-page'); ?>
-                            </label>
-                        </p>
-                        <p>
-                            <label>
-                                <input type="checkbox" name="Flacso_Main_Page_Settings[oferta_academica][show_diplomas]" value="1" <?php checked(!empty($oa['show_diplomas'])); ?>>
-                                <?php esc_html_e('Mostrar Diplomas', 'flacso-main-page'); ?>
-                            </label>
-                        </p>
-                        <p>
-                            <label>
-                                <input type="checkbox" name="Flacso_Main_Page_Settings[oferta_academica][show_seminarios]" value="1" <?php checked(!empty($oa['show_seminarios'])); ?>>
-                                <?php esc_html_e('Mostrar Seminarios', 'flacso-main-page'); ?>
-                            </label>
-                        </p>
-                    </div>
-                </div>
-                
-                <div class="postbox">
-                    <h2 class="hndle"><span><?php esc_html_e('Opciones adicionales', 'flacso-main-page'); ?></span></h2>
-                    <div class="inside">
-                        <p>
-                            <label>
-                                <input type="checkbox" name="Flacso_Main_Page_Settings[oferta_academica][show_inactivos]" value="1" <?php checked(!empty($oa['show_inactivos'])); ?>>
-                                <?php esc_html_e('Mostrar programas no vigentes', 'flacso-main-page'); ?>
-                            </label>
-                        </p>
-                    </div>
-                </div>
-                
-                <?php submit_button(__('Guardar ajustes', 'flacso-main-page')); ?>
-            </form>
-        </div>
         <?php
     }
 }

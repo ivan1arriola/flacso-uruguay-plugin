@@ -62,7 +62,7 @@ class FLACSO_Integrations_Settings {
 
     public static function register_menu(): void {
         add_submenu_page(
-            'options-general.php',
+            FLACSO_Admin_Panel::PAGE_SLUG,
             __('Integraciones FLACSO', 'flacso-uruguay'),
             __('Integraciones FLACSO', 'flacso-uruguay'),
             'manage_options',
@@ -71,7 +71,7 @@ class FLACSO_Integrations_Settings {
         );
 
         add_submenu_page(
-            'options-general.php',
+            FLACSO_Admin_Panel::PAGE_SLUG,
             __('Integración con Meta', 'flacso-uruguay'),
             __('Integración con Meta', 'flacso-uruguay'),
             'manage_options',
@@ -829,9 +829,9 @@ class FLACSO_Integrations_Settings {
                 <div class="flacso-integrations-links">
                     <h2>🔗 <?php esc_html_e('Accesos Directos Relacionados', 'flacso-uruguay'); ?></h2>
                     <ul>
+                        <li><a href="<?php echo esc_url(admin_url('admin.php?page=flacso-panel')); ?>">← <?php esc_html_e('Volver al panel FLACSO', 'flacso-uruguay'); ?></a></li>
                         <li><a href="<?php echo esc_url(self::get_meta_page_url()); ?>">📈 <?php esc_html_e('Integración con Meta', 'flacso-uruguay'); ?></a></li>
-                        <li><a href="<?php echo esc_url(admin_url('edit.php?post_type=oferta-academica&page=flacso-oferta-consulta-form')); ?>">🌐 <?php esc_html_e('Formulario flotante de Oferta Académica', 'flacso-uruguay'); ?></a></li>
-                        <li><a href="<?php echo esc_url(admin_url('admin.php?page=flacso-preinscripciones')); ?>">📝 <?php esc_html_e('Preinscripciones', 'flacso-uruguay'); ?></a></li>
+                        <li><a href="https://preinscripciones.flacso.edu.uy" target="_blank" rel="noopener noreferrer">📝 <?php esc_html_e('Abrir preinscripciones externas', 'flacso-uruguay'); ?></a></li>
                     </ul>
                 </div>
             </div>

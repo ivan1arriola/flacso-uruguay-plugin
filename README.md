@@ -147,3 +147,10 @@ anterior: los datos se exportan, transforman y validan localmente antes de
 cargarlos mediante la API final.
 
 Véase [Modelo académico final](docs/modelo-academico-final.md).
+
+## Panel FLACSO
+
+El menú administrativo `FLACSO` reúne Programas, Ofertas, Cohortes,
+Seminarios, Ediciones y Tablas de precios. Su resumen presenta los dos
+recorridos del modelo, conteos del catálogo, próximos comienzos, accesos al
+Editor y a Preinscripciones, y alertas de datos esenciales incompletos.

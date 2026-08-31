@@ -70,6 +70,18 @@ final class FLACSO_Admin_Panel {
         if (empty($submenu[self::PAGE_SLUG]) || !is_array($submenu[self::PAGE_SLUG])) {
             return;
         }
+        $academic_types = ['programa-academico', 'oferta-academica', 'cohorte', 'seminario', 'edicion-seminario', 'tabla-precio'];
+        $submenu[self::PAGE_SLUG] = array_values(array_filter(
+            $submenu[self::PAGE_SLUG],
+            static function (array $item) use ($academic_types): bool {
+                foreach ($academic_types as $post_type) {
+                    if ($item[2] === 'post-new.php?post_type=' . $post_type) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        ));
         $order = [
             self::PAGE_SLUG => 0,
             'edit.php?post_type=programa-academico' => 10,
@@ -79,8 +91,8 @@ final class FLACSO_Admin_Panel {
             'edit.php?post_type=edicion-seminario' => 50,
             'edit.php?post_type=tabla-precio' => 60,
             'flacso-main-page' => 70,
-            'flacso-integrations' => 80,
-            'flacso-meta-integration' => 90,
+            'flacso-integraciones' => 80,
+            'flacso-integracion-meta' => 90,
         ];
         usort($submenu[self::PAGE_SLUG], static function (array $left, array $right) use ($order): int {
             return ($order[$left[2]] ?? 500) <=> ($order[$right[2]] ?? 500);
@@ -166,7 +178,7 @@ final class FLACSO_Admin_Panel {
                             <?php self::resource_card('dashicons-groups', __('Docentes', 'flacso-uruguay'), __('Perfiles y referencias académicas.', 'flacso-uruguay'), admin_url('admin.php?page=docentes_panel')); ?>
                             <?php self::resource_card('dashicons-money-alt', __('Tablas de precios', 'flacso-uruguay'), __('Aranceles reutilizados por cohortes y ediciones.', 'flacso-uruguay'), admin_url('edit.php?post_type=tabla-precio')); ?>
                             <?php self::resource_card('dashicons-admin-home', __('Portada', 'flacso-uruguay'), __('Contenido y orden de la página principal.', 'flacso-uruguay'), admin_url('admin.php?page=flacso-main-page')); ?>
-                            <?php self::resource_card('dashicons-admin-generic', __('Integraciones', 'flacso-uruguay'), __('Conexiones y servicios externos.', 'flacso-uruguay'), admin_url('admin.php?page=flacso-integrations')); ?>
+                            <?php self::resource_card('dashicons-admin-generic', __('Integraciones', 'flacso-uruguay'), __('Conexiones y servicios externos.', 'flacso-uruguay'), admin_url('admin.php?page=flacso-integraciones')); ?>
                         </div>
                     </section>
                 </main>
@@ -240,7 +252,31 @@ final class FLACSO_Admin_Panel {
                 ];
             }
         }
+        $without_type = self::count_offers_without_type();
+        if ($without_type > 0) {
+            $alerts[] = [
+                'label' => __('Ofertas sin tipo académico', 'flacso-uruguay'),
+                'count' => $without_type,
+                'url' => admin_url('edit.php?post_type=oferta-academica'),
+            ];
+        }
         return $alerts;
+    }
+
+    private static function count_offers_without_type(): int {
+        $count = 0;
+        $ids = get_posts([
+            'post_type' => 'oferta-academica',
+            'post_status' => ['publish', 'draft', 'pending', 'private'],
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+        ]);
+        foreach ($ids as $id) {
+            if (FLACSO_Oferta_Academica::get_tipo((int) $id) === '') {
+                $count++;
+            }
+        }
+        return $count;
     }
 
     private static function count_missing_meta(string $post_type, string $meta_key): int {

@@ -125,7 +125,8 @@ final class FLACSO_Edicion_Seminario {
     }
 
     public static function accepts_registration(int $edition_id, ?int $timestamp = null): bool {
-        if (self::sanitize_state(get_post_meta($edition_id, 'estado', true)) === 'cancelada') {
+        $state = self::sanitize_state(get_post_meta($edition_id, 'estado', true));
+        if (!in_array($state, ['planificada', 'en_curso'], true)) {
             return false;
         }
         $timestamp = $timestamp ?? current_time('timestamp', true);

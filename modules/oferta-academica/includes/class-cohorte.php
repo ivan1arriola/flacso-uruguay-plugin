@@ -81,7 +81,8 @@ final class FLACSO_Cohorte {
     }
 
     public static function accepts_registration(int $cohort_id, ?int $timestamp = null): bool {
-        if (self::sanitize_state(get_post_meta($cohort_id, 'estado', true)) === 'cancelada') {
+        $state = self::sanitize_state(get_post_meta($cohort_id, 'estado', true));
+        if (!in_array($state, ['planificada', 'en_curso'], true)) {
             return false;
         }
         $timestamp = $timestamp ?? current_time('timestamp', true);

@@ -36,7 +36,6 @@ class FLACSO_Editor_Admin_Mode {
         'flacso-charlas-abiertas-settings',
         'flacso-charlas-abiertas-visualizador',
         'flacso-main-page',
-        'flacso-main-page-oferta-academica',
     ];
 
     public static function init(): void {
@@ -159,7 +158,7 @@ class FLACSO_Editor_Admin_Mode {
         ?>
         <div class="notice notice-info is-dismissible">
             <p>
-                <strong><?php esc_html_e('Panel FLACSO ahora se administra desde la app.', 'flacso-uruguay'); ?></strong>
+                <strong><?php esc_html_e('La edición de contenidos se realiza desde la app FLACSO.', 'flacso-uruguay'); ?></strong>
                 <?php esc_html_e('Las pantallas legacy de WordPress para la home, docentes, seminarios, ofertas, charlas y consultas fueron ocultadas para evitar lógica duplicada.', 'flacso-uruguay'); ?>
             </p>
         </div>
