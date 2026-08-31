@@ -33,8 +33,9 @@ preinscripción abierta. Los ítems tienen una de estas formas:
 {"kind":"seminario","seminario":{},"edicion":{}}
 ```
 
-Las URLs apuntan siempre a `https://preinscripciones.flacso.edu.uy`; el plugin
-no contiene formularios locales ni selección de flujo.
+`link_preinscripcion` se carga en cada Cohorte o EdicionSeminario y debe apuntar
+a `https://preinscripciones.flacso.edu.uy`. El plugin no presume una estructura
+de ruta, no contiene formularios locales ni selección de flujo.
 
 ## Carga de datos
 
@@ -49,6 +50,11 @@ Los datos transformados localmente se cargan por `POST` en este orden:
 7. relaciones `seminarios`, `componentes` y `ediciones_componentes` mediante
    `PATCH` cuando ya se conocen todos los IDs de WordPress.
 
-No existe un endpoint que interprete el esquema anterior. La transformación y
-la tabla de correspondencias entre IDs viejos y nuevos pertenecen al proceso
-local de migración.
+Los `POST` de creación no deben enviar `id`. WordPress asigna IDs totalmente
+nuevos y cada respuesta devuelve el ID creado. El proceso local mantiene una
+tabla temporal `clave_de_origen → id_nuevo`, y usa esos IDs nuevos al cargar
+padres, precios, docentes y relaciones. Esa clave de origen no se persiste en
+WordPress.
+
+No existe un endpoint que interprete el esquema anterior ni un requisito de
+conservar sus IDs.

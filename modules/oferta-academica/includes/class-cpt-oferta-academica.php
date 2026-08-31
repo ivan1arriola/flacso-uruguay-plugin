@@ -122,7 +122,7 @@ class CPT_Oferta_Academica {
             'public'                => true,
             'publicly_queryable'    => true,
             'show_ui'               => true,
-            'show_in_menu'          => true,
+            'show_in_menu'          => FLACSO_Admin_Panel::PAGE_SLUG,
             'show_in_rest'          => true,
             'query_var'             => true,
             'rewrite'               => ['slug' => 'formacion/%tipo-oferta-academica%', 'with_front' => false],

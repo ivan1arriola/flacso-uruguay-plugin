@@ -32,6 +32,7 @@ class Seminario_CPT
                 'with_front' => false,
             ),
             'show_in_rest' => true,
+            'show_in_menu' => FLACSO_Admin_Panel::PAGE_SLUG,
             'menu_position' => 20,
             'menu_icon' => 'dashicons-welcome-learn-more',
             'supports' => array('title', 'editor', 'excerpt', 'thumbnail', 'revisions'),

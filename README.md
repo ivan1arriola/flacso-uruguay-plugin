@@ -116,7 +116,6 @@ flacso-uruguay-plugin/
 ├── modules/
 │   ├── oferta-academica/
 │   ├── seminarios/
-│   ├── preinscripcion/
 │   ├── formularios/
 │   ├── shortcodes/
 │   ├── docentes/
@@ -130,23 +129,21 @@ flacso-uruguay-plugin/
 
 - `API.md`: endpoints REST.
 - `CHANGELOG.md`: historial funcional.
-- `docs/academic-model-migration.md`: modelo unificado, dry-run, migración y rollback.
+- `docs/modelo-academico-final.md`: modelo final, campos, relaciones e invariantes.
 - `docs/`: notas operativas específicas.
 - `modules/*/README.md`: documentación de módulos cuando exista.
 
 ## Dominio académico
 
-Toda propuesta se modela como `oferta-academica`, incluidos los seminarios. Los
-tipos soportados son `doctorado`, `maestria`, `especializacion`, `diplomado`,
-`diploma` y `seminario`. Cohortes y ediciones se modelan exclusivamente como
-`instancia-oferta`; la etiqueta se deriva del tipo y no se persiste un
-`tipo_instancia`.
+`OfertaAcademica` y `Seminario` son entidades distintas. Las ofertas admiten
+`doctorado`, `maestria`, `especializacion`, `diplomado` y `diploma`; su entidad
+temporal es `Cohorte`. La entidad temporal de `Seminario` es
+`EdicionSeminario`. Una cohorte recibe un número entero y su etiqueta se deriva
+siempre como `Cohorte {ROMANO}`.
 
-La migración nunca se ejecuta al activar o desplegar el plugin. Primero se debe
-usar:
+Las preinscripciones de ambos tipos se realizan exclusivamente en
+`preinscripciones.flacso.edu.uy`. El plugin no contiene migradores del esquema
+anterior: los datos se exportan, transforman y validan localmente antes de
+cargarlos mediante la API final.
 
-```bash
-wp flacso migrate academic-model --dry-run
-```
-
-Véase [Migración del modelo académico](docs/academic-model-migration.md).
+Véase [Modelo académico final](docs/modelo-academico-final.md).

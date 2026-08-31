@@ -7,10 +7,13 @@ function sanitize_text_field($value) { return trim(strip_tags((string) $value));
 function wp_kses_post($value) { return (string) $value; }
 function wp_strip_all_tags($value) { return strip_tags((string) $value); }
 function absint($value) { return abs((int) $value); }
+function esc_url_raw($value, $protocols = null) { return filter_var((string) $value, FILTER_SANITIZE_URL); }
+function wp_parse_url($url, $component = -1) { return parse_url($url, $component); }
 function wp_get_object_terms($id, $taxonomy) { return []; }
 function is_wp_error($value) { return false; }
 
 require_once __DIR__ . '/../modules/oferta-academica/includes/class-oferta-academica.php';
+require_once __DIR__ . '/../modules/oferta-academica/includes/class-cohorte.php';
 require_once __DIR__ . '/../modules/seminarios/includes/class-seminario.php';
 require_once __DIR__ . '/../modules/seminarios/includes/class-edicion-seminario.php';
 
@@ -28,6 +31,11 @@ final_assert(
 final_assert(!FLACSO_Oferta_Academica::tipo_valido('seminario'), 'Seminario no puede ser tipo de OfertaAcademica');
 final_assert(FLACSO_Edicion_Seminario::sanitize_state('cancelada') === 'cancelada', 'estado de edicion válido');
 final_assert(FLACSO_Edicion_Seminario::sanitize_state('inscripciones_abiertas') === 'planificada', 'no persiste estado de inscripción');
+final_assert(FLACSO_Cohorte::to_roman(14) === 'XIV', 'algoritmo romano por sustracción ordenada');
+final_assert(FLACSO_Cohorte::to_roman(1994) === 'MCMXCIV', 'algoritmo romano aplica pares sustractivos');
+final_assert(FLACSO_Cohorte::display_name(10) === 'Cohorte X', 'etiqueta canónica no incluye la oferta');
+final_assert(FLACSO_Cohorte::sanitize_registration_url('https://preinscripciones.flacso.edu.uy/oferta/x/') !== '', 'acepta URL del gestor externo');
+final_assert(FLACSO_Cohorte::sanitize_registration_url('https://flacso.edu.uy/preinscripcion/') === '', 'rechaza formulario local');
 
 $relations = FLACSO_Oferta_Academica::sanitize_seminars([
     ['seminario_id' => 8, 'orden' => 2, 'caracter' => 'obligatorio', 'creditos_reconocidos' => '4'],

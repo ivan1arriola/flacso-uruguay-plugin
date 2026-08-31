@@ -4,9 +4,9 @@
 `flacso-uruguay-plugin` actúa como la frontera explícita entre WordPress, el Editor administrativo, la web pública y los servicios de tracking.
 
 ## 2. Fuentes de Verdad Asignadas
-- **Contenido Público y Publicación de WordPress**: una única `OfertaAcademica` (incluido tipo seminario), Novedades y Configuración de Portada (`main-page`).
-- **Instancias de Oferta**: identidad WordPress, relación Oferta → Cohortes/Ediciones, estado y `flujo_preinscripcion`.
-- **Contratos REST API**: Exposición de DTOs diferenciados para consumo público (`PublicDTO`) y administrativo (`AdminDTO`).
+- **Contenido Público y Publicación de WordPress**: `OfertaAcademica` y `Seminario` como raíces separadas, Novedades y Configuración de Portada (`main-page`).
+- **Temporalidad académica**: `OfertaAcademica → Cohorte` y `Seminario → EdicionSeminario`.
+- **Contratos REST API**: exposición del modelo final para la web pública y el Editor.
 - **Tracking Centralizado**: API JavaScript única (`flacsoMetaTrackCustom`) encargada de sincronizar identificadores (`event_id`) entre Pixel, CAPI y GA4.
 
 ## 3. Lo que NO debe hacer este repositorio
@@ -16,6 +16,6 @@
 ## 4. Comunicación e Integraciones
 - **Hacia el Editor (`flacso-uruguay-editor`)**: Provee endpoints REST protegidos con contratos `AdminDTO`.
 - **Hacia el Tema (`kadence-child-flacso`)**: Provee datos, estructuras semánticas, shortcodes y API de tracking JS.
-- **Hacia Preinscripciones**: publica únicamente el catálogo mínimo v1 de instancias abiertas cuyo flujo es `gestor_preinscripciones`.
+- **Hacia Preinscripciones**: publica cohortes y ediciones abiertas; sus URLs apuntan exclusivamente a `https://preinscripciones.flacso.edu.uy`.
 
-Ver [transición de preinscripciones](preinscription-flow-transition.md) para contratos, migración y operación.
+Ver [modelo académico final](modelo-academico-final.md) para campos, relaciones e invariantes.

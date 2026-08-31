@@ -16,7 +16,7 @@ foreach (['READABLE', 'CREATABLE', 'EDITABLE', 'DELETABLE'] as $method) {
         exit(1);
     }
 }
-if (strpos($api, "wp_trash_post($id)") === false || strpos($api, "wp_delete_post($id, true)") === false) {
+if (strpos($api, 'wp_trash_post($id)') === false || strpos($api, 'wp_delete_post($id, true)') === false) {
     fwrite(STDERR, "Fallo: DELETE debe usar papelera salvo force=true\n");
     exit(1);
 }

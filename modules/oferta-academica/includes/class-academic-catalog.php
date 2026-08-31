@@ -31,7 +31,7 @@ final class FLACSO_Academic_Catalog {
     public static function registration_catalog(): array {
         $items = [];
         foreach (FLACSO_Academic_Repository::list('cohortes', ['per_page' => 200]) as $cohort) {
-            if (empty($cohort['preinscripcion']['abierta'])) {
+            if (empty($cohort['preinscripcion']['abierta']) || empty($cohort['link_preinscripcion'])) {
                 continue;
             }
             $offer = FLACSO_Academic_Repository::to_array('ofertas', absint($cohort['oferta_academica_id']));
@@ -40,7 +40,7 @@ final class FLACSO_Academic_Catalog {
             }
         }
         foreach (FLACSO_Academic_Repository::list('ediciones-seminario', ['per_page' => 200]) as $edition) {
-            if (empty($edition['mostrar_en_formulario']) || empty($edition['preinscripcion']['abierta'])) {
+            if (empty($edition['mostrar_en_formulario']) || empty($edition['preinscripcion']['abierta']) || empty($edition['link_preinscripcion'])) {
                 continue;
             }
             $seminar = FLACSO_Academic_Repository::to_array('seminarios', absint($edition['seminario_id']));

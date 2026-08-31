@@ -18,8 +18,8 @@ contract_assert(strpos($main, "load_module('instancias-oferta')") === false, 'no
 contract_assert(strpos($main, "load_module('preinscripcion')") === false, 'no se carga formulario local');
 contract_assert(strpos($offer, 'TIPO_SEMINARIO') === false, 'Seminario está separado de OfertaAcademica');
 contract_assert(strpos($api, "'/preinscripciones/catalogo'") !== false, 'existe catálogo externo');
-contract_assert(strpos($repository, 'https://preinscripciones.flacso.edu.uy') !== false, 'destino externo único');
+contract_assert(strpos($repository, "'preinscripciones.flacso.edu.uy'") !== false, 'destino externo único');
 contract_assert(strpos($documentation, 'especializacion') !== false, 'modelo documenta especializacion');
-contract_assert(!is_dir($root . '/modules/instancias-oferta') || count(glob($root . '/modules/instancias-oferta/*')) === 0, 'módulo genérico eliminado');
+contract_assert(!is_dir($root . '/modules/instancias-oferta'), 'módulo genérico eliminado');
 
 fwrite(STDOUT, "OK academic final contract\n");

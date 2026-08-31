@@ -20,7 +20,7 @@ final class FLACSO_Edicion_Seminario {
             ],
             'public' => false,
             'show_ui' => true,
-            'show_in_menu' => 'edit.php?post_type=seminario',
+            'show_in_menu' => FLACSO_Admin_Panel::PAGE_SLUG,
             'show_in_rest' => false,
             'supports' => ['title', 'revisions'],
             'rewrite' => false,
@@ -38,6 +38,7 @@ final class FLACSO_Edicion_Seminario {
             'encuentros_sincronicos' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_meetings']],
             'docentes' => ['type' => 'array', 'sanitize_callback' => [FLACSO_Seminario::class, 'sanitize_ids']],
             'tabla_precio_id' => ['type' => 'integer', 'sanitize_callback' => 'absint'],
+            'link_preinscripcion' => ['type' => 'string', 'sanitize_callback' => [self::class, 'sanitize_registration_url']],
             'preinscripcion_desde' => ['type' => 'string', 'sanitize_callback' => [self::class, 'sanitize_datetime']],
             'preinscripcion_hasta' => ['type' => 'string', 'sanitize_callback' => [self::class, 'sanitize_datetime']],
             'mensaje_preinscripcion_abierta' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
@@ -66,12 +67,18 @@ final class FLACSO_Edicion_Seminario {
 
     public static function sanitize_date($value): string {
         $value = sanitize_text_field((string) $value);
-        return preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) ? $value : '';
+        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+        return $date && $date->format('Y-m-d') === $value ? $value : '';
     }
 
     public static function sanitize_datetime($value): string {
         $value = sanitize_text_field((string) $value);
         return $value !== '' && strtotime($value) !== false ? $value : '';
+    }
+
+    public static function sanitize_registration_url($value): string {
+        $url = esc_url_raw((string) $value, ['https']);
+        return wp_parse_url($url, PHP_URL_HOST) === 'preinscripciones.flacso.edu.uy' ? $url : '';
     }
 
     public static function sanitize_meetings($value): array {

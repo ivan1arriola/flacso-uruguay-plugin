@@ -18,7 +18,7 @@ final class FLACSO_Programa_Academico {
             ],
             'public' => true,
             'show_ui' => true,
-            'show_in_menu' => 'edit.php?post_type=oferta-academica',
+            'show_in_menu' => FLACSO_Admin_Panel::PAGE_SLUG,
             'show_in_rest' => true,
             'rest_base' => 'programas-academicos-wp',
             'supports' => ['title', 'editor', 'excerpt', 'thumbnail', 'revisions'],

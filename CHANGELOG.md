@@ -1,3 +1,17 @@
+## Version 7.0.0 - 31 de agosto de 2026
+
+### Resumen
+- Separa definitivamente `OfertaAcademica → Cohorte` de `Seminario → EdicionSeminario`.
+- Mantiene cinco tipos de oferta: doctorado, maestría, especialización, diplomado y diploma.
+- Define la etiqueta no editable de Cohorte como `Cohorte {ROMANO}`, derivada de su número entero.
+- Centraliza precios en `TablaPrecio`, referida sólo por Cohorte o EdicionSeminario.
+- Envía todas las preinscripciones a enlaces validados de `preinscripciones.flacso.edu.uy`.
+- Elimina `InstanciaOferta`, formularios locales, migradores, backfills, APIs y archivos de compatibilidad.
+- Publica CRUD REST del esquema final para cargar datos transformados localmente con IDs nuevos.
+- Documenta el contrato completo en `docs/modelo-academico-final.md`.
+
+---
+
 ## Version 6.12.0 - 29 de agosto de 2026
 
 ### Resumen

@@ -24,10 +24,9 @@ final class FLACSO_Academic_Repository {
             'cohortes' => [
                 'post_type' => FLACSO_Cohorte::POST_TYPE,
                 'fields' => [
-                    'oferta_academica_id', 'anio', 'periodo', 'numero', 'fecha_inicio', 'fecha_fin',
-                    'precision_fecha_inicio', 'estado', 'calendario_academico', 'modalidad', 'tabla_precio_id',
-                    'preinscripcion_desde', 'preinscripcion_hasta',
-                    'mensaje_preinscripcion_abierta', 'mensaje_preinscripcion_cerrada',
+                    'oferta_academica_id', 'numero', 'fecha_inicio', 'precision_fecha_inicio',
+                    'fecha_fin', 'estado', 'calendario_academico', 'tabla_precio_id',
+                    'link_preinscripcion', 'preinscripcion_desde', 'preinscripcion_hasta',
                 ],
             ],
             'seminarios' => [
@@ -44,7 +43,7 @@ final class FLACSO_Academic_Repository {
                 'fields' => [
                     'seminario_id', 'anio', 'fecha_inicio', 'fecha_fin', 'estado', 'modalidad',
                     'encuentros_sincronicos', 'docentes', 'tabla_precio_id',
-                    'preinscripcion_desde', 'preinscripcion_hasta',
+                    'link_preinscripcion', 'preinscripcion_desde', 'preinscripcion_hasta',
                     'mensaje_preinscripcion_abierta', 'mensaje_preinscripcion_cerrada',
                     'mostrar_en_formulario', 'ediciones_componentes',
                 ],
@@ -112,6 +111,8 @@ final class FLACSO_Academic_Repository {
             $data['tipo'] = FLACSO_Oferta_Academica::get_tipo((int) $post->ID);
         }
         if ($entity === 'cohortes') {
+            $data['nombre'] = FLACSO_Cohorte::display_name(absint($data['numero']));
+            $data['numero_romano'] = FLACSO_Cohorte::to_roman(absint($data['numero']));
             $data['preinscripcion'] = FLACSO_Preinscripcion::for_cohort((int) $post->ID);
         }
         if ($entity === 'ediciones-seminario') {
@@ -134,7 +135,12 @@ final class FLACSO_Academic_Repository {
             return $validation;
         }
         $post_data = ['post_type' => $definition['post_type']];
-        if (array_key_exists('nombre', $payload)) {
+        if ($entity === 'cohortes') {
+            $number = array_key_exists('numero', $payload)
+                ? absint($payload['numero'])
+                : absint(get_post_meta($id, 'numero', true));
+            $post_data['post_title'] = FLACSO_Cohorte::display_name($number);
+        } elseif (array_key_exists('nombre', $payload)) {
             $post_data['post_title'] = sanitize_text_field((string) $payload['nombre']);
         }
         if (array_key_exists('contenido', $payload)) {
@@ -196,6 +202,30 @@ final class FLACSO_Academic_Repository {
                 return new WP_Error('invalid_parent', sprintf(__('El campo %s debe referir a un registro válido.', 'flacso-uruguay'), $key), ['status' => 400]);
             }
         }
+        if ($entity === 'cohortes') {
+            $number = array_key_exists('numero', $payload) ? absint($payload['numero']) : absint($id ? get_post_meta($id, 'numero', true) : 0);
+            if ($number < 1) {
+                return new WP_Error('invalid_cohort_number', __('El número de cohorte debe ser mayor que cero.', 'flacso-uruguay'), ['status' => 400]);
+            }
+            $offer_id = array_key_exists('oferta_academica_id', $payload)
+                ? absint($payload['oferta_academica_id'])
+                : absint($id ? get_post_meta($id, 'oferta_academica_id', true) : 0);
+            $duplicates = get_posts([
+                'post_type' => FLACSO_Cohorte::POST_TYPE,
+                'post_status' => ['publish', 'draft', 'pending', 'private'],
+                'posts_per_page' => 1,
+                'fields' => 'ids',
+                'post__not_in' => $id ? [$id] : [],
+                'meta_query' => [
+                    'relation' => 'AND',
+                    ['key' => 'oferta_academica_id', 'value' => $offer_id, 'compare' => '=', 'type' => 'NUMERIC'],
+                    ['key' => 'numero', 'value' => $number, 'compare' => '=', 'type' => 'NUMERIC'],
+                ],
+            ]);
+            if ($duplicates) {
+                return new WP_Error('duplicate_cohort_number', __('La oferta ya tiene una cohorte con ese número.', 'flacso-uruguay'), ['status' => 409]);
+            }
+        }
         if ($entity === 'ofertas') {
             $type = array_key_exists('tipo', $payload) ? sanitize_key((string) $payload['tipo']) : ($id ? FLACSO_Oferta_Academica::get_tipo($id) : '');
             if (!FLACSO_Oferta_Academica::tipo_valido($type)) {
@@ -213,6 +243,12 @@ final class FLACSO_Academic_Repository {
             $table_id = absint($payload['tabla_precio_id']);
             if ($table_id && get_post_type($table_id) !== 'tabla-precio') {
                 return new WP_Error('invalid_price_table', __('tabla_precio_id no corresponde a una TablaPrecio.', 'flacso-uruguay'), ['status' => 400]);
+            }
+        }
+        if (array_key_exists('link_preinscripcion', $payload) && $payload['link_preinscripcion'] !== '') {
+            $url = esc_url_raw((string) $payload['link_preinscripcion'], ['https']);
+            if (wp_parse_url($url, PHP_URL_HOST) !== 'preinscripciones.flacso.edu.uy') {
+                return new WP_Error('invalid_registration_url', __('La preinscripción debe apuntar a preinscripciones.flacso.edu.uy.', 'flacso-uruguay'), ['status' => 400]);
             }
         }
         $relation_rules = [
@@ -237,25 +273,19 @@ final class FLACSO_Academic_Repository {
 
 /** Unico contrato de preinscripcion: el Gestor externo. */
 final class FLACSO_Preinscripcion {
-    public static function base_url(): string {
-        return untrailingslashit((string) get_option('flacso_preinscripciones_url', 'https://preinscripciones.flacso.edu.uy'));
-    }
-
     public static function for_cohort(int $cohort_id): array {
-        $offer_id = absint(get_post_meta($cohort_id, FLACSO_Cohorte::META_PARENT_ID, true));
         return [
             'abierta' => FLACSO_Cohorte::accepts_registration($cohort_id),
-            'url' => self::base_url() . '/ofertas/' . $offer_id . '/cohortes/' . $cohort_id . '/',
+            'url' => get_post_meta($cohort_id, 'link_preinscripcion', true) ?: null,
             'desde' => get_post_meta($cohort_id, 'preinscripcion_desde', true) ?: null,
             'hasta' => get_post_meta($cohort_id, 'preinscripcion_hasta', true) ?: null,
         ];
     }
 
     public static function for_edition(int $edition_id): array {
-        $seminar_id = absint(get_post_meta($edition_id, FLACSO_Edicion_Seminario::META_PARENT_ID, true));
         return [
             'abierta' => FLACSO_Edicion_Seminario::accepts_registration($edition_id),
-            'url' => self::base_url() . '/seminarios/' . $seminar_id . '/ediciones/' . $edition_id . '/',
+            'url' => get_post_meta($edition_id, 'link_preinscripcion', true) ?: null,
             'desde' => get_post_meta($edition_id, 'preinscripcion_desde', true) ?: null,
             'hasta' => get_post_meta($edition_id, 'preinscripcion_hasta', true) ?: null,
         ];

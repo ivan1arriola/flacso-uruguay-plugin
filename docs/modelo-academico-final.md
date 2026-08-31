@@ -100,23 +100,25 @@ CPT interno: `cohorte`. No tiene URL pública propia.
 | Campo | Tipo | Regla |
 |---|---|---|
 | `oferta_academica_id` | integer | padre obligatorio |
-| `nombre` | string | nombre visible de la cohorte |
-| `anio` | integer | 2000–2200 |
-| `periodo` | string | etiqueta libre, por ejemplo `segundo semestre` |
-| `numero` | integer/null | ordinal opcional |
+| `nombre` | string derivado | `Cohorte {ROMANO}`; no editable |
+| `numero` | integer | ordinal editable, mayor que cero |
 | `fecha_inicio`, `fecha_fin` | date | `YYYY-MM-DD` |
-| `precision_fecha_inicio` | enum | `dia`, `mes`, `semestre`, `anio` |
+| `precision_fecha_inicio` | enum | `dia`, `mes`, `anio` |
 | `estado` | enum | `planificada`, `en_curso`, `finalizada`, `cancelada` |
 | `calendario_academico` | HTML | detalle temporal |
-| `modalidad` | string | modalidad de esa cohorte |
 | `tabla_precio_id` | integer/null | referencia a TablaPrecio |
+| `link_preinscripcion` | URL | debe usar `https://preinscripciones.flacso.edu.uy` |
 | `preinscripcion_desde` | datetime/null | inicio inclusivo |
 | `preinscripcion_hasta` | datetime/null | cierre exclusivo |
-| `mensaje_preinscripcion_abierta` | HTML | mensaje opcional |
-| `mensaje_preinscripcion_cerrada` | HTML | mensaje opcional |
 
 La apertura no se persiste como booleano: se deriva de estado y fechas. Una
 cohorte cancelada nunca admite preinscripción.
+
+El número romano se obtiene recorriendo, de mayor a menor, la tabla
+`M, CM, D, CD, C, XC, L, XL, X, IX, V, IV, I`; mientras el número restante es
+mayor o igual al valor se agrega el símbolo y se resta ese valor. Por ejemplo,
+`numero = 10` produce siempre `nombre = "Cohorte X"`. La cohorte no tiene año,
+semestre, período ni un título editable.
 
 ## Seminario
 
@@ -151,6 +153,7 @@ CPT interno: `edicion-seminario`. No tiene URL pública propia.
 | `docentes` | integer[] | docentes efectivos de la edición |
 | `tabla_precio_id` | integer/null | referencia a TablaPrecio |
 | `preinscripcion_desde`, `preinscripcion_hasta` | datetime/null | ventana de apertura |
+| `link_preinscripcion` | URL | debe usar `https://preinscripciones.flacso.edu.uy` |
 | `mensaje_preinscripcion_abierta` | HTML | mensaje opcional |
 | `mensaje_preinscripcion_cerrada` | HTML | mensaje opcional |
 | `mostrar_en_formulario` | boolean | inclusión en catálogo externo |
@@ -178,22 +181,19 @@ OfertaAcademica y Seminario no guardan precios.
 
 ## Preinscripción externa
 
-El plugin no renderiza ni procesa formularios de preinscripción. El único
-destino es `https://preinscripciones.flacso.edu.uy`:
+El plugin no renderiza ni procesa formularios de preinscripción. Cada Cohorte y
+EdicionSeminario guarda su URL real en `link_preinscripcion`; la API rechaza
+cualquier host diferente de `preinscripciones.flacso.edu.uy`.
 
-```text
-/ofertas/{oferta_id}/cohortes/{cohorte_id}/
-/seminarios/{seminario_id}/ediciones/{edicion_id}/
-```
-
-No existe selector de flujo, formulario interno ni fallback. El catálogo
-público se obtiene en `GET /wp-json/flacso/v1/preinscripciones/catalogo`.
+No se deduce una estructura de ruta, no existe selector de flujo, formulario
+interno ni fallback. El catálogo público se obtiene en
+`GET /wp-json/flacso/v1/preinscripciones/catalogo` y omite registros sin enlace.
 
 ## Reglas de integridad
 
 1. Una OfertaAcademica requiere ProgramaAcademico y exactamente un tipo válido.
 2. Un Seminario requiere ProgramaAcademico.
-3. Una Cohorte requiere OfertaAcademica; no puede apuntar a Seminario.
+3. Una Cohorte requiere OfertaAcademica y su número es único dentro de esa oferta.
 4. Una EdicionSeminario requiere Seminario; no puede apuntar a OfertaAcademica.
 5. Fechas de fin no pueden ser anteriores a fechas de inicio.
 6. El cierre de preinscripción no puede ser anterior a su apertura.
@@ -215,11 +215,14 @@ La estrategia final es:
 
 1. exportar los datos antiguos sin alterarlos;
 2. transformarlos y validarlos localmente;
-3. construir una tabla de correspondencias de IDs;
+3. asignar a cada registro una clave de origen sólo dentro del proceso local;
 4. cargar por la API final siguiendo el orden de [API.md](../API.md);
-5. verificar conteos, padres, relaciones, fechas y precios;
-6. recién entonces habilitar el frontend final.
+5. guardar cada ID nuevo devuelto por WordPress en la correspondencia local;
+6. reescribir padres y relaciones usando exclusivamente esos IDs nuevos;
+7. verificar conteos, padres, relaciones, fechas y precios;
+8. recién entonces habilitar el frontend final.
 
 El plugin no conoce campos antiguos, no ejecuta migraciones en `init` o
 activación y no ofrece endpoints de compatibilidad. El archivo transformado debe
-usar únicamente los nombres y estructuras documentados aquí.
+usar únicamente los nombres y estructuras documentados aquí. Los IDs anteriores
+no se conservan ni se guardan como metadatos.
