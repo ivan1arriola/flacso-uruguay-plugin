@@ -34,7 +34,7 @@ class Seminario_CPT
             'show_in_rest' => true,
             'menu_position' => 20,
             'menu_icon' => 'dashicons-welcome-learn-more',
-            'supports' => array('title', 'thumbnail', 'revisions'),
+            'supports' => array('title', 'editor', 'excerpt', 'thumbnail', 'revisions'),
         );
 
         register_post_type('seminario', $args);

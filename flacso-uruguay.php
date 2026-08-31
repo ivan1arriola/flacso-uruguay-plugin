@@ -3,7 +3,7 @@
  * Plugin Name: FLACSO Uruguay - Plataforma Integrada
  * Plugin URI: https://flacso.edu.uy
  * Description: Plataforma integrada de FLACSO Uruguay con gestion de docentes, seminarios, eventos, oferta academica y formularios. Consolida multiples plugins en una arquitectura modular.
- * Version: 6.12.0
+ * Version: 7.0.0
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: FLACSO Uruguay
@@ -21,22 +21,16 @@ if (!defined('ABSPATH')) {
 // ============================================
 // Constantes Globales
 // ============================================
-define('FLACSO_URUGUAY_VERSION', '6.12.0');
+define('FLACSO_URUGUAY_VERSION', '7.0.0');
 define('FLACSO_URUGUAY_FILE', __FILE__);
 define('FLACSO_URUGUAY_PATH', plugin_dir_path(__FILE__));
 define('FLACSO_URUGUAY_URL', plugin_dir_url(__FILE__));
 
-// Compatibilidad con plugins antiguos
 define('CPT_DOCENTES_VERSION', FLACSO_URUGUAY_VERSION);
 define('CPT_DOCENTES_PATH', FLACSO_URUGUAY_PATH);
 define('CPT_DOCENTES_URL', FLACSO_URUGUAY_URL);
 
 define('FLACSO_SEMINARIO_VERSION', FLACSO_URUGUAY_VERSION);
-// En el plugin unificado, los assets y templates de seminarios
-// viven dentro del modulo `modules/seminarios/`, no en la raiz.
-// Ajustamos las constantes de compatibilidad para que apunten ahi,
-// de modo que `Seminario_Templates` encuentre correctamente
-// `templates/single-seminario.php`, `seminarios-listado.php`, etc.
 define('FLACSO_SEMINARIO_PATH', FLACSO_URUGUAY_PATH . 'modules/seminarios/');
 define('FLACSO_SEMINARIO_URL', FLACSO_URUGUAY_URL . 'modules/seminarios/');
 
@@ -90,13 +84,6 @@ class FLACSO_Uruguay_Plugin {
         // Ayuda a precalentar dominios externos usados frecuentemente por el sitio.
         add_filter('wp_resource_hints', [$this, 'add_resource_hints'], 10, 2);
         
-        // Auto-flush rewrite rules temporal para limpiar la caché de es_carta
-        add_action('init', function() {
-            if (!get_transient('flacso_flushed_carta_rules_fix')) {
-                flush_rewrite_rules(false);
-                set_transient('flacso_flushed_carta_rules_fix', 1, 30 * DAY_IN_SECONDS);
-            }
-        }, 99);
     }
     
     public function load_textdomain() {
@@ -152,7 +139,6 @@ class FLACSO_Uruguay_Plugin {
         $loader->load_module('eventos');    // CPT Eventos
         $loader->load_module('convenios');  // CPT Convenios y migracion desde entradas
         $loader->load_module('oferta-academica'); // Oferta Academica
-        $loader->load_module('instancias-oferta'); // Cohortes/Ediciones y flujos de preinscripcion
         $loader->load_module('formularios'); // Formularios
         $loader->load_module('formularios-webhook'); // Formularios configurables enviados por webhook
         $loader->load_module('charlas-abiertas'); // Charlas Abiertas
@@ -161,7 +147,6 @@ class FLACSO_Uruguay_Plugin {
         $loader->load_module('mailing'); // Suscripciones al mailing
         $loader->load_module('preguntas-frecuentes'); // FAQ administrables
         $loader->load_module('main-page');  // Landing Page y Secciones
-        $loader->load_module('preinscripcion'); // Formularios de Preinscripcion
     }
     
     public static function activate() {

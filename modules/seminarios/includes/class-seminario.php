@@ -4,54 +4,11 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-/** Definicion estable de una carrera o trayecto academico. */
-final class FLACSO_Oferta_Academica {
-    public const POST_TYPE = 'oferta-academica';
-    public const TYPE_TAXONOMY = 'tipo-oferta-academica';
-
-    public const TIPO_DOCTORADO = 'doctorado';
-    public const TIPO_MAESTRIA = 'maestria';
-    public const TIPO_ESPECIALIZACION = 'especializacion';
-    public const TIPO_DIPLOMADO = 'diplomado';
-    public const TIPO_DIPLOMA = 'diploma';
-
+/** Definicion academica estable de un seminario. */
+final class FLACSO_Seminario {
+    public const POST_TYPE = 'seminario';
     public const META_PROGRAM_ID = 'programa_academico_id';
-    public const META_SEMINARIOS = 'seminarios';
-
-    /** @return array<string,string> */
-    public static function tipos(): array {
-        return [
-            self::TIPO_DOCTORADO => 'Doctorados',
-            self::TIPO_MAESTRIA => 'Maestrías',
-            self::TIPO_ESPECIALIZACION => 'Especializaciones',
-            self::TIPO_DIPLOMADO => 'Diplomados',
-            self::TIPO_DIPLOMA => 'Diplomas',
-        ];
-    }
-
-    /** @return array<string,string> */
-    public static function segmentos_url(): array {
-        return [
-            self::TIPO_DOCTORADO => 'doctorados',
-            self::TIPO_MAESTRIA => 'maestrias',
-            self::TIPO_ESPECIALIZACION => 'especializaciones',
-            self::TIPO_DIPLOMADO => 'diplomados',
-            self::TIPO_DIPLOMA => 'diplomas',
-        ];
-    }
-
-    public static function tipo_valido($tipo): bool {
-        return isset(self::tipos()[sanitize_key((string) $tipo)]);
-    }
-
-    public static function get_tipo(int $oferta_id): string {
-        $terms = wp_get_object_terms($oferta_id, self::TYPE_TAXONOMY);
-        if (is_wp_error($terms) || empty($terms)) {
-            return '';
-        }
-        $tipo = sanitize_key((string) $terms[0]->slug);
-        return self::tipo_valido($tipo) ? $tipo : '';
-    }
+    public const META_COMPONENTES = 'componentes';
 
     public static function register_meta(): void {
         $definitions = [
@@ -66,9 +23,11 @@ final class FLACSO_Oferta_Academica {
             'carga_horaria_descripcion' => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
             'creditos' => ['type' => 'number', 'sanitize_callback' => [self::class, 'sanitize_number']],
             'acreditacion' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
-            self::META_SEMINARIOS => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_seminars']],
+            'acredita_maestria' => ['type' => 'boolean', 'sanitize_callback' => [self::class, 'sanitize_boolean']],
+            'acredita_doctorado' => ['type' => 'boolean', 'sanitize_callback' => [self::class, 'sanitize_boolean']],
+            'docentes_base' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_ids']],
+            self::META_COMPONENTES => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_components']],
         ];
-
         foreach ($definitions as $key => $definition) {
             register_post_meta(self::POST_TYPE, $key, array_merge([
                 'single' => true,
@@ -80,6 +39,14 @@ final class FLACSO_Oferta_Academica {
 
     public static function sanitize_number($value): float {
         return max(0, (float) str_replace(',', '.', (string) $value));
+    }
+
+    public static function sanitize_boolean($value): bool {
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    public static function sanitize_ids($value): array {
+        return is_array($value) ? array_values(array_unique(array_filter(array_map('absint', $value)))) : [];
     }
 
     public static function sanitize_html_list($value): array {
@@ -111,7 +78,7 @@ final class FLACSO_Oferta_Academica {
         return $result;
     }
 
-    public static function sanitize_seminars($value): array {
+    public static function sanitize_components($value): array {
         if (!is_array($value)) {
             return [];
         }
@@ -121,20 +88,12 @@ final class FLACSO_Oferta_Academica {
             if (!is_array($item)) {
                 continue;
             }
-            $seminar_id = absint($item['seminario_id'] ?? 0);
-            if ($seminar_id < 1 || isset($seen[$seminar_id])) {
+            $id = absint($item['seminario_id'] ?? 0);
+            if ($id < 1 || isset($seen[$id])) {
                 continue;
             }
-            $character = sanitize_key((string) ($item['caracter'] ?? 'opcional'));
-            $result[] = [
-                'seminario_id' => $seminar_id,
-                'orden' => absint($item['orden'] ?? count($result) + 1),
-                'caracter' => in_array($character, ['obligatorio', 'opcional'], true) ? $character : 'opcional',
-                'creditos_reconocidos' => isset($item['creditos_reconocidos']) && $item['creditos_reconocidos'] !== ''
-                    ? self::sanitize_number($item['creditos_reconocidos'])
-                    : null,
-            ];
-            $seen[$seminar_id] = true;
+            $result[] = ['seminario_id' => $id, 'orden' => absint($item['orden'] ?? count($result) + 1)];
+            $seen[$id] = true;
         }
         usort($result, static function (array $a, array $b): int { return $a['orden'] <=> $b['orden']; });
         return $result;

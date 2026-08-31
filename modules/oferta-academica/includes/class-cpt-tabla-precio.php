@@ -10,6 +10,18 @@ class CPT_Tabla_Precio {
         add_filter('use_block_editor_for_post_type', [self::class, 'disable_block_editor'], 10, 2);
         add_filter('get_edit_post_link', [self::class, 'filter_edit_post_link'], 10, 3);
         add_action('load-post-new.php', [self::class, 'redirect_add_new']);
+        add_filter('pre_delete_post', [self::class, 'protect_linked_table'], 10, 3);
+        add_filter('pre_trash_post', [self::class, 'protect_linked_table'], 10, 3);
+    }
+
+    public static function protect_linked_table($delete, $post, $force_delete = false) {
+        if (!$post || $post->post_type !== 'tabla-precio' || !class_exists('FLACSO_Price_Table_Repository')) {
+            return $delete;
+        }
+        if (!empty(FLACSO_Price_Table_Repository::linked_uses(absint($post->ID)))) {
+            return false;
+        }
+        return $delete;
     }
 
     public static function disable_block_editor(bool $use_block_editor, string $post_type): bool {

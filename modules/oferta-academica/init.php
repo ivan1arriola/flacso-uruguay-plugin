@@ -1,78 +1,40 @@
 <?php
-/**
- * Módulo de Oferta Académica - FLACSO Uruguay
- * Integración de Oferta Académica
- */
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-// Definir constantes del módulo
 if (!defined('FLACSO_OFERTA_ACADEMICA_PATH')) {
     define('FLACSO_OFERTA_ACADEMICA_PATH', __DIR__ . '/');
 }
 if (!defined('FLACSO_OFERTA_ACADEMICA_URL')) {
     define('FLACSO_OFERTA_ACADEMICA_URL', plugin_dir_url(__FILE__));
 }
-if (!defined('FLACSO_OFERTA_ACADEMICA_VERSION')) {
-    define('FLACSO_OFERTA_ACADEMICA_VERSION', FLACSO_URUGUAY_VERSION);
-}
-if (!defined('FLACSO_OFERTA_ACADEMICA_DATA_ONLY')) {
-    define('FLACSO_OFERTA_ACADEMICA_DATA_ONLY', true);
-}
 
-// Cargar clases principales
+// Entidades y persistencia finales. No hay migraciones ni adaptadores de lectura.
 flacso_safe_require('modules/oferta-academica/includes/class-cpt-oferta-academica.php');
+flacso_safe_require('modules/oferta-academica/includes/class-cpt-programa-academico.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-academica.php');
-flacso_safe_require('modules/oferta-academica/includes/class-relacion-oferta-academica.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-seminario-admin.php');
+flacso_safe_require('modules/oferta-academica/includes/class-cohorte.php');
 flacso_safe_require('modules/oferta-academica/includes/class-cpt-tabla-precio.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-taxonomies.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-page-adapter.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-renderer.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-blocks.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-data-importer.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-data-admin.php');
 flacso_safe_require('modules/oferta-academica/includes/class-tabla-precio-schema.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-data-schema.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-docentes-integration.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-seminarios-integration.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-data-metabox.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-consulta-form.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-seminarios-routes.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-seminarios-admin-links.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-rest-api.php');
-flacso_safe_require('modules/oferta-academica/includes/class-academic-offer-api.php');
-flacso_safe_require('modules/oferta-academica/includes/class-cohorte-api.php');
-flacso_safe_require('modules/oferta-academica/includes/class-cohorte-auto-migration.php');
+flacso_safe_require('modules/oferta-academica/includes/class-oferta-taxonomies.php');
+flacso_safe_require('modules/oferta-academica/includes/class-academic-repositories.php');
+flacso_safe_require('modules/oferta-academica/includes/class-academic-catalog.php');
+flacso_safe_require('modules/oferta-academica/includes/class-academic-api.php');
 
-// Inicializar
-add_action('init', function() {
+add_action('init', static function (): void {
     CPT_Oferta_Academica::init();
+    FLACSO_Programa_Academico::init();
+    FLACSO_Oferta_Academica::register_meta();
+    FLACSO_Cohorte::register();
     CPT_Tabla_Precio::init();
     Oferta_Taxonomies::init();
-    if (class_exists('Seminario_Taxonomies')) {
-        Seminario_Taxonomies::maybe_backfill_program_relationships();
-    }
-    Oferta_Page_Adapter::init();
-    Tabla_Precio_Schema::init();
-    Oferta_Data_Schema::init();
-    Oferta_Blocks::init();
-    Oferta_Data_Admin::init();
-    Oferta_Docentes_Integration::init();
-    Oferta_Seminarios_Integration::init();
-    FLACSO_Oferta_Seminario_Admin::init();
-    Oferta_Data_MetaBox::init();
-    Oferta_Consulta_Form::init();
-    Oferta_Seminarios_Routes::init();
-    Oferta_Seminarios_Admin_Links::init();
-    Oferta_Rest_API::init();
-    // Release A: el CPT y endpoint legacy siguen disponibles, pero ninguna
-    // migracion se ejecuta desde init/activation. El cambio es solo por WP-CLI.
-    FLACSO_Cohorte_API::init();
-}, 5); // Prioridad 5 para que se ejecute antes
+}, 5);
 
-add_action('after_setup_theme', function() {
-    add_theme_support('post-thumbnails', ['oferta-academica']);
+Tabla_Precio_Schema::init();
+FLACSO_Academic_API::init();
+
+add_action('after_setup_theme', static function (): void {
+    add_theme_support('post-thumbnails', ['programa-academico', 'oferta-academica', 'seminario']);
 });

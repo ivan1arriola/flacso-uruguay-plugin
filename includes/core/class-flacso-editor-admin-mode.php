@@ -7,7 +7,12 @@ if (!defined('ABSPATH')) {
 class FLACSO_Editor_Admin_Mode {
     private const MANAGED_POST_TYPES = [
         'docente',
+        'programa-academico',
+        'oferta-academica',
+        'cohorte',
         'seminario',
+        'edicion-seminario',
+        'tabla-precio',
         'charla_abierta',
         'fc_consulta',
         'fc_info_request',
@@ -15,7 +20,6 @@ class FLACSO_Editor_Admin_Mode {
 
     private const MANAGED_TAXONOMIES = [
         'tipo-oferta-academica',
-        'area_tematica',
     ];
 
     private const MANAGED_PAGE_SLUGS = [
@@ -29,13 +33,6 @@ class FLACSO_Editor_Admin_Mode {
         'fc_oferta_options_page',
         'fc_consultas_overview',
         'fc_info_overview',
-        'seminario-config',
-        'seminario-api',
-        'flacso-oferta-data',
-        'flacso-oferta-api-docs',
-        'flacso-oferta-consulta-form',
-        'oferta-seminarios-links',
-        'flacso-oferta-migracion',
         'flacso-charlas-abiertas-settings',
         'flacso-charlas-abiertas-visualizador',
         'flacso-main-page',

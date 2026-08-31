@@ -12,7 +12,6 @@ class CPT_Oferta_Academica {
     public static function init(): void {
         self::register_post_type();
         add_action('template_redirect', [self::class, 'maybe_render_formacion_virtual_page'], 1);
-        add_filter('request', [self::class, 'resolve_migrated_seminar_request'], 5);
     }
 
     public static function maybe_render_formacion_virtual_page(): void {
@@ -132,22 +131,12 @@ class CPT_Oferta_Academica {
             'hierarchical'          => false,
             'menu_position'         => 5,
             'menu_icon'             => 'dashicons-welcome-learn-more',
-            'supports'              => ['title', 'thumbnail', 'revisions'],
-            'taxonomies'            => ['tipo-oferta-academica', 'area_tematica'],
+            'supports'              => ['title', 'editor', 'excerpt', 'thumbnail', 'revisions'],
+            'taxonomies'            => ['tipo-oferta-academica'],
         ];
 
         register_post_type('oferta-academica', $args);
         add_filter('post_type_link', [self::class, 'oferta_academica_permalink'], 10, 2);
-        
-        // REGLA PARA PÁGINAS LEGACY (_old)
-        // Evita que el CPT secuestre las páginas de WordPress que terminan en _old
-        add_action('init', function() {
-            add_rewrite_rule(
-                '^formacion/([^/]+)/([^/]+_old)/?$',
-                'index.php?pagename=formacion/$matches[1]/$matches[2]',
-                'top'
-            );
-        }, 11);
     }
 
     /**
@@ -172,23 +161,4 @@ class CPT_Oferta_Academica {
         return $post_link;
     }
 
-    /**
-     * Las reglas del CPT legacy siguen activas en Release A. Si el slug ya fue
-     * migrado, redirigimos internamente la consulta al nuevo post type sin 301 ni
-     * cambio de URL publica.
-     */
-    public static function resolve_migrated_seminar_request(array $query_vars): array {
-        if (empty($query_vars['seminario']) || !empty($query_vars['oferta-academica'])) {
-            return $query_vars;
-        }
-        $slug = sanitize_title((string) $query_vars['seminario']);
-        $offer = get_page_by_path($slug, OBJECT, FLACSO_Oferta_Academica::POST_TYPE);
-        if (!$offer || FLACSO_Oferta_Academica::get_tipo((int) $offer->ID) !== FLACSO_Oferta_Academica::TIPO_SEMINARIO) {
-            return $query_vars;
-        }
-        unset($query_vars['seminario']);
-        $query_vars['post_type'] = FLACSO_Oferta_Academica::POST_TYPE;
-        $query_vars['name'] = $slug;
-        return $query_vars;
-    }
 }

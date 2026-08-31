@@ -82,16 +82,6 @@ if (!function_exists('dp_nombre_completo')) {
 }
 
 // ============================================
-// Funciones para seminarios
-// ============================================
-
-if (!function_exists('flacso_seminario_asset_version')) {
-    function flacso_seminario_asset_version(string $relative_path): string {
-        return flacso_asset_version($relative_path);
-    }
-}
-
-// ============================================
 // Funciones para posgrados
 // ============================================
 
