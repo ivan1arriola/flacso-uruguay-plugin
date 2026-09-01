@@ -8,11 +8,13 @@ if (!defined('ABSPATH')) {
 final class FLACSO_Seminario {
     public const POST_TYPE = 'seminario';
     public const META_PROGRAM_ID = 'programa_academico_id';
+    public const META_OFERTA_ID = 'oferta_academica_id';
     public const META_COMPONENTES = 'componentes';
 
     public static function register_meta(): void {
         $definitions = [
             self::META_PROGRAM_ID => ['type' => 'integer', 'sanitize_callback' => 'absint'],
+            self::META_OFERTA_ID => ['type' => 'integer', 'sanitize_callback' => 'absint'],
             'correo' => ['type' => 'string', 'sanitize_callback' => 'sanitize_email'],
             'presentacion' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'objetivo_general' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],

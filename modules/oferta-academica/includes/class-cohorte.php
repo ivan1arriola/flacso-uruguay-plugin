@@ -38,10 +38,20 @@ final class FLACSO_Cohorte {
             'precision_fecha_inicio' => ['type' => 'string', 'sanitize_callback' => [self::class, 'sanitize_precision']],
             'estado'                 => ['type' => 'string', 'sanitize_callback' => [self::class, 'sanitize_state']],
             'calendario_academico'   => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
+            'calendario_descripcion' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
+            'modalidad'              => ['type' => 'string', 'sanitize_callback' => [self::class, 'sanitize_modality']],
+            'modalidad_descripcion'  => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'tabla_precio_id'        => ['type' => 'integer', 'sanitize_callback' => 'absint'],
             'link_preinscripcion'    => ['type' => 'string', 'sanitize_callback' => [self::class, 'sanitize_registration_url']],
             'preinscripcion_desde'   => ['type' => 'string', 'sanitize_callback' => [self::class, 'sanitize_datetime']],
             'preinscripcion_hasta'   => ['type' => 'string', 'sanitize_callback' => [self::class, 'sanitize_datetime']],
+            'preinscripcion_habilitada' => ['type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean'],
+            'mensaje_preinscripcion_abierta' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
+            'mensaje_preinscripcion_cerrada' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
+            'presentacion_preinscripcion' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
+            'etiqueta_preinscripcion' => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
+            'cta_preinscripcion' => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
+            'instancias_presenciales' => ['type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean'],
         ];
         foreach ($definitions as $key => $definition) {
             register_post_meta(self::POST_TYPE, $key, array_merge([
@@ -75,6 +85,11 @@ final class FLACSO_Cohorte {
         return in_array($precision, ['dia', 'mes', 'anio'], true) ? $precision : 'dia';
     }
 
+    public static function sanitize_modality($value): string {
+        $modality = sanitize_key((string) $value);
+        return in_array($modality, ['virtual', 'presencial', 'semipresencial', 'hibrida'], true) ? $modality : '';
+    }
+
     public static function sanitize_year($value): int {
         $year = absint($value);
         return $year >= 2000 && $year <= 2100 ? $year : 0;
@@ -97,6 +112,16 @@ final class FLACSO_Cohorte {
     }
 
     public static function accepts_registration(int $cohort_id, ?int $timestamp = null): bool {
+        if (metadata_exists('post', $cohort_id, 'preinscripcion_habilitada')) {
+            if (!rest_sanitize_boolean(get_post_meta($cohort_id, 'preinscripcion_habilitada', true))) {
+                return false;
+            }
+        } else {
+            $offer_id = absint(get_post_meta($cohort_id, self::META_PARENT_ID, true));
+            if (!$offer_id || !rest_sanitize_boolean(get_post_meta($offer_id, 'inscripciones_abiertas', true))) {
+                return false;
+            }
+        }
         $state = self::sanitize_state(get_post_meta($cohort_id, 'estado', true));
         if (!in_array($state, ['planificada', 'en_curso'], true)) {
             return false;
@@ -245,6 +270,15 @@ final class FLACSO_Cohorte {
         $link_preinscripcion = (string) get_post_meta($post->ID, 'link_preinscripcion', true);
         $pre_desde = (string) get_post_meta($post->ID, 'preinscripcion_desde', true);
         $pre_hasta = (string) get_post_meta($post->ID, 'preinscripcion_hasta', true);
+        $pre_habilitada = metadata_exists('post', $post->ID, 'preinscripcion_habilitada')
+            ? rest_sanitize_boolean(get_post_meta($post->ID, 'preinscripcion_habilitada', true))
+            : false;
+        $modalidad = self::sanitize_modality(get_post_meta($post->ID, 'modalidad', true));
+        $modalidad_descripcion = (string) get_post_meta($post->ID, 'modalidad_descripcion', true);
+        $calendario_academico = (string) get_post_meta($post->ID, 'calendario_academico', true);
+        $calendario_descripcion = (string) get_post_meta($post->ID, 'calendario_descripcion', true);
+        $mensaje_abierta = (string) get_post_meta($post->ID, 'mensaje_preinscripcion_abierta', true);
+        $mensaje_cerrada = (string) get_post_meta($post->ID, 'mensaje_preinscripcion_cerrada', true);
 
         $ofertas = get_posts(['post_type' => 'oferta-academica', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC']);
         $tablas = get_posts(['post_type' => 'tabla-precio', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC']);
@@ -335,9 +369,41 @@ final class FLACSO_Cohorte {
                 </div>
             </div>
 
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 14px 16px; border-radius: 6px;">
+                <h4 style="margin: 0 0 10px; color:#1e293b;"><?php esc_html_e('Cursado de esta cohorte', 'flacso-uruguay'); ?></h4>
+                <div style="display:grid; grid-template-columns:minmax(180px, .4fr) 1fr; gap:14px;">
+                    <div>
+                        <label style="font-weight:600;display:block;margin-bottom:4px;"><?php esc_html_e('Modalidad:', 'flacso-uruguay'); ?></label>
+                        <select name="modalidad" style="width:100%;">
+                            <option value=""><?php esc_html_e('— Sin definir —', 'flacso-uruguay'); ?></option>
+                            <option value="virtual" <?php selected($modalidad, 'virtual'); ?>><?php esc_html_e('Virtual', 'flacso-uruguay'); ?></option>
+                            <option value="presencial" <?php selected($modalidad, 'presencial'); ?>><?php esc_html_e('Presencial', 'flacso-uruguay'); ?></option>
+                            <option value="semipresencial" <?php selected($modalidad, 'semipresencial'); ?>><?php esc_html_e('Semipresencial', 'flacso-uruguay'); ?></option>
+                            <option value="hibrida" <?php selected($modalidad, 'hibrida'); ?>><?php esc_html_e('Híbrida', 'flacso-uruguay'); ?></option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-weight:600;display:block;margin-bottom:4px;"><?php esc_html_e('Descripción de modalidad:', 'flacso-uruguay'); ?></label>
+                        <textarea name="modalidad_descripcion" rows="3" style="width:100%;"><?php echo esc_textarea($modalidad_descripcion); ?></textarea>
+                    </div>
+                    <div style="grid-column:1/-1;">
+                        <label style="font-weight:600;display:block;margin-bottom:4px;"><?php esc_html_e('URL del calendario académico:', 'flacso-uruguay'); ?></label>
+                        <input type="url" name="calendario_academico" value="<?php echo esc_attr($calendario_academico); ?>" style="width:100%;">
+                    </div>
+                    <div style="grid-column:1/-1;">
+                        <label style="font-weight:600;display:block;margin-bottom:4px;"><?php esc_html_e('Descripción del calendario:', 'flacso-uruguay'); ?></label>
+                        <textarea name="calendario_descripcion" rows="3" style="width:100%;"><?php echo esc_textarea($calendario_descripcion); ?></textarea>
+                    </div>
+                </div>
+            </div>
+
             <div style="background: #f1f5f9; padding: 12px 16px; border-radius: 6px;">
                 <h4 style="margin: 0 0 10px;"><?php esc_html_e('Preinscripción Externa (Portal FLACSO)', 'flacso-uruguay'); ?></h4>
                 <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <label style="font-weight:600;">
+                        <input type="checkbox" name="preinscripcion_habilitada" value="1" <?php checked($pre_habilitada); ?>>
+                        <?php esc_html_e('Habilitar preinscripción para esta cohorte', 'flacso-uruguay'); ?>
+                    </label>
                     <div>
                         <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('URL de preinscripción:', 'flacso-uruguay'); ?></label>
                         <input type="url" name="link_preinscripcion" value="<?php echo esc_attr($link_preinscripcion); ?>" placeholder="https://preinscripciones.flacso.edu.uy/..." style="width: 100%;">
@@ -350,6 +416,16 @@ final class FLACSO_Cohorte {
                         <div>
                             <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Preinscripciones cierran el:', 'flacso-uruguay'); ?></label>
                             <input type="datetime-local" name="preinscripcion_hasta" value="<?php echo esc_attr($pre_hasta); ?>" style="width: 100%;">
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div>
+                            <label style="font-weight:600;display:block;margin-bottom:4px;"><?php esc_html_e('Mensaje cuando está abierta:', 'flacso-uruguay'); ?></label>
+                            <textarea name="mensaje_preinscripcion_abierta" rows="3" style="width:100%;"><?php echo esc_textarea($mensaje_abierta); ?></textarea>
+                        </div>
+                        <div>
+                            <label style="font-weight:600;display:block;margin-bottom:4px;"><?php esc_html_e('Mensaje cuando está cerrada:', 'flacso-uruguay'); ?></label>
+                            <textarea name="mensaje_preinscripcion_cerrada" rows="3" style="width:100%;"><?php echo esc_textarea($mensaje_cerrada); ?></textarea>
                         </div>
                     </div>
                 </div>
@@ -391,25 +467,48 @@ final class FLACSO_Cohorte {
             $anio_fin = (int) substr($fecha_fin, 0, 4);
         }
 
-        update_post_meta($post_id, 'anio_inicio', $anio_inicio);
-        update_post_meta($post_id, 'anio_fin', $anio_fin);
-        update_post_meta($post_id, 'fecha_inicio', $fecha_inicio);
-        update_post_meta($post_id, 'fecha_fin', $fecha_fin);
+        self::update_or_delete_meta($post_id, 'anio_inicio', $anio_inicio ?: '');
+        self::update_or_delete_meta($post_id, 'anio_fin', $anio_fin ?: '');
+        self::update_or_delete_meta($post_id, 'fecha_inicio', $fecha_inicio);
+        self::update_or_delete_meta($post_id, 'fecha_fin', $fecha_fin);
 
         if (isset($_POST['tabla_precio_id'])) {
-            update_post_meta($post_id, 'tabla_precio_id', absint($_POST['tabla_precio_id']));
+            self::update_or_delete_meta($post_id, 'tabla_precio_id', absint($_POST['tabla_precio_id']) ?: '');
         }
         if (isset($_POST['link_preinscripcion'])) {
-            update_post_meta($post_id, 'link_preinscripcion', self::sanitize_registration_url($_POST['link_preinscripcion']));
+            self::update_or_delete_meta($post_id, 'link_preinscripcion', self::sanitize_registration_url($_POST['link_preinscripcion']));
         }
         if (isset($_POST['preinscripcion_desde'])) {
-            update_post_meta($post_id, 'preinscripcion_desde', self::sanitize_datetime($_POST['preinscripcion_desde']));
+            self::update_or_delete_meta($post_id, 'preinscripcion_desde', self::sanitize_datetime($_POST['preinscripcion_desde']));
         }
         if (isset($_POST['preinscripcion_hasta'])) {
-            update_post_meta($post_id, 'preinscripcion_hasta', self::sanitize_datetime($_POST['preinscripcion_hasta']));
+            self::update_or_delete_meta($post_id, 'preinscripcion_hasta', self::sanitize_datetime($_POST['preinscripcion_hasta']));
+        }
+
+        update_post_meta($post_id, 'preinscripcion_habilitada', isset($_POST['preinscripcion_habilitada']));
+        $typed_fields = [
+            'modalidad' => [self::class, 'sanitize_modality'],
+            'modalidad_descripcion' => 'wp_kses_post',
+            'calendario_academico' => 'esc_url_raw',
+            'calendario_descripcion' => 'wp_kses_post',
+            'mensaje_preinscripcion_abierta' => 'wp_kses_post',
+            'mensaje_preinscripcion_cerrada' => 'wp_kses_post',
+        ];
+        foreach ($typed_fields as $key => $sanitizer) {
+            if (isset($_POST[$key])) {
+                self::update_or_delete_meta($post_id, $key, call_user_func($sanitizer, wp_unslash($_POST[$key])));
+            }
         }
 
         self::sync_title($post_id);
+    }
+
+    private static function update_or_delete_meta(int $post_id, string $key, $value): void {
+        if ($value === '' || $value === null || $value === []) {
+            delete_post_meta($post_id, $key);
+            return;
+        }
+        update_post_meta($post_id, $key, $value);
     }
 
     public static function register_columns(array $columns): array {

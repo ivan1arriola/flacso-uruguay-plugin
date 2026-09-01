@@ -179,6 +179,9 @@ class CPT_Oferta_Academica {
     }
 
     public static function add_meta_boxes(): void {
+        // Los datos académicos se administran en sus formularios tipados. El
+        // metabox nativo permitiría recrear metadatos legacy o campos sueltos.
+        remove_meta_box('postcustom', self::POST_TYPE, 'normal');
         add_meta_box(
             'flacso_oferta_cohortes_box',
             __('Cohortes de esta Oferta Académica', 'flacso-uruguay'),
@@ -222,6 +225,7 @@ class CPT_Oferta_Academica {
                         <?php foreach ($cohortes as $c) :
                             $num = (int) get_post_meta($c->ID, 'numero', true);
                             $roman = FLACSO_Cohorte::to_roman($num) ?: (string) $num;
+                            $estado = FLACSO_Cohorte::sanitize_state(get_post_meta($c->ID, 'estado', true));
                             $fechas_txt = FLACSO_Cohorte::format_dates($c->ID);
                             $link = (string) get_post_meta($c->ID, 'link_preinscripcion', true);
                             $abierta = FLACSO_Cohorte::accepts_registration($c->ID);

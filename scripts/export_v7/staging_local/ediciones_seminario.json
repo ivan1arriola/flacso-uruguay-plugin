@@ -1,0 +1,1828 @@
+[
+  {
+    "source_key": "edicion:23822",
+    "seminario_source_key": "seminario:23822",
+    "data": {
+      "nombre": "Diseño de cursos virtuales",
+      "anio": 2026,
+      "fecha_inicio": "2026-02-26",
+      "fecha_fin": "2026-04-15",
+      "estado": "finalizada",
+      "modalidad": "Virtual con un encuentro sincrónico inicial vía zoom",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-02-26",
+          "hora_inicio": "18:00",
+          "hora_fin": "21:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        23736
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23828",
+    "seminario_source_key": "seminario:23828",
+    "data": {
+      "nombre": "Planificación y diseño de proyectos educativos con TIC",
+      "anio": 2026,
+      "fecha_inicio": "2026-04-23",
+      "fecha_fin": "2026-06-10",
+      "estado": "finalizada",
+      "modalidad": "Virtual con un encuentro sincrónico inicial vía zoom",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-04-30",
+          "hora_inicio": "18:00",
+          "hora_fin": "21:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20839
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23895",
+    "seminario_source_key": "seminario:23895",
+    "data": {
+      "nombre": "Oralidad y escritura",
+      "anio": 2026,
+      "fecha_inicio": "2026-04-15",
+      "fecha_fin": "2026-05-12",
+      "estado": "finalizada",
+      "modalidad": "Virtual con instancias sincrónicas vía zoom",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-04-24",
+          "hora_inicio": "18:00",
+          "hora_fin": "20:00",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-05-09",
+          "hora_inicio": "10:00",
+          "hora_fin": "12:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        23766
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23897",
+    "seminario_source_key": "seminario:23897",
+    "data": {
+      "nombre": "Seminario integrado: Género, Interseccionalidad y Salud",
+      "anio": 2026,
+      "fecha_inicio": "2026-05-13",
+      "fecha_fin": "2026-06-16",
+      "estado": "finalizada",
+      "modalidad": "Virtual con tres instancia sincrónicas vía zoom",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-05-23",
+          "hora_inicio": "10:00",
+          "hora_fin": "12:00",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-06-06",
+          "hora_inicio": "10:00",
+          "hora_fin": "12:00",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-06-30",
+          "hora_inicio": "18:00",
+          "hora_fin": "20:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20268,
+        20279,
+        20286,
+        20274
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23898",
+    "seminario_source_key": "seminario:23898",
+    "data": {
+      "nombre": "Lectura y producción de géneros discursivos",
+      "anio": 2026,
+      "fecha_inicio": "2026-05-20",
+      "fecha_fin": "2026-06-16",
+      "estado": "finalizada",
+      "modalidad": "Virtual con instancias sincrónicas vía zoom",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-05-29",
+          "hora_inicio": "18:00",
+          "hora_fin": "20:00",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-06-12",
+          "hora_inicio": "18:00",
+          "hora_fin": "20:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20277
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23899",
+    "seminario_source_key": "seminario:23899",
+    "data": {
+      "nombre": "Género en el marco de los acuerdos multilaterales de cambio climático y gestión del riesgo de desastres",
+      "anio": 2026,
+      "fecha_inicio": "2026-05-27",
+      "fecha_fin": "2026-06-16",
+      "estado": "finalizada",
+      "modalidad": "Semipresencial",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-05-30",
+          "hora_inicio": "10:00",
+          "hora_fin": "12:00",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-06-13",
+          "hora_inicio": "10:00",
+          "hora_fin": "12:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20264
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23900",
+    "seminario_source_key": "seminario:23900",
+    "data": {
+      "nombre": "Aprendizaje visible",
+      "anio": 2026,
+      "fecha_inicio": "2026-06-04",
+      "fecha_fin": "2026-07-15",
+      "estado": "finalizada",
+      "modalidad": "Virtual con un encuentro sincrónico inicial vía zoom",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-06-04",
+          "hora_inicio": "18:00",
+          "hora_fin": "21:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20773
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23901",
+    "seminario_source_key": "seminario:23901",
+    "data": {
+      "nombre": "Tutorías virtuales",
+      "anio": 2026,
+      "fecha_inicio": "2026-06-11",
+      "fecha_fin": "2026-07-22",
+      "estado": "finalizada",
+      "modalidad": "Virtual con un encuentro sincrónico inicial vía zoom",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-06-11",
+          "hora_inicio": "18:00",
+          "hora_fin": "21:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20982
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23902",
+    "seminario_source_key": "seminario:23902",
+    "data": {
+      "nombre": "Derechos de infancia y ciudadanía digital: oportunidades y desafíos.",
+      "anio": 2026,
+      "fecha_inicio": "2026-06-24",
+      "fecha_fin": "2026-07-15",
+      "estado": "finalizada",
+      "modalidad": "Virtual",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-06-24",
+          "hora_inicio": "18:30",
+          "hora_fin": "20:30",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-07-15",
+          "hora_inicio": "18:30",
+          "hora_fin": "20:30",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-07-24",
+          "hora_inicio": "18:30",
+          "hora_fin": "20:30",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-10-21",
+          "hora_inicio": "18:30",
+          "hora_fin": "20:30",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-10-28",
+          "hora_inicio": "18:30",
+          "hora_fin": "20:30",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20899
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23903",
+    "seminario_source_key": "seminario:23903",
+    "data": {
+      "nombre": "El discurso multimodal: teoría, metodología y prácticas",
+      "anio": 2026,
+      "fecha_inicio": "2026-06-24",
+      "fecha_fin": "2026-07-21",
+      "estado": "finalizada",
+      "modalidad": "Virtual con instancias sincrónicas vía zoom",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-07-03",
+          "hora_inicio": "18:00",
+          "hora_fin": "20:00",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-07-17",
+          "hora_inicio": "18:00",
+          "hora_fin": "20:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        24023
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23904",
+    "seminario_source_key": "seminario:23904",
+    "data": {
+      "nombre": "Salud mental y violencia hacia las infancias y adolescencias.",
+      "anio": 2026,
+      "fecha_inicio": "2026-06-17",
+      "fecha_fin": "2026-06-24",
+      "estado": "finalizada",
+      "modalidad": "Virtual, con encuentros con dos encuentros sincrónicos vía zoon",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-06-17",
+          "hora_inicio": "18:00",
+          "hora_fin": "21:00",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-06-24",
+          "hora_inicio": "18:00",
+          "hora_fin": "21:00",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-10-14",
+          "hora_inicio": "18:30",
+          "hora_fin": "18:30",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-10-21",
+          "hora_inicio": "18:30",
+          "hora_fin": "18:30",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20993
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23905",
+    "seminario_source_key": "seminario:23905",
+    "data": {
+      "nombre": "Pensamiento computacional",
+      "anio": 2026,
+      "fecha_inicio": "2026-07-23",
+      "fecha_fin": "2026-09-02",
+      "estado": "en_curso",
+      "modalidad": "Virtual con un encuentro sincrónico inicial vía zoom",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-07-30",
+          "hora_inicio": "18:00",
+          "hora_fin": "21:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        23737
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23906",
+    "seminario_source_key": "seminario:23906",
+    "data": {
+      "nombre": "Materiales didácticos digitales",
+      "anio": 2026,
+      "fecha_inicio": "2026-07-23",
+      "fecha_fin": "2026-09-02",
+      "estado": "en_curso",
+      "modalidad": "Virtual con un encuentro sincrónico inicial vía zoom",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-07-23",
+          "hora_inicio": "18:00",
+          "hora_fin": "21:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20689
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23907",
+    "seminario_source_key": "seminario:23907",
+    "data": {
+      "nombre": "Discursos académicos y profesionales",
+      "anio": 2026,
+      "fecha_inicio": "2026-07-29",
+      "fecha_fin": "2026-08-25",
+      "estado": "finalizada",
+      "modalidad": "Virtual con instancias sincrónicas vía zoom",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-08-08",
+          "hora_inicio": "10:00",
+          "hora_fin": "12:00",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-08-22",
+          "hora_inicio": "10:00",
+          "hora_fin": "12:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20837
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23908",
+    "seminario_source_key": "seminario:23908",
+    "data": {
+      "nombre": "Políticas de Corresponsabilidad Social en los Cuidados: perspectivas y desafíos para la igualdad",
+      "anio": 2026,
+      "fecha_inicio": "2026-07-29",
+      "fecha_fin": "2026-08-18",
+      "estado": "finalizada",
+      "modalidad": "Semipresencial",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-08-01",
+          "hora_inicio": "10:00",
+          "hora_fin": "12:00",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-08-08",
+          "hora_inicio": "10:00",
+          "hora_fin": "12:00",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-08-15",
+          "hora_inicio": "10:00",
+          "hora_fin": "12:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20293,
+        20315
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23909",
+    "seminario_source_key": "seminario:23909",
+    "data": {
+      "nombre": "Retórica y hermenéutica",
+      "anio": 2026,
+      "fecha_inicio": "2026-09-02",
+      "fecha_fin": "2026-09-29",
+      "estado": "planificada",
+      "modalidad": "Virtual con instancias sincrónicas vía Google Meet",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-09-04",
+          "hora_inicio": "18:00",
+          "hora_fin": "20:00",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-09-18",
+          "hora_inicio": "18:00",
+          "hora_fin": "20:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20874
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23910",
+    "seminario_source_key": "seminario:23910",
+    "data": {
+      "nombre": "Educación en las áreas de ciencia, tecnología, ingeniería y matemáticas (STEM) desde un enfoque de género",
+      "anio": 2026,
+      "fecha_inicio": "2026-09-02",
+      "fecha_fin": "2026-09-22",
+      "estado": "planificada",
+      "modalidad": "Semipresencial",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-09-12",
+          "hora_inicio": "10:00",
+          "hora_fin": "13:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20328,
+        20319
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23912",
+    "seminario_source_key": "seminario:23912",
+    "data": {
+      "nombre": "Evaluación con TIC",
+      "anio": 2026,
+      "fecha_inicio": "2026-09-10",
+      "fecha_fin": "2026-10-21",
+      "estado": "planificada",
+      "modalidad": "Virtual con un encuentro sincrónico inicial vía Google Meet",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-09-10",
+          "hora_inicio": "18:00",
+          "hora_fin": "21:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        21367
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23913",
+    "seminario_source_key": "seminario:23913",
+    "data": {
+      "nombre": "Atención integral a la salud con perspectiva de género e interseccional",
+      "anio": 2026,
+      "fecha_inicio": "2026-09-16",
+      "fecha_fin": "2026-10-06",
+      "estado": "planificada",
+      "modalidad": "Virtual con una instancia sincrónica vía zoom",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-09-26",
+          "hora_inicio": "10:00",
+          "hora_fin": "12:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20325,
+        20299
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23914",
+    "seminario_source_key": "seminario:23914",
+    "data": {
+      "nombre": "Principales corrientes en los estudios de la violencia basada en género. Análisis sobre las bases culturales que la sustentan y reproducen.",
+      "anio": 2026,
+      "fecha_inicio": "2026-09-16",
+      "fecha_fin": "2026-10-06",
+      "estado": "planificada",
+      "modalidad": "Virtual con una instancia sincrónica vía Google Meet",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-09-26",
+          "hora_inicio": "10:00",
+          "hora_fin": "12:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20290
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23915",
+    "seminario_source_key": "seminario:23915",
+    "data": {
+      "nombre": "Cambio Climático y Género",
+      "anio": 2026,
+      "fecha_inicio": "2026-05-27",
+      "fecha_fin": "2026-06-16",
+      "estado": "finalizada",
+      "modalidad": "Virtual con dos instancias sincrónicas vía zoom",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-06-06",
+          "hora_inicio": "10:00",
+          "hora_fin": "12:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20306,
+        20302
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23916",
+    "seminario_source_key": "seminario:23916",
+    "data": {
+      "nombre": "Gramática y escritura",
+      "anio": 2026,
+      "fecha_inicio": "2026-10-07",
+      "fecha_fin": "2026-11-03",
+      "estado": "planificada",
+      "modalidad": "Virtual con instancias sincrónicas vía zoom",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-10-10",
+          "hora_inicio": "10:00",
+          "hora_fin": "12:00",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-10-24",
+          "hora_inicio": "10:00",
+          "hora_fin": "12:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        23767
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23917",
+    "seminario_source_key": "seminario:23917",
+    "data": {
+      "nombre": "Desastres Socioambientales y Género",
+      "anio": 2026,
+      "fecha_inicio": "2026-10-14",
+      "fecha_fin": "2026-11-03",
+      "estado": "planificada",
+      "modalidad": "Virtual con dos instancias sincrónicas vía zoom",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-10-24",
+          "hora_inicio": "10:00",
+          "hora_fin": "12:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20289,
+        20308
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23918",
+    "seminario_source_key": "seminario:23918",
+    "data": {
+      "nombre": "Investigación clínica, bioética, género e interseccionalidad en salud.",
+      "anio": 2026,
+      "fecha_inicio": "2026-10-14",
+      "fecha_fin": "2026-11-03",
+      "estado": "planificada",
+      "modalidad": "Virtual con una instancia sincrónica vía zoom",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-10-24",
+          "hora_inicio": "10:00",
+          "hora_fin": "12:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20270
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23919",
+    "seminario_source_key": "seminario:23919",
+    "data": {
+      "nombre": "Roles e identidades docentes en transformación",
+      "anio": 2026,
+      "fecha_inicio": "2026-10-29",
+      "fecha_fin": "2026-12-02",
+      "estado": "planificada",
+      "modalidad": "Virtual",
+      "encuentros_sincronicos": [],
+      "docentes": [
+        21370
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23920",
+    "seminario_source_key": "seminario:23920",
+    "data": {
+      "nombre": "Estudios sobre Varones y Masculinidades en el marco de los Estudios de Género: nociones conceptuales y herramientas para su análisis desde una postura ética y crítica en el contexto latinoamericano",
+      "anio": 2026,
+      "fecha_inicio": "2026-11-04",
+      "fecha_fin": "2026-11-24",
+      "estado": "planificada",
+      "modalidad": "Virtual con tres instancia semipresenciales, presenciales para las personas que residen en Montevideo, y virtual para las personas que residen en el interior y exterior del país.",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-11-14",
+          "hora_inicio": "10:00",
+          "hora_fin": "12:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20267,
+        20309
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23921",
+    "seminario_source_key": "seminario:23921",
+    "data": {
+      "nombre": "Historia y perspectiva del movimiento feminista. Diálogos y controversias",
+      "anio": 2026,
+      "fecha_inicio": "2026-11-04",
+      "fecha_fin": "2026-11-24",
+      "estado": "planificada",
+      "modalidad": "Virtual con tres instancia semipresenciales, presenciales para las personas que residen en Montevideo, y virtual para las personas que residen en el interior y exterior del país.",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-11-10",
+          "hora_inicio": "17:00",
+          "hora_fin": "21:00",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-11-11",
+          "hora_inicio": "17:00",
+          "hora_fin": "21:00",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-11-12",
+          "hora_inicio": "17:00",
+          "hora_fin": "21:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20330
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23922",
+    "seminario_source_key": "seminario:23922",
+    "data": {
+      "nombre": "Femicidio, feminicidio, afro feminicidio y participación de los movimientos sociales en la conceptualización y tipificación en América Latina",
+      "anio": 2026,
+      "fecha_inicio": "2026-11-04",
+      "fecha_fin": "2026-11-24",
+      "estado": "planificada",
+      "modalidad": "Semipresencial",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-11-14",
+          "hora_inicio": "10:00",
+          "hora_fin": "13:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        21009
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23923",
+    "seminario_source_key": "seminario:23923",
+    "data": {
+      "nombre": "Tópicos del conocimiento moderno: cuerpo, sexo y tecnología",
+      "anio": 2026,
+      "fecha_inicio": "2026-11-04",
+      "fecha_fin": "2026-11-24",
+      "estado": "planificada",
+      "modalidad": "Semipresencial",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-11-14",
+          "hora_inicio": "10:00",
+          "hora_fin": "13:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20284
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23924",
+    "seminario_source_key": "seminario:23924",
+    "data": {
+      "nombre": "Derechos humanos, desigualdad y violencia basada en disidencias de género. El sistema de violencia travesticida-transfemicida.",
+      "anio": 2026,
+      "fecha_inicio": "2026-11-04",
+      "fecha_fin": "2026-11-24",
+      "estado": "planificada",
+      "modalidad": "Virtual con una instancia sincrónica vía zoom",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-11-14",
+          "hora_inicio": "10:00",
+          "hora_fin": "12:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20322,
+        20316
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23925",
+    "seminario_source_key": "seminario:23925",
+    "data": {
+      "nombre": "Corrección y descripción lingüística del español escrito",
+      "anio": 2026,
+      "fecha_inicio": "2026-11-11",
+      "fecha_fin": "2026-12-08",
+      "estado": "planificada",
+      "modalidad": "Virtual con instancias sincrónicas vía zoom",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-11-21",
+          "hora_inicio": "10:00",
+          "hora_fin": "12:00",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-12-05",
+          "hora_inicio": "10:00",
+          "hora_fin": "12:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20837
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23926",
+    "seminario_source_key": "seminario:23926",
+    "data": {
+      "nombre": "Una genealogía transfeminista del género",
+      "anio": 2026,
+      "fecha_inicio": "2026-11-25",
+      "fecha_fin": "2026-12-15",
+      "estado": "planificada",
+      "modalidad": "Virtual con una unstancia sincrónica vía zoom",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-12-01",
+          "hora_inicio": "17:00",
+          "hora_fin": "21:00",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-12-02",
+          "hora_inicio": "17:00",
+          "hora_fin": "21:00",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-12-03",
+          "hora_inicio": "17:00",
+          "hora_fin": "21:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20276
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:23927",
+    "seminario_source_key": "seminario:23927",
+    "data": {
+      "nombre": "Aportes de Ecofeminismo al mainstreaming de género en el cambio climático y la gestión del riesgo de desastres",
+      "anio": 2026,
+      "fecha_inicio": "2026-11-25",
+      "fecha_fin": "2026-12-15",
+      "estado": "planificada",
+      "modalidad": "Virtual con dos instancias sincrónicas vía zoom",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-11-28",
+          "hora_inicio": "10:00",
+          "hora_fin": "12:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20282
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:24299",
+    "seminario_source_key": "seminario:24299",
+    "data": {
+      "nombre": "Seminario Bases del pensamiento Chino",
+      "anio": 2026,
+      "fecha_inicio": "2026-04-15",
+      "fecha_fin": "2026-05-05",
+      "estado": "finalizada",
+      "modalidad": "Virtual con una instancia sincrónica vía zoom",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-05-02",
+          "hora_inicio": "09:00",
+          "hora_fin": "11:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20796
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:24432",
+    "seminario_source_key": "seminario:24432",
+    "data": {
+      "nombre": "Rol de China en el contexto mundial, la era de Xi",
+      "anio": 2026,
+      "fecha_inicio": "2026-06-24",
+      "fecha_fin": "2026-07-14",
+      "estado": "finalizada",
+      "modalidad": "Virtual con una instancia sincrónica vía zoom",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-06-27",
+          "hora_inicio": "09:00",
+          "hora_fin": "11:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20796,
+        20797,
+        20798
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:25623",
+    "seminario_source_key": "seminario:25623",
+    "data": {
+      "nombre": "Relaciones de poder y violencias hacia niños, niñas y adolescentes",
+      "anio": 2026,
+      "fecha_inicio": "2026-06-03",
+      "fecha_fin": "2026-06-10",
+      "estado": "finalizada",
+      "modalidad": "Virtual con dos instancias sincrónicas",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-06-03",
+          "hora_inicio": "18:30",
+          "hora_fin": "20:30",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-06-10",
+          "hora_inicio": "18:30",
+          "hora_fin": "20:30",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-09-30",
+          "hora_inicio": "18:30",
+          "hora_fin": "20:30",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-10-07",
+          "hora_inicio": "18:30",
+          "hora_fin": "20:30",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20331
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:25624",
+    "seminario_source_key": "seminario:25624",
+    "data": {
+      "nombre": "Explotación sexual y trata. Producción, reproducción y\nrepresentaciones sociales.",
+      "anio": 2026,
+      "fecha_inicio": "2026-09-17",
+      "fecha_fin": "2026-09-24",
+      "estado": "planificada",
+      "modalidad": "Virtual con dos instancias sincrónicas",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-09-17",
+          "hora_inicio": "18:30",
+          "hora_fin": "20:30",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-09-24",
+          "hora_inicio": "18:30",
+          "hora_fin": "20:30",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        21386
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:25625",
+    "seminario_source_key": "seminario:25625",
+    "data": {
+      "nombre": "Las pericias en los procesos judiciales. Buenas prácticas periciales en violencias hacia niños,niñas y adolescentes.",
+      "anio": 2026,
+      "fecha_inicio": "2026-11-12",
+      "fecha_fin": "2026-11-19",
+      "estado": "planificada",
+      "modalidad": "Virtual con dos instancias sincrónicas",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-11-12",
+          "hora_inicio": "18:30",
+          "hora_fin": "20:30",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-11-19",
+          "hora_inicio": "18:30",
+          "hora_fin": "20:30",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        25622
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:25716",
+    "seminario_source_key": "seminario:25716",
+    "data": {
+      "nombre": "Más allá de la página impresa: la literatura y lo digital en el nivel secundario",
+      "anio": 2026,
+      "fecha_inicio": "2026-07-27",
+      "fecha_fin": "2026-08-26",
+      "estado": "finalizada",
+      "modalidad": "En línea, con encuentros sincrónicos",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-07-30",
+          "hora_inicio": "18:00",
+          "hora_fin": "20:00",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-08-13",
+          "hora_inicio": "18:00",
+          "hora_fin": "20:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        25719
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:25717",
+    "seminario_source_key": "seminario:25717",
+    "data": {
+      "nombre": "Taller de Escritura Creativa",
+      "anio": 2026,
+      "fecha_inicio": "2026-10-21",
+      "fecha_fin": "2026-11-18",
+      "estado": "planificada",
+      "modalidad": "En línea, con encuentros sincrónicos",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-10-22",
+          "hora_inicio": "19:00",
+          "hora_fin": "21:00",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-11-05",
+          "hora_inicio": "19:00",
+          "hora_fin": "21:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        25718
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:25892",
+    "seminario_source_key": "seminario:25892",
+    "data": {
+      "nombre": "Conocimiento e innovación en instituciones educativas",
+      "anio": 2026,
+      "fecha_inicio": "2026-10-28",
+      "fecha_fin": "2026-11-25",
+      "estado": "planificada",
+      "modalidad": "En línea",
+      "encuentros_sincronicos": [],
+      "docentes": [
+        21001
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:25893",
+    "seminario_source_key": "seminario:25893",
+    "data": {
+      "nombre": "Gestión en Instituciones Educativas",
+      "anio": 2026,
+      "fecha_inicio": "2026-09-30",
+      "fecha_fin": "2026-10-28",
+      "estado": "planificada",
+      "modalidad": "En línea",
+      "encuentros_sincronicos": [],
+      "docentes": [
+        21756
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:25894",
+    "seminario_source_key": "seminario:25894",
+    "data": {
+      "nombre": "Políticas e identidades docentes",
+      "anio": 2026,
+      "fecha_inicio": "2026-09-30",
+      "fecha_fin": "2026-10-28",
+      "estado": "planificada",
+      "modalidad": "En línea",
+      "encuentros_sincronicos": [],
+      "docentes": [
+        21002,
+        21003
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:25895",
+    "seminario_source_key": "seminario:25895",
+    "data": {
+      "nombre": "Introducción a las Políticas Públicas y en Educación",
+      "anio": 2026,
+      "fecha_inicio": "2026-06-24",
+      "fecha_fin": "2026-07-22",
+      "estado": "finalizada",
+      "modalidad": "En línea",
+      "encuentros_sincronicos": [],
+      "docentes": [
+        26090
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:25896",
+    "seminario_source_key": "seminario:25896",
+    "data": {
+      "nombre": "Cuerpo, políticas educativas y enseñanza",
+      "anio": 2026,
+      "fecha_inicio": "2026-06-03",
+      "fecha_fin": "2026-06-30",
+      "estado": "finalizada",
+      "modalidad": "En línea",
+      "encuentros_sincronicos": [],
+      "docentes": [
+        21758
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:26284",
+    "seminario_source_key": "seminario:26284",
+    "data": {
+      "nombre": "Poesía escrita por mujeres en América Latina",
+      "anio": 2026,
+      "fecha_inicio": "2026-09-16",
+      "fecha_fin": "2026-10-13",
+      "estado": "planificada",
+      "modalidad": "Virtual",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-09-25",
+          "hora_inicio": "18:00",
+          "hora_fin": "20:30",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-10-09",
+          "hora_inicio": "18:00",
+          "hora_fin": "20:30",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        26286
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:26285",
+    "seminario_source_key": "seminario:26285",
+    "data": {
+      "nombre": "Abuso sexual y trauma complejo en infancias y adolescencias",
+      "anio": 2026,
+      "fecha_inicio": "2026-10-01",
+      "fecha_fin": "2026-10-07",
+      "estado": "planificada",
+      "modalidad": "Virtual",
+      "encuentros_sincronicos": [],
+      "docentes": [
+        26288
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:27212",
+    "seminario_source_key": "seminario:27212",
+    "data": {
+      "nombre": "Seminario integrado: Atención integral a la salud, investigación clínica y bioética con perspectiva de género e interseccionalidad",
+      "anio": null,
+      "fecha_inicio": null,
+      "fecha_fin": null,
+      "estado": null,
+      "modalidad": "Virtual con instancias sincrónicas via Google Meet",
+      "encuentros_sincronicos": [],
+      "docentes": [],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:27240",
+    "seminario_source_key": "seminario:27240",
+    "data": {
+      "nombre": "",
+      "anio": null,
+      "fecha_inicio": null,
+      "fecha_fin": null,
+      "estado": null,
+      "modalidad": "",
+      "encuentros_sincronicos": [],
+      "docentes": [],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:27242",
+    "seminario_source_key": "seminario:24299",
+    "data": {
+      "nombre": "Seminario Bases del pensamiento Chino",
+      "anio": 2026,
+      "fecha_inicio": "2026-09-09",
+      "fecha_fin": "2026-09-29",
+      "estado": "planificada",
+      "modalidad": "Virtual con una instancia sincrónica vía Google Meet",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-09-26",
+          "hora_inicio": "09:00",
+          "hora_fin": "11:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20796
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:27245",
+    "seminario_source_key": "seminario:24432",
+    "data": {
+      "nombre": "Rol de China en el contexto mundial, la era de Xi",
+      "anio": 2026,
+      "fecha_inicio": "2026-11-18",
+      "fecha_fin": "2026-12-08",
+      "estado": "planificada",
+      "modalidad": "Virtual con una instancia sincrónica vía Google Meet",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-11-21",
+          "hora_inicio": "09:00",
+          "hora_fin": "11:00",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20796,
+        20797,
+        20798
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:27254",
+    "seminario_source_key": "seminario:23902",
+    "data": {
+      "nombre": "Derechos de infancia y ciudadanía digital: oportunidades y desafíos.",
+      "anio": 2026,
+      "fecha_inicio": "2026-10-19",
+      "fecha_fin": "2026-11-01",
+      "estado": "planificada",
+      "modalidad": "Virtual",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-10-21",
+          "hora_inicio": "18:30",
+          "hora_fin": "20:30",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-10-28",
+          "hora_inicio": "18:30",
+          "hora_fin": "20:30",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20899
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:27256",
+    "seminario_source_key": "seminario:25623",
+    "data": {
+      "nombre": "Relaciones de poder y violencias hacia niños, niñas y adolescentes",
+      "anio": 2026,
+      "fecha_inicio": "2026-09-18",
+      "fecha_fin": "2026-10-11",
+      "estado": "planificada",
+      "modalidad": "Virtual con dos instancias sincrónicas",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-09-30",
+          "hora_inicio": "18:30",
+          "hora_fin": "20:30",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-10-07",
+          "hora_inicio": "18:30",
+          "hora_fin": "20:30",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20331
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  },
+  {
+    "source_key": "edicion:27258",
+    "seminario_source_key": "seminario:23904",
+    "data": {
+      "nombre": "Salud mental y violencia hacia las infancias y adolescencias.",
+      "anio": 2026,
+      "fecha_inicio": "2026-10-12",
+      "fecha_fin": "2026-10-25",
+      "estado": "planificada",
+      "modalidad": "Virtual, con encuentros con dos encuentros sincrónicos",
+      "encuentros_sincronicos": [
+        {
+          "fecha": "2026-10-14",
+          "hora_inicio": "18:30",
+          "hora_fin": "21:30",
+          "zona_horaria": "America/Montevideo"
+        },
+        {
+          "fecha": "2026-10-21",
+          "hora_inicio": "18:30",
+          "hora_fin": "21:30",
+          "zona_horaria": "America/Montevideo"
+        }
+      ],
+      "docentes": [
+        20993
+      ],
+      "tabla_precio_id": null,
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null,
+      "link_preinscripcion": "",
+      "mensaje_preinscripcion_abierta": "",
+      "mensaje_preinscripcion_cerrada": "",
+      "mostrar_en_formulario": false,
+      "ediciones_componentes": []
+    }
+  }
+]

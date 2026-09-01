@@ -23,6 +23,11 @@ flacso_safe_require('modules/oferta-academica/includes/class-academic-repositori
 flacso_safe_require('modules/oferta-academica/includes/class-academic-catalog.php');
 flacso_safe_require('modules/oferta-academica/includes/class-academic-api.php');
 
+if (defined('WP_CLI') && WP_CLI) {
+    flacso_safe_require('modules/oferta-academica/includes/class-academic-cli.php');
+    flacso_safe_require('modules/oferta-academica/includes/class-academic-meta-normalizer.php');
+}
+
 add_action('init', static function (): void {
     CPT_Oferta_Academica::init();
     FLACSO_Programa_Academico::init();

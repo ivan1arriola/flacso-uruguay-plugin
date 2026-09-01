@@ -1,0 +1,258 @@
+[
+  {
+    "source_key": "cohorte:24160",
+    "oferta_source_key": "oferta:24160",
+    "data": {
+      "numero": 6,
+      "fecha_inicio": "2027-01-01",
+      "fecha_fin": null,
+      "precision_fecha_inicio": "anio",
+      "estado": "planificada",
+      "calendario_academico": "",
+      "tabla_precio_id": null,
+      "link_preinscripcion": "",
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null
+    }
+  },
+  {
+    "source_key": "cohorte:24161",
+    "oferta_source_key": "oferta:24161",
+    "data": {
+      "numero": null,
+      "fecha_inicio": "2027-01-01",
+      "fecha_fin": null,
+      "precision_fecha_inicio": "anio",
+      "estado": "planificada",
+      "calendario_academico": "",
+      "tabla_precio_id": null,
+      "link_preinscripcion": "",
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null
+    }
+  },
+  {
+    "source_key": "cohorte:24162",
+    "oferta_source_key": "oferta:24162",
+    "data": {
+      "numero": 6,
+      "fecha_inicio": "2027-01-01",
+      "fecha_fin": null,
+      "precision_fecha_inicio": "anio",
+      "estado": "planificada",
+      "calendario_academico": "",
+      "tabla_precio_id": null,
+      "link_preinscripcion": "",
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null
+    }
+  },
+  {
+    "source_key": "cohorte:24163",
+    "oferta_source_key": "oferta:24163",
+    "data": {
+      "numero": 1,
+      "fecha_inicio": "2027-01-01",
+      "fecha_fin": null,
+      "precision_fecha_inicio": "anio",
+      "estado": "planificada",
+      "calendario_academico": "",
+      "tabla_precio_id": null,
+      "link_preinscripcion": "",
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null
+    }
+  },
+  {
+    "source_key": "cohorte:24164",
+    "oferta_source_key": "oferta:24164",
+    "data": {
+      "numero": 1,
+      "fecha_inicio": "2027-01-01",
+      "fecha_fin": null,
+      "precision_fecha_inicio": "anio",
+      "estado": "planificada",
+      "calendario_academico": "",
+      "tabla_precio_id": null,
+      "link_preinscripcion": "",
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null
+    }
+  },
+  {
+    "source_key": "cohorte:24165",
+    "oferta_source_key": "oferta:24165",
+    "data": {
+      "numero": 1,
+      "fecha_inicio": "2027-01-01",
+      "fecha_fin": null,
+      "precision_fecha_inicio": "anio",
+      "estado": "planificada",
+      "calendario_academico": "",
+      "tabla_precio_id": null,
+      "link_preinscripcion": "",
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null
+    }
+  },
+  {
+    "source_key": "cohorte:24166",
+    "oferta_source_key": "oferta:24166",
+    "data": {
+      "numero": 1,
+      "fecha_inicio": "2027-01-01",
+      "fecha_fin": null,
+      "precision_fecha_inicio": "anio",
+      "estado": "planificada",
+      "calendario_academico": "",
+      "tabla_precio_id": null,
+      "link_preinscripcion": "",
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null
+    }
+  },
+  {
+    "source_key": "cohorte:24167",
+    "oferta_source_key": "oferta:24167",
+    "data": {
+      "numero": 1,
+      "fecha_inicio": "2027-01-01",
+      "fecha_fin": null,
+      "precision_fecha_inicio": "anio",
+      "estado": "planificada",
+      "calendario_academico": "",
+      "tabla_precio_id": null,
+      "link_preinscripcion": "",
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null
+    }
+  },
+  {
+    "source_key": "cohorte:24168",
+    "oferta_source_key": "oferta:24168",
+    "data": {
+      "numero": 6,
+      "fecha_inicio": "2026-08-05",
+      "fecha_fin": null,
+      "precision_fecha_inicio": "dia",
+      "estado": "en_curso",
+      "calendario_academico": "",
+      "tabla_precio_id": null,
+      "link_preinscripcion": "",
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null
+    }
+  },
+  {
+    "source_key": "cohorte:24169",
+    "oferta_source_key": "oferta:24169",
+    "data": {
+      "numero": 7,
+      "fecha_inicio": "2026-09-02",
+      "fecha_fin": null,
+      "precision_fecha_inicio": "dia",
+      "estado": "planificada",
+      "calendario_academico": "",
+      "tabla_precio_id": null,
+      "link_preinscripcion": "",
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null
+    }
+  },
+  {
+    "source_key": "cohorte:24170",
+    "oferta_source_key": "oferta:24170",
+    "data": {
+      "numero": 12,
+      "fecha_inicio": "2026-08-12",
+      "fecha_fin": null,
+      "precision_fecha_inicio": "dia",
+      "estado": "en_curso",
+      "calendario_academico": "",
+      "tabla_precio_id": null,
+      "link_preinscripcion": "",
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null
+    }
+  },
+  {
+    "source_key": "cohorte:24171",
+    "oferta_source_key": "oferta:24171",
+    "data": {
+      "numero": 8,
+      "fecha_inicio": "2026-07-29",
+      "fecha_fin": null,
+      "precision_fecha_inicio": "dia",
+      "estado": "en_curso",
+      "calendario_academico": "",
+      "tabla_precio_id": null,
+      "link_preinscripcion": "",
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null
+    }
+  },
+  {
+    "source_key": "cohorte:24172",
+    "oferta_source_key": "oferta:24172",
+    "data": {
+      "numero": 3,
+      "fecha_inicio": "2026-08-10",
+      "fecha_fin": null,
+      "precision_fecha_inicio": "dia",
+      "estado": "en_curso",
+      "calendario_academico": "",
+      "tabla_precio_id": null,
+      "link_preinscripcion": "",
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null
+    }
+  },
+  {
+    "source_key": "cohorte:24173",
+    "oferta_source_key": "oferta:24173",
+    "data": {
+      "numero": 12,
+      "fecha_inicio": "2026-08-12",
+      "fecha_fin": null,
+      "precision_fecha_inicio": "dia",
+      "estado": "en_curso",
+      "calendario_academico": "",
+      "tabla_precio_id": null,
+      "link_preinscripcion": "",
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null
+    }
+  },
+  {
+    "source_key": "cohorte:24174",
+    "oferta_source_key": "oferta:24174",
+    "data": {
+      "numero": 5,
+      "fecha_inicio": "2026-08-12",
+      "fecha_fin": null,
+      "precision_fecha_inicio": "dia",
+      "estado": "en_curso",
+      "calendario_academico": "",
+      "tabla_precio_id": null,
+      "link_preinscripcion": "",
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null
+    }
+  },
+  {
+    "source_key": "cohorte:26595",
+    "oferta_source_key": "oferta:26595",
+    "data": {
+      "numero": 1,
+      "fecha_inicio": "2026-08-26",
+      "fecha_fin": null,
+      "precision_fecha_inicio": "dia",
+      "estado": "en_curso",
+      "calendario_academico": "",
+      "tabla_precio_id": null,
+      "link_preinscripcion": "",
+      "preinscripcion_desde": null,
+      "preinscripcion_hasta": null
+    }
+  }
+]

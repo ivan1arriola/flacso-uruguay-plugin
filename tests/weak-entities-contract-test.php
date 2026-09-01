@@ -22,6 +22,10 @@ weak_assert(strpos($panel, "hidden_submenus") !== false, "Admin panel oculta sub
 // 2. Oferta Académica gestiona sus Cohortes
 weak_assert(strpos($oferta, "flacso_oferta_cohortes_box") !== false, "Oferta Academica tiene metabox de cohortes");
 weak_assert(strpos($oferta, "cohortes") !== false, "Oferta Academica tiene columna de cohortes");
+weak_assert(
+    strpos($oferta, '$estado = FLACSO_Cohorte::sanitize_state(get_post_meta($c->ID, \'estado\', true));') !== false,
+    "Metabox de cohortes inicializa el estado antes de mostrarlo"
+);
 
 // 3. Seminario gestiona sus Ediciones
 weak_assert(strpos($seminario, "flacso_seminario_ediciones_box") !== false, "Seminario tiene metabox de ediciones");

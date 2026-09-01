@@ -1,0 +1,72 @@
+[
+  {
+    "nombre": "Archivos",
+    "slug": "archivos",
+    "contenido": "",
+    "resumen": "",
+    "correo": "conservacionarchivos@flacso.edu.uy",
+    "coordinacion": [],
+    "orden": 1,
+    "estado_publicacion": "publish"
+  },
+  {
+    "nombre": "Educación",
+    "slug": "educacion",
+    "contenido": "",
+    "resumen": "",
+    "correo": "",
+    "coordinacion": [],
+    "orden": 2,
+    "estado_publicacion": "publish"
+  },
+  {
+    "nombre": "Estudios de China",
+    "slug": "estudios-de-china",
+    "contenido": "",
+    "resumen": "",
+    "correo": "inscripciones@flacso.edu.uy",
+    "coordinacion": [],
+    "orden": 3,
+    "estado_publicacion": "publish"
+  },
+  {
+    "nombre": "Género y Cultura",
+    "slug": "genero-y-cultura",
+    "contenido": "",
+    "resumen": "",
+    "correo": "",
+    "coordinacion": [],
+    "orden": 4,
+    "estado_publicacion": "publish"
+  },
+  {
+    "nombre": "Infancias y Adolescencias",
+    "slug": "infancias-y-adolescencias",
+    "contenido": "",
+    "resumen": "",
+    "correo": "",
+    "coordinacion": [],
+    "orden": 5,
+    "estado_publicacion": "publish"
+  },
+  {
+    "nombre": "Producción de Textos",
+    "slug": "produccion-de-textos",
+    "contenido": "",
+    "resumen": "",
+    "correo": "inscripciones@flacso.edu.uy",
+    "coordinacion": [],
+    "orden": 6,
+    "estado_publicacion": "publish"
+  },
+  {
+    "nombre": "Salud Mental, Subjetividad y Trabajo",
+    "slug": "salud-mental-subjetividad-y-trabajo",
+    "contenido": "",
+    "resumen": "",
+    "correo": "inscripciones@flacso.edu.uy",
+    "coordinacion": [],
+    "orden": 7,
+    "estado_publicacion": "publish"
+  }
+]
