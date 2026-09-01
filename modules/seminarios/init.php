@@ -23,6 +23,7 @@ if (!defined('FLACSO_SEMINARIO_VERSION')) {
 flacso_safe_require('modules/seminarios/includes/class-seminario-cpt.php');
 flacso_safe_require('modules/seminarios/includes/class-seminario.php');
 flacso_safe_require('modules/seminarios/includes/class-seminario-integrado.php');
+flacso_safe_require('modules/seminarios/includes/class-seminario-integrado-meta-safe.php');
 flacso_safe_require('modules/seminarios/includes/class-seminario-admin-fields.php');
 flacso_safe_require('modules/seminarios/includes/class-edicion.php');
 flacso_safe_require('modules/seminarios/includes/class-edicion-admin-fields.php');
@@ -33,7 +34,14 @@ class Seminario_Plugin {
         add_action('init', ['Seminario_CPT', 'register'], 4);
         add_action('init', ['FLACSO_Seminario', 'register_meta'], 5);
         add_action('init', ['FLACSO_Edicion', 'register'], 5);
+
         FLACSO_Seminario_Integrado::init();
+        // La implementación original del filtro derivado reentraba al consultar
+        // `seminario_id` de una Edición. Se reemplaza por una versión que sólo
+        // interviene sobre las tres claves realmente derivadas.
+        remove_filter('get_post_metadata', [FLACSO_Seminario_Integrado::class, 'filter_derived_metadata'], 20);
+        add_filter('get_post_metadata', [FLACSO_Seminario_Integrado_Meta_Safe::class, 'filter_derived_metadata'], 20, 5);
+
         FLACSO_Seminario_Admin_Fields::init();
         FLACSO_Edicion_Admin_Fields::init();
         add_action('after_setup_theme', function() {
