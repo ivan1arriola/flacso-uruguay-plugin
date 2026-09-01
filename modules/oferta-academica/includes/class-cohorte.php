@@ -112,24 +112,26 @@ final class FLACSO_Cohorte {
     }
 
     public static function accepts_registration(int $cohort_id, ?int $timestamp = null): bool {
+        $state = self::sanitize_state(get_post_meta($cohort_id, 'estado', true));
+        if (in_array($state, ['cancelada', 'finalizada'], true)) {
+            return false;
+        }
         if (metadata_exists('post', $cohort_id, 'preinscripcion_habilitada')) {
             if (!rest_sanitize_boolean(get_post_meta($cohort_id, 'preinscripcion_habilitada', true))) {
                 return false;
             }
         } else {
             $offer_id = absint(get_post_meta($cohort_id, self::META_PARENT_ID, true));
-            if (!$offer_id || !rest_sanitize_boolean(get_post_meta($offer_id, 'inscripciones_abiertas', true))) {
-                return false;
+            if ($offer_id && metadata_exists('post', $offer_id, 'inscripciones_abiertas')) {
+                if (!rest_sanitize_boolean(get_post_meta($offer_id, 'inscripciones_abiertas', true))) {
+                    return false;
+                }
             }
-        }
-        $state = self::sanitize_state(get_post_meta($cohort_id, 'estado', true));
-        if (!in_array($state, ['planificada', 'en_curso'], true)) {
-            return false;
         }
         $timestamp = $timestamp ?? current_time('timestamp', true);
         $from = strtotime((string) get_post_meta($cohort_id, 'preinscripcion_desde', true));
         $until = strtotime((string) get_post_meta($cohort_id, 'preinscripcion_hasta', true));
-        return (!$from || $timestamp >= $from) && (!$until || $timestamp < $until);
+        return (!$from || $timestamp >= $from) && (!$until || $timestamp <= $until);
     }
 
     public static function to_roman(int $number): string {
