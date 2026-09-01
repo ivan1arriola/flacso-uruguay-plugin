@@ -270,7 +270,7 @@ jobs:
           printf '%s\n' "$validation_output"
 
           sudo -n -u web5 -- "$WP_BIN" --path="$WP_ROOT" eval '
-          $required_cpts = ["programa-academico", "oferta-academica", "cohorte", "seminario", "edicion-seminario", "tabla-precio"];
+          $required_cpts = ["programa-academico", "oferta-academica", "cohorte", "seminario", "edicion", "tabla-precio"];
           foreach ($required_cpts as $cpt) {
               if (!post_type_exists($cpt)) {
                   fwrite(STDERR, "Required custom post type \"$cpt\" is not registered.\n");
