@@ -43,14 +43,53 @@ $relations = FLACSO_Oferta_Academica::sanitize_seminars([
 ]);
 final_assert(count($relations) === 1 && $relations[0]['seminario_id'] === 8, 'relaciones de seminario sin duplicados');
 
-// Prueba de días límite post inicio
+// Pruebas de la regla automática de preinscripción de Edicion.
 if (!function_exists('get_option')) {
     function get_option($k, $d = false) { return $d; }
 }
+$GLOBALS['flacso_test_post_meta'] = [];
 if (!function_exists('get_post_meta')) {
-    function get_post_meta($id, $k, $s = false) { return ''; }
+    function get_post_meta($id, $k, $s = false) {
+        return $GLOBALS['flacso_test_post_meta'][$id][$k] ?? '';
+    }
 }
+
 final_assert(FLACSO_Edicion::get_days_after_start_limit(0) === 10, 'dias de cierre por defecto es 10');
-final_assert(FLACSO_Edicion::accepts_registration(999, strtotime('2026-03-01')), 'acepta registro para edicion planificada sin fecha limite');
+
+$GLOBALS['flacso_test_post_meta'][999] = [
+    'estado' => 'planificada',
+];
+final_assert(
+    FLACSO_Edicion::accepts_registration(999, strtotime('2026-03-01 12:00:00')),
+    'una edicion creada sin fecha de inicio queda abierta automaticamente'
+);
+
+$GLOBALS['flacso_test_post_meta'][1000] = [
+    'estado' => 'finalizada',
+    'fecha_inicio' => '2026-03-01',
+    'dias_cierre_post_inicio' => 10,
+];
+final_assert(
+    FLACSO_Edicion::accepts_registration(1000, strtotime('2026-03-05 12:00:00')),
+    'el estado finalizada no cierra antes del limite temporal'
+);
+final_assert(
+    FLACSO_Edicion::accepts_registration(1000, strtotime('2026-03-11 23:59:59')),
+    'permanece abierta hasta el final del dia limite'
+);
+final_assert(
+    !FLACSO_Edicion::accepts_registration(1000, strtotime('2026-03-12 00:00:00')),
+    'cierra automaticamente al superar los dias configurados desde el inicio'
+);
+
+$GLOBALS['flacso_test_post_meta'][1001] = [
+    'estado' => 'cancelada',
+    'fecha_inicio' => '2026-12-01',
+    'dias_cierre_post_inicio' => 10,
+];
+final_assert(
+    !FLACSO_Edicion::accepts_registration(1001, strtotime('2026-03-01 12:00:00')),
+    'una edicion cancelada cierra inmediatamente la preinscripcion'
+);
 
 fwrite(STDOUT, "OK academic final model\n");
