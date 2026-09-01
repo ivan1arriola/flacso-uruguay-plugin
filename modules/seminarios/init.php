@@ -33,6 +33,7 @@ class Seminario_Plugin {
         add_action('init', ['Seminario_CPT', 'register'], 4);
         add_action('init', ['FLACSO_Seminario', 'register_meta'], 5);
         add_action('init', ['FLACSO_Edicion', 'register'], 5);
+        FLACSO_Seminario_Integrado::init();
         FLACSO_Seminario_Admin_Fields::init();
         FLACSO_Edicion_Admin_Fields::init();
         add_action('after_setup_theme', function() {
