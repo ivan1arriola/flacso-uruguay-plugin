@@ -182,31 +182,32 @@ final class FLACSO_Cohorte {
         }
 
         if ($precision === 'mes' && $fecha_inicio !== '') {
-            $ts = strtotime($fecha_inicio);
-            if ($ts) {
-                $m_start = function_exists('wp_date') ? wp_date('F Y', $ts) : date('m/Y', $ts);
+            try {
+                $dt = new \DateTime($fecha_inicio, wp_timezone());
+                $m_start = function_exists('wp_date') ? wp_date('F Y', $dt->getTimestamp()) : date('m/Y', $dt->getTimestamp());
                 if ($fecha_fin !== '') {
-                    $ts_end = strtotime($fecha_fin);
-                    if ($ts_end) {
-                        $m_end = function_exists('wp_date') ? wp_date('F Y', $ts_end) : date('m/Y', $ts_end);
-                        return $m_start . ' – ' . $m_end;
-                    }
+                    $dt_end = new \DateTime($fecha_fin, wp_timezone());
+                    $m_end = function_exists('wp_date') ? wp_date('F Y', $dt_end->getTimestamp()) : date('m/Y', $dt_end->getTimestamp());
+                    return $m_start . ' – ' . $m_end;
                 }
                 return $m_start;
+            } catch (\Exception $e) {
+                // silencioso
             }
         }
 
         if ($fecha_inicio !== '') {
-            $ts = strtotime($fecha_inicio);
-            if ($ts) {
-                $d_start = date('d/m/Y', $ts);
+            try {
+                $dt = new \DateTime($fecha_inicio, wp_timezone());
+                $f_start = function_exists('wp_date') ? wp_date('j \d\e F \d\e Y', $dt->getTimestamp()) : date('d/m/Y', $dt->getTimestamp());
                 if ($fecha_fin !== '') {
-                    $ts_end = strtotime($fecha_fin);
-                    if ($ts_end) {
-                        return $d_start . ' al ' . date('d/m/Y', $ts_end);
-                    }
+                    $dt_end = new \DateTime($fecha_fin, wp_timezone());
+                    $f_end = function_exists('wp_date') ? wp_date('j \d\e F \d\e Y', $dt_end->getTimestamp()) : date('d/m/Y', $dt_end->getTimestamp());
+                    return $f_start . ' al ' . $f_end;
                 }
-                return $d_start;
+                return $f_start;
+            } catch (\Exception $e) {
+                // silencioso
             }
         }
 
