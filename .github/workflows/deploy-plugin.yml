@@ -270,22 +270,29 @@ jobs:
           printf '%s\n' "$validation_output"
 
           sudo -n -u web5 -- "$WP_BIN" --path="$WP_ROOT" eval '
-          $taxonomy = get_taxonomy("area_tematica");
-          if (!$taxonomy || !in_array("oferta-academica", $taxonomy->object_type, true) || !in_array("seminario", $taxonomy->object_type, true)) {
-              fwrite(STDERR, "Program taxonomy is not attached to the complete academic catalog.\n");
+          $required_cpts = ["programa-academico", "oferta-academica", "cohorte", "seminario", "edicion-seminario", "tabla-precio"];
+          foreach ($required_cpts as $cpt) {
+              if (!post_type_exists($cpt)) {
+                  fwrite(STDERR, "Required custom post type \"$cpt\" is not registered.\n");
+                  exit(1);
+              }
+          }
+          $catalog_response = rest_do_request(new WP_REST_Request("GET", "/flacso/v1/preinscripciones/catalogo"));
+          if ($catalog_response->is_error() || $catalog_response->get_status() !== 200) {
+              fwrite(STDERR, "Canonical Preinscriptions Catalog API is unavailable.\n");
               exit(1);
           }
-          $response = rest_do_request(new WP_REST_Request("GET", "/flacso/v1/programs"));
-          if ($response->is_error() || $response->get_status() !== 200) {
+          $programs_response = rest_do_request(new WP_REST_Request("GET", "/flacso/v1/programas"));
+          if ($programs_response->is_error() || $programs_response->get_status() !== 200) {
               fwrite(STDERR, "Canonical Program API is unavailable.\n");
               exit(1);
           }
-          $data = $response->get_data();
-          if (!is_array($data) || !isset($data["items"], $data["integrity"])) {
-              fwrite(STDERR, "Canonical Program API response is incomplete.\n");
+          $data = $catalog_response->get_data();
+          if (!is_array($data) || !isset($data["items"])) {
+              fwrite(STDERR, "Catalog API response is incomplete.\n");
               exit(1);
           }
-          echo wp_json_encode($data["integrity"]) . "\n";
+          echo wp_json_encode(["catalog_items_count" => count($data["items"])]) . "\n";
           '
 
           if grep -Fq "$MISSING_SHORTCODE" <<< "$validation_output"; then
