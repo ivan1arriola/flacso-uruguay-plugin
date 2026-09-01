@@ -43,4 +43,14 @@ $relations = FLACSO_Oferta_Academica::sanitize_seminars([
 ]);
 final_assert(count($relations) === 1 && $relations[0]['seminario_id'] === 8, 'relaciones de seminario sin duplicados');
 
+// Prueba de días límite post inicio
+if (!function_exists('get_option')) {
+    function get_option($k, $d = false) { return $d; }
+}
+if (!function_exists('get_post_meta')) {
+    function get_post_meta($id, $k, $s = false) { return ''; }
+}
+final_assert(FLACSO_Edicion_Seminario::get_days_after_start_limit(0) === 10, 'dias de cierre por defecto es 10');
+final_assert(FLACSO_Edicion_Seminario::accepts_registration(999, strtotime('2026-03-01')), 'acepta registro para edicion planificada sin fecha limite');
+
 fwrite(STDOUT, "OK academic final model\n");

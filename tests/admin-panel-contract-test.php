@@ -21,7 +21,7 @@ panel_assert(strpos($panel, 'Calidad de datos') !== false, 'incluye control de i
 panel_assert(strpos($homepage_admin, "add_menu_page(") === false, 'Portada no crea un segundo Panel FLACSO');
 panel_assert(strpos($styles, '@media (max-width: 782px)') !== false, 'el panel tiene diseño móvil');
 
-foreach (['programa-academico', 'oferta-academica', 'cohorte', 'seminario', 'edicion-seminario', 'tabla-precio'] as $post_type) {
+foreach (['programa-academico', 'oferta-academica', 'cohorte', 'seminario', 'edicion', 'tabla-precio'] as $post_type) {
     panel_assert(strpos($panel, "edit.php?post_type={$post_type}") !== false, "falta acceso a {$post_type}");
 }
 

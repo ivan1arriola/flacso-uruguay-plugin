@@ -31,24 +31,67 @@ final class FLACSO_Academic_Catalog {
     public static function registration_catalog(): array {
         $items = [];
         foreach (FLACSO_Academic_Repository::list('cohortes', ['per_page' => 200]) as $cohort) {
-            if (empty($cohort['preinscripcion']['abierta']) || empty($cohort['link_preinscripcion'])) {
+            if (empty($cohort['preinscripcion']['abierta'])) {
                 continue;
             }
             $offer = FLACSO_Academic_Repository::to_array('ofertas', absint($cohort['oferta_academica_id']));
-            if ($offer) {
-                $items[] = ['kind' => 'oferta_academica', 'oferta' => $offer, 'cohorte' => $cohort];
+            if (!$offer) {
+                continue;
             }
+            $modified = function_exists('get_post_modified_time') ? get_post_modified_time('c', true, $cohort['id']) : date('c');
+            $items[] = [
+                'oferta' => [
+                    'id' => absint($offer['id']),
+                    'titulo' => (string) ($offer['nombre'] ?? ''),
+                    'slug' => (string) ($offer['slug'] ?? ''),
+                    'tipo' => (string) ($offer['tipo'] ?? ''),
+                    'url_informacion' => function_exists('get_permalink') ? (string) get_permalink($offer['id']) : '',
+                    'correo' => (string) ($offer['correo'] ?? ''),
+                ],
+                'instancia' => [
+                    'id' => absint($cohort['id']),
+                    'nombre' => (string) ($cohort['nombre'] ?? ''),
+                    'anio' => absint($cohort['anio_inicio'] ?: ($cohort['fecha_inicio'] ? date('Y', strtotime($cohort['fecha_inicio'])) : 2026)),
+                    'semestre' => '',
+                    'numero' => max(1, absint($cohort['numero'] ?? 0)),
+                    'estado' => 'preinscripciones_abiertas',
+                    'actualizado' => $modified ?: date('c'),
+                ],
+            ];
         }
         foreach (FLACSO_Academic_Repository::list('ediciones-seminario', ['per_page' => 200]) as $edition) {
-            if (empty($edition['mostrar_en_formulario']) || empty($edition['preinscripcion']['abierta']) || empty($edition['link_preinscripcion'])) {
+            if (empty($edition['mostrar_en_formulario']) || empty($edition['preinscripcion']['abierta'])) {
                 continue;
             }
             $seminar = FLACSO_Academic_Repository::to_array('seminarios', absint($edition['seminario_id']));
-            if ($seminar) {
-                $items[] = ['kind' => 'seminario', 'seminario' => $seminar, 'edicion' => $edition];
+            if (!$seminar) {
+                continue;
             }
+            $modified = function_exists('get_post_modified_time') ? get_post_modified_time('c', true, $edition['id']) : date('c');
+            $items[] = [
+                'oferta' => [
+                    'id' => absint($seminar['id']),
+                    'titulo' => (string) ($seminar['nombre'] ?? ''),
+                    'slug' => (string) ($seminar['slug'] ?? ''),
+                    'tipo' => 'seminario',
+                    'url_informacion' => function_exists('get_permalink') ? (string) get_permalink($seminar['id']) : '',
+                    'correo' => (string) ($seminar['correo'] ?? ''),
+                ],
+                'instancia' => [
+                    'id' => absint($edition['id']),
+                    'nombre' => (string) ($edition['nombre'] ?? ''),
+                    'anio' => absint($edition['anio'] ?: ($edition['fecha_inicio'] ? date('Y', strtotime($edition['fecha_inicio'])) : 2026)),
+                    'semestre' => '',
+                    'numero' => 1,
+                    'estado' => 'preinscripciones_abiertas',
+                    'actualizado' => $modified ?: date('c'),
+                ],
+            ];
         }
-        return $items;
+        return [
+            'schema_version' => 1,
+            'items' => $items,
+        ];
     }
 
     private static function current_item(array $items): ?array {

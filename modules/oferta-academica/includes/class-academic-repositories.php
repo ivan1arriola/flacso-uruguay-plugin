@@ -123,7 +123,7 @@ final class FLACSO_Academic_Repository {
             $data['numero_romano'] = FLACSO_Cohorte::to_roman(absint($data['numero']));
             $data['preinscripcion'] = FLACSO_Preinscripcion::for_cohort((int) $post->ID);
         }
-        if ($entity === 'ediciones-seminario') {
+        if ($entity === 'ediciones') {
             $data['es_asincronica'] = empty($data['encuentros_sincronicos']);
             $data['preinscripcion'] = FLACSO_Preinscripcion::for_edition((int) $post->ID);
         }
@@ -192,6 +192,7 @@ final class FLACSO_Academic_Repository {
             'ofertas' => 'programa_academico_id',
             'seminarios' => 'programa_academico_id',
             'cohortes' => 'oferta_academica_id',
+            'ediciones' => 'seminario_id',
             'ediciones-seminario' => 'seminario_id',
         ][$entity] ?? '';
     }
@@ -206,6 +207,7 @@ final class FLACSO_Academic_Repository {
             'ofertas' => ['programa_academico_id', FLACSO_Programa_Academico::POST_TYPE],
             'seminarios' => ['programa_academico_id', FLACSO_Programa_Academico::POST_TYPE],
             'cohortes' => ['oferta_academica_id', FLACSO_Oferta_Academica::POST_TYPE],
+            'ediciones' => ['seminario_id', FLACSO_Seminario::POST_TYPE],
             'ediciones-seminario' => ['seminario_id', FLACSO_Seminario::POST_TYPE],
         ];
         if (isset($parent_rules[$entity])) {
@@ -296,11 +298,22 @@ final class FLACSO_Preinscripcion {
     }
 
     public static function for_edition(int $edition_id): array {
+        $hasta = get_post_meta($edition_id, 'preinscripcion_hasta', true) ?: null;
+        if (!$hasta) {
+            $fecha_inicio = (string) get_post_meta($edition_id, 'fecha_inicio', true);
+            if ($fecha_inicio !== '' && class_exists('FLACSO_Edicion_Seminario')) {
+                $days = FLACSO_Edicion_Seminario::get_days_after_start_limit($edition_id);
+                $closing = strtotime($fecha_inicio . ' +' . $days . ' days 23:59:59');
+                if ($closing) {
+                    $hasta = date('Y-m-d H:i:s', $closing);
+                }
+            }
+        }
         return [
             'abierta' => FLACSO_Edicion_Seminario::accepts_registration($edition_id),
             'url' => get_post_meta($edition_id, 'link_preinscripcion', true) ?: null,
             'desde' => get_post_meta($edition_id, 'preinscripcion_desde', true) ?: null,
-            'hasta' => get_post_meta($edition_id, 'preinscripcion_hasta', true) ?: null,
+            'hasta' => $hasta,
         ];
     }
 }

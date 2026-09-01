@@ -71,7 +71,7 @@ class Seminario_CPT
     public static function render_column(string $column, int $post_id): void {
         if ($column === 'ediciones') {
             $ediciones = get_posts([
-                'post_type'      => 'edicion-seminario',
+                'post_type'      => FLACSO_Edicion_Seminario::POST_TYPE,
                 'posts_per_page' => -1,
                 'meta_key'       => 'seminario_id',
                 'meta_value'     => $post_id,
@@ -93,7 +93,7 @@ class Seminario_CPT
                 echo '<span style="color:#94a3b8;">Sin ediciones</span><br>';
             }
 
-            $add_url = admin_url('post-new.php?post_type=edicion-seminario&seminario_id=' . $post_id);
+            $add_url = admin_url('post-new.php?post_type=' . FLACSO_Edicion_Seminario::POST_TYPE . '&seminario_id=' . $post_id);
             echo '<div style="margin-top:4px;"><a class="button button-small" href="' . esc_url($add_url) . '">➕ Nueva edición</a></div>';
         }
     }
@@ -111,7 +111,7 @@ class Seminario_CPT
 
     public static function render_ediciones_meta_box($post): void {
         $ediciones = get_posts([
-            'post_type'      => 'edicion-seminario',
+            'post_type'      => FLACSO_Edicion_Seminario::POST_TYPE,
             'posts_per_page' => -1,
             'meta_key'       => 'seminario_id',
             'meta_value'     => $post->ID,
@@ -120,7 +120,7 @@ class Seminario_CPT
             'order'          => 'DESC',
         ]);
 
-        $add_url = admin_url('post-new.php?post_type=edicion-seminario&seminario_id=' . $post->ID);
+        $add_url = admin_url('post-new.php?post_type=' . FLACSO_Edicion_Seminario::POST_TYPE . '&seminario_id=' . $post->ID);
         ?>
         <div style="padding: 6px 0;">
             <p style="margin-top:0; color:#475569;">

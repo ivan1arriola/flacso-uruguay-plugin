@@ -143,8 +143,8 @@ final class FLACSO_Admin_Panel {
             return;
         }
         // Cohortes y Ediciones son entidades débiles subordinadas; no deben listarse sueltas en el submenú.
-        $hidden_submenus = ['edit.php?post_type=cohorte', 'edit.php?post_type=edicion-seminario'];
-        $academic_types = ['programa-academico', 'oferta-academica', 'cohorte', 'seminario', 'edicion-seminario', 'tabla-precio'];
+        $hidden_submenus = ['edit.php?post_type=cohorte', 'edit.php?post_type=edicion'];
+        $academic_types = ['programa-academico', 'oferta-academica', 'cohorte', 'seminario', 'edicion', 'tabla-precio'];
         $submenu[self::PAGE_SLUG] = array_values(array_filter(
             $submenu[self::PAGE_SLUG],
             static function (array $item) use ($academic_types, $hidden_submenus): bool {
@@ -165,7 +165,7 @@ final class FLACSO_Admin_Panel {
             'edit.php?post_type=oferta-academica' => 20,
             'edit.php?post_type=cohorte' => 30,
             'edit.php?post_type=seminario' => 40,
-            'edit.php?post_type=edicion-seminario' => 50,
+            'edit.php?post_type=edicion' => 50,
             'edit.php?post_type=tabla-precio' => 60,
             'flacso-main-page' => 70,
             'flacso-integraciones' => 80,
@@ -237,7 +237,7 @@ final class FLACSO_Admin_Panel {
                                 [
                                     ['Programa', 'programa-academico', $counts['programa-academico']],
                                     ['Seminario', 'seminario', $counts['seminario']],
-                                    ['Edición', 'edicion-seminario', $counts['edicion-seminario']],
+                                    ['Edición', 'edicion', $counts['edicion']],
                                 ],
                                 'flacso-panel__workflow--seminar'
                             ); ?>
@@ -284,7 +284,7 @@ final class FLACSO_Admin_Panel {
 
     private static function counts(): array {
         $result = [];
-        foreach (['programa-academico', 'oferta-academica', 'cohorte', 'seminario', 'edicion-seminario', 'tabla-precio'] as $post_type) {
+        foreach (['programa-academico', 'oferta-academica', 'cohorte', 'seminario', 'edicion', 'tabla-precio'] as $post_type) {
             $counts = wp_count_posts($post_type);
             $total = 0;
             foreach (['publish', 'draft', 'pending', 'private', 'future'] as $status) {
@@ -302,7 +302,7 @@ final class FLACSO_Admin_Panel {
                 $total++;
             }
         }
-        foreach (get_posts(['post_type' => 'edicion-seminario', 'post_status' => 'any', 'posts_per_page' => -1, 'fields' => 'ids']) as $id) {
+        foreach (get_posts(['post_type' => 'edicion', 'post_status' => 'any', 'posts_per_page' => -1, 'fields' => 'ids']) as $id) {
             if (get_post_meta($id, 'link_preinscripcion', true) && FLACSO_Edicion_Seminario::accepts_registration((int) $id)) {
                 $total++;
             }
@@ -317,7 +317,7 @@ final class FLACSO_Admin_Panel {
             ['seminario', 'programa_academico_id', __('Seminarios sin programa', 'flacso-uruguay')],
             ['cohorte', 'numero', __('Cohortes sin número', 'flacso-uruguay')],
             ['cohorte', 'link_preinscripcion', __('Cohortes sin enlace', 'flacso-uruguay')],
-            ['edicion-seminario', 'link_preinscripcion', __('Ediciones sin enlace', 'flacso-uruguay')],
+            ['edicion', 'link_preinscripcion', __('Ediciones sin enlace', 'flacso-uruguay')],
         ];
         foreach ($checks as $check) {
             $count = self::count_missing_meta($check[0], $check[1]);
@@ -375,7 +375,7 @@ final class FLACSO_Admin_Panel {
         $items = [];
         foreach ([
             ['cohorte', 'Cohorte'],
-            ['edicion-seminario', 'Edición'],
+            ['edicion', 'Edición'],
         ] as $definition) {
             $posts = get_posts([
                 'post_type' => $definition[0],

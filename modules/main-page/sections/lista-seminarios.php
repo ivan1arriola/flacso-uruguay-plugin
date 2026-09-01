@@ -30,7 +30,7 @@ function flacso_generar_seminarios_combinados_html(int $offset = 0, array $atts 
     $show_button = rest_sanitize_boolean($atts['mostrar_boton'] ?? true);
     $button_text = sanitize_text_field((string) ($atts['texto_boton'] ?? __('Ver más información', 'flacso-main-page')));
 
-    $editions = array_slice(FLACSO_Academic_Repository::list('ediciones-seminario', ['per_page' => 200]), $offset, $limit);
+    $editions = array_slice(FLACSO_Academic_Repository::list('ediciones', ['per_page' => 200]), $offset, $limit);
     $cards = [];
     $seen = [];
     foreach ($editions as $edition) {

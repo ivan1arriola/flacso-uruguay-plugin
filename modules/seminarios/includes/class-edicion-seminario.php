@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
 
 /** Ocurrencia temporal de un Seminario (Entidad débil subordinada). */
 final class FLACSO_Edicion_Seminario {
-    public const POST_TYPE = 'edicion-seminario';
+    public const POST_TYPE = 'edicion';
     public const META_PARENT_ID = 'seminario_id';
     public const ESTADOS = ['planificada', 'en_curso', 'finalizada', 'cancelada'];
 
@@ -41,6 +41,7 @@ final class FLACSO_Edicion_Seminario {
             'link_preinscripcion'            => ['type' => 'string', 'sanitize_callback' => [self::class, 'sanitize_registration_url']],
             'preinscripcion_desde'           => ['type' => 'string', 'sanitize_callback' => [self::class, 'sanitize_datetime']],
             'preinscripcion_hasta'           => ['type' => 'string', 'sanitize_callback' => [self::class, 'sanitize_datetime']],
+            'dias_cierre_post_inicio'        => ['type' => 'integer', 'sanitize_callback' => 'absint'],
             'mensaje_preinscripcion_abierta' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'mensaje_preinscripcion_cerrada' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'mostrar_en_formulario'          => ['type' => 'boolean', 'sanitize_callback' => [FLACSO_Seminario::class, 'sanitize_boolean']],
@@ -136,15 +137,50 @@ final class FLACSO_Edicion_Seminario {
         return $result;
     }
 
+    public static function get_days_after_start_limit(int $edition_id = 0): int {
+        if ($edition_id > 0) {
+            $custom = get_post_meta($edition_id, 'dias_cierre_post_inicio', true);
+            if ($custom !== '' && $custom !== false && is_numeric($custom)) {
+                return (int) $custom;
+            }
+        }
+        $global = get_option('flacso_seminarios_dias_cierre_post_inicio', 10);
+        return is_numeric($global) ? (int) $global : 10;
+    }
+
     public static function accepts_registration(int $edition_id, ?int $timestamp = null): bool {
         $state = self::sanitize_state(get_post_meta($edition_id, 'estado', true));
-        if (!in_array($state, ['planificada', 'en_curso'], true)) {
+        if (in_array($state, ['cancelada', 'finalizada'], true)) {
             return false;
         }
         $timestamp = $timestamp ?? current_time('timestamp', true);
-        $from = strtotime((string) get_post_meta($edition_id, 'preinscripcion_desde', true));
-        $until = strtotime((string) get_post_meta($edition_id, 'preinscripcion_hasta', true));
-        return (!$from || $timestamp >= $from) && (!$until || $timestamp < $until);
+
+        $from_str = (string) get_post_meta($edition_id, 'preinscripcion_desde', true);
+        if ($from_str !== '') {
+            $from = strtotime($from_str);
+            if ($from && $timestamp < $from) {
+                return false;
+            }
+        }
+
+        $until_str = (string) get_post_meta($edition_id, 'preinscripcion_hasta', true);
+        if ($until_str !== '') {
+            $until = strtotime($until_str);
+            if ($until && $timestamp > $until) {
+                return false;
+            }
+        } else {
+            $fecha_inicio = (string) get_post_meta($edition_id, 'fecha_inicio', true);
+            if ($fecha_inicio !== '') {
+                $days = self::get_days_after_start_limit($edition_id);
+                $closing_time = strtotime($fecha_inicio . ' +' . $days . ' days 23:59:59');
+                if ($closing_time && $timestamp > $closing_time) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     public static function sync_title(int $post_id): void {
@@ -296,9 +332,17 @@ final class FLACSO_Edicion_Seminario {
                             <input type="datetime-local" name="preinscripcion_desde" value="<?php echo esc_attr($pre_desde); ?>" style="width: 100%;">
                         </div>
                         <div>
-                            <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Preinscripciones cierran el:', 'flacso-uruguay'); ?></label>
+                            <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Preinscripciones cierran el (manual):', 'flacso-uruguay'); ?></label>
                             <input type="datetime-local" name="preinscripcion_hasta" value="<?php echo esc_attr($pre_hasta); ?>" style="width: 100%;">
                         </div>
+                    </div>
+                    <div>
+                        <?php $dias_cierre = get_post_meta($post->ID, 'dias_cierre_post_inicio', true); ?>
+                        <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Días de cierre automático tras el inicio:', 'flacso-uruguay'); ?></label>
+                        <input type="number" name="dias_cierre_post_inicio" value="<?php echo esc_attr((string) $dias_cierre); ?>" min="0" max="365" placeholder="10 (por defecto)" style="width: 100%; max-width: 220px;">
+                        <p style="margin: 4px 0 0; font-size: 12px; color: #64748b;">
+                            <?php esc_html_e('Si no se fija una fecha de cierre manual, las inscripciones permanecerán abiertas hasta N días posteriores a la fecha de inicio de la edición.', 'flacso-uruguay'); ?>
+                        </p>
                     </div>
                 </div>
             </div>
@@ -348,6 +392,14 @@ final class FLACSO_Edicion_Seminario {
         }
         if (isset($_POST['preinscripcion_hasta'])) {
             update_post_meta($post_id, 'preinscripcion_hasta', self::sanitize_datetime($_POST['preinscripcion_hasta']));
+        }
+        if (isset($_POST['dias_cierre_post_inicio'])) {
+            $raw_dias = trim((string) $_POST['dias_cierre_post_inicio']);
+            if ($raw_dias === '') {
+                delete_post_meta($post_id, 'dias_cierre_post_inicio');
+            } else {
+                update_post_meta($post_id, 'dias_cierre_post_inicio', absint($raw_dias));
+            }
         }
 
         self::sync_title($post_id);

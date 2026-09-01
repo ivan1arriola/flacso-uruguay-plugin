@@ -50,6 +50,7 @@ class FLACSO_Integrations_Settings {
     private const OPTION_META_LEADS_FORWARD_TO_WEBHOOK = 'flacso_meta_leads_forward_to_webhook';
     private const OPTION_META_LEADS_LAST_PERMISSION_CHECK = 'flacso_meta_leads_last_permission_check';
     private const OPTION_USD_EXCHANGE_RATE = 'flacso_usd_exchange_rate';
+    public const OPTION_SEMINARIOS_DIAS_CIERRE_POST_INICIO = 'flacso_seminarios_dias_cierre_post_inicio';
 
     public static function init(): void {
         if (!is_admin()) {
@@ -139,6 +140,16 @@ class FLACSO_Integrations_Settings {
                 'type' => 'string',
                 'sanitize_callback' => 'esc_url_raw',
                 'default' => '',
+            ]
+        );
+
+        register_setting(
+            self::SETTINGS_GROUP,
+            self::OPTION_SEMINARIOS_DIAS_CIERRE_POST_INICIO,
+            [
+                'type' => 'integer',
+                'sanitize_callback' => 'absint',
+                'default' => 10,
             ]
         );
 
@@ -2302,6 +2313,13 @@ class FLACSO_Integrations_Settings {
                     'url',
                     'https://tu-editor.com/api/preinscripciones/ofertas',
                     __('Si este campo queda vacío, el plugin intentará derivarlo desde la URL base del editor externo.', 'flacso-uruguay')
+                );
+                self::render_input_field(
+                    self::OPTION_SEMINARIOS_DIAS_CIERRE_POST_INICIO,
+                    __('Días para cierre de inscripción tras inicio de seminario', 'flacso-uruguay'),
+                    'number',
+                    '10',
+                    __('Las inscripciones a seminarios permanecen abiertas hasta N días posteriores a la fecha de inicio (por defecto 10 días).', 'flacso-uruguay')
                 );
                 ?>
             </div>
