@@ -303,7 +303,7 @@ final class FLACSO_Admin_Panel {
             }
         }
         foreach (get_posts(['post_type' => 'edicion', 'post_status' => 'any', 'posts_per_page' => -1, 'fields' => 'ids']) as $id) {
-            if (get_post_meta($id, 'link_preinscripcion', true) && FLACSO_Edicion_Seminario::accepts_registration((int) $id)) {
+            if (get_post_meta($id, 'link_preinscripcion', true) && FLACSO_Edicion::accepts_registration((int) $id)) {
                 $total++;
             }
         }

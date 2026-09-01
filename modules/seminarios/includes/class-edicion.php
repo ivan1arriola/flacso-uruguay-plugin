@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 /** Ocurrencia temporal de un Seminario (Entidad débil subordinada). */
-final class FLACSO_Edicion_Seminario {
+final class FLACSO_Edicion {
     public const POST_TYPE = 'edicion';
     public const META_PARENT_ID = 'seminario_id';
     public const ESTADOS = ['planificada', 'en_curso', 'finalizada', 'cancelada'];
@@ -510,3 +510,6 @@ final class FLACSO_Edicion_Seminario {
         }
     }
 }
+
+class_alias('FLACSO_Edicion', 'FLACSO_Edicion_Seminario');
+

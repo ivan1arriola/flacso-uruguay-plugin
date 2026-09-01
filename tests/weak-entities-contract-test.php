@@ -2,7 +2,7 @@
 
 $root = dirname(__DIR__);
 $cohorte = file_get_contents($root . '/modules/oferta-academica/includes/class-cohorte.php');
-$edicion = file_get_contents($root . '/modules/seminarios/includes/class-edicion-seminario.php');
+$edicion = file_get_contents($root . '/modules/seminarios/includes/class-edicion.php');
 $oferta = file_get_contents($root . '/modules/oferta-academica/includes/class-cpt-oferta-academica.php');
 $seminario = file_get_contents($root . '/modules/seminarios/includes/class-seminario-cpt.php');
 $panel = file_get_contents($root . '/includes/core/class-flacso-admin-panel.php');

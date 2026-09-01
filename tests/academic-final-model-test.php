@@ -15,7 +15,7 @@ function is_wp_error($value) { return false; }
 require_once __DIR__ . '/../modules/oferta-academica/includes/class-oferta-academica.php';
 require_once __DIR__ . '/../modules/oferta-academica/includes/class-cohorte.php';
 require_once __DIR__ . '/../modules/seminarios/includes/class-seminario.php';
-require_once __DIR__ . '/../modules/seminarios/includes/class-edicion-seminario.php';
+require_once __DIR__ . '/../modules/seminarios/includes/class-edicion.php';
 
 function final_assert($condition, string $message): void {
     if (!$condition) {
@@ -29,8 +29,8 @@ final_assert(
     'OfertaAcademica debe tener exactamente cinco tipos, incluida especializacion'
 );
 final_assert(!FLACSO_Oferta_Academica::tipo_valido('seminario'), 'Seminario no puede ser tipo de OfertaAcademica');
-final_assert(FLACSO_Edicion_Seminario::sanitize_state('cancelada') === 'cancelada', 'estado de edicion válido');
-final_assert(FLACSO_Edicion_Seminario::sanitize_state('inscripciones_abiertas') === 'planificada', 'no persiste estado de inscripción');
+final_assert(FLACSO_Edicion::sanitize_state('cancelada') === 'cancelada', 'estado de edicion válido');
+final_assert(FLACSO_Edicion::sanitize_state('inscripciones_abiertas') === 'planificada', 'no persiste estado de inscripción');
 final_assert(FLACSO_Cohorte::to_roman(14) === 'XIV', 'algoritmo romano por sustracción ordenada');
 final_assert(FLACSO_Cohorte::to_roman(1994) === 'MCMXCIV', 'algoritmo romano aplica pares sustractivos');
 final_assert(FLACSO_Cohorte::display_name(10) === 'Cohorte X', 'etiqueta canónica no incluye la oferta');
@@ -50,7 +50,7 @@ if (!function_exists('get_option')) {
 if (!function_exists('get_post_meta')) {
     function get_post_meta($id, $k, $s = false) { return ''; }
 }
-final_assert(FLACSO_Edicion_Seminario::get_days_after_start_limit(0) === 10, 'dias de cierre por defecto es 10');
-final_assert(FLACSO_Edicion_Seminario::accepts_registration(999, strtotime('2026-03-01')), 'acepta registro para edicion planificada sin fecha limite');
+final_assert(FLACSO_Edicion::get_days_after_start_limit(0) === 10, 'dias de cierre por defecto es 10');
+final_assert(FLACSO_Edicion::accepts_registration(999, strtotime('2026-03-01')), 'acepta registro para edicion planificada sin fecha limite');
 
 fwrite(STDOUT, "OK academic final model\n");

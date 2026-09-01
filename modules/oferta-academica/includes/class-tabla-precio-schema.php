@@ -60,7 +60,7 @@ final class Tabla_Precio_Schema {
 final class FLACSO_Price_Table_Repository {
     public static function linked_uses(int $table_id): array {
         $result = [];
-        foreach ([FLACSO_Cohorte::POST_TYPE, FLACSO_Edicion_Seminario::POST_TYPE] as $post_type) {
+        foreach ([FLACSO_Cohorte::POST_TYPE, FLACSO_Edicion::POST_TYPE] as $post_type) {
             $ids = get_posts([
                 'post_type' => $post_type,
                 'post_status' => 'any',
@@ -80,8 +80,8 @@ final class FLACSO_Price_Table_Repository {
         $post_type = get_post_type($post_id);
         $table_id = $post_type === 'tabla-precio' ? $post_id : absint(get_post_meta($post_id, 'tabla_precio_id', true));
         if ($table_id < 1 && in_array($post_type, ['oferta-academica', 'seminario'], true)) {
-            $temporal_type = $post_type === 'oferta-academica' ? FLACSO_Cohorte::POST_TYPE : FLACSO_Edicion_Seminario::POST_TYPE;
-            $parent_key = $post_type === 'oferta-academica' ? FLACSO_Cohorte::META_PARENT_ID : FLACSO_Edicion_Seminario::META_PARENT_ID;
+            $temporal_type = $post_type === 'oferta-academica' ? FLACSO_Cohorte::POST_TYPE : FLACSO_Edicion::POST_TYPE;
+            $parent_key = $post_type === 'oferta-academica' ? FLACSO_Cohorte::META_PARENT_ID : FLACSO_Edicion::META_PARENT_ID;
             $temporal_ids = get_posts([
                 'post_type' => $temporal_type,
                 'post_status' => ['publish', 'draft', 'pending', 'private'],

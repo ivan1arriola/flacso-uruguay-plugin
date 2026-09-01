@@ -10,7 +10,7 @@ Base: `/wp-json/flacso/v1`.
 | OfertaAcademica | `/ofertas` | `/ofertas/{id}` |
 | Cohorte | `/cohortes` | `/cohortes/{id}` |
 | Seminario | `/seminarios` | `/seminarios/{id}` |
-| EdicionSeminario | `/ediciones-seminario` | `/ediciones-seminario/{id}` |
+| Edicion | `/ediciones` | `/ediciones/{id}` |
 | TablaPrecio | `/tablas-precio` | `/tablas-precio/{id}` |
 
 Todas las colecciones aceptan `GET` y `POST`. Los recursos aceptan `GET`,
@@ -21,7 +21,7 @@ Todas las colecciones aceptan `GET` y `POST`. Los recursos aceptan `GET`,
 Las colecciones temporales aceptan `parent_id`:
 
 - `/cohortes?parent_id={oferta_id}`
-- `/ediciones-seminario?parent_id={seminario_id}`
+- `/ediciones?parent_id={seminario_id}`
 
 ## Catálogo de preinscripción
 
@@ -33,7 +33,7 @@ preinscripción abierta. Los ítems tienen una de estas formas:
 {"kind":"seminario","seminario":{},"edicion":{}}
 ```
 
-`link_preinscripcion` se carga en cada Cohorte o EdicionSeminario y debe apuntar
+`link_preinscripcion` se carga en cada Cohorte o Edicion y debe apuntar
 a `https://preinscripciones.flacso.edu.uy`. El plugin no presume una estructura
 de ruta, no contiene formularios locales ni selección de flujo.
 

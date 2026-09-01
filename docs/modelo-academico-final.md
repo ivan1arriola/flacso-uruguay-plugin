@@ -12,21 +12,21 @@ ProgramaAcademico
 │   ├── Cohorte
 │   └── seminarios[] ───────────────┐
 └── Seminario                       │
-    ├── EdicionSeminario            │
+    ├── Edicion                     │
     └── componentes[] -> Seminario  │
                                      │
 OfertaAcademica <────────────────────┘
 
 Cohorte ───────────> TablaPrecio
-EdicionSeminario ──> TablaPrecio
+Edicion ───────────> TablaPrecio
 
 ProgramaAcademico.coordinacion[] ──> Docente
 Seminario.docentes_base[] ─────────> Docente
-EdicionSeminario.docentes[] ───────> Docente
+Edicion.docentes[] ────────────────> Docente
 ```
 
 `OfertaAcademica` y `Seminario` son raíces distintas. `Cohorte` sólo puede
-pertenecer a una oferta y `EdicionSeminario` sólo puede pertenecer a un
+pertenecer a una oferta y `Edicion` sólo puede pertenecer a un
 seminario. No existe una entidad temporal genérica.
 
 ## ProgramaAcademico
@@ -137,9 +137,9 @@ Tiene los mismos campos académicos estables de OfertaAcademica y además:
 `componentes` describe que un seminario se compone académicamente de otros
 seminarios. No referencia ediciones y no puede contenerse a sí mismo.
 
-## EdicionSeminario
+## Edicion
 
-CPT interno: `edicion-seminario`. No tiene URL pública propia.
+CPT interno: `edicion`. No tiene URL pública propia.
 
 | Campo | Tipo | Regla |
 |---|---|---|
@@ -176,13 +176,13 @@ la referencian.
 | `precios_nota` | HTML |
 | `mostrar_precios_dolares` | boolean |
 
-Una tabla utilizada por una Cohorte o EdicionSeminario no puede eliminarse.
+Una tabla utilizada por una Cohorte o Edicion no puede eliminarse.
 OfertaAcademica y Seminario no guardan precios.
 
 ## Preinscripción externa
 
 El plugin no renderiza ni procesa formularios de preinscripción. Cada Cohorte y
-EdicionSeminario guarda su URL real en `link_preinscripcion`; la API rechaza
+Edicion guarda su URL real en `link_preinscripcion`; la API rechaza
 cualquier host diferente de `preinscripciones.flacso.edu.uy`.
 
 No se deduce una estructura de ruta, no existe selector de flujo, formulario
@@ -194,7 +194,7 @@ interno ni fallback. El catálogo público se obtiene en
 1. Una OfertaAcademica requiere ProgramaAcademico y exactamente un tipo válido.
 2. Un Seminario requiere ProgramaAcademico.
 3. Una Cohorte requiere OfertaAcademica y su número es único dentro de esa oferta.
-4. Una EdicionSeminario requiere Seminario; no puede apuntar a OfertaAcademica.
+4. Una Edicion requiere Seminario; no puede apuntar a OfertaAcademica.
 5. Fechas de fin no pueden ser anteriores a fechas de inicio.
 6. El cierre de preinscripción no puede ser anterior a su apertura.
 7. Relaciones no admiten duplicados ni autorreferencias.

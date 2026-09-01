@@ -4,7 +4,7 @@ $source = file_get_contents(dirname(__DIR__) . '/modules/oferta-academica/includ
 $api = file_get_contents(dirname(__DIR__) . '/modules/oferta-academica/includes/class-academic-api.php');
 $deploy = file_get_contents(dirname(__DIR__) . '/.github/workflows/deploy-plugin.yml');
 
-$entities = ['programas-academicos', 'ofertas', 'cohortes', 'seminarios', 'ediciones-seminario', 'tablas-precio'];
+$entities = ['programas-academicos', 'ofertas', 'cohortes', 'seminarios', 'ediciones', 'tablas-precio'];
 foreach ($entities as $entity) {
     if (strpos($source, "'{$entity}' =>") === false) {
         fwrite(STDERR, "Fallo: falta entidad REST {$entity}\n");

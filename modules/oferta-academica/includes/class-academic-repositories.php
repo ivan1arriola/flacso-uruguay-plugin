@@ -47,13 +47,13 @@ final class FLACSO_Academic_Repository {
                     'acredita_maestria', 'acredita_doctorado', 'docentes_base', 'componentes',
                 ],
             ],
-            'ediciones-seminario' => [
-                'post_type' => FLACSO_Edicion_Seminario::POST_TYPE,
+            'ediciones' => [
+                'post_type' => FLACSO_Edicion::POST_TYPE,
                 'fields' => [
                     'seminario_id', 'anio', 'fecha_inicio', 'fecha_fin', 'estado', 'modalidad',
                     'encuentros_sincronicos', 'docentes', 'tabla_precio_id',
                     'link_preinscripcion', 'preinscripcion_desde', 'preinscripcion_hasta',
-                    'mensaje_preinscripcion_abierta', 'mensaje_preinscripcion_cerrada',
+                    'dias_cierre_post_inicio', 'mensaje_preinscripcion_abierta', 'mensaje_preinscripcion_cerrada',
                     'mostrar_en_formulario', 'ediciones_componentes',
                 ],
             ],
@@ -269,7 +269,7 @@ final class FLACSO_Academic_Repository {
         $relation_rules = [
             'seminarios' => ['seminario_id', FLACSO_Seminario::POST_TYPE],
             'componentes' => ['seminario_id', FLACSO_Seminario::POST_TYPE],
-            'ediciones_componentes' => ['edicion_id', FLACSO_Edicion_Seminario::POST_TYPE],
+            'ediciones_componentes' => ['edicion_id', FLACSO_Edicion::POST_TYPE],
         ];
         foreach ($relation_rules as $field => $rule) {
             if (!array_key_exists($field, $payload) || !is_array($payload[$field])) {
@@ -301,8 +301,8 @@ final class FLACSO_Preinscripcion {
         $hasta = get_post_meta($edition_id, 'preinscripcion_hasta', true) ?: null;
         if (!$hasta) {
             $fecha_inicio = (string) get_post_meta($edition_id, 'fecha_inicio', true);
-            if ($fecha_inicio !== '' && class_exists('FLACSO_Edicion_Seminario')) {
-                $days = FLACSO_Edicion_Seminario::get_days_after_start_limit($edition_id);
+            if ($fecha_inicio !== '' && class_exists('FLACSO_Edicion')) {
+                $days = FLACSO_Edicion::get_days_after_start_limit($edition_id);
                 $closing = strtotime($fecha_inicio . ' +' . $days . ' days 23:59:59');
                 if ($closing) {
                     $hasta = date('Y-m-d H:i:s', $closing);
@@ -310,7 +310,7 @@ final class FLACSO_Preinscripcion {
             }
         }
         return [
-            'abierta' => FLACSO_Edicion_Seminario::accepts_registration($edition_id),
+            'abierta' => FLACSO_Edicion::accepts_registration($edition_id),
             'url' => get_post_meta($edition_id, 'link_preinscripcion', true) ?: null,
             'desde' => get_post_meta($edition_id, 'preinscripcion_desde', true) ?: null,
             'hasta' => $hasta,
