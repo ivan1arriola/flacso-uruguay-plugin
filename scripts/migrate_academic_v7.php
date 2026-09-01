@@ -542,17 +542,21 @@ try {
     $comp_json = load_json($data_dir . '/staging_local/componentes_seminario.json');
     $comp_grouped = [];
     foreach ($comp_json as $c) {
-        $padre_id = (int)str_replace('seminario:', '', $c['seminario_padre_source_key']);
-        $hijo_id = (int)str_replace('seminario:', '', $c['seminario_hijo_source_key']);
+        $padre_key = $c['seminario_padre_source_key'] ?? $c['seminario_source_key'] ?? '';
+        $hijo_key = $c['seminario_hijo_source_key'] ?? $c['componente_source_key'] ?? '';
+        $padre_id = (int)str_replace('seminario:', '', (string)$padre_key);
+        $hijo_id = (int)str_replace('seminario:', '', (string)$hijo_key);
         $hijo_id = $sem_canonical_alias[$hijo_id] ?? $hijo_id;
 
-        if (!isset($comp_grouped[$padre_id])) {
-            $comp_grouped[$padre_id] = [];
+        if ($padre_id && $hijo_id) {
+            if (!isset($comp_grouped[$padre_id])) {
+                $comp_grouped[$padre_id] = [];
+            }
+            $comp_grouped[$padre_id][] = [
+                'seminario_id' => $hijo_id,
+                'orden' => (int)($c['orden'] ?? count($comp_grouped[$padre_id])),
+            ];
         }
-        $comp_grouped[$padre_id][] = [
-            'seminario_id' => $hijo_id,
-            'orden' => (int)($c['orden'] ?? count($comp_grouped[$padre_id])),
-        ];
     }
     foreach ($comp_grouped as $padre_id => $comps) {
         echo "  - Seminario compuesto #$padre_id: guardando " . count($comps) . " componentes.\n";
