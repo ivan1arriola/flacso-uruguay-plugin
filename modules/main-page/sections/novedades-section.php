@@ -2701,23 +2701,7 @@ if (!function_exists('flacso_section_novedades_get_posts')) {
         }
 
         $query = new WP_Query($query_args);
-        $forms_args = [
-            'post_type'              => 'flacso_hook_form',
-            'post_status'            => 'publish',
-            'posts_per_page'         => -1,
-            'ignore_sticky_posts'    => 1,
-            'no_found_rows'          => true,
-            'meta_key'               => '_flacso_hook_show_on_home',
-            'meta_value'             => '1',
-        ];
-        if ($search_term !== '') {
-            $forms_args['s'] = $search_term;
-        }
-        $forms_query = new WP_Query($forms_args);
-        $posts = array_merge($query->posts, $forms_query->posts);
-        usort($posts, static function ($left, $right) {
-            return strcmp($right->post_date_gmt, $left->post_date_gmt);
-        });
+        $posts = $query->posts;
 
         $posts_per_page = max(1, (int) $posts_per_page);
         $paged = max(1, (int) $paged);

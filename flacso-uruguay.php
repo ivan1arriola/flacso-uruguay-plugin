@@ -141,7 +141,6 @@ class FLACSO_Uruguay_Plugin {
         $loader->load_module('convenios');  // CPT Convenios y migracion desde entradas
         $loader->load_module('oferta-academica'); // Oferta Academica
         $loader->load_module('formularios'); // Formularios
-        $loader->load_module('formularios-webhook'); // Formularios configurables enviados por webhook
         $loader->load_module('charlas-abiertas'); // Charlas Abiertas
         $loader->load_module('posgrados');  // Posgrados
         $loader->load_module('shortcodes'); // Shortcodes
