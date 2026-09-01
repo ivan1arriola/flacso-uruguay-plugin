@@ -16,6 +16,7 @@ flacso_safe_require('modules/oferta-academica/includes/class-cpt-oferta-academic
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-admin-table-layout.php');
 flacso_safe_require('modules/oferta-academica/includes/class-cpt-programa-academico.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-academica.php');
+flacso_safe_require('modules/oferta-academica/includes/class-oferta-admin-fields.php');
 flacso_safe_require('modules/oferta-academica/includes/class-cohorte.php');
 flacso_safe_require('modules/oferta-academica/includes/class-cpt-tabla-precio.php');
 flacso_safe_require('modules/oferta-academica/includes/class-tabla-precio-schema.php');
@@ -41,6 +42,7 @@ add_action('init', static function (): void {
     Oferta_Taxonomies::init();
 }, 5);
 
+FLACSO_Oferta_Admin_Fields::init();
 Tabla_Precio_Schema::init();
 FLACSO_Academic_API::init();
 
