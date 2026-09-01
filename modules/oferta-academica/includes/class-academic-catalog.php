@@ -123,17 +123,52 @@ final class FLACSO_Academic_Catalog {
     }
 
     private static function current_item(array $items): ?array {
+        if (empty($items)) {
+            return null;
+        }
+
+        $today = function_exists('current_time') ? current_time('Y-m-d') : date('Y-m-d');
+
+        // 1. Edición con preinscripción abierta
+        foreach ($items as $item) {
+            if (!empty($item['preinscripcion']['abierta'])) {
+                return $item;
+            }
+        }
+
+        // 2. Edición 'en_curso'
         foreach ($items as $item) {
             if (($item['estado'] ?? '') === 'en_curso') {
                 return $item;
             }
         }
+
+        // 3. Edición 'planificada' futura más próxima a iniciar (fecha_inicio >= hoy)
+        $upcoming_planificadas = [];
+        foreach ($items as $item) {
+            if (($item['estado'] ?? '') === 'planificada') {
+                $start = (string) ($item['fecha_inicio'] ?? '');
+                if ($start !== '' && $start >= $today) {
+                    $upcoming_planificadas[] = $item;
+                }
+            }
+        }
+        if (!empty($upcoming_planificadas)) {
+            usort($upcoming_planificadas, static function (array $a, array $b): int {
+                return strcmp((string) ($a['fecha_inicio'] ?? ''), (string) ($b['fecha_inicio'] ?? ''));
+            });
+            return $upcoming_planificadas[0];
+        }
+
+        // 4. Cualquier edición 'planificada'
         foreach ($items as $item) {
             if (($item['estado'] ?? '') === 'planificada') {
                 return $item;
             }
         }
-        return null;
+
+        // 5. Fallback al primer elemento
+        return $items[0] ?? null;
     }
 }
 
