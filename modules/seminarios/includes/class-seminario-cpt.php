@@ -45,6 +45,8 @@ class Seminario_CPT
         if (is_admin()) {
             add_action('add_meta_boxes', [self::class, 'add_meta_boxes']);
             add_filter('manage_' . self::POST_TYPE . '_posts_columns', [self::class, 'register_columns'], 100);
+            add_filter('manage_edit-' . self::POST_TYPE . '_sortable_columns', [self::class, 'register_sortable_columns']);
+            add_filter('posts_clauses', [self::class, 'sort_by_edition_date'], 10, 2);
             add_action('manage_' . self::POST_TYPE . '_posts_custom_column', [self::class, 'render_column'], 10, 2);
             add_action('admin_head-edit.php', [self::class, 'admin_list_styles']);
         }
@@ -98,6 +100,49 @@ class Seminario_CPT
         return $new_columns;
     }
 
+    public static function register_sortable_columns(array $columns): array
+    {
+        $columns['edicion_actual'] = 'edicion_fecha_inicio';
+        return $columns;
+    }
+
+    /**
+     * Ordena el listado de Seminarios por la fecha de inicio más reciente de sus Ediciones.
+     * Esto permite usar el encabezado "Edición actual" como columna ordenable sin
+     * persistir información duplicada en el Seminario.
+     */
+    public static function sort_by_edition_date(array $clauses, WP_Query $query): array
+    {
+        if (
+            !$query->is_main_query()
+            || $query->get('post_type') !== self::POST_TYPE
+            || $query->get('orderby') !== 'edicion_fecha_inicio'
+        ) {
+            return $clauses;
+        }
+
+        global $wpdb;
+        $direction = strtoupper((string) $query->get('order')) === 'ASC' ? 'ASC' : 'DESC';
+        $edition_post_type = esc_sql(FLACSO_Edicion::POST_TYPE);
+
+        $latest_start = "(
+            SELECT MAX(CAST(NULLIF(fecha.meta_value, '') AS DATE))
+            FROM {$wpdb->posts} edicion
+            INNER JOIN {$wpdb->postmeta} relacion
+                ON relacion.post_id = edicion.ID
+                AND relacion.meta_key = 'seminario_id'
+            INNER JOIN {$wpdb->postmeta} fecha
+                ON fecha.post_id = edicion.ID
+                AND fecha.meta_key = 'fecha_inicio'
+            WHERE edicion.post_type = '{$edition_post_type}'
+                AND edicion.post_status IN ('publish', 'draft', 'pending', 'private')
+                AND relacion.meta_value = CAST({$wpdb->posts}.ID AS CHAR)
+        )";
+
+        $clauses['orderby'] = "{$latest_start} {$direction}, {$wpdb->posts}.post_title ASC";
+        return $clauses;
+    }
+
     private static function get_ediciones(int $post_id): array
     {
         return get_posts([
@@ -139,6 +184,21 @@ class Seminario_CPT
         return $labels[$state] ?? ucfirst(str_replace('_', ' ', $state));
     }
 
+    private static function format_uy_date(string $date): string
+    {
+        $date = trim($date);
+        if ($date === '') {
+            return '';
+        }
+
+        $parsed = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
+        if (!$parsed || $parsed->format('Y-m-d') !== $date) {
+            return $date;
+        }
+
+        return $parsed->format('d/m/Y');
+    }
+
     public static function render_column(string $column, int $post_id): void
     {
         if (!in_array($column, array('edicion_actual', 'preinscripcion'), true)) {
@@ -167,7 +227,9 @@ class Seminario_CPT
             echo '<a class="flacso-edicion-summary__title" href="' . esc_url($edit_url) . '">' . esc_html($title) . '</a>';
             echo '<span class="flacso-state flacso-state--' . esc_attr($estado) . '">' . esc_html(self::state_label($estado)) . '</span>';
             if ($inicio !== '') {
-                $date_label = $inicio . ($fin !== '' && $fin !== $inicio ? ' → ' . $fin : '');
+                $inicio_label = self::format_uy_date($inicio);
+                $fin_label = self::format_uy_date($fin);
+                $date_label = $inicio_label . ($fin_label !== '' && $fin !== $inicio ? ' → ' . $fin_label : '');
                 echo '<span class="flacso-edicion-summary__date">' . esc_html($date_label) . '</span>';
             }
             if (count($ediciones) > 1) {
@@ -287,7 +349,11 @@ class Seminario_CPT
                                 <td><strong><a href="<?php echo esc_url($edit_url); ?>">Edición <?php echo esc_html((string) $anio); ?></a></strong></td>
                                 <td><span style="font-weight:600;"><?php echo esc_html(self::state_label($estado)); ?></span></td>
                                 <td><?php echo $modalidad !== '' ? esc_html($modalidad) : '—'; ?></td>
-                                <td><?php echo $inicio ? esc_html($inicio . ($fin ? ' al ' . $fin : '')) : '—'; ?></td>
+                                <td><?php
+                                    $inicio_label = self::format_uy_date($inicio);
+                                    $fin_label = self::format_uy_date($fin);
+                                    echo $inicio_label !== '' ? esc_html($inicio_label . ($fin_label !== '' ? ' al ' . $fin_label : '')) : '—';
+                                ?></td>
                                 <td>
                                     <?php if ($link) : ?>
                                         <?php echo $abierta ? '<span style="color:#16a34a;font-weight:700;">● Abierta</span>' : '<span style="color:#64748b;">● Cerrada</span>'; ?>
