@@ -40,8 +40,6 @@ final class FLACSO_Edicion {
             'docentes'                       => ['type' => 'array', 'sanitize_callback' => [FLACSO_Seminario::class, 'sanitize_ids']],
             'tabla_precio_id'                => ['type' => 'integer', 'sanitize_callback' => 'absint'],
             'link_preinscripcion'            => ['type' => 'string', 'sanitize_callback' => [self::class, 'sanitize_registration_url']],
-            'preinscripcion_desde'           => ['type' => 'string', 'sanitize_callback' => [self::class, 'sanitize_datetime']],
-            'preinscripcion_hasta'           => ['type' => 'string', 'sanitize_callback' => [self::class, 'sanitize_datetime']],
             'dias_cierre_post_inicio'        => ['type' => 'integer', 'sanitize_callback' => 'absint'],
             'mensaje_preinscripcion_abierta' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'mensaje_preinscripcion_cerrada' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
@@ -91,11 +89,6 @@ final class FLACSO_Edicion {
         $value = sanitize_text_field((string) $value);
         $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
         return $date && $date->format('Y-m-d') === $value ? $value : '';
-    }
-
-    public static function sanitize_datetime($value): string {
-        $value = sanitize_text_field((string) $value);
-        return $value !== '' && strtotime($value) !== false ? $value : '';
     }
 
     public static function sanitize_registration_url($value): string {
@@ -194,26 +187,26 @@ final class FLACSO_Edicion {
     }
 
     /**
-     * La preinscripción en edición de seminario está abierta desde el momento que se crea
-     * y cierra automáticamente X días después de iniciado (dias_cierre_post_inicio).
+     * La preinscripción queda abierta automáticamente desde que existe la edición.
+     * Sólo una edición cancelada la cierra antes de tiempo; en cualquier otro estado
+     * cierra al finalizar el día N posterior a fecha_inicio.
      */
     public static function accepts_registration(int $edition_id, ?int $timestamp = null): bool {
         $state = self::sanitize_state(get_post_meta($edition_id, 'estado', true));
-        if (in_array($state, ['cancelada', 'finalizada'], true)) {
+        if ($state === 'cancelada') {
             return false;
         }
-        $timestamp = $timestamp ?? (function_exists('current_time') ? current_time('timestamp', true) : time());
 
+        $timestamp = $timestamp ?? (function_exists('current_time') ? current_time('timestamp', true) : time());
         $fecha_inicio = (string) get_post_meta($edition_id, 'fecha_inicio', true);
-        if ($fecha_inicio !== '') {
-            $days = self::get_days_after_start_limit($edition_id);
-            $closing_time = strtotime($fecha_inicio . ' +' . $days . ' days 23:59:59');
-            if ($closing_time && $timestamp > $closing_time) {
-                return false;
-            }
+        if ($fecha_inicio === '') {
+            return true;
         }
 
-        return true;
+        $days = self::get_days_after_start_limit($edition_id);
+        $closing_time = strtotime($fecha_inicio . ' +' . $days . ' days 23:59:59');
+
+        return !$closing_time || $timestamp <= $closing_time;
     }
 
     public static function sync_title(int $post_id): void {
@@ -269,8 +262,7 @@ final class FLACSO_Edicion {
         $tabla_precio_id = absint(get_post_meta($post->ID, 'tabla_precio_id', true));
         $docentes = (array) get_post_meta($post->ID, 'docentes', true);
         $link_preinscripcion = (string) get_post_meta($post->ID, 'link_preinscripcion', true);
-        $pre_desde = (string) get_post_meta($post->ID, 'preinscripcion_desde', true);
-        $pre_hasta = (string) get_post_meta($post->ID, 'preinscripcion_hasta', true);
+        $dias_cierre = self::get_days_after_start_limit((int) $post->ID);
 
         $seminarios = get_posts(['post_type' => 'seminario', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC']);
         $tablas = get_posts(['post_type' => 'tabla-precio', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC']);
@@ -363,18 +355,23 @@ final class FLACSO_Edicion {
             </div>
 
             <div style="background: #f1f5f9; padding: 12px 16px; border-radius: 6px;">
-                <h4 style="margin: 0 0 10px;"><?php esc_html_e('Preinscripción Externa (Portal FLACSO)', 'flacso-uruguay'); ?></h4>
+                <h4 style="margin: 0 0 10px;"><?php esc_html_e('Preinscripción', 'flacso-uruguay'); ?></h4>
+                <p style="margin: 0 0 12px; color: #475569;">
+                    <?php esc_html_e('La preinscripción se habilita automáticamente al crear la edición. No requiere fecha ni estado manual de apertura.', 'flacso-uruguay'); ?>
+                </p>
                 <div style="display: flex; flex-direction: column; gap: 10px;">
                     <div>
                         <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('URL de preinscripción:', 'flacso-uruguay'); ?></label>
                         <input type="url" name="link_preinscripcion" value="<?php echo esc_attr($link_preinscripcion); ?>" placeholder="https://preinscripciones.flacso.edu.uy/..." style="width: 100%;">
                     </div>
                     <div>
-                        <?php $dias_cierre = get_post_meta($post->ID, 'dias_cierre_post_inicio', true); ?>
-                        <label for="edicion_dias_cierre" style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Días de cierre automático tras el inicio:', 'flacso-uruguay'); ?></label>
-                        <input type="number" id="edicion_dias_cierre" name="dias_cierre_post_inicio" value="<?php echo esc_attr((string) $dias_cierre); ?>" min="0" max="365" placeholder="10 (por defecto)" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" style="width: 100%; max-width: 220px;">
+                        <label for="edicion_dias_cierre" style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Cerrar automáticamente después de:', 'flacso-uruguay'); ?></label>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <input type="number" id="edicion_dias_cierre" name="dias_cierre_post_inicio" value="<?php echo esc_attr((string) $dias_cierre); ?>" min="0" max="365" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" style="width: 100px;">
+                            <span><?php esc_html_e('días después de la fecha de inicio', 'flacso-uruguay'); ?></span>
+                        </div>
                         <p style="margin: 4px 0 0; font-size: 12px; color: #64748b;">
-                            <?php esc_html_e('La preinscripción permanece abierta desde el momento que se crea la edición y cierra automáticamente N días después de iniciado.', 'flacso-uruguay'); ?>
+                            <?php esc_html_e('Si la edición se cancela, la preinscripción se cierra inmediatamente. El estado «Finalizada» no modifica esta regla temporal.', 'flacso-uruguay'); ?>
                         </p>
                     </div>
                 </div>
@@ -428,19 +425,13 @@ final class FLACSO_Edicion {
         if (isset($_POST['link_preinscripcion'])) {
             update_post_meta($post_id, 'link_preinscripcion', self::sanitize_registration_url($_POST['link_preinscripcion']));
         }
-        if (isset($_POST['preinscripcion_desde'])) {
-            update_post_meta($post_id, 'preinscripcion_desde', self::sanitize_datetime($_POST['preinscripcion_desde']));
-        }
-        if (isset($_POST['preinscripcion_hasta'])) {
-            update_post_meta($post_id, 'preinscripcion_hasta', self::sanitize_datetime($_POST['preinscripcion_hasta']));
-        }
+
+        // Metadatos legacy: la apertura/cierre ya no se configura con fechas manuales.
+        delete_post_meta($post_id, 'preinscripcion_desde');
+        delete_post_meta($post_id, 'preinscripcion_hasta');
+
         if (isset($_POST['dias_cierre_post_inicio'])) {
-            $raw_dias = trim((string) $_POST['dias_cierre_post_inicio']);
-            if ($raw_dias === '') {
-                delete_post_meta($post_id, 'dias_cierre_post_inicio');
-            } else {
-                update_post_meta($post_id, 'dias_cierre_post_inicio', absint($raw_dias));
-            }
+            update_post_meta($post_id, 'dias_cierre_post_inicio', absint($_POST['dias_cierre_post_inicio']));
         }
 
         self::sync_title($post_id);
@@ -499,15 +490,17 @@ final class FLACSO_Edicion {
             case 'preinscripcion':
                 $url = (string) get_post_meta($post_id, 'link_preinscripcion', true);
                 $abierta = self::accepts_registration($post_id);
+                $days = self::get_days_after_start_limit($post_id);
                 if ($url) {
                     if ($abierta) {
                         echo '<span style="color:#16a34a;font-weight:700;">🟢 Abierta</span><br>';
                     } else {
                         echo '<span style="color:#94a3b8;">⚪ Cerrada</span><br>';
                     }
+                    echo '<small>' . esc_html(sprintf(__('Cierre: %d días después del inicio', 'flacso-uruguay'), $days)) . '</small><br>';
                     echo '<small><a href="' . esc_url($url) . '" target="_blank">Portal externo ↗</a></small>';
                 } else {
-                    echo '<span style="color:#94a3b8;">—</span>';
+                    echo '<span style="color:#94a3b8;">Sin enlace</span>';
                 }
                 break;
         }
@@ -553,4 +546,3 @@ final class FLACSO_Edicion {
 }
 
 class_alias('FLACSO_Edicion', 'FLACSO_Edicion_Seminario');
-
