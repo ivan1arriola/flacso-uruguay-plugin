@@ -22,6 +22,7 @@ if (!defined('FLACSO_SEMINARIO_VERSION')) {
 // Modelo final: Seminario y Edicion son entidades independientes.
 flacso_safe_require('modules/seminarios/includes/class-seminario-cpt.php');
 flacso_safe_require('modules/seminarios/includes/class-seminario.php');
+flacso_safe_require('modules/seminarios/includes/class-seminario-admin-fields.php');
 flacso_safe_require('modules/seminarios/includes/class-edicion.php');
 
 // Inicializar módulo
@@ -30,6 +31,7 @@ class Seminario_Plugin {
         add_action('init', ['Seminario_CPT', 'register'], 4);
         add_action('init', ['FLACSO_Seminario', 'register_meta'], 5);
         add_action('init', ['FLACSO_Edicion', 'register'], 5);
+        FLACSO_Seminario_Admin_Fields::init();
         add_action('after_setup_theme', function() {
             add_theme_support('post-thumbnails', ['seminario']);
         });

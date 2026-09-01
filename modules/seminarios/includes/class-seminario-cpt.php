@@ -246,7 +246,7 @@ class Seminario_CPT
             [self::class, 'render_ediciones_meta_box'],
             self::POST_TYPE,
             'normal',
-            'high'
+            'default'
         );
     }
 
