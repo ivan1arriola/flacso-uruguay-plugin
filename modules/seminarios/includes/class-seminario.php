@@ -26,7 +26,6 @@ final class FLACSO_Seminario {
             'creditos' => ['type' => 'number', 'sanitize_callback' => [self::class, 'sanitize_number']],
             'acreditacion' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'acredita_maestria' => ['type' => 'boolean', 'sanitize_callback' => [self::class, 'sanitize_boolean']],
-            'acredita_doctorado' => ['type' => 'boolean', 'sanitize_callback' => [self::class, 'sanitize_boolean']],
             'docentes_base' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_ids']],
             self::META_COMPONENTES => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_components']],
         ];

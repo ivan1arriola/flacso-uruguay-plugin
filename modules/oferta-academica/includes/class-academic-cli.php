@@ -276,7 +276,6 @@ class FLACSO_Academic_CLI_Command {
                     update_post_meta($canonical_id, 'creditos', $data['creditos'] !== null ? (float)$data['creditos'] : '');
                     update_post_meta($canonical_id, 'acreditacion', $data['acreditacion'] ?? '');
                     update_post_meta($canonical_id, 'acredita_maestria', (bool)($data['acredita_maestria'] ?? false));
-                    update_post_meta($canonical_id, 'acredita_doctorado', (bool)($data['acredita_doctorado'] ?? false));
                     update_post_meta($canonical_id, 'docentes_base', $data['docentes_base'] ?? []);
 
                     delete_post_meta($canonical_id, 'tabla_precio_id');

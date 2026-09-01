@@ -31,7 +31,7 @@ final class FLACSO_Academic_Catalog {
     public static function registration_catalog(): array {
         $items = [];
 
-        // 1. Ofertas Académicas (Doctorados, Maestrías, Especializaciones, Diplomados, Diplomas)
+        // 1. Ofertas Académicas (Maestrías, Especializaciones, Diplomados, Diplomas)
         $offers = FLACSO_Academic_Repository::list('ofertas', ['per_page' => 300]);
         foreach ($offers as $offer) {
             $offer_id = absint($offer['id'] ?? 0);

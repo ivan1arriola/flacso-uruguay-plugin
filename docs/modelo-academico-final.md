@@ -54,7 +54,6 @@ CPT: `oferta-academica`.
 
 Taxonomía cerrada `tipo-oferta-academica`:
 
-- `doctorado`
 - `maestria`
 - `especializacion`
 - `diplomado`
@@ -130,7 +129,6 @@ Tiene los mismos campos académicos estables de OfertaAcademica y además:
 |---|---|---|
 | `programa_academico_id` | integer | ProgramaAcademico obligatorio |
 | `acredita_maestria` | boolean | dato estable |
-| `acredita_doctorado` | boolean | dato estable |
 | `docentes_base` | integer[] | referencias a Docente |
 | `componentes` | object[] | `{seminario_id, orden}` |
 
