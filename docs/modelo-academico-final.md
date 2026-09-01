@@ -21,13 +21,13 @@ Cohorte ───────────> TablaPrecio
 Edicion ───────────> TablaPrecio
 
 ProgramaAcademico.coordinacion[] ──> Docente
-Seminario.docentes_base[] ─────────> Docente
 Edicion.docentes[] ────────────────> Docente
 ```
 
 `OfertaAcademica` y `Seminario` son raíces distintas. `Cohorte` sólo puede
 pertenecer a una oferta y `Edicion` sólo puede pertenecer a un
-seminario. No existe una entidad temporal genérica.
+seminario. Los docentes pertenecen a la `Edicion`. En caso de un `Seminario Integrado`,
+los docentes, encuentros y fechas de la edición se obtienen de forma transitiva de sus componentes.
 
 ## ProgramaAcademico
 
@@ -131,11 +131,15 @@ Tiene los mismos campos académicos estables de OfertaAcademica y además:
 | `programa_academico_id` | integer | ProgramaAcademico obligatorio |
 | `acredita_maestria` | boolean | dato estable |
 | `acredita_doctorado` | boolean | dato estable |
-| `docentes_base` | integer[] | referencias a Docente |
 | `componentes` | object[] | `{seminario_id, orden}` |
 
-`componentes` describe que un seminario se compone académicamente de otros
-seminarios. No referencia ediciones y no puede contenerse a sí mismo.
+`Seminario` no guarda docentes; el equipo docente pertenece exclusivamente a la
+`Edicion`. `componentes` describe que un seminario se compone académicamente de
+otros seminarios (Seminario Integrado). En este caso, el seminario tiene de forma
+transitiva lo que tengan sus componentes, y la edición de un Seminario Integrado
+hereda de forma transitiva los docentes, encuentros sincrónicos y fechas de las
+ediciones de sus componentes. No referencia ediciones directamente y no puede
+contenerse a sí mismo.
 
 ## Edicion
 

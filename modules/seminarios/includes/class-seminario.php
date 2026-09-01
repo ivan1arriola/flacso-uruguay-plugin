@@ -27,7 +27,6 @@ final class FLACSO_Seminario {
             'acreditacion' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'acredita_maestria' => ['type' => 'boolean', 'sanitize_callback' => [self::class, 'sanitize_boolean']],
             'acredita_doctorado' => ['type' => 'boolean', 'sanitize_callback' => [self::class, 'sanitize_boolean']],
-            'docentes_base' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_ids']],
             self::META_COMPONENTES => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_components']],
         ];
         foreach ($definitions as $key => $definition) {
