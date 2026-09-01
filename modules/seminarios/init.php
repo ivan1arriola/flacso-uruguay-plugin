@@ -26,6 +26,7 @@ flacso_safe_require('modules/seminarios/includes/class-seminario-integrado.php')
 flacso_safe_require('modules/seminarios/includes/class-seminario-integrado-meta-safe.php');
 flacso_safe_require('modules/seminarios/includes/class-seminario-integrado-workload.php');
 flacso_safe_require('modules/seminarios/includes/class-seminario-integrado-registration.php');
+flacso_safe_require('modules/seminarios/includes/class-seminario-sort-safe.php');
 flacso_safe_require('modules/seminarios/includes/class-seminario-admin-fields.php');
 flacso_safe_require('modules/seminarios/includes/class-edicion.php');
 flacso_safe_require('modules/seminarios/includes/class-edicion-admin-fields.php');
@@ -45,6 +46,7 @@ class Seminario_Plugin {
         add_filter('get_post_metadata', [FLACSO_Seminario_Integrado_Meta_Safe::class, 'filter_derived_metadata'], 20, 5);
         FLACSO_Seminario_Integrado_Workload::init();
         FLACSO_Seminario_Integrado_Registration::init();
+        FLACSO_Seminario_Sort_Safe::init();
 
         FLACSO_Seminario_Admin_Fields::init();
         FLACSO_Edicion_Admin_Fields::init();
