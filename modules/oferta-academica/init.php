@@ -22,6 +22,8 @@ flacso_safe_require('modules/oferta-academica/includes/class-oferta-taxonomies.p
 flacso_safe_require('modules/oferta-academica/includes/class-academic-repositories.php');
 flacso_safe_require('modules/oferta-academica/includes/class-academic-catalog.php');
 flacso_safe_require('modules/oferta-academica/includes/class-academic-api.php');
+flacso_safe_require('modules/oferta-academica/includes/class-django-api-client.php');
+flacso_safe_require('modules/oferta-academica/includes/class-django-ajax-handlers.php');
 
 if (defined('WP_CLI') && WP_CLI) {
     flacso_safe_require('modules/oferta-academica/includes/class-academic-cli.php');

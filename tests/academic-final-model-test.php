@@ -43,7 +43,7 @@ $relations = FLACSO_Oferta_Academica::sanitize_seminars([
 ]);
 final_assert(count($relations) === 1 && $relations[0]['seminario_id'] === 8, 'relaciones de seminario sin duplicados');
 
-// Pruebas de la regla automática de preinscripción de Edicion.
+// Pruebas del estado explícito de preinscripción de Edición.
 if (!function_exists('get_option')) {
     function get_option($k, $d = false) { return $d; }
 }
@@ -53,6 +53,16 @@ if (!function_exists('get_post_meta')) {
         return $GLOBALS['flacso_test_post_meta'][$id][$k] ?? '';
     }
 }
+if (!function_exists('metadata_exists')) {
+    function metadata_exists($type, $id, $key) {
+        return array_key_exists($key, $GLOBALS['flacso_test_post_meta'][$id] ?? []);
+    }
+}
+if (!function_exists('rest_sanitize_boolean')) {
+    function rest_sanitize_boolean($value) {
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+    }
+}
 
 final_assert(FLACSO_Edicion::get_days_after_start_limit(0) === 10, 'dias de cierre por defecto es 10');
 
@@ -60,35 +70,40 @@ $GLOBALS['flacso_test_post_meta'][999] = [
     'estado' => 'planificada',
 ];
 final_assert(
-    FLACSO_Edicion::accepts_registration(999, strtotime('2026-03-01 12:00:00')),
-    'una edicion creada sin fecha de inicio queda abierta automaticamente'
+    !FLACSO_Edicion::accepts_registration(999),
+    'una edición sin configuración explícita permanece cerrada'
+);
+
+$GLOBALS['flacso_test_post_meta'][1000] = [
+    'estado' => 'planificada',
+    'preinscripcion_habilitada' => true,
+];
+final_assert(
+    FLACSO_Edicion::accepts_registration(1000),
+    'una edición planificada puede tener preinscripciones abiertas'
+);
+
+$GLOBALS['flacso_test_post_meta'][1000]['preinscripcion_habilitada'] = false;
+final_assert(
+    !FLACSO_Edicion::accepts_registration(1000),
+    'el booleano explícito cierra la preinscripción'
 );
 
 $GLOBALS['flacso_test_post_meta'][1000] = [
     'estado' => 'finalizada',
-    'fecha_inicio' => '2026-03-01',
-    'dias_cierre_post_inicio' => 10,
+    'preinscripcion_habilitada' => true,
 ];
 final_assert(
-    FLACSO_Edicion::accepts_registration(1000, strtotime('2026-03-05 12:00:00')),
-    'el estado finalizada no cierra antes del limite temporal'
-);
-final_assert(
-    FLACSO_Edicion::accepts_registration(1000, strtotime('2026-03-11 23:59:59')),
-    'permanece abierta hasta el final del dia limite'
-);
-final_assert(
-    !FLACSO_Edicion::accepts_registration(1000, strtotime('2026-03-12 00:00:00')),
-    'cierra automaticamente al superar los dias configurados desde el inicio'
+    !FLACSO_Edicion::accepts_registration(1000),
+    'una edición finalizada no admite nuevas preinscripciones'
 );
 
 $GLOBALS['flacso_test_post_meta'][1001] = [
     'estado' => 'cancelada',
-    'fecha_inicio' => '2026-12-01',
-    'dias_cierre_post_inicio' => 10,
+    'preinscripcion_habilitada' => true,
 ];
 final_assert(
-    !FLACSO_Edicion::accepts_registration(1001, strtotime('2026-03-01 12:00:00')),
+    !FLACSO_Edicion::accepts_registration(1001),
     'una edicion cancelada cierra inmediatamente la preinscripcion'
 );
 

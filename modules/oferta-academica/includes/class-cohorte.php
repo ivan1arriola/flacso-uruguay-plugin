@@ -116,22 +116,12 @@ final class FLACSO_Cohorte {
         if (in_array($state, ['cancelada', 'finalizada'], true)) {
             return false;
         }
-        if (metadata_exists('post', $cohort_id, 'preinscripcion_habilitada')) {
-            if (!rest_sanitize_boolean(get_post_meta($cohort_id, 'preinscripcion_habilitada', true))) {
-                return false;
-            }
-        } else {
-            $offer_id = absint(get_post_meta($cohort_id, self::META_PARENT_ID, true));
-            if ($offer_id && metadata_exists('post', $offer_id, 'inscripciones_abiertas')) {
-                if (!rest_sanitize_boolean(get_post_meta($offer_id, 'inscripciones_abiertas', true))) {
-                    return false;
-                }
-            }
+        if (!metadata_exists('post', $cohort_id, 'preinscripcion_habilitada')) {
+            return false;
         }
-        $timestamp = $timestamp ?? current_time('timestamp', true);
-        $from = strtotime((string) get_post_meta($cohort_id, 'preinscripcion_desde', true));
-        $until = strtotime((string) get_post_meta($cohort_id, 'preinscripcion_hasta', true));
-        return (!$from || $timestamp >= $from) && (!$until || $timestamp <= $until);
+        return rest_sanitize_boolean(
+            get_post_meta($cohort_id, 'preinscripcion_habilitada', true)
+        );
     }
 
     public static function to_roman(int $number): string {
@@ -275,6 +265,8 @@ final class FLACSO_Cohorte {
         $pre_habilitada = metadata_exists('post', $post->ID, 'preinscripcion_habilitada')
             ? rest_sanitize_boolean(get_post_meta($post->ID, 'preinscripcion_habilitada', true))
             : false;
+        $pre_configurada = metadata_exists('post', $post->ID, 'preinscripcion_habilitada')
+            || $link_preinscripcion !== '';
         $modalidad = self::sanitize_modality(get_post_meta($post->ID, 'modalidad', true));
         $modalidad_descripcion = (string) get_post_meta($post->ID, 'modalidad_descripcion', true);
         $calendario_academico = (string) get_post_meta($post->ID, 'calendario_academico', true);
@@ -400,38 +392,107 @@ final class FLACSO_Cohorte {
             </div>
 
             <div style="background: #f1f5f9; padding: 12px 16px; border-radius: 6px;">
-                <h4 style="margin: 0 0 10px;"><?php esc_html_e('Preinscripción Externa (Portal FLACSO)', 'flacso-uruguay'); ?></h4>
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <label style="font-weight:600;">
-                        <input type="checkbox" name="preinscripcion_habilitada" value="1" <?php checked($pre_habilitada); ?>>
-                        <?php esc_html_e('Habilitar preinscripción para esta cohorte', 'flacso-uruguay'); ?>
-                    </label>
-                    <div>
-                        <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('URL de preinscripción:', 'flacso-uruguay'); ?></label>
-                        <input type="url" name="link_preinscripcion" value="<?php echo esc_attr($link_preinscripcion); ?>" placeholder="https://preinscripciones.flacso.edu.uy/..." style="width: 100%;">
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <div>
-                            <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Preinscripciones abiertas desde:', 'flacso-uruguay'); ?></label>
-                            <input type="datetime-local" name="preinscripcion_desde" value="<?php echo esc_attr($pre_desde); ?>" style="width: 100%;">
-                        </div>
-                        <div>
-                            <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Preinscripciones cierran el:', 'flacso-uruguay'); ?></label>
-                            <input type="datetime-local" name="preinscripcion_hasta" value="<?php echo esc_attr($pre_hasta); ?>" style="width: 100%;">
-                        </div>
-                    </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                        <div>
-                            <label style="font-weight:600;display:block;margin-bottom:4px;"><?php esc_html_e('Mensaje cuando está abierta:', 'flacso-uruguay'); ?></label>
-                            <textarea name="mensaje_preinscripcion_abierta" rows="3" style="width:100%;"><?php echo esc_textarea($mensaje_abierta); ?></textarea>
-                        </div>
-                        <div>
-                            <label style="font-weight:600;display:block;margin-bottom:4px;"><?php esc_html_e('Mensaje cuando está cerrada:', 'flacso-uruguay'); ?></label>
-                            <textarea name="mensaje_preinscripcion_cerrada" rows="3" style="width:100%;"><?php echo esc_textarea($mensaje_cerrada); ?></textarea>
-                        </div>
-                    </div>
+                <h4 style="margin: 0 0 12px;"><?php esc_html_e('Preinscripción', 'flacso-uruguay'); ?></h4>
+                <?php
+                $url_preinscripcion = FLACSO_Django_API_Client::url_preinscripcion_oferta($parent_id);
+                $nonce              = wp_create_nonce('flacso_preinscripcion_nonce');
+                if ($pre_habilitada):
+                ?>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                    <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#22c55e;"></span>
+                    <strong><?php esc_html_e('Abierta', 'flacso-uruguay'); ?></strong>
                 </div>
+                <?php if ($url_preinscripcion): ?>
+                <p style="margin:0 0 10px;font-size:12px;word-break:break-all;">
+                    <a href="<?php echo esc_url($url_preinscripcion); ?>" target="_blank"><?php echo esc_html($url_preinscripcion); ?></a>
+                </p>
+                <?php endif; ?>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <?php if ($url_preinscripcion): ?>
+                    <a href="<?php echo esc_url($url_preinscripcion); ?>" target="_blank" class="button button-secondary">
+                        <?php esc_html_e('Ver preinscripción', 'flacso-uruguay'); ?>
+                    </a>
+                    <?php endif; ?>
+                    <button type="button" id="flacso-cerrar-preinscripcion"
+                            class="button"
+                            style="color:#b91c1c;"
+                            data-cohorte-id="<?php echo esc_attr($post->ID); ?>"
+                            data-nonce="<?php echo esc_attr($nonce); ?>">
+                        <?php esc_html_e('Cerrar preinscripción', 'flacso-uruguay'); ?>
+                    </button>
+                </div>
+                <?php else: ?>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                    <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#94a3b8;"></span>
+                    <strong>
+                        <?php $pre_configurada
+                            ? esc_html_e('Cerrada', 'flacso-uruguay')
+                            : esc_html_e('No configurada', 'flacso-uruguay'); ?>
+                    </strong>
+                </div>
+                <button type="button" id="flacso-abrir-preinscripcion"
+                        class="button button-primary"
+                        data-cohorte-id="<?php echo esc_attr($post->ID); ?>"
+                        data-nonce="<?php echo esc_attr($nonce); ?>">
+                    <?php esc_html_e('Abrir preinscripción', 'flacso-uruguay'); ?>
+                </button>
+                <?php endif; ?>
+
+                <div id="flacso-preinscripcion-notice" style="margin-top:10px;display:none;"></div>
+
+                <script>
+                (function($) {
+                    function preinscripcionAction(action, btn) {
+                        btn.prop('disabled', true).text('<?php echo esc_js(__('Procesando…', 'flacso-uruguay')); ?>');
+                        $.post(ajaxurl, {
+                            action:     action,
+                            cohorte_id: btn.data('cohorte-id'),
+                            _wpnonce:   btn.data('nonce'),
+                        }, function(res) {
+                            var notice = $('#flacso-preinscripcion-notice');
+                            if (res.success) {
+                                notice.css('color', '#166534').text(res.data.message).show();
+                                setTimeout(function() { location.reload(); }, 1200);
+                            } else {
+                                notice.css('color', '#991b1b').text(res.data.message || '<?php echo esc_js(__('Error al comunicarse con el sistema de preinscripciones.', 'flacso-uruguay')); ?>').show();
+                                btn.prop('disabled', false).text(btn.data('original-text'));
+                            }
+                        }).fail(function() {
+                            var notice = $('#flacso-preinscripcion-notice');
+                            notice.css('color', '#991b1b').text('<?php echo esc_js(__('Error de red. Inténtelo nuevamente.', 'flacso-uruguay')); ?>').show();
+                            btn.prop('disabled', false).text(btn.data('original-text'));
+                        });
+                    }
+
+                    $(document).on('click', '#flacso-abrir-preinscripcion', function() {
+                        var btn = $(this);
+                        btn.data('original-text', btn.text());
+                        preinscripcionAction('flacso_abrir_preinscripcion_cohorte', btn);
+                    });
+                    $(document).on('click', '#flacso-cerrar-preinscripcion', function() {
+                        if (!confirm('<?php echo esc_js(__('¿Cerrar la preinscripción para esta cohorte?', 'flacso-uruguay')); ?>')) return;
+                        var btn = $(this);
+                        btn.data('original-text', btn.text());
+                        preinscripcionAction('flacso_cerrar_preinscripcion_cohorte', btn);
+                    });
+                })(jQuery);
+                </script>
+
+                <?php if (is_admin() && $pre_habilitada): ?>
+                <?php /* Campo oculto conservado para compatibilidad — no editar manualmente */ ?>
+                <input type="hidden" name="link_preinscripcion" value="<?php echo esc_attr($link_preinscripcion); ?>">
+                <?php endif; ?>
+
+                <p style="font-size:11px;color:#64748b;margin:12px 0 0;">
+                    <?php printf(
+                        esc_html__('La URL de preinscripción es: %s', 'flacso-uruguay'),
+                        $url_preinscripcion
+                            ? '<code>' . esc_html($url_preinscripcion) . '</code>'
+                            : esc_html__('(configure FLACSO_DJANGO_API_URL en wp-config.php)', 'flacso-uruguay')
+                    ); ?>
+                </p>
             </div>
+
         </div>
         <?php
     }
@@ -489,7 +550,6 @@ final class FLACSO_Cohorte {
             self::update_or_delete_meta($post_id, 'preinscripcion_hasta', self::sanitize_datetime($_POST['preinscripcion_hasta']));
         }
 
-        update_post_meta($post_id, 'preinscripcion_habilitada', isset($_POST['preinscripcion_habilitada']));
         $typed_fields = [
             'modalidad' => [self::class, 'sanitize_modality'],
             'modalidad_descripcion' => 'wp_kses_post',

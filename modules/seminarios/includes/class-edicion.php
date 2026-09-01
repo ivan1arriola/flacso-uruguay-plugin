@@ -40,6 +40,7 @@ final class FLACSO_Edicion {
             'docentes'                       => ['type' => 'array', 'sanitize_callback' => [FLACSO_Seminario::class, 'sanitize_ids']],
             'tabla_precio_id'                => ['type' => 'integer', 'sanitize_callback' => 'absint'],
             'link_preinscripcion'            => ['type' => 'string', 'sanitize_callback' => [self::class, 'sanitize_registration_url']],
+            'preinscripcion_habilitada'      => ['type' => 'boolean', 'sanitize_callback' => [FLACSO_Seminario::class, 'sanitize_boolean']],
             'dias_cierre_post_inicio'        => ['type' => 'integer', 'sanitize_callback' => 'absint'],
             'mensaje_preinscripcion_abierta' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'mensaje_preinscripcion_cerrada' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
@@ -186,27 +187,17 @@ final class FLACSO_Edicion {
         return false;
     }
 
-    /**
-     * La preinscripción queda abierta automáticamente desde que existe la edición.
-     * Sólo una edición cancelada la cierra antes de tiempo; en cualquier otro estado
-     * cierra al finalizar el día N posterior a fecha_inicio.
-     */
     public static function accepts_registration(int $edition_id, ?int $timestamp = null): bool {
         $state = self::sanitize_state(get_post_meta($edition_id, 'estado', true));
-        if ($state === 'cancelada') {
+        if (in_array($state, ['cancelada', 'finalizada'], true)) {
             return false;
         }
-
-        $timestamp = $timestamp ?? (function_exists('current_time') ? current_time('timestamp', true) : time());
-        $fecha_inicio = (string) get_post_meta($edition_id, 'fecha_inicio', true);
-        if ($fecha_inicio === '') {
-            return true;
+        if (!metadata_exists('post', $edition_id, 'preinscripcion_habilitada')) {
+            return false;
         }
-
-        $days = self::get_days_after_start_limit($edition_id);
-        $closing_time = strtotime($fecha_inicio . ' +' . $days . ' days 23:59:59');
-
-        return !$closing_time || $timestamp <= $closing_time;
+        return rest_sanitize_boolean(
+            get_post_meta($edition_id, 'preinscripcion_habilitada', true)
+        );
     }
 
     public static function sync_title(int $post_id): void {
@@ -262,7 +253,11 @@ final class FLACSO_Edicion {
         $tabla_precio_id = absint(get_post_meta($post->ID, 'tabla_precio_id', true));
         $docentes = (array) get_post_meta($post->ID, 'docentes', true);
         $link_preinscripcion = (string) get_post_meta($post->ID, 'link_preinscripcion', true);
-        $dias_cierre = self::get_days_after_start_limit((int) $post->ID);
+        $pre_habilitada = metadata_exists('post', $post->ID, 'preinscripcion_habilitada')
+            ? rest_sanitize_boolean(get_post_meta($post->ID, 'preinscripcion_habilitada', true))
+            : false;
+        $pre_configurada = metadata_exists('post', $post->ID, 'preinscripcion_habilitada')
+            || $link_preinscripcion !== '';
 
         $seminarios = get_posts(['post_type' => 'seminario', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC']);
         $tablas = get_posts(['post_type' => 'tabla-precio', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC']);
@@ -355,26 +350,106 @@ final class FLACSO_Edicion {
             </div>
 
             <div style="background: #f1f5f9; padding: 12px 16px; border-radius: 6px;">
-                <h4 style="margin: 0 0 10px;"><?php esc_html_e('Preinscripción', 'flacso-uruguay'); ?></h4>
-                <p style="margin: 0 0 12px; color: #475569;">
-                    <?php esc_html_e('La preinscripción se habilita automáticamente al crear la edición. No requiere fecha ni estado manual de apertura.', 'flacso-uruguay'); ?>
-                </p>
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <div>
-                        <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('URL de preinscripción:', 'flacso-uruguay'); ?></label>
-                        <input type="url" name="link_preinscripcion" value="<?php echo esc_attr($link_preinscripcion); ?>" placeholder="https://preinscripciones.flacso.edu.uy/..." style="width: 100%;">
-                    </div>
-                    <div>
-                        <label for="edicion_dias_cierre" style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Cerrar automáticamente después de:', 'flacso-uruguay'); ?></label>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <input type="number" id="edicion_dias_cierre" name="dias_cierre_post_inicio" value="<?php echo esc_attr((string) $dias_cierre); ?>" min="0" max="365" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" style="width: 100px;">
-                            <span><?php esc_html_e('días después de la fecha de inicio', 'flacso-uruguay'); ?></span>
-                        </div>
-                        <p style="margin: 4px 0 0; font-size: 12px; color: #64748b;">
-                            <?php esc_html_e('Si la edición se cancela, la preinscripción se cierra inmediatamente. El estado «Finalizada» no modifica esta regla temporal.', 'flacso-uruguay'); ?>
-                        </p>
-                    </div>
+                <h4 style="margin: 0 0 12px;"><?php esc_html_e('Preinscripción', 'flacso-uruguay'); ?></h4>
+                <?php
+                $url_preinscripcion = FLACSO_Django_API_Client::url_preinscripcion_seminario($parent_id);
+                $nonce = wp_create_nonce('flacso_preinscripcion_nonce');
+                if ($pre_habilitada):
+                ?>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                    <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#22c55e;"></span>
+                    <strong><?php esc_html_e('Abierta', 'flacso-uruguay'); ?></strong>
                 </div>
+                <?php if ($url_preinscripcion): ?>
+                <p style="margin:0 0 10px;font-size:12px;word-break:break-all;">
+                    <a href="<?php echo esc_url($url_preinscripcion); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html($url_preinscripcion); ?></a>
+                </p>
+                <?php endif; ?>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <?php if ($url_preinscripcion): ?>
+                    <a href="<?php echo esc_url($url_preinscripcion); ?>" target="_blank" rel="noopener noreferrer" class="button button-secondary">
+                        <?php esc_html_e('Ver preinscripción', 'flacso-uruguay'); ?>
+                    </a>
+                    <?php endif; ?>
+                    <button type="button" id="flacso-cerrar-preinscripcion-edicion"
+                            class="button" style="color:#b91c1c;"
+                            data-edicion-id="<?php echo esc_attr($post->ID); ?>"
+                            data-nonce="<?php echo esc_attr($nonce); ?>">
+                        <?php esc_html_e('Cerrar preinscripción', 'flacso-uruguay'); ?>
+                    </button>
+                </div>
+                <?php else: ?>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                    <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#94a3b8;"></span>
+                    <strong>
+                        <?php $pre_configurada
+                            ? esc_html_e('Cerrada', 'flacso-uruguay')
+                            : esc_html_e('No configurada', 'flacso-uruguay'); ?>
+                    </strong>
+                </div>
+                <button type="button" id="flacso-abrir-preinscripcion-edicion"
+                        class="button button-primary"
+                        data-edicion-id="<?php echo esc_attr($post->ID); ?>"
+                        data-nonce="<?php echo esc_attr($nonce); ?>">
+                    <?php esc_html_e('Abrir preinscripción', 'flacso-uruguay'); ?>
+                </button>
+                <?php endif; ?>
+
+                <div id="flacso-preinscripcion-edicion-notice" style="margin-top:10px;display:none;"></div>
+
+                <script>
+                (function($) {
+                    function preinscripcionEdicionAction(action, btn) {
+                        var originalText = btn.text();
+                        btn.prop('disabled', true).text('<?php echo esc_js(__('Procesando…', 'flacso-uruguay')); ?>');
+                        $.post(ajaxurl, {
+                            action: action,
+                            edicion_id: btn.data('edicion-id'),
+                            _wpnonce: btn.data('nonce')
+                        }, function(res) {
+                            var notice = $('#flacso-preinscripcion-edicion-notice');
+                            if (res.success) {
+                                notice.css('color', '#166534').text(res.data.message).show();
+                                setTimeout(function() { location.reload(); }, 1200);
+                            } else {
+                                notice.css('color', '#991b1b').text(
+                                    (res.data && res.data.message)
+                                        ? res.data.message
+                                        : '<?php echo esc_js(__('Error al comunicarse con el sistema de preinscripciones.', 'flacso-uruguay')); ?>'
+                                ).show();
+                                btn.prop('disabled', false).text(originalText);
+                            }
+                        }).fail(function() {
+                            $('#flacso-preinscripcion-edicion-notice')
+                                .css('color', '#991b1b')
+                                .text('<?php echo esc_js(__('Error de red. Inténtelo nuevamente.', 'flacso-uruguay')); ?>')
+                                .show();
+                            btn.prop('disabled', false).text(originalText);
+                        });
+                    }
+
+                    $(document).on('click', '#flacso-abrir-preinscripcion-edicion', function() {
+                        preinscripcionEdicionAction('flacso_abrir_preinscripcion_edicion', $(this));
+                    });
+                    $(document).on('click', '#flacso-cerrar-preinscripcion-edicion', function() {
+                        if (!confirm('<?php echo esc_js(__('¿Cerrar la preinscripción para esta edición?', 'flacso-uruguay')); ?>')) return;
+                        preinscripcionEdicionAction('flacso_cerrar_preinscripcion_edicion', $(this));
+                    });
+                })(jQuery);
+                </script>
+
+                <?php if ($link_preinscripcion !== ''): ?>
+                <input type="hidden" name="link_preinscripcion" value="<?php echo esc_attr($link_preinscripcion); ?>">
+                <?php endif; ?>
+
+                <p style="font-size:11px;color:#64748b;margin:12px 0 0;">
+                    <?php printf(
+                        esc_html__('La URL de preinscripción es: %s', 'flacso-uruguay'),
+                        $url_preinscripcion
+                            ? '<code>' . esc_html($url_preinscripcion) . '</code>'
+                            : esc_html__('(configure FLACSO_DJANGO_API_URL en wp-config.php)', 'flacso-uruguay')
+                    ); ?>
+                </p>
             </div>
         </div>
         <?php

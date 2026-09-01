@@ -118,7 +118,9 @@ final class FLACSO_Academic_Catalog {
                     'anio_inicio'         => absint($chosen_cohort['anio_inicio'] ?: ($chosen_cohort['fecha_inicio'] ? date('Y', strtotime($chosen_cohort['fecha_inicio'])) : 2026)),
                     'fecha_inicio'        => (string) ($chosen_cohort['fecha_inicio'] ?? '') ?: null,
                     'fecha_fin'           => (string) ($chosen_cohort['fecha_fin'] ?? '') ?: null,
-                    'estado'              => (string) ($chosen_cohort['estado'] ?? 'planificada'),
+                    // En este DTO, estado describe la apertura transaccional,
+                    // no el estado académico separado de la cohorte.
+                    'estado'              => 'preinscripciones_abiertas',
                     'link_preinscripcion' => (string) ($chosen_cohort['preinscripcion']['url'] ?? ''),
                     'actualizado'         => $modified ?: date('c'),
                 ],
@@ -161,7 +163,8 @@ final class FLACSO_Academic_Catalog {
                     'anio'                => absint($chosen_edition['anio'] ?: ($chosen_edition['fecha_inicio'] ? date('Y', strtotime($chosen_edition['fecha_inicio'])) : 2026)),
                     'fecha_inicio'        => (string) ($chosen_edition['fecha_inicio'] ?? '') ?: null,
                     'fecha_fin'           => (string) ($chosen_edition['fecha_fin'] ?? '') ?: null,
-                    'estado'              => (string) ($chosen_edition['estado'] ?? 'planificada'),
+                    // El catálogo defensivo solo publica instancias abiertas.
+                    'estado'              => 'preinscripciones_abiertas',
                     'link_preinscripcion' => (string) ($chosen_edition['preinscripcion']['url'] ?? ''),
                     'actualizado'         => $modified ?: date('c'),
                 ],
