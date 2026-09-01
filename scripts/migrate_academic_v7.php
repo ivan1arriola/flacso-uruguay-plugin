@@ -300,6 +300,9 @@ try {
     foreach ($seminarios_json as $sem) {
         $source_key = $sem['source_key'];
         $canonical_id = (int)str_replace('seminario:', '', $source_key);
+        if (in_array($canonical_id, $duplicates_to_delete, true)) {
+            continue;
+        }
         $prog_source = $sem['programa_source_key'];
         $prog_id = $programa_map[$prog_source] ?? null;
 
@@ -333,14 +336,12 @@ try {
             ensure_meta($pdo, $canonical_id, 'presentacion', $data['presentacion'] ?? '');
             ensure_meta($pdo, $canonical_id, 'objetivo_general', $data['objetivo_general'] ?? '');
             ensure_meta($pdo, $canonical_id, 'objetivos_especificos', $data['objetivos_especificos'] ?? []);
-            ensure_meta($pdo, $canonical_id, 'composicion_academica', $data['composicion_academica'] ?? []);
-            ensure_meta($pdo, $canonical_id, 'forma_aprobacion', $data['forma_aprobacion'] ?? '');
-            ensure_meta($pdo, $canonical_id, 'carga_horaria', $data['carga_horaria'] !== null ? (float)$data['carga_horaria'] : '');
-            ensure_meta($pdo, $canonical_id, 'carga_horaria_descripcion', $data['carga_horaria_descripcion'] ?? '');
-            ensure_meta($pdo, $canonical_id, 'creditos', $data['creditos'] !== null ? (float)$data['creditos'] : '');
-            ensure_meta($pdo, $canonical_id, 'acreditacion', $data['acreditacion'] ?? '');
-            ensure_meta($pdo, $canonical_id, 'acredita_maestria', (bool)($data['acredita_maestria'] ?? false));
-            ensure_meta($pdo, $canonical_id, 'acredita_doctorado', (bool)($data['acredita_doctorado'] ?? false));
+            ensure_meta($pdo, $canonical_id, 'destinatarios', $data['destinatarios'] ?? '');
+            ensure_meta($pdo, $canonical_id, 'requisitos_ingreso', $data['requisitos_ingreso'] ?? '');
+            ensure_meta($pdo, $canonical_id, 'creditos', (int)($data['creditos'] ?? 0));
+            ensure_meta($pdo, $canonical_id, 'carga_horaria', (int)($data['carga_horaria'] ?? 0));
+            ensure_meta($pdo, $canonical_id, 'codigo_seminario', $data['codigo_seminario'] ?? '');
+            ensure_meta($pdo, $canonical_id, 'tipo_seminario', $data['tipo_seminario'] ?? 'general');
             ensure_meta($pdo, $canonical_id, 'docentes_base', $data['docentes_base'] ?? []);
 
             // Purgar precios y campos obsoletos en seminario
@@ -348,6 +349,7 @@ try {
             remove_obsolete_taxonomies($pdo, $canonical_id);
         }
     }
+    echo "  Total seminarios mapeados: " . count($seminario_map) . "\n";
 
     // =========================================================================
     // FASE 5: DEPURACIÓN Y RECREACIÓN DE COHORTES (cohorte)
@@ -430,7 +432,7 @@ try {
     // =========================================================================
     // FASE 6: CREACIÓN DE EDICIONES DE SEMINARIO (edicion)
     // =========================================================================
-    echo "\n▶ FASE 6: Creando 54 Ediciones de Seminario...\n";
+    echo "\n▶ FASE 6: Creando Ediciones de Seminario...\n";
     $ediciones_json = load_json($data_dir . '/staging_local/ediciones_seminario.json');
     $edicion_map = [];
 
@@ -448,6 +450,9 @@ try {
         $source_key = $ed['source_key'];
         $sem_source = $ed['seminario_source_key'];
         $sem_id = (int)str_replace('seminario:', '', $sem_source);
+        if (in_array($sem_id, $duplicates_to_delete, true)) {
+            continue;
+        }
         $d = $ed['data'];
 
         $title = $d['nombre'];
