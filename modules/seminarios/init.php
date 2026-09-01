@@ -22,6 +22,7 @@ if (!defined('FLACSO_SEMINARIO_VERSION')) {
 // Modelo final: Seminario y Edicion son entidades independientes.
 flacso_safe_require('modules/seminarios/includes/class-seminario-cpt.php');
 flacso_safe_require('modules/seminarios/includes/class-seminario.php');
+flacso_safe_require('modules/seminarios/includes/class-seminario-integrado.php');
 flacso_safe_require('modules/seminarios/includes/class-seminario-admin-fields.php');
 flacso_safe_require('modules/seminarios/includes/class-edicion.php');
 flacso_safe_require('modules/seminarios/includes/class-edicion-admin-fields.php');
