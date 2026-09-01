@@ -22,6 +22,6 @@ oferta_admin_assert(strpos($admin, "'carga_horaria'") !== false, 'debe editar ca
 oferta_admin_assert(strpos($admin, "'creditos'") !== false, 'debe editar créditos');
 oferta_admin_assert(strpos($admin, "'perfil_ingreso_html'") !== false, 'debe editar perfil de ingreso');
 oferta_admin_assert(strpos($admin, 'wp_verify_nonce') !== false, 'debe validar nonce');
-oferta_admin_assert(strpos($admin, "current_user_can('edit_post', $post_id)") !== false, 'debe validar permisos');
+oferta_admin_assert(strpos($admin, "current_user_can('edit_post', \$post_id)") !== false, 'debe validar permisos');
 
 echo "OK oferta admin fields contract\n";
