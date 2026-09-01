@@ -7,6 +7,7 @@ $ajax = file_get_contents($root . '/modules/oferta-academica/includes/class-djan
 $cohorte = file_get_contents($root . '/modules/oferta-academica/includes/class-cohorte.php');
 $edicion = file_get_contents($root . '/modules/seminarios/includes/class-edicion.php');
 $catalog = file_get_contents($root . '/modules/oferta-academica/includes/class-academic-catalog.php');
+$offer_admin = file_get_contents($root . '/modules/oferta-academica/includes/class-cpt-oferta-academica.php');
 
 function django_pre_assert($condition, string $message): void {
     if (!$condition) {
@@ -37,5 +38,12 @@ django_pre_assert(strpos($edicion, 'No configurada') !== false, 'Edición distin
 django_pre_assert(strpos($edicion, "'preinscripcion_habilitada'") !== false, 'Edición registra el booleano de apertura');
 django_pre_assert(strpos($edicion, 'flacso-abrir-preinscripcion-edicion') !== false, 'Edición muestra el control de apertura');
 django_pre_assert(substr_count($catalog, "'estado'              => 'preinscripciones_abiertas'") === 2, 'el catálogo defensivo declara solo instancias abiertas');
+django_pre_assert(strpos($offer_admin, 'Cohortes y preinscripción') !== false, 'el listado de ofertas identifica la gestión de preinscripción');
+django_pre_assert(strpos($offer_admin, 'Apertura heredada') !== false, 'el listado distingue aperturas heredadas');
+django_pre_assert(strpos($offer_admin, 'Confirmar apertura') !== false, 'el listado permite confirmar aperturas heredadas');
+django_pre_assert(strpos($offer_admin, 'flacso-pre-action') !== false, 'el listado expone controles AJAX de preinscripción');
+django_pre_assert(strpos($offer_admin, "'flacso_abrir_preinscripcion_cohorte'") !== false, 'el listado permite abrir una cohorte');
+django_pre_assert(strpos($offer_admin, "'flacso_cerrar_preinscripcion_cohorte'") !== false, 'el listado permite cerrar una cohorte');
+django_pre_assert(strpos($offer_admin, 'aria-live="polite"') !== false, 'el listado anuncia el resultado de las acciones');
 
 fwrite(STDOUT, "OK Django preinscription integration contract\n");
