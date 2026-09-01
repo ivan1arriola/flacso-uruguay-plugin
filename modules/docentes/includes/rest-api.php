@@ -132,6 +132,8 @@ if (!function_exists('dp_rest_build_docente_payload')) {
 
         $redes = get_post_meta($post->ID, 'docente_redes', true);
         $featured_image = dp_rest_featured_image_payload($post->ID);
+        $roles = Docente_Meta::get_roles($post->ID);
+        $cargo = (string) get_post_meta($post->ID, 'cargo', true);
 
         return [
             'id' => (int) $post->ID,
@@ -145,11 +147,15 @@ if (!function_exists('dp_rest_build_docente_payload')) {
             'meta' => [
                 'prefijo_abrev' => get_post_meta($post->ID, 'prefijo_abrev', true),
                 'titulo_academico' => get_post_meta($post->ID, 'titulo_academico', true),
+                'cargo' => $cargo,
+                'roles' => $roles,
                 'nombre' => get_post_meta($post->ID, 'nombre', true),
                 'apellido' => get_post_meta($post->ID, 'apellido', true),
                 'cv' => get_post_meta($post->ID, 'cv', true),
                 'docente_redes' => is_array($redes) ? $redes : [],
             ],
+            'cargo' => $cargo,
+            'roles' => $roles,
             // Compatibilidad
             'prefijo_abrev' => get_post_meta($post->ID, 'prefijo_abrev', true),
             'prefijo_full' => get_post_meta($post->ID, 'prefijo_full', true),
@@ -188,6 +194,17 @@ if (!function_exists('dp_rest_get_docentes')) {
 
         if ($search !== '') {
             $args['s'] = $search;
+        }
+
+        $rol = sanitize_key((string) ($request->get_param('rol') ?: $request->get_param('role')));
+        if ($rol && in_array($rol, ['docente', 'administrativo'], true)) {
+            $meta_query = $args['meta_query'] ?? [];
+            $meta_query[] = [
+                'key' => 'roles',
+                'value' => '"' . $rol . '"',
+                'compare' => 'LIKE',
+            ];
+            $args['meta_query'] = $meta_query;
         }
 
         $include = $request->get_param('include');
@@ -278,8 +295,17 @@ if (!function_exists('dp_rest_create_docente')) {
             }
         }
 
+        $cargo = isset($params['cargo']) ? sanitize_text_field($params['cargo']) : '';
         update_post_meta($doc_id, 'prefijo_abrev', $prefijo_abrev);
         update_post_meta($doc_id, 'titulo_academico', $titulo_academico);
+        update_post_meta($doc_id, 'cargo', $cargo);
+
+        if (array_key_exists('roles', $params) && is_array($params['roles'])) {
+            $clean_roles = array_values(array_filter($params['roles'], static function($r) {
+                return in_array($r, ['docente', 'administrativo'], true);
+            }));
+            update_post_meta($doc_id, 'roles', $clean_roles ?: ['docente']);
+        }
         update_post_meta($doc_id, 'nombre', $nombre);
         update_post_meta($doc_id, 'apellido', $apellido);
         update_post_meta($doc_id, 'cv', $cv);
@@ -349,6 +375,15 @@ if (!function_exists('dp_rest_update_docente')) {
             $params = array_merge($params, $meta);
         }
 
+        if (array_key_exists('cargo', $params)) {
+            update_post_meta($doc_id, 'cargo', sanitize_text_field($params['cargo']));
+        }
+        if (array_key_exists('roles', $params) && is_array($params['roles'])) {
+            $clean_roles = array_values(array_filter($params['roles'], static function($r) {
+                return in_array($r, ['docente', 'administrativo'], true);
+            }));
+            update_post_meta($doc_id, 'roles', $clean_roles ?: ['docente']);
+        }
         if (array_key_exists('prefijo_abrev', $params)) {
             update_post_meta($doc_id, 'prefijo_abrev', sanitize_text_field($params['prefijo_abrev']));
         }

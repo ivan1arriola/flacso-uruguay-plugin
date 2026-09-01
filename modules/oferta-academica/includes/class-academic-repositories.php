@@ -24,8 +24,8 @@ final class FLACSO_Academic_Repository {
             'cohortes' => [
                 'post_type' => FLACSO_Cohorte::POST_TYPE,
                 'fields' => [
-                    'oferta_academica_id', 'numero', 'fecha_inicio', 'precision_fecha_inicio',
-                    'fecha_fin', 'estado', 'calendario_academico', 'tabla_precio_id',
+                    'oferta_academica_id', 'numero', 'fecha_inicio', 'fecha_fin', 'anio_inicio', 'anio_fin',
+                    'precision_fecha_inicio', 'estado', 'calendario_academico', 'tabla_precio_id',
                     'link_preinscripcion', 'preinscripcion_desde', 'preinscripcion_hasta',
                 ],
             ],
@@ -100,8 +100,7 @@ final class FLACSO_Academic_Repository {
             'nombre' => (string) $post->post_title,
             'slug' => (string) $post->post_name,
             'estado_publicacion' => (string) $post->post_status,
-            'contenido' => (string) $post->post_content,
-            'resumen' => (string) $post->post_excerpt,
+            'resumen' => (string) (get_post_meta($post->ID, 'resumen', true) ?: $post->post_excerpt),
             'imagen' => get_the_post_thumbnail_url($post, 'full') ?: null,
         ];
         foreach ($definition['fields'] as $field) {

@@ -15,6 +15,8 @@ final class Docente_Public_DTO {
     private const PUBLIC_META_FIELDS = [
         'prefijo_abrev',
         'titulo_academico',
+        'cargo',
+        'roles',
         'nombre',
         'apellido',
         'cv',

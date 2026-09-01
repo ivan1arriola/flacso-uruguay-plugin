@@ -10,13 +10,13 @@ final class FLACSO_Admin_Panel {
     private const CAPABILITY = 'edit_posts';
 
     public static function init(): void {
+        add_action('admin_bar_menu', [self::class, 'register_admin_bar_item'], 35);
         if (!is_admin()) {
             return;
         }
         add_action('admin_menu', [self::class, 'register_menu'], 1);
         add_action('admin_menu', [self::class, 'sort_submenus'], 999);
         add_action('admin_enqueue_scripts', [self::class, 'enqueue_assets']);
-        add_action('admin_bar_menu', [self::class, 'register_admin_bar_item'], 2);
     }
 
     public static function register_menu(): void {
@@ -43,12 +43,84 @@ final class FLACSO_Admin_Panel {
         if (!is_admin_bar_showing() || !current_user_can(self::CAPABILITY)) {
             return;
         }
+
+        $items = [
+            'resumen'     => ['title' => __('Panel FLACSO', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=' . self::PAGE_SLUG)],
+            'programas'   => ['title' => __('Programas Académicos', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=programa-academico')],
+            'ofertas'     => ['title' => __('Ofertas Académicas', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=oferta-academica')],
+            'seminarios'  => ['title' => __('Seminarios', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=seminario')],
+            'tablas'      => ['title' => __('Tablas de Aranceles', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=tabla-precio')],
+            'docentes'    => ['title' => __('Personas / Equipo', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=docente')],
+            'convenios'   => ['title' => __('Convenios', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=convenio')],
+            'eventos'     => ['title' => __('Eventos', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=evento')],
+            'faqs'        => ['title' => __('Preguntas Frecuentes', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=flacso_faq')],
+            'portada'     => ['title' => __('Portada FLACSO', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-main-page')],
+            'integracion' => ['title' => __('Integraciones', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-integraciones')],
+        ];
+
+        // 1. Nodo principal FLACSO en el Admin Bar
         $admin_bar->add_node([
-            'id' => 'flacso-panel',
-            'title' => __('FLACSO', 'flacso-uruguay'),
-            'href' => admin_url('admin.php?page=' . self::PAGE_SLUG),
-            'meta' => ['title' => __('Abrir panel FLACSO', 'flacso-uruguay')],
+            'id'    => 'flacso-panel',
+            'title' => '<span class="ab-icon dashicons-building" style="top:2px;"></span><span class="ab-label">' . esc_html__('FLACSO', 'flacso-uruguay') . '</span>',
+            'href'  => admin_url('admin.php?page=' . self::PAGE_SLUG),
+            'meta'  => ['title' => __('Gestión institucional y académica FLACSO', 'flacso-uruguay')],
         ]);
+
+        foreach ($items as $key => $item) {
+            $admin_bar->add_node([
+                'id'     => 'flacso-panel-' . $key,
+                'parent' => 'flacso-panel',
+                'title'  => esc_html($item['title']),
+                'href'   => $item['href'],
+            ]);
+        }
+
+        // 2. Submenús dentro del nodo del sitio "FLACSO Uruguay" (site-name)
+        if ($admin_bar->get_node('site-name')) {
+            $admin_bar->add_node([
+                'id'     => 'site-name-flacso-group',
+                'parent' => 'site-name',
+                'title'  => '--- ' . esc_html__('FLACSO Gestión', 'flacso-uruguay') . ' ---',
+                'href'   => admin_url('admin.php?page=' . self::PAGE_SLUG),
+            ]);
+            $admin_bar->add_node([
+                'id'     => 'site-name-flacso-panel',
+                'parent' => 'site-name',
+                'title'  => esc_html__('Panel FLACSO', 'flacso-uruguay'),
+                'href'   => admin_url('admin.php?page=' . self::PAGE_SLUG),
+            ]);
+            $admin_bar->add_node([
+                'id'     => 'site-name-flacso-ofertas',
+                'parent' => 'site-name',
+                'title'  => esc_html__('Ofertas Académicas', 'flacso-uruguay'),
+                'href'   => admin_url('edit.php?post_type=oferta-academica'),
+            ]);
+            $admin_bar->add_node([
+                'id'     => 'site-name-flacso-seminarios',
+                'parent' => 'site-name',
+                'title'  => esc_html__('Seminarios', 'flacso-uruguay'),
+                'href'   => admin_url('edit.php?post_type=seminario'),
+            ]);
+
+            $admin_bar->add_node([
+                'id'     => 'site-name-flacso-tablas',
+                'parent' => 'site-name',
+                'title'  => esc_html__('Tablas de Aranceles', 'flacso-uruguay'),
+                'href'   => admin_url('edit.php?post_type=tabla-precio'),
+            ]);
+            $admin_bar->add_node([
+                'id'     => 'site-name-flacso-docentes',
+                'parent' => 'site-name',
+                'title'  => esc_html__('Personas / Equipo', 'flacso-uruguay'),
+                'href'   => admin_url('edit.php?post_type=docente'),
+            ]);
+            $admin_bar->add_node([
+                'id'     => 'site-name-flacso-portada',
+                'parent' => 'site-name',
+                'title'  => esc_html__('Portada FLACSO', 'flacso-uruguay'),
+                'href'   => admin_url('admin.php?page=flacso-main-page'),
+            ]);
+        }
     }
 
     public static function enqueue_assets(string $hook): void {
@@ -70,10 +142,15 @@ final class FLACSO_Admin_Panel {
         if (empty($submenu[self::PAGE_SLUG]) || !is_array($submenu[self::PAGE_SLUG])) {
             return;
         }
+        // Cohortes y Ediciones son entidades débiles subordinadas; no deben listarse sueltas en el submenú.
+        $hidden_submenus = ['edit.php?post_type=cohorte', 'edit.php?post_type=edicion-seminario'];
         $academic_types = ['programa-academico', 'oferta-academica', 'cohorte', 'seminario', 'edicion-seminario', 'tabla-precio'];
         $submenu[self::PAGE_SLUG] = array_values(array_filter(
             $submenu[self::PAGE_SLUG],
-            static function (array $item) use ($academic_types): bool {
+            static function (array $item) use ($academic_types, $hidden_submenus): bool {
+                if (in_array($item[2], $hidden_submenus, true)) {
+                    return false;
+                }
                 foreach ($academic_types as $post_type) {
                     if ($item[2] === 'post-new.php?post_type=' . $post_type) {
                         return false;

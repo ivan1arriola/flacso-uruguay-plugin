@@ -6,12 +6,21 @@ if (!defined('ABSPATH')) {
 
 /**
  * Registra el Custom Post Type: oferta-academica
+ * y gestiona la visualización contextual de sus cohortes subordinadas.
  */
 class CPT_Oferta_Academica {
-    
+    public const POST_TYPE = 'oferta-academica';
+
     public static function init(): void {
         self::register_post_type();
+        add_filter('use_block_editor_for_post_type', [self::class, 'disable_block_editor'], 10, 2);
         add_action('template_redirect', [self::class, 'maybe_render_formacion_virtual_page'], 1);
+
+        if (is_admin()) {
+            add_action('add_meta_boxes', [self::class, 'add_meta_boxes']);
+            add_filter('manage_' . self::POST_TYPE . '_posts_columns', [self::class, 'register_columns']);
+            add_action('manage_' . self::POST_TYPE . '_posts_custom_column', [self::class, 'render_column'], 10, 2);
+        }
     }
 
     public static function maybe_render_formacion_virtual_page(): void {
@@ -64,57 +73,21 @@ class CPT_Oferta_Academica {
         }
     }
 
-
-
-    public static function add_og_meta_tags(): void {
-        if (is_singular('oferta-academica') && !has_action('wp_head', 'jetpack_og_tags')) {
-            $post_id = get_the_ID();
-            $titulo = get_the_title();
-            $url = get_permalink();
-            $imagen_url = get_the_post_thumbnail_url($post_id, 'full');
-            $descripcion = get_the_excerpt();
-
-            if (empty($descripcion)) {
-                $descripcion = wp_trim_words(strip_shortcodes(get_post_field('post_content', $post_id)), 30, '...');
-            }
-
-            echo '<meta property="og:type" content="article" />' . "\n";
-            echo '<meta property="og:title" content="' . esc_attr($titulo) . '" />' . "\n";
-            if ($descripcion) {
-                echo '<meta property="og:description" content="' . esc_attr($descripcion) . '" />' . "\n";
-            }
-            echo '<meta property="og:url" content="' . esc_url($url) . '" />' . "\n";
-            if ($imagen_url) {
-                echo '<meta property="og:image" content="' . esc_url($imagen_url) . '" />' . "\n";
-                echo '<meta property="og:image:width" content="1200" />' . "\n";
-                echo '<meta property="og:image:height" content="630" />' . "\n";
-            }
-            echo '<meta name="twitter:card" content="summary_large_image" />' . "\n";
-            echo '<meta name="twitter:title" content="' . esc_attr($titulo) . '" />' . "\n";
-            if ($descripcion) {
-                echo '<meta name="twitter:description" content="' . esc_attr($descripcion) . '" />' . "\n";
-            }
-            if ($imagen_url) {
-                echo '<meta name="twitter:image" content="' . esc_url($imagen_url) . '" />' . "\n";
-            }
-        }
-    }
-
     public static function register_post_type(): void {
         $labels = [
-            'name'                  => 'Oferta Académica',
-            'singular_name'         => 'Oferta Académica',
-            'menu_name'             => 'Oferta Académica',
-            'name_admin_bar'        => 'Oferta Académica',
-            'add_new'               => 'Añadir Nueva',
-            'add_new_item'          => 'Añadir Nueva Oferta Académica',
-            'new_item'              => 'Nueva Oferta Académica',
-            'edit_item'             => 'Editar Oferta Académica',
-            'view_item'             => 'Ver Oferta Académica',
-            'all_items'             => 'Todas las Ofertas',
-            'search_items'          => 'Buscar Ofertas Académicas',
-            'not_found'             => 'No se encontraron ofertas académicas',
-            'not_found_in_trash'    => 'No hay ofertas académicas en la papelera',
+            'name'                  => __('Ofertas Académicas', 'flacso-uruguay'),
+            'singular_name'         => __('Oferta Académica', 'flacso-uruguay'),
+            'menu_name'             => __('Ofertas Académicas', 'flacso-uruguay'),
+            'name_admin_bar'        => __('Oferta Académica', 'flacso-uruguay'),
+            'add_new'               => __('Añadir Nueva', 'flacso-uruguay'),
+            'add_new_item'          => __('Añadir Nueva Oferta Académica', 'flacso-uruguay'),
+            'new_item'              => __('Nueva Oferta Académica', 'flacso-uruguay'),
+            'edit_item'             => __('Editar Oferta Académica', 'flacso-uruguay'),
+            'view_item'             => __('Ver Oferta Académica', 'flacso-uruguay'),
+            'all_items'             => __('Todas las Ofertas', 'flacso-uruguay'),
+            'search_items'          => __('Buscar Ofertas Académicas', 'flacso-uruguay'),
+            'not_found'             => __('No se encontraron ofertas académicas', 'flacso-uruguay'),
+            'not_found_in_trash'    => __('No hay ofertas académicas en la papelera', 'flacso-uruguay'),
         ];
 
         $args = [
@@ -131,27 +104,22 @@ class CPT_Oferta_Academica {
             'hierarchical'          => false,
             'menu_position'         => 5,
             'menu_icon'             => 'dashicons-welcome-learn-more',
-            'supports'              => ['title', 'editor', 'excerpt', 'thumbnail', 'revisions'],
+            'supports'              => ['title', 'thumbnail', 'revisions'],
             'taxonomies'            => ['tipo-oferta-academica'],
         ];
 
-        register_post_type('oferta-academica', $args);
+        register_post_type(self::POST_TYPE, $args);
         add_filter('post_type_link', [self::class, 'oferta_academica_permalink'], 10, 2);
     }
 
-    /**
-     * Reemplaza el tag %tipo-oferta-academica% en el permalink con el plural del término asociado.
-     */
     public static function oferta_academica_permalink($post_link, $post) {
-        if (is_object($post) && $post->post_type === 'oferta-academica') {
+        if (is_object($post) && $post->post_type === self::POST_TYPE) {
             if (strpos($post_link, '%tipo-oferta-academica%') !== false) {
                 $terms = wp_get_object_terms($post->ID, 'tipo-oferta-academica');
                 if (!is_wp_error($terms) && !empty($terms) && is_object($terms[0])) {
                     $slug = $terms[0]->slug;
-                    
                     $segments = FLACSO_Oferta_Academica::segmentos_url();
                     $plural_slug = $segments[$slug] ?? 'otros';
-                    
                     $post_link = str_replace('%tipo-oferta-academica%', $plural_slug, $post_link);
                 } else {
                     $post_link = str_replace('%tipo-oferta-academica%', 'otros', $post_link);
@@ -161,4 +129,133 @@ class CPT_Oferta_Academica {
         return $post_link;
     }
 
+    public static function disable_block_editor(bool $use_block_editor, string $post_type): bool {
+        if ($post_type === self::POST_TYPE) {
+            return false;
+        }
+        return $use_block_editor;
+    }
+
+    public static function register_columns(array $columns): array {
+        $new_columns = [];
+        foreach ($columns as $key => $val) {
+            $new_columns[$key] = $val;
+            if ($key === 'title') {
+                $new_columns['cohortes'] = __('Cohortes Asignadas', 'flacso-uruguay');
+            }
+        }
+        return $new_columns;
+    }
+
+    public static function render_column(string $column, int $post_id): void {
+        if ($column === 'cohortes') {
+            $cohortes = get_posts([
+                'post_type'      => 'cohorte',
+                'posts_per_page' => -1,
+                'meta_key'       => 'oferta_academica_id',
+                'meta_value'     => $post_id,
+                'orderby'        => 'meta_value_num',
+                'meta_key_num'   => 'numero',
+                'order'          => 'DESC',
+            ]);
+
+            if (!empty($cohortes)) {
+                echo '<ul style="margin:0;padding-left:14px;list-style:disc;">';
+                foreach ($cohortes as $c) {
+                    $num = (int) get_post_meta($c->ID, 'numero', true);
+                    $roman = FLACSO_Cohorte::to_roman($num) ?: (string) $num;
+                    $estado = FLACSO_Cohorte::sanitize_state(get_post_meta($c->ID, 'estado', true));
+                    $edit_c_url = get_edit_post_link($c->ID);
+                    echo '<li><a href="' . esc_url($edit_c_url) . '">Cohorte ' . esc_html($roman) . '</a> <small>(' . esc_html($estado) . ')</small></li>';
+                }
+                echo '</ul>';
+            } else {
+                echo '<span style="color:#94a3b8;">Sin cohortes</span><br>';
+            }
+
+            $add_url = admin_url('post-new.php?post_type=cohorte&oferta_academica_id=' . $post_id);
+            echo '<div style="margin-top:4px;"><a class="button button-small" href="' . esc_url($add_url) . '">➕ Nueva cohorte</a></div>';
+        }
+    }
+
+    public static function add_meta_boxes(): void {
+        add_meta_box(
+            'flacso_oferta_cohortes_box',
+            __('Cohortes de esta Oferta Académica', 'flacso-uruguay'),
+            [self::class, 'render_cohortes_meta_box'],
+            self::POST_TYPE,
+            'normal',
+            'high'
+        );
+    }
+
+    public static function render_cohortes_meta_box($post): void {
+        $cohortes = get_posts([
+            'post_type'      => 'cohorte',
+            'posts_per_page' => -1,
+            'meta_key'       => 'oferta_academica_id',
+            'meta_value'     => $post->ID,
+            'orderby'        => 'meta_value_num',
+            'meta_key_num'   => 'numero',
+            'order'          => 'DESC',
+        ]);
+
+        $add_url = admin_url('post-new.php?post_type=cohorte&oferta_academica_id=' . $post->ID);
+        ?>
+        <div style="padding: 6px 0;">
+            <p style="margin-top:0; color:#475569;">
+                <?php esc_html_e('Las cohortes son las aperturas temporales de esta oferta académica donde se configuran las fechas y la preinscripción.', 'flacso-uruguay'); ?>
+            </p>
+
+            <?php if (!empty($cohortes)) : ?>
+                <table class="widefat striped" style="margin-bottom: 15px; border-radius: 4px; overflow: hidden;">
+                    <thead>
+                        <tr>
+                            <th style="font-weight:700;"><?php esc_html_e('Cohorte', 'flacso-uruguay'); ?></th>
+                            <th style="font-weight:700;"><?php esc_html_e('Estado', 'flacso-uruguay'); ?></th>
+                            <th style="font-weight:700;"><?php esc_html_e('Fechas', 'flacso-uruguay'); ?></th>
+                            <th style="font-weight:700;"><?php esc_html_e('Preinscripción', 'flacso-uruguay'); ?></th>
+                            <th style="font-weight:700; text-align:right;"><?php esc_html_e('Acciones', 'flacso-uruguay'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($cohortes as $c) :
+                            $num = (int) get_post_meta($c->ID, 'numero', true);
+                            $roman = FLACSO_Cohorte::to_roman($num) ?: (string) $num;
+                            $fechas_txt = FLACSO_Cohorte::format_dates($c->ID);
+                            $link = (string) get_post_meta($c->ID, 'link_preinscripcion', true);
+                            $abierta = FLACSO_Cohorte::accepts_registration($c->ID);
+                            $edit_url = get_edit_post_link($c->ID);
+                        ?>
+                            <tr>
+                                <td><strong><a href="<?php echo esc_url($edit_url); ?>">Cohorte <?php echo esc_html($roman); ?></a></strong></td>
+                                <td><span style="font-weight:600;"><?php echo esc_html(ucfirst($estado)); ?></span></td>
+                                <td><?php echo $fechas_txt !== '' ? esc_html($fechas_txt) : '—'; ?></td>
+                                <td>
+                                    <?php if ($link) : ?>
+                                        <?php echo $abierta ? '<span style="color:#16a34a;font-weight:700;">🟢 Abierta</span>' : '<span style="color:#94a3b8;">⚪ Cerrada</span>'; ?>
+                                        <a href="<?php echo esc_url($link); ?>" target="_blank" style="margin-left:6px;font-size:12px;">Portal ↗</a>
+                                    <?php else : ?>
+                                        <span style="color:#94a3b8;">—</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="text-align:right;">
+                                    <a class="button button-small" href="<?php echo esc_url($edit_url); ?>"><?php esc_html_e('Editar cohorte', 'flacso-uruguay'); ?></a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php else : ?>
+                <div style="background:#f8fafc; border:1px dashed #cbd5e1; padding:15px; border-radius:6px; margin-bottom:15px; text-align:center; color:#64748b;">
+                    <?php esc_html_e('Esta oferta académica aún no tiene cohortes creadas.', 'flacso-uruguay'); ?>
+                </div>
+            <?php endif; ?>
+
+            <a class="button button-primary" href="<?php echo esc_url($add_url); ?>">
+                ➕ <?php esc_html_e('Agregar nueva cohorte para esta oferta', 'flacso-uruguay'); ?>
+            </a>
+        </div>
+        <?php
+    }
 }
