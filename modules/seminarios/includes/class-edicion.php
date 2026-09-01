@@ -267,8 +267,8 @@ final class FLACSO_Edicion {
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
                 <div>
-                    <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Año de la edición:', 'flacso-uruguay'); ?> <span style="color:red">*</span></label>
-                    <input type="number" name="anio" value="<?php echo esc_attr((string) $anio); ?>" min="2000" max="2100" required style="width: 100%;">
+                    <label for="edicion_anio" style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Año de la edición:', 'flacso-uruguay'); ?> <span style="color:red">*</span></label>
+                    <input type="number" id="edicion_anio" name="anio" value="<?php echo esc_attr((string) $anio); ?>" min="2000" max="2100" required autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" style="width: 100%;">
                 </div>
                 <div>
                     <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Estado:', 'flacso-uruguay'); ?></label>
@@ -338,8 +338,8 @@ final class FLACSO_Edicion {
                     </div>
                     <div>
                         <?php $dias_cierre = get_post_meta($post->ID, 'dias_cierre_post_inicio', true); ?>
-                        <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Días de cierre automático tras el inicio:', 'flacso-uruguay'); ?></label>
-                        <input type="number" name="dias_cierre_post_inicio" value="<?php echo esc_attr((string) $dias_cierre); ?>" min="0" max="365" placeholder="10 (por defecto)" style="width: 100%; max-width: 220px;">
+                        <label for="edicion_dias_cierre" style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Días de cierre automático tras el inicio:', 'flacso-uruguay'); ?></label>
+                        <input type="number" id="edicion_dias_cierre" name="dias_cierre_post_inicio" value="<?php echo esc_attr((string) $dias_cierre); ?>" min="0" max="365" placeholder="10 (por defecto)" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" style="width: 100%; max-width: 220px;">
                         <p style="margin: 4px 0 0; font-size: 12px; color: #64748b;">
                             <?php esc_html_e('Si no se fija una fecha de cierre manual, las inscripciones permanecerán abiertas hasta N días posteriores a la fecha de inicio de la edición.', 'flacso-uruguay'); ?>
                         </p>

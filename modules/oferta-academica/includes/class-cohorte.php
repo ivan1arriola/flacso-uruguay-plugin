@@ -310,8 +310,8 @@ final class FLACSO_Cohorte {
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
                 <div>
-                    <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Número de cohorte:', 'flacso-uruguay'); ?> <span style="color:red">*</span></label>
-                    <input type="number" name="numero" value="<?php echo esc_attr((string) $numero); ?>" min="1" max="999" required style="width: 100%;">
+                    <label for="cohorte_numero" style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Número de cohorte:', 'flacso-uruguay'); ?> <span style="color:red">*</span></label>
+                    <input type="number" id="cohorte_numero" name="numero_cohorte" value="<?php echo esc_attr((string) $numero); ?>" min="1" max="999" required autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" style="width: 100%;">
                     <small style="color: #64748b;"><?php esc_html_e('Se convertirá a romano automáticamente (ej: 6 -> VI)', 'flacso-uruguay'); ?></small>
                 </div>
                 <div>
@@ -351,11 +351,11 @@ final class FLACSO_Cohorte {
                     </div>
                     <div>
                         <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Año de inicio:', 'flacso-uruguay'); ?></label>
-                        <input type="number" name="anio_inicio" id="anio_inicio" value="<?php echo $anio_inicio > 0 ? esc_attr((string) $anio_inicio) : ''; ?>" min="2000" max="2100" placeholder="ej: 2027" style="width: 100%;">
+                        <input type="number" name="anio_inicio" id="anio_inicio" value="<?php echo $anio_inicio > 0 ? esc_attr((string) $anio_inicio) : ''; ?>" min="2000" max="2100" placeholder="ej: 2027" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" style="width: 100%;">
                     </div>
                     <div>
                         <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Año de fin:', 'flacso-uruguay'); ?></label>
-                        <input type="number" name="anio_fin" id="anio_fin" value="<?php echo $anio_fin > 0 ? esc_attr((string) $anio_fin) : ''; ?>" min="2000" max="2100" placeholder="ej: 2029" style="width: 100%;">
+                        <input type="number" name="anio_fin" id="anio_fin" value="<?php echo $anio_fin > 0 ? esc_attr((string) $anio_fin) : ''; ?>" min="2000" max="2100" placeholder="ej: 2029" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" style="width: 100%;">
                     </div>
                 </div>
 
@@ -447,7 +447,9 @@ final class FLACSO_Cohorte {
         if (isset($_POST['oferta_academica_id'])) {
             update_post_meta($post_id, self::META_PARENT_ID, absint($_POST['oferta_academica_id']));
         }
-        if (isset($_POST['numero'])) {
+        if (isset($_POST['numero_cohorte'])) {
+            update_post_meta($post_id, 'numero', absint($_POST['numero_cohorte']));
+        } elseif (isset($_POST['numero'])) {
             update_post_meta($post_id, 'numero', absint($_POST['numero']));
         }
         if (isset($_POST['estado'])) {

@@ -1621,6 +1621,180 @@ function flacso_render_solicitar_info_virtual() {
 }
 add_action( 'template_redirect', 'flacso_render_solicitar_info_virtual', 0 );
 
+function flacso_render_dynamic_info_form_single() {
+	if ( ! is_singular( 'fc_info_form' ) ) {
+		return;
+	}
+
+	$form_id = get_queried_object_id();
+	if ( ! $form_id ) {
+		return;
+	}
+
+	$offer_ids = function_exists( 'fc_dynamic_info_form_get_offer_ids' )
+		? fc_dynamic_info_form_get_offer_ids( $form_id )
+		: array();
+	$offer_ids = flacso_consultas_normalize_offer_ids( $offer_ids );
+
+	$form_title = get_the_title( $form_id );
+	$current_url = get_permalink( $form_id );
+	$gracias_url = add_query_arg( 'tipo', 'solicitud_informacion', trailingslashit( $current_url ) . 'gracias/' );
+	$thumb_url = ! empty( $offer_ids ) ? get_the_post_thumbnail_url( $offer_ids[0], 'full' ) : '';
+	$intro_text = __( 'Seleccioná las propuestas de tu interés y completá tus datos. Te enviaremos información sobre cursada, inscripción y financiación.', 'flacso-consultas' );
+
+	status_header( 200 );
+	nocache_headers();
+	flacso_consultas_apply_virtual_page_title( $form_title );
+	add_filter(
+		'body_class',
+		static function ( $classes ) {
+			$classes[] = 'flacso-solicitar-info-template';
+			$classes[] = 'flacso-dynamic-info-form-template';
+			return $classes;
+		},
+		20
+	);
+
+	get_header();
+	?>
+	<header class="flacso-solicitar-info-brand" aria-label="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>">
+		<a class="flacso-solicitar-info-brand__link" href="<?php echo esc_url( home_url( '/' ) ); ?>" aria-label="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>">
+			<?php
+			$custom_logo_id = (int) get_theme_mod( 'custom_logo' );
+			if ( $custom_logo_id ) {
+				echo wp_get_attachment_image(
+					$custom_logo_id,
+					'medium',
+					false,
+					array(
+						'class'   => 'flacso-solicitar-info-brand__logo',
+						'loading' => 'eager',
+						'alt'     => get_bloginfo( 'name' ),
+					)
+				);
+			} else {
+				echo '<span class="flacso-solicitar-info-brand__text">FLACSO Uruguay</span>';
+			}
+			?>
+		</a>
+	</header>
+	<main class="flacso-solicitar-info-page" aria-labelledby="flacso-solicitar-info-title">
+		<h1 id="flacso-solicitar-info-title" class="screen-reader-text"><?php echo esc_html( $form_title ); ?></h1>
+		<?php if ( $thumb_url ) : ?>
+			<div class="flacso-solicitar-info-page__bg" aria-hidden="true" style="background-image: linear-gradient(rgba(8, 25, 58, .66), rgba(8, 25, 58, .72)), url('<?php echo esc_url( $thumb_url ); ?>');"></div>
+		<?php endif; ?>
+
+		<section class="flacso-solicitar-info-page__shell">
+			<div class="flacso-solicitar-info-page__form">
+				<?php
+				if ( empty( $offer_ids ) ) {
+					echo '<div class="flacso-consultas-formulario flacso-consultas-formulario--solicitar-info"><h3>' . esc_html( $form_title ) . '</h3><p>' . esc_html__( 'Este formulario todavía no tiene ofertas académicas asociadas.', 'flacso-consultas' ) . '</p></div>';
+				} else {
+					echo flacso_consultas_render_form(
+						array(
+							'mostrar_preinscripcion' => false,
+							'post_id'                => 0,
+							'titulo_posgrado'        => $form_title,
+							'url_base'               => $current_url,
+							'url_gracias'            => $gracias_url,
+							'form_variant'           => 'solicitar-info',
+							'intro_text'             => $intro_text,
+							'offer_choices'          => $offer_ids,
+							'dynamic_form_id'        => $form_id,
+							'heading_text'           => $form_title,
+						)
+					);
+				}
+				?>
+			</div>
+		</section>
+	</main>
+	<style>
+	body.flacso-dynamic-info-form-template #masthead,
+	body.flacso-dynamic-info-form-template .site-header,
+	body.flacso-dynamic-info-form-template .flacso-nav-announcement,
+	body.flacso-dynamic-info-form-template .flacso-banner-full-clickable,
+	body.flacso-dynamic-info-form-template #colophon,
+	body.flacso-dynamic-info-form-template .site-footer {
+		display: none !important;
+	}
+	body.flacso-dynamic-info-form-template #inner-wrap,
+	body.flacso-dynamic-info-form-template .content-area,
+	body.flacso-dynamic-info-form-template .site-main {
+		min-height: 100vh;
+		margin: 0;
+		padding: 0;
+	}
+	body.flacso-dynamic-info-form-template .flacso-solicitar-info-brand {
+		position: fixed;
+		top: 1rem;
+		left: 1rem;
+		z-index: 20;
+	}
+	body.flacso-dynamic-info-form-template .flacso-solicitar-info-brand__link {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: .55rem .8rem;
+		border-radius: 999px;
+		background: rgba(255,255,255,.92);
+		box-shadow: 0 10px 30px rgba(8,25,58,.18);
+	}
+	body.flacso-dynamic-info-form-template .flacso-solicitar-info-brand__logo {
+		width: auto;
+		max-width: 180px;
+		max-height: 48px;
+	}
+	body.flacso-dynamic-info-form-template .flacso-solicitar-info-page {
+		position: relative;
+		min-height: 100vh;
+		display: grid;
+		place-items: center;
+		padding: clamp(5rem, 8vw, 7rem) 1rem 2rem;
+		background: #0d234a;
+		overflow: hidden;
+	}
+	body.flacso-dynamic-info-form-template .flacso-solicitar-info-page__bg {
+		position: absolute;
+		inset: 0;
+		background-size: cover;
+		background-position: center;
+		filter: saturate(.95);
+		transform: scale(1.02);
+	}
+	body.flacso-dynamic-info-form-template .flacso-solicitar-info-page__shell {
+		position: relative;
+		z-index: 1;
+		width: min(100%, 560px);
+	}
+	body.flacso-dynamic-info-form-template .flacso-solicitar-info-page__form {
+		width: 100%;
+	}
+	body.flacso-dynamic-info-form-template .flacso-consultas-formulario {
+		max-width: 560px;
+		margin-bottom: 0;
+		background: rgba(255,255,255,.96);
+		backdrop-filter: blur(10px);
+	}
+	@media (max-width: 576px) {
+		body.flacso-dynamic-info-form-template .flacso-solicitar-info-brand {
+			position: absolute;
+			left: .75rem;
+			top: .75rem;
+		}
+		body.flacso-dynamic-info-form-template .flacso-solicitar-info-page {
+			align-items: start;
+			padding-top: 5.75rem;
+		}
+	}
+	</style>
+	<?php
+	get_footer();
+	wp_reset_postdata();
+	exit;
+}
+add_action( 'template_redirect', 'flacso_render_dynamic_info_form_single', 0 );
+
 /**
  * Página /gracias virtual.
  */
@@ -1675,6 +1849,15 @@ function flacso_consultas_apply_virtual_page_title( $base_title ) {
 function flacso_render_gracias_virtual() {
         $path = wp_parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH );
         if ( ! preg_match( '#/(gracias|confirmacion-consulta)/?$#', $path ) ) {
+                return;
+        }
+
+        // Los CPT Formulario tienen su propia página de agradecimiento y contenido
+        // configurable. No deben heredar textos ni acciones de la oferta académica.
+        if (
+                is_singular( 'flacso_hook_form' )
+                && get_query_var( 'flacso_form_thanks' )
+        ) {
                 return;
         }
 

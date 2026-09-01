@@ -117,8 +117,8 @@ final class FLACSO_Programa_Academico {
                     <input type="email" name="correo" value="<?php echo esc_attr($correo); ?>" placeholder="programa@flacso.edu.uy" style="width: 100%;">
                 </div>
                 <div>
-                    <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Orden de aparición:', 'flacso-uruguay'); ?></label>
-                    <input type="number" name="orden" value="<?php echo esc_attr((string) $orden); ?>" min="0" max="999" style="width: 100%;">
+                    <label for="programa_orden" style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Orden de aparición:', 'flacso-uruguay'); ?></label>
+                    <input type="number" id="programa_orden" name="orden" value="<?php echo esc_attr((string) $orden); ?>" min="0" max="999" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" style="width: 100%;">
                 </div>
             </div>
 
