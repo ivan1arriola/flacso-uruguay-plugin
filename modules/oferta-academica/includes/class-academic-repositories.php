@@ -52,8 +52,8 @@ final class FLACSO_Academic_Repository {
                 'fields' => [
                     'seminario_id', 'anio', 'semestre', 'fecha_inicio', 'fecha_fin', 'estado', 'modalidad',
                     'encuentros_sincronicos', 'docentes', 'tabla_precio_id',
-                    'link_preinscripcion', 'preinscripcion_desde', 'preinscripcion_hasta',
-                    'dias_cierre_post_inicio', 'mensaje_preinscripcion_abierta', 'mensaje_preinscripcion_cerrada',
+                    'link_preinscripcion', 'dias_cierre_post_inicio',
+                    'mensaje_preinscripcion_abierta', 'mensaje_preinscripcion_cerrada',
                     'mostrar_en_formulario', 'ediciones_componentes',
                 ],
             ],
@@ -184,6 +184,10 @@ final class FLACSO_Academic_Repository {
                 }
             }
         }
+        if ($entity === 'ediciones' || $entity === 'ediciones-seminario') {
+            delete_post_meta($post_id, 'preinscripcion_desde');
+            delete_post_meta($post_id, 'preinscripcion_hasta');
+        }
         if ($entity === 'ofertas' && array_key_exists('tipo', $payload)) {
             $type = sanitize_key((string) $payload['tipo']);
             wp_set_object_terms($post_id, [$type], FLACSO_Oferta_Academica::TYPE_TAXONOMY, false);
@@ -263,13 +267,11 @@ final class FLACSO_Academic_Repository {
                 return new WP_Error('duplicate_edition', $msg, ['status' => 409]);
             }
         }
-        if ($entity === 'ofertas') {
-            $type = array_key_exists('tipo', $payload) ? sanitize_key((string) $payload['tipo']) : ($id ? FLACSO_Oferta_Academica::get_tipo($id) : '');
-            if (!FLACSO_Oferta_Academica::tipo_valido($type)) {
-                return new WP_Error('invalid_offer_type', __('Tipo de oferta inválido.', 'flacso-uruguay'), ['status' => 400]);
-            }
+        $date_pairs = [['fecha_inicio', 'fecha_fin']];
+        if ($entity === 'cohortes') {
+            $date_pairs[] = ['preinscripcion_desde', 'preinscripcion_hasta'];
         }
-        foreach ([['fecha_inicio', 'fecha_fin'], ['preinscripcion_desde', 'preinscripcion_hasta']] as $pair) {
+        foreach ($date_pairs as $pair) {
             $from = array_key_exists($pair[0], $payload) ? $payload[$pair[0]] : ($id ? get_post_meta($id, $pair[0], true) : '');
             $until = array_key_exists($pair[1], $payload) ? $payload[$pair[1]] : ($id ? get_post_meta($id, $pair[1], true) : '');
             if ($from && $until && strtotime((string) $until) < strtotime((string) $from)) {
@@ -330,7 +332,7 @@ final class FLACSO_Preinscripcion {
             }
         }
         $post_date = get_post_field('post_date', $edition_id);
-        $desde = get_post_meta($edition_id, 'preinscripcion_desde', true) ?: ($post_date ? date('Y-m-d H:i:s', strtotime($post_date)) : null);
+        $desde = $post_date ? date('Y-m-d H:i:s', strtotime($post_date)) : null;
         return [
             'abierta' => class_exists('FLACSO_Edicion') ? FLACSO_Edicion::accepts_registration($edition_id) : true,
             'url' => get_post_meta($edition_id, 'link_preinscripcion', true) ?: null,
