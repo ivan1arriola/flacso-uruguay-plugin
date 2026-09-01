@@ -136,9 +136,9 @@ flacso-uruguay-plugin/
 ## Dominio académico
 
 `OfertaAcademica` y `Seminario` son entidades distintas. Las ofertas admiten
-`maestria`, `especializacion`, `diplomado` y `diploma`; su entidad
+`doctorado`, `maestria`, `especializacion`, `diplomado` y `diploma`; su entidad
 temporal es `Cohorte`. La entidad temporal de `Seminario` es
-`Edicion`. Una cohorte recibe un número entero y su etiqueta se deriva
+`EdicionSeminario`. Una cohorte recibe un número entero y su etiqueta se deriva
 siempre como `Cohorte {ROMANO}`.
 
 Las preinscripciones de ambos tipos se realizan exclusivamente en

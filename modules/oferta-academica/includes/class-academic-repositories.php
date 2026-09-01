@@ -44,7 +44,7 @@ final class FLACSO_Academic_Repository {
                     'programa_academico_id', 'oferta_academica_id', 'correo', 'presentacion', 'objetivo_general',
                     'objetivos_especificos', 'composicion_academica', 'forma_aprobacion',
                     'carga_horaria', 'carga_horaria_descripcion', 'creditos', 'acreditacion',
-                    'acredita_maestria', 'docentes_base', 'componentes',
+                    'acredita_maestria', 'acredita_doctorado', 'docentes_base', 'componentes',
                 ],
             ],
             'ediciones' => [

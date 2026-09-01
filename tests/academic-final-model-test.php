@@ -25,8 +25,8 @@ function final_assert($condition, string $message): void {
 }
 
 final_assert(
-    array_keys(FLACSO_Oferta_Academica::tipos()) === ['maestria', 'especializacion', 'diplomado', 'diploma'],
-    'OfertaAcademica debe tener exactamente cuatro tipos, excluida doctorado'
+    array_keys(FLACSO_Oferta_Academica::tipos()) === ['doctorado', 'maestria', 'especializacion', 'diplomado', 'diploma'],
+    'OfertaAcademica debe tener exactamente cinco tipos, incluida especializacion'
 );
 final_assert(!FLACSO_Oferta_Academica::tipo_valido('seminario'), 'Seminario no puede ser tipo de OfertaAcademica');
 final_assert(FLACSO_Edicion::sanitize_state('cancelada') === 'cancelada', 'estado de edicion válido');

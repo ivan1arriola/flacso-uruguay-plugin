@@ -9,6 +9,7 @@ final class FLACSO_Oferta_Academica {
     public const POST_TYPE = 'oferta-academica';
     public const TYPE_TAXONOMY = 'tipo-oferta-academica';
 
+    public const TIPO_DOCTORADO = 'doctorado';
     public const TIPO_MAESTRIA = 'maestria';
     public const TIPO_ESPECIALIZACION = 'especializacion';
     public const TIPO_DIPLOMADO = 'diplomado';
@@ -20,6 +21,7 @@ final class FLACSO_Oferta_Academica {
     /** @return array<string,string> */
     public static function tipos(): array {
         return [
+            self::TIPO_DOCTORADO => 'Doctorados',
             self::TIPO_MAESTRIA => 'Maestrías',
             self::TIPO_ESPECIALIZACION => 'Especializaciones',
             self::TIPO_DIPLOMADO => 'Diplomados',
@@ -30,6 +32,7 @@ final class FLACSO_Oferta_Academica {
     /** @return array<string,string> */
     public static function segmentos_url(): array {
         return [
+            self::TIPO_DOCTORADO => 'doctorados',
             self::TIPO_MAESTRIA => 'maestrias',
             self::TIPO_ESPECIALIZACION => 'especializaciones',
             self::TIPO_DIPLOMADO => 'diplomados',
