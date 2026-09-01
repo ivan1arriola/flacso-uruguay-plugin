@@ -66,12 +66,33 @@ if (!function_exists('rest_sanitize_boolean')) {
 
 final_assert(FLACSO_Edicion::get_days_after_start_limit(0) === 10, 'dias de cierre por defecto es 10');
 
+$GLOBALS['flacso_test_post_meta'][998] = [
+    'estado' => 'planificada',
+];
+final_assert(
+    FLACSO_Cohorte::accepts_registration(998, strtotime('2026-03-01 12:00:00')),
+    'una cohorte sin booleano conserva la apertura legacy durante el rollout'
+);
+$GLOBALS['flacso_test_post_meta'][998]['preinscripcion_habilitada'] = false;
+final_assert(
+    !FLACSO_Cohorte::accepts_registration(998, strtotime('2026-03-01 12:00:00')),
+    'el cierre explícito prevalece sobre la regla legacy de cohorte'
+);
+$GLOBALS['flacso_test_post_meta'][998] = [
+    'estado' => 'finalizada',
+    'preinscripcion_habilitada' => true,
+];
+final_assert(
+    FLACSO_Cohorte::accepts_registration(998, strtotime('2026-03-01 12:00:00')),
+    'el booleano explícito queda separado del estado académico de cohorte'
+);
+
 $GLOBALS['flacso_test_post_meta'][999] = [
     'estado' => 'planificada',
 ];
 final_assert(
-    !FLACSO_Edicion::accepts_registration(999),
-    'una edición sin configuración explícita permanece cerrada'
+    FLACSO_Edicion::accepts_registration(999),
+    'una edición sin booleano conserva la apertura legacy durante el rollout'
 );
 
 $GLOBALS['flacso_test_post_meta'][1000] = [
@@ -94,17 +115,22 @@ $GLOBALS['flacso_test_post_meta'][1000] = [
     'preinscripcion_habilitada' => true,
 ];
 final_assert(
-    !FLACSO_Edicion::accepts_registration(1000),
-    'una edición finalizada no admite nuevas preinscripciones'
+    FLACSO_Edicion::accepts_registration(1000),
+    'el estado académico finalizada no sobrescribe el booleano de preinscripción'
 );
 
 $GLOBALS['flacso_test_post_meta'][1001] = [
     'estado' => 'cancelada',
-    'preinscripcion_habilitada' => true,
 ];
 final_assert(
     !FLACSO_Edicion::accepts_registration(1001),
-    'una edicion cancelada cierra inmediatamente la preinscripcion'
+    'una edición legacy cancelada permanece cerrada'
+);
+
+$GLOBALS['flacso_test_post_meta'][1001]['preinscripcion_habilitada'] = true;
+final_assert(
+    FLACSO_Edicion::accepts_registration(1001),
+    'el booleano explícito prevalece sobre la regla legacy'
 );
 
 fwrite(STDOUT, "OK academic final model\n");

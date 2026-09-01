@@ -68,7 +68,14 @@ final class FLACSO_Django_API_Client {
             return new WP_Error('django_api_error', $message, ['status' => $code, 'body' => $raw]);
         }
 
-        return is_array($data) ? $data : [];
+        if (!is_array($data) || json_last_error() !== JSON_ERROR_NONE) {
+            return new WP_Error(
+                'django_api_invalid_response',
+                'Django devolvió una respuesta JSON inválida.'
+            );
+        }
+
+        return $data;
     }
 
     // -------------------------------------------------------------------------

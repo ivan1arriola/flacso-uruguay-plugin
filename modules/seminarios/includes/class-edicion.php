@@ -188,16 +188,26 @@ final class FLACSO_Edicion {
     }
 
     public static function accepts_registration(int $edition_id, ?int $timestamp = null): bool {
+        if (metadata_exists('post', $edition_id, 'preinscripcion_habilitada')) {
+            return rest_sanitize_boolean(
+                get_post_meta($edition_id, 'preinscripcion_habilitada', true)
+            );
+        }
+
+        // Compatibilidad de rollout para ediciones todavía no confirmadas con
+        // los nuevos botones. Un booleano explícito siempre prevalece.
         $state = self::sanitize_state(get_post_meta($edition_id, 'estado', true));
-        if (in_array($state, ['cancelada', 'finalizada'], true)) {
+        if ($state === 'cancelada') {
             return false;
         }
-        if (!metadata_exists('post', $edition_id, 'preinscripcion_habilitada')) {
-            return false;
+        $timestamp = $timestamp ?? (function_exists('current_time') ? current_time('timestamp', true) : time());
+        $fecha_inicio = (string) get_post_meta($edition_id, 'fecha_inicio', true);
+        if ($fecha_inicio === '') {
+            return true;
         }
-        return rest_sanitize_boolean(
-            get_post_meta($edition_id, 'preinscripcion_habilitada', true)
-        );
+        $days = self::get_days_after_start_limit($edition_id);
+        $closing_time = strtotime($fecha_inicio . ' +' . $days . ' days 23:59:59');
+        return !$closing_time || $timestamp <= $closing_time;
     }
 
     public static function sync_title(int $post_id): void {

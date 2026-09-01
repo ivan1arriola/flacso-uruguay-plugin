@@ -112,16 +112,28 @@ final class FLACSO_Cohorte {
     }
 
     public static function accepts_registration(int $cohort_id, ?int $timestamp = null): bool {
+        if (metadata_exists('post', $cohort_id, 'preinscripcion_habilitada')) {
+            return rest_sanitize_boolean(
+                get_post_meta($cohort_id, 'preinscripcion_habilitada', true)
+            );
+        }
+
+        // Compatibilidad de rollout: hasta que un administrador confirme Abrir
+        // o Cerrar, conservar la decisión legacy para no cortar inscripciones.
         $state = self::sanitize_state(get_post_meta($cohort_id, 'estado', true));
         if (in_array($state, ['cancelada', 'finalizada'], true)) {
             return false;
         }
-        if (!metadata_exists('post', $cohort_id, 'preinscripcion_habilitada')) {
-            return false;
+        $offer_id = absint(get_post_meta($cohort_id, self::META_PARENT_ID, true));
+        if ($offer_id && metadata_exists('post', $offer_id, 'inscripciones_abiertas')) {
+            if (!rest_sanitize_boolean(get_post_meta($offer_id, 'inscripciones_abiertas', true))) {
+                return false;
+            }
         }
-        return rest_sanitize_boolean(
-            get_post_meta($cohort_id, 'preinscripcion_habilitada', true)
-        );
+        $timestamp = $timestamp ?? current_time('timestamp', true);
+        $from = strtotime((string) get_post_meta($cohort_id, 'preinscripcion_desde', true));
+        $until = strtotime((string) get_post_meta($cohort_id, 'preinscripcion_hasta', true));
+        return (!$from || $timestamp >= $from) && (!$until || $timestamp <= $until);
     }
 
     public static function to_roman(int $number): string {
