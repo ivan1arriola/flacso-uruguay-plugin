@@ -22,61 +22,15 @@ final class FLACSO_Academic_Catalog {
         if (!$seminar) {
             return [];
         }
+
+        // Los valores derivados de Seminarios Integrados se resuelven en
+        // FLACSO_Seminario_Integrado a través de get_post_meta(). En particular,
+        // una Edición integrada toma docentes y encuentros exclusivamente de
+        // `ediciones_componentes`; nunca de la "edición vigente" arbitraria de
+        // cada Seminario componente.
         $editions = FLACSO_Academic_Repository::list('ediciones', ['parent_id' => $seminar_id, 'per_page' => 200]);
-        $current_edition = self::current_item($editions);
-
-        // Si es un seminario integrado, hereda transitivamente lo de las ediciones de sus componentes
-        $raw_components = is_array($seminar['componentes'] ?? null) ? $seminar['componentes'] : [];
-        if (!empty($raw_components)) {
-            $transitive_docentes = [];
-            $transitive_encuentros = [];
-            $min_start = '';
-            $max_end = '';
-
-            foreach ($raw_components as $comp) {
-                $comp_id = is_array($comp) ? absint($comp['seminario_id'] ?? 0) : absint($comp);
-                if ($comp_id <= 0) {
-                    continue;
-                }
-                $comp_editions = FLACSO_Academic_Repository::list('ediciones', ['parent_id' => $comp_id, 'per_page' => 50]);
-                $comp_current = self::current_item($comp_editions);
-                if ($comp_current) {
-                    if (!empty($comp_current['docentes']) && is_array($comp_current['docentes'])) {
-                        $transitive_docentes = array_merge($transitive_docentes, array_map('absint', $comp_current['docentes']));
-                    }
-                    if (!empty($comp_current['encuentros_sincronicos']) && is_array($comp_current['encuentros_sincronicos'])) {
-                        $transitive_encuentros = array_merge($transitive_encuentros, $comp_current['encuentros_sincronicos']);
-                    }
-                    $c_start = (string) ($comp_current['fecha_inicio'] ?? '');
-                    $c_end = (string) ($comp_current['fecha_fin'] ?? '');
-                    if ($c_start !== '' && ($min_start === '' || $c_start < $min_start)) {
-                        $min_start = $c_start;
-                    }
-                    if ($c_end !== '' && ($max_end === '' || $c_end > $max_end)) {
-                        $max_end = $c_end;
-                    }
-                }
-            }
-
-            if ($current_edition) {
-                $current_edition['docentes'] = array_values(array_unique(array_filter(array_merge(
-                    is_array($current_edition['docentes'] ?? null) ? array_map('absint', $current_edition['docentes']) : [],
-                    $transitive_docentes
-                ))));
-                if (empty($current_edition['encuentros_sincronicos'])) {
-                    $current_edition['encuentros_sincronicos'] = $transitive_encuentros;
-                }
-                if (empty($current_edition['fecha_inicio']) && $min_start !== '') {
-                    $current_edition['fecha_inicio'] = $min_start;
-                }
-                if (empty($current_edition['fecha_fin']) && $max_end !== '') {
-                    $current_edition['fecha_fin'] = $max_end;
-                }
-            }
-        }
-
         $seminar['ediciones'] = $editions;
-        $seminar['edicion_vigente'] = $current_edition;
+        $seminar['edicion_vigente'] = self::current_item($editions);
         return $seminar;
     }
 
