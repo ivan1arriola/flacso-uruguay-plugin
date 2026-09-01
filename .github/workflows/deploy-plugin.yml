@@ -282,7 +282,7 @@ jobs:
               fwrite(STDERR, "Canonical Preinscriptions Catalog API is unavailable.\n");
               exit(1);
           }
-          $programs_response = rest_do_request(new WP_REST_Request("GET", "/flacso/v1/programas"));
+          $programs_response = rest_do_request(new WP_REST_Request("GET", "/flacso/v1/programas-academicos"));
           if ($programs_response->is_error() || $programs_response->get_status() !== 200) {
               fwrite(STDERR, "Canonical Program API is unavailable.\n");
               exit(1);
