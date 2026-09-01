@@ -13,6 +13,7 @@ if (!defined('FLACSO_OFERTA_ACADEMICA_URL')) {
 
 // Entidades y persistencia finales. No hay migraciones ni adaptadores de lectura.
 flacso_safe_require('modules/oferta-academica/includes/class-cpt-oferta-academica.php');
+flacso_safe_require('modules/oferta-academica/includes/class-oferta-admin-table-layout.php');
 flacso_safe_require('modules/oferta-academica/includes/class-cpt-programa-academico.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-academica.php');
 flacso_safe_require('modules/oferta-academica/includes/class-cohorte.php');
@@ -32,6 +33,7 @@ if (defined('WP_CLI') && WP_CLI) {
 
 add_action('init', static function (): void {
     CPT_Oferta_Academica::init();
+    FLACSO_Oferta_Admin_Table_Layout::init();
     FLACSO_Programa_Academico::init();
     FLACSO_Oferta_Academica::register_meta();
     FLACSO_Cohorte::register();
