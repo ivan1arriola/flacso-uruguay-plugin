@@ -5,12 +5,16 @@ import re
 import sys
 from pathlib import Path
 
-ROOT = Path.cwd()
+ROOT = Path(__file__).resolve().parent.parent.parent
 
 EXCLUDED_DIR_NAMES = {
     ".git",
     ".svn",
     ".hg",
+    ".venv",
+    ".ruff_cache",
+    ".next",
+    ".next-dev",
     "node_modules",
     "vendor",
     "dist",
