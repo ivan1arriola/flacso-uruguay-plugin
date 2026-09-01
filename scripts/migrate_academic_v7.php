@@ -428,7 +428,7 @@ try {
     }
 
     // =========================================================================
-    // FASE 6: CREACIÓN DE EDICIONES DE SEMINARIO (edicion-seminario)
+    // FASE 6: CREACIÓN DE EDICIONES DE SEMINARIO (edicion)
     // =========================================================================
     echo "\n▶ FASE 6: Creando 54 Ediciones de Seminario...\n";
     $ediciones_json = load_json($data_dir . '/staging_local/ediciones_seminario.json');
@@ -436,7 +436,7 @@ try {
 
     // Limpiar ediciones existentes si hubiera alguna
     if (!$is_dry_run) {
-        $old_eds = $pdo->query("SELECT ID FROM wp_posts WHERE post_type = 'edicion-seminario'")->fetchAll(PDO::FETCH_COLUMN);
+        $old_eds = $pdo->query("SELECT ID FROM wp_posts WHERE post_type IN ('edicion-seminario', 'edicion')")->fetchAll(PDO::FETCH_COLUMN);
         if (!empty($old_eds)) {
             $in_e = implode(',', $old_eds);
             $pdo->exec("DELETE FROM wp_postmeta WHERE post_id IN ($in_e)");
@@ -457,7 +457,7 @@ try {
             $slug_ed = sanitize_title_with_dashes($title) . '-' . $d['anio'];
             $ins = $pdo->prepare("
                 INSERT INTO wp_posts (post_author, post_date, post_date_gmt, post_content, post_title, post_excerpt, post_status, comment_status, ping_status, post_name, post_modified, post_modified_gmt, post_type, post_parent)
-                VALUES (1, NOW(), NOW(), '', ?, '', 'publish', 'closed', 'closed', ?, NOW(), NOW(), 'edicion-seminario', ?)
+                VALUES (1, NOW(), NOW(), '', ?, '', 'publish', 'closed', 'closed', ?, NOW(), NOW(), 'edicion', ?)
             ");
             $ins->execute([$title, $slug_ed, $sem_id]);
             $ed_id = (int)$pdo->lastInsertId();
