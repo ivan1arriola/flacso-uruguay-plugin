@@ -21,6 +21,12 @@ oferta_admin_assert(strpos($admin, "'duracion_meses'") !== false, 'debe editar d
 oferta_admin_assert(strpos($admin, "'carga_horaria'") !== false, 'debe editar carga horaria');
 oferta_admin_assert(strpos($admin, "'creditos'") !== false, 'debe editar créditos');
 oferta_admin_assert(strpos($admin, "'perfil_ingreso_html'") !== false, 'debe editar perfil de ingreso');
+oferta_admin_assert(strpos($admin, '<details class="flacso-oferta-section"') !== false, 'debe organizar el editor en secciones plegables');
+oferta_admin_assert(strpos($admin, '<summary class="flacso-oferta-section__summary">') !== false, 'las secciones deben usar controles nativos accesibles');
+oferta_admin_assert(strpos($admin, 'data-flacso-sections="open"') !== false, 'debe permitir abrir todas las secciones');
+oferta_admin_assert(strpos($admin, 'data-flacso-sections="close"') !== false, 'debe permitir cerrar todas las secciones');
+oferta_admin_assert(strpos($admin, 'campos con contenido') !== false, 'debe informar la cobertura editorial sin marcar campos opcionales como obligatorios');
+oferta_admin_assert(strpos($admin, 'pertenecen a cada cohorte') !== false, 'debe diferenciar datos estables y temporales');
 oferta_admin_assert(strpos($admin, 'wp_verify_nonce') !== false, 'debe validar nonce');
 oferta_admin_assert(strpos($admin, "current_user_can('edit_post', \$post_id)") !== false, 'debe validar permisos');
 
