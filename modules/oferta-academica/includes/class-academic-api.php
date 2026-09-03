@@ -26,7 +26,7 @@ final class FLACSO_Academic_API {
                 [
                     'methods' => WP_REST_Server::CREATABLE,
                     'callback' => static function (WP_REST_Request $request) use ($entity) {
-                        return FLACSO_Academic_Repository::save($entity, $request->get_json_params());
+                        return self::save_entity($entity, $request->get_json_params());
                     },
                     'permission_callback' => [self::class, 'can_write'],
                 ],
@@ -44,7 +44,7 @@ final class FLACSO_Academic_API {
                 [
                     'methods' => WP_REST_Server::EDITABLE,
                     'callback' => static function (WP_REST_Request $request) use ($entity) {
-                        return FLACSO_Academic_Repository::save($entity, $request->get_json_params(), absint($request['id']));
+                        return self::save_entity($entity, $request->get_json_params(), absint($request['id']));
                     },
                     'permission_callback' => [self::class, 'can_write'],
                 ],
@@ -75,6 +75,38 @@ final class FLACSO_Academic_API {
             'callback' => [self::class, 'submit_consulta_seminario'],
             'permission_callback' => '__return_true',
         ]);
+    }
+
+    /**
+     * Persiste una entidad académica y aplica los metadatos que forman parte del
+     * contrato público de la entidad pero que no deben confundirse con campos
+     * editoriales genéricos del repositorio.
+     */
+    private static function save_entity(string $entity, array $payload, int $id = 0) {
+        $result = FLACSO_Academic_Repository::save($entity, $payload, $id);
+        if (is_wp_error($result)) {
+            return $result;
+        }
+
+        $post_id = absint($result['id'] ?? 0);
+        if ($post_id < 1) {
+            return $result;
+        }
+
+        if ($entity === 'ediciones' && array_key_exists('preinscripcion_habilitada', $payload)) {
+            update_post_meta(
+                $post_id,
+                'preinscripcion_habilitada',
+                rest_sanitize_boolean($payload['preinscripcion_habilitada'])
+            );
+            $result = FLACSO_Academic_Repository::to_array($entity, $post_id);
+            $result['preinscripcion_habilitada'] = rest_sanitize_boolean(
+                get_post_meta($post_id, 'preinscripcion_habilitada', true)
+            );
+            $result['preinscripcion'] = FLACSO_Preinscripcion::for_edition($post_id);
+        }
+
+        return $result;
     }
 
     public static function submit_consulta_seminario(WP_REST_Request $request) {
