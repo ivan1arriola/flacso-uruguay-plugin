@@ -110,6 +110,27 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
             $title    = get_the_title($page_id);
             $permalink = get_permalink($page_id);
             $current_url = $permalink ?: home_url('/');
+            $preinsc_url = trailingslashit($current_url) . 'preinscripcion';
+
+            if ($page_id > 0 && class_exists('FLACSO_Academic_Catalog') && get_post_type($page_id) === 'oferta-academica') {
+                $offer = FLACSO_Academic_Catalog::get_offer($page_id);
+                $active_cohort = $offer['cohorte_vigente'] ?? null;
+                if (!empty($active_cohort)) {
+                    $is_open = !empty($active_cohort['preinscripcion']['abierta']) || !empty($active_cohort['preinscripcion_habilitada']);
+                    $show_pre = $show_pre && $is_open;
+                    if (!empty($active_cohort['link_preinscripcion'])) {
+                        $preinsc_url = $active_cohort['link_preinscripcion'];
+                    } elseif (!empty($active_cohort['preinscripcion']['url'])) {
+                        $preinsc_url = $active_cohort['preinscripcion']['url'];
+                    }
+                } else {
+                    $abiertas = get_post_meta($page_id, 'inscripciones_abiertas', true);
+                    $show_pre = $show_pre && ($abiertas === '1' || $abiertas === 'true' || $abiertas === true || $abiertas === 1);
+                }
+            } elseif ($page_id > 0 && get_post_type($page_id) === 'oferta-academica') {
+                $abiertas = get_post_meta($page_id, 'inscripciones_abiertas', true);
+                $show_pre = $show_pre && ($abiertas === '1' || $abiertas === 'true' || $abiertas === true || $abiertas === 1);
+            }
 
             ob_start();
             ?>
@@ -172,7 +193,7 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
 
                 <?php if ($show_pre): ?>
                     <div class="d-grid gap-2 mt-4">
-                        <a class="btn btn-preinsc btn-lg py-3 fw-bold" href="<?php echo esc_url(trailingslashit($current_url) . 'preinscripcion'); ?>" onclick="if(typeof window.flacsoMetaTrack === 'function'){ window.flacsoMetaTrack('InitiateCheckout', { content_name: '<?php echo esc_js($title); ?>', content_category: 'oferta_academica' }); }">
+                        <a class="btn btn-preinsc btn-lg py-3 fw-bold" href="<?php echo esc_url($preinsc_url); ?>" onclick="if(typeof window.flacsoMetaTrack === 'function'){ window.flacsoMetaTrack('InitiateCheckout', { content_name: '<?php echo esc_js($title); ?>', content_category: 'oferta_academica' }); }">
                             <i class="bi bi-stars me-2" aria-hidden="true"></i>
                             <?php esc_html_e('Preinscripción', 'flacso-posgrados-docentes'); ?>
                         </a>
@@ -287,6 +308,7 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
             $fields = [
                 'nombre','apellido','pais','nivel_academico','correo','profesion',
                 'id_pagina','titulo_posgrado','url_base','url_referer',
+                'consulta','mensaje',
                 'campaign_provider','campaign_source','campaign_medium','campaign_name',
                 'campaign_external_id','campaign_content','campaign_term',
                 'utm_source','utm_medium','utm_campaign','utm_id','utm_content','utm_term',
@@ -301,6 +323,8 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
                     $data[$field] = absint($value);
                 } elseif (in_array($field, ['url_base', 'url_referer', 'landing_url', 'referrer_url'], true)) {
                     $data[$field] = esc_url_raw($value);
+                } elseif (in_array($field, ['consulta', 'mensaje'], true)) {
+                    $data[$field] = sanitize_textarea_field($value);
                 } elseif ($field === 'correo') {
                     $data[$field] = sanitize_email($value);
                 } else {
