@@ -29,9 +29,13 @@ deploy_opcache_assert(
     'el workflow debe ejecutar primero el reset y luego un request de runtime independiente'
 );
 deploy_opcache_assert(
-    strpos($workflow, 'method_exists(\'FLACSO_Academic_Team_Admin\', \'render_member_row\')') !== false
-        || strpos($workflow, 'method_exists("FLACSO_Academic_Team_Admin", "render_member_row")') !== false,
-    'el smoke test debe comprobar render_member_row'
+    strpos($workflow, "FLACSO_Academic_Team_Editor") !== false
+        && strpos($workflow, "render_member_row") !== false,
+    'el smoke test debe comprobar el editor de equipos sin colisiones'
+);
+deploy_opcache_assert(
+    strpos($workflow, "ini_get('opcache.preload')") !== false,
+    'el diagnostico debe informar si FPM usa opcache.preload'
 );
 deploy_opcache_assert(
     strpos($workflow, 'test ! -e "$TARGET/$OPCACHE_RESET_REL"') !== false

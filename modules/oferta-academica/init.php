@@ -18,7 +18,9 @@ flacso_safe_require('modules/oferta-academica/includes/class-cpt-programa-academ
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-academica.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-admin-fields.php');
 flacso_safe_require('modules/oferta-academica/includes/class-cohorte.php');
-flacso_safe_require('modules/oferta-academica/includes/class-academic-team-admin.php');
+// No cargar el editor legado: en algunos runtimes quedó una definición antigua
+// de FLACSO_Academic_Team_Admin. El editor nuevo usa una clase sin colisiones.
+flacso_safe_require('modules/oferta-academica/includes/class-academic-team-editor.php');
 flacso_safe_require('modules/oferta-academica/includes/class-cpt-tabla-precio.php');
 flacso_safe_require('modules/oferta-academica/includes/class-tabla-precio-schema.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-taxonomies.php');
@@ -46,7 +48,7 @@ add_action('init', static function (): void {
 }, 5);
 
 FLACSO_Oferta_Admin_Fields::init();
-FLACSO_Academic_Team_Admin::init();
+FLACSO_Academic_Team_Editor::init();
 Tabla_Precio_Schema::init();
 FLACSO_Academic_API::init();
 
