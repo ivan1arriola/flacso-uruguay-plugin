@@ -12,7 +12,6 @@ class FLACSO_Editor_Admin_Mode {
         'cohorte',
         'seminario',
         'edicion',
-        'tabla-precio',
         'charla_abierta',
         'fc_consulta',
         'fc_info_request',
