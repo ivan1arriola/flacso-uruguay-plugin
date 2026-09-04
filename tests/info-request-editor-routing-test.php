@@ -23,6 +23,7 @@ editor_routing_assert(strpos($routing, 'https://editor.flacso.edu.uy') !== false
 editor_routing_assert(strpos($routing, "'/api/consultas'") !== false, 'el destino canónico debe ser /api/consultas');
 editor_routing_assert(strpos($routing, "get_option('fc_oferta_webhook_url'") !== false, 'debe respetar la opción de solicitudes de oferta');
 editor_routing_assert(strpos($routing, "get_option('fc_consultas_webhook_url'") !== false, 'debe completar la opción de consultas generales');
+editor_routing_assert(strpos($routing, 'editor-flacso-uy.vercel.app') !== false, 'debe reconocer el host Vercel legado para migrarlo');
 
 if (!defined('ABSPATH')) {
     define('ABSPATH', __DIR__ . '/');
@@ -74,7 +75,7 @@ editor_routing_assert(
     'consultas generales deben partir del endpoint canónico; su handler agrega /general'
 );
 
-// Un Editor explícito debe usarse como base sin depender del dominio de producción.
+// Un Editor explícito no legado debe usarse como base.
 $GLOBALS['editor_routing_options'] = [
     'flacso_external_editor_url' => 'https://editor-ejemplo.test/',
 ];
@@ -82,10 +83,38 @@ $GLOBALS['editor_routing_updates'] = [];
 fc_ensure_info_request_editor_routes();
 editor_routing_assert(
     get_option('fc_oferta_webhook_url') === 'https://editor-ejemplo.test/api/consultas',
-    'debe construir /api/consultas desde flacso_external_editor_url'
+    'debe construir /api/consultas desde un flacso_external_editor_url explícito no legado'
 );
 
-// Overrides explícitos nunca se pisan.
+// El dominio Vercel histórico ya no es un destino válido de producción.
+$GLOBALS['editor_routing_options'] = [
+    'flacso_external_editor_url' => 'https://editor-flacso-uy.vercel.app',
+];
+$GLOBALS['editor_routing_updates'] = [];
+fc_ensure_info_request_editor_routes();
+editor_routing_assert(
+    get_option('fc_oferta_webhook_url') === 'https://editor.flacso.edu.uy/api/consultas',
+    'debe migrar el Editor Vercel legado al dominio productivo actual'
+);
+
+// Si las opciones webhook quedaron persistidas con Vercel, también deben repararse.
+$GLOBALS['editor_routing_options'] = [
+    'flacso_external_editor_url' => 'https://editor.flacso.edu.uy',
+    'fc_oferta_webhook_url' => 'https://editor-flacso-uy.vercel.app/api/consultas',
+    'fc_consultas_webhook_url' => 'https://editor-flacso-uy.vercel.app/api/consultas',
+];
+$GLOBALS['editor_routing_updates'] = [];
+fc_ensure_info_request_editor_routes();
+editor_routing_assert(
+    get_option('fc_oferta_webhook_url') === 'https://editor.flacso.edu.uy/api/consultas',
+    'debe reparar fc_oferta_webhook_url legado'
+);
+editor_routing_assert(
+    get_option('fc_consultas_webhook_url') === 'https://editor.flacso.edu.uy/api/consultas',
+    'debe reparar fc_consultas_webhook_url legado'
+);
+
+// Overrides explícitos no legados nunca se pisan.
 $GLOBALS['editor_routing_options'] = [
     'flacso_external_editor_url' => 'https://editor.flacso.edu.uy',
     'fc_oferta_webhook_url' => 'https://override.example/api/consultas',
