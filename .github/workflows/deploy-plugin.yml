@@ -211,6 +211,10 @@ jobs:
           TARGET="${WP_ROOT}/wp-content/plugins/flacso-uruguay-plugin"
           PLUGIN_FILE="flacso-uruguay.php"
           MISSING_SHORTCODE='[FLACSO] Archivo no encontrado: modules/shortcodes/includes/shortcodes-programa.php'
+          OPCACHE_RESET_REL=".flacso-opcache-reset-${DEPLOY_SHA}.php"
+          OPCACHE_RESET_SOURCE="${SOURCE}/${OPCACHE_RESET_REL}"
+          OPCACHE_RESET_URL="https://flacso.edu.uy/wp-content/plugins/flacso-uruguay-plugin/${OPCACHE_RESET_REL}"
+          OPCACHE_TOKEN="$(openssl rand -hex 24)"
 
           activated=0
           cleanup() {
@@ -238,6 +242,30 @@ jobs:
           install -d -m 700 "$BACKUP"
           /usr/bin/rsync -rt "$TARGET/" "$BACKUP/"
 
+          cat > "$OPCACHE_RESET_SOURCE" <<PHP
+          <?php
+          \$remote = (string) (\$_SERVER['REMOTE_ADDR'] ?? '');
+          \$token = (string) (\$_GET['token'] ?? '');
+          if (!in_array(\$remote, ['127.0.0.1', '::1'], true) || !hash_equals('${OPCACHE_TOKEN}', \$token)) {
+              http_response_code(404);
+              exit;
+          }
+          header('Content-Type: text/plain; charset=utf-8');
+          \$opcache = 'unavailable';
+          if (function_exists('opcache_reset')) {
+              \$opcache = opcache_reset() ? 'reset' : 'not-reset';
+          }
+          require dirname(__DIR__, 3) . '/wp-load.php';
+          \$class_ok = class_exists('FLACSO_Academic_Team_Admin');
+          \$method_ok = \$class_ok && method_exists('FLACSO_Academic_Team_Admin', 'render_member_row');
+          if (!\$method_ok) {
+              http_response_code(500);
+              echo "team_admin_method=missing opcache=" . \$opcache . "\n";
+              exit;
+          }
+          echo "team_admin_method=ok opcache=" . \$opcache . "\n";
+          PHP
+
           sudo -n /usr/bin/rsync \
             -a --delete --delay-updates \
             --chown=web5:client2 \
@@ -247,6 +275,27 @@ jobs:
 
           test -f "$TARGET/$PLUGIN_FILE"
           test -f "$TARGET/modules/shortcodes/includes/shortcodes-programa.php"
+          test -f "$TARGET/$OPCACHE_RESET_REL"
+
+          # Ejecutar el reset dentro del mismo vhost/pool FPM que atiende flacso.edu.uy.
+          # Esto evita depender de conocer la versión de PHP configurada por ISPConfig.
+          opcache_output="$(curl --fail --silent --show-error --insecure \
+            --resolve flacso.edu.uy:443:127.0.0.1 \
+            "${OPCACHE_RESET_URL}?token=${OPCACHE_TOKEN}")"
+          printf 'FPM smoke test: %s\n' "$opcache_output"
+          if [[ "$opcache_output" != team_admin_method=ok* ]]; then
+            echo "The FPM pool did not load the current academic team admin class." >&2
+            exit 1
+          fi
+
+          # El endpoint temporal existe sólo durante el deploy.
+          rm -f -- "$OPCACHE_RESET_SOURCE"
+          sudo -n /usr/bin/rsync \
+            -a --delete --delay-updates \
+            --chown=web5:client2 \
+            --chmod=D755,F644 \
+            "$SOURCE/" "$TARGET/"
+          test ! -e "$TARGET/$OPCACHE_RESET_REL"
 
           WP_BIN="$(command -v wp)"
           test -n "$WP_BIN"
@@ -270,6 +319,10 @@ jobs:
           printf '%s\n' "$validation_output"
 
           sudo -n -u web5 -- "$WP_BIN" --path="$WP_ROOT" eval '
+          if (!class_exists("FLACSO_Academic_Team_Admin") || !method_exists("FLACSO_Academic_Team_Admin", "render_member_row")) {
+              fwrite(STDERR, "Academic team admin class is incomplete.\n");
+              exit(1);
+          }
           $required_cpts = ["programa-academico", "oferta-academica", "cohorte", "seminario", "edicion", "tabla-precio"];
           foreach ($required_cpts as $cpt) {
               if (!post_type_exists($cpt)) {
