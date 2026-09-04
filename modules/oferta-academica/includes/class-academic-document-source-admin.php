@@ -85,7 +85,7 @@ final class FLACSO_Academic_Document_Source_Admin {
         }
 
         global $post;
-        if (!$post instanceof WP_Post) {
+        if (!($post instanceof WP_Post)) {
             return;
         }
 
@@ -141,112 +141,121 @@ final class FLACSO_Academic_Document_Source_Admin {
         <script>
         (function () {
             var cfg = <?php echo wp_json_encode($config); ?>;
-            var input = document.querySelector(cfg.selector);
-            var form = document.getElementById('post');
-            if (!input || !form || typeof wp === 'undefined' || !wp.media) return;
-            if (input.dataset.flacsoDocumentSourceReady === '1') return;
-            input.dataset.flacsoDocumentSourceReady = '1';
 
-            function hidden(name, value) {
-                var field = document.createElement('input');
-                field.type = 'hidden';
-                field.name = name;
-                field.value = value == null ? '' : String(value);
-                form.appendChild(field);
-                return field;
-            }
+            function boot() {
+                var input = document.querySelector(cfg.selector);
+                var form = document.getElementById('post');
+                if (!input || !form || typeof wp === 'undefined' || !wp.media) return;
+                if (input.dataset.flacsoDocumentSourceReady === '1') return;
+                input.dataset.flacsoDocumentSourceReady = '1';
 
-            hidden(cfg.nonceName, cfg.nonce);
-            var modeInput = hidden('flacso_document_source[' + cfg.key + '][mode]', cfg.mode);
-            var attachmentInput = hidden('flacso_document_source[' + cfg.key + '][attachment_id]', cfg.attachmentId || 0);
+                function hidden(name, value) {
+                    var field = document.createElement('input');
+                    field.type = 'hidden';
+                    field.name = name;
+                    field.value = value == null ? '' : String(value);
+                    form.appendChild(field);
+                    return field;
+                }
 
-            var panel = document.createElement('div');
-            panel.className = 'flacso-document-source';
-            panel.innerHTML =
-                '<span class="flacso-document-source__title"></span>' +
-                '<div class="flacso-document-source__modes">' +
-                    '<label><input type="radio" name="flacso_document_source_mode_ui_' + cfg.key + '" value="enlace"> <span class="mode-link"></span></label>' +
-                    '<label><input type="radio" name="flacso_document_source_mode_ui_' + cfg.key + '" value="pdf"> <span class="mode-pdf"></span></label>' +
-                '</div>' +
-                '<div class="flacso-document-source__pdf">' +
-                    '<button type="button" class="button flacso-document-source__choose"></button>' +
-                    '<button type="button" class="button-link-delete flacso-document-source__remove"></button>' +
-                    '<span class="flacso-document-source__file"></span>' +
-                '</div>' +
-                '<small class="flacso-document-source__help"></small>';
+                hidden(cfg.nonceName, cfg.nonce);
+                var modeInput = hidden('flacso_document_source[' + cfg.key + '][mode]', cfg.mode);
+                var attachmentInput = hidden('flacso_document_source[' + cfg.key + '][attachment_id]', cfg.attachmentId || 0);
 
-            input.parentNode.insertBefore(panel, input);
-            panel.querySelector('.flacso-document-source__title').textContent = cfg.labels.source + ' — ' + cfg.title;
-            panel.querySelector('.mode-link').textContent = cfg.labels.link;
-            panel.querySelector('.mode-pdf').textContent = cfg.labels.pdf;
+                var panel = document.createElement('div');
+                panel.className = 'flacso-document-source';
+                panel.innerHTML =
+                    '<span class="flacso-document-source__title"></span>' +
+                    '<div class="flacso-document-source__modes">' +
+                        '<label><input type="radio" name="flacso_document_source_mode_ui_' + cfg.key + '" value="enlace"> <span class="mode-link"></span></label>' +
+                        '<label><input type="radio" name="flacso_document_source_mode_ui_' + cfg.key + '" value="pdf"> <span class="mode-pdf"></span></label>' +
+                    '</div>' +
+                    '<div class="flacso-document-source__pdf">' +
+                        '<button type="button" class="button flacso-document-source__choose"></button>' +
+                        '<button type="button" class="button-link-delete flacso-document-source__remove"></button>' +
+                        '<span class="flacso-document-source__file"></span>' +
+                    '</div>' +
+                    '<small class="flacso-document-source__help"></small>';
 
-            var chooseButton = panel.querySelector('.flacso-document-source__choose');
-            var removeButton = panel.querySelector('.flacso-document-source__remove');
-            var fileLabel = panel.querySelector('.flacso-document-source__file');
-            var pdfArea = panel.querySelector('.flacso-document-source__pdf');
-            var help = panel.querySelector('.flacso-document-source__help');
-            var radios = panel.querySelectorAll('input[type="radio"]');
-            var frame = null;
+                input.parentNode.insertBefore(panel, input);
+                panel.querySelector('.flacso-document-source__title').textContent = cfg.labels.source + ' — ' + cfg.title;
+                panel.querySelector('.mode-link').textContent = cfg.labels.link;
+                panel.querySelector('.mode-pdf').textContent = cfg.labels.pdf;
 
-            function selectedMode() {
-                return modeInput.value === 'pdf' ? 'pdf' : 'enlace';
-            }
+                var chooseButton = panel.querySelector('.flacso-document-source__choose');
+                var removeButton = panel.querySelector('.flacso-document-source__remove');
+                var fileLabel = panel.querySelector('.flacso-document-source__file');
+                var pdfArea = panel.querySelector('.flacso-document-source__pdf');
+                var help = panel.querySelector('.flacso-document-source__help');
+                var radios = panel.querySelectorAll('input[type="radio"]');
+                var frame = null;
 
-            function render() {
-                var mode = selectedMode();
-                panel.classList.toggle('is-pdf', mode === 'pdf');
-                input.readOnly = mode === 'pdf';
-                pdfArea.style.display = mode === 'pdf' ? 'flex' : 'none';
-                help.textContent = mode === 'pdf' ? cfg.labels.pdfHelp : cfg.labels.linkHelp;
-                radios.forEach(function (radio) { radio.checked = radio.value === mode; });
+                function selectedMode() {
+                    return modeInput.value === 'pdf' ? 'pdf' : 'enlace';
+                }
 
-                var hasPdf = parseInt(attachmentInput.value || '0', 10) > 0;
-                chooseButton.textContent = hasPdf ? cfg.labels.replacePdf : cfg.labels.selectPdf;
-                removeButton.textContent = cfg.labels.removePdf;
-                removeButton.style.display = hasPdf ? 'inline-block' : 'none';
-                fileLabel.textContent = hasPdf ? (input.value || cfg.currentUrl || '') : cfg.labels.noPdf;
-            }
+                function render() {
+                    var mode = selectedMode();
+                    panel.classList.toggle('is-pdf', mode === 'pdf');
+                    input.readOnly = mode === 'pdf';
+                    pdfArea.style.display = mode === 'pdf' ? 'flex' : 'none';
+                    help.textContent = mode === 'pdf' ? cfg.labels.pdfHelp : cfg.labels.linkHelp;
+                    radios.forEach(function (radio) { radio.checked = radio.value === mode; });
 
-            radios.forEach(function (radio) {
-                radio.addEventListener('change', function () {
-                    modeInput.value = radio.value;
-                    render();
-                });
-            });
+                    var hasPdf = parseInt(attachmentInput.value || '0', 10) > 0;
+                    chooseButton.textContent = hasPdf ? cfg.labels.replacePdf : cfg.labels.selectPdf;
+                    removeButton.textContent = cfg.labels.removePdf;
+                    removeButton.style.display = hasPdf ? 'inline-block' : 'none';
+                    fileLabel.textContent = hasPdf ? (input.value || cfg.currentUrl || '') : cfg.labels.noPdf;
+                }
 
-            chooseButton.addEventListener('click', function () {
-                if (!frame) {
-                    frame = wp.media({
-                        title: cfg.labels.choosePdf + ' — ' + cfg.title,
-                        button: { text: cfg.labels.choosePdf },
-                        library: { type: 'application/pdf' },
-                        multiple: false
-                    });
-                    frame.on('select', function () {
-                        var selected = frame.state().get('selection').first();
-                        var attachment = selected ? selected.toJSON() : null;
-                        if (!attachment || attachment.mime !== 'application/pdf') {
-                            window.alert(cfg.labels.invalidPdf);
-                            return;
-                        }
-                        attachmentInput.value = attachment.id || 0;
-                        input.value = attachment.url || '';
-                        input.dispatchEvent(new Event('change', { bubbles: true }));
-                        modeInput.value = 'pdf';
+                radios.forEach(function (radio) {
+                    radio.addEventListener('change', function () {
+                        modeInput.value = radio.value;
                         render();
                     });
-                }
-                frame.open();
-            });
+                });
 
-            removeButton.addEventListener('click', function () {
-                attachmentInput.value = '0';
-                input.value = '';
-                input.dispatchEvent(new Event('change', { bubbles: true }));
+                chooseButton.addEventListener('click', function () {
+                    if (!frame) {
+                        frame = wp.media({
+                            title: cfg.labels.choosePdf + ' — ' + cfg.title,
+                            button: { text: cfg.labels.choosePdf },
+                            library: { type: 'application/pdf' },
+                            multiple: false
+                        });
+                        frame.on('select', function () {
+                            var selected = frame.state().get('selection').first();
+                            var attachment = selected ? selected.toJSON() : null;
+                            if (!attachment || attachment.mime !== 'application/pdf') {
+                                window.alert(cfg.labels.invalidPdf);
+                                return;
+                            }
+                            attachmentInput.value = attachment.id || 0;
+                            input.value = attachment.url || '';
+                            input.dispatchEvent(new Event('change', { bubbles: true }));
+                            modeInput.value = 'pdf';
+                            render();
+                        });
+                    }
+                    frame.open();
+                });
+
+                removeButton.addEventListener('click', function () {
+                    attachmentInput.value = '0';
+                    input.value = '';
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                    render();
+                });
+
                 render();
-            });
+            }
 
-            render();
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', boot, { once: true });
+            } else {
+                window.setTimeout(boot, 0);
+            }
         })();
         </script>
         <?php
