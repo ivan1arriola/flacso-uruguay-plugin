@@ -38,6 +38,7 @@ jobs:
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           test -f "$PLUGIN_FILE"
           test -f modules/shortcodes/includes/shortcodes-programa.php
+          test -f modules/oferta-academica/includes/class-academic-team-editor.php
 
           symlink="$(find . -path './.git' -prune -o -type l -print -quit)"
           if [[ -n "$symlink" ]]; then
@@ -240,8 +241,6 @@ jobs:
                 --chmod=D755,F644 \
                 "$BACKUP/" "$TARGET/" || true
 
-              # Invalidar también el bytecode del intento fallido. Se copia sólo
-              # el endpoint de reset, se ejecuta y se vuelve a restaurar el backup.
               if [[ -f "$OPCACHE_RESET_SOURCE" ]]; then
                 sudo -n /usr/bin/rsync \
                   -a --chown=web5:client2 --chmod=F644 \
@@ -264,6 +263,7 @@ jobs:
 
           test -f "$SOURCE/$PLUGIN_FILE"
           test -f "$SOURCE/modules/shortcodes/includes/shortcodes-programa.php"
+          test -f "$SOURCE/modules/oferta-academica/includes/class-academic-team-editor.php"
           test -d "$WP_ROOT"
           test -d "$TARGET"
           test -f "$TARGET/$PLUGIN_FILE"
@@ -272,8 +272,6 @@ jobs:
           /usr/bin/rsync -rt "$TARGET/" "$BACKUP/"
 
           # Petición 1: invalida OPcache en el FPM real que atiende el vhost.
-          # No carga WordPress en este request: la recompilación se comprueba en
-          # una segunda petición independiente.
           cat > "$OPCACHE_RESET_SOURCE" <<PHP
           <?php
           \$remote = (string) (\$_SERVER['REMOTE_ADDR'] ?? '');
@@ -287,11 +285,11 @@ jobs:
           if (function_exists('opcache_reset')) {
               \$state = opcache_reset() ? 'reset' : 'not-reset';
           }
-          echo 'opcache=' . \$state . ' php=' . PHP_VERSION . ' sapi=' . PHP_SAPI . "\n";
+          echo 'opcache=' . \$state . ' php=' . PHP_VERSION . ' sapi=' . PHP_SAPI . ' preload=' . (string) ini_get('opcache.preload') . "\n";
           PHP
 
-          # Petición 2: arranca otro request PHP, carga WordPress y verifica que
-          # la clase ejecutada por FPM corresponde a los archivos recién activados.
+          # Petición 2: carga WordPress en un request nuevo y verifica la clase
+          # sin colisiones que debe atender el editor de equipos.
           cat > "$RUNTIME_CHECK_SOURCE" <<PHP
           <?php
           \$remote = (string) (\$_SERVER['REMOTE_ADDR'] ?? '');
@@ -302,14 +300,36 @@ jobs:
           }
           header('Content-Type: text/plain; charset=utf-8');
           require dirname(__DIR__, 3) . '/wp-load.php';
-          \$class_ok = class_exists('FLACSO_Academic_Team_Admin');
-          \$method_ok = \$class_ok && method_exists('FLACSO_Academic_Team_Admin', 'render_member_row');
+
+          \$class = 'FLACSO_Academic_Team_Editor';
+          \$class_ok = class_exists(\$class);
+          \$method_ok = \$class_ok && method_exists(\$class, 'render_member_row');
           if (!\$method_ok) {
               http_response_code(500);
-              echo 'team_admin_method=missing php=' . PHP_VERSION . ' sapi=' . PHP_SAPI . "\n";
+              \$parts = [
+                  'team_editor_method=missing',
+                  'php=' . PHP_VERSION,
+                  'sapi=' . PHP_SAPI,
+                  'preload=' . (string) ini_get('opcache.preload'),
+              ];
+              if (class_exists('FLACSO_Academic_Team_Admin')) {
+                  try {
+                      \$legacy = new ReflectionClass('FLACSO_Academic_Team_Admin');
+                      \$parts[] = 'legacy_file=' . (string) \$legacy->getFileName();
+                      \$parts[] = 'legacy_has_row=' . (method_exists('FLACSO_Academic_Team_Admin', 'render_member_row') ? '1' : '0');
+                  } catch (Throwable \$e) {
+                      \$parts[] = 'legacy_reflection_error=1';
+                  }
+              }
+              echo implode(' ', \$parts) . "\n";
               exit;
           }
-          echo 'team_admin_method=ok php=' . PHP_VERSION . ' sapi=' . PHP_SAPI . "\n";
+
+          \$reflection = new ReflectionClass(\$class);
+          echo 'team_editor_method=ok php=' . PHP_VERSION
+              . ' sapi=' . PHP_SAPI
+              . ' file=' . (string) \$reflection->getFileName()
+              . "\n";
           PHP
 
           sudo -n /usr/bin/rsync \
@@ -321,6 +341,7 @@ jobs:
 
           test -f "$TARGET/$PLUGIN_FILE"
           test -f "$TARGET/modules/shortcodes/includes/shortcodes-programa.php"
+          test -f "$TARGET/modules/oferta-academica/includes/class-academic-team-editor.php"
           test -f "$TARGET/$OPCACHE_RESET_REL"
           test -f "$TARGET/$RUNTIME_CHECK_REL"
 
@@ -339,12 +360,11 @@ jobs:
           runtime_output="$(cat "$runtime_body")"
           rm -f -- "$runtime_body"
           printf 'FPM runtime check [%s]: %s\n' "$runtime_status" "$runtime_output"
-          if [[ "$runtime_status" != "200" || "$runtime_output" != team_admin_method=ok* ]]; then
-            echo "The production FPM pool did not load the current academic team admin class." >&2
+          if [[ "$runtime_status" != "200" || "$runtime_output" != team_editor_method=ok* ]]; then
+            echo "The production FPM pool did not load the collision-free academic team editor." >&2
             exit 1
           fi
 
-          # Los endpoints temporales existen sólo durante el deploy.
           rm -f -- "$OPCACHE_RESET_SOURCE" "$RUNTIME_CHECK_SOURCE"
           sudo -n /usr/bin/rsync \
             -a --delete --delay-updates \
@@ -376,8 +396,8 @@ jobs:
           printf '%s\n' "$validation_output"
 
           sudo -n -u web5 -- "$WP_BIN" --path="$WP_ROOT" eval '
-          if (!class_exists("FLACSO_Academic_Team_Admin") || !method_exists("FLACSO_Academic_Team_Admin", "render_member_row")) {
-              fwrite(STDERR, "Academic team admin class is incomplete.\n");
+          if (!class_exists("FLACSO_Academic_Team_Editor") || !method_exists("FLACSO_Academic_Team_Editor", "render_member_row")) {
+              fwrite(STDERR, "Collision-free academic team editor is incomplete.\n");
               exit(1);
           }
           $required_cpts = ["programa-academico", "oferta-academica", "cohorte", "seminario", "edicion", "tabla-precio"];
