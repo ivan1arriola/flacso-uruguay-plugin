@@ -27,6 +27,7 @@ flacso_safe_require('modules/formularios/includes/assets.php');
 // Cargar configuración y handlers de formularios
 flacso_safe_require('modules/formularios/includes/cpt.php');
 flacso_safe_require('modules/formularios/includes/helpers.php');
+flacso_safe_require('modules/formularios/includes/editor-routing.php');
 flacso_safe_require('modules/formularios/includes/settings.php');
 flacso_safe_require('modules/formularios/includes/validation.php');
 flacso_safe_require('modules/formularios/includes/telegram.php');
