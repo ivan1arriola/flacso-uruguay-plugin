@@ -17,6 +17,7 @@ flacso_safe_require('modules/oferta-academica/includes/class-oferta-admin-table-
 flacso_safe_require('modules/oferta-academica/includes/class-cpt-programa-academico.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-academica.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-admin-fields.php');
+flacso_safe_require('modules/oferta-academica/includes/class-offer-carta-contact-admin.php');
 flacso_safe_require('modules/oferta-academica/includes/class-cohorte.php');
 flacso_safe_require('modules/oferta-academica/includes/class-academic-document-source-admin.php');
 // No cargar el editor legado: en algunos runtimes quedó una definición antigua
@@ -50,6 +51,7 @@ add_action('init', static function (): void {
 }, 5);
 
 FLACSO_Oferta_Admin_Fields::init();
+FLACSO_Offer_Carta_Contact_Admin::init();
 FLACSO_Academic_Document_Source_Admin::init();
 FLACSO_Academic_Team_Editor::init();
 Tabla_Precio_Schema::init();
