@@ -86,6 +86,9 @@ class FLACSO_Uruguay_Plugin {
 
         // Ayuda a precalentar dominios externos usados frecuentemente por el sitio.
         add_filter('wp_resource_hints', [$this, 'add_resource_hints'], 10, 2);
+
+        // Baseline móvil acotado a los componentes públicos del plugin.
+        add_action('wp_enqueue_scripts', [$this, 'enqueue_public_mobile_ux'], 70);
         
     }
     
@@ -129,6 +132,31 @@ class FLACSO_Uruguay_Plugin {
         ];
 
         return $hints;
+    }
+
+    /**
+     * Carga una capa móvil pequeña y segura para los componentes públicos.
+     * El CSS está completamente acotado a clases FLACSO, por lo que puede
+     * convivir con el tema actual o con cualquier otro tema compatible.
+     */
+    public function enqueue_public_mobile_ux() {
+        if (is_admin()) {
+            return;
+        }
+
+        $relative_path = 'assets/css/flacso-public-mobile.css';
+        $absolute_path = FLACSO_URUGUAY_PATH . $relative_path;
+
+        if (!is_readable($absolute_path)) {
+            return;
+        }
+
+        wp_enqueue_style(
+            'flacso-public-mobile',
+            FLACSO_URUGUAY_URL . $relative_path,
+            [],
+            (string) filemtime($absolute_path)
+        );
     }
     
     public function load_modules() {

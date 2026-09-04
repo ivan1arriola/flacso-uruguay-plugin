@@ -1,0 +1,283 @@
+/*
+ * FLACSO Uruguay — baseline móvil de componentes públicos del plugin.
+ * Todas las reglas están acotadas a componentes FLACSO para convivir con
+ * Kadence u otros temas sin modificar su tipografía o layout global.
+ */
+
+@media (max-width: 782px) {
+    :where(
+        .flacso-main-page,
+        .flacso-oferta-hero,
+        .flacso-oferta-nav,
+        .flacso-oferta-body,
+        .flacso-formulario-consultas,
+        .flacso-docentes-scope,
+        .flacso-mailing-home-card,
+        .flacso-posgrados-consultas,
+        .flacso-pos-consultas-thanks
+    ) {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    :where(
+        .flacso-main-page,
+        .flacso-oferta-hero,
+        .flacso-oferta-body,
+        .flacso-formulario-consultas,
+        .flacso-docentes-scope,
+        .flacso-mailing-home-card,
+        .flacso-posgrados-consultas,
+        .flacso-pos-consultas-thanks
+    ) :where(img, picture, video, iframe, svg) {
+        max-width: 100%;
+    }
+
+    :where(
+        .flacso-main-page,
+        .flacso-oferta-hero,
+        .flacso-oferta-body,
+        .flacso-formulario-consultas,
+        .flacso-docentes-scope,
+        .flacso-mailing-home-card,
+        .flacso-posgrados-consultas,
+        .flacso-pos-consultas-thanks
+    ) :where(img, video) {
+        height: auto;
+    }
+
+    :where(
+        .flacso-main-page,
+        .flacso-oferta-body,
+        .flacso-formulario-consultas,
+        .flacso-docentes-scope,
+        .flacso-mailing-home-card,
+        .flacso-posgrados-consultas
+    ) :where(p, li, h1, h2, h3, h4, h5, h6, a, span) {
+        overflow-wrap: anywhere;
+    }
+
+    /* Evita zoom del navegador al entrar en campos y mejora el área táctil. */
+    :where(
+        .flacso-main-page,
+        .flacso-oferta-body,
+        .flacso-formulario-consultas,
+        .flacso-docentes-scope,
+        .flacso-mailing-home-card,
+        .flacso-posgrados-consultas
+    ) :where(
+        input:not([type="checkbox"]):not([type="radio"]),
+        textarea,
+        select
+    ) {
+        max-width: 100%;
+        min-height: 44px;
+        font-size: 16px !important;
+    }
+
+    :where(
+        .flacso-main-page,
+        .flacso-oferta-body,
+        .flacso-formulario-consultas,
+        .flacso-docentes-scope,
+        .flacso-mailing-home-card,
+        .flacso-posgrados-consultas
+    ) :where(button, input[type="button"], input[type="submit"], a.btn, .btn) {
+        min-height: 44px;
+        max-width: 100%;
+        touch-action: manipulation;
+    }
+
+    /* Homepage: las columnas Bootstrap y las tarjetas nunca deben desbordar. */
+    .flacso-main-page,
+    .flacso-main-page .flacso-home-block,
+    .flacso-main-page .flacso-content-shell,
+    .flacso-main-page .row > *,
+    .flacso-main-page .card,
+    .flacso-main-page .card-body {
+        min-width: 0;
+    }
+
+    .flacso-main-page .flacso-content-shell {
+        width: 100%;
+        padding-inline: 1rem;
+    }
+
+    .flacso-main-page .badge {
+        max-width: 100%;
+        white-space: normal;
+        line-height: 1.25;
+        text-align: left;
+    }
+
+    /* Oferta académica: hero compacto, CTAs claros y navegación deslizable. */
+    .flacso-oferta-hero {
+        min-height: auto;
+        padding-block: 2.6rem;
+    }
+
+    .flacso-oferta-hero__content {
+        width: 100%;
+        padding-inline: 1rem;
+    }
+
+    .flacso-oferta-hero__title {
+        font-size: clamp(1.85rem, 9vw, 2.35rem);
+        line-height: 1.08;
+    }
+
+    .flacso-oferta-hero__subtitle {
+        font-size: 1rem;
+        line-height: 1.5;
+    }
+
+    .flacso-oferta-hero__actions,
+    .flacso-oferta-section__actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.65rem;
+    }
+
+    .flacso-oferta-hero .flacso-oferta-hero__actions a.flacso-oferta-hero__btn,
+    .flacso-oferta-section__btn {
+        width: 100%;
+        min-height: 48px;
+        padding-inline: 1rem;
+        white-space: normal;
+        text-align: center;
+    }
+
+    .flacso-oferta-nav {
+        overflow: hidden;
+        backdrop-filter: none;
+    }
+
+    .flacso-oferta-nav :where(.container, .container-fluid) {
+        max-width: 100%;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .flacso-oferta-nav :where(.container, .container-fluid)::-webkit-scrollbar {
+        display: none;
+    }
+
+    .flacso-oferta-nav .nav {
+        width: max-content;
+        min-width: 100%;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        gap: 0.25rem;
+        scroll-snap-type: x proximity;
+    }
+
+    .flacso-oferta-nav .nav-link {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        scroll-snap-align: start;
+    }
+
+    .flacso-oferta-documento-card {
+        padding: 1.15rem 1rem 1rem 1.1rem;
+    }
+
+    .flacso-oferta-proximo-inicio__pill {
+        align-items: flex-start;
+        padding: 0.8rem 0.95rem;
+    }
+
+    .flacso-oferta-cards-grid .flacso-oferta-info-card .card-body {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+    }
+
+    /* Formularios y docentes: elimina anchos mínimos heredados de layouts desktop. */
+    .flacso-formulario-consultas :where(.row, [class*="col-"]) ,
+    .flacso-docentes-scope :where(.row, [class*="col-"]) ,
+    .flacso-docentes-scope :where(.flacso-docente-card, .dp-program-card, .card) {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .flacso-formulario-consultas :where(.btn, button, input[type="submit"]) {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Mailing y consultas: CTA principal cómodo para pulgar. */
+    .flacso-mailing-home-card :where(button, .btn, input[type="submit"]),
+    .flacso-posgrados-consultas :where(button, .btn, input[type="submit"]) {
+        min-height: 48px;
+    }
+}
+
+@media (max-width: 480px) {
+    .flacso-main-page .flacso-content-shell {
+        padding-inline: 0.75rem;
+    }
+
+    .flacso-oferta-hero {
+        padding-block: 2.15rem;
+    }
+
+    .flacso-oferta-hero__content {
+        padding-inline: 0.75rem;
+    }
+
+    .flacso-oferta-documento-card__title {
+        font-size: clamp(1.35rem, 7vw, 1.7rem);
+    }
+
+    .flacso-oferta-proximo-inicio__pill {
+        gap: 0.55rem;
+    }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .flacso-main-page .card:hover,
+    .flacso-oferta-hero__btn:hover,
+    .flacso-oferta-section__btn:hover,
+    .flacso-oferta-documento-card__button:hover,
+    .flacso-docentes-scope .hover-lift:hover {
+        transform: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :where(
+        .flacso-main-page,
+        .flacso-oferta-hero,
+        .flacso-oferta-body,
+        .flacso-formulario-consultas,
+        .flacso-docentes-scope,
+        .flacso-mailing-home-card,
+        .flacso-posgrados-consultas
+    ) *,
+    :where(
+        .flacso-main-page,
+        .flacso-oferta-hero,
+        .flacso-oferta-body,
+        .flacso-formulario-consultas,
+        .flacso-docentes-scope,
+        .flacso-mailing-home-card,
+        .flacso-posgrados-consultas
+    ) *::before,
+    :where(
+        .flacso-main-page,
+        .flacso-oferta-hero,
+        .flacso-oferta-body,
+        .flacso-formulario-consultas,
+        .flacso-docentes-scope,
+        .flacso-mailing-home-card,
+        .flacso-posgrados-consultas
+    ) *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
