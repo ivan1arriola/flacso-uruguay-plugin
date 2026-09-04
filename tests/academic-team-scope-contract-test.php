@@ -20,8 +20,8 @@ team_scope_assert(strpos($team, "register_post_meta(FLACSO_Cohorte::POST_TYPE, '
 team_scope_assert(strpos($team, "'post_type' => 'docente'") !== false, 'todos los grupos deben seleccionar desde el CPT docente');
 team_scope_assert(strpos($team, 'flacso_equipo_academico[docentes]') !== false, 'Oferta debe editar integrantes del Equipo académico');
 team_scope_assert(strpos($team, 'flacso_cohorte_equipos') !== false, 'Cohorte debe editar grupos propios');
-team_scope_assert(strpos($team, "update_post_meta($post_id, 'equipo_academico'") !== false, 'Oferta debe persistir equipo_academico');
-team_scope_assert(strpos($team, "update_post_meta($post_id, 'equipos'") !== false, 'Cohorte debe persistir equipos');
+team_scope_assert(strpos($team, "update_post_meta(\$post_id, 'equipo_academico'") !== false, 'Oferta debe persistir equipo_academico');
+team_scope_assert(strpos($team, "update_post_meta(\$post_id, 'equipos'") !== false, 'Cohorte debe persistir equipos');
 team_scope_assert(strpos($init, 'class-academic-team-admin.php') !== false, 'init debe cargar el editor de equipos');
 team_scope_assert(strpos($init, 'FLACSO_Academic_Team_Admin::init();') !== false, 'init debe inicializar el editor de equipos');
 
