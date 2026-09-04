@@ -211,10 +211,23 @@ jobs:
           TARGET="${WP_ROOT}/wp-content/plugins/flacso-uruguay-plugin"
           PLUGIN_FILE="flacso-uruguay.php"
           MISSING_SHORTCODE='[FLACSO] Archivo no encontrado: modules/shortcodes/includes/shortcodes-programa.php'
-          OPCACHE_RESET_REL=".flacso-opcache-reset-${DEPLOY_SHA}.php"
-          OPCACHE_RESET_SOURCE="${SOURCE}/${OPCACHE_RESET_REL}"
-          OPCACHE_RESET_URL="https://flacso.edu.uy/wp-content/plugins/flacso-uruguay-plugin/${OPCACHE_RESET_REL}"
           OPCACHE_TOKEN="$(openssl rand -hex 24)"
+          OPCACHE_RESET_REL="flacso-deploy-opcache-reset-${DEPLOY_SHA}.php"
+          RUNTIME_CHECK_REL="flacso-deploy-runtime-check-${DEPLOY_SHA}.php"
+          OPCACHE_RESET_SOURCE="${SOURCE}/${OPCACHE_RESET_REL}"
+          RUNTIME_CHECK_SOURCE="${SOURCE}/${RUNTIME_CHECK_REL}"
+          OPCACHE_RESET_URL="https://flacso.edu.uy/wp-content/plugins/flacso-uruguay-plugin/${OPCACHE_RESET_REL}"
+          RUNTIME_CHECK_URL="https://flacso.edu.uy/wp-content/plugins/flacso-uruguay-plugin/${RUNTIME_CHECK_REL}"
+
+          local_request() {
+            local url="$1"
+            local body_file="$2"
+            curl --silent --show-error --insecure \
+              --resolve flacso.edu.uy:443:127.0.0.1 \
+              --output "$body_file" \
+              --write-out '%{http_code}' \
+              "$url"
+          }
 
           activated=0
           cleanup() {
@@ -226,6 +239,22 @@ jobs:
                 --chown=web5:client2 \
                 --chmod=D755,F644 \
                 "$BACKUP/" "$TARGET/" || true
+
+              # Invalidar también el bytecode del intento fallido. Se copia sólo
+              # el endpoint de reset, se ejecuta y se vuelve a restaurar el backup.
+              if [[ -f "$OPCACHE_RESET_SOURCE" ]]; then
+                sudo -n /usr/bin/rsync \
+                  -a --chown=web5:client2 --chmod=F644 \
+                  "$OPCACHE_RESET_SOURCE" "$TARGET/$OPCACHE_RESET_REL" || true
+                rollback_body="$(mktemp)"
+                local_request "${OPCACHE_RESET_URL}?token=${OPCACHE_TOKEN}" "$rollback_body" >/dev/null || true
+                rm -f -- "$rollback_body"
+                sudo -n /usr/bin/rsync \
+                  -a --delete --delay-updates \
+                  --chown=web5:client2 \
+                  --chmod=D755,F644 \
+                  "$BACKUP/" "$TARGET/" || true
+              fi
             fi
             rm -rf -- "$SOURCE"
             rm -rf -- "$BACKUP" || true
@@ -242,6 +271,9 @@ jobs:
           install -d -m 700 "$BACKUP"
           /usr/bin/rsync -rt "$TARGET/" "$BACKUP/"
 
+          # Petición 1: invalida OPcache en el FPM real que atiende el vhost.
+          # No carga WordPress en este request: la recompilación se comprueba en
+          # una segunda petición independiente.
           cat > "$OPCACHE_RESET_SOURCE" <<PHP
           <?php
           \$remote = (string) (\$_SERVER['REMOTE_ADDR'] ?? '');
@@ -251,19 +283,33 @@ jobs:
               exit;
           }
           header('Content-Type: text/plain; charset=utf-8');
-          \$opcache = 'unavailable';
+          \$state = 'unavailable';
           if (function_exists('opcache_reset')) {
-              \$opcache = opcache_reset() ? 'reset' : 'not-reset';
+              \$state = opcache_reset() ? 'reset' : 'not-reset';
           }
+          echo 'opcache=' . \$state . ' php=' . PHP_VERSION . ' sapi=' . PHP_SAPI . "\n";
+          PHP
+
+          # Petición 2: arranca otro request PHP, carga WordPress y verifica que
+          # la clase ejecutada por FPM corresponde a los archivos recién activados.
+          cat > "$RUNTIME_CHECK_SOURCE" <<PHP
+          <?php
+          \$remote = (string) (\$_SERVER['REMOTE_ADDR'] ?? '');
+          \$token = (string) (\$_GET['token'] ?? '');
+          if (!in_array(\$remote, ['127.0.0.1', '::1'], true) || !hash_equals('${OPCACHE_TOKEN}', \$token)) {
+              http_response_code(404);
+              exit;
+          }
+          header('Content-Type: text/plain; charset=utf-8');
           require dirname(__DIR__, 3) . '/wp-load.php';
           \$class_ok = class_exists('FLACSO_Academic_Team_Admin');
           \$method_ok = \$class_ok && method_exists('FLACSO_Academic_Team_Admin', 'render_member_row');
           if (!\$method_ok) {
               http_response_code(500);
-              echo "team_admin_method=missing opcache=" . \$opcache . "\n";
+              echo 'team_admin_method=missing php=' . PHP_VERSION . ' sapi=' . PHP_SAPI . "\n";
               exit;
           }
-          echo "team_admin_method=ok opcache=" . \$opcache . "\n";
+          echo 'team_admin_method=ok php=' . PHP_VERSION . ' sapi=' . PHP_SAPI . "\n";
           PHP
 
           sudo -n /usr/bin/rsync \
@@ -276,26 +322,37 @@ jobs:
           test -f "$TARGET/$PLUGIN_FILE"
           test -f "$TARGET/modules/shortcodes/includes/shortcodes-programa.php"
           test -f "$TARGET/$OPCACHE_RESET_REL"
+          test -f "$TARGET/$RUNTIME_CHECK_REL"
 
-          # Ejecutar el reset dentro del mismo vhost/pool FPM que atiende flacso.edu.uy.
-          # Esto evita depender de conocer la versión de PHP configurada por ISPConfig.
-          opcache_output="$(curl --fail --silent --show-error --insecure \
-            --resolve flacso.edu.uy:443:127.0.0.1 \
-            "${OPCACHE_RESET_URL}?token=${OPCACHE_TOKEN}")"
-          printf 'FPM smoke test: %s\n' "$opcache_output"
-          if [[ "$opcache_output" != team_admin_method=ok* ]]; then
-            echo "The FPM pool did not load the current academic team admin class." >&2
+          reset_body="$(mktemp)"
+          reset_status="$(local_request "${OPCACHE_RESET_URL}?token=${OPCACHE_TOKEN}" "$reset_body")"
+          reset_output="$(cat "$reset_body")"
+          rm -f -- "$reset_body"
+          printf 'FPM OPcache reset [%s]: %s\n' "$reset_status" "$reset_output"
+          if [[ "$reset_status" != "200" ]]; then
+            echo "Could not invalidate OPcache through the production FPM pool." >&2
             exit 1
           fi
 
-          # El endpoint temporal existe sólo durante el deploy.
-          rm -f -- "$OPCACHE_RESET_SOURCE"
+          runtime_body="$(mktemp)"
+          runtime_status="$(local_request "${RUNTIME_CHECK_URL}?token=${OPCACHE_TOKEN}" "$runtime_body")"
+          runtime_output="$(cat "$runtime_body")"
+          rm -f -- "$runtime_body"
+          printf 'FPM runtime check [%s]: %s\n' "$runtime_status" "$runtime_output"
+          if [[ "$runtime_status" != "200" || "$runtime_output" != team_admin_method=ok* ]]; then
+            echo "The production FPM pool did not load the current academic team admin class." >&2
+            exit 1
+          fi
+
+          # Los endpoints temporales existen sólo durante el deploy.
+          rm -f -- "$OPCACHE_RESET_SOURCE" "$RUNTIME_CHECK_SOURCE"
           sudo -n /usr/bin/rsync \
             -a --delete --delay-updates \
             --chown=web5:client2 \
             --chmod=D755,F644 \
             "$SOURCE/" "$TARGET/"
           test ! -e "$TARGET/$OPCACHE_RESET_REL"
+          test ! -e "$TARGET/$RUNTIME_CHECK_REL"
 
           WP_BIN="$(command -v wp)"
           test -n "$WP_BIN"
