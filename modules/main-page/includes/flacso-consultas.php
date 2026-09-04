@@ -274,9 +274,26 @@ function flacso_consultas_render_form( $attributes = array() ) {
 	}
 
 	// ADAPTACIÓN CPT: Solo mostrar si las inscripciones están abiertas
+	$preinsc_btn_url = trailingslashit( $url_actual ) . 'preinscripcion';
 	if ( $mostrar_pre && get_post_type($id_pagina) === 'oferta-academica' ) {
-		$abiertas = get_post_meta($id_pagina, 'inscripciones_abiertas', true);
-		$mostrar_pre = ($abiertas === '1' || $abiertas === 'true' || $abiertas === true || $abiertas === 1);
+		if ( class_exists( 'FLACSO_Academic_Catalog' ) && $id_pagina > 0 ) {
+			$offer = FLACSO_Academic_Catalog::get_offer( $id_pagina );
+			$active_cohort = $offer['cohorte_vigente'] ?? null;
+			if ( ! empty( $active_cohort ) ) {
+				$mostrar_pre = ! empty( $active_cohort['preinscripcion']['abierta'] ) || ! empty( $active_cohort['preinscripcion_habilitada'] );
+				if ( ! empty( $active_cohort['link_preinscripcion'] ) ) {
+					$preinsc_btn_url = $active_cohort['link_preinscripcion'];
+				} elseif ( ! empty( $active_cohort['preinscripcion']['url'] ) ) {
+					$preinsc_btn_url = $active_cohort['preinscripcion']['url'];
+				}
+			} else {
+				$abiertas = get_post_meta($id_pagina, 'inscripciones_abiertas', true);
+				$mostrar_pre = ($abiertas === '1' || $abiertas === 'true' || $abiertas === true || $abiertas === 1);
+			}
+		} else {
+			$abiertas = get_post_meta($id_pagina, 'inscripciones_abiertas', true);
+			$mostrar_pre = ($abiertas === '1' || $abiertas === 'true' || $abiertas === true || $abiertas === 1);
+		}
 	}
 
 	if ( ! wp_script_is( 'jquery', 'enqueued' ) ) {
@@ -425,7 +442,7 @@ function flacso_consultas_render_form( $attributes = array() ) {
 	<?php if ( $mostrar_pre ) : ?>
 	<div class="d-grid gap-2 mt-4">
 		<a
-		   href="<?php echo esc_url( function_exists( 'flacso_get_preinscription_url' ) ? flacso_get_preinscription_url( 0, $id_pagina ) : trailingslashit( $url_actual ) . 'preinscripcion' ); ?>"
+		   href="<?php echo esc_url( $preinsc_btn_url ); ?>"
 		   data-flacso-preinscription-cta="1"
 		   class="btn btn-preinsc btn-lg rounded-pill py-3 fw-bold"
 		   aria-label="Ir a Preinscripción 2026"
@@ -937,9 +954,16 @@ function flacso_consultas_render_preinscripcion_button() {
 
 	$id_pagina = get_the_ID();
 	$url_actual = $id_pagina ? get_permalink( $id_pagina ) : home_url( '/' );
-	$href_preinscripcion = function_exists( 'flacso_get_preinscription_url' )
-		? flacso_get_preinscription_url( 0, $id_pagina )
-		: trailingslashit( $url_actual ) . 'preinscripcion';
+	$href_preinscripcion = trailingslashit( $url_actual ) . 'preinscripcion';
+	if ( class_exists( 'FLACSO_Academic_Catalog' ) && $id_pagina > 0 ) {
+		$offer = FLACSO_Academic_Catalog::get_offer( $id_pagina );
+		$active_cohort = $offer['cohorte_vigente'] ?? null;
+		if ( ! empty( $active_cohort['link_preinscripcion'] ) ) {
+			$href_preinscripcion = $active_cohort['link_preinscripcion'];
+		} elseif ( ! empty( $active_cohort['preinscripcion']['url'] ) ) {
+			$href_preinscripcion = $active_cohort['preinscripcion']['url'];
+		}
+	}
 
 	ob_start();
 	?>

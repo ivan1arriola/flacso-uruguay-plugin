@@ -218,59 +218,6 @@ function fc_normalize_program_start_for_webhook( string $value, string $precisio
     return $result;
 }
 
-/**
- * Completa el contexto del programa usando el ID del CPT como fuente de verdad.
- *
- * @param array $data Datos del formulario.
- * @return array
- */
-function fc_enrich_info_request_program_context( array $data ) {
-    $offer_id = 0;
-    if ( isset( $data['id_pagina'] ) ) {
-        $offer_id = absint( $data['id_pagina'] );
-    } elseif ( isset( $data['programa_id'] ) ) {
-        $offer_id = absint( $data['programa_id'] );
-    }
-
-    $resolved_title = '';
-    $resolved_url   = '';
-
-    if ( $offer_id > 0 ) {
-        $resolved_title = (string) get_the_title( $offer_id );
-        $resolved_url   = (string) get_permalink( $offer_id );
-
-        if ( 'oferta-academica' === get_post_type( $offer_id ) ) {
-            $start_value     = (string) get_post_meta( $offer_id, 'proximo_inicio', true );
-            $start_precision = (string) get_post_meta( $offer_id, 'proximo_inicio_precision', true );
-            if ( $start_value !== '' ) {
-                $data = array_merge(
-                    $data,
-                    fc_normalize_program_start_for_webhook( $start_value, $start_precision )
-                );
-            }
-        }
-    }
-
-    if ( '' === $resolved_title && isset( $data['titulo_posgrado'] ) ) {
-        $resolved_title = sanitize_text_field( (string) $data['titulo_posgrado'] );
-    }
-    if ( '' === $resolved_title && isset( $data['programa_titulo'] ) ) {
-        $resolved_title = sanitize_text_field( (string) $data['programa_titulo'] );
-    }
-
-    if ( '' === $resolved_url && isset( $data['url_base'] ) ) {
-        $resolved_url = esc_url_raw( (string) $data['url_base'] );
-    }
-
-    $data['id_pagina']       = $offer_id;
-    $data['programa_id']     = $offer_id;
-    $data['titulo_posgrado'] = $resolved_title;
-    $data['programa_titulo'] = $resolved_title;
-    $data['url_base']        = $resolved_url;
-
-    return $data;
-}
-
 function fc_resolve_info_request_offer_id( array $data ) {
     $candidate_ids = [];
 
@@ -288,31 +235,233 @@ function fc_resolve_info_request_offer_id( array $data ) {
     $candidate_ids = array_values( array_unique( $candidate_ids ) );
 
     foreach ( $candidate_ids as $candidate_id ) {
-        if ( 'oferta-academica' === get_post_type( $candidate_id ) ) {
+        $post_type = function_exists( 'get_post_type' ) ? get_post_type( $candidate_id ) : '';
+        if ( 'oferta-academica' === $post_type || 'seminario' === $post_type ) {
             return $candidate_id;
         }
 
-        $related = get_posts(
-            [
-                'post_type'      => 'oferta-academica',
-                'posts_per_page' => 1,
-                'post_status'    => 'any',
-                'fields'         => 'ids',
-                'meta_query'     => [
-                    [
-                        'key'   => '_oferta_page_id',
-                        'value' => $candidate_id,
+        if ( function_exists( 'get_posts' ) ) {
+            $related = get_posts(
+                [
+                    'post_type'      => [ 'oferta-academica', 'seminario' ],
+                    'posts_per_page' => 1,
+                    'post_status'    => 'any',
+                    'fields'         => 'ids',
+                    'meta_query'     => [
+                        [
+                            'key'   => '_oferta_page_id',
+                            'value' => $candidate_id,
+                        ],
                     ],
-                ],
-            ]
-        );
+                ]
+            );
 
-        if ( ! empty( $related ) ) {
-            return (int) $related[0];
+            if ( ! empty( $related ) ) {
+                return (int) $related[0];
+            }
         }
     }
 
     return 0;
+}
+
+/**
+ * Completa el contexto del programa usando el ID del CPT y su cohorte activa como fuente de verdad.
+ *
+ * @param array $data Datos del formulario.
+ * @return array
+ */
+function fc_enrich_info_request_program_context( array $data ) {
+    $offer_id = fc_resolve_info_request_offer_id( $data );
+    if ( $offer_id <= 0 ) {
+        if ( isset( $data['id_pagina'] ) ) {
+            $offer_id = absint( $data['id_pagina'] );
+        } elseif ( isset( $data['programa_id'] ) ) {
+            $offer_id = absint( $data['programa_id'] );
+        } elseif ( isset( $data['offer_id'] ) ) {
+            $offer_id = absint( $data['offer_id'] );
+        }
+    }
+
+    $resolved_title     = '';
+    $resolved_url       = '';
+    $offer_type         = '';
+    $offer_email        = '';
+    $preinscripcion_url = '';
+    $is_open            = false;
+    $cohort_id          = 0;
+    $cohort_name        = '';
+    $cohort_number      = 0;
+    $start_value        = '';
+    $start_precision    = 'dia';
+    $modality           = '';
+
+    if ( $offer_id > 0 ) {
+        $post_type = function_exists( 'get_post_type' ) ? get_post_type( $offer_id ) : '';
+        if ( function_exists( 'get_the_title' ) ) {
+            $resolved_title = (string) get_the_title( $offer_id );
+        }
+        if ( function_exists( 'get_permalink' ) ) {
+            $resolved_url = (string) get_permalink( $offer_id );
+        }
+
+        if ( 'oferta-academica' === $post_type || '' === $post_type ) {
+            if ( class_exists( 'FLACSO_Academic_Catalog' ) ) {
+                $offer = FLACSO_Academic_Catalog::get_offer( $offer_id );
+                if ( ! empty( $offer ) ) {
+                    if ( ! empty( $offer['nombre'] ) ) {
+                        $resolved_title = (string) $offer['nombre'];
+                    }
+                    if ( ! empty( $offer['tipo'] ) ) {
+                        $offer_type = (string) $offer['tipo'];
+                    }
+                    if ( ! empty( $offer['correo'] ) ) {
+                        $offer_email = (string) $offer['correo'];
+                    }
+
+                    $active_cohort = $offer['cohorte_vigente'] ?? null;
+                    if ( is_array( $active_cohort ) && ! empty( $active_cohort ) ) {
+                        $cohort_id     = absint( $active_cohort['id'] ?? 0 );
+                        $cohort_name   = (string) ( $active_cohort['nombre'] ?? '' );
+                        $cohort_number = absint( $active_cohort['numero'] ?? 0 );
+                        $modality      = (string) ( $active_cohort['modalidad'] ?? '' );
+
+                        if ( ! empty( $active_cohort['link_preinscripcion'] ) ) {
+                            $preinscripcion_url = (string) $active_cohort['link_preinscripcion'];
+                        } elseif ( ! empty( $active_cohort['preinscripcion']['url'] ) ) {
+                            $preinscripcion_url = (string) $active_cohort['preinscripcion']['url'];
+                        }
+
+                        $is_open = ! empty( $active_cohort['preinscripcion']['abierta'] ) || ! empty( $active_cohort['preinscripcion_habilitada'] );
+
+                        if ( ! empty( $active_cohort['fecha_inicio'] ) ) {
+                            $start_value     = (string) $active_cohort['fecha_inicio'];
+                            $start_precision = (string) ( $active_cohort['precision_fecha_inicio'] ?? 'dia' );
+                        }
+                    }
+                }
+            }
+
+            // Fallbacks desde post_meta de la oferta si no se resolvieron por catálogo
+            if ( function_exists( 'get_post_meta' ) ) {
+                if ( '' === $preinscripcion_url ) {
+                    $meta_pre = (string) get_post_meta( $offer_id, 'link_preinscripcion', true );
+                    if ( '' !== $meta_pre ) {
+                        $preinscripcion_url = $meta_pre;
+                    }
+                }
+                if ( ! $is_open ) {
+                    $meta_abierta = get_post_meta( $offer_id, 'inscripciones_abiertas', true );
+                    if ( '1' === (string) $meta_abierta || true === $meta_abierta ) {
+                        $is_open = true;
+                    }
+                }
+                if ( '' === $start_value ) {
+                    $start_value     = (string) get_post_meta( $offer_id, 'proximo_inicio', true );
+                    $start_precision = (string) get_post_meta( $offer_id, 'proximo_inicio_precision', true );
+                }
+                if ( '' === $modality ) {
+                    $modality = (string) get_post_meta( $offer_id, 'modalidad', true );
+                }
+                if ( '' === $offer_email ) {
+                    $offer_email = (string) get_post_meta( $offer_id, 'correo', true );
+                }
+            }
+        } elseif ( 'seminario' === $post_type ) {
+            $offer_type = 'seminario';
+            if ( class_exists( 'FLACSO_Academic_Catalog' ) ) {
+                $seminar = FLACSO_Academic_Catalog::get_seminar( $offer_id );
+                if ( ! empty( $seminar ) ) {
+                    if ( ! empty( $seminar['nombre'] ) ) {
+                        $resolved_title = (string) $seminar['nombre'];
+                    }
+                    if ( ! empty( $seminar['correo'] ) ) {
+                        $offer_email = (string) $seminar['correo'];
+                    }
+
+                    $active_edition = $seminar['edicion_vigente'] ?? null;
+                    if ( is_array( $active_edition ) && ! empty( $active_edition ) ) {
+                        $cohort_id     = absint( $active_edition['id'] ?? 0 );
+                        $cohort_name   = (string) ( $active_edition['nombre'] ?? '' );
+                        $cohort_number = absint( $active_edition['semestre'] ?? ( $active_edition['anio'] ?? 0 ) );
+                        $modality      = (string) ( $active_edition['modalidad'] ?? '' );
+
+                        if ( ! empty( $active_edition['link_preinscripcion'] ) ) {
+                            $preinscripcion_url = (string) $active_edition['link_preinscripcion'];
+                        } elseif ( ! empty( $active_edition['preinscripcion']['url'] ) ) {
+                            $preinscripcion_url = (string) $active_edition['preinscripcion']['url'];
+                        }
+
+                        $is_open = ! empty( $active_edition['preinscripcion']['abierta'] );
+
+                        if ( ! empty( $active_edition['fecha_inicio'] ) ) {
+                            $start_value     = (string) $active_edition['fecha_inicio'];
+                            $start_precision = 'dia';
+                        }
+                    }
+                }
+            }
+        }
+
+        if ( $start_value !== '' && function_exists( 'fc_normalize_program_start_for_webhook' ) ) {
+            $data = array_merge(
+                $data,
+                fc_normalize_program_start_for_webhook( $start_value, $start_precision ?: 'dia' )
+            );
+        }
+    }
+
+    if ( '' === $resolved_title && isset( $data['titulo_posgrado'] ) ) {
+        $resolved_title = sanitize_text_field( (string) $data['titulo_posgrado'] );
+    }
+    if ( '' === $resolved_title && isset( $data['programa_titulo'] ) ) {
+        $resolved_title = sanitize_text_field( (string) $data['programa_titulo'] );
+    }
+    if ( '' === $resolved_title && isset( $data['offer_name'] ) ) {
+        $resolved_title = sanitize_text_field( (string) $data['offer_name'] );
+    }
+
+    if ( '' === $resolved_url && isset( $data['url_base'] ) ) {
+        $resolved_url = esc_url_raw( (string) $data['url_base'] );
+    }
+
+    if ( '' === $preinscripcion_url && isset( $data['link_preinscripcion'] ) ) {
+        $preinscripcion_url = esc_url_raw( (string) $data['link_preinscripcion'] );
+    }
+    if ( '' === $preinscripcion_url && isset( $data['preinscripcion_url'] ) ) {
+        $preinscripcion_url = esc_url_raw( (string) $data['preinscripcion_url'] );
+    }
+    if ( '' === $preinscripcion_url && isset( $data['url_preinscripcion'] ) ) {
+        $preinscripcion_url = esc_url_raw( (string) $data['url_preinscripcion'] );
+    }
+    if ( '' === $preinscripcion_url && isset( $data['oferta_academica_url_preinscripcion'] ) ) {
+        $preinscripcion_url = esc_url_raw( (string) $data['oferta_academica_url_preinscripcion'] );
+    }
+
+    $data['id_pagina']                           = $offer_id;
+    $data['programa_id']                         = $offer_id;
+    $data['offer_id']                            = $offer_id;
+    $data['titulo_posgrado']                     = $resolved_title;
+    $data['programa_titulo']                     = $resolved_title;
+    $data['offer_name']                          = $resolved_title;
+    $data['url_base']                            = $resolved_url;
+    $data['tipo_oferta']                         = $offer_type ?: ( $data['tipo_oferta'] ?? '' );
+    $data['correo_programa']                     = $offer_email ?: ( $data['correo_programa'] ?? '' );
+    $data['link_preinscripcion']                 = $preinscripcion_url;
+    $data['preinscripcion_url']                  = $preinscripcion_url;
+    $data['url_preinscripcion']                  = $preinscripcion_url;
+    $data['oferta_academica_url_preinscripcion'] = $preinscripcion_url;
+    $data['inscripciones_abiertas']              = $is_open ? 1 : ( ! empty( $data['inscripciones_abiertas'] ) ? 1 : 0 );
+    $data['cohorte_id']                          = $cohort_id ?: ( isset( $data['cohorte_id'] ) ? absint( $data['cohorte_id'] ) : 0 );
+    $data['cohorte_nombre']                      = $cohort_name ?: ( $data['cohorte_nombre'] ?? '' );
+    $data['cohorte_numero']                      = $cohort_number ?: ( isset( $data['cohorte_numero'] ) ? absint( $data['cohorte_numero'] ) : 0 );
+    $data['modalidad']                           = $modality ?: ( $data['modalidad'] ?? '' );
+    if ( $start_value !== '' ) {
+        $data['proximo_inicio']           = $start_value;
+        $data['proximo_inicio_precision'] = $start_precision ?: 'dia';
+    }
+
+    return $data;
 }
 
 function fc_info_request_sanitize_text_value( array $data, string $key ): string {
@@ -732,6 +881,22 @@ function fc_build_info_request_webhook_payload( array $data ) {
         'profession'      => isset( $data['profesion'] ) ? sanitize_text_field( $data['profesion'] ) : '',
         'education_level' => isset( $data['nivel_academico'] ) ? sanitize_text_field( $data['nivel_academico'] ) : '',
         'offer_id'        => $offer_id,
+        'offer_name'      => isset( $data['offer_name'] ) ? sanitize_text_field( $data['offer_name'] ) : ( isset( $data['titulo_posgrado'] ) ? sanitize_text_field( $data['titulo_posgrado'] ) : '' ),
+        'offer_type'      => isset( $data['tipo_oferta'] ) ? sanitize_text_field( $data['tipo_oferta'] ) : '',
+        'link_preinscripcion' => isset( $data['link_preinscripcion'] ) ? esc_url_raw( $data['link_preinscripcion'] ) : '',
+        'preinscripcion_url'  => isset( $data['preinscripcion_url'] ) ? esc_url_raw( $data['preinscripcion_url'] ) : '',
+        'url_preinscripcion'  => isset( $data['url_preinscripcion'] ) ? esc_url_raw( $data['url_preinscripcion'] ) : '',
+        'oferta_academica_url_preinscripcion' => isset( $data['oferta_academica_url_preinscripcion'] ) ? esc_url_raw( $data['oferta_academica_url_preinscripcion'] ) : '',
+        'inscripciones_abiertas' => ! empty( $data['inscripciones_abiertas'] ),
+        'cohorte_id'      => isset( $data['cohorte_id'] ) ? absint( $data['cohorte_id'] ) : 0,
+        'cohorte_nombre'  => isset( $data['cohorte_nombre'] ) ? sanitize_text_field( $data['cohorte_nombre'] ) : '',
+        'cohorte_numero'  => isset( $data['cohorte_numero'] ) ? absint( $data['cohorte_numero'] ) : 0,
+        'modalidad'       => isset( $data['modalidad'] ) ? sanitize_text_field( $data['modalidad'] ) : '',
+        'reply_to'        => isset( $data['correo_programa'] ) ? sanitize_email( $data['correo_programa'] ) : '',
+        'correo_programa' => isset( $data['correo_programa'] ) ? sanitize_email( $data['correo_programa'] ) : '',
+        'url_base'        => isset( $data['url_base'] ) ? esc_url_raw( $data['url_base'] ) : '',
+        'consulta'        => isset( $data['consulta'] ) ? sanitize_textarea_field( $data['consulta'] ) : ( isset( $data['mensaje'] ) ? sanitize_textarea_field( $data['mensaje'] ) : '' ),
+        'mensaje'         => isset( $data['mensaje'] ) ? sanitize_textarea_field( $data['mensaje'] ) : ( isset( $data['consulta'] ) ? sanitize_textarea_field( $data['consulta'] ) : '' ),
         'source'          => $source,
         'campaign_provider' => $campaign_provider,
         'campaign_source'   => $campaign_source,

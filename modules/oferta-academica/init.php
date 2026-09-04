@@ -28,6 +28,7 @@ flacso_safe_require('modules/oferta-academica/includes/class-oferta-taxonomies.p
 flacso_safe_require('modules/oferta-academica/includes/class-academic-repositories.php');
 flacso_safe_require('modules/oferta-academica/includes/class-academic-catalog.php');
 flacso_safe_require('modules/oferta-academica/includes/class-academic-api.php');
+flacso_safe_require('modules/oferta-academica/includes/class-academic-settings-api.php');
 flacso_safe_require('modules/oferta-academica/includes/class-django-api-client.php');
 flacso_safe_require('modules/oferta-academica/includes/class-django-ajax-handlers.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-consulta-form.php');
@@ -53,6 +54,7 @@ FLACSO_Academic_Document_Source_Admin::init();
 FLACSO_Academic_Team_Editor::init();
 Tabla_Precio_Schema::init();
 FLACSO_Academic_API::init();
+FLACSO_Academic_Settings_API::init();
 
 add_action('after_setup_theme', static function (): void {
     add_theme_support('post-thumbnails', ['programa-academico', 'oferta-academica', 'seminario']);
