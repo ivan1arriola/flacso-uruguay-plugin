@@ -63,11 +63,35 @@
         position: relative;
         z-index: 1;
         width: min(76%, 325px);
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
         justify-content: flex-end;
         align-items: flex-start;
         padding: 1.15rem 1.2rem;
         gap: 0.48rem;
         color: #ffffff !important;
+    }
+
+    /*
+     * La baseline móvil global permite cortar URLs largas con overflow-wrap.
+     * En un hijo flex alineado al inicio eso reduce el ancho intrínseco del
+     * título/descripción casi a una letra. Se fuerza el ancho útil de la tarjeta
+     * y se usa break-word, que conserva el ancho intrínseco normal.
+     */
+    .flacso-main-page .flacso-oferta-mosaico__content > h3,
+    .flacso-main-page .flacso-oferta-mosaico__description {
+        align-self: stretch;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        overflow-wrap: break-word;
+        word-break: normal;
+    }
+
+    .flacso-main-page .flacso-oferta-mosaico__description :where(p, span, strong, em) {
+        overflow-wrap: break-word;
+        word-break: normal;
     }
 
     .flacso-main-page .flacso-oferta-mosaico__content h3,
