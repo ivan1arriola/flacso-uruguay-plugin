@@ -19,6 +19,10 @@ final class FLACSO_Offer_Carta_Contact_Admin {
 
         if (is_admin()) {
             add_action('save_post_' . FLACSO_Oferta_Academica::POST_TYPE, [self::class, 'save'], 20, 2);
+            add_action('admin_head-post.php', [self::class, 'render_styles']);
+            add_action('admin_head-post-new.php', [self::class, 'render_styles']);
+            add_action('admin_footer-post.php', [self::class, 'render_script']);
+            add_action('admin_footer-post-new.php', [self::class, 'render_script']);
         }
     }
 
