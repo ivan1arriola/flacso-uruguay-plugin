@@ -43,6 +43,7 @@ foreach (['asistente_academica_docente_id', 'asistente_academica_rol', 'asistent
 }
 
 carta_contact_assert(strpos($bridge, 'get_post_metadata') !== false, 'el frontend histórico debe poder leer la configuración nueva');
+carta_contact_assert(strpos($bridge, 'did_complete_save($post_id)') !== false, 'el bridge solo debe consolidar legacy tras un guardado canónico válido');
 carta_contact_assert(strpos($bridge, 'private static array $resolving') !== false, 'el puente debe tener guardia explícita contra reentrada');
 carta_contact_assert(strpos($bridge, 'isset(self::$resolving[$guard_key])') !== false, 'el puente debe cortar llamadas recursivas');
 carta_contact_assert(strpos($bridge, 'finally') !== false && strpos($bridge, 'unset(self::$resolving[$guard_key])') !== false, 'la guardia de reentrada debe liberarse siempre');
