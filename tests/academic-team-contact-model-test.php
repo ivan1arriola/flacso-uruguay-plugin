@@ -12,6 +12,7 @@ $GLOBALS['test_post_types'] = [
     8 => 'docente',
     10 => 'docente',
     100 => 'oferta-academica',
+    101 => 'oferta-academica',
 ];
 $GLOBALS['test_meta'] = [];
 $GLOBALS['test_transients'] = [];
@@ -39,6 +40,7 @@ function delete_transient($key) { unset($GLOBALS['test_transients'][$key]); retu
 require_once __DIR__ . '/../modules/oferta-academica/includes/class-oferta-academica.php';
 require_once __DIR__ . '/../modules/oferta-academica/includes/class-academic-team-editor.php';
 require_once __DIR__ . '/../modules/oferta-academica/includes/class-offer-carta-contact-admin.php';
+require_once __DIR__ . '/../modules/oferta-academica/includes/class-offer-carta-contact-bridge.php';
 
 function team_contact_assert(bool $condition, string $message): void {
     if (!$condition) {
@@ -156,5 +158,28 @@ FLACSO_Offer_Carta_Contact_Admin::save(100, $post);
 team_contact_assert($GLOBALS['test_meta'][100][FLACSO_Offer_Carta_Contact_Admin::META_PERSON_ID] === 10, 'un segundo integrante de Coordinación debe poder guardarse');
 team_contact_assert($GLOBALS['test_meta'][100][FLACSO_Offer_Carta_Contact_Admin::META_TITLE] === 'Coordinación de la oferta', 'debe guardar el título del contacto válido');
 team_contact_assert($GLOBALS['test_meta'][100][FLACSO_Offer_Carta_Contact_Admin::META_EMAIL] === 'coord@example.org', 'debe guardar el correo del contacto válido');
+
+$GLOBALS['test_meta'][101] = [
+    'asistente_academica_docente_id' => 7,
+    'asistente_academica_rol' => 'Contacto histórico',
+    'asistente_academica_correo' => 'historico@example.org',
+];
+
+$_POST = [
+    'flacso_offer_carta_contact_nonce' => 'ok',
+    'flacso_carta_contact' => [
+        'person_id' => '8',
+        'title' => 'Intento inválido',
+        'email' => 'invalido@example.org',
+    ],
+    'flacso_oferta_equipos' => $submitted_groups,
+];
+
+FLACSO_Offer_Carta_Contact_Admin::save(101, $post);
+FLACSO_Offer_Carta_Contact_Bridge::consolidate_legacy_meta(101, $post);
+
+team_contact_assert(($GLOBALS['test_meta'][101]['asistente_academica_docente_id'] ?? 0) === 7, 'una selección inválida no debe borrar la persona legacy');
+team_contact_assert(($GLOBALS['test_meta'][101]['asistente_academica_rol'] ?? '') === 'Contacto histórico', 'una selección inválida no debe borrar el título legacy');
+team_contact_assert(($GLOBALS['test_meta'][101]['asistente_academica_correo'] ?? '') === 'historico@example.org', 'una selección inválida no debe borrar el correo legacy');
 
 echo "OK academic team and carta contact model\n";
