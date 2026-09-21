@@ -103,101 +103,242 @@ final class FLACSO_Programa_Academico {
 
     public static function render_meta_box($post): void {
         $correo = (string) get_post_meta($post->ID, 'correo', true);
-        $orden  = absint(get_post_meta($post->ID, 'orden', true));
+        $orden = absint(get_post_meta($post->ID, 'orden', true));
         $presentacion = (string) get_post_meta($post->ID, 'presentacion', true);
         $coordinacion = (array) get_post_meta($post->ID, 'coordinacion', true);
-        $all_personas = get_posts(['post_type' => 'docente', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC']);
+        $all_personas = get_posts([
+            'post_type' => 'docente',
+            'post_status' => ['publish', 'draft', 'pending', 'private'],
+            'posts_per_page' => -1,
+            'orderby' => 'title',
+            'order' => 'ASC',
+        ]);
+        $ofertas = get_posts([
+            'post_type' => FLACSO_Oferta_Academica::POST_TYPE,
+            'post_status' => ['publish', 'draft', 'pending', 'private'],
+            'posts_per_page' => -1,
+            'orderby' => 'title',
+            'order' => 'ASC',
+            'meta_key' => FLACSO_Oferta_Academica::META_PROGRAM_ID,
+            'meta_value' => $post->ID,
+        ]);
 
         wp_nonce_field('save_programa_meta', 'programa_nonce');
-        ?>
-        <div style="display: flex; flex-direction: column; gap: 16px; padding: 10px 0;">
-            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px;">
-                <div>
-                    <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Correo institucional de contacto:', 'flacso-uruguay'); ?></label>
-                    <input type="email" name="correo" value="<?php echo esc_attr($correo); ?>" placeholder="programa@flacso.edu.uy" style="width: 100%;">
-                </div>
-                <div>
-                    <label for="programa_orden" style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Orden de aparición:', 'flacso-uruguay'); ?></label>
-                    <input type="number" id="programa_orden" name="orden" value="<?php echo esc_attr((string) $orden); ?>" min="0" max="999" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" style="width: 100%;">
-                </div>
-            </div>
 
-            <div>
-                <label style="font-weight: 600; display: block; margin-bottom: 6px;"><?php esc_html_e('Presentación / Descripción del Programa:', 'flacso-uruguay'); ?></label>
+        $identity_summary = [];
+        if ($correo !== '') {
+            $identity_summary[] = $correo;
+        }
+        if ($orden > 0) {
+            $identity_summary[] = sprintf(__('orden %d', 'flacso-uruguay'), $orden);
+        }
+        $coord_count = count(array_filter($coordinacion, static function ($row): bool {
+            return is_array($row) && (absint($row['docente_id'] ?? 0) > 0 || trim((string) ($row['nombre'] ?? '')) !== '');
+        }));
+        ?>
+        <div class="flacso-academic-editor flacso-program-editor">
+            <?php FLACSO_Academic_Admin_UI::render_header(
+                $post,
+                __('Programa Académico', 'flacso-uruguay'),
+                $post->post_title !== '' ? $post->post_title : __('Nuevo programa académico', 'flacso-uruguay'),
+                __('Agrupa y presenta sus ofertas. Podés editar cualquier sección en el orden que necesites y guardar con el botón nativo de WordPress.', 'flacso-uruguay'),
+                [
+                    ['icon' => 'dashicons-welcome-learn-more', 'label' => sprintf(_n('%d oferta', '%d ofertas', count($ofertas), 'flacso-uruguay'), count($ofertas))],
+                    ['icon' => 'dashicons-groups', 'label' => sprintf(_n('%d integrante', '%d integrantes', $coord_count, 'flacso-uruguay'), $coord_count)],
+                ],
+                true
+            ); ?>
+
+            <?php FLACSO_Academic_Admin_UI::section_start(
+                'flacso-programa-identidad',
+                __('Identidad y contacto', 'flacso-uruguay'),
+                __('El título se edita arriba; aquí se administra el contacto y el orden de aparición.', 'flacso-uruguay'),
+                'dashicons-admin-home',
+                $identity_summary ? implode(' · ', $identity_summary) : __('Sin completar', 'flacso-uruguay'),
+                true
+            ); ?>
+                <div class="flacso-academic-grid">
+                    <label class="flacso-academic-field">
+                        <span><?php esc_html_e('Correo institucional de contacto', 'flacso-uruguay'); ?></span>
+                        <input type="email" name="correo" value="<?php echo esc_attr($correo); ?>" placeholder="programa@flacso.edu.uy">
+                    </label>
+                    <label class="flacso-academic-field">
+                        <span><?php esc_html_e('Orden de aparición', 'flacso-uruguay'); ?></span>
+                        <input type="number" id="programa_orden" name="orden" value="<?php echo esc_attr((string) $orden); ?>" min="0" max="999" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other">
+                    </label>
+                </div>
+            <?php FLACSO_Academic_Admin_UI::section_end(); ?>
+
+            <?php FLACSO_Academic_Admin_UI::section_start(
+                'flacso-programa-presentacion',
+                __('Presentación', 'flacso-uruguay'),
+                __('Descripción rica destinada a la página pública del programa.', 'flacso-uruguay'),
+                'dashicons-text-page',
+                FLACSO_Academic_Admin_UI::display_value($presentacion)
+            ); ?>
                 <?php
                 wp_editor($presentacion, 'presentacion', [
                     'textarea_name' => 'presentacion',
                     'textarea_rows' => 8,
                     'media_buttons' => false,
-                    'teeny'         => false,
-                    'tinymce'       => true,
-                    'quicktags'     => true,
+                    'teeny' => false,
+                    'tinymce' => true,
+                    'quicktags' => true,
                 ]);
                 ?>
-            </div>
+            <?php FLACSO_Academic_Admin_UI::section_end(); ?>
 
-            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 16px; border-radius: 6px;">
-                <label style="font-weight: 700; display: block; margin-bottom: 8px;"><?php esc_html_e('Equipo de Coordinación del Programa:', 'flacso-uruguay'); ?></label>
-                <p style="margin: 0 0 12px; color: #64748b; font-size: 13px;">
-                    <?php esc_html_e('Seleccione las personas que integran la coordinación académica o dirección de este programa:', 'flacso-uruguay'); ?>
-                </p>
-
-                <div id="coordinacion-list" style="display: flex; flex-direction: column; gap: 8px;">
+            <?php FLACSO_Academic_Admin_UI::section_start(
+                'flacso-programa-coordinacion',
+                __('Coordinación', 'flacso-uruguay'),
+                __('Integrantes, rol y acciones para agregar o quitar filas.', 'flacso-uruguay'),
+                'dashicons-groups',
+                $coord_count > 0 ? sprintf(_n('%d integrante', '%d integrantes', $coord_count, 'flacso-uruguay'), $coord_count) : __('Sin completar', 'flacso-uruguay')
+            ); ?>
+                <p class="flacso-academic-help"><?php esc_html_e('Seleccioná las personas que integran la coordinación académica o dirección de este programa.', 'flacso-uruguay'); ?></p>
+                <div id="coordinacion-list" class="flacso-program-coordination-list">
                     <?php
                     $coord_rows = !empty($coordinacion) ? $coordinacion : [['docente_id' => 0, 'nombre' => '', 'rol' => 'Coordinación Académica']];
                     foreach ($coord_rows as $idx => $item) :
                         $doc_id = absint($item['docente_id'] ?? 0);
-                        $rol    = (string) ($item['rol'] ?? 'Coordinación Académica');
+                        $rol = (string) ($item['rol'] ?? 'Coordinación Académica');
                     ?>
-                        <div class="coord-row" style="display: flex; gap: 10px; align-items: center;">
-                            <select name="coordinacion[<?php echo esc_attr((string) $idx); ?>][docente_id]" style="flex: 2;">
-                                <option value="0"><?php esc_html_e('— Seleccionar Persona / Docente —', 'flacso-uruguay'); ?></option>
-                                <?php foreach ($all_personas as $p) : ?>
-                                    <option value="<?php echo esc_attr((string) $p->ID); ?>" <?php selected($doc_id, $p->ID); ?>>
-                                        <?php echo esc_html($p->post_title); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                            <input type="text" name="coordinacion[<?php echo esc_attr((string) $idx); ?>][rol]" value="<?php echo esc_attr($rol); ?>" placeholder="<?php esc_attr_e('Rol (ej: Coordinación Académica, Dirección)', 'flacso-uruguay'); ?>" style="flex: 2;">
-                            <button type="button" class="button delete-coord-row" style="color:#b91c1c;">✕</button>
+                        <div class="coord-row flacso-program-coordination-row">
+                            <label class="flacso-academic-field">
+                                <span class="screen-reader-text"><?php esc_html_e('Persona o docente', 'flacso-uruguay'); ?></span>
+                                <select name="coordinacion[<?php echo esc_attr((string) $idx); ?>][docente_id]">
+                                    <option value="0"><?php esc_html_e('— Seleccionar persona / docente —', 'flacso-uruguay'); ?></option>
+                                    <?php foreach ($all_personas as $p) : ?>
+                                        <option value="<?php echo esc_attr((string) $p->ID); ?>" <?php selected($doc_id, $p->ID); ?>><?php echo esc_html($p->post_title); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </label>
+                            <label class="flacso-academic-field">
+                                <span class="screen-reader-text"><?php esc_html_e('Rol', 'flacso-uruguay'); ?></span>
+                                <input type="text" name="coordinacion[<?php echo esc_attr((string) $idx); ?>][rol]" value="<?php echo esc_attr($rol); ?>" placeholder="<?php esc_attr_e('Rol (ej.: Coordinación Académica)', 'flacso-uruguay'); ?>">
+                            </label>
+                            <button type="button" class="button delete-coord-row"><?php esc_html_e('Quitar', 'flacso-uruguay'); ?></button>
                         </div>
                     <?php endforeach; ?>
                 </div>
-                <div style="margin-top: 10px;">
-                    <button type="button" class="button" id="add-coord-btn">➕ <?php esc_html_e('Agregar coordinador/a', 'flacso-uruguay'); ?></button>
-                </div>
-            </div>
+                <p><button type="button" class="button" id="add-coord-btn"><span class="dashicons dashicons-plus-alt2" aria-hidden="true"></span> <?php esc_html_e('Agregar integrante', 'flacso-uruguay'); ?></button></p>
+            <?php FLACSO_Academic_Admin_UI::section_end(); ?>
+
+            <?php FLACSO_Academic_Admin_UI::section_start(
+                'flacso-programa-ofertas',
+                __('Ofertas vinculadas', 'flacso-uruguay'),
+                __('Listado operativo de ofertas del programa y estado de sus cohortes.', 'flacso-uruguay'),
+                'dashicons-welcome-learn-more',
+                count($ofertas) > 0 ? sprintf(_n('%d oferta', '%d ofertas', count($ofertas), 'flacso-uruguay'), count($ofertas)) : __('Sin ofertas', 'flacso-uruguay')
+            ); ?>
+                <?php if ($ofertas) : ?>
+                    <ul class="flacso-academic-list">
+                        <?php foreach ($ofertas as $oferta) :
+                            $cohort_ids = get_posts([
+                                'post_type' => FLACSO_Cohorte::POST_TYPE,
+                                'post_status' => ['publish', 'draft', 'pending', 'private'],
+                                'posts_per_page' => -1,
+                                'fields' => 'ids',
+                                'no_found_rows' => true,
+                                'meta_key' => FLACSO_Cohorte::META_PARENT_ID,
+                                'meta_value' => $oferta->ID,
+                            ]);
+                            $states = [];
+                            foreach ($cohort_ids as $cohort_id) {
+                                $state = FLACSO_Cohorte::sanitize_state(get_post_meta($cohort_id, 'estado', true));
+                                $states[$state] = ($states[$state] ?? 0) + 1;
+                            }
+                            $state_labels = [
+                                'planificada' => __('planificadas', 'flacso-uruguay'),
+                                'en_curso' => __('en curso', 'flacso-uruguay'),
+                                'finalizada' => __('finalizadas', 'flacso-uruguay'),
+                                'cancelada' => __('canceladas', 'flacso-uruguay'),
+                            ];
+                            $state_summary = [];
+                            foreach ($states as $state => $count) {
+                                $state_summary[] = $count . ' ' . ($state_labels[$state] ?? $state);
+                            }
+                            $edit_link = get_edit_post_link($oferta->ID);
+                            $public_link = get_permalink($oferta->ID);
+                        ?>
+                            <li>
+                                <span class="flacso-academic-list__copy">
+                                    <strong><?php echo esc_html(get_the_title($oferta)); ?></strong>
+                                    <small>
+                                        <?php
+                                        echo esc_html(sprintf(_n('%d cohorte', '%d cohortes', count($cohort_ids), 'flacso-uruguay'), count($cohort_ids)));
+                                        if ($state_summary) {
+                                            echo ' · ' . esc_html(implode(', ', $state_summary));
+                                        }
+                                        ?>
+                                    </small>
+                                </span>
+                                <span class="flacso-academic-actions">
+                                    <?php if ($public_link) : ?><a class="button button-small" href="<?php echo esc_url($public_link); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Ver pública', 'flacso-uruguay'); ?></a><?php endif; ?>
+                                    <?php if ($edit_link) : ?><a class="button button-small" href="<?php echo esc_url($edit_link); ?>"><?php esc_html_e('Editar', 'flacso-uruguay'); ?></a><?php endif; ?>
+                                </span>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php else : ?>
+                    <?php FLACSO_Academic_Admin_UI::render_empty(__('Este programa todavía no tiene ofertas vinculadas.', 'flacso-uruguay')); ?>
+                <?php endif; ?>
+                <p>
+                    <a class="button button-primary" href="<?php echo esc_url(add_query_arg([
+                        'post_type' => FLACSO_Oferta_Academica::POST_TYPE,
+                        'programa_academico_id' => $post->ID,
+                    ], admin_url('post-new.php'))); ?>">
+                        <?php esc_html_e('Agregar nueva oferta', 'flacso-uruguay'); ?>
+                    </a>
+                </p>
+            <?php FLACSO_Academic_Admin_UI::section_end(); ?>
         </div>
 
+        <style>
+            .flacso-program-coordination-list{display:grid;gap:8px}
+            .flacso-program-coordination-row{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,2fr) auto;gap:10px;align-items:center}
+            .flacso-program-coordination-row .button{min-height:38px}
+            #add-coord-btn .dashicons{margin-top:3px}
+            @media(max-width:782px){.flacso-program-coordination-row{grid-template-columns:1fr}.flacso-program-coordination-row .button{justify-self:start}}
+        </style>
+
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const list = document.getElementById('coordinacion-list');
-                const addBtn = document.getElementById('add-coord-btn');
-                if (addBtn && list) {
-                    addBtn.addEventListener('click', function() {
-                        const count = list.querySelectorAll('.coord-row').length;
-                        const firstRow = list.querySelector('.coord-row');
-                        if (firstRow) {
-                            const clone = firstRow.cloneNode(true);
-                            const select = clone.querySelector('select');
-                            const input = clone.querySelector('input');
-                            select.name = `coordinacion[${count}][docente_id]`;
-                            select.value = '0';
-                            input.name = `coordinacion[${count}][rol]`;
-                            input.value = 'Coordinación Académica';
-                            list.appendChild(clone);
-                        }
-                    });
-                    list.addEventListener('click', function(e) {
-                        if (e.target.classList.contains('delete-coord-row')) {
-                            const rows = list.querySelectorAll('.coord-row');
-                            if (rows.length > 1) {
-                                e.target.closest('.coord-row').remove();
-                            }
-                        }
-                    });
-                }
+        document.addEventListener('DOMContentLoaded', function () {
+            var list = document.getElementById('coordinacion-list');
+            var addBtn = document.getElementById('add-coord-btn');
+            if (!addBtn || !list) return;
+
+            function renumber() {
+                list.querySelectorAll('.coord-row').forEach(function (row, index) {
+                    var select = row.querySelector('select');
+                    var input = row.querySelector('input[type="text"]');
+                    if (select) select.name = 'coordinacion[' + index + '][docente_id]';
+                    if (input) input.name = 'coordinacion[' + index + '][rol]';
+                });
+            }
+
+            addBtn.addEventListener('click', function () {
+                var firstRow = list.querySelector('.coord-row');
+                if (!firstRow) return;
+                var clone = firstRow.cloneNode(true);
+                var select = clone.querySelector('select');
+                var input = clone.querySelector('input[type="text"]');
+                if (select) select.value = '0';
+                if (input) input.value = 'Coordinación Académica';
+                list.appendChild(clone);
+                renumber();
+                if (select) select.focus();
             });
+
+            list.addEventListener('click', function (event) {
+                var button = event.target.closest('.delete-coord-row');
+                if (!button) return;
+                var rows = list.querySelectorAll('.coord-row');
+                if (rows.length <= 1) return;
+                button.closest('.coord-row').remove();
+                renumber();
+            });
+        });
         </script>
         <?php
     }
