@@ -14,6 +14,9 @@ final class FLACSO_Offer_Carta_Contact_Admin {
     private const NONCE_NAME = 'flacso_offer_carta_contact_nonce';
     private const PRESERVE_VALUE = '__preserve__';
 
+    /** @var array<int,bool> */
+    private static array $completed_saves = [];
+
     public static function init(): void {
         add_action('init', [self::class, 'register_meta'], 12);
 
@@ -213,6 +216,10 @@ final class FLACSO_Offer_Carta_Contact_Admin {
         FLACSO_Academic_Admin_UI::section_end();
     }
 
+    public static function did_complete_save(int $post_id): bool {
+        return !empty(self::$completed_saves[$post_id]);
+    }
+
     public static function save(int $post_id, WP_Post $post): void {
         if (
             $post->post_type !== FLACSO_Oferta_Academica::POST_TYPE
@@ -242,6 +249,7 @@ final class FLACSO_Offer_Carta_Contact_Admin {
             delete_post_meta($post_id, self::META_PERSON_ID);
             delete_post_meta($post_id, self::META_TITLE);
             delete_post_meta($post_id, self::META_EMAIL);
+            self::$completed_saves[$post_id] = true;
             return;
         }
 
@@ -261,6 +269,7 @@ final class FLACSO_Offer_Carta_Contact_Admin {
         self::save_or_delete($post_id, self::META_PERSON_ID, $person_id);
         self::save_or_delete($post_id, self::META_TITLE, sanitize_text_field((string) ($payload['title'] ?? '')));
         self::save_or_delete($post_id, self::META_EMAIL, sanitize_email((string) ($payload['email'] ?? '')));
+        self::$completed_saves[$post_id] = true;
     }
 
     private static function save_or_delete(int $post_id, string $key, $value): void {
