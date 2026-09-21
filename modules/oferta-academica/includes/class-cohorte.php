@@ -565,6 +565,8 @@ final class FLACSO_Cohorte {
                 </script>
             <?php FLACSO_Academic_Admin_UI::section_end(); ?>
 
+            <?php FLACSO_Academic_Team_Editor::render_cohort_section($post); ?>
+
             <?php FLACSO_Academic_Admin_UI::section_start(
                 'flacso-cohorte-enlaces',
                 __('Enlaces útiles', 'flacso-uruguay'),
