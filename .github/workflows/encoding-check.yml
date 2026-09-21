@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -22,13 +24,20 @@ jobs:
       - name: Check for BOM, mojibake and UTF-8 issues
         run: python .github/scripts/check_encoding.py
 
-      - name: Validate PHP contract test syntax
+      - name: Check patch whitespace
+        shell: bash
+        run: git diff --check origin/main...HEAD
+
+      - name: Validate PHP syntax
         shell: bash
         run: |
           set -euo pipefail
           while IFS= read -r -d '' file; do
             php -l "$file"
-          done < <(find tests -type f -name '*-test.php' -print0)
+          done < <(find . -type f -name '*.php' \
+            -not -path './vendor/*' \
+            -not -path './node_modules/*' \
+            -print0)
 
       - name: Run PHP contract tests
         shell: bash
