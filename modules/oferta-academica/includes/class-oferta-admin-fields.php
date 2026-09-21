@@ -43,6 +43,19 @@ final class FLACSO_Oferta_Admin_Fields {
         wp_nonce_field(self::NONCE_ACTION, self::NONCE_NAME);
 
         $program_id = absint(self::meta($post->ID, FLACSO_Oferta_Academica::META_PROGRAM_ID, 0));
+        if ($program_id === 0 && isset($_GET['programa_academico_id'])) {
+            $program_id = absint($_GET['programa_academico_id']);
+        }
+        $current_type = FLACSO_Oferta_Academica::get_tipo($post->ID);
+        $offer_types = [
+            FLACSO_Oferta_Academica::TIPO_DOCTORADO => __('Doctorado', 'flacso-uruguay'),
+            FLACSO_Oferta_Academica::TIPO_MAESTRIA => __('Maestría', 'flacso-uruguay'),
+            FLACSO_Oferta_Academica::TIPO_ESPECIALIZACION => __('Especialización', 'flacso-uruguay'),
+            FLACSO_Oferta_Academica::TIPO_DIPLOMADO => __('Diplomado', 'flacso-uruguay'),
+            FLACSO_Oferta_Academica::TIPO_DIPLOMA => __('Diploma', 'flacso-uruguay'),
+        ];
+        $colors = FLACSO_Oferta_Academica::sanitize_presentation_colors(self::meta($post->ID, FLACSO_Oferta_Academica::META_PRESENTATION_COLORS, []));
+        $principal_color = (string) ($colors['principal'] ?? '');
         $programs = get_posts([
             'post_type' => FLACSO_Programa_Academico::POST_TYPE,
             'post_status' => ['publish', 'draft', 'pending', 'private'],
@@ -51,7 +64,7 @@ final class FLACSO_Oferta_Admin_Fields {
             'order' => 'ASC',
         ]);
         $sections = [
-            'general' => [FLACSO_Oferta_Academica::META_PROGRAM_ID, 'abreviacion', 'correo'],
+            'general' => [FLACSO_Oferta_Academica::META_PROGRAM_ID, 'abreviacion', 'correo', FLACSO_Oferta_Academica::META_PRESENTATION_COLORS],
             'presentation' => ['presentacion', 'objetivo_general', 'objetivos_especificos'],
             'course' => ['duracion_meses', 'duracion_html', 'carga_horaria', 'carga_horaria_descripcion', 'creditos', 'forma_aprobacion'],
             'profiles' => ['perfil_ingreso_html', 'requisitos_ingreso_html', 'perfil_egreso_html', 'requisitos_egreso_html'],
@@ -78,6 +91,9 @@ final class FLACSO_Oferta_Admin_Fields {
                     <p class="flacso-oferta-eyebrow"><?php esc_html_e('Contenido estable de la propuesta', 'flacso-uruguay'); ?></p>
                     <h3><?php esc_html_e('Editá la oferta por secciones', 'flacso-uruguay'); ?></h3>
                     <p><?php esc_html_e('Acá se administra lo que identifica y describe la propuesta. Las fechas, el estado, los precios y la preinscripción pertenecen a cada cohorte.', 'flacso-uruguay'); ?></p>
+                    <?php if ('auto-draft' !== $post->post_status && get_permalink($post)) : ?>
+                        <p class="flacso-oferta-public-link"><a href="<?php echo esc_url(get_permalink($post)); ?>" target="_blank" rel="noopener noreferrer"><span class="dashicons dashicons-external" aria-hidden="true"></span><?php esc_html_e('Ver página pública', 'flacso-uruguay'); ?></a></p>
+                    <?php endif; ?>
                 </div>
                 <div class="flacso-oferta-workspace__aside">
                     <div class="flacso-oferta-pills" aria-label="<?php esc_attr_e('Resumen de la oferta', 'flacso-uruguay'); ?>">
@@ -104,8 +120,29 @@ final class FLACSO_Oferta_Admin_Fields {
                     </select>
                     <small><?php esc_html_e('Agrupa ofertas que pertenecen a una misma línea o programa institucional.', 'flacso-uruguay'); ?></small>
                 </label>
+                <label class="flacso-oferta-field">
+                    <span><?php esc_html_e('Tipo de oferta', 'flacso-uruguay'); ?></span>
+                    <select name="flacso_oferta_tipo">
+                        <option value=""><?php esc_html_e('— Sin tipo —', 'flacso-uruguay'); ?></option>
+                        <?php foreach ($offer_types as $type_key => $type_name) : ?>
+                            <option value="<?php echo esc_attr($type_key); ?>" <?php selected($current_type, $type_key); ?>><?php echo esc_html($type_name); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
                 <?php self::text_field($post->ID, 'abreviacion', __('Abreviación', 'flacso-uruguay')); ?>
                 <?php self::text_field($post->ID, 'correo', __('Correo de contacto', 'flacso-uruguay'), 'email'); ?>
+                <label class="flacso-oferta-field flacso-oferta-field--full">
+                    <span><?php esc_html_e('Color principal', 'flacso-uruguay'); ?></span>
+                    <span class="flacso-oferta-color-control">
+                        <input type="color" id="flacso_oferta_color_picker" value="<?php echo esc_attr($principal_color !== '' ? $principal_color : '#ffffff'); ?>" aria-label="<?php esc_attr_e('Elegir color principal', 'flacso-uruguay'); ?>">
+                        <input type="text" id="flacso_oferta_color_principal" name="flacso_oferta_color_principal" value="<?php echo esc_attr($principal_color); ?>" placeholder="#0057a8" pattern="#[0-9A-Fa-f]{6}" maxlength="7" aria-describedby="flacso-oferta-color-help">
+                        <span class="flacso-oferta-color-preview <?php echo $principal_color === '' ? 'is-empty' : ''; ?>" data-color-preview<?php echo $principal_color !== '' ? ' style="background:' . esc_attr($principal_color) . ';"' : ''; ?>>
+                            <?php echo $principal_color !== '' ? esc_html($principal_color) : esc_html__('Sin completar', 'flacso-uruguay'); ?>
+                        </span>
+                        <button type="button" class="button" data-clear-offer-color><?php esc_html_e('Limpiar', 'flacso-uruguay'); ?></button>
+                    </span>
+                    <small id="flacso-oferta-color-help"><?php esc_html_e('Se guarda únicamente un hexadecimal de seis dígitos. Por ahora no modifica la página pública.', 'flacso-uruguay'); ?></small>
+                </label>
             </div>
             <?php self::section_end(); ?>
 
@@ -170,6 +207,47 @@ final class FLACSO_Oferta_Admin_Fields {
                             <label><input type="checkbox" name="flacso_oferta[<?php echo esc_attr($key); ?>]" value="1" <?php checked(rest_sanitize_boolean(self::meta($post->ID, $key, false))); ?>><span><?php echo esc_html($label); ?></span></label>
                         <?php endforeach; ?>
                     </div>
+                </div>
+            </details>
+
+            <details class="flacso-oferta-section" id="flacso-oferta-cohortes">
+                <summary class="flacso-oferta-section__summary">
+                    <span class="flacso-oferta-section__icon dashicons dashicons-calendar-alt" aria-hidden="true"></span>
+                    <span class="flacso-oferta-section__copy"><strong><?php esc_html_e('Cohortes', 'flacso-uruguay'); ?></strong><small><?php esc_html_e('Aperturas temporales de esta oferta: comienzo, estado, cursado, preinscripción y aranceles.', 'flacso-uruguay'); ?></small></span>
+                    <span class="flacso-oferta-section__status <?php echo $cohort_ids ? 'is-complete' : ''; ?>"><?php echo esc_html($cohort_ids ? sprintf(_n('%d cohorte', '%d cohortes', count($cohort_ids), 'flacso-uruguay'), count($cohort_ids)) : __('Sin cohortes', 'flacso-uruguay')); ?></span>
+                </summary>
+                <div class="flacso-oferta-section__body">
+                    <?php if ($cohort_ids) : ?>
+                        <ul class="flacso-oferta-cohort-list">
+                            <?php foreach ($cohort_ids as $cohort_id) :
+                                $state = FLACSO_Cohorte::sanitize_state(get_post_meta($cohort_id, 'estado', true));
+                                $state_labels = [
+                                    'planificada' => __('Planificada', 'flacso-uruguay'),
+                                    'en_curso' => __('En curso', 'flacso-uruguay'),
+                                    'finalizada' => __('Finalizada', 'flacso-uruguay'),
+                                    'cancelada' => __('Cancelada', 'flacso-uruguay'),
+                                ];
+                                $start_label = FLACSO_Cohorte::format_dates((int) $cohort_id);
+                                $edit_link = get_edit_post_link($cohort_id);
+                            ?>
+                                <li>
+                                    <span>
+                                        <strong><?php echo esc_html(get_the_title($cohort_id)); ?></strong>
+                                        <small><?php echo esc_html(($state_labels[$state] ?? $state) . ($start_label !== '' ? ' · ' . $start_label : ' · ' . __('Sin comienzo', 'flacso-uruguay'))); ?></small>
+                                    </span>
+                                    <?php if ($edit_link) : ?><a class="button button-small" href="<?php echo esc_url($edit_link); ?>"><?php esc_html_e('Editar cohorte', 'flacso-uruguay'); ?></a><?php endif; ?>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php else : ?>
+                        <p class="flacso-oferta-empty"><?php esc_html_e('Esta oferta todavía no tiene cohortes.', 'flacso-uruguay'); ?></p>
+                    <?php endif; ?>
+                    <p>
+                        <a class="button button-primary" href="<?php echo esc_url(add_query_arg([
+                            'post_type' => FLACSO_Cohorte::POST_TYPE,
+                            'oferta_academica_id' => $post->ID,
+                        ], admin_url('post-new.php'))); ?>"><?php esc_html_e('Agregar cohorte', 'flacso-uruguay'); ?></a>
+                    </p>
                 </div>
             </details>
         </div>
@@ -308,6 +386,25 @@ final class FLACSO_Oferta_Admin_Fields {
             $items ? update_post_meta($post_id, $key, $items) : delete_post_meta($post_id, $key);
         }
 
+        if (isset($_POST['flacso_oferta_tipo'])) {
+            $type = sanitize_key(wp_unslash($_POST['flacso_oferta_tipo']));
+            if (FLACSO_Oferta_Academica::tipo_valido($type)) {
+                wp_set_object_terms($post_id, $type, FLACSO_Oferta_Academica::TYPE_TAXONOMY);
+            }
+        }
+
+        if (isset($_POST['flacso_oferta_color_principal'])) {
+            $colors = FLACSO_Oferta_Academica::sanitize_presentation_colors([
+                'principal' => sanitize_text_field(wp_unslash($_POST['flacso_oferta_color_principal'])),
+                'secundarios' => [],
+            ]);
+            if ($colors) {
+                update_post_meta($post_id, FLACSO_Oferta_Academica::META_PRESENTATION_COLORS, $colors);
+            } else {
+                delete_post_meta($post_id, FLACSO_Oferta_Academica::META_PRESENTATION_COLORS);
+            }
+        }
+
         foreach (['reconocido_mec', 'reconocimiento_internacional', 'convenio_iin_oea', 'mostrar_costos_envio', 'mostrar_expedicion_titulo'] as $key) {
             update_post_meta($post_id, $key, !empty($data[$key]));
         }
@@ -366,8 +463,20 @@ final class FLACSO_Oferta_Admin_Fields {
             .flacso-oferta-checks { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:16px; }
             .flacso-oferta-checks label { display:flex; align-items:flex-start; gap:8px; padding:10px 12px; border:1px solid #dcdcde; border-radius:6px; background:#fafafa; }
             .flacso-oferta-checks input { margin-top:1px; }
+            .flacso-oferta-public-link { margin-top:10px!important; }
+            .flacso-oferta-public-link a { display:inline-flex;align-items:center;gap:5px;color:#fff;text-decoration:none;font-weight:600; }
+            .flacso-oferta-public-link .dashicons { width:16px;height:16px;font-size:16px; }
+            .flacso-oferta-color-control { display:grid;grid-template-columns:50px minmax(140px,220px) auto auto;gap:8px;align-items:center; }
+            .flacso-oferta-color-control input[type=color] { width:50px;min-height:38px;padding:2px; }
+            .flacso-oferta-color-preview { display:inline-flex;min-height:34px;align-items:center;padding:0 10px;border:1px solid #c3c4c7;border-radius:4px;font-size:12px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.55); }
+            .flacso-oferta-color-preview.is-empty { color:#646970;background:#f6f7f7!important;text-shadow:none; }
+            .flacso-oferta-cohort-list { display:grid;gap:8px;margin:16px 0 0; }
+            .flacso-oferta-cohort-list li { display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0;padding:10px 12px;border:1px solid #dcdcde;border-radius:6px;background:#fafafa; }
+            .flacso-oferta-cohort-list li>span { display:grid;gap:3px; }
+            .flacso-oferta-cohort-list small { color:#646970; }
+            .flacso-oferta-empty { padding:12px;border:1px dashed #c3c4c7;border-radius:6px;color:#646970;background:#f6f7f7; }
             @media(max-width:1100px){ .flacso-oferta-workspace{flex-direction:column;} .flacso-oferta-workspace__aside{min-width:0;align-items:flex-start;} .flacso-oferta-pills{justify-content:flex-start;} .flacso-oferta-grid--three,.flacso-oferta-editor-grid{grid-template-columns:1fr;} }
-            @media(max-width:782px){ .flacso-oferta-fields{padding:12px;} .flacso-oferta-workspace{padding:18px;} .flacso-oferta-grid,.flacso-oferta-checks{grid-template-columns:1fr;} .flacso-oferta-field--full{grid-column:auto;} .flacso-oferta-section__summary{align-items:flex-start;padding:14px;} .flacso-oferta-section__copy small{display:none;} .flacso-oferta-section__status{margin-left:auto;} .flacso-oferta-section__body{padding:2px 14px 16px;} }
+            @media(max-width:782px){ .flacso-oferta-color-control{grid-template-columns:50px 1fr;} .flacso-oferta-color-preview,.flacso-oferta-color-control .button{grid-column:1/-1;} .flacso-oferta-cohort-list li{align-items:flex-start;flex-direction:column;} .flacso-oferta-fields{padding:12px;} .flacso-oferta-workspace{padding:18px;} .flacso-oferta-grid,.flacso-oferta-checks{grid-template-columns:1fr;} .flacso-oferta-field--full{grid-column:auto;} .flacso-oferta-section__summary{align-items:flex-start;padding:14px;} .flacso-oferta-section__copy small{display:none;} .flacso-oferta-section__status{margin-left:auto;} .flacso-oferta-section__body{padding:2px 14px 16px;} }
         </style>
         <?php
     }
@@ -398,6 +507,38 @@ final class FLACSO_Oferta_Admin_Fields {
                     if (section.open) window.dispatchEvent(new Event('resize'));
                 });
             });
+
+            var colorPicker = document.getElementById('flacso_oferta_color_picker');
+            var colorText = document.getElementById('flacso_oferta_color_principal');
+            var colorPreview = root.querySelector('[data-color-preview]');
+            var clearColor = root.querySelector('[data-clear-offer-color]');
+            var validColor = /^#[0-9a-fA-F]{6}$/;
+
+            function renderColor(value) {
+                var valid = validColor.test(value);
+                if (colorPreview) {
+                    colorPreview.classList.toggle('is-empty', !valid);
+                    colorPreview.style.background = valid ? value : '';
+                    colorPreview.textContent = valid ? value.toLowerCase() : '<?php echo esc_js(__('Sin completar', 'flacso-uruguay')); ?>';
+                }
+                if (valid && colorPicker && colorPicker.value.toLowerCase() !== value.toLowerCase()) {
+                    colorPicker.value = value;
+                }
+            }
+
+            colorPicker?.addEventListener('input', function () {
+                colorText.value = colorPicker.value.toLowerCase();
+                renderColor(colorText.value);
+            });
+            colorText?.addEventListener('input', function () {
+                renderColor(colorText.value.trim());
+            });
+            clearColor?.addEventListener('click', function () {
+                colorText.value = '';
+                renderColor('');
+                colorText.focus();
+            });
+            if (colorText) renderColor(colorText.value.trim());
         })();
         </script>
         <?php
