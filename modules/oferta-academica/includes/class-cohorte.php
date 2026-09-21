@@ -468,7 +468,7 @@ final class FLACSO_Cohorte {
 
             <?php
             $pre_status = !$pre_configurada
-                ? __('Sin completar', 'flacso-uruguay')
+                ? __('Sin completar — No configurada', 'flacso-uruguay')
                 : ($pre_habilitada ? __('Abierta', 'flacso-uruguay') : __('Cerrada', 'flacso-uruguay'));
             FLACSO_Academic_Admin_UI::section_start(
                 'flacso-cohorte-preinscripcion',
