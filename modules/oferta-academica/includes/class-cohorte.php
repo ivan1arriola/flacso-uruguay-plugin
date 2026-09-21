@@ -243,14 +243,16 @@ final class FLACSO_Cohorte {
         }
 
         $numero = absint(get_post_meta($post->ID, 'numero', true));
-        $estado = self::sanitize_state(get_post_meta($post->ID, 'estado', true));
+        $has_state = metadata_exists('post', $post->ID, 'estado');
+        $estado = $has_state ? self::sanitize_state(get_post_meta($post->ID, 'estado', true)) : '';
         $fecha_inicio = (string) get_post_meta($post->ID, 'fecha_inicio', true);
         $anio_inicio = absint(get_post_meta($post->ID, 'anio_inicio', true));
         if ($anio_inicio === 0 && $fecha_inicio !== '') {
             $anio_inicio = (int) substr($fecha_inicio, 0, 4);
         }
 
-        $precision = (string) get_post_meta($post->ID, 'precision_fecha_inicio', true) ?: 'dia';
+        $has_precision = metadata_exists('post', $post->ID, 'precision_fecha_inicio');
+        $precision = $has_precision ? (string) get_post_meta($post->ID, 'precision_fecha_inicio', true) : '';
         $tabla_precio_id = absint(get_post_meta($post->ID, 'tabla_precio_id', true));
         $link_preinscripcion = (string) get_post_meta($post->ID, 'link_preinscripcion', true);
         $pre_desde = (string) get_post_meta($post->ID, 'preinscripcion_desde', true);
@@ -260,232 +262,349 @@ final class FLACSO_Cohorte {
             : false;
         $pre_configurada = metadata_exists('post', $post->ID, 'preinscripcion_habilitada')
             || $link_preinscripcion !== '';
+
         $modalidad = self::sanitize_modality(get_post_meta($post->ID, 'modalidad', true));
         $modalidad_descripcion = (string) get_post_meta($post->ID, 'modalidad_descripcion', true);
         $calendario_academico = (string) get_post_meta($post->ID, 'calendario_academico', true);
         $calendario_descripcion = (string) get_post_meta($post->ID, 'calendario_descripcion', true);
         $mensaje_abierta = (string) get_post_meta($post->ID, 'mensaje_preinscripcion_abierta', true);
         $mensaje_cerrada = (string) get_post_meta($post->ID, 'mensaje_preinscripcion_cerrada', true);
+        $presentacion_preinscripcion = (string) get_post_meta($post->ID, 'presentacion_preinscripcion', true);
+        $etiqueta_preinscripcion = (string) get_post_meta($post->ID, 'etiqueta_preinscripcion', true);
+        $cta_preinscripcion = (string) get_post_meta($post->ID, 'cta_preinscripcion', true);
+        $instancias_presenciales = metadata_exists('post', $post->ID, 'instancias_presenciales')
+            ? rest_sanitize_boolean(get_post_meta($post->ID, 'instancias_presenciales', true))
+            : false;
 
-        $ofertas = get_posts(['post_type' => 'oferta-academica', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC']);
-        $tablas = get_posts(['post_type' => 'tabla-precio', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC']);
+        $ofertas = get_posts([
+            'post_type' => FLACSO_Oferta_Academica::POST_TYPE,
+            'post_status' => ['publish', 'draft', 'pending', 'private'],
+            'posts_per_page' => -1,
+            'orderby' => 'title',
+            'order' => 'ASC',
+        ]);
+        $tablas = get_posts([
+            'post_type' => 'tabla-precio',
+            'post_status' => ['publish', 'draft', 'pending', 'private'],
+            'posts_per_page' => -1,
+            'orderby' => 'title',
+            'order' => 'ASC',
+        ]);
+
+        $parent_title = $parent_id > 0 ? get_the_title($parent_id) : '';
+        $table_title = $tabla_precio_id > 0 ? get_the_title($tabla_precio_id) : '';
+        $state_labels = [
+            'planificada' => __('Planificada', 'flacso-uruguay'),
+            'en_curso' => __('En curso', 'flacso-uruguay'),
+            'finalizada' => __('Finalizada', 'flacso-uruguay'),
+            'cancelada' => __('Cancelada', 'flacso-uruguay'),
+        ];
+        $start_preview = ($fecha_inicio !== '' || $anio_inicio > 0) ? self::format_dates((int) $post->ID) : '';
+
         wp_nonce_field('save_cohorte_meta', 'cohorte_nonce');
         ?>
-        <div style="display: flex; flex-direction: column; gap: 16px; padding: 10px 0;">
-            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px 16px; border-radius: 6px;">
-                <label style="font-weight: 700; display: block; margin-bottom: 6px;">
-                    <?php esc_html_e('Oferta Académica (Entidad Padre):', 'flacso-uruguay'); ?> <span style="color:red">*</span>
-                </label>
-                <select name="oferta_academica_id" style="width: 100%; max-width: 500px;" required>
-                    <option value=""><?php esc_html_e('— Seleccionar Oferta Académica —', 'flacso-uruguay'); ?></option>
-                    <?php foreach ($ofertas as $oferta) : ?>
-                        <option value="<?php echo esc_attr((string) $oferta->ID); ?>" <?php selected($parent_id, $oferta->ID); ?>>
-                            <?php echo esc_html($oferta->post_title); ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-                <?php if ($parent_id > 0) : ?>
-                    <p style="display:flex; flex-wrap:wrap; gap:12px; margin: 6px 0 0; font-size: 12px;">
-                        <a href="<?php echo esc_url(get_permalink($parent_id)); ?>" target="_blank">
-                            <?php esc_html_e('↗ Ver página pública de la Oferta Académica', 'flacso-uruguay'); ?>
-                        </a>
-                        <a href="<?php echo esc_url(get_edit_post_link($parent_id)); ?>" target="_blank">
-                            <?php esc_html_e('Editar Oferta Académica padre', 'flacso-uruguay'); ?>
-                        </a>
-                    </p>
-                <?php endif; ?>
-            </div>
+        <div class="flacso-academic-editor flacso-cohort-editor">
+            <?php FLACSO_Academic_Admin_UI::render_header(
+                $post,
+                __('Cohorte', 'flacso-uruguay'),
+                get_the_title($post) !== '' ? get_the_title($post) : __('Nueva cohorte', 'flacso-uruguay'),
+                __('Concentra los datos temporales de una oferta: comienzo, estado, cursado, preinscripción y la tabla de aranceles elegida.', 'flacso-uruguay'),
+                [
+                    ['icon' => 'dashicons-welcome-learn-more', 'label' => $parent_title !== '' ? $parent_title : __('Sin oferta padre', 'flacso-uruguay')],
+                    ['icon' => 'dashicons-flag', 'label' => $estado !== '' ? ($state_labels[$estado] ?? $estado) : __('Sin estado', 'flacso-uruguay')],
+                    ['icon' => 'dashicons-calendar-alt', 'label' => $start_preview !== '' ? $start_preview : __('Sin comienzo', 'flacso-uruguay')],
+                ],
+                false
+            ); ?>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
-                <div>
-                    <label for="cohorte_numero" style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Número de cohorte:', 'flacso-uruguay'); ?> <span style="color:red">*</span></label>
-                    <input type="number" id="cohorte_numero" name="numero_cohorte" value="<?php echo esc_attr((string) $numero); ?>" min="1" max="999" required autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" style="width: 100%;">
-                    <small style="color: #64748b;"><?php esc_html_e('Se convertirá a romano automáticamente (ej: 6 -> VI)', 'flacso-uruguay'); ?></small>
-                </div>
-                <div>
-                    <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Estado:', 'flacso-uruguay'); ?></label>
-                    <select name="estado" style="width: 100%;">
-                        <option value="planificada" <?php selected($estado, 'planificada'); ?>><?php esc_html_e('Planificada', 'flacso-uruguay'); ?></option>
-                        <option value="en_curso" <?php selected($estado, 'en_curso'); ?>><?php esc_html_e('En curso', 'flacso-uruguay'); ?></option>
-                        <option value="finalizada" <?php selected($estado, 'finalizada'); ?>><?php esc_html_e('Finalizada', 'flacso-uruguay'); ?></option>
-                        <option value="cancelada" <?php selected($estado, 'cancelada'); ?>><?php esc_html_e('Cancelada', 'flacso-uruguay'); ?></option>
-                    </select>
-                </div>
-                <div>
-                    <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Tabla de Aranceles:', 'flacso-uruguay'); ?></label>
-                    <select name="tabla_precio_id" style="width: 100%;">
-                        <option value="0"><?php esc_html_e('— Sin tabla asignada —', 'flacso-uruguay'); ?></option>
-                        <?php foreach ($tablas as $tabla) : ?>
-                            <option value="<?php echo esc_attr((string) $tabla->ID); ?>" <?php selected($tabla_precio_id, $tabla->ID); ?>>
-                                <?php echo esc_html($tabla->post_title); ?>
-                            </option>
+            <?php FLACSO_Academic_Admin_UI::section_start(
+                'flacso-cohorte-oferta-padre',
+                __('Oferta padre', 'flacso-uruguay'),
+                __('Seleccioná la Oferta Académica a la que pertenece esta cohorte.', 'flacso-uruguay'),
+                'dashicons-welcome-learn-more',
+                $parent_title !== '' ? $parent_title : __('Sin completar', 'flacso-uruguay'),
+                true
+            ); ?>
+                <label class="flacso-academic-field">
+                    <span><?php esc_html_e('Oferta Académica', 'flacso-uruguay'); ?></span>
+                    <select name="oferta_academica_id">
+                        <option value=""><?php esc_html_e('— Sin completar —', 'flacso-uruguay'); ?></option>
+                        <?php foreach ($ofertas as $oferta) : ?>
+                            <option value="<?php echo esc_attr((string) $oferta->ID); ?>" <?php selected($parent_id, $oferta->ID); ?>><?php echo esc_html($oferta->post_title); ?></option>
                         <?php endforeach; ?>
                     </select>
-                </div>
-            </div>
-
-            <!-- Sección de Fechas y Precisión -->
-            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 14px 16px; border-radius: 6px;">
-                <h4 style="margin: 0 0 10px; color:#1e293b;"><?php esc_html_e('Fecha de comienzo de la Cohorte', 'flacso-uruguay'); ?></h4>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 12px;">
-                    <div>
-                        <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Precisión de visualización:', 'flacso-uruguay'); ?></label>
-                        <select name="precision_fecha_inicio" id="precision_fecha_inicio" style="width: 100%;">
-                            <option value="dia" <?php selected($precision, 'dia'); ?>><?php esc_html_e('Día exacto (ej: 15/03/2027)', 'flacso-uruguay'); ?></option>
-                            <option value="mes" <?php selected($precision, 'mes'); ?>><?php esc_html_e('Mes y año (ej: Marzo 2027)', 'flacso-uruguay'); ?></option>
-                            <option value="anio" <?php selected($precision, 'anio'); ?>><?php esc_html_e('Solo año (ej: 2027)', 'flacso-uruguay'); ?></option>
-                        </select>
-                        <small style="color:#64748b;"><?php esc_html_e('Determina cómo se muestra en la web pública.', 'flacso-uruguay'); ?></small>
-                    </div>
-                    <div>
-                        <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Año de inicio:', 'flacso-uruguay'); ?></label>
-                        <input type="number" name="anio_inicio" id="anio_inicio" value="<?php echo $anio_inicio > 0 ? esc_attr((string) $anio_inicio) : ''; ?>" min="2000" max="2100" placeholder="ej: 2027" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" style="width: 100%;">
-                    </div>
-                </div>
-
-                <div style="border-top: 1px dashed #cbd5e1; padding-top: 10px;">
-                    <div>
-                        <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Fecha exacta de inicio (opcional si aún no está fijada):', 'flacso-uruguay'); ?></label>
-                        <input type="date" name="fecha_inicio" id="fecha_inicio" value="<?php echo esc_attr($fecha_inicio); ?>" style="width: 100%;">
-                    </div>
-                    <p id="flacso-cohorte-start-preview" aria-live="polite" style="margin:12px 0 0; padding:10px 12px; background:#eff6ff; border-left:3px solid #2563eb; color:#1e3a8a;">
-                        <strong><?php esc_html_e('Vista previa pública:', 'flacso-uruguay'); ?></strong>
-                        <span></span>
+                </label>
+                <?php if ($parent_id > 0) : ?>
+                    <p class="flacso-academic-actions">
+                        <?php $public_parent = get_permalink($parent_id); ?>
+                        <?php $edit_parent = get_edit_post_link($parent_id); ?>
+                        <?php if ($public_parent) : ?><a class="button" href="<?php echo esc_url($public_parent); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Ver página pública de la Oferta', 'flacso-uruguay'); ?></a><?php endif; ?>
+                        <?php if ($edit_parent) : ?><a class="button" href="<?php echo esc_url($edit_parent); ?>"><?php esc_html_e('Editar Oferta padre', 'flacso-uruguay'); ?></a><?php endif; ?>
                     </p>
-                </div>
-            </div>
+                <?php else : ?>
+                    <?php FLACSO_Academic_Admin_UI::render_empty(__('No hay una Oferta padre seleccionada. La cohorte sigue siendo editable.', 'flacso-uruguay')); ?>
+                <?php endif; ?>
+            <?php FLACSO_Academic_Admin_UI::section_end(); ?>
 
-            <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 14px 16px; border-radius: 6px;">
-                <h4 style="margin: 0 0 10px; color:#1e293b;"><?php esc_html_e('Cursado de esta cohorte', 'flacso-uruguay'); ?></h4>
-                <div style="display:grid; grid-template-columns:minmax(180px, .4fr) 1fr; gap:14px;">
-                    <div>
-                        <label style="font-weight:600;display:block;margin-bottom:4px;"><?php esc_html_e('Modalidad:', 'flacso-uruguay'); ?></label>
-                        <select name="modalidad" style="width:100%;">
-                            <option value=""><?php esc_html_e('— Sin definir —', 'flacso-uruguay'); ?></option>
+            <?php
+            $state_price_summary = [];
+            if ($estado !== '') {
+                $state_price_summary[] = $state_labels[$estado] ?? $estado;
+            }
+            if ($table_title !== '') {
+                $state_price_summary[] = $table_title;
+            }
+            FLACSO_Academic_Admin_UI::section_start(
+                'flacso-cohorte-estado-aranceles',
+                __('Estado y aranceles', 'flacso-uruguay'),
+                __('Estado académico de la cohorte y Tabla de Aranceles reutilizable asignada.', 'flacso-uruguay'),
+                'dashicons-money-alt',
+                $state_price_summary ? implode(' · ', $state_price_summary) : __('Sin completar', 'flacso-uruguay')
+            );
+            ?>
+                <div class="flacso-academic-grid flacso-academic-grid--three">
+                    <label class="flacso-academic-field">
+                        <span><?php esc_html_e('Número de cohorte', 'flacso-uruguay'); ?></span>
+                        <input type="number" id="cohorte_numero" name="numero_cohorte" value="<?php echo $numero > 0 ? esc_attr((string) $numero) : ''; ?>" min="1" max="999" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" placeholder="<?php esc_attr_e('Sin completar', 'flacso-uruguay'); ?>">
+                        <small><?php esc_html_e('Se convierte a romano automáticamente en el nombre de la cohorte.', 'flacso-uruguay'); ?></small>
+                    </label>
+                    <label class="flacso-academic-field">
+                        <span><?php esc_html_e('Estado académico', 'flacso-uruguay'); ?></span>
+                        <select name="estado">
+                            <option value=""><?php esc_html_e('— Sin completar —', 'flacso-uruguay'); ?></option>
+                            <option value="planificada" <?php selected($estado, 'planificada'); ?>><?php esc_html_e('Planificada', 'flacso-uruguay'); ?></option>
+                            <option value="en_curso" <?php selected($estado, 'en_curso'); ?>><?php esc_html_e('En curso', 'flacso-uruguay'); ?></option>
+                            <option value="finalizada" <?php selected($estado, 'finalizada'); ?>><?php esc_html_e('Finalizada', 'flacso-uruguay'); ?></option>
+                            <option value="cancelada" <?php selected($estado, 'cancelada'); ?>><?php esc_html_e('Cancelada', 'flacso-uruguay'); ?></option>
+                        </select>
+                    </label>
+                    <label class="flacso-academic-field">
+                        <span><?php esc_html_e('Tabla de Aranceles', 'flacso-uruguay'); ?></span>
+                        <select name="tabla_precio_id">
+                            <option value="0"><?php esc_html_e('— Sin completar —', 'flacso-uruguay'); ?></option>
+                            <?php foreach ($tablas as $tabla) : ?>
+                                <option value="<?php echo esc_attr((string) $tabla->ID); ?>" <?php selected($tabla_precio_id, $tabla->ID); ?>><?php echo esc_html($tabla->post_title); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <?php if ($tabla_precio_id > 0 && get_edit_post_link($tabla_precio_id)) : ?>
+                            <small><a href="<?php echo esc_url(get_edit_post_link($tabla_precio_id)); ?>"><?php esc_html_e('Editar la tabla asignada', 'flacso-uruguay'); ?></a></small>
+                        <?php endif; ?>
+                    </label>
+                </div>
+            <?php FLACSO_Academic_Admin_UI::section_end(); ?>
+
+            <?php FLACSO_Academic_Admin_UI::section_start(
+                'flacso-cohorte-comienzo',
+                __('Comienzo', 'flacso-uruguay'),
+                __('Definí la precisión pública del comienzo. No se solicita ni muestra una fecha de fin.', 'flacso-uruguay'),
+                'dashicons-calendar-alt',
+                $start_preview !== '' ? $start_preview : __('Sin completar', 'flacso-uruguay')
+            ); ?>
+                <div class="flacso-academic-grid flacso-academic-grid--three">
+                    <label class="flacso-academic-field">
+                        <span><?php esc_html_e('Precisión de visualización', 'flacso-uruguay'); ?></span>
+                        <select name="precision_fecha_inicio" id="precision_fecha_inicio">
+                            <option value=""><?php esc_html_e('— Sin completar —', 'flacso-uruguay'); ?></option>
+                            <option value="dia" <?php selected($precision, 'dia'); ?>><?php esc_html_e('Día exacto', 'flacso-uruguay'); ?></option>
+                            <option value="mes" <?php selected($precision, 'mes'); ?>><?php esc_html_e('Mes y año', 'flacso-uruguay'); ?></option>
+                            <option value="anio" <?php selected($precision, 'anio'); ?>><?php esc_html_e('Solo año', 'flacso-uruguay'); ?></option>
+                        </select>
+                    </label>
+                    <label class="flacso-academic-field">
+                        <span><?php esc_html_e('Año de comienzo', 'flacso-uruguay'); ?></span>
+                        <input type="number" name="anio_inicio" id="anio_inicio" value="<?php echo $anio_inicio > 0 ? esc_attr((string) $anio_inicio) : ''; ?>" min="2000" max="2100" placeholder="<?php esc_attr_e('Sin completar', 'flacso-uruguay'); ?>" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other">
+                    </label>
+                    <label class="flacso-academic-field">
+                        <span><?php esc_html_e('Fecha exacta de comienzo', 'flacso-uruguay'); ?></span>
+                        <input type="date" name="fecha_inicio" id="fecha_inicio" value="<?php echo esc_attr($fecha_inicio); ?>">
+                        <small><?php esc_html_e('Puede quedar vacía si solo se conoce el año.', 'flacso-uruguay'); ?></small>
+                    </label>
+                </div>
+                <p id="flacso-cohorte-start-preview" class="flacso-academic-preview" aria-live="polite">
+                    <strong><?php esc_html_e('Vista previa pública:', 'flacso-uruguay'); ?></strong><span></span>
+                </p>
+            <?php FLACSO_Academic_Admin_UI::section_end(); ?>
+
+            <?php
+            $course_summary = $modalidad !== '' ? ucfirst($modalidad) : '';
+            FLACSO_Academic_Admin_UI::section_start(
+                'flacso-cohorte-cursado',
+                __('Cursado', 'flacso-uruguay'),
+                __('Modalidad, instancias presenciales y calendario propio de esta cohorte.', 'flacso-uruguay'),
+                'dashicons-clock',
+                $course_summary !== '' ? $course_summary : __('Sin completar', 'flacso-uruguay')
+            );
+            ?>
+                <div class="flacso-academic-grid">
+                    <label class="flacso-academic-field">
+                        <span><?php esc_html_e('Modalidad', 'flacso-uruguay'); ?></span>
+                        <select name="modalidad">
+                            <option value=""><?php esc_html_e('— Sin completar —', 'flacso-uruguay'); ?></option>
                             <option value="virtual" <?php selected($modalidad, 'virtual'); ?>><?php esc_html_e('Virtual', 'flacso-uruguay'); ?></option>
                             <option value="presencial" <?php selected($modalidad, 'presencial'); ?>><?php esc_html_e('Presencial', 'flacso-uruguay'); ?></option>
                             <option value="semipresencial" <?php selected($modalidad, 'semipresencial'); ?>><?php esc_html_e('Semipresencial', 'flacso-uruguay'); ?></option>
                             <option value="hibrida" <?php selected($modalidad, 'hibrida'); ?>><?php esc_html_e('Híbrida', 'flacso-uruguay'); ?></option>
                         </select>
-                    </div>
-                    <div>
-                        <label style="font-weight:600;display:block;margin-bottom:4px;"><?php esc_html_e('Descripción de modalidad:', 'flacso-uruguay'); ?></label>
-                        <textarea name="modalidad_descripcion" rows="3" style="width:100%;"><?php echo esc_textarea($modalidad_descripcion); ?></textarea>
-                    </div>
-                    <div style="grid-column:1/-1;">
-                        <label style="font-weight:600;display:block;margin-bottom:4px;"><?php esc_html_e('URL del calendario académico:', 'flacso-uruguay'); ?></label>
-                        <input type="url" name="calendario_academico" value="<?php echo esc_attr($calendario_academico); ?>" style="width:100%;">
-                    </div>
-                    <div style="grid-column:1/-1;">
-                        <label style="font-weight:600;display:block;margin-bottom:4px;"><?php esc_html_e('Descripción del calendario:', 'flacso-uruguay'); ?></label>
-                        <textarea name="calendario_descripcion" rows="3" style="width:100%;"><?php echo esc_textarea($calendario_descripcion); ?></textarea>
-                    </div>
+                    </label>
+                    <label class="flacso-cohort-checkbox">
+                        <input type="hidden" name="instancias_presenciales" value="0">
+                        <input type="checkbox" name="instancias_presenciales" value="1" <?php checked($instancias_presenciales); ?>>
+                        <span><strong><?php esc_html_e('Tiene instancias presenciales', 'flacso-uruguay'); ?></strong><small><?php esc_html_e('Marcá esta opción cuando el cursado incluya encuentros presenciales.', 'flacso-uruguay'); ?></small></span>
+                    </label>
+                    <label class="flacso-academic-field flacso-academic-field--full">
+                        <span><?php esc_html_e('Descripción de modalidad', 'flacso-uruguay'); ?></span>
+                        <textarea name="modalidad_descripcion" rows="3"><?php echo esc_textarea($modalidad_descripcion); ?></textarea>
+                    </label>
+                    <label class="flacso-academic-field">
+                        <span><?php esc_html_e('URL del calendario académico', 'flacso-uruguay'); ?></span>
+                        <input type="url" name="calendario_academico" value="<?php echo esc_attr($calendario_academico); ?>" placeholder="<?php esc_attr_e('Sin completar', 'flacso-uruguay'); ?>">
+                    </label>
+                    <label class="flacso-academic-field">
+                        <span><?php esc_html_e('Descripción del calendario', 'flacso-uruguay'); ?></span>
+                        <textarea name="calendario_descripcion" rows="3"><?php echo esc_textarea($calendario_descripcion); ?></textarea>
+                    </label>
                 </div>
-            </div>
+            <?php FLACSO_Academic_Admin_UI::section_end(); ?>
 
-            <div style="background: #f1f5f9; padding: 12px 16px; border-radius: 6px;">
-                <h4 style="margin: 0 0 12px;"><?php esc_html_e('Preinscripción', 'flacso-uruguay'); ?></h4>
-                <?php
-                $url_preinscripcion = FLACSO_Django_API_Client::url_preinscripcion_oferta($parent_id);
-                $nonce              = wp_create_nonce('flacso_preinscripcion_nonce');
-                if ($pre_habilitada):
-                ?>
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-                    <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#22c55e;"></span>
-                    <strong><?php esc_html_e('Abierta', 'flacso-uruguay'); ?></strong>
+            <?php
+            $pre_status = !$pre_configurada
+                ? __('Sin completar', 'flacso-uruguay')
+                : ($pre_habilitada ? __('Abierta', 'flacso-uruguay') : __('Cerrada', 'flacso-uruguay'));
+            FLACSO_Academic_Admin_UI::section_start(
+                'flacso-cohorte-preinscripcion',
+                __('Preinscripción', 'flacso-uruguay'),
+                __('Apertura, cierre, enlace, mensajes y fechas propias de la inscripción.', 'flacso-uruguay'),
+                'dashicons-forms',
+                $pre_status
+            );
+            $url_preinscripcion = FLACSO_Django_API_Client::url_preinscripcion_oferta($parent_id);
+            $nonce = wp_create_nonce('flacso_preinscripcion_nonce');
+            ?>
+                <div class="flacso-cohort-registration-status <?php echo $pre_habilitada ? 'is-open' : ''; ?>">
+                    <span class="flacso-cohort-registration-dot" aria-hidden="true"></span>
+                    <strong><?php echo esc_html($pre_status); ?></strong>
+                    <span class="flacso-academic-actions">
+                        <?php if ($pre_habilitada) : ?>
+                            <button type="button" id="flacso-cerrar-preinscripcion" class="button" data-cohorte-id="<?php echo esc_attr((string) $post->ID); ?>" data-nonce="<?php echo esc_attr($nonce); ?>"><?php esc_html_e('Cerrar preinscripción', 'flacso-uruguay'); ?></button>
+                        <?php else : ?>
+                            <button type="button" id="flacso-abrir-preinscripcion" class="button button-primary" data-cohorte-id="<?php echo esc_attr((string) $post->ID); ?>" data-nonce="<?php echo esc_attr($nonce); ?>" <?php disabled($parent_id < 1); ?>><?php esc_html_e('Abrir preinscripción', 'flacso-uruguay'); ?></button>
+                        <?php endif; ?>
+                    </span>
                 </div>
-                <?php if ($url_preinscripcion): ?>
-                <p style="margin:0 0 10px;font-size:12px;word-break:break-all;">
-                    <a href="<?php echo esc_url($url_preinscripcion); ?>" target="_blank"><?php echo esc_html($url_preinscripcion); ?></a>
-                </p>
-                <?php endif; ?>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                    <?php if ($url_preinscripcion): ?>
-                    <a href="<?php echo esc_url($url_preinscripcion); ?>" target="_blank" class="button button-secondary">
-                        <?php esc_html_e('Ver preinscripción', 'flacso-uruguay'); ?>
-                    </a>
-                    <?php endif; ?>
-                    <button type="button" id="flacso-cerrar-preinscripcion"
-                            class="button"
-                            style="color:#b91c1c;"
-                            data-cohorte-id="<?php echo esc_attr($post->ID); ?>"
-                            data-nonce="<?php echo esc_attr($nonce); ?>">
-                        <?php esc_html_e('Cerrar preinscripción', 'flacso-uruguay'); ?>
-                    </button>
-                </div>
-                <?php else: ?>
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-                    <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#94a3b8;"></span>
-                    <strong>
-                        <?php $pre_configurada
-                            ? esc_html_e('Cerrada', 'flacso-uruguay')
-                            : esc_html_e('No configurada', 'flacso-uruguay'); ?>
-                    </strong>
-                </div>
-                <button type="button" id="flacso-abrir-preinscripcion"
-                        class="button button-primary"
-                        data-cohorte-id="<?php echo esc_attr($post->ID); ?>"
-                        data-nonce="<?php echo esc_attr($nonce); ?>">
-                    <?php esc_html_e('Abrir preinscripción', 'flacso-uruguay'); ?>
-                </button>
-                <?php endif; ?>
+                <div id="flacso-preinscripcion-notice" class="flacso-cohort-registration-notice" aria-live="polite"></div>
 
-                <div id="flacso-preinscripcion-notice" style="margin-top:10px;display:none;"></div>
+                <div class="flacso-academic-grid">
+                    <label class="flacso-academic-field flacso-academic-field--full">
+                        <span><?php esc_html_e('URL de preinscripción', 'flacso-uruguay'); ?></span>
+                        <input type="url" name="link_preinscripcion" value="<?php echo esc_attr($link_preinscripcion); ?>" placeholder="https://preinscripciones.flacso.edu.uy/…">
+                        <small><?php esc_html_e('Solo se guardan URLs HTTPS del portal preinscripciones.flacso.edu.uy.', 'flacso-uruguay'); ?></small>
+                    </label>
+                    <label class="flacso-academic-field">
+                        <span><?php esc_html_e('Apertura programada', 'flacso-uruguay'); ?></span>
+                        <input type="text" name="preinscripcion_desde" value="<?php echo esc_attr($pre_desde); ?>" placeholder="<?php esc_attr_e('Sin completar', 'flacso-uruguay'); ?>">
+                    </label>
+                    <label class="flacso-academic-field">
+                        <span><?php esc_html_e('Cierre programado', 'flacso-uruguay'); ?></span>
+                        <input type="text" name="preinscripcion_hasta" value="<?php echo esc_attr($pre_hasta); ?>" placeholder="<?php esc_attr_e('Sin completar', 'flacso-uruguay'); ?>">
+                    </label>
+                    <label class="flacso-academic-field">
+                        <span><?php esc_html_e('Etiqueta', 'flacso-uruguay'); ?></span>
+                        <input type="text" name="etiqueta_preinscripcion" value="<?php echo esc_attr($etiqueta_preinscripcion); ?>">
+                    </label>
+                    <label class="flacso-academic-field">
+                        <span><?php esc_html_e('Texto del CTA', 'flacso-uruguay'); ?></span>
+                        <input type="text" name="cta_preinscripcion" value="<?php echo esc_attr($cta_preinscripcion); ?>">
+                    </label>
+                    <label class="flacso-academic-field flacso-academic-field--full">
+                        <span><?php esc_html_e('Presentación de la preinscripción', 'flacso-uruguay'); ?></span>
+                        <textarea name="presentacion_preinscripcion" rows="4"><?php echo esc_textarea($presentacion_preinscripcion); ?></textarea>
+                    </label>
+                    <label class="flacso-academic-field">
+                        <span><?php esc_html_e('Mensaje cuando está abierta', 'flacso-uruguay'); ?></span>
+                        <textarea name="mensaje_preinscripcion_abierta" rows="4"><?php echo esc_textarea($mensaje_abierta); ?></textarea>
+                    </label>
+                    <label class="flacso-academic-field">
+                        <span><?php esc_html_e('Mensaje cuando está cerrada', 'flacso-uruguay'); ?></span>
+                        <textarea name="mensaje_preinscripcion_cerrada" rows="4"><?php echo esc_textarea($mensaje_cerrada); ?></textarea>
+                    </label>
+                </div>
 
                 <script>
-                (function($) {
+                (function ($) {
                     function preinscripcionAction(action, btn) {
-                        btn.prop('disabled', true).text('<?php echo esc_js(__('Procesando…', 'flacso-uruguay')); ?>');
+                        btn.prop('disabled', true);
+                        var original = btn.text();
+                        btn.text('<?php echo esc_js(__('Procesando…', 'flacso-uruguay')); ?>');
                         $.post(ajaxurl, {
-                            action:     action,
+                            action: action,
                             cohorte_id: btn.data('cohorte-id'),
-                            _wpnonce:   btn.data('nonce'),
-                        }, function(res) {
+                            _wpnonce: btn.data('nonce')
+                        }, function (res) {
                             var notice = $('#flacso-preinscripcion-notice');
                             if (res.success) {
-                                notice.css('color', '#166534').text(res.data.message).show();
-                                setTimeout(function() { location.reload(); }, 1200);
+                                notice.removeClass('is-error').addClass('is-success').text(res.data.message).show();
+                                setTimeout(function () { location.reload(); }, 1200);
                             } else {
-                                notice.css('color', '#991b1b').text(res.data.message || '<?php echo esc_js(__('Error al comunicarse con el sistema de preinscripciones.', 'flacso-uruguay')); ?>').show();
-                                btn.prop('disabled', false).text(btn.data('original-text'));
+                                notice.removeClass('is-success').addClass('is-error').text((res.data && res.data.message) || '<?php echo esc_js(__('Error al comunicarse con el sistema de preinscripciones.', 'flacso-uruguay')); ?>').show();
+                                btn.prop('disabled', false).text(original);
                             }
-                        }).fail(function() {
-                            var notice = $('#flacso-preinscripcion-notice');
-                            notice.css('color', '#991b1b').text('<?php echo esc_js(__('Error de red. Inténtelo nuevamente.', 'flacso-uruguay')); ?>').show();
-                            btn.prop('disabled', false).text(btn.data('original-text'));
+                        }).fail(function () {
+                            $('#flacso-preinscripcion-notice').removeClass('is-success').addClass('is-error').text('<?php echo esc_js(__('Error de red. Inténtelo nuevamente.', 'flacso-uruguay')); ?>').show();
+                            btn.prop('disabled', false).text(original);
                         });
                     }
 
-                    $(document).on('click', '#flacso-abrir-preinscripcion', function() {
-                        var btn = $(this);
-                        btn.data('original-text', btn.text());
-                        preinscripcionAction('flacso_abrir_preinscripcion_cohorte', btn);
+                    $(document).on('click', '#flacso-abrir-preinscripcion', function () {
+                        preinscripcionAction('flacso_abrir_preinscripcion_cohorte', $(this));
                     });
-                    $(document).on('click', '#flacso-cerrar-preinscripcion', function() {
+                    $(document).on('click', '#flacso-cerrar-preinscripcion', function () {
                         if (!confirm('<?php echo esc_js(__('¿Cerrar la preinscripción para esta cohorte?', 'flacso-uruguay')); ?>')) return;
-                        var btn = $(this);
-                        btn.data('original-text', btn.text());
-                        preinscripcionAction('flacso_cerrar_preinscripcion_cohorte', btn);
+                        preinscripcionAction('flacso_cerrar_preinscripcion_cohorte', $(this));
                     });
-                })(jQuery);
+                }(jQuery));
                 </script>
+            <?php FLACSO_Academic_Admin_UI::section_end(); ?>
 
-                <?php if (is_admin() && $pre_habilitada): ?>
-                <?php /* Campo oculto conservado para compatibilidad — no editar manualmente */ ?>
-                <input type="hidden" name="link_preinscripcion" value="<?php echo esc_attr($link_preinscripcion); ?>">
+            <?php FLACSO_Academic_Admin_UI::section_start(
+                'flacso-cohorte-enlaces',
+                __('Enlaces útiles', 'flacso-uruguay'),
+                __('Accesos relacionados con la oferta y su preinscripción.', 'flacso-uruguay'),
+                'dashicons-admin-links',
+                ($url_preinscripcion || $parent_id > 0) ? __('Disponible', 'flacso-uruguay') : __('Sin completar', 'flacso-uruguay')
+            ); ?>
+                <ul class="flacso-academic-list">
+                    <?php if ($url_preinscripcion) : ?>
+                        <li>
+                            <span class="flacso-academic-list__copy"><strong><?php esc_html_e('Portal de preinscripción', 'flacso-uruguay'); ?></strong><small><?php echo esc_html($url_preinscripcion); ?></small></span>
+                            <a class="button button-small" href="<?php echo esc_url($url_preinscripcion); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Abrir', 'flacso-uruguay'); ?></a>
+                        </li>
+                    <?php endif; ?>
+                    <?php if ($parent_id > 0 && get_permalink($parent_id)) : ?>
+                        <li>
+                            <span class="flacso-academic-list__copy"><strong><?php esc_html_e('Página pública de la Oferta', 'flacso-uruguay'); ?></strong><small><?php echo esc_html($parent_title); ?></small></span>
+                            <a class="button button-small" href="<?php echo esc_url(get_permalink($parent_id)); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Abrir', 'flacso-uruguay'); ?></a>
+                        </li>
+                    <?php endif; ?>
+                </ul>
+                <?php if (!$url_preinscripcion && $parent_id < 1) : ?>
+                    <?php FLACSO_Academic_Admin_UI::render_empty(__('No hay enlaces disponibles hasta seleccionar una Oferta padre.', 'flacso-uruguay')); ?>
                 <?php endif; ?>
-
-                <p style="font-size:11px;color:#64748b;margin:12px 0 0;">
-                    <?php printf(
-                        esc_html__('La URL de preinscripción es: %s', 'flacso-uruguay'),
-                        $url_preinscripcion
-                            ? '<code>' . esc_html($url_preinscripcion) . '</code>'
-                            : esc_html__('(configure FLACSO_DJANGO_API_URL en wp-config.php)', 'flacso-uruguay')
-                    ); ?>
-                </p>
-            </div>
-
+            <?php FLACSO_Academic_Admin_UI::section_end(); ?>
         </div>
+
+        <style>
+            .flacso-cohort-checkbox{display:flex;align-items:flex-start;gap:9px;padding:12px;border:1px solid #dcdcde;border-radius:6px;background:#fafafa}
+            .flacso-cohort-checkbox>span{display:grid;gap:3px}
+            .flacso-cohort-checkbox small{color:#646970}
+            .flacso-cohort-registration-status{display:flex;align-items:center;gap:9px;margin-bottom:14px;padding:12px;border:1px solid #dcdcde;border-radius:6px;background:#f6f7f7}
+            .flacso-cohort-registration-status .flacso-academic-actions{margin-left:auto}
+            .flacso-cohort-registration-dot{width:10px;height:10px;border-radius:50%;background:#94a3b8}
+            .flacso-cohort-registration-status.is-open .flacso-cohort-registration-dot{background:#22c55e}
+            .flacso-cohort-registration-notice{display:none;margin:0 0 14px;padding:9px 11px;border-radius:4px}
+            .flacso-cohort-registration-notice.is-success{color:#166534;background:#dcfce7}
+            .flacso-cohort-registration-notice.is-error{color:#991b1b;background:#fee2e2}
+            @media(max-width:782px){.flacso-cohort-registration-status{align-items:flex-start;flex-wrap:wrap}.flacso-cohort-registration-status .flacso-academic-actions{width:100%;margin-left:19px}}
+        </style>
         <?php
     }
 
