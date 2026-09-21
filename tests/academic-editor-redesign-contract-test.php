@@ -49,6 +49,8 @@ foreach ([
     'Perfiles y requisitos',
     'Titulación, acreditación y financiación',
     'Plan de estudios',
+    'Equipos estables',
+    'Contacto de la carta',
     'Reconocimientos y visualización',
     'Cohortes',
 ] as $section) {
@@ -65,7 +67,7 @@ academic_editor_redesign_assert(
     'Oferta debe permitir elegir, previsualizar y limpiar el color sin aplicarlo públicamente'
 );
 
-foreach (['Oferta padre', 'Estado y aranceles', 'Comienzo', 'Cursado', 'Preinscripción', 'Enlaces útiles'] as $section) {
+foreach (['Oferta padre', 'Estado y aranceles', 'Comienzo', 'Cursado', 'Preinscripción', 'Equipos de la cohorte', 'Enlaces útiles'] as $section) {
     academic_editor_redesign_assert(strpos($cohort, $section) !== false, "Cohorte debe incluir {$section}");
 }
 $render_start = strpos($cohort, 'public static function render_meta_box');
@@ -75,6 +77,15 @@ academic_editor_redesign_assert(
     strpos($cohort_render, 'name="fecha_fin"') === false
         && strpos($cohort_render, 'name="anio_fin"') === false,
     'Cohorte no debe volver a pedir fecha o año de fin'
+);
+academic_editor_redesign_assert(
+    strpos($offer, 'FLACSO_Academic_Team_Editor::render_offer_section($post)') !== false
+        && strpos($offer, 'FLACSO_Offer_Carta_Contact_Admin::render_section($post)') !== false,
+    'Oferta debe integrar equipos estables y contacto de carta dentro del editor principal'
+);
+academic_editor_redesign_assert(
+    strpos($cohort, 'FLACSO_Academic_Team_Editor::render_cohort_section($post)') !== false,
+    'Cohorte debe integrar sus equipos variables dentro del editor principal'
 );
 academic_editor_redesign_assert(
     strpos($cohort, 'flacso-cohorte-start-preview') !== false
