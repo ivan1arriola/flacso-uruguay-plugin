@@ -72,6 +72,8 @@ final class FLACSO_Cohorte {
             add_action('manage_' . self::POST_TYPE . '_posts_custom_column', [self::class, 'render_column'], 10, 2);
             add_action('restrict_manage_posts', [self::class, 'render_admin_filters']);
             add_filter('parse_query', [self::class, 'filter_query_by_parent']);
+            add_action('admin_footer-post.php', [self::class, 'render_start_date_preview_script']);
+            add_action('admin_footer-post-new.php', [self::class, 'render_start_date_preview_script']);
         }
     }
 
@@ -163,20 +165,13 @@ final class FLACSO_Cohorte {
     public static function format_dates(int $post_id): string {
         $precision = sanitize_key((string) get_post_meta($post_id, 'precision_fecha_inicio', true)) ?: 'dia';
         $fecha_inicio = (string) get_post_meta($post_id, 'fecha_inicio', true);
-        $fecha_fin = (string) get_post_meta($post_id, 'fecha_fin', true);
         $anio_inicio = absint(get_post_meta($post_id, 'anio_inicio', true));
-        $anio_fin = absint(get_post_meta($post_id, 'anio_fin', true));
 
         $y_start = $anio_inicio > 0 ? $anio_inicio : ($fecha_inicio !== '' ? (int) substr($fecha_inicio, 0, 4) : 0);
-        $y_end = $anio_fin > 0 ? $anio_fin : ($fecha_fin !== '' ? (int) substr($fecha_fin, 0, 4) : 0);
 
-        if ($precision === 'anio' || ($fecha_inicio === '' && ($y_start > 0 || $y_end > 0))) {
-            if ($y_start > 0 && $y_end > 0 && $y_start !== $y_end) {
-                return $y_start . ' – ' . $y_end;
-            } elseif ($y_start > 0) {
+        if ($precision === 'anio' || ($fecha_inicio === '' && $y_start > 0)) {
+            if ($y_start > 0) {
                 return (string) $y_start;
-            } elseif ($y_end > 0) {
-                return (string) $y_end;
             }
             return '';
         }
@@ -185,11 +180,6 @@ final class FLACSO_Cohorte {
             try {
                 $dt = new \DateTime($fecha_inicio, wp_timezone());
                 $m_start = function_exists('wp_date') ? wp_date('F Y', $dt->getTimestamp()) : date('m/Y', $dt->getTimestamp());
-                if ($fecha_fin !== '') {
-                    $dt_end = new \DateTime($fecha_fin, wp_timezone());
-                    $m_end = function_exists('wp_date') ? wp_date('F Y', $dt_end->getTimestamp()) : date('m/Y', $dt_end->getTimestamp());
-                    return $m_start . ' – ' . $m_end;
-                }
                 return $m_start;
             } catch (\Exception $e) {
                 // silencioso
@@ -200,11 +190,6 @@ final class FLACSO_Cohorte {
             try {
                 $dt = new \DateTime($fecha_inicio, wp_timezone());
                 $f_start = function_exists('wp_date') ? wp_date('j \d\e F \d\e Y', $dt->getTimestamp()) : date('d/m/Y', $dt->getTimestamp());
-                if ($fecha_fin !== '') {
-                    $dt_end = new \DateTime($fecha_fin, wp_timezone());
-                    $f_end = function_exists('wp_date') ? wp_date('j \d\e F \d\e Y', $dt_end->getTimestamp()) : date('d/m/Y', $dt_end->getTimestamp());
-                    return $f_start . ' al ' . $f_end;
-                }
                 return $f_start;
             } catch (\Exception $e) {
                 // silencioso
@@ -260,14 +245,9 @@ final class FLACSO_Cohorte {
         $numero = absint(get_post_meta($post->ID, 'numero', true));
         $estado = self::sanitize_state(get_post_meta($post->ID, 'estado', true));
         $fecha_inicio = (string) get_post_meta($post->ID, 'fecha_inicio', true);
-        $fecha_fin = (string) get_post_meta($post->ID, 'fecha_fin', true);
         $anio_inicio = absint(get_post_meta($post->ID, 'anio_inicio', true));
-        $anio_fin = absint(get_post_meta($post->ID, 'anio_fin', true));
         if ($anio_inicio === 0 && $fecha_inicio !== '') {
             $anio_inicio = (int) substr($fecha_inicio, 0, 4);
-        }
-        if ($anio_fin === 0 && $fecha_fin !== '') {
-            $anio_fin = (int) substr($fecha_fin, 0, 4);
         }
 
         $precision = (string) get_post_meta($post->ID, 'precision_fecha_inicio', true) ?: 'dia';
@@ -305,9 +285,12 @@ final class FLACSO_Cohorte {
                     <?php endforeach; ?>
                 </select>
                 <?php if ($parent_id > 0) : ?>
-                    <p style="margin: 6px 0 0; font-size: 12px;">
+                    <p style="display:flex; flex-wrap:wrap; gap:12px; margin: 6px 0 0; font-size: 12px;">
+                        <a href="<?php echo esc_url(get_permalink($parent_id)); ?>" target="_blank">
+                            <?php esc_html_e('↗ Ver página pública de la Oferta Académica', 'flacso-uruguay'); ?>
+                        </a>
                         <a href="<?php echo esc_url(get_edit_post_link($parent_id)); ?>" target="_blank">
-                            <?php esc_html_e('↗ Ver Oferta Académica padre en WordPress', 'flacso-uruguay'); ?>
+                            <?php esc_html_e('Editar Oferta Académica padre', 'flacso-uruguay'); ?>
                         </a>
                     </p>
                 <?php endif; ?>
@@ -343,14 +326,14 @@ final class FLACSO_Cohorte {
 
             <!-- Sección de Fechas y Precisión -->
             <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 14px 16px; border-radius: 6px;">
-                <h4 style="margin: 0 0 10px; color:#1e293b;"><?php esc_html_e('Período y Fechas de la Cohorte', 'flacso-uruguay'); ?></h4>
+                <h4 style="margin: 0 0 10px; color:#1e293b;"><?php esc_html_e('Fecha de comienzo de la Cohorte', 'flacso-uruguay'); ?></h4>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 12px;">
                     <div>
                         <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Precisión de visualización:', 'flacso-uruguay'); ?></label>
                         <select name="precision_fecha_inicio" id="precision_fecha_inicio" style="width: 100%;">
                             <option value="dia" <?php selected($precision, 'dia'); ?>><?php esc_html_e('Día exacto (ej: 15/03/2027)', 'flacso-uruguay'); ?></option>
                             <option value="mes" <?php selected($precision, 'mes'); ?>><?php esc_html_e('Mes y año (ej: Marzo 2027)', 'flacso-uruguay'); ?></option>
-                            <option value="anio" <?php selected($precision, 'anio'); ?>><?php esc_html_e('Solo año / Período (ej: 2027 – 2029)', 'flacso-uruguay'); ?></option>
+                            <option value="anio" <?php selected($precision, 'anio'); ?>><?php esc_html_e('Solo año (ej: 2027)', 'flacso-uruguay'); ?></option>
                         </select>
                         <small style="color:#64748b;"><?php esc_html_e('Determina cómo se muestra en la web pública.', 'flacso-uruguay'); ?></small>
                     </div>
@@ -358,21 +341,17 @@ final class FLACSO_Cohorte {
                         <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Año de inicio:', 'flacso-uruguay'); ?></label>
                         <input type="number" name="anio_inicio" id="anio_inicio" value="<?php echo $anio_inicio > 0 ? esc_attr((string) $anio_inicio) : ''; ?>" min="2000" max="2100" placeholder="ej: 2027" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" style="width: 100%;">
                     </div>
-                    <div>
-                        <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Año de fin:', 'flacso-uruguay'); ?></label>
-                        <input type="number" name="anio_fin" id="anio_fin" value="<?php echo $anio_fin > 0 ? esc_attr((string) $anio_fin) : ''; ?>" min="2000" max="2100" placeholder="ej: 2029" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" style="width: 100%;">
-                    </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; border-top: 1px dashed #cbd5e1; padding-top: 10px;">
+                <div style="border-top: 1px dashed #cbd5e1; padding-top: 10px;">
                     <div>
                         <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Fecha exacta de inicio (opcional si aún no está fijada):', 'flacso-uruguay'); ?></label>
                         <input type="date" name="fecha_inicio" id="fecha_inicio" value="<?php echo esc_attr($fecha_inicio); ?>" style="width: 100%;">
                     </div>
-                    <div>
-                        <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Fecha exacta de fin (opcional):', 'flacso-uruguay'); ?></label>
-                        <input type="date" name="fecha_fin" id="fecha_fin" value="<?php echo esc_attr($fecha_fin); ?>" style="width: 100%;">
-                    </div>
+                    <p id="flacso-cohorte-start-preview" aria-live="polite" style="margin:12px 0 0; padding:10px 12px; background:#eff6ff; border-left:3px solid #2563eb; color:#1e3a8a;">
+                        <strong><?php esc_html_e('Vista previa pública:', 'flacso-uruguay'); ?></strong>
+                        <span></span>
+                    </p>
                 </div>
             </div>
 
@@ -510,6 +489,54 @@ final class FLACSO_Cohorte {
         <?php
     }
 
+    public static function render_start_date_preview_script(): void {
+        $screen = get_current_screen();
+        if (!$screen || $screen->post_type !== self::POST_TYPE) {
+            return;
+        }
+        ?>
+        <script>
+        (function () {
+            var precision = document.getElementById('precision_fecha_inicio');
+            var year = document.getElementById('anio_inicio');
+            var date = document.getElementById('fecha_inicio');
+            var preview = document.getElementById('flacso-cohorte-start-preview');
+            if (!precision || !year || !date || !preview) {
+                return;
+            }
+
+            var output = preview.querySelector('span');
+            var locale = 'es-UY';
+            function selectedDate() {
+                return date.value ? new Date(date.value + 'T00:00:00') : null;
+            }
+            function updatePreview() {
+                var selected = selectedDate();
+                var value = '';
+                if (precision.value === 'anio') {
+                    value = year.value || (selected ? String(selected.getFullYear()) : 'Completá el año de comienzo.');
+                } else if (precision.value === 'mes') {
+                    value = selected
+                        ? selected.toLocaleDateString(locale, { month: 'long', year: 'numeric' })
+                        : 'Elegí una fecha para mostrar el mes y año.';
+                } else {
+                    value = selected
+                        ? selected.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })
+                        : 'Elegí la fecha exacta de comienzo.';
+                }
+                output.textContent = ' ' + value;
+            }
+
+            [precision, year, date].forEach(function (field) {
+                field.addEventListener('change', updatePreview);
+                field.addEventListener('input', updatePreview);
+            });
+            updatePreview();
+        }());
+        </script>
+        <?php
+    }
+
     public static function save_post_data(int $post_id, $post): void {
         if (!isset($_POST['cohorte_nonce']) || !wp_verify_nonce($_POST['cohorte_nonce'], 'save_cohorte_meta')) {
             return;
@@ -534,21 +561,14 @@ final class FLACSO_Cohorte {
         }
 
         $anio_inicio = isset($_POST['anio_inicio']) ? self::sanitize_year($_POST['anio_inicio']) : 0;
-        $anio_fin = isset($_POST['anio_fin']) ? self::sanitize_year($_POST['anio_fin']) : 0;
         $fecha_inicio = isset($_POST['fecha_inicio']) ? self::sanitize_date($_POST['fecha_inicio']) : '';
-        $fecha_fin = isset($_POST['fecha_fin']) ? self::sanitize_date($_POST['fecha_fin']) : '';
 
         if ($anio_inicio === 0 && $fecha_inicio !== '') {
             $anio_inicio = (int) substr($fecha_inicio, 0, 4);
         }
-        if ($anio_fin === 0 && $fecha_fin !== '') {
-            $anio_fin = (int) substr($fecha_fin, 0, 4);
-        }
 
         self::update_or_delete_meta($post_id, 'anio_inicio', $anio_inicio ?: '');
-        self::update_or_delete_meta($post_id, 'anio_fin', $anio_fin ?: '');
         self::update_or_delete_meta($post_id, 'fecha_inicio', $fecha_inicio);
-        self::update_or_delete_meta($post_id, 'fecha_fin', $fecha_fin);
 
         if (isset($_POST['tabla_precio_id'])) {
             self::update_or_delete_meta($post_id, 'tabla_precio_id', absint($_POST['tabla_precio_id']) ?: '');
