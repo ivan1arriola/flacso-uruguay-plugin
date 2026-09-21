@@ -19,6 +19,7 @@ $GLOBALS['test_transients'] = [];
 function absint($value) { return abs((int) $value); }
 function sanitize_key($value) { return preg_replace('/[^a-z0-9_-]/', '', strtolower((string) $value)); }
 function sanitize_text_field($value) { return trim(strip_tags((string) $value)); }
+function __($value, $domain = null) { return (string) $value; }
 function sanitize_email($value) { return filter_var((string) $value, FILTER_SANITIZE_EMAIL); }
 function wp_kses_post($value) { return (string) $value; }
 function wp_strip_all_tags($value) { return strip_tags((string) $value); }
