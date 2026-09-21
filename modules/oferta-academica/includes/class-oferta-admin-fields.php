@@ -135,7 +135,7 @@ final class FLACSO_Oferta_Admin_Fields {
                     <span><?php esc_html_e('Color principal', 'flacso-uruguay'); ?></span>
                     <span class="flacso-oferta-color-control">
                         <input type="color" id="flacso_oferta_color_picker" value="<?php echo esc_attr($principal_color !== '' ? $principal_color : '#ffffff'); ?>" aria-label="<?php esc_attr_e('Elegir color principal', 'flacso-uruguay'); ?>">
-                        <input type="text" id="flacso_oferta_color_principal" name="flacso_oferta_color_principal" value="<?php echo esc_attr($principal_color); ?>" placeholder="#0057a8" pattern="#[0-9A-Fa-f]{6}" maxlength="7" aria-describedby="flacso-oferta-color-help">
+                        <input type="text" id="flacso_oferta_color_principal" name="flacso_oferta_color_principal" value="<?php echo esc_attr($principal_color); ?>" placeholder="#0057a8" maxlength="7" aria-describedby="flacso-oferta-color-help">
                         <span class="flacso-oferta-color-preview <?php echo $principal_color === '' ? 'is-empty' : ''; ?>" data-color-preview<?php echo $principal_color !== '' ? ' style="background:' . esc_attr($principal_color) . ';"' : ''; ?>>
                             <?php echo $principal_color !== '' ? esc_html($principal_color) : esc_html__('Sin completar', 'flacso-uruguay'); ?>
                         </span>
@@ -388,7 +388,9 @@ final class FLACSO_Oferta_Admin_Fields {
 
         if (isset($_POST['flacso_oferta_tipo'])) {
             $type = sanitize_key(wp_unslash($_POST['flacso_oferta_tipo']));
-            if (FLACSO_Oferta_Academica::tipo_valido($type)) {
+            if ($type === '') {
+                wp_set_object_terms($post_id, [], FLACSO_Oferta_Academica::TYPE_TAXONOMY);
+            } elseif (FLACSO_Oferta_Academica::tipo_valido($type)) {
                 wp_set_object_terms($post_id, $type, FLACSO_Oferta_Academica::TYPE_TAXONOMY);
             }
         }
