@@ -673,10 +673,20 @@ final class FLACSO_Cohorte {
             update_post_meta($post_id, 'numero', absint($_POST['numero']));
         }
         if (isset($_POST['estado'])) {
-            update_post_meta($post_id, 'estado', self::sanitize_state($_POST['estado']));
+            $raw_state = sanitize_key(wp_unslash($_POST['estado']));
+            if ($raw_state === '') {
+                delete_post_meta($post_id, 'estado');
+            } else {
+                update_post_meta($post_id, 'estado', self::sanitize_state($raw_state));
+            }
         }
         if (isset($_POST['precision_fecha_inicio'])) {
-            update_post_meta($post_id, 'precision_fecha_inicio', self::sanitize_precision($_POST['precision_fecha_inicio']));
+            $raw_precision = sanitize_key(wp_unslash($_POST['precision_fecha_inicio']));
+            if ($raw_precision === '') {
+                delete_post_meta($post_id, 'precision_fecha_inicio');
+            } else {
+                update_post_meta($post_id, 'precision_fecha_inicio', self::sanitize_precision($raw_precision));
+            }
         }
 
         $anio_inicio = isset($_POST['anio_inicio']) ? self::sanitize_year($_POST['anio_inicio']) : 0;
@@ -709,11 +719,18 @@ final class FLACSO_Cohorte {
             'calendario_descripcion' => 'wp_kses_post',
             'mensaje_preinscripcion_abierta' => 'wp_kses_post',
             'mensaje_preinscripcion_cerrada' => 'wp_kses_post',
+            'presentacion_preinscripcion' => 'wp_kses_post',
+            'etiqueta_preinscripcion' => 'sanitize_text_field',
+            'cta_preinscripcion' => 'sanitize_text_field',
         ];
         foreach ($typed_fields as $key => $sanitizer) {
             if (isset($_POST[$key])) {
                 self::update_or_delete_meta($post_id, $key, call_user_func($sanitizer, wp_unslash($_POST[$key])));
             }
+        }
+
+        if (isset($_POST['instancias_presenciales'])) {
+            update_post_meta($post_id, 'instancias_presenciales', rest_sanitize_boolean(wp_unslash($_POST['instancias_presenciales'])));
         }
 
         self::sync_title($post_id);
