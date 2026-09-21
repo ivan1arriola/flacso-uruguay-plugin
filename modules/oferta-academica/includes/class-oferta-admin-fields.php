@@ -190,6 +190,9 @@ final class FLACSO_Oferta_Admin_Fields {
             </div>
             <?php self::section_end(); ?>
 
+            <?php FLACSO_Academic_Team_Editor::render_offer_section($post); ?>
+            <?php FLACSO_Offer_Carta_Contact_Admin::render_section($post); ?>
+
             <details class="flacso-oferta-section">
                 <summary class="flacso-oferta-section__summary">
                     <span class="flacso-oferta-section__icon dashicons dashicons-visibility" aria-hidden="true"></span>
@@ -497,14 +500,14 @@ final class FLACSO_Oferta_Admin_Fields {
             root.querySelectorAll('[data-flacso-sections]').forEach(function (button) {
                 button.addEventListener('click', function () {
                     var open = button.getAttribute('data-flacso-sections') === 'open';
-                    root.querySelectorAll('details.flacso-oferta-section').forEach(function (section) {
+                    root.querySelectorAll('details.flacso-oferta-section, details.flacso-academic-section').forEach(function (section) {
                         section.open = open;
                     });
                     window.dispatchEvent(new Event('resize'));
                 });
             });
 
-            root.querySelectorAll('details.flacso-oferta-section').forEach(function (section) {
+            root.querySelectorAll('details.flacso-oferta-section, details.flacso-academic-section').forEach(function (section) {
                 section.addEventListener('toggle', function () {
                     if (section.open) window.dispatchEvent(new Event('resize'));
                 });
