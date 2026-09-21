@@ -8,6 +8,8 @@ $program = (string) file_get_contents($root . '/modules/oferta-academica/include
 $offer = (string) file_get_contents($root . '/modules/oferta-academica/includes/class-oferta-admin-fields.php');
 $offer_model = (string) file_get_contents($root . '/modules/oferta-academica/includes/class-oferta-academica.php');
 $cohort = (string) file_get_contents($root . '/modules/oferta-academica/includes/class-cohorte.php');
+$teams = (string) file_get_contents($root . '/modules/oferta-academica/includes/class-academic-team-editor.php');
+$carta = (string) file_get_contents($root . '/modules/oferta-academica/includes/class-offer-carta-contact-admin.php');
 $price = (string) file_get_contents($root . '/modules/oferta-academica/includes/class-cpt-tabla-precio.php');
 
 function academic_editor_redesign_assert(bool $condition, string $message): void {
@@ -49,13 +51,13 @@ foreach ([
     'Perfiles y requisitos',
     'Titulación, acreditación y financiación',
     'Plan de estudios',
-    'Equipos estables',
-    'Contacto de la carta',
     'Reconocimientos y visualización',
     'Cohortes',
 ] as $section) {
     academic_editor_redesign_assert(strpos($offer, $section) !== false, "Oferta debe incluir {$section}");
 }
+academic_editor_redesign_assert(strpos($teams, 'Equipos estables') !== false, 'Oferta debe incluir Equipos estables');
+academic_editor_redesign_assert(strpos($carta, 'Contacto de la carta') !== false, 'Oferta debe incluir Contacto de la carta');
 academic_editor_redesign_assert(
     strpos($offer_model, "META_PRESENTATION_COLORS = 'colores_presentacion'") !== false,
     'Oferta debe registrar el metadato colores_presentacion'
@@ -67,9 +69,10 @@ academic_editor_redesign_assert(
     'Oferta debe permitir elegir, previsualizar y limpiar el color sin aplicarlo públicamente'
 );
 
-foreach (['Oferta padre', 'Estado y aranceles', 'Comienzo', 'Cursado', 'Preinscripción', 'Equipos de la cohorte', 'Enlaces útiles'] as $section) {
+foreach (['Oferta padre', 'Estado y aranceles', 'Comienzo', 'Cursado', 'Preinscripción', 'Enlaces útiles'] as $section) {
     academic_editor_redesign_assert(strpos($cohort, $section) !== false, "Cohorte debe incluir {$section}");
 }
+academic_editor_redesign_assert(strpos($teams, 'Equipos de la cohorte') !== false, 'Cohorte debe incluir Equipos de la cohorte');
 $render_start = strpos($cohort, 'public static function render_meta_box');
 $render_end = strpos($cohort, 'public static function render_start_date_preview_script', $render_start);
 $cohort_render = $render_start === false ? '' : substr($cohort, $render_start, $render_end - $render_start);
