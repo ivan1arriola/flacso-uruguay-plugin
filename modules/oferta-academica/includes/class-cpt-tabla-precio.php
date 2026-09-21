@@ -109,6 +109,9 @@ class CPT_Tabla_Precio {
         $note = (string) get_post_meta($post->ID, 'precios_nota', true);
         $show_usd = self::meta_boolean($post->ID, 'mostrar_precios_dolares', true);
         $rows = self::normalize_rows_for_admin(get_post_meta($post->ID, 'precios_filas', true));
+        $uses = ('auto-draft' !== $post->post_status && class_exists('FLACSO_Price_Table_Repository'))
+            ? FLACSO_Price_Table_Repository::linked_uses((int) $post->ID)
+            : [];
 
         if (!$rows) {
             $rows = [[
@@ -118,61 +121,84 @@ class CPT_Tabla_Precio {
                 'destacada' => true,
             ]];
         }
+
+        $stored_rows = array_values(array_filter($rows, static function (array $row): bool {
+            return trim((string) ($row['concepto'] ?? '')) !== ''
+                || trim((string) ($row['uyu'] ?? '')) !== ''
+                || trim((string) ($row['usd'] ?? '')) !== '';
+        }));
         ?>
-        <div class="flacso-price-editor" data-price-editor data-show-usd="<?php echo $show_usd ? '1' : '0'; ?>">
-            <div class="flacso-price-intro">
-                <div>
-                    <strong>Configurá la tabla tal como se mostrará en la oferta.</strong>
-                    <p>Agregá una fila por modalidad de pago, marcá la principal y decidí si se muestran importes en dólares.</p>
+        <div class="flacso-price-editor flacso-academic-editor" data-price-editor data-show-usd="<?php echo $show_usd ? '1' : '0'; ?>">
+            <?php FLACSO_Academic_Admin_UI::render_header(
+                $post,
+                __('Tabla de Aranceles', 'flacso-uruguay'),
+                $post->post_title !== '' ? $post->post_title : __('Nueva tabla de aranceles', 'flacso-uruguay'),
+                __('Es reutilizable y se vincula desde Cohortes o Ediciones de seminario. El título se edita en el campo nativo de WordPress.', 'flacso-uruguay'),
+                [
+                    ['icon' => 'dashicons-list-view', 'label' => sprintf(_n('%d fila', '%d filas', count($stored_rows), 'flacso-uruguay'), count($stored_rows))],
+                    ['icon' => 'dashicons-admin-site-alt3', 'label' => $show_usd ? __('UYU + USD', 'flacso-uruguay') : __('Solo UYU', 'flacso-uruguay')],
+                    ['icon' => 'dashicons-admin-links', 'label' => sprintf(_n('%d uso', '%d usos', count($uses), 'flacso-uruguay'), count($uses))],
+                ],
+                false
+            ); ?>
+
+            <?php
+            $identification_summary = [];
+            if ($type !== '') {
+                $identification_summary[] = $type;
+            }
+            $identification_summary[] = $show_usd ? __('USD visible', 'flacso-uruguay') : __('USD oculto', 'flacso-uruguay');
+            FLACSO_Academic_Admin_UI::section_start(
+                'flacso-price-identification',
+                __('Identificación', 'flacso-uruguay'),
+                __('Título, tipo interno y visibilidad de importes en dólares.', 'flacso-uruguay'),
+                'dashicons-tag',
+                implode(' · ', $identification_summary),
+                true
+            );
+            ?>
+                <div class="flacso-academic-grid">
+                    <label class="flacso-academic-field">
+                        <span><?php esc_html_e('Tipo o categoría interna', 'flacso-uruguay'); ?></span>
+                        <input type="text" name="flacso_price_type" value="<?php echo esc_attr($type); ?>" placeholder="<?php esc_attr_e('Sin completar', 'flacso-uruguay'); ?>">
+                        <small><?php esc_html_e('Ej.: general, convenio o beca.', 'flacso-uruguay'); ?></small>
+                    </label>
+                    <label class="flacso-price-toggle-card">
+                        <input type="checkbox" name="flacso_price_show_usd" value="1" data-usd-toggle <?php checked($show_usd); ?>>
+                        <span class="flacso-price-toggle" aria-hidden="true"></span>
+                        <span>
+                            <strong><?php esc_html_e('Mostrar precios en USD', 'flacso-uruguay'); ?></strong>
+                            <small><?php esc_html_e('Ocultar esta columna no borra los valores cargados.', 'flacso-uruguay'); ?></small>
+                        </span>
+                    </label>
                 </div>
-                <span class="flacso-price-count" data-row-count></span>
-            </div>
+            <?php FLACSO_Academic_Admin_UI::section_end(); ?>
 
-            <div class="flacso-price-settings-grid">
-                <label class="flacso-price-field">
-                    <span>Tipo o categoría <small>(opcional)</small></span>
-                    <input
-                        type="text"
-                        name="flacso_price_type"
-                        value="<?php echo esc_attr($type); ?>"
-                        placeholder="Ej. General, convenio, beca"
-                    >
-                    <small>Sirve para identificar el propósito de la tabla internamente.</small>
-                </label>
-
-                <label class="flacso-price-toggle-card">
-                    <input
-                        type="checkbox"
-                        name="flacso_price_show_usd"
-                        value="1"
-                        data-usd-toggle
-                        <?php checked($show_usd); ?>
-                    >
-                    <span class="flacso-price-toggle" aria-hidden="true"></span>
-                    <span>
-                        <strong>Mostrar precios en USD</strong>
-                        <small>Podés ocultar la columna sin borrar los valores cargados.</small>
-                    </span>
-                </label>
-            </div>
-
-            <div class="flacso-price-rows-section">
+            <?php FLACSO_Academic_Admin_UI::section_start(
+                'flacso-price-rows-section',
+                __('Filas de precios', 'flacso-uruguay'),
+                __('Conceptos, importes en UYU y USD, fila principal y acciones de alta, eliminación y reordenamiento.', 'flacso-uruguay'),
+                'dashicons-money-alt',
+                $stored_rows ? sprintf(_n('%d fila con contenido', '%d filas con contenido', count($stored_rows), 'flacso-uruguay'), count($stored_rows)) : __('Sin completar', 'flacso-uruguay')
+            ); ?>
                 <div class="flacso-price-section-heading">
                     <div>
-                        <h3>Filas de precios</h3>
-                        <p>La fila destacada se usa como referencia principal cuando otra parte del sistema necesita un precio.</p>
+                        <p class="description"><?php esc_html_e('La fila principal se usa como referencia cuando otra parte del sistema necesita un precio.', 'flacso-uruguay'); ?></p>
                     </div>
-                    <button type="button" class="button button-secondary" data-add-price-row>
-                        <span class="dashicons dashicons-plus-alt2" aria-hidden="true"></span>
-                        Añadir fila
-                    </button>
+                    <div class="flacso-academic-actions">
+                        <span class="flacso-price-count" data-row-count></span>
+                        <button type="button" class="button button-secondary" data-add-price-row>
+                            <span class="dashicons dashicons-plus-alt2" aria-hidden="true"></span>
+                            <?php esc_html_e('Añadir fila', 'flacso-uruguay'); ?>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="flacso-price-table-head" aria-hidden="true">
-                    <span>Concepto</span>
-                    <span>Pesos uruguayos</span>
-                    <span class="flacso-usd-column">Dólares</span>
-                    <span>Principal</span>
+                    <span><?php esc_html_e('Concepto', 'flacso-uruguay'); ?></span>
+                    <span><?php esc_html_e('Pesos uruguayos', 'flacso-uruguay'); ?></span>
+                    <span class="flacso-usd-column"><?php esc_html_e('Dólares', 'flacso-uruguay'); ?></span>
+                    <span><?php esc_html_e('Principal', 'flacso-uruguay'); ?></span>
                     <span></span>
                 </div>
 
@@ -184,14 +210,18 @@ class CPT_Tabla_Precio {
 
                 <div class="flacso-price-empty" data-empty-state hidden>
                     <span class="dashicons dashicons-money-alt" aria-hidden="true"></span>
-                    <strong>La tabla todavía no tiene filas.</strong>
-                    <span>Añadí una fila para comenzar.</span>
+                    <strong><?php esc_html_e('La tabla todavía no tiene filas.', 'flacso-uruguay'); ?></strong>
+                    <span><?php esc_html_e('Añadí una fila para comenzar.', 'flacso-uruguay'); ?></span>
                 </div>
-            </div>
+            <?php FLACSO_Academic_Admin_UI::section_end(); ?>
 
-            <div class="flacso-price-note-section">
-                <label for="flacso_price_note"><strong>Nota al pie</strong></label>
-                <p class="description">Texto opcional para aclaraciones sobre cuotas, impuestos, descuentos o condiciones.</p>
+            <?php FLACSO_Academic_Admin_UI::section_start(
+                'flacso-price-note-section',
+                __('Nota', 'flacso-uruguay'),
+                __('Aclaraciones publicables sobre cuotas, impuestos, descuentos o condiciones.', 'flacso-uruguay'),
+                'dashicons-editor-help',
+                FLACSO_Academic_Admin_UI::display_value($note)
+            ); ?>
                 <?php
                 wp_editor($note, 'flacso_price_note_editor', [
                     'textarea_name' => 'flacso_price_note',
@@ -201,7 +231,35 @@ class CPT_Tabla_Precio {
                     'quicktags' => true,
                 ]);
                 ?>
-            </div>
+            <?php FLACSO_Academic_Admin_UI::section_end(); ?>
+
+            <?php FLACSO_Academic_Admin_UI::section_start(
+                'flacso-price-linked-uses',
+                __('Usos vinculados', 'flacso-uruguay'),
+                __('Cohortes o Ediciones de seminario que utilizan esta tabla.', 'flacso-uruguay'),
+                'dashicons-admin-links',
+                $uses ? sprintf(_n('%d uso activo', '%d usos activos', count($uses), 'flacso-uruguay'), count($uses)) : __('Sin usos', 'flacso-uruguay')
+            ); ?>
+                <?php if ($uses) : ?>
+                    <ul class="flacso-academic-list">
+                        <?php foreach ($uses as $use) :
+                            $label = 'cohorte' === $use['entidad'] ? __('Cohorte', 'flacso-uruguay') : __('Edición de seminario', 'flacso-uruguay');
+                            $edit_link = get_edit_post_link((int) $use['id']);
+                        ?>
+                            <li>
+                                <span class="flacso-academic-list__copy">
+                                    <strong><?php echo esc_html((string) $use['nombre']); ?></strong>
+                                    <small><?php echo esc_html($label); ?></small>
+                                </span>
+                                <?php if ($edit_link) : ?><a class="button button-small" href="<?php echo esc_url($edit_link); ?>"><?php esc_html_e('Editar', 'flacso-uruguay'); ?></a><?php endif; ?>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <p class="description"><?php esc_html_e('Mientras tenga usos vinculados, WordPress impedirá eliminar esta tabla.', 'flacso-uruguay'); ?></p>
+                <?php else : ?>
+                    <?php FLACSO_Academic_Admin_UI::render_empty(__('Esta tabla todavía no está asignada. Podés seleccionarla desde una Cohorte o una Edición de seminario.', 'flacso-uruguay')); ?>
+                <?php endif; ?>
+            <?php FLACSO_Academic_Admin_UI::section_end(); ?>
 
             <template data-price-row-template>
                 <?php self::render_row('__INDEX__', [

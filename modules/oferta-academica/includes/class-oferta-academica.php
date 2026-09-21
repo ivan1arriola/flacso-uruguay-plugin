@@ -17,6 +17,7 @@ final class FLACSO_Oferta_Academica {
 
     public const META_PROGRAM_ID = 'programa_academico_id';
     public const META_SEMINARIOS = 'seminarios';
+    public const META_PRESENTATION_COLORS = 'colores_presentacion';
 
     /** @return array<string,string> */
     public static function tipos(): array {
@@ -87,6 +88,7 @@ final class FLACSO_Oferta_Academica {
             'convenio_iin_oea' => ['type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean'],
             'mostrar_costos_envio' => ['type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean'],
             'mostrar_expedicion_titulo' => ['type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean'],
+            self::META_PRESENTATION_COLORS => ['type' => 'object', 'sanitize_callback' => [self::class, 'sanitize_presentation_colors']],
             self::META_SEMINARIOS => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_seminars']],
         ];
 
@@ -97,6 +99,22 @@ final class FLACSO_Oferta_Academica {
                 'auth_callback' => static function (): bool { return current_user_can('edit_posts'); },
             ], $definition));
         }
+    }
+
+    public static function sanitize_presentation_colors($value): array {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $principal = trim((string) ($value['principal'] ?? ''));
+        if (!preg_match('/^#[0-9a-fA-F]{6}$/', $principal)) {
+            return [];
+        }
+
+        return [
+            'principal' => strtolower($principal),
+            'secundarios' => [],
+        ];
     }
 
     public static function sanitize_number($value): float {

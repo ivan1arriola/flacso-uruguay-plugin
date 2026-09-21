@@ -29,6 +29,19 @@ final_assert(
     'OfertaAcademica debe tener exactamente cinco tipos, incluida especializacion'
 );
 final_assert(!FLACSO_Oferta_Academica::tipo_valido('seminario'), 'Seminario no puede ser tipo de OfertaAcademica');
+
+$presentation_colors = FLACSO_Oferta_Academica::sanitize_presentation_colors([
+    'principal' => '#0057A8',
+    'secundarios' => ['#ffffff', '#000000'],
+]);
+final_assert(
+    $presentation_colors === ['principal' => '#0057a8', 'secundarios' => []],
+    'los colores de presentación conservan un principal hexadecimal y fuerzan secundarios vacíos'
+);
+final_assert(
+    FLACSO_Oferta_Academica::sanitize_presentation_colors(['principal' => '#57a8']) === [],
+    'un color principal inválido se descarta'
+);
 final_assert(FLACSO_Edicion::sanitize_state('cancelada') === 'cancelada', 'estado de edicion válido');
 final_assert(FLACSO_Edicion::sanitize_state('inscripciones_abiertas') === 'planificada', 'no persiste estado de inscripción');
 final_assert(FLACSO_Cohorte::to_roman(14) === 'XIV', 'algoritmo romano por sustracción ordenada');
