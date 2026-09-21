@@ -673,20 +673,10 @@ final class FLACSO_Cohorte {
             update_post_meta($post_id, 'numero', absint($_POST['numero']));
         }
         if (isset($_POST['estado'])) {
-            $raw_state = sanitize_key(wp_unslash($_POST['estado']));
-            if ($raw_state === '') {
-                delete_post_meta($post_id, 'estado');
-            } else {
-                update_post_meta($post_id, 'estado', self::sanitize_state($raw_state));
-            }
+            update_post_meta($post_id, 'estado', self::sanitize_state($_POST['estado']));
         }
         if (isset($_POST['precision_fecha_inicio'])) {
-            $raw_precision = sanitize_key(wp_unslash($_POST['precision_fecha_inicio']));
-            if ($raw_precision === '') {
-                delete_post_meta($post_id, 'precision_fecha_inicio');
-            } else {
-                update_post_meta($post_id, 'precision_fecha_inicio', self::sanitize_precision($raw_precision));
-            }
+            update_post_meta($post_id, 'precision_fecha_inicio', self::sanitize_precision($_POST['precision_fecha_inicio']));
         }
 
         $anio_inicio = isset($_POST['anio_inicio']) ? self::sanitize_year($_POST['anio_inicio']) : 0;
