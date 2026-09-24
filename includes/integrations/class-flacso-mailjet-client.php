@@ -259,6 +259,78 @@ class FLACSO_Mailjet_Client {
     }
 
     /**
+     * Convierte los slugs canónicos de modalidad en etiquetas legibles para correo.
+     */
+    private static function humanize_modality(string $value): string {
+        $raw = trim($value);
+        if ($raw === '') {
+            return '';
+        }
+
+        $key = function_exists('sanitize_key')
+            ? sanitize_key($raw)
+            : strtolower($raw);
+
+        $labels = [
+            'virtual'         => 'Virtual',
+            'presencial'      => 'Presencial',
+            'semipresencial'  => 'Semipresencial',
+            'hibrida'         => 'Híbrida',
+            'hibrido'         => 'Híbrida',
+        ];
+
+        return $labels[$key] ?? $raw;
+    }
+
+    /**
+     * Formatea fechas civiles del modelo académico sin desplazamientos de zona horaria.
+     */
+    private static function format_start_value(string $value, string $precision = 'dia'): string {
+        $raw = trim($value);
+        if ($raw === '') {
+            return '';
+        }
+
+        $precision = strtolower(trim($precision));
+        $precision = [
+            'day'   => 'dia',
+            'month' => 'mes',
+            'year'  => 'anio',
+        ][$precision] ?? $precision;
+
+        if ($precision === 'anio' && preg_match('/^(\\d{4})/', $raw, $m)) {
+            return $m[1];
+        }
+
+        if (!preg_match('/^(\\d{4})-(\\d{2})(?:-(\\d{2}))?/', $raw, $m)) {
+            return $raw;
+        }
+
+        $year = (int) $m[1];
+        $month = (int) $m[2];
+        $day = isset($m[3]) ? (int) $m[3] : 1;
+        $months = [
+            1 => 'enero', 2 => 'febrero', 3 => 'marzo', 4 => 'abril',
+            5 => 'mayo', 6 => 'junio', 7 => 'julio', 8 => 'agosto',
+            9 => 'septiembre', 10 => 'octubre', 11 => 'noviembre', 12 => 'diciembre',
+        ];
+
+        if (!isset($months[$month])) {
+            return $raw;
+        }
+
+        if ($precision === 'mes') {
+            return ucfirst($months[$month] . ' de ' . $year);
+        }
+
+        if (!checkdate($month, $day, $year)) {
+            return $raw;
+        }
+
+        return $day . ' de ' . $months[$month] . ' de ' . $year;
+    }
+
+    /**
      * Envía correo transaccional de consulta sobre una oferta académica.
      * Regla conservadora:
      * - Si hay TemplateID configurado localmente -> se envía vía TemplateID.
@@ -291,8 +363,14 @@ class FLACSO_Mailjet_Client {
         $program_name = trim((string) ($program['name'] ?? $program['titulo_posgrado'] ?? $program['title'] ?? 'Oferta académica'));
         $program_url = trim((string) ($program['urlBase'] ?? $program['programUrl'] ?? $program['url'] ?? $program['link'] ?? 'https://flacso.edu.uy/formacion/'));
         $preinscripcion_url = trim((string) ($program['preinscripcionUrl'] ?? $program['preinscripcion_url'] ?? ''));
-        $start_value = trim((string) ($program['startValue'] ?? $program['fecha_inicio'] ?? ''));
-        $modality = trim((string) ($program['modalityLabel'] ?? $program['modalidad'] ?? ''));
+        $start_precision = trim((string) ($program['startPrecision'] ?? $program['precision_fecha_inicio'] ?? 'dia'));
+        $start_value = self::format_start_value(
+            trim((string) ($program['startValue'] ?? $program['fecha_inicio'] ?? '')),
+            $start_precision
+        );
+        $modality = self::humanize_modality(
+            trim((string) ($program['modalityLabel'] ?? $program['modalidad'] ?? ''))
+        );
 
         // Resolución de TemplateID configurado
         $template_id = '';
@@ -308,12 +386,17 @@ class FLACSO_Mailjet_Client {
 
         $subject = sprintf('📌 %s – %s', $program_name ?: 'Información solicitada', $first_name ?: 'información solicitada');
 
+        $reply_to = trim((string) ($inquiry['replyToEmail'] ?? $inquiry['reply_to'] ?? ''));
+        if ($reply_to === '') {
+            $reply_to = 'secretaria@flacso.edu.uy';
+        }
+
         $params = [
             'to_email'   => $email,
             'to_name'    => $full_name !== '' ? $full_name : $first_name,
-            'subject'    => $subject,
+            'subject'    => $template_id !== '' ? '' : $subject,
             'custom_id'  => $consulta_id,
-            'reply_to'   => 'secretaria@flacso.edu.uy',
+            'reply_to'   => $reply_to,
         ];
 
         if ($template_id !== '') {
@@ -378,8 +461,13 @@ class FLACSO_Mailjet_Client {
         $seminar_name = trim((string) ($seminar['name'] ?? $seminar['title'] ?? $seminar['seminario_titulo'] ?? $inquiry['seminario_titulo'] ?? 'Seminario FLACSO Uruguay'));
         $seminar_url = trim((string) ($seminar['urlBase'] ?? $seminar['url'] ?? $seminar['link'] ?? 'https://flacso.edu.uy/formacion/seminarios/'));
         $preinscripcion_url = trim((string) ($seminar['preinscripcionUrl'] ?? $seminar['preinscripcion_url'] ?? ''));
-        $start_value = trim((string) ($seminar['startValue'] ?? $seminar['periodo_inicio'] ?? $seminar['fecha_inicio'] ?? ''));
-        $modality = trim((string) ($seminar['modalityLabel'] ?? $seminar['modalidad'] ?? ''));
+        $start_value = self::format_start_value(
+            trim((string) ($seminar['startValue'] ?? $seminar['periodo_inicio'] ?? $seminar['fecha_inicio'] ?? '')),
+            'dia'
+        );
+        $modality = self::humanize_modality(
+            trim((string) ($seminar['modalityLabel'] ?? $seminar['modalidad'] ?? ''))
+        );
 
         $template_id = function_exists('get_option')
             ? trim((string) get_option(self::OPTION_TEMPLATE_CONSULTA_SEMINARIO, ''))
@@ -387,12 +475,17 @@ class FLACSO_Mailjet_Client {
 
         $subject = sprintf('Información solicitada: %s', $seminar_name ?: 'Seminario FLACSO Uruguay');
 
+        $reply_to = trim((string) ($inquiry['replyToEmail'] ?? $inquiry['reply_to'] ?? ''));
+        if ($reply_to === '') {
+            $reply_to = 'inscripciones@flacso.edu.uy';
+        }
+
         $params = [
             'to_email'   => $email,
             'to_name'    => $full_name !== '' ? $full_name : $first_name,
-            'subject'    => $subject,
+            'subject'    => $template_id !== '' ? '' : $subject,
             'custom_id'  => $consulta_id,
-            'reply_to'   => 'inscripciones@flacso.edu.uy',
+            'reply_to'   => $reply_to,
         ];
 
         if ($template_id !== '') {
