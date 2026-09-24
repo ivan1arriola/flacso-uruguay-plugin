@@ -167,9 +167,6 @@ add_action( 'admin_post_fc_submit_consulta', 'fc_handle_form_submit' );
  */
 function fc_get_consulta_webhook_url() {
     $webhook_url = trim( (string) get_option( 'fc_consultas_webhook_url', '' ) );
-    if ( '' === $webhook_url ) {
-        $webhook_url = trim( (string) get_option( 'fc_oferta_webhook_url', '' ) );
-    }
     if ( '' === $webhook_url && defined( 'FLACSO_WEBHOOK_URL' ) ) {
         $webhook_url = trim( (string) FLACSO_WEBHOOK_URL );
     }
