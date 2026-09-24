@@ -520,4 +520,40 @@ $ajax_row = $stmt_ajax->fetch();
 wiring_assert(!empty($ajax_row), 'Consulta procesada por handle_ajax debe persistirse en offer_inquiries');
 wiring_assert((int)$ajax_row['offerWpId'] === 109, 'offerWpId de handle_ajax debe ser 109');
 
+// ---------------------------------------------------------------------------
+// 7. Un fallo real de persistencia nunca puede convertirse en éxito por RELAXED_MODE
+// ---------------------------------------------------------------------------
+$broken_pdo = new PDO('sqlite::memory:', null, null, [
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+]);
+FLACSO_DB::set_connection($broken_pdo);
+FLACSO_Base_Inquiry_Repository::clear_cache();
+
+$_POST = [
+    'id_pagina'            => '110',
+    'titulo_posgrado'      => 'Diploma de prueba',
+    'nombre'               => 'Laura',
+    'apellido'             => 'Pérez',
+    'correo'               => 'laura.perez@example.com',
+    'pais'                 => 'Uruguay',
+    'nivel_academico'      => 'Universitario',
+    'profesion'            => 'Docente',
+    'url_base'             => 'https://flacso.edu.uy/oferta/diploma-prueba',
+    'dynamic_info_form_id' => '0',
+];
+
+$db_error_caught = false;
+try {
+    FLACSO_Posgrados_Consultas_Form::handle_ajax();
+} catch (TestAjaxErrorException $e) {
+    $db_error_caught = true;
+} catch (TestAjaxSuccessException $e) {
+    wiring_assert(false, 'Un fallo de PostgreSQL no debe responder success aunque FLACSO_RELAXED_MODE esté activo');
+}
+wiring_assert($db_error_caught, 'Un fallo de PostgreSQL debe responder wp_send_json_error');
+
+FLACSO_DB::set_connection($pdo);
+FLACSO_Base_Inquiry_Repository::clear_cache();
+
 echo "OK inquiry-handler-wiring-test\n";
