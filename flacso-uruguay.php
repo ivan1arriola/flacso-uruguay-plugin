@@ -164,6 +164,7 @@ class FLACSO_Uruguay_Plugin {
         
         // Cargar modulos en orden de dependencias
         $loader->load_module('core');      // Funciones base
+        $loader->load_module('consultas'); // Sistema de consultas y despacho transaccional
         $loader->load_module('docentes');  // CPT Docentes
         $loader->load_module('autoridades'); // Autoridades FLACSO
         $loader->load_module('seminarios'); // CPT Seminarios

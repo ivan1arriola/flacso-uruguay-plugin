@@ -140,21 +140,9 @@ final class FLACSO_Academic_API {
             ], 404);
         }
 
-        $endpoint_url = get_option('flacso_seminario_consulta_endpoint_url', '');
-        if ($endpoint_url === '') {
-            $editor_url = get_option('flacso_external_editor_url', '');
-            if ($editor_url !== '') {
-                $endpoint_url = trailingslashit($editor_url) . 'api/consultas/seminarios';
-            }
-        }
-
-        if ($endpoint_url === '') {
-            $endpoint_url = 'https://editor.flacso.edu.uy/api/consultas/seminarios';
-        }
-
-        $webhook_token = get_option('flacso_webhook_token', '');
-
-        $event_id = wp_generate_uuid4();
+        $event_id = !empty($params['event_id'])
+            ? sanitize_text_field($params['event_id'])
+            : (function_exists('wp_generate_uuid4') ? wp_generate_uuid4() : '');
         $payload = [
             'event_id'         => $event_id,
             'seminario_id'     => (string) $seminario_id,
@@ -173,53 +161,37 @@ final class FLACSO_Academic_API {
             ],
         ];
 
-        $headers = ['Content-Type' => 'application/json; charset=utf-8'];
-        if ($webhook_token !== '') {
-            $headers['X-FLACSO-Webhook-Token'] = $webhook_token;
-            $headers['Authorization'] = 'Bearer ' . $webhook_token;
+        if (!class_exists('FLACSO_Seminar_Inquiry_Service')) {
+            $service_file = dirname(__DIR__, 2) . '/consultas/services/class-flacso-seminar-inquiry-service.php';
+            if (file_exists($service_file)) {
+                require_once $service_file;
+            }
         }
-        $headers['X-Idempotency-Key'] = $event_id;
 
-        $response = wp_remote_post($endpoint_url, [
-            'body'    => wp_json_encode($payload),
-            'headers' => $headers,
-            'timeout' => 20,
-        ]);
-
-        if (is_wp_error($response)) {
+        if (!class_exists('FLACSO_Seminar_Inquiry_Service')) {
             return new WP_REST_Response([
                 'success' => false,
-                'message' => 'Error de conexión con el CRM: ' . $response->get_error_message(),
-            ], 502);
+                'message' => 'Servicio de seminarios no disponible',
+            ], 500);
         }
 
-        $response_code = (int) wp_remote_retrieve_response_code($response);
-        $response_body = (string) wp_remote_retrieve_body($response);
-        $decoded_body = json_decode($response_body, true);
+        $result = FLACSO_Seminar_Inquiry_Service::submit($payload);
 
-        if ($response_code < 200 || $response_code >= 300) {
+        if (!empty($result['ok'])) {
             return new WP_REST_Response([
-                'success' => false,
-                'message' => 'El CRM respondió con código ' . $response_code . '. La consulta no se confirmó.',
-                'response_code' => $response_code,
-            ], 502);
+                'success'      => true,
+                'message'      => 'Consulta enviada correctamente',
+                'timestamp'    => current_time('mysql'),
+                'consulta_id'  => $result['consulta_id'] ?? null,
+                'email_status' => $result['email'] ?? null,
+            ], 200);
         }
 
-        $crm_confirmed = !empty($decoded_body['ok']) && !empty($decoded_body['data']['saved']);
-        if (!$crm_confirmed) {
-            return new WP_REST_Response([
-                'success' => false,
-                'message' => 'El CRM no confirmó el guardado de la consulta.',
-                'editor_response' => $decoded_body,
-            ], 502);
-        }
-
+        $status_code = (!empty($result['code']) && $result['code'] >= 400 && $result['code'] <= 599) ? (int)$result['code'] : 500;
         return new WP_REST_Response([
-            'success' => true,
-            'message' => 'Consulta enviada correctamente',
-            'timestamp' => current_time('mysql'),
-            'editor_response' => $decoded_body,
-        ], 200);
+            'success' => false,
+            'message' => $result['message'] ?? $result['error'] ?? 'Error al procesar la consulta.',
+        ], $status_code);
     }
 
     public static function can_write(): bool {

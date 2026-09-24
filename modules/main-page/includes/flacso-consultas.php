@@ -193,9 +193,20 @@ function flacso_consultas_dispatch_single_info_request( array $data ) {
 		}
 	}
 
+	if ( ! class_exists( 'FLACSO_Offer_Inquiry_Service' ) ) {
+		$service_file = dirname( __DIR__, 2 ) . '/consultas/services/class-flacso-offer-inquiry-service.php';
+		if ( file_exists( $service_file ) ) {
+			require_once $service_file;
+		}
+	}
+
+	if ( class_exists( 'FLACSO_Offer_Inquiry_Service' ) ) {
+		return FLACSO_Offer_Inquiry_Service::submit( $data );
+	}
+
 	return function_exists( 'fc_send_info_request_webhook' )
 		? fc_send_info_request_webhook( $data )
-		: array( 'ok' => false, 'error' => 'fc_send_info_request_webhook no disponible', 'code' => 0, 'body' => '' );
+		: array( 'ok' => false, 'error' => 'FLACSO_Offer_Inquiry_Service no disponible', 'code' => 500, 'body' => '' );
 }
 
 /**
@@ -1181,17 +1192,9 @@ function flacso_enviar_consulta_func() {
 	}
 
 	if ( ! empty( $failures ) && count( $failures ) === count( $offer_payloads ) ) {
-		if ( FLACSO_RELAXED_MODE ) {
-			wp_send_json_success(
-				array(
-					'note'       => ( (int) ( $failures[0]['code'] ?? 0 ) > 0 ) ? 'http_code_relajado' : 'webhook_error_relajado',
-					'code'       => (int) ( $failures[0]['code'] ?? 0 ),
-					'deliveries' => $deliveries,
-					'count'      => count( $offer_payloads ),
-				)
-			);
-		}
-
+		// El servicio interno es ahora la fuente canónica. Un fallo de persistencia
+		// no puede degradarse a éxito aunque FLACSO_RELAXED_MODE esté activo: el
+		// principio del nuevo flujo es guardar primero y confirmar después.
 		wp_send_json_error( 'No se pudo procesar la consulta. Intentá más tarde.' );
 	}
 
