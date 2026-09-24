@@ -455,34 +455,36 @@ class FLACSO_Meta_Leads_Webhook {
     }
 
     private static function forward_lead(array $normalized, array $settings): array {
+        // La option key conserva su nombre histórico para evitar una migración de
+        // datos, pero ya no existe un webhook de ofertas: el lead entra al mismo
+        // servicio interno que los formularios públicos.
         if (empty($settings['forward_to_webhook'])) {
             return ['ok' => false, 'skipped' => true, 'error' => 'forwarding_disabled'];
         }
 
-        if (function_exists('fc_build_info_request_webhook_payload') && function_exists('fc_dispatch_info_request_webhook')) {
-            $payload = fc_build_info_request_webhook_payload($normalized);
-            $payload['source'] = 'Meta Lead Ads';
-            $payload['origen'] = 'Meta Lead Ads';
-            $payload['meta_leadgen_id'] = $normalized['meta_leadgen_id'] ?? '';
-            $payload['meta_form_id'] = $normalized['meta_form_id'] ?? '';
-            $payload['meta_campaign_id'] = $normalized['meta_campaign_id'] ?? '';
-            $payload['meta_campaign_name'] = $normalized['meta_campaign_name'] ?? '';
-            $payload['campaign_provider'] = 'meta';
-            $payload['campaign_source'] = $normalized['campaign_source'] ?? 'Meta Lead Ads';
-            $payload['campaign_medium'] = $normalized['campaign_medium'] ?? 'lead_ad';
-            $payload['campaign_name'] = $normalized['campaign_name'] ?? '';
-            $payload['campaign_external_id'] = $normalized['campaign_external_id'] ?? '';
-            $payload['campaign_content'] = $normalized['campaign_content'] ?? '';
-            $payload['campaign_term'] = $normalized['campaign_term'] ?? '';
-
-            return fc_dispatch_info_request_webhook($payload);
+        if (!function_exists('fc_send_info_request_webhook')) {
+            return ['ok' => false, 'error' => 'offer_inquiry_service_unavailable'];
         }
 
-        if (function_exists('fc_send_info_request_webhook')) {
-            return fc_send_info_request_webhook($normalized);
-        }
+        $payload = function_exists('fc_build_info_request_webhook_payload')
+            ? fc_build_info_request_webhook_payload($normalized)
+            : $normalized;
 
-        return ['ok' => false, 'error' => 'webhook_helpers_unavailable'];
+        $payload['source'] = 'Meta Lead Ads';
+        $payload['origen'] = 'Meta Lead Ads';
+        $payload['meta_leadgen_id'] = $normalized['meta_leadgen_id'] ?? '';
+        $payload['meta_form_id'] = $normalized['meta_form_id'] ?? '';
+        $payload['meta_campaign_id'] = $normalized['meta_campaign_id'] ?? '';
+        $payload['meta_campaign_name'] = $normalized['meta_campaign_name'] ?? '';
+        $payload['campaign_provider'] = 'meta';
+        $payload['campaign_source'] = $normalized['campaign_source'] ?? 'Meta Lead Ads';
+        $payload['campaign_medium'] = $normalized['campaign_medium'] ?? 'lead_ad';
+        $payload['campaign_name'] = $normalized['campaign_name'] ?? '';
+        $payload['campaign_external_id'] = $normalized['campaign_external_id'] ?? '';
+        $payload['campaign_content'] = $normalized['campaign_content'] ?? '';
+        $payload['campaign_term'] = $normalized['campaign_term'] ?? '';
+
+        return fc_send_info_request_webhook($payload);
     }
 
     private static function send_initial_crm_event(array $normalized, string $leadgen_id): array {
