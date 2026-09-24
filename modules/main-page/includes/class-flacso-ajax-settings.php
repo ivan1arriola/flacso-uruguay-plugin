@@ -28,6 +28,29 @@ class Flacso_AJAX_Settings {
         // Sanitizar datos según el tipo de sección
         $sanitized_data = self::sanitize_section_data($section, $data);
 
+        if ($section === 'anuncio') {
+            $mapping = [
+                'enabled' => 'flacso_nav_announcement_enabled',
+                'url' => 'flacso_nav_announcement_url',
+                'kicker' => 'flacso_nav_announcement_kicker',
+                'message' => 'flacso_nav_announcement_message',
+                'cta' => 'flacso_nav_announcement_cta',
+                'aria' => 'flacso_nav_announcement_aria',
+                'hide_formacion' => 'flacso_nav_announcement_hide_formacion',
+            ];
+            foreach ($mapping as $key => $option) {
+                if (array_key_exists($key, $sanitized_data)) {
+                    update_option($option, $sanitized_data[$key]);
+                }
+            }
+
+            wp_send_json_success([
+                'message' => __('Anuncio superior guardado exitosamente.', 'flacso-main-page'),
+                'section' => $section,
+                'timestamp' => current_time('mysql'),
+            ]);
+        }
+
         // Obtener configuración actual
         $current_settings = Flacso_Main_Page_Settings::get_settings();
 
@@ -85,6 +108,9 @@ class Flacso_AJAX_Settings {
             case 'hero':
                 $sanitized = self::sanitize_hero($data);
                 break;
+            case 'anuncio':
+                $sanitized = self::sanitize_anuncio($data);
+                break;
             case 'eventos':
                 $sanitized = self::sanitize_eventos($data);
                 break;
@@ -117,6 +143,18 @@ class Flacso_AJAX_Settings {
         }
 
         return $sanitized;
+    }
+
+    private static function sanitize_anuncio(array $data): array {
+        return [
+            'enabled' => !empty($data['enabled']) ? 1 : 0,
+            'url' => isset($data['url']) ? esc_url_raw($data['url']) : '',
+            'kicker' => isset($data['kicker']) ? sanitize_text_field($data['kicker']) : '',
+            'message' => isset($data['message']) ? sanitize_text_field($data['message']) : '',
+            'cta' => isset($data['cta']) ? sanitize_text_field($data['cta']) : '',
+            'aria' => isset($data['aria']) ? sanitize_text_field($data['aria']) : '',
+            'hide_formacion' => !empty($data['hide_formacion']) ? 1 : 0,
+        ];
     }
 
     private static function sanitize_hero(array $data): array {
