@@ -31,7 +31,6 @@
 
         var ajaxUrl = root.getAttribute('data-ajax-url') || '';
         var nonce = root.getAttribute('data-nonce') || '';
-        var endpointConfigured = root.getAttribute('data-endpoint-configured') === '1';
         var defaultSubmitLabel = submitBtn.textContent;
         var returnFocusNode = null;
         var ofertaMap = new Map();
@@ -128,11 +127,6 @@
             setStatus(statusNode, '', null);
 
             syncOfertaIdFromInput();
-
-            if (!endpointConfigured) {
-                setStatus(statusNode, 'El formulario no est\u00e1 disponible en este momento.', 'error');
-                return;
-            }
 
             if (!ajaxUrl || !nonce) {
                 setStatus(statusNode, 'No se pudo enviar la consulta. Recarg\u00e1 la p\u00e1gina e intent\u00e1 nuevamente.', 'error');
