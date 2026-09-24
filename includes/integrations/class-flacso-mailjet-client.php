@@ -16,13 +16,13 @@ class FLACSO_Mailjet_Client {
     private const MAILJET_SEND_ENDPOINT = 'https://api.mailjet.com/v3.1/send';
 
     /**
-     * Obtiene la configuración de Mailjet reutilizando FLACSO_Integrations_Settings si está disponible.
+     * Obtiene la configuración de Mailjet desde el módulo de Correos cuando está disponible.
      *
      * @return array
      */
     public static function get_settings(): array {
-        if (class_exists('FLACSO_Integrations_Settings') && method_exists('FLACSO_Integrations_Settings', 'get_mailjet_settings')) {
-            $settings = FLACSO_Integrations_Settings::get_mailjet_settings();
+        if (class_exists('FLACSO_Mail_Settings') && method_exists('FLACSO_Mail_Settings', 'get_settings')) {
+            $settings = FLACSO_Mail_Settings::get_settings();
         } else {
             $admin_email = function_exists('get_option') ? (string) get_option('admin_email', '') : '';
             $default_name = 'FLACSO Uruguay';
