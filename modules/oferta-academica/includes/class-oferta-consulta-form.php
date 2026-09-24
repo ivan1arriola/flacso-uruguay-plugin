@@ -348,7 +348,7 @@ class Oferta_Consulta_Form {
         }
 
         if (!class_exists('FLACSO_Offer_Inquiry_Service')) {
-            $service_file = dirname(__DIR__) . '/consultas/services/class-flacso-offer-inquiry-service.php';
+            $service_file = dirname(__DIR__, 2) . '/consultas/services/class-flacso-offer-inquiry-service.php';
             if (is_readable($service_file)) {
                 require_once $service_file;
             }
