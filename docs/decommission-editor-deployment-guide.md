@@ -27,11 +27,23 @@ define('FLACSO_PG_DATABASE', 'flacso_db');
 define('FLACSO_PG_USER', 'flacso_user');
 define('FLACSO_PG_PASSWORD', 'tu_password_seguro');
 
-// Credenciales transaccionales Mailjet
-define('FLACSO_MAILJET_API_KEY', 'tu_mailjet_api_key');
-define('FLACSO_MAILJET_SECRET_KEY', 'tu_mailjet_secret_key');
-define('FLACSO_MAILJET_SANDBOX', false); // true en staging/desarrollo si aplica
+// Mailjet NO se lee desde constantes FLACSO_MAILJET_* en esta implementación.
+// Se reutiliza la configuración centralizada del plugin, guardada en WordPress.
 ```
+
+Verifique en **FLACSO → Integraciones** que estén configurados:
+- API Key de Mailjet.
+- Secret Key de Mailjet.
+- Sender Email verificado (por ejemplo, `noreply@envios.flacso.edu.uy`).
+- Sender Name.
+
+Los Template ID de `consulta_abierta`, `consulta_cerrada` y
+`consulta_seminario` se leen de las opciones WordPress
+`flacso_mailjet_template_consulta_abierta`,
+`flacso_mailjet_template_consulta_cerrada` y
+`flacso_mailjet_template_consulta_seminario`. Si no están configuradas, el
+plugin usa el fallback HTML institucional; no se debe asumir que las constantes
+de `wp-config.php` configuran Mailjet.
 
 Asegúrese además de que la extensión PHP `pdo_pgsql` esté habilitada en el servidor:
 ```bash
