@@ -118,7 +118,7 @@ class Flacso_Mailing_Subscription {
 
             return self::render_notice(
                 'warning',
-                __('Configurá Mailjet en Ajustes > Integraciones FLACSO para habilitar este formulario.', 'flacso-uruguay')
+                __('Configurá Mailjet en FLACSO > Correos para habilitar este formulario.', 'flacso-uruguay')
             );
         }
 
@@ -433,8 +433,8 @@ class Flacso_Mailing_Subscription {
     }
 
     public static function is_configured(): bool {
-        if (class_exists('FLACSO_Integrations_Settings') && method_exists('FLACSO_Integrations_Settings', 'is_mailjet_configured')) {
-            return FLACSO_Integrations_Settings::is_mailjet_configured();
+        if (class_exists('FLACSO_Mail_Settings') && method_exists('FLACSO_Mail_Settings', 'is_mailing_ready')) {
+            return FLACSO_Mail_Settings::is_mailing_ready();
         }
 
         $settings = self::get_mailjet_settings();
@@ -950,8 +950,8 @@ class Flacso_Mailing_Subscription {
     }
 
     private static function get_mailjet_settings(): array {
-        if (class_exists('FLACSO_Integrations_Settings') && method_exists('FLACSO_Integrations_Settings', 'get_mailjet_settings')) {
-            return FLACSO_Integrations_Settings::get_mailjet_settings();
+        if (class_exists('FLACSO_Mail_Settings') && method_exists('FLACSO_Mail_Settings', 'get_settings')) {
+            return FLACSO_Mail_Settings::get_settings();
         }
 
         return [
