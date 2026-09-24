@@ -1,11 +1,9 @@
 <?php
 /**
- * Ruteo canónico de formularios hacia Editor FLACSO.
+ * Ruteo de compatibilidad para la consulta general.
  *
- * Los formularios públicos pertenecen al plugin, pero la persistencia de
- * solicitudes y el correo transaccional se procesan en editor.flacso.edu.uy.
- * Las opciones históricas siguen funcionando como overrides explícitos, salvo
- * el host Vercel legado, que se migra al Editor de producción actual.
+ * Las consultas de ofertas y seminarios ya se procesan internamente en
+ * WordPress. Solo la consulta general conserva por ahora un destino externo.
  */
 
 if (!defined('ABSPATH')) {
@@ -48,21 +46,13 @@ function fc_should_repair_info_request_endpoint(string $current): bool {
 }
 
 /**
- * Completa rutas faltantes y corrige únicamente el host Vercel legado.
- * Otros endpoints configurados explícitamente se preservan.
- *
- * - fc_oferta_webhook_url -> solicitudes de información de ofertas
- * - fc_consultas_webhook_url -> consultas generales; su handler agrega /general
+ * Completa únicamente la ruta de la consulta general y corrige el host Vercel
+ * legado. No toca fc_oferta_webhook_url: ese flujo fue desmantelado.
  */
 function fc_ensure_info_request_editor_routes(): void {
     $endpoint = fc_get_canonical_info_request_endpoint();
-
-    $offer_endpoint = (string) get_option('fc_oferta_webhook_url', '');
-    if (fc_should_repair_info_request_endpoint($offer_endpoint)) {
-        update_option('fc_oferta_webhook_url', $endpoint, false);
-    }
-
     $general_endpoint = (string) get_option('fc_consultas_webhook_url', '');
+
     if (fc_should_repair_info_request_endpoint($general_endpoint)) {
         update_option('fc_consultas_webhook_url', $endpoint, false);
     }
