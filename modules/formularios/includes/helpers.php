@@ -48,24 +48,13 @@ function fc_parse_user_agent_simple( $ua ) {
 }
 
 /**
- * Resuelve el endpoint destino para solicitudes de informacion.
+ * Endpoint externo de compatibilidad para la consulta general.
  *
- * Prioridad:
- * 1) opcion dedicada de oferta
- * 2) opcion de webhook de consultas (fallback de menu)
+ * Las solicitudes de información de ofertas no usan este valor.
  */
 function fc_get_info_request_webhook_url() {
-    $candidate = trim( (string) get_option( 'fc_oferta_webhook_url', '' ) );
-    if ( '' !== $candidate ) {
-        return esc_url_raw( $candidate );
-    }
-
     $candidate = trim( (string) get_option( 'fc_consultas_webhook_url', '' ) );
-    if ( '' !== $candidate ) {
-        return esc_url_raw( $candidate );
-    }
-
-    return '';
+    return '' !== $candidate ? esc_url_raw( $candidate ) : '';
 }
 
 function fc_get_info_request_webhook_token() {
@@ -954,28 +943,40 @@ function fc_build_info_request_webhook_payload( array $data ) {
 }
 
 /**
- * Envia la solicitud de informacion al endpoint externo.
+ * Procesa una solicitud de información de oferta dentro del plugin.
  *
- * @param array $data Datos sanitizados del formulario.
- * @return array { ok, target, code, body, error }
+ * Conserva el nombre histórico de la función para no romper formularios y
+ * bloques existentes, pero ya no realiza un webhook externo.
  */
 function fc_send_info_request_webhook( array $data ) {
-    if ( class_exists( 'FLACSO_Offer_Inquiry_Service' ) ) {
-        return FLACSO_Offer_Inquiry_Service::submit( $data );
+    if ( ! class_exists( 'FLACSO_Offer_Inquiry_Service' ) ) {
+        $service_file = dirname( __DIR__, 2 ) . '/consultas/services/class-flacso-offer-inquiry-service.php';
+        if ( is_readable( $service_file ) ) {
+            require_once $service_file;
+        }
     }
-    $payload = fc_build_info_request_webhook_payload( $data );
-    return fc_dispatch_info_request_webhook( $payload );
+
+    if ( ! class_exists( 'FLACSO_Offer_Inquiry_Service' ) ) {
+        return [
+            'ok'      => false,
+            'code'    => 503,
+            'error'   => 'offer_inquiry_service_unavailable',
+            'message' => 'El servicio interno de consultas de ofertas no está disponible.',
+        ];
+    }
+
+    return FLACSO_Offer_Inquiry_Service::submit( $data );
 }
 
 function fc_send_info_request_webhook_test() {
-    return fc_dispatch_info_request_webhook(
-        [
-            'test'         => true,
-            'source'       => 'wordpress_admin',
-            'requested_at' => current_time( 'c' ),
-        ],
-        [ 'X-FLACSO-Webhook-Test' => '1' ]
-    );
+    return [
+        'ok'      => class_exists( 'FLACSO_Offer_Inquiry_Service' ),
+        'code'    => class_exists( 'FLACSO_Offer_Inquiry_Service' ) ? 200 : 503,
+        'target'  => 'internal',
+        'body'    => '',
+        'error'   => class_exists( 'FLACSO_Offer_Inquiry_Service' ) ? '' : 'Servicio interno no disponible.',
+        'message' => 'Las consultas de ofertas se procesan dentro de WordPress.',
+    ];
 }
 
 /**
