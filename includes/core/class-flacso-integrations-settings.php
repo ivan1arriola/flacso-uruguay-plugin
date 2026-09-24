@@ -64,17 +64,8 @@ class FLACSO_Integrations_Settings {
     public static function register_menu(): void {
         add_submenu_page(
             FLACSO_Admin_Panel::PAGE_SLUG,
-            __('Integraciones FLACSO', 'flacso-uruguay'),
-            __('Integraciones FLACSO', 'flacso-uruguay'),
-            'manage_options',
-            self::PAGE_SLUG,
-            [self::class, 'render_page']
-        );
-
-        add_submenu_page(
-            FLACSO_Admin_Panel::PAGE_SLUG,
-            __('Integración con Meta', 'flacso-uruguay'),
-            __('Integración con Meta', 'flacso-uruguay'),
+            __('Analítica / Meta', 'flacso-uruguay'),
+            __('Analítica / Meta', 'flacso-uruguay'),
             'manage_options',
             self::PAGE_SLUG_META,
             [self::class, 'render_meta_page']
@@ -82,406 +73,81 @@ class FLACSO_Integrations_Settings {
     }
 
     public static function register_settings(): void {
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_CONSULTAS_WEBHOOK_URL,
-            [
-                'type' => 'string',
-                'sanitize_callback' => 'esc_url_raw',
-                'default' => '',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_UNIFIED_WEBHOOK_TOKEN,
-            [
-                'type' => 'string',
-                'sanitize_callback' => 'sanitize_text_field',
-                'default' => '',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_INFO_REQUEST_WEBHOOK_URL,
-            [
-                'type' => 'string',
-                'sanitize_callback' => 'esc_url_raw',
-                'default' => '',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_OFERTA_FLOTANTE_ENDPOINT,
-            [
-                'type' => 'string',
-                'sanitize_callback' => [self::class, 'sanitize_oferta_flotante_endpoint'],
-                'default' => '',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_CHARLAS_WEBHOOK_URL,
-            [
-                'type' => 'string',
-                'sanitize_callback' => [self::class, 'sanitize_charlas_webhook_url'],
-                'default' => '',
-            ]
-        );
-
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_PREINSCRIPCIONES_WEBHOOK_URL,
-            [
-                'type' => 'string',
-                'sanitize_callback' => 'esc_url_raw',
-                'default' => '',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_SEMINARIOS_DIAS_CIERRE_POST_INICIO,
-            [
-                'type' => 'integer',
-                'sanitize_callback' => 'absint',
-                'default' => 10,
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_TELEGRAM_BOT_TOKEN,
-            [
-                'type' => 'string',
-                'sanitize_callback' => 'sanitize_text_field',
-                'default' => '',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_TELEGRAM_CHAT_ID,
-            [
-                'type' => 'string',
-                'sanitize_callback' => 'sanitize_text_field',
-                'default' => '',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_RECAPTCHA_SITE_KEY,
-            [
-                'type' => 'string',
-                'sanitize_callback' => 'sanitize_text_field',
-                'default' => '',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_RECAPTCHA_SECRET_KEY,
-            [
-                'type' => 'string',
-                'sanitize_callback' => 'sanitize_text_field',
-                'default' => '',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_EXTERNAL_EDITOR_URL,
-            [
-                'type' => 'string',
-                'sanitize_callback' => 'esc_url_raw',
-                'default' => 'https://editor-flacso-uy.vercel.app',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_NAV_ANNOUNCEMENT_ENABLED,
-            [
-                'type' => 'boolean',
-                'sanitize_callback' => [self::class, 'sanitize_checkbox'],
-                'default' => 0,
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_NAV_ANNOUNCEMENT_URL,
-            [
-                'type' => 'string',
-                'sanitize_callback' => 'esc_url_raw',
-                'default' => '',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_NAV_ANNOUNCEMENT_KICKER,
-            [
-                'type' => 'string',
-                'sanitize_callback' => 'sanitize_text_field',
-                'default' => 'Próxima apertura',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_NAV_ANNOUNCEMENT_MESSAGE,
-            [
-                'type' => 'string',
-                'sanitize_callback' => 'sanitize_text_field',
-                'default' => 'Diplomas 2026 · Segundo semestre',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_NAV_ANNOUNCEMENT_CTA,
-            [
-                'type' => 'string',
-                'sanitize_callback' => 'sanitize_text_field',
-                'default' => 'Postúlate ahora',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_NAV_ANNOUNCEMENT_ARIA,
-            [
-                'type' => 'string',
-                'sanitize_callback' => 'sanitize_text_field',
-                'default' => '',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_NAV_ANNOUNCEMENT_HIDE_FORMACION,
-            [
-                'type' => 'boolean',
-                'sanitize_callback' => [self::class, 'sanitize_checkbox'],
-                'default' => 1,
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_MAILJET_API_KEY,
-            [
-                'type' => 'string',
-                'sanitize_callback' => 'sanitize_text_field',
-                'default' => '',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_MAILJET_SECRET_KEY,
-            [
-                'type' => 'string',
-                'sanitize_callback' => 'sanitize_text_field',
-                'default' => '',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_MAILJET_LIST_ID,
-            [
-                'type' => 'string',
-                'sanitize_callback' => [self::class, 'sanitize_mailjet_list_id'],
-                'default' => '',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_MAILJET_SENDER_EMAIL,
-            [
-                'type' => 'string',
-                'sanitize_callback' => 'sanitize_email',
-                'default' => get_option('admin_email'),
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_MAILJET_SENDER_NAME,
-            [
-                'type' => 'string',
-                'sanitize_callback' => 'sanitize_text_field',
-                'default' => wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES),
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_CARTA_CTA_TITULO_DEFAULT,
-            [
-                'type' => 'string',
-                'sanitize_callback' => 'sanitize_text_field',
-                'default' => 'Comenzá el año cursando un posgrado en FLACSO Uruguay',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_META_ENABLED,
-            [
-                'type' => 'boolean',
-                'sanitize_callback' => [self::class, 'sanitize_checkbox'],
-                'default' => 0,
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_META_PIXEL_ID,
-            [
-                'type' => 'string',
-                'sanitize_callback' => [self::class, 'sanitize_meta_pixel_id'],
-                'default' => '',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_META_ACCESS_TOKEN,
-            [
-                'type' => 'string',
-                'sanitize_callback' => 'sanitize_text_field',
-                'default' => '',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_META_TEST_EVENT_CODE,
-            [
-                'type' => 'string',
-                'sanitize_callback' => 'sanitize_text_field',
-                'default' => '',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_META_TRACK_PAGEVIEW,
-            [
-                'type' => 'boolean',
-                'sanitize_callback' => [self::class, 'sanitize_checkbox'],
-                'default' => 1,
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_META_LEADS_ENABLED,
-            [
-                'type' => 'boolean',
-                'sanitize_callback' => [self::class, 'sanitize_checkbox'],
-                'default' => 0,
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_META_LEADS_VERIFY_TOKEN,
-            [
-                'type' => 'string',
-                'sanitize_callback' => [self::class, 'sanitize_secret_text'],
-                'default' => '',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_META_LEADS_PAGE_ACCESS_TOKEN,
-            [
-                'type' => 'string',
-                'sanitize_callback' => [self::class, 'sanitize_secret_text'],
-                'default' => '',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_META_LEADS_APP_SECRET,
-            [
-                'type' => 'string',
-                'sanitize_callback' => [self::class, 'sanitize_secret_text'],
-                'default' => '',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_META_LEADS_PAGE_ID,
-            [
-                'type' => 'string',
-                'sanitize_callback' => [self::class, 'sanitize_meta_numeric_id'],
-                'default' => '',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_META_LEADS_FORM_IDS,
-            [
-                'type' => 'string',
-                'sanitize_callback' => [self::class, 'sanitize_meta_leads_form_ids'],
-                'default' => '',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_META_LEADS_OFFER_FIELD,
-            [
-                'type' => 'string',
-                'sanitize_callback' => 'sanitize_key',
-                'default' => 'programa',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_META_LEADS_GRAPH_VERSION,
-            [
-                'type' => 'string',
-                'sanitize_callback' => [self::class, 'sanitize_meta_graph_version'],
-                'default' => 'v25.0',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_META_LEADS_FORWARD_TO_WEBHOOK,
-            [
-                'type' => 'boolean',
-                'sanitize_callback' => [self::class, 'sanitize_checkbox'],
-                'default' => 1,
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
-            self::OPTION_USD_EXCHANGE_RATE,
-            [
-                'type' => 'number',
-                'sanitize_callback' => 'absint',
-                'default' => 40,
-            ]
-        );
+        register_setting(self::SETTINGS_GROUP, self::OPTION_META_ENABLED, [
+            'type' => 'boolean',
+            'sanitize_callback' => [self::class, 'sanitize_checkbox'],
+            'default' => 0,
+        ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_META_PIXEL_ID, [
+            'type' => 'string',
+            'sanitize_callback' => [self::class, 'sanitize_meta_pixel_id'],
+            'default' => '',
+        ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_META_ACCESS_TOKEN, [
+            'type' => 'string',
+            'sanitize_callback' => 'sanitize_text_field',
+            'default' => '',
+        ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_META_TEST_EVENT_CODE, [
+            'type' => 'string',
+            'sanitize_callback' => 'sanitize_text_field',
+            'default' => '',
+        ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_META_TRACK_PAGEVIEW, [
+            'type' => 'boolean',
+            'sanitize_callback' => [self::class, 'sanitize_checkbox'],
+            'default' => 1,
+        ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_META_LEADS_ENABLED, [
+            'type' => 'boolean',
+            'sanitize_callback' => [self::class, 'sanitize_checkbox'],
+            'default' => 0,
+        ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_META_LEADS_VERIFY_TOKEN, [
+            'type' => 'string',
+            'sanitize_callback' => [self::class, 'sanitize_secret_text'],
+            'default' => '',
+        ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_META_LEADS_PAGE_ACCESS_TOKEN, [
+            'type' => 'string',
+            'sanitize_callback' => [self::class, 'sanitize_secret_text'],
+            'default' => '',
+        ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_META_LEADS_APP_SECRET, [
+            'type' => 'string',
+            'sanitize_callback' => [self::class, 'sanitize_secret_text'],
+            'default' => '',
+        ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_META_LEADS_PAGE_ID, [
+            'type' => 'string',
+            'sanitize_callback' => [self::class, 'sanitize_meta_numeric_id'],
+            'default' => '',
+        ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_META_LEADS_FORM_IDS, [
+            'type' => 'string',
+            'sanitize_callback' => [self::class, 'sanitize_meta_leads_form_ids'],
+            'default' => '',
+        ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_META_LEADS_OFFER_FIELD, [
+            'type' => 'string',
+            'sanitize_callback' => 'sanitize_key',
+            'default' => 'programa',
+        ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_META_LEADS_GRAPH_VERSION, [
+            'type' => 'string',
+            'sanitize_callback' => [self::class, 'sanitize_meta_graph_version'],
+            'default' => 'v25.0',
+        ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_META_LEADS_FORWARD_TO_WEBHOOK, [
+            'type' => 'boolean',
+            'sanitize_callback' => [self::class, 'sanitize_checkbox'],
+            'default' => 1,
+        ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_USD_EXCHANGE_RATE, [
+            'type' => 'number',
+            'sanitize_callback' => 'absint',
+            'default' => 40,
+        ]);
     }
 
     public static function sanitize_charlas_webhook_url($value): string {
@@ -549,6 +215,10 @@ class FLACSO_Integrations_Settings {
     }
 
     public static function get_mailjet_settings(): array {
+        if (class_exists('FLACSO_Mail_Settings') && method_exists('FLACSO_Mail_Settings', 'get_settings')) {
+            return FLACSO_Mail_Settings::get_settings();
+        }
+
         return [
             'api_key' => trim((string) get_option(self::OPTION_MAILJET_API_KEY, '')),
             'secret_key' => trim((string) get_option(self::OPTION_MAILJET_SECRET_KEY, '')),
@@ -615,14 +285,21 @@ class FLACSO_Integrations_Settings {
     }
 
     public static function is_mailjet_configured(): bool {
-        $settings = self::get_mailjet_settings();
+        if (class_exists('FLACSO_Mail_Settings') && method_exists('FLACSO_Mail_Settings', 'is_mailing_ready')) {
+            return FLACSO_Mail_Settings::is_mailing_ready();
+        }
 
+        $settings = self::get_mailjet_settings();
         return $settings['api_key'] !== ''
             && $settings['secret_key'] !== ''
             && $settings['list_id'] !== '';
     }
 
     public static function get_mailjet_contact_lists(bool $force_refresh = false): array {
+        if (class_exists('FLACSO_Mail_Settings') && method_exists('FLACSO_Mail_Settings', 'get_contact_lists')) {
+            return FLACSO_Mail_Settings::get_contact_lists($force_refresh);
+        }
+
         $settings = self::get_mailjet_settings();
         if ($settings['api_key'] === '' || $settings['secret_key'] === '') {
             return [];
@@ -711,16 +388,16 @@ class FLACSO_Integrations_Settings {
         return $lists;
     }
 
+    /**
+     * Compatibilidad para redirecciones antiguas: la página centralizada ya no
+     * existe y cualquier enlace residual aterriza en Sistema.
+     */
     public static function get_page_url(array $args = []): string {
-        return add_query_arg(
-            array_merge(
-                [
-                    'page' => self::PAGE_SLUG,
-                ],
-                $args
-            ),
-            admin_url('options-general.php')
-        );
+        $base = class_exists('FLACSO_System_Settings')
+            ? FLACSO_System_Settings::get_page_url()
+            : admin_url('admin.php?page=flacso-sistema');
+
+        return !empty($args) ? add_query_arg($args, $base) : $base;
     }
 
     public static function get_meta_page_url(array $args = []): string {
@@ -773,7 +450,6 @@ class FLACSO_Integrations_Settings {
                 </header>
 
                 <?php settings_errors(); ?>
-                <?php self::render_migration_banner(); ?>
                 <?php self::render_inline_notices(); ?>
 
 
@@ -841,7 +517,7 @@ class FLACSO_Integrations_Settings {
                     <h2>🔗 <?php esc_html_e('Accesos Directos Relacionados', 'flacso-uruguay'); ?></h2>
                     <ul>
                         <li><a href="<?php echo esc_url(admin_url('admin.php?page=flacso-panel')); ?>">← <?php esc_html_e('Volver al panel FLACSO', 'flacso-uruguay'); ?></a></li>
-                        <li><a href="<?php echo esc_url(self::get_meta_page_url()); ?>">📈 <?php esc_html_e('Integración con Meta', 'flacso-uruguay'); ?></a></li>
+                        <li><a href="<?php echo esc_url(self::get_meta_page_url()); ?>">📈 <?php esc_html_e('Analítica / Meta', 'flacso-uruguay'); ?></a></li>
                         <li><a href="https://preinscripciones.flacso.edu.uy" target="_blank" rel="noopener noreferrer">📝 <?php esc_html_e('Abrir preinscripciones externas', 'flacso-uruguay'); ?></a></li>
                     </ul>
                 </div>
@@ -897,7 +573,7 @@ class FLACSO_Integrations_Settings {
                 <div class="flacso-integrations-links">
                     <h2>🔗 <?php esc_html_e('Accesos Relacionados', 'flacso-uruguay'); ?></h2>
                     <ul>
-                        <li><a href="<?php echo esc_url(self::get_page_url()); ?>">↩ <?php esc_html_e('Volver a Integraciones FLACSO', 'flacso-uruguay'); ?></a></li>
+                        <li><a href="<?php echo esc_url(admin_url('admin.php?page=flacso-panel')); ?>">← <?php esc_html_e('Volver al panel FLACSO', 'flacso-uruguay'); ?></a></li>
                     </ul>
                 </div>
             </div>
