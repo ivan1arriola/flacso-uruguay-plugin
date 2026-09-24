@@ -14,6 +14,10 @@ class Flacso_Main_Page_Unified_Settings {
             'label' => 'Encabezado',
             'icon' => 'dashicons-image-filter',
         ],
+        'anuncio' => [
+            'label' => 'Anuncio superior',
+            'icon' => 'dashicons-megaphone',
+        ],
         'festejos' => [
             'label' => 'Festejos 20 Años',
             'icon' => 'dashicons-star-filled',
@@ -184,6 +188,9 @@ class Flacso_Main_Page_Unified_Settings {
         switch ($section_key) {
                         case 'hero':
                 self::render_hero_section($settings);
+                break;
+            case 'anuncio':
+                self::render_nav_announcement_section();
                 break;
             case 'festejos':
                 self::render_festejos_section($settings);
@@ -987,6 +994,59 @@ class Flacso_Main_Page_Unified_Settings {
         <?php
     }
 
+    private static function render_nav_announcement_section(): void {
+        $enabled = (bool) get_option('flacso_nav_announcement_enabled', 0);
+        $url = (string) get_option('flacso_nav_announcement_url', '');
+        $kicker = (string) get_option('flacso_nav_announcement_kicker', 'Próxima apertura');
+        $message = (string) get_option('flacso_nav_announcement_message', 'Diplomas 2026 · Segundo semestre');
+        $cta = (string) get_option('flacso_nav_announcement_cta', 'Postúlate ahora');
+        $aria = (string) get_option('flacso_nav_announcement_aria', '');
+        $hide_formacion = (bool) get_option('flacso_nav_announcement_hide_formacion', 1);
+        ?>
+        <h3><?php esc_html_e('Anuncio superior del sitio', 'flacso-main-page'); ?></h3>
+        <p class="description"><?php esc_html_e('Controla la franja de anuncio que aparece en la navegación pública. Esta configuración pertenece a Portada y ya no forma parte de Integraciones.', 'flacso-main-page'); ?></p>
+
+        <div class="flacso-form-group">
+            <label>
+                <input type="checkbox" name="anuncio[enabled]" value="1" <?php checked($enabled); ?>>
+                <?php esc_html_e('Mostrar anuncio superior', 'flacso-main-page'); ?>
+            </label>
+        </div>
+
+        <div class="flacso-form-group">
+            <label for="anuncio_kicker"><?php esc_html_e('Antetítulo', 'flacso-main-page'); ?></label>
+            <input type="text" id="anuncio_kicker" name="anuncio[kicker]" class="regular-text" value="<?php echo esc_attr($kicker); ?>">
+        </div>
+
+        <div class="flacso-form-group">
+            <label for="anuncio_message"><?php esc_html_e('Mensaje', 'flacso-main-page'); ?></label>
+            <input type="text" id="anuncio_message" name="anuncio[message]" class="regular-text" value="<?php echo esc_attr($message); ?>">
+        </div>
+
+        <div class="flacso-form-group">
+            <label for="anuncio_cta"><?php esc_html_e('Texto del enlace', 'flacso-main-page'); ?></label>
+            <input type="text" id="anuncio_cta" name="anuncio[cta]" class="regular-text" value="<?php echo esc_attr($cta); ?>">
+        </div>
+
+        <div class="flacso-form-group">
+            <label for="anuncio_url"><?php esc_html_e('URL', 'flacso-main-page'); ?></label>
+            <input type="url" id="anuncio_url" name="anuncio[url]" class="regular-text" value="<?php echo esc_attr($url); ?>">
+        </div>
+
+        <div class="flacso-form-group">
+            <label for="anuncio_aria"><?php esc_html_e('Etiqueta accesible', 'flacso-main-page'); ?></label>
+            <input type="text" id="anuncio_aria" name="anuncio[aria]" class="regular-text" value="<?php echo esc_attr($aria); ?>">
+        </div>
+
+        <div class="flacso-form-group">
+            <label>
+                <input type="checkbox" name="anuncio[hide_formacion]" value="1" <?php checked($hide_formacion); ?>>
+                <?php esc_html_e('Ocultar en /formacion', 'flacso-main-page'); ?>
+            </label>
+        </div>
+        <?php
+    }
+
     private static function render_mailing_section(array $settings): void {
         $mailing = $settings['mailing'] ?? [];
         ?>
@@ -1030,7 +1090,7 @@ class Flacso_Main_Page_Unified_Settings {
         </div>
 
         <p class="description">
-            <?php esc_html_e('Las credenciales y la lista de destino se configuran en Ajustes > Integraciones FLACSO > Mailjet Mailing.', 'flacso-main-page'); ?>
+            <?php esc_html_e('Las credenciales y la lista de destino se configuran en FLACSO > Correos.', 'flacso-main-page'); ?>
         </p>
         <?php
     }
