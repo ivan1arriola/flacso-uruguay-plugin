@@ -38,9 +38,9 @@ wiring_assert(
 );
 
 wiring_assert(
-    strpos($helpers_code, "if ( class_exists( 'FLACSO_Offer_Inquiry_Service' ) )") !== false
-    && strpos($helpers_code, "return FLACSO_Offer_Inquiry_Service::submit( \$data );") !== false,
-    'fc_send_info_request_webhook debe delegar en FLACSO_Offer_Inquiry_Service::submit cuando la clase existe'
+    strpos($helpers_code, "FLACSO_Offer_Inquiry_Service::submit( \$data )") !== false
+    && strpos($helpers_code, "offer_inquiry_service_unavailable") !== false,
+    'fc_send_info_request_webhook debe delegar en FLACSO_Offer_Inquiry_Service::submit y no depender del Editor'
 );
 
 wiring_assert(

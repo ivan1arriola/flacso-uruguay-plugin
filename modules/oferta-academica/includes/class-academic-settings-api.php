@@ -282,16 +282,25 @@ final class FLACSO_Academic_Settings_API {
     }
 
     public static function get_mailjet_lists_endpoint() {
-        if (class_exists("FLACSO_Integrations_Settings")) {
-            $lists = FLACSO_Integrations_Settings::get_mailjet_contact_lists();
+        if (class_exists("FLACSO_Mail_Settings") && method_exists("FLACSO_Mail_Settings", "get_contact_lists")) {
             return rest_ensure_response([
                 "ok" => true,
-                "lists" => $lists,
+                "lists" => FLACSO_Mail_Settings::get_contact_lists(),
             ]);
         }
+
+        // Compatibilidad transitoria para instalaciones que todavía no cargaron
+        // el módulo Mailing al resolver este endpoint.
+        if (class_exists("FLACSO_Integrations_Settings") && method_exists("FLACSO_Integrations_Settings", "get_mailjet_contact_lists")) {
+            return rest_ensure_response([
+                "ok" => true,
+                "lists" => FLACSO_Integrations_Settings::get_mailjet_contact_lists(),
+            ]);
+        }
+
         return rest_ensure_response([
             "ok" => false,
-            "message" => "FLACSO_Integrations_Settings class not found.",
+            "message" => "La configuración de Correos/Mailjet no está disponible.",
         ]);
     }
 }

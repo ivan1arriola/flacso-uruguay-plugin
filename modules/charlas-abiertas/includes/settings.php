@@ -150,29 +150,25 @@ function flacso_charlas_abiertas_render_webhook_token_field() {
     <?php
 }
 
-// Decommissioned in favor of unified Integraciones FLACSO page
+// La configuración visible vive en FLACSO > Sistema.
 // add_action('admin_menu', 'flacso_charlas_abiertas_add_settings_page');
 function flacso_charlas_abiertas_add_settings_page() {
     // Left as legacy function placeholder
 }
 
 function flacso_charlas_abiertas_get_settings_page_url(array $args = []) {
-    return add_query_arg(
-        array_merge(
-            [
-                'page' => 'flacso-integraciones',
-            ],
-            $args
-        ),
-        admin_url('options-general.php')
-    );
+    $base = class_exists('FLACSO_System_Settings')
+        ? FLACSO_System_Settings::get_page_url()
+        : admin_url('admin.php?page=flacso-sistema');
+
+    return !empty($args) ? add_query_arg($args, $base) : $base;
 }
 
 function flacso_charlas_abiertas_render_settings_page() {
     if (!current_user_can('manage_options')) {
         return;
     }
-    wp_safe_redirect(admin_url('options-general.php?page=flacso-integraciones'));
+    wp_safe_redirect(flacso_charlas_abiertas_get_settings_page_url());
     exit;
     ?>
     <div class="wrap">
@@ -316,9 +312,7 @@ function flacso_charlas_abiertas_handle_test_webhook() {
         $args['flacso_charlas_webhook_message'] = $message;
     }
 
-    $redirect_url = class_exists('FLACSO_Integrations_Settings')
-        ? FLACSO_Integrations_Settings::get_redirect_url_from_request($args, flacso_charlas_abiertas_get_settings_page_url())
-        : flacso_charlas_abiertas_get_settings_page_url($args);
+    $redirect_url = flacso_charlas_abiertas_get_settings_page_url($args);
     wp_safe_redirect($redirect_url);
     exit;
 }
@@ -326,7 +320,7 @@ add_action('admin_post_flacso_charlas_abiertas_test_webhook', 'flacso_charlas_ab
 
 function flacso_charlas_abiertas_admin_notices() {
     $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
-    if ('flacso-charlas-abiertas-settings' !== $page || !isset($_GET['flacso_charlas_webhook_test'])) {
+    if (!in_array($page, ['flacso-charlas-abiertas-settings', 'flacso-sistema'], true) || !isset($_GET['flacso_charlas_webhook_test'])) {
         return;
     }
 
