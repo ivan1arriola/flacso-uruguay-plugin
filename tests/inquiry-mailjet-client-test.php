@@ -71,6 +71,7 @@ $res_open = FLACSO_Mailjet_Client::send_offer_inquiry(
         'email'      => 'interesado@ejemplo.com',
         'firstName'  => 'Mariana',
         'fullName'   => 'Mariana Silva',
+        'replyToEmail'=> 'coordinacion@flacso.edu.uy',
     ],
     [
         'id'                     => 55,
@@ -78,14 +79,21 @@ $res_open = FLACSO_Mailjet_Client::send_offer_inquiry(
         'isInscripcionesAbiertas'=> true,
         'urlBase'                => 'https://flacso.edu.uy/formacion/politicas-publicas',
         'preinscripcionUrl'      => 'https://flacso.edu.uy/formacion/politicas-publicas/preinscripcion',
-        'startValue'             => '7 de abril 2026',
-        'modalityLabel'          => 'Virtual',
+        'startValue'             => '2026-04-07',
+        'startPrecision'         => 'dia',
+        'modalityLabel'          => 'hibrida',
     ]
 );
 mj_assert($res_open['ok'] === true, 'El envío debe ser exitoso');
 mj_assert($res_open['status'] === 'sent', 'Status debe ser sent');
 mj_assert($res_open['message_id'] === '288230407340150000', 'Debe capturar message_id');
 mj_assert($res_open['message_uuid'] === 'f7b8a8b1-1234-5678-90ab-cdef12345678', 'Debe capturar message_uuid');
+$first_call = end($GLOBALS['mailjet_http_calls']);
+$first_payload = json_decode($first_call['args']['body'], true);
+mj_assert(empty($first_payload['Messages'][0]['Subject']), 'Con TemplateID debe respetar el asunto configurado en Mailjet');
+mj_assert(($first_payload['Messages'][0]['ReplyTo']['Email'] ?? '') === 'coordinacion@flacso.edu.uy', 'Debe conservar el Reply-To de la oferta');
+mj_assert(($first_payload['Messages'][0]['Variables']['oferta_academica_fecha_inicio'] ?? '') === '7 de abril de 2026', 'Debe formatear la fecha civil para Mailjet');
+mj_assert(($first_payload['Messages'][0]['Variables']['oferta_academica_modalidad'] ?? '') === 'Híbrida', 'Debe humanizar la modalidad canónica');
 
 // 2. Envío sin TemplateID (debe activar fallback HTML interno)
 $res_closed = FLACSO_Mailjet_Client::send_offer_inquiry(
