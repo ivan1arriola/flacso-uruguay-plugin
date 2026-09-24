@@ -13,8 +13,7 @@
  * @package FLACSO_Uruguay
  */
 
-// Nota: No incluir declare(strict_types=1) aquí porque WP-CLI (`wp eval-file`)
-// evalúa el script mediante eval() y PHP lanza Fatal Error si aparece dentro de eval().
+declare(strict_types=1);
 
 // Cargar configuración de WordPress si no están definidas las constantes de conexión
 if (!defined('FLACSO_PG_HOST')) {
