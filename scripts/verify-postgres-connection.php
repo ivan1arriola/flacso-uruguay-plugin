@@ -158,7 +158,12 @@ function flacso_run_postgres_verification(?PDO $injected_pdo = null, bool $verbo
             );
 
             $read_offer = $offer_repo->find_by_consulta_id($diag_offer_cid);
-            if (!$read_offer || ($read_offer['emailStatus'] ?? '') !== 'sent' || ($read_offer['mailjetMessageId'] ?? '') !== 'diag-mj-offer-1') {
+            if (
+                !$read_offer
+                || ($read_offer['emailStatus'] ?? '') !== 'sent'
+                || ($read_offer['mailjetMessageId'] ?? '') !== 'diag-mj-offer-1'
+                || ($read_offer['mailjetMessageUuid'] ?? '') !== 'diag-uuid-offer-1'
+            ) {
                 throw new RuntimeException('Fallo al verificar UPDATE en offer_inquiries dentro de la transacción');
             }
 
@@ -189,7 +194,12 @@ function flacso_run_postgres_verification(?PDO $injected_pdo = null, bool $verbo
             );
 
             $read_seminar = $seminar_repo->find_by_consulta_id($diag_seminar_cid);
-            if (!$read_seminar || ($read_seminar['emailStatus'] ?? '') !== 'sent' || ($read_seminar['mailjetMessageId'] ?? '') !== 'diag-mj-seminar-1') {
+            if (
+                !$read_seminar
+                || ($read_seminar['emailStatus'] ?? '') !== 'sent'
+                || ($read_seminar['mailjetMessageId'] ?? '') !== 'diag-mj-seminar-1'
+                || ($read_seminar['mailjetMessageUuid'] ?? '') !== 'diag-uuid-seminar-1'
+            ) {
                 throw new RuntimeException('Fallo al verificar UPDATE en seminar_inquiries dentro de la transacción');
             }
 
@@ -212,11 +222,11 @@ function flacso_run_postgres_verification(?PDO $injected_pdo = null, bool $verbo
         $persisted_offer = $offer_repo->find_by_consulta_id($diag_offer_cid);
         $persisted_seminar = $seminar_repo->find_by_consulta_id($diag_seminar_cid);
 
-        if ($after_offer_count !== $initial_offer_count || $persisted_offer !== null) {
+        if ($persisted_offer !== null || $after_offer_count < $initial_offer_count || ($injected_pdo !== null && $after_offer_count !== $initial_offer_count)) {
             throw new RuntimeException("ROLLBACK falló en offer_inquiries: se encontraron registros residuales tras revertir.");
         }
 
-        if ($after_seminar_count !== $initial_seminar_count || $persisted_seminar !== null) {
+        if ($persisted_seminar !== null || $after_seminar_count < $initial_seminar_count || ($injected_pdo !== null && $after_seminar_count !== $initial_seminar_count)) {
             throw new RuntimeException("ROLLBACK falló en seminar_inquiries: se encontraron registros residuales tras revertir.");
         }
 

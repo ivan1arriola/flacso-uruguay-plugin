@@ -48,12 +48,16 @@ Confirmar que todos los archivos nuevos y modificados se encuentran presentes en
 - `includes/database/repositories/class-flacso-base-inquiry-repository.php`
 - `includes/database/repositories/class-flacso-offer-inquiry-repository.php`
 - `includes/database/repositories/class-flacso-seminar-inquiry-repository.php`
-- `includes/mailjet/class-flacso-mailjet-client.php`
-- `includes/inquiries/class-flacso-inquiry-service.php`
-- `includes/inquiries/class-flacso-seminar-inquiry-service.php`
-- `includes/inquiries/class-flacso-inquiry-ajax-handler.php`
-- `includes/inquiries/class-flacso-seminar-inquiry-ajax-handler.php`
+- `includes/integrations/class-flacso-mailjet-client.php`
+- `modules/consultas/init.php`
+- `modules/consultas/services/class-flacso-offer-inquiry-service.php`
+- `modules/consultas/services/class-flacso-seminar-inquiry-service.php`
+- `modules/main-page/includes/flacso-consultas.php`
+- `modules/posgrados/includes/class-flacso-posgrados-consultas-form.php`
+- `modules/formularios/includes/helpers.php`
+- `modules/oferta-academica/includes/class-academic-api.php`
 - `scripts/verify-postgres-connection.php`
+
 
 ### Paso 2: Suite de tests unitarios al 100%
 Ejecutar la suite completa de pruebas automáticas (ejecutada con base en memoria SQLite para aislar dependencias):
