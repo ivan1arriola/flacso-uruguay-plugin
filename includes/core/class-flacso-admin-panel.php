@@ -55,7 +55,9 @@ final class FLACSO_Admin_Panel {
             'eventos'     => ['title' => __('Eventos', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=evento')],
             'faqs'        => ['title' => __('Preguntas Frecuentes', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=flacso_faq')],
             'portada'     => ['title' => __('Portada FLACSO', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-main-page')],
-            'integracion' => ['title' => __('Integraciones', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-integraciones')],
+            'correos'      => ['title' => __('Correos', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-correos')],
+            'analitica'    => ['title' => __('Analítica / Meta', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-integracion-meta')],
+            'sistema'      => ['title' => __('Sistema', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-sistema')],
         ];
 
         // 1. Nodo principal FLACSO en el Admin Bar
@@ -168,8 +170,9 @@ final class FLACSO_Admin_Panel {
             'edit.php?post_type=edicion' => 50,
             'edit.php?post_type=tabla-precio' => 60,
             'flacso-main-page' => 70,
-            'flacso-integraciones' => 80,
+            'flacso-correos' => 80,
             'flacso-integracion-meta' => 90,
+            'flacso-sistema' => 100,
         ];
         usort($submenu[self::PAGE_SLUG], static function (array $left, array $right) use ($order): int {
             return ($order[$left[2]] ?? 500) <=> ($order[$right[2]] ?? 500);
@@ -185,7 +188,6 @@ final class FLACSO_Admin_Panel {
         $open_registrations = self::open_registration_count();
         $alerts = self::integrity_alerts();
         $upcoming = self::upcoming_items();
-        $editor_url = self::external_editor_url();
         ?>
         <div class="wrap flacso-panel">
             <header class="flacso-panel__hero">
@@ -195,9 +197,6 @@ final class FLACSO_Admin_Panel {
                     <p><?php esc_html_e('Una vista clara del catálogo académico, sus cohortes y las ediciones de seminarios.', 'flacso-uruguay'); ?></p>
                 </div>
                 <div class="flacso-panel__hero-actions">
-                    <a class="button button-primary" href="<?php echo esc_url($editor_url); ?>" target="_blank" rel="noopener noreferrer">
-                        <?php esc_html_e('Abrir Editor FLACSO', 'flacso-uruguay'); ?>
-                    </a>
                     <a class="button" href="https://preinscripciones.flacso.edu.uy" target="_blank" rel="noopener noreferrer">
                         <?php esc_html_e('Ver preinscripciones', 'flacso-uruguay'); ?>
                     </a>
@@ -255,7 +254,9 @@ final class FLACSO_Admin_Panel {
                             <?php self::resource_card('dashicons-groups', __('Docentes', 'flacso-uruguay'), __('Perfiles y referencias académicas.', 'flacso-uruguay'), admin_url('admin.php?page=docentes_panel')); ?>
                             <?php self::resource_card('dashicons-money-alt', __('Tablas de precios', 'flacso-uruguay'), __('Aranceles reutilizados por cohortes y ediciones.', 'flacso-uruguay'), admin_url('edit.php?post_type=tabla-precio')); ?>
                             <?php self::resource_card('dashicons-admin-home', __('Portada', 'flacso-uruguay'), __('Contenido y orden de la página principal.', 'flacso-uruguay'), admin_url('admin.php?page=flacso-main-page')); ?>
-                            <?php self::resource_card('dashicons-admin-generic', __('Integraciones', 'flacso-uruguay'), __('Conexiones y servicios externos.', 'flacso-uruguay'), admin_url('admin.php?page=flacso-integraciones')); ?>
+                            <?php self::resource_card('dashicons-email-alt', __('Correos', 'flacso-uruguay'), __('Mailjet, remitente, listas y plantillas transaccionales.', 'flacso-uruguay'), admin_url('admin.php?page=flacso-correos')); ?>
+                            <?php self::resource_card('dashicons-chart-area', __('Analítica', 'flacso-uruguay'), __('Meta Pixel, Conversion API y captación.', 'flacso-uruguay'), admin_url('admin.php?page=flacso-integracion-meta')); ?>
+                            <?php self::resource_card('dashicons-admin-tools', __('Sistema', 'flacso-uruguay'), __('Diagnóstico y dependencias externas todavía activas.', 'flacso-uruguay'), admin_url('admin.php?page=flacso-sistema')); ?>
                         </div>
                     </section>
                 </main>
@@ -406,11 +407,6 @@ final class FLACSO_Admin_Panel {
             return strcmp($left['date'], $right['date']);
         });
         return array_slice($items, 0, 6);
-    }
-
-    private static function external_editor_url(): string {
-        $url = (string) get_option('flacso_external_editor_url', 'https://editor-flacso-uy.vercel.app');
-        return $url !== '' ? $url : 'https://editor-flacso-uy.vercel.app';
     }
 
     private static function metric(string $label, int $value, string $icon): void {
