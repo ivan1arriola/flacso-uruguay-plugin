@@ -170,6 +170,7 @@ final class FLACSO_Admin_Panel {
             'edit.php?post_type=edicion' => 50,
             'edit.php?post_type=tabla-precio' => 60,
             'flacso-main-page' => 70,
+            'fc_options_page' => 75,
             'flacso-correos' => 80,
             'flacso-integracion-meta' => 90,
             'flacso-sistema' => 100,
