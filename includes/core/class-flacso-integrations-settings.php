@@ -407,7 +407,7 @@ class FLACSO_Integrations_Settings {
                 ],
                 $args
             ),
-            admin_url('options-general.php')
+            admin_url('admin.php')
         );
     }
 
@@ -426,105 +426,6 @@ class FLACSO_Integrations_Settings {
         }
 
         return add_query_arg($args, $base_url);
-    }
-
-    public static function render_page(): void {
-        if (!current_user_can('manage_options')) {
-            return;
-        }
-
-        ?>
-        <div class="wrap">
-            <div class="flacso-integrations-dashboard">
-                <header class="flacso-dashboard-header">
-                    <div class="flacso-dashboard-title-area">
-                        <h1 class="flacso-dashboard-title">
-                            <?php esc_html_e('Integraciones FLACSO', 'flacso-uruguay'); ?>
-                            <span class="flacso-badge">v2.0 – Centralizado</span>
-                        </h1>
-                    </div>
-                    <p class="flacso-dashboard-subtitle">
-                        <?php esc_html_e('Panel de control para centralizar, administrar y verificar de forma segura los endpoints y tokens unificados en todos los módulos del plugin FLACSO Uruguay.', 'flacso-uruguay'); ?>
-                    </p>
-                </header>
-
-                <?php settings_errors(); ?>
-                <?php self::render_inline_notices(); ?>
-
-
-                <form method="post" action="options.php">
-                    <?php settings_fields(self::SETTINGS_GROUP); ?>
-
-                    <!-- Token de Acceso Global Único -->
-                    <?php self::render_global_token_card(); ?>
-
-                    <div class="flacso-integrations-grid">
-                        <?php self::render_consultas_card(); ?>
-                        <?php self::render_ofertas_card(); ?>
-                        <?php self::render_charlas_card(); ?>
-                        <?php self::render_oferta_flotante_card(); ?>
-                        <?php self::render_preinscripciones_card(); ?>
-                        <?php self::render_external_editor_card(); ?>
-                        <?php self::render_nav_announcement_card(); ?>
-                        <?php self::render_mailjet_card(); ?>
-                        <?php self::render_services_card(); ?>
-                    </div>
-
-                    <div class="flacso-submit-section">
-                        <?php submit_button(__('Guardar integraciones', 'flacso-uruguay')); ?>
-                    </div>
-                </form>
-
-                <div class="flacso-integrations-tests">
-                    <div class="flacso-section-title-area">
-                        <h2>⚡ <?php esc_html_e('Pruebas de Conectividad Rápidas', 'flacso-uruguay'); ?></h2>
-                        <p><?php esc_html_e('Ejecutá pruebas asíncronas para validar que las URLs y tokens unificados se comuniquen perfectamente.', 'flacso-uruguay'); ?></p>
-                    </div>
-                    <div class="flacso-integrations-test-grid">
-                        <?php self::render_test_form(
-                            'fc_test_consultas_webhook',
-                            'fc_consultas_webhook_test_nonce',
-                            'fc_test_consultas_webhook',
-                            __('Probar consultas generales', 'flacso-uruguay'),
-                            __('Valida el webhook del formulario de consulta general.', 'flacso-uruguay')
-                        ); ?>
-                        <?php self::render_test_form(
-                            'fc_test_oferta_webhook',
-                            'fc_oferta_webhook_test_nonce',
-                            'fc_test_oferta_webhook',
-                            __('Probar solicitud de información', 'flacso-uruguay'),
-                            __('Valida el webhook usado por el bloque de solicitud de información.', 'flacso-uruguay')
-                        ); ?>
-                        <?php self::render_test_form(
-                            'flacso_charlas_abiertas_test_webhook',
-                            'flacso_charlas_abiertas_test_webhook_nonce',
-                            'flacso_charlas_abiertas_test_webhook',
-                            __('Probar charlas abiertas', 'flacso-uruguay'),
-                            __('Valida el webhook de inscripciones de charlas abiertas.', 'flacso-uruguay')
-                        ); ?>
-                        <?php self::render_test_form(
-                            'flacso_preinscripciones_test_webhook',
-                            'flacso_preinscripciones_test_webhook_nonce',
-                            'flacso_preinscripciones_test_webhook',
-                            __('Probar preinscripciones', 'flacso-uruguay'),
-                            __('Valida el webhook de preinscripciones académicas.', 'flacso-uruguay')
-                        ); ?>
-                    </div>
-                </div>
-
-                <div class="flacso-integrations-links">
-                    <h2>🔗 <?php esc_html_e('Accesos Directos Relacionados', 'flacso-uruguay'); ?></h2>
-                    <ul>
-                        <li><a href="<?php echo esc_url(admin_url('admin.php?page=flacso-panel')); ?>">← <?php esc_html_e('Volver al panel FLACSO', 'flacso-uruguay'); ?></a></li>
-                        <li><a href="<?php echo esc_url(self::get_meta_page_url()); ?>">📈 <?php esc_html_e('Analítica / Meta', 'flacso-uruguay'); ?></a></li>
-                        <li><a href="https://preinscripciones.flacso.edu.uy" target="_blank" rel="noopener noreferrer">📝 <?php esc_html_e('Abrir preinscripciones externas', 'flacso-uruguay'); ?></a></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-        <?php self::render_admin_styles(); ?>
-        <?php self::render_test_script(); ?>
-        <?php
     }
 
     public static function render_meta_page(): void {
