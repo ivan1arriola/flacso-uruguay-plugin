@@ -58,6 +58,21 @@ class FLACSO_Integrations_Settings {
 
         add_action('admin_menu', [self::class, 'register_menu']);
         add_action('admin_init', [self::class, 'register_settings']);
+        add_action('admin_init', [self::class, 'redirect_legacy_page'], 1);
+    }
+
+    public static function redirect_legacy_page(): void {
+        $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+        if ($page !== self::PAGE_SLUG) {
+            return;
+        }
+
+        $target = class_exists('FLACSO_System_Settings')
+            ? FLACSO_System_Settings::get_page_url()
+            : admin_url('admin.php?page=flacso-sistema');
+
+        wp_safe_redirect($target);
+        exit;
     }
 
     public static function register_menu(): void {
