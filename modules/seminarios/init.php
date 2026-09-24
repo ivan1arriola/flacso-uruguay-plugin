@@ -30,6 +30,7 @@ flacso_safe_require('modules/seminarios/includes/class-seminario-sort-safe.php')
 flacso_safe_require('modules/seminarios/includes/class-seminario-admin-fields.php');
 flacso_safe_require('modules/seminarios/includes/class-edicion.php');
 flacso_safe_require('modules/seminarios/includes/class-edicion-admin-fields.php');
+flacso_safe_require('modules/seminarios/includes/class-seminario-settings.php');
 
 // Inicializar módulo
 class Seminario_Plugin {
@@ -50,6 +51,7 @@ class Seminario_Plugin {
 
         FLACSO_Seminario_Admin_Fields::init();
         FLACSO_Edicion_Admin_Fields::init();
+        FLACSO_Seminar_Settings::init();
         add_action('after_setup_theme', function() {
             add_theme_support('post-thumbnails', ['seminario']);
         });
