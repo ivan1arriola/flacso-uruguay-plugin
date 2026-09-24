@@ -198,14 +198,27 @@ class FLACSO_Offer_Inquiry_Service {
             ? (string)$data['modalityLabel']
             : (!empty($data['modalidad'])
                 ? (string)$data['modalidad']
-                : (!empty($catalog_data['modalidad'])
-                    ? (string)$catalog_data['modalidad']
-                    : ''));
+                : (!empty($catalog_data['cohorte_vigente']['modalidad'])
+                    ? (string)$catalog_data['cohorte_vigente']['modalidad']
+                    : (!empty($catalog_data['modalidad'])
+                        ? (string)$catalog_data['modalidad']
+                        : '')));
+
+        $start_precision = !empty($data['startPrecision'])
+            ? (string)$data['startPrecision']
+            : (!empty($data['precision_fecha_inicio'])
+                ? (string)$data['precision_fecha_inicio']
+                : (!empty($catalog_data['cohorte_vigente']['precision_fecha_inicio'])
+                    ? (string)$catalog_data['cohorte_vigente']['precision_fecha_inicio']
+                    : 'dia'));
 
         $country = isset($data['country']) ? (string)$data['country'] : (isset($data['pais']) ? (string)$data['pais'] : null);
         $profession = isset($data['profession']) ? (string)$data['profession'] : (isset($data['profesion']) ? (string)$data['profesion'] : null);
         $education_level = isset($data['educationLevel']) ? (string)$data['educationLevel'] : (isset($data['nivel_academico']) ? (string)$data['nivel_academico'] : null);
         $reply_to = isset($data['replyToEmail']) ? (string)$data['replyToEmail'] : (isset($data['reply_to']) ? (string)$data['reply_to'] : null);
+        if (($reply_to === null || trim($reply_to) === '') && !empty($catalog_data['correo'])) {
+            $reply_to = (string)$catalog_data['correo'];
+        }
         $source = isset($data['source']) ? (string)$data['source'] : (isset($data['origen']) ? (string)$data['origen'] : 'Web');
 
         $ip = isset($data['ipAddress'])
@@ -319,6 +332,7 @@ class FLACSO_Offer_Inquiry_Service {
             'cartaUrl'                => $carta_url,
             'preinscripcionUrl'       => $preinscripcion_url,
             'startValue'              => $start_value,
+            'startPrecision'          => $start_precision,
             'modalityLabel'           => $modality,
         ];
 
