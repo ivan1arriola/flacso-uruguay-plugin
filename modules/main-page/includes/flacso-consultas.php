@@ -1192,17 +1192,9 @@ function flacso_enviar_consulta_func() {
 	}
 
 	if ( ! empty( $failures ) && count( $failures ) === count( $offer_payloads ) ) {
-		if ( FLACSO_RELAXED_MODE ) {
-			wp_send_json_success(
-				array(
-					'note'       => ( (int) ( $failures[0]['code'] ?? 0 ) > 0 ) ? 'http_code_relajado' : 'webhook_error_relajado',
-					'code'       => (int) ( $failures[0]['code'] ?? 0 ),
-					'deliveries' => $deliveries,
-					'count'      => count( $offer_payloads ),
-				)
-			);
-		}
-
+		// El servicio interno es ahora la fuente canónica. Un fallo de persistencia
+		// no puede degradarse a éxito aunque FLACSO_RELAXED_MODE esté activo: el
+		// principio del nuevo flujo es guardar primero y confirmar después.
 		wp_send_json_error( 'No se pudo procesar la consulta. Intentá más tarde.' );
 	}
 
