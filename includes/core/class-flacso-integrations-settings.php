@@ -50,7 +50,6 @@ class FLACSO_Integrations_Settings {
     private const OPTION_META_LEADS_FORWARD_TO_WEBHOOK = 'flacso_meta_leads_forward_to_webhook';
     private const OPTION_META_LEADS_LAST_PERMISSION_CHECK = 'flacso_meta_leads_last_permission_check';
     private const OPTION_USD_EXCHANGE_RATE = 'flacso_usd_exchange_rate';
-    public const OPTION_SEMINARIOS_DIAS_CIERRE_POST_INICIO = 'flacso_seminarios_dias_cierre_post_inicio';
 
     public static function init(): void {
         if (!is_admin()) {
@@ -539,7 +538,7 @@ class FLACSO_Integrations_Settings {
                 <header class="flacso-dashboard-header">
                     <div class="flacso-dashboard-title-area">
                         <h1 class="flacso-dashboard-title">
-                            <?php esc_html_e('Integración con Meta', 'flacso-uruguay'); ?>
+                            <?php esc_html_e('Analítica / Meta', 'flacso-uruguay'); ?>
                             <span class="flacso-badge"><?php esc_html_e('Pixel + CAPI', 'flacso-uruguay'); ?></span>
                         </h1>
                     </div>
@@ -549,7 +548,6 @@ class FLACSO_Integrations_Settings {
                 </header>
 
                 <?php settings_errors(); ?>
-                <?php self::render_migration_banner(); ?>
                 <?php self::render_inline_notices(); ?>
 
 
