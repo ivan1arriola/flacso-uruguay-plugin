@@ -11,10 +11,17 @@ if (!defined('ABSPATH') && !defined('STDIN')) {
 
 abstract class FLACSO_Base_Inquiry_Repository {
     protected ?string $table_name = null;
-    private array $columns_cache = [];
+    private static array $columns_cache = [];
 
     public function __construct(?string $table_name = null) {
         $this->table_name = $table_name;
+    }
+
+    /**
+     * Limpia la caché estática de columnas (útil en pruebas automatizadas).
+     */
+    public static function clear_cache(): void {
+        self::$columns_cache = [];
     }
 
     /**
@@ -37,12 +44,15 @@ abstract class FLACSO_Base_Inquiry_Repository {
      */
     public function get_table_columns(): array {
         $table = trim($this->get_raw_table_name(), '"');
-        if (isset($this->columns_cache[$table])) {
-            return $this->columns_cache[$table];
+        $pdo = FLACSO_DB::connection();
+        $pdo_id = spl_object_id($pdo);
+        $cache_key = "{$pdo_id}:{$table}";
+
+        if (isset(self::$columns_cache[$cache_key])) {
+            return self::$columns_cache[$cache_key];
         }
 
         try {
-            $pdo = FLACSO_DB::connection();
             $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
             $columns = [];
 
@@ -62,7 +72,7 @@ abstract class FLACSO_Base_Inquiry_Repository {
             }
 
             if (!empty($columns)) {
-                return $this->columns_cache[$table] = $columns;
+                return self::$columns_cache[$cache_key] = $columns;
             }
         } catch (\Throwable $e) {
             // Continuar sin cache de columnas

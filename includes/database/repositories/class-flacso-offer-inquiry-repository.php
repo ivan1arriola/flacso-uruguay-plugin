@@ -46,10 +46,13 @@ class FLACSO_Offer_Inquiry_Repository extends FLACSO_Base_Inquiry_Repository {
         $email_norm = !empty($data['emailNormalized']) ? strtolower(trim((string)$data['emailNormalized'])) : strtolower(trim($email));
 
         $payload = isset($data['payload'])
-            ? (is_string($data['payload']) ? $data['payload'] : json_encode($data['payload'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
-            : json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ? (is_string($data['payload']) ? (trim($data['payload']) !== '' ? $data['payload'] : '{}') : (json_encode($data['payload'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}'))
+            : (json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}');
 
         $now = gmdate('c');
+        $inquiry_at = (!empty($data['inquiryAt']) && trim((string)$data['inquiryAt']) !== '') ? trim((string)$data['inquiryAt']) : $now;
+        $created_at = (!empty($data['createdAt']) && trim((string)$data['createdAt']) !== '') ? trim((string)$data['createdAt']) : $now;
+        $updated_at = (!empty($data['updatedAt']) && trim((string)$data['updatedAt']) !== '') ? trim((string)$data['updatedAt']) : $now;
 
         $record = [
             'id'                  => $id,
@@ -75,7 +78,7 @@ class FLACSO_Offer_Inquiry_Repository extends FLACSO_Base_Inquiry_Repository {
             'campaignTerm'        => isset($data['campaignTerm']) ? (string)$data['campaignTerm'] : null,
             'urlBase'             => isset($data['urlBase']) ? (string)$data['urlBase'] : null,
             'urlReferer'          => isset($data['urlReferer']) ? (string)$data['urlReferer'] : null,
-            'inquiryAt'           => isset($data['inquiryAt']) ? (string)$data['inquiryAt'] : $now,
+            'inquiryAt'           => $inquiry_at,
             'ipAddress'           => isset($data['ipAddress']) ? (string)$data['ipAddress'] : null,
             'userAgent'           => isset($data['userAgent']) ? (string)$data['userAgent'] : null,
             'replyToEmail'        => isset($data['replyToEmail']) ? (string)$data['replyToEmail'] : null,
@@ -89,8 +92,8 @@ class FLACSO_Offer_Inquiry_Repository extends FLACSO_Base_Inquiry_Repository {
             'mailjetMessageId'    => isset($data['mailjetMessageId']) ? (string)$data['mailjetMessageId'] : null,
             'mailjetMessageUuid'  => isset($data['mailjetMessageUuid']) ? (string)$data['mailjetMessageUuid'] : null,
             'payload'             => $payload,
-            'createdAt'           => isset($data['createdAt']) ? (string)$data['createdAt'] : $now,
-            'updatedAt'           => isset($data['updatedAt']) ? (string)$data['updatedAt'] : $now,
+            'createdAt'           => $created_at,
+            'updatedAt'           => $updated_at,
         ];
 
         // 4. Filtrar por columnas existentes en la tabla

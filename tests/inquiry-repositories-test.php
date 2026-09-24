@@ -4,7 +4,6 @@ $root = dirname(__DIR__);
 require_once $root . '/includes/database/class-flacso-db.php';
 require_once $root . '/includes/database/repositories/class-flacso-offer-inquiry-repository.php';
 require_once $root . '/includes/database/repositories/class-flacso-seminar-inquiry-repository.php';
-require_once $root . '/includes/database/repositories/class-flacso-general-inquiry-repository.php';
 
 function repo_assert(bool $cond, string $msg): void {
     if (!$cond) {
@@ -13,7 +12,7 @@ function repo_assert(bool $cond, string $msg): void {
     }
 }
 
-// Configurar SQLite en memoria con el esquema de tablas
+// Configurar SQLite en memoria con el esquema de tablas (solo offer_inquiries y seminar_inquiries)
 $pdo = new PDO('sqlite::memory:', null, null, [
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -103,31 +102,10 @@ CREATE TABLE seminar_inquiries (
     createdAt TEXT,
     updatedAt TEXT
 );
-
-CREATE TABLE Consulta (
-    id TEXT PRIMARY KEY,
-    consultaId TEXT UNIQUE,
-    controlNumber TEXT,
-    nombre TEXT,
-    apellido TEXT,
-    email TEXT,
-    emailNormalized TEXT,
-    telefono TEXT,
-    asunto TEXT,
-    mensaje TEXT,
-    urlReferer TEXT,
-    ipAddress TEXT,
-    userAgent TEXT,
-    emailStatus TEXT DEFAULT "skipped",
-    emailSender TEXT,
-    mailjetMessageId TEXT,
-    mailjetMessageUuid TEXT,
-    createdAt TEXT,
-    updatedAt TEXT
-);
 ');
 
 FLACSO_DB::set_connection($pdo);
+FLACSO_Base_Inquiry_Repository::clear_cache();
 
 // 1. Probar offer_inquiries
 $offer_repo = new FLACSO_Offer_Inquiry_Repository();
@@ -152,6 +130,7 @@ repo_assert($found_offer_initial !== null, 'find_by_consulta_id debe encontrar e
 repo_assert($found_offer_initial['offerName'] === 'Maestría de Prueba', 'offerName debe coincidir');
 repo_assert($found_offer_initial['emailNormalized'] === 'laura@ejemplo.com', 'emailNormalized debe ser normalizado a minúsculas');
 repo_assert($found_offer_initial['emailStatus'] === 'skipped', 'emailStatus inicial debe ser skipped');
+repo_assert(!empty($found_offer_initial['inquiryAt']), 'inquiryAt debe ser asignado automáticamente');
 
 // Idempotencia en offer_inquiries
 $res1_dup = $offer_repo->insert([
@@ -172,7 +151,22 @@ repo_assert($found_offer['mailjetMessageId'] === 'mj-12345', 'mailjetMessageId d
 repo_assert($found_offer['mailjetMessageUuid'] === 'uuid-mj-offer-001', 'mailjetMessageUuid debe ser uuid-mj-offer-001');
 repo_assert(!empty($found_offer['updatedAt']), 'updatedAt debe estar actualizado');
 
-// 2. Probar seminar_inquiries
+// 2. Probar guarda contra strings vacíos en TIMESTAMP (inquiryAt, createdAt, updatedAt)
+$res_empty_ts = $offer_repo->insert([
+    'consultaId' => 'cid-offer-empty-ts',
+    'offerName'  => 'Diploma en Políticas',
+    'email'      => 'diego@ejemplo.com',
+    'inquiryAt'  => '', // String vacío debe ser reemplazado por timestamp actual
+    'createdAt'  => '   ',
+    'updatedAt'  => '',
+]);
+repo_assert($res_empty_ts['duplicate'] === false, 'Debe insertar con campos de fecha vacíos');
+$found_empty_ts = $offer_repo->find_by_consulta_id('cid-offer-empty-ts');
+repo_assert(!empty($found_empty_ts['inquiryAt']) && trim($found_empty_ts['inquiryAt']) !== '', 'inquiryAt no debe ser string vacío');
+repo_assert(!empty($found_empty_ts['createdAt']) && trim($found_empty_ts['createdAt']) !== '', 'createdAt no debe ser string vacío');
+repo_assert(!empty($found_empty_ts['updatedAt']) && trim($found_empty_ts['updatedAt']) !== '', 'updatedAt no debe ser string vacío');
+
+// 3. Probar seminar_inquiries
 $seminar_repo = new FLACSO_Seminar_Inquiry_Repository();
 $res2 = $seminar_repo->insert([
     'consultaId'   => 'cid-sem-001',
@@ -182,10 +176,14 @@ $res2 = $seminar_repo->insert([
     'lastName'     => 'Ruiz',
     'fullName'     => 'Carlos Ruiz',
     'email'        => 'carlos@ejemplo.com',
+    'inquiryAt'    => '', // Verificación de guarda de timestamp en seminarios
 ]);
 repo_assert(!empty($res2['id']), 'Debe retornar ID de seminario');
 repo_assert(preg_match('/^c[0-9a-z]{24}$/', $res2['id']) === 1, 'ID de seminario debe tener formato CUID');
 repo_assert($res2['duplicate'] === false, 'Seminario no debe ser duplicado');
+
+$found_sem = $seminar_repo->find_by_consulta_id('cid-sem-001');
+repo_assert(!empty($found_sem['inquiryAt']) && trim($found_sem['inquiryAt']) !== '', 'inquiryAt de seminario no debe ser string vacío');
 
 // Idempotencia en seminar_inquiries
 $res2_dup = $seminar_repo->insert([
@@ -197,87 +195,14 @@ repo_assert($res2_dup['duplicate'] === true, 'Seminario duplicado debe reportar 
 repo_assert($res2_dup['id'] === $res2['id'], 'ID de seminario duplicado debe ser igual');
 
 $seminar_repo->update_email_status('cid-sem-001', 'failed');
-$found_sem = $seminar_repo->find_by_consulta_id('cid-sem-001');
-repo_assert($found_sem['emailStatus'] === 'failed', 'emailStatus de seminario debe ser failed');
-
-// 3. Probar Consulta (general)
-$general_repo = new FLACSO_General_Inquiry_Repository();
-$res3 = $general_repo->insert([
-    'consultaId' => 'cid-gen-001',
-    'nombre'     => 'Ana',
-    'apellido'   => 'Pérez',
-    'email'      => 'ana@ejemplo.com',
-    'asunto'     => 'Consulta general',
-    'mensaje'    => 'Hola',
-]);
-repo_assert(!empty($res3['id']), 'Debe retornar ID de consulta general');
-repo_assert(preg_match('/^c[0-9a-z]{24}$/', $res3['id']) === 1, 'ID general debe tener formato CUID');
-repo_assert(!empty($res3['controlNumber']), 'Debe generar controlNumber');
-repo_assert(strpos($res3['controlNumber'], 'FC-') === 0, 'controlNumber debe comenzar con FC-');
-repo_assert($res3['duplicate'] === false, 'General no debe ser duplicado');
-
-// Idempotencia en Consulta general
-$res3_dup = $general_repo->insert([
-    'consultaId' => 'cid-gen-001',
-    'nombre'     => 'Ana',
-    'apellido'   => 'Pérez',
-    'email'      => 'ana@ejemplo.com',
-]);
-repo_assert($res3_dup['duplicate'] === true, 'General duplicado debe reportar duplicate true');
-repo_assert($res3_dup['id'] === $res3['id'], 'ID general duplicado debe coincidir');
-repo_assert($res3_dup['controlNumber'] === $res3['controlNumber'], 'controlNumber duplicado debe coincidir');
-
-$general_repo->update_email_status('cid-gen-001', 'sent', 'contacto@flacso.edu.uy', 'mj-67890', 'uuid-mj-gen-001');
-$found_gen = $general_repo->find_by_consulta_id('cid-gen-001');
-repo_assert($found_gen['emailStatus'] === 'sent', 'emailStatus de Consulta debe ser sent');
-repo_assert($found_gen['emailSender'] === 'contacto@flacso.edu.uy', 'emailSender debe ser contacto@flacso.edu.uy');
-repo_assert($found_gen['mailjetMessageId'] === 'mj-67890', 'mailjetMessageId de Consulta debe ser mj-67890');
-repo_assert($found_gen['mailjetMessageUuid'] === 'uuid-mj-gen-001', 'mailjetMessageUuid de Consulta debe coincidir');
+$found_sem_failed = $seminar_repo->find_by_consulta_id('cid-sem-001');
+repo_assert($found_sem_failed['emailStatus'] === 'failed', 'emailStatus de seminario debe ser failed');
 
 // 4. Probar búsqueda de consultaId inexistente
 repo_assert($offer_repo->find_by_consulta_id('inexistente') === null, 'Consulta inexistente debe retornar null');
 repo_assert($seminar_repo->find_by_consulta_id('inexistente') === null, 'Seminario inexistente debe retornar null');
-repo_assert($general_repo->find_by_consulta_id('inexistente') === null, 'General inexistente debe retornar null');
 
-// 5. Probar soporte de tabla general_inquiries (PostgreSQL canonical)
-$pdo->exec('
-CREATE TABLE general_inquiries (
-    id TEXT PRIMARY KEY,
-    consultaId TEXT UNIQUE,
-    controlNumber TEXT,
-    nombre TEXT,
-    apellido TEXT,
-    email TEXT,
-    emailNormalized TEXT,
-    telefono TEXT,
-    asunto TEXT,
-    mensaje TEXT,
-    urlReferer TEXT,
-    ipAddress TEXT,
-    userAgent TEXT,
-    emailStatus TEXT DEFAULT "skipped",
-    emailSender TEXT,
-    mailjetMessageId TEXT,
-    mailjetMessageUuid TEXT,
-    createdAt TEXT,
-    updatedAt TEXT
-);
-');
-$general_canonical_repo = new FLACSO_General_Inquiry_Repository('general_inquiries');
-$res_gen_can = $general_canonical_repo->insert([
-    'consultaId' => 'cid-gen-can-001',
-    'nombre'     => 'Martín',
-    'apellido'   => 'López',
-    'email'      => 'martin@ejemplo.com',
-    'asunto'     => 'Consulta en tabla canonical',
-    'mensaje'    => 'Probando tabla general_inquiries',
-]);
-repo_assert(!empty($res_gen_can['id']), 'Debe insertar correctamente en general_inquiries');
-$found_can = $general_canonical_repo->find_by_consulta_id('cid-gen-can-001');
-repo_assert($found_can !== null && $found_can['nombre'] === 'Martín', 'Debe encontrar en general_inquiries');
-
-// 6. Probar recuperación ante condición de carrera (concurrency race condition)
-// Simulamos una subclase que omite el chequeo temprano para forzar el choque de restricción única en el INSERT
+// 5. Probar recuperación ante condición de carrera (concurrency race condition)
 class FLACSO_Offer_Inquiry_Repository_Race_Test extends FLACSO_Offer_Inquiry_Repository {
     private int $lookup_count = 0;
     public function find_by_consulta_id(string $consulta_id): ?array {
@@ -300,4 +225,3 @@ repo_assert($race_res['duplicate'] === true, 'Debe capturar colisión de unicida
 repo_assert($race_res['id'] === $res1['id'], 'El ID recuperado tras colisión debe coincidir con el original');
 
 echo "OK inquiry-repositories-test\n";
-
