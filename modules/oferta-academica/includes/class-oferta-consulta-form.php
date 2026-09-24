@@ -8,7 +8,6 @@ if (!defined('ABSPATH')) {
  * Formulario flotante de consultas para la página de Oferta Académica.
  */
 class Oferta_Consulta_Form {
-    private const OPTION_ENDPOINT_URL = 'flacso_oferta_consulta_endpoint_url';
     private const OPTION_BUTTON_ENABLED = 'flacso_oferta_consulta_button_enabled';
     private const SETTINGS_GROUP = 'flacso_oferta_consulta_settings';
     private const MENU_SLUG = 'flacso-oferta-consulta-form';
@@ -37,16 +36,6 @@ class Oferta_Consulta_Form {
     public static function register_settings(): void {
         register_setting(
             self::SETTINGS_GROUP,
-            self::OPTION_ENDPOINT_URL,
-            [
-                'type' => 'string',
-                'sanitize_callback' => [self::class, 'sanitize_endpoint_url'],
-                'default' => '',
-            ]
-        );
-
-        register_setting(
-            self::SETTINGS_GROUP,
             self::OPTION_BUTTON_ENABLED,
             [
                 'type' => 'boolean',
@@ -54,34 +43,6 @@ class Oferta_Consulta_Form {
                 'default' => true,
             ]
         );
-    }
-
-    public static function sanitize_endpoint_url($value): string {
-        $value = trim((string) $value);
-
-        if ($value === '') {
-            return '';
-        }
-
-        $sanitized = esc_url_raw($value);
-        $scheme = wp_parse_url($sanitized, PHP_URL_SCHEME);
-
-        if (!$sanitized || !wp_http_validate_url($sanitized) || !in_array($scheme, ['http', 'https'], true)) {
-            add_settings_error(
-                self::SETTINGS_GROUP,
-                'flacso_oferta_consulta_endpoint_invalid',
-                __('La URL del endpoint no es válida. Debe comenzar con http:// o https://', 'flacso-oferta-academica'),
-                'error'
-            );
-
-            return self::get_endpoint_url();
-        }
-
-        return $sanitized;
-    }
-
-    public static function get_endpoint_url(): string {
-        return trim((string) get_option(self::OPTION_ENDPOINT_URL, ''));
     }
 
     public static function sanitize_button_enabled($value): bool {
@@ -127,36 +88,17 @@ class Oferta_Consulta_Form {
             return;
         }
 
-        $endpoint_url = self::get_endpoint_url();
         $button_enabled = self::is_button_enabled();
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('Formulario de Consulta de Oferta Académica', 'flacso-oferta-academica'); ?></h1>
-            <p><?php esc_html_e('Configura la URL que recibirá por POST los datos enviados desde el botón flotante de consulta.', 'flacso-oferta-academica'); ?></p>
+            <p><?php esc_html_e('Las consultas se guardan directamente en PostgreSQL desde WordPress y el correo transaccional se envía por Mailjet. Ya no existe un endpoint externo que configurar para este formulario.', 'flacso-oferta-academica'); ?></p>
 
             <?php settings_errors(self::SETTINGS_GROUP); ?>
 
             <form method="post" action="options.php">
                 <?php settings_fields(self::SETTINGS_GROUP); ?>
                 <table class="form-table" role="presentation">
-                    <tr>
-                        <th scope="row">
-                            <label for="flacso_oferta_consulta_endpoint_url"><?php esc_html_e('URL del endpoint', 'flacso-oferta-academica'); ?></label>
-                        </th>
-                        <td>
-                            <input
-                                id="flacso_oferta_consulta_endpoint_url"
-                                name="<?php echo esc_attr(self::OPTION_ENDPOINT_URL); ?>"
-                                type="url"
-                                class="regular-text code"
-                                placeholder="https://ejemplo.com/webhook/consultas"
-                                value="<?php echo esc_attr($endpoint_url); ?>"
-                            />
-                            <p class="description">
-                                <?php esc_html_e('La información se enviará por método POST en formato JSON (application/json).', 'flacso-oferta-academica'); ?>
-                            </p>
-                        </td>
-                    </tr>
                     <tr>
                         <th scope="row"><?php esc_html_e('Visibilidad del botón', 'flacso-oferta-academica'); ?></th>
                         <td>
@@ -171,6 +113,9 @@ class Oferta_Consulta_Form {
                                 />
                                 <?php esc_html_e('Mostrar botón flotante de "Solicitar información"', 'flacso-oferta-academica'); ?>
                             </label>
+                            <p class="description">
+                                <?php esc_html_e('Para revisar PostgreSQL y Mailjet, usá FLACSO > Sistema y FLACSO > Correos.', 'flacso-oferta-academica'); ?>
+                            </p>
                         </td>
                     </tr>
                 </table>
@@ -246,11 +191,6 @@ class Oferta_Consulta_Form {
             return '';
         }
 
-        $endpoint_configured = self::get_endpoint_url() !== '';
-        if (!$endpoint_configured && !current_user_can('manage_options')) {
-            return '';
-        }
-
         $dialog_id = function_exists('wp_unique_id')
             ? wp_unique_id('flacso-oa-consulta-')
             : ('flacso-oa-consulta-' . wp_rand(1000, 9999));
@@ -262,7 +202,6 @@ class Oferta_Consulta_Form {
             data-flacso-oa-consulta
             data-ajax-url="<?php echo esc_url(admin_url('admin-ajax.php', 'relative')); ?>"
             data-nonce="<?php echo esc_attr(wp_create_nonce('flacso_oferta_consulta_submit')); ?>"
-            data-endpoint-configured="<?php echo $endpoint_configured ? '1' : '0'; ?>"
         >
             <button type="button" class="flacso-oa-consulta__fab" data-oa-consulta-open>
                 <span class="dashicons dashicons-email-alt" aria-hidden="true"></span>
@@ -291,11 +230,6 @@ class Oferta_Consulta_Form {
                             </div>
 
                             <p class="flacso-oa-consulta__status" data-oa-consulta-status aria-live="polite"></p>
-                            <?php if (!$endpoint_configured && current_user_can('manage_options')) : ?>
-                                <p class="flacso-oa-consulta__status is-error">
-                                    <?php esc_html_e('El endpoint no está configurado todavía. Podés configurarlo en Oferta Académica > Formulario de Consulta.', 'flacso-oferta-academica'); ?>
-                                </p>
-                            <?php endif; ?>
                         </form>
                     </div>
                 </section>
@@ -364,20 +298,10 @@ class Oferta_Consulta_Form {
     }
 
     public static function handle_ajax_submit(): void {
-        $include_response_code = is_user_logged_in();
-
         if (!check_ajax_referer('flacso_oferta_consulta_submit', 'nonce', false)) {
             wp_send_json_error(
                 ['message' => __('No se pudo validar la solicitud. Recargá la página e intentá de nuevo.', 'flacso-oferta-academica')],
                 403
-            );
-        }
-
-        $endpoint = self::get_endpoint_url();
-        if ($endpoint === '') {
-            wp_send_json_error(
-                ['message' => __('El formulario no está disponible en este momento.', 'flacso-oferta-academica')],
-                503
             );
         }
 
@@ -423,117 +347,72 @@ class Oferta_Consulta_Form {
             );
         }
 
-        $origin = isset($_SERVER['HTTP_REFERER']) ? esc_url_raw(wp_unslash($_SERVER['HTTP_REFERER'])) : '';
-        $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : '';
+        if (!class_exists('FLACSO_Offer_Inquiry_Service')) {
+            $service_file = dirname(__DIR__) . '/consultas/services/class-flacso-offer-inquiry-service.php';
+            if (is_readable($service_file)) {
+                require_once $service_file;
+            }
+        }
 
-        $event_id = wp_generate_uuid4();
+        if (!class_exists('FLACSO_Offer_Inquiry_Service')) {
+            error_log('[FLACSO] Servicio interno de consultas de ofertas no disponible.');
+            wp_send_json_error(
+                ['message' => __('El formulario no está disponible en este momento.', 'flacso-oferta-academica')],
+                503
+            );
+        }
+
+        $origin = isset($_SERVER['HTTP_REFERER'])
+            ? esc_url_raw(wp_unslash($_SERVER['HTTP_REFERER']))
+            : '';
+        $user_agent = isset($_SERVER['HTTP_USER_AGENT'])
+            ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT']))
+            : '';
+        $ip = isset($_SERVER['REMOTE_ADDR'])
+            ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR']))
+            : '';
+
         $payload = [
-            'event_id' => $event_id,
+            'event_id' => wp_generate_uuid4(),
+            'id_pagina' => $oferta_id,
+            'offer_id' => $oferta_id,
+            'titulo_posgrado' => get_the_title($oferta_id),
             'nombre' => $nombre,
             'apellido' => $apellido,
             'correo' => $correo,
-            'oferta_id' => (string) $oferta_id,
-            'oferta_titulo' => get_the_title($oferta_id),
             'consulta' => $consulta,
-            'url_origen' => $origin,
-            'sitio' => home_url('/'),
-            'fecha_utc' => gmdate('c'),
+            'source' => 'Web - Formulario flotante',
+            'url_base' => get_permalink($oferta_id),
+            'url_referer' => $origin,
+            'ip_usuario' => $ip,
             'user_agent' => $user_agent,
+            'fecha_envio' => current_time('c'),
         ];
 
-        $payload_json = wp_json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        if (!is_string($payload_json) || $payload_json === '') {
-            wp_send_json_error(
-                ['message' => __('No se pudo preparar el envío de la consulta.', 'flacso-oferta-academica')],
-                500
-            );
-        }
-
-        $webhook_token = get_option('flacso_webhook_token', '');
-
-        $headers = [
-            'Content-Type' => 'application/json; charset=utf-8',
-            'Accept' => 'application/json',
-        ];
-
-        if ($webhook_token !== '') {
-            $headers['X-FLACSO-Webhook-Token'] = $webhook_token;
-            $headers['Authorization'] = 'Bearer ' . $webhook_token;
-        }
-        $headers['X-Idempotency-Key'] = $event_id;
-
-        $response = wp_safe_remote_post($endpoint, [
-            'timeout' => 20,
-            'redirection' => 3,
-            'headers' => $headers,
-            'body' => $payload_json,
-        ]);
-
-        if (is_wp_error($response)) {
-            $error_payload = [
-                'message' => __('No se pudo enviar la consulta. Intentá nuevamente en unos minutos.', 'flacso-oferta-academica'),
-            ];
-            if ($include_response_code) {
-                $error_payload['response_code'] = 0;
+        $result = FLACSO_Offer_Inquiry_Service::submit($payload);
+        if (empty($result['ok'])) {
+            $status = isset($result['code']) ? (int) $result['code'] : 500;
+            if ($status < 400 || $status > 599) {
+                $status = 500;
             }
 
+            error_log(
+                '[FLACSO] Consulta flotante de oferta no procesada: '
+                . sanitize_text_field((string) ($result['error'] ?? $result['message'] ?? 'error_desconocido'))
+            );
+
             wp_send_json_error(
-                $error_payload,
-                502
+                ['message' => __('No se pudo procesar la consulta. Intentá nuevamente en unos minutos.', 'flacso-oferta-academica')],
+                $status
             );
         }
 
-        $status_code = (int) wp_remote_retrieve_response_code($response);
-        $response_body = (string) wp_remote_retrieve_body($response);
-
-        if ($status_code < 200 || $status_code >= 300) {
-            $error_payload = [
-                'message' => sprintf(__('El webhook respondió con código %d. La consulta no se confirmó.', 'flacso-oferta-academica'), $status_code),
-            ];
-            if ($include_response_code) {
-                $error_payload['response_code'] = $status_code;
-                $excerpt = trim(wp_strip_all_tags($response_body));
-                if ($excerpt !== '') {
-                    if (function_exists('mb_substr')) {
-                        $excerpt = mb_substr($excerpt, 0, 260);
-                    } else {
-                        $excerpt = substr($excerpt, 0, 260);
-                    }
-                    $error_payload['response_excerpt'] = $excerpt;
-                }
-            }
-
-            wp_send_json_error(
-                $error_payload,
-                502
-            );
-        }
-
-        $decoded_body = json_decode($response_body, true);
-        if (!is_array($decoded_body)) {
-            wp_send_json_error(
-                ['message' => __('El webhook respondió con un formato inválido.', 'flacso-oferta-academica')],
-                502
-            );
-        }
-
-        $crm_confirmed = !empty($decoded_body['ok']) || !empty($decoded_body['success']);
-        if (!$crm_confirmed) {
-            wp_send_json_error(
-                ['message' => __('La consulta no pudo ser registrada en el sistema.', 'flacso-oferta-academica')],
-                502
-            );
-        }
-
-        $success_payload = [
+        wp_send_json_success([
             'message' => __('Gracias. Recibimos tu consulta y te contactaremos a la brevedad.', 'flacso-oferta-academica'),
-        ];
-
-        if ($include_response_code) {
-            $success_payload['response_code'] = $status_code;
-            $success_payload['editor_response'] = $decoded_body;
-        }
-
-        wp_send_json_success($success_payload);
+            'consulta_id' => $result['consulta_id'] ?? null,
+            'email_status' => $result['email'] ?? null,
+            'duplicate' => !empty($result['duplicate']),
+        ]);
     }
+
 }
