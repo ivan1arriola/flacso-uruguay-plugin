@@ -1,6 +1,9 @@
 <?php
 /**
- * Contrato del ruteo de Solicitudes de Información hacia Editor FLACSO.
+ * Contrato de compatibilidad del ruteo externo.
+ *
+ * Las consultas de ofertas ya son internas. Únicamente la consulta general
+ * conserva por ahora el endpoint del Editor.
  */
 
 $root = dirname(__DIR__);
@@ -19,11 +22,12 @@ $routing = (string) file_get_contents($routing_file);
 $init = (string) file_get_contents($init_file);
 
 editor_routing_assert(strpos($init, "modules/formularios/includes/editor-routing.php") !== false, 'formularios/init.php debe cargar editor-routing.php');
-editor_routing_assert(strpos($routing, 'https://editor.flacso.edu.uy') !== false, 'debe existir el Editor canónico como fallback');
-editor_routing_assert(strpos($routing, "'/api/consultas'") !== false, 'el destino canónico debe ser /api/consultas');
-editor_routing_assert(strpos($routing, "get_option('fc_oferta_webhook_url'") !== false, 'debe respetar la opción de solicitudes de oferta');
+editor_routing_assert(strpos($routing, 'https://editor.flacso.edu.uy') !== false, 'la consulta general conserva el Editor canónico como fallback');
+editor_routing_assert(strpos($routing, "'/api/consultas'") !== false, 'el destino canónico general debe partir de /api/consultas');
 editor_routing_assert(strpos($routing, "get_option('fc_consultas_webhook_url'") !== false, 'debe completar la opción de consultas generales');
-editor_routing_assert(strpos($routing, 'editor-flacso-uy.vercel.app') !== false, 'debe reconocer el host Vercel legado para migrarlo');
+editor_routing_assert(strpos($routing, "get_option('fc_oferta_webhook_url'") === false, 'el ruteo no debe leer el webhook de ofertas');
+editor_routing_assert(strpos($routing, "update_option('fc_oferta_webhook_url'") === false, 'el ruteo no debe escribir el webhook de ofertas');
+editor_routing_assert(strpos($routing, 'editor-flacso-uy.vercel.app') !== false, 'debe reconocer el host Vercel legado para la consulta general');
 
 if (!defined('ABSPATH')) {
     define('ABSPATH', __DIR__ . '/');
@@ -64,40 +68,38 @@ if (!function_exists('add_action')) {
 
 require_once $routing_file;
 
-// Sin configuración histórica: debe restaurar automáticamente el camino a Editor.
+// Sin configuración: solo debe crear la ruta de consulta general.
 fc_ensure_info_request_editor_routes();
 editor_routing_assert(
-    get_option('fc_oferta_webhook_url') === 'https://editor.flacso.edu.uy/api/consultas',
-    'Solicitud de Información debe apuntar a Editor cuando la opción histórica está vacía'
+    !array_key_exists('fc_oferta_webhook_url', $GLOBALS['editor_routing_options']),
+    'no debe recrear fc_oferta_webhook_url'
 );
 editor_routing_assert(
     get_option('fc_consultas_webhook_url') === 'https://editor.flacso.edu.uy/api/consultas',
     'consultas generales deben partir del endpoint canónico; su handler agrega /general'
 );
 
-// Un Editor explícito no legado debe usarse como base.
+// Un Editor explícito no legado solo afecta la consulta general.
 $GLOBALS['editor_routing_options'] = [
     'flacso_external_editor_url' => 'https://editor-ejemplo.test/',
+    'fc_oferta_webhook_url' => 'https://obsolete.example/api/consultas',
 ];
 $GLOBALS['editor_routing_updates'] = [];
 fc_ensure_info_request_editor_routes();
 editor_routing_assert(
-    get_option('fc_oferta_webhook_url') === 'https://editor-ejemplo.test/api/consultas',
-    'debe construir /api/consultas desde un flacso_external_editor_url explícito no legado'
+    get_option('fc_consultas_webhook_url') === 'https://editor-ejemplo.test/api/consultas',
+    'debe construir el endpoint general desde un Editor explícito'
 );
-
-// El dominio Vercel histórico ya no es un destino válido de producción.
-$GLOBALS['editor_routing_options'] = [
-    'flacso_external_editor_url' => 'https://editor-flacso-uy.vercel.app',
-];
-$GLOBALS['editor_routing_updates'] = [];
-fc_ensure_info_request_editor_routes();
 editor_routing_assert(
-    get_option('fc_oferta_webhook_url') === 'https://editor.flacso.edu.uy/api/consultas',
-    'debe migrar el Editor Vercel legado al dominio productivo actual'
+    get_option('fc_oferta_webhook_url') === 'https://obsolete.example/api/consultas',
+    'no debe modificar una opción legacy de oferta'
+);
+editor_routing_assert(
+    !isset($GLOBALS['editor_routing_updates']['fc_oferta_webhook_url']),
+    'fc_oferta_webhook_url no puede formar parte de las actualizaciones'
 );
 
-// Si las opciones webhook quedaron persistidas con Vercel, también deben repararse.
+// Vercel histórico se repara únicamente para la consulta general.
 $GLOBALS['editor_routing_options'] = [
     'flacso_external_editor_url' => 'https://editor.flacso.edu.uy',
     'fc_oferta_webhook_url' => 'https://editor-flacso-uy.vercel.app/api/consultas',
@@ -106,34 +108,32 @@ $GLOBALS['editor_routing_options'] = [
 $GLOBALS['editor_routing_updates'] = [];
 fc_ensure_info_request_editor_routes();
 editor_routing_assert(
-    get_option('fc_oferta_webhook_url') === 'https://editor.flacso.edu.uy/api/consultas',
-    'debe reparar fc_oferta_webhook_url legado'
+    get_option('fc_consultas_webhook_url') === 'https://editor.flacso.edu.uy/api/consultas',
+    'debe reparar el endpoint general Vercel legado'
 );
 editor_routing_assert(
-    get_option('fc_consultas_webhook_url') === 'https://editor.flacso.edu.uy/api/consultas',
-    'debe reparar fc_consultas_webhook_url legado'
+    get_option('fc_oferta_webhook_url') === 'https://editor-flacso-uy.vercel.app/api/consultas',
+    'no debe tocar la opción legacy de ofertas'
 );
 
-// Overrides explícitos no legados nunca se pisan.
+// Overrides explícitos generales no se pisan.
 $GLOBALS['editor_routing_options'] = [
     'flacso_external_editor_url' => 'https://editor.flacso.edu.uy',
-    'fc_oferta_webhook_url' => 'https://override.example/api/consultas',
     'fc_consultas_webhook_url' => 'https://override.example/api/consultas',
 ];
 $GLOBALS['editor_routing_updates'] = [];
 fc_ensure_info_request_editor_routes();
-editor_routing_assert(empty($GLOBALS['editor_routing_updates']), 'no debe sobreescribir endpoints configurados explícitamente');
-editor_routing_assert(get_option('fc_oferta_webhook_url') === 'https://override.example/api/consultas', 'debe preservar override de oferta');
+editor_routing_assert(empty($GLOBALS['editor_routing_updates']), 'no debe sobreescribir el endpoint general configurado explícitamente');
 
-// Si flacso_external_editor_url ya contiene el endpoint, no debe duplicarlo.
+// Si la base ya contiene /api/consultas, no debe duplicarla.
 $GLOBALS['editor_routing_options'] = [
     'flacso_external_editor_url' => 'https://editor.flacso.edu.uy/api/consultas/',
 ];
 $GLOBALS['editor_routing_updates'] = [];
 fc_ensure_info_request_editor_routes();
 editor_routing_assert(
-    get_option('fc_oferta_webhook_url') === 'https://editor.flacso.edu.uy/api/consultas',
+    get_option('fc_consultas_webhook_url') === 'https://editor.flacso.edu.uy/api/consultas',
     'no debe generar /api/consultas/api/consultas'
 );
 
-echo "OK info-request editor routing test\n";
+echo "OK general inquiry editor routing test\n";
