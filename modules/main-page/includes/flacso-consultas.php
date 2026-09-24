@@ -193,9 +193,20 @@ function flacso_consultas_dispatch_single_info_request( array $data ) {
 		}
 	}
 
+	if ( ! class_exists( 'FLACSO_Offer_Inquiry_Service' ) ) {
+		$service_file = dirname( __DIR__, 2 ) . '/consultas/services/class-flacso-offer-inquiry-service.php';
+		if ( file_exists( $service_file ) ) {
+			require_once $service_file;
+		}
+	}
+
+	if ( class_exists( 'FLACSO_Offer_Inquiry_Service' ) ) {
+		return FLACSO_Offer_Inquiry_Service::submit( $data );
+	}
+
 	return function_exists( 'fc_send_info_request_webhook' )
 		? fc_send_info_request_webhook( $data )
-		: array( 'ok' => false, 'error' => 'fc_send_info_request_webhook no disponible', 'code' => 0, 'body' => '' );
+		: array( 'ok' => false, 'error' => 'FLACSO_Offer_Inquiry_Service no disponible', 'code' => 500, 'body' => '' );
 }
 
 /**
