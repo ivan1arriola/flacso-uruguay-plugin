@@ -14,6 +14,8 @@ function wiring_assert(bool $cond, string $msg): void {
 // ---------------------------------------------------------------------------
 $ofertas_code = (string) file_get_contents($root . '/modules/main-page/includes/flacso-consultas.php');
 $seminarios_code = (string) file_get_contents($root . '/modules/oferta-academica/includes/class-academic-api.php');
+$posgrados_code = (string) file_get_contents($root . '/modules/posgrados/includes/class-flacso-posgrados-consultas-form.php');
+$helpers_code = (string) file_get_contents($root . '/modules/formularios/includes/helpers.php');
 
 wiring_assert(
     strpos($ofertas_code, 'FLACSO_Offer_Inquiry_Service::submit') !== false,
@@ -28,6 +30,27 @@ wiring_assert(
 wiring_assert(
     strpos($seminarios_code, 'editor.flacso.edu.uy/api/consultas/seminarios') === false,
     'class-academic-api.php no debe referenciar el endpoint externo del Editor'
+);
+
+wiring_assert(
+    preg_match('/public\s+static\s+function\s+handle_ajax\s*\(\)\s*:\s*void\s*\{\s*if\s*\(\s*function_exists\(\s*[\'"]flacso_enviar_consulta_func[\'"]\s*\)\s*\)\s*\{\s*flacso_enviar_consulta_func\(\);\s*return;\s*\}/s', $posgrados_code) === 1,
+    'FLACSO_Posgrados_Consultas_Form::handle_ajax debe delegar incondicionalmente a flacso_enviar_consulta_func'
+);
+
+wiring_assert(
+    strpos($helpers_code, "if ( class_exists( 'FLACSO_Offer_Inquiry_Service' ) )") !== false
+    && strpos($helpers_code, "return FLACSO_Offer_Inquiry_Service::submit( \$data );") !== false,
+    'fc_send_info_request_webhook debe delegar en FLACSO_Offer_Inquiry_Service::submit cuando la clase existe'
+);
+
+wiring_assert(
+    strpos($seminarios_code, "if (!class_exists('FLACSO_Seminar_Inquiry_Service'))") !== false,
+    'class-academic-api.php debe verificar defensivamente la existencia de FLACSO_Seminar_Inquiry_Service'
+);
+
+wiring_assert(
+    strpos($seminarios_code, "\$result['code'] >= 400 && \$result['code'] <= 599") !== false,
+    'class-academic-api.php debe sanitizar el código de error HTTP'
 );
 
 // ---------------------------------------------------------------------------
@@ -80,6 +103,85 @@ if (!function_exists('current_time')) {
         return date('Y-m-d H:i:s');
     }
 }
+if (!function_exists('absint')) {
+    function absint($v) {
+        return abs((int)$v);
+    }
+}
+if (!function_exists('sanitize_key')) {
+    function sanitize_key($k) {
+        return strtolower(preg_replace('/[^a-z0-9_-]/i', '', (string)$k));
+    }
+}
+if (!function_exists('esc_url_raw')) {
+    function esc_url_raw($u) {
+        return (string)$u;
+    }
+}
+if (!function_exists('wp_unslash')) {
+    function wp_unslash($v) {
+        return $v;
+    }
+}
+if (!function_exists('is_email')) {
+    function is_email($e) {
+        return (bool) filter_var($e, FILTER_VALIDATE_EMAIL);
+    }
+}
+if (!function_exists('wp_json_encode')) {
+    function wp_json_encode($d) {
+        return json_encode($d);
+    }
+}
+if (!function_exists('add_filter')) {
+    function add_filter($h, $c, $p = 10, $a = 1) {}
+}
+if (!function_exists('__')) {
+    function __($text, $domain = '') {
+        return $text;
+    }
+}
+if (!function_exists('esc_html__')) {
+    function esc_html__($text, $domain = '') {
+        return $text;
+    }
+}
+if (!function_exists('get_the_title')) {
+    function get_the_title($id) {
+        return 'Oferta ' . $id;
+    }
+}
+if (!function_exists('get_permalink')) {
+    function get_permalink($id) {
+        return 'https://flacso.edu.uy/oferta/' . $id;
+    }
+}
+
+class TestAjaxSuccessException extends Exception {
+    public $data;
+    public function __construct($data) {
+        $this->data = $data;
+        parent::__construct('AJAX Success');
+    }
+}
+class TestAjaxErrorException extends Exception {
+    public $data;
+    public function __construct($data) {
+        $this->data = $data;
+        parent::__construct('AJAX Error');
+    }
+}
+if (!function_exists('wp_send_json_success')) {
+    function wp_send_json_success($data = null) {
+        throw new TestAjaxSuccessException($data);
+    }
+}
+if (!function_exists('wp_send_json_error')) {
+    function wp_send_json_error($data = null) {
+        throw new TestAjaxErrorException($data);
+    }
+}
+
 if (!function_exists('wp_generate_uuid4')) {
     function wp_generate_uuid4() {
         $bytes = random_bytes(16);
@@ -219,6 +321,8 @@ FLACSO_DB::set_connection($pdo);
 
 // Include handlers
 require_once $root . '/modules/main-page/includes/flacso-consultas.php';
+require_once $root . '/modules/formularios/includes/helpers.php';
+require_once $root . '/modules/posgrados/includes/class-flacso-posgrados-consultas-form.php';
 require_once $root . '/modules/oferta-academica/includes/class-academic-api.php';
 
 // ---------------------------------------------------------------------------
@@ -261,12 +365,9 @@ wiring_assert(!empty($offer_dup_res['ok']), 'Reenvío de oferta con mismo ID deb
 wiring_assert(!empty($offer_dup_res['duplicate']), 'Reenvío de oferta debe indicar duplicate => true');
 
 // 3.3 Invalid email in offer submission
-$offer_invalid = flacso_consultas_dispatch_single_info_request([
-    'id_pagina'       => 101,
-    'titulo_posgrado' => 'Maestría',
-    'nombre'          => 'Ana',
-    'correo'          => 'invalido',
-]);
+$offer_invalid = flacso_consultas_dispatch_single_info_request(array_merge($offer_test_data, [
+    'correo' => 'invalido',
+]));
 wiring_assert(empty($offer_invalid['ok']), 'Oferta con email inválido debe retornar ok => false');
 wiring_assert(($offer_invalid['code'] ?? 0) === 422, 'Oferta con email inválido debe retornar código 422');
 
@@ -356,5 +457,67 @@ $req_invalid_email = new WP_REST_Request('POST', [
 $res_invalid_email = FLACSO_Academic_API::submit_consulta_seminario($req_invalid_email);
 wiring_assert($res_invalid_email->get_status() === 422, 'Email inválido en seminario debe retornar status 422');
 wiring_assert(empty($res_invalid_email->get_data()['success']), 'Email inválido debe retornar success => false');
+
+// ---------------------------------------------------------------------------
+// 5. Test fc_send_info_request_webhook delegation to FLACSO_Offer_Inquiry_Service
+// ---------------------------------------------------------------------------
+$webhook_test_data = [
+    'id_pagina'       => 108,
+    'titulo_posgrado' => 'Diploma Superior en Políticas',
+    'nombre'          => 'Valeria',
+    'apellido'        => 'Silva',
+    'correo'          => 'valeria.silva@example.com',
+    'pais'            => 'Uruguay',
+    'nivel_academico' => 'Universitario',
+    'profesion'       => 'Economista',
+    'url_base'        => 'https://flacso.edu.uy/oferta/diploma-politicas',
+    'url_referer'     => 'https://google.com',
+];
+
+$webhook_res = fc_send_info_request_webhook($webhook_test_data);
+wiring_assert(is_array($webhook_res), 'fc_send_info_request_webhook debe retornar un array');
+wiring_assert(!empty($webhook_res['ok']), 'fc_send_info_request_webhook debe retornar ok => true');
+wiring_assert(!empty($webhook_res['consulta_id']), 'fc_send_info_request_webhook debe retornar consulta_id');
+
+$stmt_wb = $pdo->prepare('SELECT * FROM offer_inquiries WHERE consultaId = ?');
+$stmt_wb->execute([$webhook_res['consulta_id']]);
+$wb_row = $stmt_wb->fetch();
+wiring_assert(!empty($wb_row), 'Registro enviado por fc_send_info_request_webhook debe persistirse');
+wiring_assert($wb_row['email'] === 'valeria.silva@example.com', 'Email del registro webhook debe coincidir');
+wiring_assert((int)$wb_row['offerWpId'] === 108, 'offerWpId del webhook debe ser 108');
+
+// ---------------------------------------------------------------------------
+// 6. Test FLACSO_Posgrados_Consultas_Form::handle_ajax unconditional delegation
+// ---------------------------------------------------------------------------
+$_POST = [
+    'id_pagina'            => '109',
+    'titulo_posgrado'      => 'Especialización en Educación',
+    'nombre'               => 'Mateo',
+    'apellido'             => 'Ramos',
+    'correo'               => 'mateo.ramos@example.com',
+    'pais'                 => 'Uruguay',
+    'nivel_academico'      => 'Universitario',
+    'profesion'            => 'Profesor',
+    'url_base'             => 'https://flacso.edu.uy/oferta/especializacion-educacion',
+    'dynamic_info_form_id' => '0', // Single posgrado form (no dynamic form id)
+];
+
+$ajax_caught = false;
+try {
+    FLACSO_Posgrados_Consultas_Form::handle_ajax();
+} catch (TestAjaxSuccessException $e) {
+    $ajax_caught = true;
+    $ajax_data = $e->data;
+    wiring_assert(!empty($ajax_data['note']) && $ajax_data['note'] === 'ok', 'handle_ajax debe responder con note => ok');
+} catch (TestAjaxErrorException $e) {
+    wiring_assert(false, 'handle_ajax no debe fallar para una consulta válida');
+}
+wiring_assert($ajax_caught, 'handle_ajax debe delegar incondicionalmente a flacso_enviar_consulta_func y terminar con éxito');
+
+$stmt_ajax = $pdo->prepare('SELECT * FROM offer_inquiries WHERE email = ?');
+$stmt_ajax->execute(['mateo.ramos@example.com']);
+$ajax_row = $stmt_ajax->fetch();
+wiring_assert(!empty($ajax_row), 'Consulta procesada por handle_ajax debe persistirse en offer_inquiries');
+wiring_assert((int)$ajax_row['offerWpId'] === 109, 'offerWpId de handle_ajax debe ser 109');
 
 echo "OK inquiry-handler-wiring-test\n";

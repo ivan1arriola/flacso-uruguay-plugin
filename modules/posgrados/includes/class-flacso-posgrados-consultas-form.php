@@ -280,14 +280,7 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
         }
 
         public static function handle_ajax(): void {
-            if (
-                function_exists('flacso_enviar_consulta_func')
-                && (
-                    !empty($_POST['dynamic_info_form_id'])
-                    || !empty($_POST['selected_offer_ids'])
-                    || isset($_POST['selected_offers'])
-                )
-            ) {
+            if (function_exists('flacso_enviar_consulta_func')) {
                 flacso_enviar_consulta_func();
                 return;
             }

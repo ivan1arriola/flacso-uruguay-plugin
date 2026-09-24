@@ -960,6 +960,9 @@ function fc_build_info_request_webhook_payload( array $data ) {
  * @return array { ok, target, code, body, error }
  */
 function fc_send_info_request_webhook( array $data ) {
+    if ( class_exists( 'FLACSO_Offer_Inquiry_Service' ) ) {
+        return FLACSO_Offer_Inquiry_Service::submit( $data );
+    }
     $payload = fc_build_info_request_webhook_payload( $data );
     return fc_dispatch_info_request_webhook( $payload );
 }

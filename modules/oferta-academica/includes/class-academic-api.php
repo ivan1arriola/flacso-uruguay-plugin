@@ -168,6 +168,13 @@ final class FLACSO_Academic_API {
             }
         }
 
+        if (!class_exists('FLACSO_Seminar_Inquiry_Service')) {
+            return new WP_REST_Response([
+                'success' => false,
+                'message' => 'Servicio de seminarios no disponible',
+            ], 500);
+        }
+
         $result = FLACSO_Seminar_Inquiry_Service::submit($payload);
 
         if (!empty($result['ok'])) {
@@ -180,10 +187,11 @@ final class FLACSO_Academic_API {
             ], 200);
         }
 
+        $status_code = (!empty($result['code']) && $result['code'] >= 400 && $result['code'] <= 599) ? (int)$result['code'] : 500;
         return new WP_REST_Response([
             'success' => false,
             'message' => $result['message'] ?? $result['error'] ?? 'Error al procesar la consulta.',
-        ], $result['code'] ?? 500);
+        ], $status_code);
     }
 
     public static function can_write(): bool {
