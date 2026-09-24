@@ -55,6 +55,7 @@ final class FLACSO_Admin_Panel {
             'eventos'     => ['title' => __('Eventos', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=evento')],
             'faqs'        => ['title' => __('Preguntas Frecuentes', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=flacso_faq')],
             'portada'     => ['title' => __('Portada FLACSO', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-main-page')],
+            'consultas'   => ['title' => __('Consultas', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-consultas')],
             'correos'      => ['title' => __('Correos', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-correos')],
             'analitica'    => ['title' => __('Analítica / Meta', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-integracion-meta')],
             'sistema'      => ['title' => __('Sistema', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-sistema')],
@@ -171,6 +172,7 @@ final class FLACSO_Admin_Panel {
             'edit.php?post_type=tabla-precio' => 60,
             'flacso-main-page' => 70,
             'fc_options_page' => 75,
+            'flacso-consultas' => 78,
             'flacso-correos' => 80,
             'flacso-integracion-meta' => 90,
             'flacso-sistema' => 100,
@@ -255,7 +257,8 @@ final class FLACSO_Admin_Panel {
                             <?php self::resource_card('dashicons-groups', __('Docentes', 'flacso-uruguay'), __('Perfiles y referencias académicas.', 'flacso-uruguay'), admin_url('admin.php?page=docentes_panel')); ?>
                             <?php self::resource_card('dashicons-money-alt', __('Tablas de precios', 'flacso-uruguay'), __('Aranceles reutilizados por cohortes y ediciones.', 'flacso-uruguay'), admin_url('edit.php?post_type=tabla-precio')); ?>
                             <?php self::resource_card('dashicons-admin-home', __('Portada', 'flacso-uruguay'), __('Contenido y orden de la página principal.', 'flacso-uruguay'), admin_url('admin.php?page=flacso-main-page')); ?>
-                            <?php self::resource_card('dashicons-email-alt', __('Correos', 'flacso-uruguay'), __('Mailjet, remitente, listas y plantillas transaccionales.', 'flacso-uruguay'), admin_url('admin.php?page=flacso-correos')); ?>
+                            <?php self::resource_card('dashicons-chart-bar', __('Consultas', 'flacso-uruguay'), __('Bandeja PostgreSQL, analítica por oferta/país, campañas y exportación CSV.', 'flacso-uruguay'), admin_url('admin.php?page=flacso-consultas')); ?>
+                            <?php self::resource_card('dashicons-email-alt', __('Correos', 'flacso-uruguay'), __('Consola Mailjet, listas por oferta/seminario, plantillas y pruebas.', 'flacso-uruguay'), admin_url('admin.php?page=flacso-correos')); ?>
                             <?php self::resource_card('dashicons-chart-area', __('Analítica', 'flacso-uruguay'), __('Meta Pixel, Conversion API y captación.', 'flacso-uruguay'), admin_url('admin.php?page=flacso-integracion-meta')); ?>
                             <?php self::resource_card('dashicons-admin-tools', __('Sistema', 'flacso-uruguay'), __('Diagnóstico y dependencias externas todavía activas.', 'flacso-uruguay'), admin_url('admin.php?page=flacso-sistema')); ?>
                         </div>

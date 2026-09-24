@@ -25,9 +25,11 @@ $flacso_consultas_files = [
     'includes/database/repositories/class-flacso-base-inquiry-repository.php',
     'includes/database/repositories/class-flacso-offer-inquiry-repository.php',
     'includes/database/repositories/class-flacso-seminar-inquiry-repository.php',
+    'includes/database/repositories/class-flacso-inquiry-analytics-repository.php',
     'includes/integrations/class-flacso-mailjet-client.php',
     'modules/consultas/services/class-flacso-offer-inquiry-service.php',
     'modules/consultas/services/class-flacso-seminar-inquiry-service.php',
+    'modules/consultas/includes/class-flacso-consultas-admin.php',
 ];
 
 $flacso_base_dir = defined('FLACSO_URUGUAY_PATH') ? FLACSO_URUGUAY_PATH : dirname(__DIR__, 2) . '/';
@@ -39,3 +41,8 @@ foreach ($flacso_consultas_files as $flacso_file) {
         require_once rtrim($flacso_base_dir, '/') . '/' . ltrim($flacso_file, '/');
     }
 }
+
+if (class_exists('FLACSO_Consultas_Admin') && function_exists('add_action')) {
+    FLACSO_Consultas_Admin::init();
+}
+

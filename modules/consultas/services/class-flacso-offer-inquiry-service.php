@@ -381,6 +381,22 @@ class FLACSO_Offer_Inquiry_Service {
             error_log('[FLACSO] Error al actualizar estado de email en base de datos: ' . $e->getMessage());
         }
 
+        // 7b. Sincronizar contacto con listas de Mailjet asignadas a la oferta y/o lista global
+        try {
+            if (class_exists('FLACSO_Mail_Settings') && class_exists('FLACSO_Mailjet_Client')) {
+                $target_lists = FLACSO_Mail_Settings::get_target_lists_for_offer((int) ($offer_id ?? 0));
+                if (!empty($target_lists)) {
+                    FLACSO_Mailjet_Client::sync_contact_to_lists($email, $full_name, [
+                        'firstname' => $first_name,
+                        'lastname'  => $last_name,
+                        'country'   => (string) ($country ?? ''),
+                    ], $target_lists);
+                }
+            }
+        } catch (\Throwable $e) {
+            error_log('[FLACSO] Aviso al sincronizar contacto en lista Mailjet (oferta): ' . $e->getMessage());
+        }
+
         // 8. Retornar resultado
         return [
             'ok'                   => true,

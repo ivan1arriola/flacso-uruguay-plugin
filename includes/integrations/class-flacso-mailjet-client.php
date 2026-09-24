@@ -742,4 +742,211 @@ class FLACSO_Mailjet_Client {
             htmlspecialchars($label, ENT_QUOTES, 'UTF-8')
         );
     }
+
+    /**
+     * Sincroniza (suscribe/actualiza con Action=addnoforce) un contacto en una o varias listas de Mailjet.
+     *
+     * @param string $email
+     * @param string $name
+     * @param array  $properties
+     * @param array  $list_ids
+     * @return array
+     */
+    public static function sync_contact_to_lists(string $email, string $name, array $properties, array $list_ids): array {
+        $email = trim($email);
+        $clean_lists = array_values(array_unique(array_filter(array_map(static function ($id): string {
+            return preg_replace('/[^0-9]/', '', (string) $id) ?: '';
+        }, $list_ids))));
+
+        if ($email === '' || empty($clean_lists)) {
+            return ['ok' => false, 'synced' => [], 'errors' => ['Sin email o listas destino']];
+        }
+
+        $settings = self::get_settings();
+        if ($settings['api_key'] === '' || $settings['secret_key'] === '' || !function_exists('wp_remote_post')) {
+            return ['ok' => false, 'synced' => [], 'errors' => ['Credenciales Mailjet no configuradas']];
+        }
+
+        $auth_header = 'Basic ' . base64_encode($settings['api_key'] . ':' . $settings['secret_key']);
+        $synced = [];
+        $errors = [];
+
+        $contact = [
+            'Email' => $email,
+            'IsExcludedFromCampaigns' => 'false',
+        ];
+        if ($name !== '') {
+            $contact['Name'] = $name;
+        }
+        $clean_props = [];
+        foreach ($properties as $k => $v) {
+            $val = trim((string) $v);
+            if ($val !== '' && preg_match('/^[a-z][a-z0-9_]*$/i', (string) $k)) {
+                $clean_props[(string) $k] = substr($val, 0, 500);
+            }
+        }
+        if (!empty($clean_props)) {
+            $contact['Properties'] = $clean_props;
+        }
+
+        foreach ($clean_lists as $list_id) {
+            $endpoint = sprintf('https://api.mailjet.com/v3/REST/contactslist/%s/managemanycontacts', rawurlencode($list_id));
+            $response = wp_remote_post($endpoint, [
+                'timeout' => 12,
+                'headers' => [
+                    'Authorization' => $auth_header,
+                    'Content-Type'  => 'application/json',
+                    'Accept'        => 'application/json',
+                ],
+                'body' => function_exists('wp_json_encode')
+                    ? wp_json_encode(['Action' => 'addnoforce', 'Contacts' => [$contact]])
+                    : json_encode(['Action' => 'addnoforce', 'Contacts' => [$contact]]),
+            ]);
+
+            if (function_exists('is_wp_error') && is_wp_error($response)) {
+                $errors[$list_id] = $response->get_error_message();
+                continue;
+            }
+
+            $status_code = function_exists('wp_remote_retrieve_response_code')
+                ? (int) wp_remote_retrieve_response_code($response)
+                : (int) ($response['response']['code'] ?? 0);
+
+            if ($status_code >= 200 && $status_code < 300) {
+                $synced[] = $list_id;
+            } else {
+                $errors[$list_id] = 'HTTP ' . $status_code;
+            }
+        }
+
+        return [
+            'ok'     => !empty($synced),
+            'synced' => $synced,
+            'errors' => $errors,
+        ];
+    }
+
+    /**
+     * Genera la vista previa del cuerpo HTML institucional para cualquiera de los 3 escenarios.
+     *
+     * @param string $scenario 'consulta_abierta' | 'consulta_cerrada' | 'consulta_seminario'
+     * @return array { subject: string, html: string, text: string }
+     */
+    public static function get_preview_html(string $scenario = 'consulta_abierta'): array {
+        if ($scenario === 'consulta_seminario') {
+            $sample_inquiry = [
+                'firstName' => 'María',
+                'lastName'  => 'Rodríguez',
+                'fullName'  => 'María Rodríguez',
+                'email'     => 'maria.rodriguez@ejemplo.edu.uy',
+                'country'   => 'Uruguay',
+                'consulta'  => 'Quisiera consultar sobre la modalidad de cursada sincrónica y horarios de las sesiones.',
+            ];
+            $sample_seminar = [
+                'name'              => 'Seminario de Políticas de Cuidado y Género en América Latina',
+                'urlBase'           => 'https://flacso.edu.uy/seminarios/politicas-de-cuidado/',
+                'preinscripcionUrl' => 'https://preinscripciones.flacso.edu.uy',
+                'startValue'        => 'Octubre 2026',
+                'modalityLabel'     => 'Virtual sincrónico',
+            ];
+            $fallback = self::compile_seminar_inquiry_fallback($sample_inquiry, $sample_seminar);
+            return [
+                'subject' => 'Información sobre Seminario de Políticas de Cuidado y Género · FLACSO Uruguay',
+                'html'    => $fallback['html'],
+                'text'    => $fallback['text'],
+            ];
+        }
+
+        $is_closed = ($scenario === 'consulta_cerrada');
+        $sample_inquiry = [
+            'firstName'      => 'María',
+            'lastName'       => 'Rodríguez',
+            'fullName'       => 'María Rodríguez',
+            'email'          => 'maria.rodriguez@ejemplo.edu.uy',
+            'country'        => 'Uruguay',
+            'educationLevel' => 'Grado universitario',
+            'profession'     => 'Socióloga',
+        ];
+        $sample_program = [
+            'name'              => 'Maestría en Políticas Públicas y Género',
+            'urlBase'           => 'https://flacso.edu.uy/oferta/maestria-politicas-publicas-genero/',
+            'cartaUrl'          => 'https://flacso.edu.uy/oferta/maestria-politicas-publicas-genero/#programa',
+            'preinscripcionUrl' => 'https://preinscripciones.flacso.edu.uy',
+            'calendarUrl'       => 'https://flacso.edu.uy/oferta/maestria-politicas-publicas-genero/#calendario',
+            'startValue'        => 'Mayo 2026',
+            'nextPeriod'        => 'Abril 2027',
+            'modalityLabel'     => 'Virtual con encuentros sincrónicos',
+        ];
+        $fallback = self::compile_offer_inquiry_fallback($sample_inquiry, $sample_program, !$is_closed);
+        return [
+            'subject' => ($is_closed ? '[Inscripciones cerradas] ' : '') . 'Información sobre Maestría en Políticas Públicas y Género · FLACSO Uruguay',
+            'html'    => $fallback['html'],
+            'text'    => $fallback['text'],
+        ];
+    }
+
+    /**
+     * Envía un correo de prueba en vivo usando el escenario indicado.
+     *
+     * @param string $recipient_email
+     * @param string $scenario 'consulta_abierta' | 'consulta_cerrada' | 'consulta_seminario'
+     * @return array
+     */
+    public static function send_test_scenario(string $recipient_email, string $scenario = 'consulta_abierta'): array {
+        $recipient_email = trim($recipient_email);
+        if ($recipient_email === '' || !filter_var($recipient_email, FILTER_VALIDATE_EMAIL)) {
+            return [
+                'ok'     => false,
+                'status' => 'failed',
+                'error'  => 'Dirección de correo destinatario inválida.',
+            ];
+        }
+
+        if ($scenario === 'consulta_seminario') {
+            return self::send_seminar_inquiry(
+                [
+                    'consultaId' => 'test-seminario-' . time(),
+                    'firstName'  => 'Prueba',
+                    'lastName'   => 'FLACSO',
+                    'fullName'   => 'Prueba FLACSO Uruguay',
+                    'email'      => $recipient_email,
+                    'country'    => 'Uruguay',
+                    'consulta'   => 'Este es un envío de prueba disparado desde la Consola de Correos de WordPress.',
+                ],
+                [
+                    'seminarName'       => 'Seminario de Prueba — Consola FLACSO Uruguay',
+                    'seminarType'       => 'Seminario de Posgrado',
+                    'offerStatus'       => 'abierta',
+                    'programUrl'        => 'https://flacso.edu.uy',
+                    'preinscripcionUrl' => 'https://preinscripciones.flacso.edu.uy',
+                    'startPeriod'       => 'Próxima Edición',
+                    'modality'          => 'Virtual',
+                ]
+            );
+        }
+
+        $is_closed = ($scenario === 'consulta_cerrada');
+        return self::send_offer_inquiry(
+            [
+                'consultaId' => 'test-oferta-' . ($is_closed ? 'cerrada-' : 'abierta-') . time(),
+                'firstName'  => 'Prueba',
+                'lastName'   => 'FLACSO',
+                'fullName'   => 'Prueba FLACSO Uruguay',
+                'email'      => $recipient_email,
+                'country'    => 'Uruguay',
+            ],
+            [
+                'offerName'         => 'Maestría de Prueba — Consola FLACSO Uruguay',
+                'offerType'         => 'Maestría',
+                'offerStatus'       => $is_closed ? 'cerrada' : 'abierta',
+                'programUrl'        => 'https://flacso.edu.uy',
+                'cartaUrl'          => 'https://flacso.edu.uy',
+                'preinscripcionUrl' => 'https://preinscripciones.flacso.edu.uy',
+                'startPeriod'       => 'Mayo 2026',
+                'nextPeriod'        => 'Abril 2027',
+                'modality'          => 'Virtual',
+                'duration'          => '24 meses',
+            ]
+        );
+    }
 }
