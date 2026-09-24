@@ -44,83 +44,41 @@ final class FLACSO_Admin_Panel {
             return;
         }
 
-        $items = [
-            'resumen'     => ['title' => __('Panel FLACSO', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=' . self::PAGE_SLUG)],
-            'programas'   => ['title' => __('Programas Académicos', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=programa-academico')],
-            'ofertas'     => ['title' => __('Ofertas Académicas', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=oferta-academica')],
-            'seminarios'  => ['title' => __('Seminarios', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=seminario')],
-            'tablas'      => ['title' => __('Tablas de Aranceles', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=tabla-precio')],
-            'docentes'    => ['title' => __('Personas / Equipo', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=docente')],
-            'convenios'   => ['title' => __('Convenios', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=convenio')],
-            'eventos'     => ['title' => __('Eventos', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=evento')],
-            'faqs'        => ['title' => __('Preguntas Frecuentes', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=flacso_faq')],
-            'portada'     => ['title' => __('Portada FLACSO', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-main-page')],
-            'correos'      => ['title' => __('Correos', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-correos')],
-            'analitica'    => ['title' => __('Analítica / Meta', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-integracion-meta')],
-            'sistema'      => ['title' => __('Sistema', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-sistema')],
-        ];
+        // WordPress ya muestra el nombre del sitio ("FLACSO Uruguay") en la barra.
+        // Usamos ese único nodo y evitamos crear un segundo menú FLACSO paralelo.
+        if (!$admin_bar->get_node('site-name')) {
+            return;
+        }
 
-        // 1. Nodo principal FLACSO en el Admin Bar
         $admin_bar->add_node([
-            'id'    => 'flacso-panel',
-            'title' => '<span class="ab-icon dashicons-building" style="top:2px;"></span><span class="ab-label">' . esc_html__('FLACSO', 'flacso-uruguay') . '</span>',
-            'href'  => admin_url('admin.php?page=' . self::PAGE_SLUG),
-            'meta'  => ['title' => __('Gestión institucional y académica FLACSO', 'flacso-uruguay')],
+            'id'     => 'site-name-flacso-group',
+            'parent' => 'site-name',
+            'title'  => '--- ' . esc_html__('FLACSO Gestión', 'flacso-uruguay') . ' ---',
+            'href'   => admin_url('admin.php?page=' . self::PAGE_SLUG),
         ]);
+
+        $items = [
+            'panel'      => ['title' => __('Panel FLACSO', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=' . self::PAGE_SLUG)],
+            'programas'  => ['title' => __('Programas Académicos', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=programa-academico')],
+            'ofertas'    => ['title' => __('Ofertas Académicas', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=oferta-academica')],
+            'seminarios' => ['title' => __('Seminarios', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=seminario')],
+            'tablas'     => ['title' => __('Tablas de Aranceles', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=tabla-precio')],
+            'docentes'   => ['title' => __('Personas / Equipo', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=docente')],
+            'convenios'  => ['title' => __('Convenios', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=convenio')],
+            'eventos'    => ['title' => __('Eventos', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=evento')],
+            'faqs'       => ['title' => __('Preguntas Frecuentes', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=flacso_faq')],
+            'portada'    => ['title' => __('Portada FLACSO', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-main-page')],
+            'correos'    => ['title' => __('Correos', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-correos')],
+            'analitica'  => ['title' => __('Analítica / Meta', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-integracion-meta')],
+            'sistema'    => ['title' => __('Sistema', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-sistema')],
+        ];
 
         foreach ($items as $key => $item) {
             $admin_bar->add_node([
-                'id'     => 'flacso-panel-' . $key,
-                'parent' => 'flacso-panel',
+                'id'     => 'site-name-flacso-' . $key,
+                'parent' => 'site-name',
                 'title'  => esc_html($item['title']),
                 'href'   => $item['href'],
-            ]);
-        }
-
-        // 2. Submenús dentro del nodo del sitio "FLACSO Uruguay" (site-name)
-        if ($admin_bar->get_node('site-name')) {
-            $admin_bar->add_node([
-                'id'     => 'site-name-flacso-group',
-                'parent' => 'site-name',
-                'title'  => '--- ' . esc_html__('FLACSO Gestión', 'flacso-uruguay') . ' ---',
-                'href'   => admin_url('admin.php?page=' . self::PAGE_SLUG),
-            ]);
-            $admin_bar->add_node([
-                'id'     => 'site-name-flacso-panel',
-                'parent' => 'site-name',
-                'title'  => esc_html__('Panel FLACSO', 'flacso-uruguay'),
-                'href'   => admin_url('admin.php?page=' . self::PAGE_SLUG),
-            ]);
-            $admin_bar->add_node([
-                'id'     => 'site-name-flacso-ofertas',
-                'parent' => 'site-name',
-                'title'  => esc_html__('Ofertas Académicas', 'flacso-uruguay'),
-                'href'   => admin_url('edit.php?post_type=oferta-academica'),
-            ]);
-            $admin_bar->add_node([
-                'id'     => 'site-name-flacso-seminarios',
-                'parent' => 'site-name',
-                'title'  => esc_html__('Seminarios', 'flacso-uruguay'),
-                'href'   => admin_url('edit.php?post_type=seminario'),
-            ]);
-
-            $admin_bar->add_node([
-                'id'     => 'site-name-flacso-tablas',
-                'parent' => 'site-name',
-                'title'  => esc_html__('Tablas de Aranceles', 'flacso-uruguay'),
-                'href'   => admin_url('edit.php?post_type=tabla-precio'),
-            ]);
-            $admin_bar->add_node([
-                'id'     => 'site-name-flacso-docentes',
-                'parent' => 'site-name',
-                'title'  => esc_html__('Personas / Equipo', 'flacso-uruguay'),
-                'href'   => admin_url('edit.php?post_type=docente'),
-            ]);
-            $admin_bar->add_node([
-                'id'     => 'site-name-flacso-portada',
-                'parent' => 'site-name',
-                'title'  => esc_html__('Portada FLACSO', 'flacso-uruguay'),
-                'href'   => admin_url('admin.php?page=flacso-main-page'),
             ]);
         }
     }
