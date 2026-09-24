@@ -1713,8 +1713,8 @@ class FLACSO_Integrations_Settings {
             );
             self::render_checkbox_field(
                 self::OPTION_META_LEADS_FORWARD_TO_WEBHOOK,
-                __('Reenviar al webhook de solicitud de información', 'flacso-uruguay'),
-                __('Cuando esté activo, cada lead válido se envía al mismo endpoint configurado para solicitudes de información de oferta académica.', 'flacso-uruguay')
+                __('Registrar como consulta de oferta', 'flacso-uruguay'),
+                __('Cuando esté activo, cada lead válido entra al servicio interno de consultas y se guarda en PostgreSQL antes del envío transaccional.', 'flacso-uruguay')
             );
             ?>
 
