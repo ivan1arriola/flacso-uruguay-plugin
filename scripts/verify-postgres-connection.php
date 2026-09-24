@@ -13,8 +13,6 @@
  * @package FLACSO_Uruguay
  */
 
-declare(strict_types=1);
-
 // Cargar configuración de WordPress si no están definidas las constantes de conexión
 if (!defined('FLACSO_PG_HOST')) {
     $current_dir = __DIR__;
