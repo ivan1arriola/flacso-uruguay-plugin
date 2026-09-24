@@ -22,6 +22,31 @@ if (!function_exists('get_option')) {
     }
 }
 
+if (!class_exists('FLACSO_Academic_Catalog')) {
+    class FLACSO_Academic_Catalog {
+        public static function get_offer(int $id): array {
+            if ($id !== 13) {
+                return [];
+            }
+
+            return [
+                'id' => 13,
+                'nombre' => 'Diploma con cohorte canónica',
+                'correo' => 'coordinacion@flacso.edu.uy',
+                'cohorte_vigente' => [
+                    'fecha_inicio' => '2026-09-02',
+                    'precision_fecha_inicio' => 'dia',
+                    'modalidad' => 'hibrida',
+                    'preinscripcion' => [
+                        'abierta' => true,
+                        'url' => 'https://preinscripciones.flacso.edu.uy/oferta/13',
+                    ],
+                ],
+            ];
+        }
+    }
+}
+
 $GLOBALS['mailjet_http_calls'] = [];
 $GLOBALS['mailjet_mock_simulate_error'] = false;
 
@@ -139,6 +164,22 @@ srv_assert(!empty($saved), 'La fila debe existir en offer_inquiries');
 srv_assert($saved['emailStatus'] === 'sent', 'emailStatus en BD debe ser sent');
 srv_assert($saved['mailjetMessageId'] === '288230407340150000', 'mailjetMessageId debe guardarse en BD');
 srv_assert($saved['mailjetMessageUuid'] === 'f7b8a8b1-1234-5678-90ab-cdef12345678', 'mailjetMessageUuid debe guardarse en BD');
+
+// =========================================================================
+// 1.2 Datos canónicos de Cohorte: modalidad, fecha y Reply-To de la oferta
+// =========================================================================
+$result_catalog = FLACSO_Offer_Inquiry_Service::submit([
+    'event_id'  => 'srv-offer-catalog-003',
+    'id_pagina' => 13,
+    'nombre'    => 'Sofía',
+    'correo'    => 'sofia@ejemplo.com',
+]);
+srv_assert($result_catalog['ok'] === true, 'Offer con catálogo canónico debe ser ok');
+$catalog_call = end($GLOBALS['mailjet_http_calls']);
+$catalog_payload = json_decode($catalog_call['args']['body'], true);
+srv_assert(($catalog_payload['Messages'][0]['ReplyTo']['Email'] ?? '') === 'coordinacion@flacso.edu.uy', 'Debe usar correo de coordinación como Reply-To');
+srv_assert(($catalog_payload['Messages'][0]['Variables']['oferta_academica_modalidad'] ?? '') === 'Híbrida', 'Debe tomar y humanizar modalidad de cohorte vigente');
+srv_assert(($catalog_payload['Messages'][0]['Variables']['oferta_academica_fecha_inicio'] ?? '') === '2 de septiembre de 2026', 'Debe formatear fecha de cohorte vigente');
 
 // =========================================================================
 // 2. Idempotencia de oferta: reenvío con mismo event_id retorna duplicate sin enviar correo
