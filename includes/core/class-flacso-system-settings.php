@@ -19,8 +19,10 @@ final class FLACSO_System_Settings {
     private const OPTION_WEBHOOK_TOKEN = 'flacso_webhook_token';
     private const OPTION_CHARLAS_WEBHOOK_URL = 'flacso_charlas_abiertas_webhook_url';
     private const OPTION_PREINSCRIPCIONES_WEBHOOK_URL = 'flacso_preinscripciones_webhook_url';
+    private const OPTION_USE_TELEGRAM = 'fc_use_telegram';
     private const OPTION_TELEGRAM_BOT_TOKEN = 'fc_telegram_bot_token';
     private const OPTION_TELEGRAM_CHAT_ID = 'fc_telegram_chat_id';
+    private const OPTION_USE_RECAPTCHA = 'fc_use_recaptcha';
     private const OPTION_RECAPTCHA_SITE_KEY = 'fc_recaptcha_site_key';
     private const OPTION_RECAPTCHA_SECRET_KEY = 'fc_recaptcha_secret_key';
 
@@ -65,6 +67,11 @@ final class FLACSO_System_Settings {
             'sanitize_callback' => 'esc_url_raw',
             'default' => '',
         ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_USE_TELEGRAM, [
+            'type' => 'string',
+            'sanitize_callback' => [self::class, 'sanitize_toggle'],
+            'default' => '0',
+        ]);
         register_setting(self::SETTINGS_GROUP, self::OPTION_TELEGRAM_BOT_TOKEN, [
             'type' => 'string',
             'sanitize_callback' => 'sanitize_text_field',
@@ -74,6 +81,11 @@ final class FLACSO_System_Settings {
             'type' => 'string',
             'sanitize_callback' => 'sanitize_text_field',
             'default' => '',
+        ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_USE_RECAPTCHA, [
+            'type' => 'string',
+            'sanitize_callback' => [self::class, 'sanitize_toggle'],
+            'default' => '0',
         ]);
         register_setting(self::SETTINGS_GROUP, self::OPTION_RECAPTCHA_SITE_KEY, [
             'type' => 'string',
@@ -85,6 +97,10 @@ final class FLACSO_System_Settings {
             'sanitize_callback' => 'sanitize_text_field',
             'default' => '',
         ]);
+    }
+
+    public static function sanitize_toggle($value): string {
+        return (string) $value === '1' ? '1' : '0';
     }
 
     public static function sanitize_charlas_webhook_url($value): string {
@@ -192,12 +208,32 @@ final class FLACSO_System_Settings {
                 <h2><?php esc_html_e('Formularios y notificaciones', 'flacso-uruguay'); ?></h2>
                 <table class="form-table" role="presentation">
                     <tr>
+                        <th scope="row"><?php esc_html_e('Telegram', 'flacso-uruguay'); ?></th>
+                        <td>
+                            <input type="hidden" name="<?php echo esc_attr(self::OPTION_USE_TELEGRAM); ?>" value="0">
+                            <label>
+                                <input type="checkbox" name="<?php echo esc_attr(self::OPTION_USE_TELEGRAM); ?>" value="1" <?php checked(get_option(self::OPTION_USE_TELEGRAM, '0'), '1'); ?>>
+                                <?php esc_html_e('Activar notificaciones Telegram del formulario general', 'flacso-uruguay'); ?>
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
                         <th scope="row"><label for="<?php echo esc_attr(self::OPTION_TELEGRAM_BOT_TOKEN); ?>"><?php esc_html_e('Telegram Bot Token', 'flacso-uruguay'); ?></label></th>
                         <td><input class="regular-text code" type="password" autocomplete="new-password" id="<?php echo esc_attr(self::OPTION_TELEGRAM_BOT_TOKEN); ?>" name="<?php echo esc_attr(self::OPTION_TELEGRAM_BOT_TOKEN); ?>" value="<?php echo esc_attr((string) get_option(self::OPTION_TELEGRAM_BOT_TOKEN, '')); ?>"></td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="<?php echo esc_attr(self::OPTION_TELEGRAM_CHAT_ID); ?>"><?php esc_html_e('Telegram Chat ID', 'flacso-uruguay'); ?></label></th>
                         <td><input class="regular-text code" type="text" id="<?php echo esc_attr(self::OPTION_TELEGRAM_CHAT_ID); ?>" name="<?php echo esc_attr(self::OPTION_TELEGRAM_CHAT_ID); ?>" value="<?php echo esc_attr((string) get_option(self::OPTION_TELEGRAM_CHAT_ID, '')); ?>"></td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('reCAPTCHA', 'flacso-uruguay'); ?></th>
+                        <td>
+                            <input type="hidden" name="<?php echo esc_attr(self::OPTION_USE_RECAPTCHA); ?>" value="0">
+                            <label>
+                                <input type="checkbox" name="<?php echo esc_attr(self::OPTION_USE_RECAPTCHA); ?>" value="1" <?php checked(get_option(self::OPTION_USE_RECAPTCHA, '0'), '1'); ?>>
+                                <?php esc_html_e('Proteger el formulario general con reCAPTCHA v3', 'flacso-uruguay'); ?>
+                            </label>
+                        </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="<?php echo esc_attr(self::OPTION_RECAPTCHA_SITE_KEY); ?>"><?php esc_html_e('reCAPTCHA Site Key', 'flacso-uruguay'); ?></label></th>
