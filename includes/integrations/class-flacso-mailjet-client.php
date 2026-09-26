@@ -189,7 +189,9 @@ class FLACSO_Mailjet_Client {
         if (function_exists('is_wp_error') && is_wp_error($response)) {
             return [
                 'ok'           => false,
-                'status'       => 'failed',
+                // No hay confirmación de que Mailjet no haya aceptado el
+                // mensaje antes de que la red o el timeout fallaran.
+                'status'       => 'processing',
                 'sender'       => $sender_email,
                 'message_id'   => null,
                 'message_uuid' => null,
@@ -209,10 +211,14 @@ class FLACSO_Mailjet_Client {
 
         if ($code < 200 || $code >= 300) {
             $error_detail = $decoded['ErrorMessage'] ?? $decoded['message'] ?? $body_str;
+            // Un 4xx confirma un rechazo. En 5xx (o sin código) no podemos
+            // descartar que el proveedor haya recibido el envío, por lo que
+            // el registro queda pendiente de conciliación.
+            $status = $code >= 400 && $code < 500 ? 'failed' : 'processing';
 
             return [
                 'ok'           => false,
-                'status'       => 'failed',
+                'status'       => $status,
                 'sender'       => $sender_email,
                 'message_id'   => null,
                 'message_uuid' => null,

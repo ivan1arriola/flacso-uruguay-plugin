@@ -86,6 +86,27 @@ function assert_true(bool $cond, string $msg): void {
     }
 }
 
+assert_true(
+    method_exists('FLACSO_Consultas_Admin', 'is_retryable_email_status'),
+    'la consola debe definir qué estados permiten reenvío manual'
+);
+assert_true(
+    FLACSO_Consultas_Admin::is_retryable_email_status('failed') === true,
+    'sólo una entrega fallida debe poder reenviarse'
+);
+assert_true(
+    FLACSO_Consultas_Admin::is_retryable_email_status('sent') === false,
+    'una entrega ya enviada no debe poder reenviarse para evitar duplicados'
+);
+assert_true(
+    FLACSO_Consultas_Admin::is_retryable_email_status('skipped') === false,
+    'una entrega omitida no debe poder reenviarse desde la consola'
+);
+assert_true(
+    FLACSO_Consultas_Admin::is_retryable_email_status('processing') === false,
+    'un reenvío pendiente de conciliación no debe poder reenviarse para evitar duplicados'
+);
+
 // 1. Setup SQLite in-memory schema matching Prisma PostgreSQL columns
 $pdo = new PDO('sqlite::memory:');
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

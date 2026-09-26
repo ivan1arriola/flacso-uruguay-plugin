@@ -146,6 +146,32 @@ abstract class FLACSO_Base_Inquiry_Repository {
     }
 
     /**
+     * Reserva un reenvío manual sin permitir que dos solicitudes envíen el
+     * mismo correo. La condición `emailStatus = failed` forma parte del UPDATE
+     * para que PostgreSQL resuelva la carrera de manera atómica.
+     */
+    public function claim_failed_email_retry(string $consulta_id): bool {
+        if ($consulta_id === '') {
+            return false;
+        }
+
+        $pdo = FLACSO_DB::connection();
+        $table = $this->get_table_name();
+        $sql = "UPDATE {$table}
+                SET \"emailStatus\" = :processing, \"updatedAt\" = :updated_at
+                WHERE \"consultaId\" = :consulta_id AND \"emailStatus\" = :failed";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':processing'  => 'processing',
+            ':updated_at'  => gmdate('c'),
+            ':consulta_id' => $consulta_id,
+            ':failed'      => 'failed',
+        ]);
+
+        return $stmt->rowCount() === 1;
+    }
+
+    /**
      * Verifica si una excepción PDO se debe a una violación de restricción de unicidad.
      */
     protected function is_unique_violation(PDOException $e): bool {

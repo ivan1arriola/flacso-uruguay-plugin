@@ -151,6 +151,24 @@ repo_assert($found_offer['mailjetMessageId'] === 'mj-12345', 'mailjetMessageId d
 repo_assert($found_offer['mailjetMessageUuid'] === 'uuid-mj-offer-001', 'mailjetMessageUuid debe ser uuid-mj-offer-001');
 repo_assert(!empty($found_offer['updatedAt']), 'updatedAt debe estar actualizado');
 
+// La reserva de reenvío debe ser atómica: una segunda solicitud no puede
+// obtener el mismo registro una vez que la primera lo puso en processing.
+$offer_repo->update_email_status('cid-offer-001', 'failed');
+repo_assert(
+    method_exists($offer_repo, 'claim_failed_email_retry'),
+    'El repositorio debe reservar atómicamente un reenvío fallido'
+);
+repo_assert(
+    $offer_repo->claim_failed_email_retry('cid-offer-001') === true,
+    'La primera reserva de un correo fallido debe obtener el envío'
+);
+repo_assert(
+    $offer_repo->claim_failed_email_retry('cid-offer-001') === false,
+    'Una segunda reserva concurrente no debe poder reenviar el mismo correo'
+);
+$claimed_offer = $offer_repo->find_by_consulta_id('cid-offer-001');
+repo_assert($claimed_offer['emailStatus'] === 'processing', 'La reserva debe marcar el correo como processing antes de llamar a Mailjet');
+
 // 2. Probar guarda contra strings vacíos en TIMESTAMP (inquiryAt, createdAt, updatedAt)
 $res_empty_ts = $offer_repo->insert([
     'consultaId' => 'cid-offer-empty-ts',

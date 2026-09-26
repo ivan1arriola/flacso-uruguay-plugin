@@ -236,7 +236,8 @@ srv_assert($result_sem_dup['duplicate'] === true, 'Seminar dup debe marcar dupli
 srv_assert(count($GLOBALS['mailjet_http_calls']) === $calls_before_sem_dup, 'No debe llamar a Mailjet en dup de seminario');
 
 // =========================================================================
-// 5. Resiliencia ante falla de Mailjet: BD guarda consulta, submit retorna ok y email=failed
+// 5. Resiliencia ante falla incierta de Mailjet: BD guarda la consulta y
+// conserva processing para que no se pueda duplicar un correo posiblemente aceptado.
 // =========================================================================
 $GLOBALS['mailjet_mock_simulate_error'] = true;
 $result_mail_fail = FLACSO_Offer_Inquiry_Service::submit([
@@ -247,11 +248,11 @@ $result_mail_fail = FLACSO_Offer_Inquiry_Service::submit([
     'correo'          => 'valeria@ejemplo.com',
 ]);
 srv_assert($result_mail_fail['ok'] === true, 'submit() debe retornar ok=true aun con fallo de Mailjet');
-srv_assert($result_mail_fail['email'] === 'failed', 'Estado de email debe ser failed');
+srv_assert($result_mail_fail['email'] === 'processing', 'Un HTTP 5xx debe dejar el estado processing hasta conciliación');
 
 $saved_fail = $repo->find_by_consulta_id('srv-offer-fail-002');
 srv_assert(!empty($saved_fail), 'La consulta DEBE guardarse en BD aunque Mailjet falle');
-srv_assert($saved_fail['emailStatus'] === 'failed', 'emailStatus en BD debe reflejar failed');
+srv_assert($saved_fail['emailStatus'] === 'processing', 'emailStatus en BD debe reflejar un resultado incierto');
 $GLOBALS['mailjet_mock_simulate_error'] = false;
 
 // =========================================================================

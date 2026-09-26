@@ -1,6 +1,6 @@
-# Guía de Despliegue y Apagado Definitivo del Editor (Decommissioning)
+# Guía de Despliegue y Validación de Consultas Directas
 
-Esta guía documenta el procedimiento ordenado, verificado y por fases para migrar la recepción de consultas (Ofertas Académicas y Seminarios) directamente al plugin WordPress de FLACSO Uruguay, eliminando la dependencia del servicio intermedio Next.js (`flacso-editor.service`).
+Esta guía documenta el procedimiento ordenado, verificado y por fases para migrar la recepción de consultas (Ofertas Académicas y Seminarios) directamente al plugin WordPress de FLACSO Uruguay. No autoriza ni describe el apagado de `flacso-editor.service`: ese servicio conserva dependencias ajenas a estas consultas y exige un plan de retiro independiente.
 
 ---
 
@@ -11,7 +11,8 @@ Esta guía documenta el procedimiento ordenado, verificado y por fases para migr
   - Verificación de idempotencia y persistencia directa en PostgreSQL (`offer_inquiries`, `seminar_inquiries`) mediante `FLACSO_DB` (PDO PostgreSQL).
   - Envío transaccional y templating directo vía Mailjet API v3.1 (`FLACSO_Mailjet_Client`).
   - Actualización de estado del correo (`emailStatus = 'sent'`, `mailjetMessageId`, `mailjetMessageUuid`) directamente en la base de datos relacional.
-  - Sincronización secundaria en WordPress y fallback resiliente.
+  - Sin fallback al webhook histórico del Editor: si el servicio interno no está disponible, el formulario responde con un error explícito y no entrega datos a un destino alternativo.
+  - Los reenvíos manuales se reservan atómicamente desde `failed` a `processing` antes de contactar Mailjet, para impedir despachos concurrentes duplicados. Un rechazo determinista vuelve a `failed`; timeout, red, HTTP 5xx o cualquier resultado no confirmable conserva `processing` y debe conciliarse en Mailjet antes de permitir otro envío.
 
 ---
 
@@ -115,11 +116,7 @@ PERMISOS_ESCRITURA=OK
 ```
 
 ### Paso 4: Despliegue del plugin actualizado
-Subir o sincronizar la nueva versión del plugin en el entorno de producción (git pull / rsync / pipeline CI-CD) y activar/recargar el plugin en WordPress:
-```bash
-wp plugin is-active flacso-uruguay-plugin || wp plugin activate flacso-uruguay-plugin
-wp cache flush
-```
+Publicar el commit aprobado en `main` y usar exclusivamente el workflow oficial **Deploy WordPress Plugin**. Registrar el SHA que dispara el workflow y confirmar que su job de despliegue termina correctamente; el workflow aplica el paquete de ese SHA, conserva un backup transitorio y ejecuta su smoke test. No copiar archivos con `git pull` o `rsync` manual.
 
 ### Paso 5: Consulta real controlada en Oferta Académica
 Desde un navegador o herramienta de pruebas, acceder a una página pública de Oferta Académica activa y enviar una consulta real de prueba con datos controlados (ej. email del equipo técnico `control-test@flacso.edu.uy`).
@@ -160,8 +157,7 @@ LIMIT 1;
 ```
 
 ### Paso 11: Ventana de Observación Inicial
-> **IMPORTANTE:** NO apagar `flacso-editor.service` inmediatamente después de los pasos anteriores.
-> Mantener `flacso-editor.service` encendido durante una ventana de observación de **24 a 48 horas** hábiles.
+Mantener la observación durante **24 a 48 horas** hábiles. Esta ventana valida solamente la captura directa de consultas; no constituye evidencia para detener ni deshabilitar `flacso-editor.service`.
 
 Monitorear durante este período:
 - Errores en el log de WordPress (`wp-content/debug.log` o logs de PHP-FPM).
@@ -177,43 +173,16 @@ sudo -u postgres psql -d flacso_db -c 'SELECT "createdAt", "offerName", email, "
 # Monitoreo de logs de PHP-FPM
 sudo tail -f /var/log/php*-fpm.log | grep -i flacso
 
-# Estado del Editor durante la observación
-sudo systemctl status flacso-editor.service
 ```
 
-### Paso 12: Apagado Definitivo del Editor
-Una vez transcurrida la ventana de observación sin anomalías y habiendo comprobado el 100% de éxito en la captura y notificación de consultas:
-
-1. Detener el servicio `flacso-editor.service`:
-   ```bash
-   sudo systemctl stop flacso-editor.service
-   ```
-
-2. Deshabilitar el servicio para evitar que inicie tras reinicios del sistema:
-   ```bash
-   sudo systemctl disable flacso-editor.service
-   ```
-
-3. Verificar que el servicio esté inactivo:
-   ```bash
-   sudo systemctl status flacso-editor.service
-   ```
-
-4. Realizar una consulta adicional de comprobación en una Oferta y en un Seminario para ratificar la total independencia funcional del servicio apagado.
+### Paso 12: Cierre de esta fase
+Documentar los resultados, el SHA desplegado y las evidencias de persistencia y entrega. Cualquier propuesta de retiro de Editor debe iniciar un plan nuevo que inventarie y migre su RBAC, administración académica, instancias `legacy_editor` y demás dependencias antes de modificar el servicio.
 
 ---
 
 ## 4. Plan de Contingencia y Rollback
 
-En caso de detectarse cualquier inconveniente crítico durante la ventana de observación antes del apagado definitivo:
+En caso de detectarse cualquier inconveniente crítico durante la ventana de observación:
 
-1. El servicio `flacso-editor.service` sigue disponible y listo para reactivarse si fuera necesario:
-   ```bash
-   sudo systemctl restart flacso-editor.service
-   ```
-2. Para revertir temporalmente el enrutamiento de consultas a la versión anterior del plugin, restaurar el tag git o backup previo:
-   ```bash
-   git checkout <tag_previo>
-   wp cache flush
-   ```
-3. Ninguna de las operaciones de diagnóstico en el paso 3 modifica datos persistentes gracias a la ejecución obligatoria bajo `ROLLBACK`.
+1. Para revertir el plugin, seleccionar el SHA previamente validado y volver a desplegarlo mediante el workflow oficial; no usar `git checkout` ni cambios manuales en producción.
+2. Ninguna de las operaciones de diagnóstico en el paso 3 modifica datos persistentes gracias a la ejecución obligatoria bajo `ROLLBACK`.

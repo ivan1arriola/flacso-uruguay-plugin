@@ -325,6 +325,19 @@ require_once $root . '/modules/formularios/includes/helpers.php';
 require_once $root . '/modules/posgrados/includes/class-flacso-posgrados-consultas-form.php';
 require_once $root . '/modules/oferta-academica/includes/class-academic-api.php';
 
+wiring_assert(
+    function_exists('flacso_consultas_direct_service_unavailable_response'),
+    'la ausencia del servicio directo debe producir un error seguro, sin volver al webhook del Editor'
+);
+
+$unavailable_response = flacso_consultas_direct_service_unavailable_response();
+wiring_assert(
+    ($unavailable_response['ok'] ?? true) === false
+    && ($unavailable_response['error'] ?? '') === 'offer_inquiry_service_unavailable'
+    && ($unavailable_response['code'] ?? 0) === 503,
+    'el formulario de oferta debe informar indisponibilidad del servicio directo con HTTP 503'
+);
+
 // ---------------------------------------------------------------------------
 // 3. Test flacso_consultas_dispatch_single_info_request execution
 // ---------------------------------------------------------------------------

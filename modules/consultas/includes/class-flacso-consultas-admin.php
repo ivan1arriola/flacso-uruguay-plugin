@@ -23,6 +23,15 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			add_action( 'admin_post_flacso_consultas_export_csv', array( __CLASS__, 'handle_export_csv' ) );
 		}
 
+		/**
+		 * Un reenvío manual sólo es seguro cuando el envío anterior falló.
+		 * Los estados sent y skipped no prueban que Mailjet no haya entregado
+		 * el correo, por lo que reenviarlos podría duplicarlo.
+		 */
+		public static function is_retryable_email_status( string $status ): bool {
+			return 'failed' === strtolower( trim( $status ) );
+		}
+
 		public static function register_menu(): void {
 			$parent_slug = class_exists( 'FLACSO_Admin_Panel' ) ? FLACSO_Admin_Panel::PAGE_SLUG : 'flacso-panel';
 
@@ -159,7 +168,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 		}
 
 		/**
-		 * AJAX: Reintentar envío de correo transaccional en una consulta con fallo o estado pendiente.
+		 * AJAX: Reintentar un envío de correo transaccional que falló.
 		 */
 		public static function ajax_retry_email(): void {
 			check_ajax_referer( self::NONCE_ACTION, 'nonce' );
@@ -176,49 +185,62 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 				wp_send_json_error( array( 'message' => 'No se encontró la consulta solicitada.' ), 404 );
 			}
 
+			if ( ! self::is_retryable_email_status( (string) ( $detail['emailStatus'] ?? '' ) ) ) {
+				wp_send_json_error( array( 'message' => 'Sólo se pueden reenviar consultas cuyo envío anterior falló.' ), 409 );
+			}
+
 			$consulta_id = (string) ( $detail['consultaId'] ?? '' );
 			if ( '' === $consulta_id ) {
 				wp_send_json_error( array( 'message' => 'El registro no tiene consultaId válido.' ), 422 );
 			}
 
-			if ( 'seminar_inquiries' === $table ) {
-				$seminar = array(
-					'id'     => (int) ( $detail['seminarWpId'] ?? 0 ),
-					'titulo' => (string) ( $detail['seminarName'] ?? 'Seminario FLACSO' ),
-					'url'    => (string) ( $detail['pageUrl'] ?? 'https://flacso.edu.uy/seminarios/' ),
-				);
-				$mail_res = FLACSO_Mailjet_Client::send_seminar_inquiry( $detail, $seminar );
-				$sem_repo = new FLACSO_Seminar_Inquiry_Repository();
-				$sem_repo->update_email_status(
-					$consulta_id,
-					(string) ( $mail_res['status'] ?? 'failed' ),
-					$mail_res['sender'] ?? null,
-					$mail_res['message_id'] ?? null,
-					$mail_res['message_uuid'] ?? null
-				);
-			} else {
-				$wp_id   = (int) ( $detail['offerWpId'] ?? 0 );
-				$program = array(
-					'id'                => $wp_id,
-					'titulo'            => (string) ( $detail['offerName'] ?? 'Posgrado FLACSO Uruguay' ),
-					'url'               => (string) ( $detail['pageUrl'] ?? 'https://flacso.edu.uy/formacion/' ),
-					'inscripcion_state' => 'open',
-				);
-				if ( $wp_id > 0 && class_exists( 'FLACSO_Academic_Catalog' ) && method_exists( 'FLACSO_Academic_Catalog', 'get_offer' ) ) {
-					$offer_obj = FLACSO_Academic_Catalog::get_offer( $wp_id );
-					if ( is_array( $offer_obj ) && ! empty( $offer_obj['titulo'] ) ) {
-						$program = array_merge( $program, $offer_obj );
+			$retry_repository = 'seminar_inquiries' === $table
+				? new FLACSO_Seminar_Inquiry_Repository()
+				: new FLACSO_Offer_Inquiry_Repository();
+			if ( ! $retry_repository->claim_failed_email_retry( $consulta_id ) ) {
+				wp_send_json_error( array( 'message' => 'El envío ya fue procesado o está siendo reenviado por otra persona.' ), 409 );
+			}
+
+			try {
+				if ( 'seminar_inquiries' === $table ) {
+					$seminar = array(
+						'id'     => (int) ( $detail['seminarWpId'] ?? 0 ),
+						'titulo' => (string) ( $detail['seminarName'] ?? 'Seminario FLACSO' ),
+						'url'    => (string) ( $detail['pageUrl'] ?? 'https://flacso.edu.uy/seminarios/' ),
+					);
+					$mail_res = FLACSO_Mailjet_Client::send_seminar_inquiry( $detail, $seminar );
+				} else {
+					$wp_id   = (int) ( $detail['offerWpId'] ?? 0 );
+					$program = array(
+						'id'                => $wp_id,
+						'titulo'            => (string) ( $detail['offerName'] ?? 'Posgrado FLACSO Uruguay' ),
+						'url'               => (string) ( $detail['pageUrl'] ?? 'https://flacso.edu.uy/formacion/' ),
+						'inscripcion_state' => 'open',
+					);
+					if ( $wp_id > 0 && class_exists( 'FLACSO_Academic_Catalog' ) && method_exists( 'FLACSO_Academic_Catalog', 'get_offer' ) ) {
+						$offer_obj = FLACSO_Academic_Catalog::get_offer( $wp_id );
+						if ( is_array( $offer_obj ) && ! empty( $offer_obj['titulo'] ) ) {
+							$program = array_merge( $program, $offer_obj );
+						}
 					}
+					$mail_res = FLACSO_Mailjet_Client::send_offer_inquiry( $detail, $program );
 				}
-				$mail_res   = FLACSO_Mailjet_Client::send_offer_inquiry( $detail, $program );
-				$offer_repo = new FLACSO_Offer_Inquiry_Repository();
-				$offer_repo->update_email_status(
+
+				if ( ! $retry_repository->update_email_status(
 					$consulta_id,
 					(string) ( $mail_res['status'] ?? 'failed' ),
 					$mail_res['sender'] ?? null,
 					$mail_res['message_id'] ?? null,
 					$mail_res['message_uuid'] ?? null
-				);
+				) ) {
+					throw new RuntimeException( 'No fue posible persistir el resultado del reenvío.' );
+				}
+			} catch ( Throwable $e ) {
+				// No se restaura `failed`: una excepción de red o de persistencia puede
+				// ocurrir después de que Mailjet aceptó el correo. Mantener processing
+				// impide un duplicado hasta que el equipo concilie el envío en Mailjet.
+				error_log( '[FLACSO Consultas] Reenvío pendiente de conciliación: ' . $e->getMessage() );
+				wp_send_json_error( array( 'message' => 'No se pudo confirmar el resultado del reenvío. No lo reintente: verifique el envío en Mailjet.' ), 502 );
 			}
 
 			if ( ! empty( $mail_res['ok'] ) ) {
