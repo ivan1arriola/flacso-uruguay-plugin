@@ -28,6 +28,7 @@ verify_assert(strpos($script_content, 'ROLLBACK') !== false, 'El script debe con
 verify_assert(strpos($script_content, 'offer_inquiries') !== false, 'El script debe contener offer_inquiries');
 verify_assert(strpos($script_content, 'seminar_inquiries') !== false, 'El script debe contener seminar_inquiries');
 verify_assert(strpos($script_content, 'FLACSO_PG_HOST') !== false, 'El script debe contener FLACSO_PG_HOST');
+verify_assert(preg_match('/^\s*declare\s*\(\s*strict_types\s*=\s*1\s*\)\s*;/m', $script_content) !== 1, 'El script debe ser compatible con wp eval-file, que lo evalúa dentro de otro contexto');
 
 verify_assert(strpos($guide_content, 'ROLLBACK') !== false, 'La guía debe contener ROLLBACK');
 verify_assert(strpos($guide_content, 'offer_inquiries') !== false, 'La guía debe contener offer_inquiries');
