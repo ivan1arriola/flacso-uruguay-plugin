@@ -14,12 +14,14 @@ final class FLACSO_Academic_Catalog {
         $cohorts = FLACSO_Academic_Repository::list('cohortes', ['parent_id' => $offer_id, 'per_page' => 200]);
         $offer['cohortes'] = $cohorts;
         $offer['cohorte_vigente'] = self::current_item($cohorts);
-        $offer['cohorte_consulta'] = self::get_inquiry_cohort($offer_id);
+        $offer['cohorte_consulta'] = self::get_inquiry_cohort($offer_id, $cohorts);
         return $offer;
     }
 
-    public static function get_inquiry_cohort(int $offer_id): ?array {
-        $cohorts = FLACSO_Academic_Repository::list('cohortes', ['parent_id' => $offer_id, 'per_page' => 200]);
+    public static function get_inquiry_cohort(int $offer_id, ?array $cohorts = null): ?array {
+        if ($cohorts === null) {
+            $cohorts = FLACSO_Academic_Repository::list('cohortes', ['parent_id' => $offer_id, 'per_page' => 200]);
+        }
         if (empty($cohorts)) {
             return null;
         }

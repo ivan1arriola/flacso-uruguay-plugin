@@ -24,7 +24,7 @@ class FLACSO_Inquiry_Context_Service {
         $offer_name = trim((string)($inquiry_data['offerName'] ?? $inquiry_data['titulo_posgrado'] ?? ''));
         if ($offer_name === '' && !empty($catalog_data['nombre'])) {
             $offer_name = (string)$catalog_data['nombre'];
-        } elseif ($offer_name === '' && function_exists('get_post')) {
+        } elseif ($offer_name === '' && $offer_id > 0 && function_exists('get_post')) {
             $post = get_post($offer_id);
             if ($post && !empty($post->post_title)) {
                 $offer_name = (string)$post->post_title;
@@ -48,7 +48,11 @@ class FLACSO_Inquiry_Context_Service {
         // 4. Cohorte de consulta
         $inquiry_cohort = $catalog_data['cohorte_consulta'] ?? null;
         if ($inquiry_cohort === null && class_exists('FLACSO_Academic_Catalog') && method_exists('FLACSO_Academic_Catalog', 'get_inquiry_cohort')) {
-            $inquiry_cohort = FLACSO_Academic_Catalog::get_inquiry_cohort($offer_id);
+            try {
+                $inquiry_cohort = FLACSO_Academic_Catalog::get_inquiry_cohort($offer_id);
+            } catch (\Throwable $t) {
+                $inquiry_cohort = null;
+            }
         }
 
         $cohort_wp_id = null;

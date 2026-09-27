@@ -145,7 +145,9 @@ class FLACSO_Offer_Inquiry_Service {
 
         $offer_status = !empty($data['offerStatus'])
             ? (string)$data['offerStatus']
-            : ($context['offerStatus'] ?? 'sin_cohorte');
+            : (!empty($data['offer_status'])
+                ? (string)$data['offer_status']
+                : ($context['offerStatus'] ?? 'sin_cohorte'));
 
         $is_open = ($offer_status === 'abierta');
 

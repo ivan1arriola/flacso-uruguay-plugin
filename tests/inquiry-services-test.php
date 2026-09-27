@@ -352,4 +352,20 @@ srv_assert(preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-
 $saved_auto = $repo->find_by_consulta_id($result_auto_uuid['consulta_id']);
 srv_assert(!empty($saved_auto), 'Debe encontrarse en la base de datos por el UUID generado');
 
+// =========================================================================
+// 9. Sobrescritura de estado con 'offer_status' (snake_case)
+// =========================================================================
+$result_status_snake = FLACSO_Offer_Inquiry_Service::submit([
+    'event_id'        => 'srv-offer-status-override',
+    'id_pagina'       => 21,
+    'titulo_posgrado' => 'Oferta Override Status',
+    'nombre'          => 'Mariana',
+    'correo'          => 'mariana@ejemplo.com',
+    'offer_status'    => 'abierta',
+]);
+srv_assert($result_status_snake['ok'] === true, 'Envío con offer_status debe ser exitoso');
+srv_assert($result_status_snake['offer_status'] === 'abierta', 'offer_status debe tomar override snake_case');
+$saved_snake = $repo->find_by_consulta_id('srv-offer-status-override');
+srv_assert($saved_snake['offerStatus'] === 'abierta', 'offerStatus en BD debe ser abierta por override snake_case');
+
 echo "OK inquiry-services-test\n";

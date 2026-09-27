@@ -300,4 +300,15 @@ $found_pending = $repo->find_pending_by_email_and_cohort('ana@example.com', 813)
 repo_assert($found_pending !== null, 'Debe encontrar consulta pendiente por email y cohorte');
 repo_assert($found_pending['consultaId'] === 'c-pending-01', 'consultaId de pendiente coincide');
 
+// Boundary assertions para find_pending_by_email_and_cohort
+repo_assert($repo->find_pending_by_email_and_cohort('', 813) === null, 'Email vacío debe retornar null');
+repo_assert($repo->find_pending_by_email_and_cohort('   ', 813) === null, 'Email con solo espacios debe retornar null');
+repo_assert($repo->find_pending_by_email_and_cohort('ana@example.com', 0) === null, 'cohort_id = 0 debe retornar null');
+repo_assert($repo->find_pending_by_email_and_cohort('ana@example.com', -1) === null, 'cohort_id < 0 debe retornar null');
+
+// Variación con mayúsculas: normaliza y encuentra el registro
+$found_uppercase = $repo->find_pending_by_email_and_cohort('ANA@EXAMPLE.COM', 813);
+repo_assert($found_uppercase !== null, 'Email en mayúsculas debe normalizarse y encontrar el registro');
+repo_assert($found_uppercase['consultaId'] === 'c-pending-01', 'consultaId coincide para email en mayúsculas');
+
 echo "OK inquiry-repositories-test\n";

@@ -152,4 +152,17 @@ $GLOBALS['mock_cohorts'][8] = [
 $c8 = FLACSO_Academic_Catalog::get_inquiry_cohort(8);
 test_assert($c8 === null, 'Cohorte planificada con fecha pasada retorna null');
 
+// Escenario 9: Pasar cohortes pre-cargadas explícitamente sin consultar el repositorio
+$custom_cohorts = [
+    [
+        'id' => 99,
+        'numero' => 1,
+        'fecha_inicio' => '2028-01-01',
+        'preinscripcion' => ['abierta' => true],
+        'estado' => 'planificada',
+    ],
+];
+$c9 = FLACSO_Academic_Catalog::get_inquiry_cohort(999, $custom_cohorts);
+test_assert($c9 !== null && $c9['id'] === 99, 'Debe resolver desde array de cohortes provisto explícitamente');
+
 echo "OK inquiry-cohort-resolution-test\n";

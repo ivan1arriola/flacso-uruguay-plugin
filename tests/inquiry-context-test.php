@@ -32,6 +32,20 @@ if (!class_exists('FLACSO_Oferta_Academica') && file_exists($root . '/modules/of
 $GLOBALS['mock_catalog_offers'] = [];
 $GLOBALS['mock_catalog_inquiry_cohorts'] = [];
 $GLOBALS['mock_catalog_throw'] = false;
+$GLOBALS['mock_catalog_inquiry_throw'] = false;
+$GLOBALS['mock_get_post_called_with'] = null;
+
+if (!function_exists('get_post')) {
+    function get_post($id = 0) {
+        $GLOBALS['mock_get_post_called_with'] = $id;
+        if ($id <= 0) {
+            $obj = new stdClass();
+            $obj->post_title = 'Post Global Inesperado';
+            return $obj;
+        }
+        return null;
+    }
+}
 
 if (!class_exists('FLACSO_Academic_Catalog')) {
     class FLACSO_Academic_Catalog {
@@ -43,6 +57,9 @@ if (!class_exists('FLACSO_Academic_Catalog')) {
         }
 
         public static function get_inquiry_cohort(int $offer_id): ?array {
+            if (!empty($GLOBALS['mock_catalog_inquiry_throw'])) {
+                throw new \RuntimeException('Error simulado en get_inquiry_cohort');
+            }
             return $GLOBALS['mock_catalog_inquiry_cohorts'][$offer_id] ?? null;
         }
     }
@@ -230,5 +247,27 @@ $ctx7 = FLACSO_Inquiry_Context_Service::resolve(99, ['offerName' => 'Oferta Resi
 $GLOBALS['mock_catalog_throw'] = false;
 test_assert($ctx7['offerName'] === 'Oferta Resiliente', 'Test 7: Resiliente ante error en catálogo');
 test_assert($ctx7['offerStatus'] === 'sin_cohorte', 'Test 7: Status default sin_cohorte');
+
+// -------------------------------------------------------------
+// Test 8: Resiliencia si get_inquiry_cohort arroja excepción
+// -------------------------------------------------------------
+$GLOBALS['mock_catalog_offers'][8] = [
+    'id' => 8,
+    'nombre' => 'Oferta Excepción en Cohorte',
+    'cohorte_consulta' => null,
+];
+$GLOBALS['mock_catalog_inquiry_throw'] = true;
+$ctx8 = FLACSO_Inquiry_Context_Service::resolve(8);
+$GLOBALS['mock_catalog_inquiry_throw'] = false;
+test_assert($ctx8['cohortWpId'] === null, 'Test 8: cohortWpId debe ser null tras excepción');
+test_assert($ctx8['offerStatus'] === 'sin_cohorte', 'Test 8: Status default sin_cohorte tras excepción');
+
+// -------------------------------------------------------------
+// Test 9: Guarda de get_post con offer_id <= 0
+// -------------------------------------------------------------
+$GLOBALS['mock_get_post_called_with'] = null;
+$ctx9 = FLACSO_Inquiry_Context_Service::resolve(0, ['offerName' => '']);
+test_assert($GLOBALS['mock_get_post_called_with'] === null, 'Test 9: get_post NO debe ser llamado si offer_id <= 0');
+test_assert($ctx9['offerName'] === '', 'Test 9: offerName no debe ser contaminado por get_post(0)');
 
 echo "OK inquiry-context-test\n";
