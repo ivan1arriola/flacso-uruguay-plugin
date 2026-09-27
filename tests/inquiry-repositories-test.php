@@ -24,7 +24,13 @@ CREATE TABLE offer_inquiries (
     consultaId TEXT UNIQUE,
     offerWpId INTEGER,
     offerName TEXT,
+    offerAbbreviation TEXT,
     offerType TEXT,
+    cohortWpId INTEGER,
+    cohortNumber INTEGER,
+    cohortName TEXT,
+    registrationOpenAt TEXT,
+    registrationCloseAt TEXT,
     firstName TEXT,
     lastName TEXT,
     fullName TEXT,
@@ -50,7 +56,16 @@ CREATE TABLE offer_inquiries (
     programUrl TEXT,
     cartaUrl TEXT,
     preinscripcionUrl TEXT,
-    offerStatus TEXT,
+    offerStatus TEXT DEFAULT "sin_cohorte",
+    mauticContactId TEXT,
+    mauticSyncStatus TEXT DEFAULT "skipped",
+    mauticSyncedAt TEXT,
+    mauticLastError TEXT,
+    followupDueAt TEXT,
+    followupStatus TEXT DEFAULT "none",
+    followupSentAt TEXT,
+    followupAttempts INTEGER DEFAULT 0,
+    followupLastError TEXT,
     emailStatus TEXT DEFAULT "skipped",
     emailSender TEXT,
     gmailMessageUrl TEXT,
@@ -241,5 +256,48 @@ $race_res = $race_repo->insert([
 ]);
 repo_assert($race_res['duplicate'] === true, 'Debe capturar colisión de unicidad y recuperar duplicate true');
 repo_assert($race_res['id'] === $res1['id'], 'El ID recuperado tras colisión debe coincidir con el original');
+
+// 6. Probar campos de snapshot de cohorte, mautic y método find_pending_by_email_and_cohort
+repo_assert(method_exists($offer_repo, 'find_pending_by_email_and_cohort'), 'Método find_pending_by_email_and_cohort debe existir en FLACSO_Offer_Inquiry_Repository');
+
+$repo = new FLACSO_Offer_Inquiry_Repository();
+$res = $repo->insert([
+    'consultaId'          => 'c-snapshot-01',
+    'offerWpId'           => 417,
+    'offerName'           => 'DAVIA',
+    'offerAbbreviation'   => 'davia',
+    'cohortWpId'          => 813,
+    'cohortNumber'        => 10,
+    'cohortName'          => 'Cohorte X',
+    'registrationOpenAt'  => '2026-09-01T00:00:00Z',
+    'registrationCloseAt' => '2026-09-30T23:59:59Z',
+    'offerStatus'         => 'abierta',
+    'firstName'           => 'Ana',
+    'lastName'            => 'Pérez',
+    'email'               => 'ana@example.com',
+]);
+
+repo_assert(!empty($res['id']), 'Debe retornar un ID de inserción');
+$found = $repo->find_by_consulta_id('c-snapshot-01');
+repo_assert(isset($found['offerAbbreviation']) && $found['offerAbbreviation'] === 'davia', 'offerAbbreviation debe ser davia');
+repo_assert(isset($found['cohortWpId']) && (int)$found['cohortWpId'] === 813, 'cohortWpId debe ser 813');
+repo_assert(isset($found['cohortNumber']) && (int)$found['cohortNumber'] === 10, 'cohortNumber debe ser 10');
+repo_assert(isset($found['cohortName']) && $found['cohortName'] === 'Cohorte X', 'cohortName debe ser Cohorte X');
+repo_assert(isset($found['offerStatus']) && $found['offerStatus'] === 'abierta', 'offerStatus debe ser abierta');
+repo_assert(isset($found['registrationOpenAt']) && $found['registrationOpenAt'] === '2026-09-01T00:00:00Z', 'registrationOpenAt coincide');
+repo_assert(isset($found['registrationCloseAt']) && $found['registrationCloseAt'] === '2026-09-30T23:59:59Z', 'registrationCloseAt coincide');
+
+// Probar búsqueda de consulta pendiente por email y cohorte
+repo_assert($repo->find_pending_by_email_and_cohort('ana@example.com', 813) === null, 'No debe retornar consulta si followupStatus es none');
+
+$res_pending = $repo->insert([
+    'consultaId'     => 'c-pending-01',
+    'cohortWpId'     => 813,
+    'email'          => 'ana@example.com',
+    'followupStatus' => 'pending',
+]);
+$found_pending = $repo->find_pending_by_email_and_cohort('ana@example.com', 813);
+repo_assert($found_pending !== null, 'Debe encontrar consulta pendiente por email y cohorte');
+repo_assert($found_pending['consultaId'] === 'c-pending-01', 'consultaId de pendiente coincide');
 
 echo "OK inquiry-repositories-test\n";

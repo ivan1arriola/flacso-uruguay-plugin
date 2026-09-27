@@ -59,7 +59,13 @@ class FLACSO_Offer_Inquiry_Repository extends FLACSO_Base_Inquiry_Repository {
             'consultaId'          => $consulta_id,
             'offerWpId'           => isset($data['offerWpId']) && $data['offerWpId'] !== '' ? (int)$data['offerWpId'] : null,
             'offerName'           => isset($data['offerName']) ? (string)$data['offerName'] : '',
+            'offerAbbreviation'   => isset($data['offerAbbreviation']) && trim((string)$data['offerAbbreviation']) !== '' ? (string)$data['offerAbbreviation'] : null,
             'offerType'           => isset($data['offerType']) ? (string)$data['offerType'] : null,
+            'cohortWpId'          => isset($data['cohortWpId']) && $data['cohortWpId'] !== '' ? (int)$data['cohortWpId'] : null,
+            'cohortNumber'        => isset($data['cohortNumber']) && $data['cohortNumber'] !== '' ? (int)$data['cohortNumber'] : null,
+            'cohortName'          => isset($data['cohortName']) ? (string)$data['cohortName'] : null,
+            'registrationOpenAt'  => isset($data['registrationOpenAt']) && trim((string)$data['registrationOpenAt']) !== '' ? (string)$data['registrationOpenAt'] : null,
+            'registrationCloseAt' => isset($data['registrationCloseAt']) && trim((string)$data['registrationCloseAt']) !== '' ? (string)$data['registrationCloseAt'] : null,
             'firstName'           => $first_name,
             'lastName'            => $last_name,
             'fullName'            => $full_name,
@@ -85,7 +91,16 @@ class FLACSO_Offer_Inquiry_Repository extends FLACSO_Base_Inquiry_Repository {
             'programUrl'          => isset($data['programUrl']) ? (string)$data['programUrl'] : null,
             'cartaUrl'            => isset($data['cartaUrl']) ? (string)$data['cartaUrl'] : null,
             'preinscripcionUrl'   => isset($data['preinscripcionUrl']) ? (string)$data['preinscripcionUrl'] : null,
-            'offerStatus'         => isset($data['offerStatus']) ? (string)$data['offerStatus'] : null,
+            'offerStatus'         => isset($data['offerStatus']) ? (string)$data['offerStatus'] : 'sin_cohorte',
+            'mauticContactId'     => isset($data['mauticContactId']) ? (string)$data['mauticContactId'] : null,
+            'mauticSyncStatus'    => isset($data['mauticSyncStatus']) ? (string)$data['mauticSyncStatus'] : 'skipped',
+            'mauticSyncedAt'      => isset($data['mauticSyncedAt']) ? (string)$data['mauticSyncedAt'] : null,
+            'mauticLastError'     => isset($data['mauticLastError']) ? (string)$data['mauticLastError'] : null,
+            'followupDueAt'       => isset($data['followupDueAt']) ? (string)$data['followupDueAt'] : null,
+            'followupStatus'      => isset($data['followupStatus']) ? (string)$data['followupStatus'] : 'none',
+            'followupSentAt'      => isset($data['followupSentAt']) ? (string)$data['followupSentAt'] : null,
+            'followupAttempts'    => isset($data['followupAttempts']) ? (int)$data['followupAttempts'] : 0,
+            'followupLastError'   => isset($data['followupLastError']) ? (string)$data['followupLastError'] : null,
             'emailStatus'         => isset($data['emailStatus']) ? (string)$data['emailStatus'] : 'skipped',
             'emailSender'         => isset($data['emailSender']) ? (string)$data['emailSender'] : null,
             'gmailMessageUrl'     => isset($data['gmailMessageUrl']) ? (string)$data['gmailMessageUrl'] : null,
@@ -142,5 +157,22 @@ class FLACSO_Offer_Inquiry_Repository extends FLACSO_Base_Inquiry_Repository {
             'consultaId' => $consulta_id,
             'duplicate'  => false,
         ];
+    }
+
+    /**
+     * Busca la consulta más reciente de una cohorte y correo con seguimiento pendiente.
+     */
+    public function find_pending_by_email_and_cohort(string $email_normalized, int $cohort_id): ?array {
+        $email_norm = strtolower(trim($email_normalized));
+        if ($email_norm === '' || $cohort_id <= 0) {
+            return null;
+        }
+        $pdo = FLACSO_DB::connection();
+        $table = $this->get_table_name();
+        $sql = "SELECT * FROM {$table} WHERE \"emailNormalized\" = :email AND \"cohortWpId\" = :cohort_id AND \"followupStatus\" = 'pending' ORDER BY \"createdAt\" DESC LIMIT 1";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':email' => $email_norm, ':cohort_id' => $cohort_id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
     }
 }
