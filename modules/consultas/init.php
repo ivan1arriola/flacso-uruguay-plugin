@@ -29,6 +29,7 @@ $flacso_consultas_files = [
     'includes/integrations/class-flacso-mailjet-client.php',
     'modules/consultas/services/class-flacso-offer-inquiry-service.php',
     'modules/consultas/services/class-flacso-seminar-inquiry-service.php',
+    'modules/consultas/services/class-flacso-inquiry-context-service.php',
     'modules/consultas/includes/class-flacso-consultas-admin.php',
 ];
 
