@@ -18,10 +18,31 @@ final class FLACSO_Oferta_Admin_Fields {
         self::$initialized = true;
         add_action('add_meta_boxes', [self::class, 'add_meta_box']);
         add_action('save_post_' . FLACSO_Oferta_Academica::POST_TYPE, [self::class, 'save'], 10, 2);
+        add_action('admin_notices', [self::class, 'render_admin_notices']);
         add_action('admin_head-post.php', [self::class, 'render_styles']);
         add_action('admin_head-post-new.php', [self::class, 'render_styles']);
         add_action('admin_footer-post.php', [self::class, 'render_scripts']);
         add_action('admin_footer-post-new.php', [self::class, 'render_scripts']);
+    }
+
+    public static function render_admin_notices(): void {
+        global $post;
+        $post_id = 0;
+        if ($post instanceof WP_Post) {
+            $post_id = $post->ID;
+        } elseif (isset($_GET['post'])) {
+            $post_id = absint($_GET['post']);
+        }
+        if ($post_id <= 0) {
+            return;
+        }
+
+        $transient_key = 'flacso_oferta_abbr_error_' . $post_id;
+        $message = get_transient($transient_key);
+        if ($message) {
+            delete_transient($transient_key);
+            echo '<div class="notice notice-error is-dismissible"><p>' . esc_html($message) . '</p></div>';
+        }
     }
 
     public static function add_meta_box(): void {
@@ -346,7 +367,6 @@ final class FLACSO_Oferta_Admin_Fields {
 
         $sanitizers = [
             FLACSO_Oferta_Academica::META_PROGRAM_ID => 'absint',
-            'abreviacion' => 'sanitize_text_field',
             'correo' => 'sanitize_email',
             'presentacion' => 'wp_kses_post',
             'objetivo_general' => 'wp_kses_post',
@@ -375,6 +395,19 @@ final class FLACSO_Oferta_Admin_Fields {
             } else {
                 update_post_meta($post_id, $key, $value);
             }
+        }
+
+        $raw_abbr = $data['abreviacion'] ?? '';
+        $normalized_abbr = FLACSO_Oferta_Academica::normalize_abbreviation((string) $raw_abbr);
+        if ($normalized_abbr !== '') {
+            if (FLACSO_Oferta_Academica::is_abbreviation_available($normalized_abbr, $post_id)) {
+                update_post_meta($post_id, 'abreviacion', $normalized_abbr);
+            } else {
+                // No sobrescribir con valor colisionado; registrar aviso
+                set_transient('flacso_oferta_abbr_error_' . $post_id, sprintf(__('La abreviación "%s" ya está en uso por otra oferta académica.', 'flacso-uruguay'), esc_html($normalized_abbr)), 45);
+            }
+        } else {
+            delete_post_meta($post_id, 'abreviacion');
         }
 
         foreach (['objetivos_especificos', 'menciones', 'orientaciones', 'titulos_intermedios'] as $key) {
