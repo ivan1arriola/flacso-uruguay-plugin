@@ -32,7 +32,22 @@ if (!class_exists('FLACSO_Academic_Catalog')) {
             return [
                 'id' => 13,
                 'nombre' => 'Diploma con cohorte canónica',
+                'abreviacion' => 'DCC-2026',
                 'correo' => 'coordinacion@flacso.edu.uy',
+                'cohorte_consulta' => [
+                    'id' => 1301,
+                    'numero' => 4,
+                    'nombre' => 'Cohorte 4',
+                    'fecha_inicio' => '2026-09-02',
+                    'precision_fecha_inicio' => 'dia',
+                    'modalidad' => 'hibrida',
+                    'preinscripcion' => [
+                        'abierta' => true,
+                        'desde'   => '2026-08-01',
+                        'hasta'   => '2026-09-01',
+                        'url'     => 'https://preinscripciones.flacso.edu.uy/oferta/13',
+                    ],
+                ],
                 'cohorte_vigente' => [
                     'fecha_inicio' => '2026-09-02',
                     'precision_fecha_inicio' => 'dia',
@@ -101,6 +116,7 @@ require_once $root . '/includes/database/class-flacso-db.php';
 require_once $root . '/includes/database/repositories/class-flacso-offer-inquiry-repository.php';
 require_once $root . '/includes/database/repositories/class-flacso-seminar-inquiry-repository.php';
 require_once $root . '/includes/integrations/class-flacso-mailjet-client.php';
+require_once $root . '/modules/consultas/services/class-flacso-inquiry-context-service.php';
 require_once $root . '/modules/consultas/services/class-flacso-offer-inquiry-service.php';
 require_once $root . '/modules/consultas/services/class-flacso-seminar-inquiry-service.php';
 
@@ -118,7 +134,9 @@ $pdo = new PDO('sqlite::memory:', null, null, [
 ]);
 $pdo->exec('
 CREATE TABLE offer_inquiries (
-    id TEXT PRIMARY KEY, consultaId TEXT UNIQUE, offerWpId INTEGER, offerName TEXT, offerType TEXT,
+    id TEXT PRIMARY KEY, consultaId TEXT UNIQUE, offerWpId INTEGER, offerName TEXT,
+    offerAbbreviation TEXT, offerType TEXT, cohortWpId INTEGER, cohortNumber INTEGER, cohortName TEXT,
+    registrationOpenAt TEXT, registrationCloseAt TEXT,
     firstName TEXT, lastName TEXT, fullName TEXT, email TEXT, emailNormalized TEXT, country TEXT,
     profession TEXT, educationLevel TEXT, source TEXT, campaignProvider TEXT, campaignSource TEXT,
     campaignMedium TEXT, campaignName TEXT, campaignExternalId TEXT, campaignContent TEXT, campaignTerm TEXT,
@@ -157,6 +175,9 @@ srv_assert($result_offer['duplicate'] === false, 'No debe ser duplicado');
 srv_assert($result_offer['email'] === 'sent', 'Email status debe ser sent');
 srv_assert($result_offer['mailjet_message_id'] === '288230407340150000', 'Debe retornar mailjet_message_id');
 srv_assert(count($GLOBALS['mailjet_http_calls']) === $initial_mail_calls + 1, 'Debe haber llamado a Mailjet una vez');
+srv_assert(isset($result_offer['offer_status']) && $result_offer['offer_status'] === 'sin_cohorte', 'Debe retornar offer_status = sin_cohorte si no hay cohorte');
+srv_assert(array_key_exists('cohort_number', $result_offer) && $result_offer['cohort_number'] === null, 'cohort_number debe ser null si no hay cohorte');
+srv_assert(array_key_exists('offer_abbreviation', $result_offer) && $result_offer['offer_abbreviation'] === null, 'offer_abbreviation debe ser null si no hay abreviación');
 
 $repo = new FLACSO_Offer_Inquiry_Repository();
 $saved = $repo->find_by_consulta_id('srv-offer-001');
@@ -164,9 +185,12 @@ srv_assert(!empty($saved), 'La fila debe existir en offer_inquiries');
 srv_assert($saved['emailStatus'] === 'sent', 'emailStatus en BD debe ser sent');
 srv_assert($saved['mailjetMessageId'] === '288230407340150000', 'mailjetMessageId debe guardarse en BD');
 srv_assert($saved['mailjetMessageUuid'] === 'f7b8a8b1-1234-5678-90ab-cdef12345678', 'mailjetMessageUuid debe guardarse en BD');
+srv_assert($saved['offerStatus'] === 'sin_cohorte', 'offerStatus en BD debe ser sin_cohorte');
+srv_assert($saved['cohortNumber'] === null, 'cohortNumber en BD debe ser null');
+srv_assert($saved['offerAbbreviation'] === null, 'offerAbbreviation en BD debe ser null');
 
 // =========================================================================
-// 1.2 Datos canónicos de Cohorte: modalidad, fecha y Reply-To de la oferta
+// 1.2 Datos canónicos de Cohorte: modalidad, fecha, Reply-To y Snapshots
 // =========================================================================
 $result_catalog = FLACSO_Offer_Inquiry_Service::submit([
     'event_id'  => 'srv-offer-catalog-003',
@@ -175,6 +199,20 @@ $result_catalog = FLACSO_Offer_Inquiry_Service::submit([
     'correo'    => 'sofia@ejemplo.com',
 ]);
 srv_assert($result_catalog['ok'] === true, 'Offer con catálogo canónico debe ser ok');
+srv_assert(isset($result_catalog['offer_status']) && $result_catalog['offer_status'] === 'abierta', 'Debe retornar offer_status = abierta');
+srv_assert(isset($result_catalog['cohort_number']) && $result_catalog['cohort_number'] === 4, 'Debe retornar cohort_number = 4');
+srv_assert(isset($result_catalog['offer_abbreviation']) && $result_catalog['offer_abbreviation'] === 'dcc-2026', 'Debe retornar offer_abbreviation = dcc-2026');
+
+$saved_catalog = $repo->find_by_consulta_id('srv-offer-catalog-003');
+srv_assert(!empty($saved_catalog), 'La fila de catálogo debe existir en offer_inquiries');
+srv_assert($saved_catalog['offerAbbreviation'] === 'dcc-2026', 'offerAbbreviation en BD debe ser dcc-2026');
+srv_assert((int)$saved_catalog['cohortWpId'] === 1301, 'cohortWpId en BD debe ser 1301');
+srv_assert((int)$saved_catalog['cohortNumber'] === 4, 'cohortNumber en BD debe ser 4');
+srv_assert($saved_catalog['cohortName'] === 'Cohorte 4', 'cohortName en BD debe ser Cohorte 4');
+srv_assert($saved_catalog['offerStatus'] === 'abierta', 'offerStatus en BD debe ser abierta');
+srv_assert($saved_catalog['registrationOpenAt'] === '2026-08-01', 'registrationOpenAt debe guardarse en BD');
+srv_assert($saved_catalog['registrationCloseAt'] === '2026-09-01', 'registrationCloseAt debe guardarse en BD');
+
 $catalog_call = end($GLOBALS['mailjet_http_calls']);
 $catalog_payload = json_decode($catalog_call['args']['body'], true);
 srv_assert(($catalog_payload['Messages'][0]['ReplyTo']['Email'] ?? '') === 'coordinacion@flacso.edu.uy', 'Debe usar correo de coordinación como Reply-To');

@@ -364,6 +364,10 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					.flacso-badge.offer_inquiries { background: #dbeafe; color: #1e40af; }
 					.flacso-badge.seminar_inquiries { background: #f3e8ff; color: #6b21a8; }
 					.flacso-badge.general_inquiries { background: #e2e8f0; color: #334155; }
+					.flacso-badge.status-abierta { background: #dcfce7; color: #166534; }
+					.flacso-badge.status-cerrada { background: #f1f5f9; color: #475569; }
+					.flacso-badge.status-sin_cohorte { background: #f8fafc; color: #64748b; border: 1px dashed #cbd5e1; }
+					.flacso-badge.abbr { background: #eff6ff; color: #1d4ed8; font-size: 11px; text-transform: lowercase; font-weight: 700; }
 					.flacso-chip {
 						display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px;
 						border: 1px solid #cbd5e1; background: #f8fafc; font-size: 12.5px; cursor: pointer; user-select: none;
@@ -459,6 +463,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			$item_name    = isset( $_GET['item_name'] ) ? sanitize_text_field( wp_unslash( $_GET['item_name'] ) ) : '';
 			$country      = isset( $_GET['country'] ) ? sanitize_text_field( wp_unslash( $_GET['country'] ) ) : '';
 			$email_status = isset( $_GET['email_status'] ) ? sanitize_key( wp_unslash( $_GET['email_status'] ) ) : '';
+			$offer_status = isset( $_GET['offer_status'] ) ? sanitize_key( wp_unslash( $_GET['offer_status'] ) ) : '';
 			$search       = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '';
 			$paged        = isset( $_GET['paged'] ) ? max( 1, (int) $_GET['paged'] ) : 1;
 
@@ -471,6 +476,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					'item_name'    => $item_name,
 					'country'      => $country,
 					'email_status' => $email_status,
+					'offer_status' => $offer_status,
 					'search'       => $search,
 					'desde'        => $from,
 					'hasta'        => $to,
@@ -533,6 +539,18 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 						</select>
 					</div>
 
+					<?php if ( 'offer_inquiries' === $table ) : ?>
+						<div class="fg">
+							<label>Al consultar</label>
+							<select name="offer_status">
+								<option value="">— Todos —</option>
+								<option value="abierta" <?php selected( $offer_status, 'abierta' ); ?>>🟢 Abierta</option>
+								<option value="cerrada" <?php selected( $offer_status, 'cerrada' ); ?>>⚪ Cerrada</option>
+								<option value="sin_cohorte" <?php selected( $offer_status, 'sin_cohorte' ); ?>>➖ Sin cohorte</option>
+							</select>
+						</div>
+					<?php endif; ?>
+
 					<div class="fg">
 						<label>Desde</label>
 						<input type="date" name="from" value="<?php echo esc_attr( $from ); ?>">
@@ -566,7 +584,13 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 							<th>Fecha</th>
 							<th>Persona</th>
 							<th>Correo</th>
-							<th>Oferta / Seminario</th>
+							<?php if ( 'offer_inquiries' === $table ) : ?>
+								<th>Oferta</th>
+								<th>Cohorte</th>
+								<th>Al consultar</th>
+							<?php else : ?>
+								<th>Oferta / Seminario</th>
+							<?php endif; ?>
 							<th>País</th>
 							<th>Estado Email</th>
 							<th>Acciones</th>
@@ -574,7 +598,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					</thead>
 					<tbody>
 						<?php if ( empty( $result['items'] ) ) : ?>
-							<tr><td colspan="7" style="text-align:center; padding:26px; color:#64748b;">No se encontraron consultas con los filtros seleccionados.</td></tr>
+							<tr><td colspan="<?php echo 'offer_inquiries' === $table ? 9 : 7; ?>" style="text-align:center; padding:26px; color:#64748b;">No se encontraron consultas con los filtros seleccionados.</td></tr>
 						<?php else : ?>
 							<?php foreach ( $result['items'] as $row ) :
 								$status_val = strtolower( (string) ( $row['emailStatus'] ?? 'skipped' ) );
@@ -592,10 +616,43 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 										<?php endif; ?>
 									</td>
 									<td><a href="mailto:<?php echo esc_attr( (string) $row['email'] ); ?>"><?php echo esc_html( (string) $row['email'] ); ?></a></td>
-									<td>
-										<span class="flacso-badge <?php echo esc_attr( $table ); ?>"><?php echo esc_html( FLACSO_Inquiry_Analytics_Repository::ALLOWED_TABLES[ $table ]['label'] ?? $table ); ?></span>
-										<span style="font-weight:600; color:#1e293b;"><?php echo esc_html( (string) $row['item_name'] ); ?></span>
-									</td>
+									<?php if ( 'offer_inquiries' === $table ) : ?>
+										<td>
+											<span style="font-weight:600; color:#1e293b;"><?php echo esc_html( (string) $row['item_name'] ); ?></span>
+											<?php if ( ! empty( $row['offerAbbreviation'] ) ) : ?>
+												<span class="flacso-badge abbr" title="Abreviación canónica"><?php echo esc_html( (string) $row['offerAbbreviation'] ); ?></span>
+											<?php endif; ?>
+										</td>
+										<td style="font-size:12px; color:#475569; white-space:nowrap;">
+											<?php
+											$cohort_num = ! empty( $row['cohortNumber'] ) ? (int) $row['cohortNumber'] : 0;
+											if ( $cohort_num > 0 ) {
+												echo esc_html( sprintf( __( 'Cohorte %d', 'flacso-uruguay' ), $cohort_num ) );
+											} elseif ( ! empty( $row['cohortName'] ) ) {
+												echo esc_html( (string) $row['cohortName'] );
+											} else {
+												echo '—';
+											}
+											?>
+										</td>
+										<td>
+											<?php
+											$st = (string) ( $row['offerStatus'] ?? 'sin_cohorte' );
+											if ( 'abierta' === $st ) {
+												echo '<span class="flacso-badge status-abierta" title="' . esc_attr__( 'Inscripciones abiertas al consultar', 'flacso-uruguay' ) . '">🟢 ' . esc_html__( 'Abierta', 'flacso-uruguay' ) . '</span>';
+											} elseif ( 'cerrada' === $st ) {
+												echo '<span class="flacso-badge status-cerrada" title="' . esc_attr__( 'Inscripciones cerradas al consultar', 'flacso-uruguay' ) . '">⚪ ' . esc_html__( 'Cerrada', 'flacso-uruguay' ) . '</span>';
+											} else {
+												echo '<span class="flacso-badge status-sin_cohorte" title="' . esc_attr__( 'Sin cohorte activa al consultar', 'flacso-uruguay' ) . '">➖ ' . esc_html__( 'Sin cohorte', 'flacso-uruguay' ) . '</span>';
+											}
+											?>
+										</td>
+									<?php else : ?>
+										<td>
+											<span class="flacso-badge <?php echo esc_attr( $table ); ?>"><?php echo esc_html( FLACSO_Inquiry_Analytics_Repository::ALLOWED_TABLES[ $table ]['label'] ?? $table ); ?></span>
+											<span style="font-weight:600; color:#1e293b;"><?php echo esc_html( (string) $row['item_name'] ); ?></span>
+										</td>
+									<?php endif; ?>
 									<td style="font-size:12px;">
 										<?php echo esc_html( (string) ( $row['country'] ?: '—' ) ); ?>
 									</td>

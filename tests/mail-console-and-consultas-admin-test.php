@@ -75,6 +75,80 @@ if (!function_exists('wp_json_encode')) {
         return (string) json_encode($data);
     }
 }
+if (!function_exists('current_user_can')) {
+    function current_user_can(string $cap): bool {
+        return true;
+    }
+}
+if (!function_exists('wp_unslash')) {
+    function wp_unslash($v) {
+        return $v;
+    }
+}
+if (!function_exists('sanitize_key')) {
+    function sanitize_key($k) {
+        return preg_replace('/[^a-z0-9_\-]/', '', strtolower((string)$k));
+    }
+}
+if (!function_exists('sanitize_text_field')) {
+    function sanitize_text_field($t) {
+        return trim(strip_tags((string)$t));
+    }
+}
+if (!function_exists('wp_create_nonce')) {
+    function wp_create_nonce($action = -1) {
+        return 'mock-nonce-' . $action;
+    }
+}
+if (!function_exists('admin_url')) {
+    function admin_url($path = '', $scheme = 'admin') {
+        return 'https://example.org/wp-admin/' . $path;
+    }
+}
+if (!function_exists('add_query_arg')) {
+    function add_query_arg(...$args) {
+        return 'https://example.org/wp-admin/admin.php';
+    }
+}
+if (!function_exists('esc_url')) {
+    function esc_url($u) {
+        return (string)$u;
+    }
+}
+if (!function_exists('esc_attr')) {
+    function esc_attr($a) {
+        return htmlspecialchars((string)$a, ENT_QUOTES, 'UTF-8');
+    }
+}
+if (!function_exists('esc_html')) {
+    function esc_html($h) {
+        return htmlspecialchars((string)$h, ENT_NOQUOTES, 'UTF-8');
+    }
+}
+if (!function_exists('selected')) {
+    function selected($selected, $current = true, $echo = true) {
+        $result = (string)$selected === (string)$current ? ' selected="selected"' : '';
+        if ($echo) {
+            echo $result;
+        }
+        return $result;
+    }
+}
+if (!function_exists('__')) {
+    function __($text, $domain = 'default') {
+        return (string)$text;
+    }
+}
+if (!function_exists('esc_attr__')) {
+    function esc_attr__($text, $domain = 'default') {
+        return htmlspecialchars((string)$text, ENT_QUOTES, 'UTF-8');
+    }
+}
+if (!function_exists('esc_html__')) {
+    function esc_html__($text, $domain = 'default') {
+        return htmlspecialchars((string)$text, ENT_NOQUOTES, 'UTF-8');
+    }
+}
 
 require_once dirname(__DIR__) . '/modules/consultas/init.php';
 require_once dirname(__DIR__) . '/modules/mailing/includes/class-flacso-mail-settings.php';
@@ -117,7 +191,11 @@ $pdo->exec('CREATE TABLE "offer_inquiries" (
     "consultaId" TEXT UNIQUE,
     "offerWpId" INTEGER,
     "offerName" TEXT,
+    "offerAbbreviation" TEXT,
     "offerType" TEXT,
+    "cohortWpId" INTEGER,
+    "cohortNumber" INTEGER,
+    "cohortName" TEXT,
     "offerStatus" TEXT,
     "firstName" TEXT,
     "lastName" TEXT,
@@ -184,14 +262,14 @@ $today = gmdate('Y-m-d');
 $now   = gmdate('Y-m-d H:i:s');
 
 $stmt = $pdo->prepare('INSERT INTO "offer_inquiries"
-    ("id","consultaId","offerWpId","offerName","firstName","lastName","fullName","email","emailNormalized","phone","country","source","campaignProvider","campaignSource","campaignMedium","campaignName","emailStatus","payload","inquiryAt","createdAt","updatedAt")
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
+    ("id","consultaId","offerWpId","offerName","offerAbbreviation","cohortNumber","cohortName","offerStatus","firstName","lastName","fullName","email","emailNormalized","phone","country","source","campaignProvider","campaignSource","campaignMedium","campaignName","emailStatus","payload","inquiryAt","createdAt","updatedAt")
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
 
 // Ana in Uruguay (2 inquiries for same Maestría -> deduplicates to 1 pair)
-$stmt->execute(['c01', 'cid-1', 501, 'Maestría en Género', 'Ana', 'Pérez', 'Ana Pérez', 'ana@ejemplo.com', 'ana@ejemplo.com', '099111', 'Uruguay', 'web', 'meta', 'facebook', 'cpc', 'Campaña Género', 'sent', '{"test":1}', $now, $now, $now]);
-$stmt->execute(['c02', 'cid-2', 501, 'Maestría en Género', 'Ana', 'Pérez', 'Ana Pérez', 'ana@ejemplo.com', 'ana@ejemplo.com', '099111', 'Uruguay', 'web', 'meta', 'facebook', 'cpc', 'Campaña Género', 'sent', '{"test":2}', $now, $now, $now]);
+$stmt->execute(['c01', 'cid-1', 501, 'Maestría en Género', 'mg', 2, '2ª Cohorte', 'abierta', 'Ana', 'Pérez', 'Ana Pérez', 'ana@ejemplo.com', 'ana@ejemplo.com', '099111', 'Uruguay', 'web', 'meta', 'facebook', 'cpc', 'Campaña Género', 'sent', '{"test":1}', $now, $now, $now]);
+$stmt->execute(['c02', 'cid-2', 501, 'Maestría en Género', 'mg', 2, '2ª Cohorte', 'abierta', 'Ana', 'Pérez', 'Ana Pérez', 'ana@ejemplo.com', 'ana@ejemplo.com', '099111', 'Uruguay', 'web', 'meta', 'facebook', 'cpc', 'Campaña Género', 'sent', '{"test":2}', $now, $now, $now]);
 // Ana also in Argentina for another offer -> creates UY/EXT intersection for ana@ejemplo.com
-$stmt->execute(['c03', 'cid-3', 502, 'Diploma en Educación', 'Ana', 'Pérez', 'Ana Pérez', 'ana@ejemplo.com', 'ana@ejemplo.com', '099111', 'Argentina', 'web', 'google', 'google', 'cpc', 'Campaña Educación', 'failed', '{"test":3}', $now, $now, $now]);
+$stmt->execute(['c03', 'cid-3', 502, 'Diploma en Educación', null, null, null, 'cerrada', 'Ana', 'Pérez', 'Ana Pérez', 'ana@ejemplo.com', 'ana@ejemplo.com', '099111', 'Argentina', 'web', 'google', 'google', 'cpc', 'Campaña Educación', 'failed', '{"test":3}', $now, $now, $now]);
 
 // Seminar inquiry
 $stmt_sem = $pdo->prepare('INSERT INTO "seminar_inquiries"
@@ -243,5 +321,48 @@ $preview = FLACSO_Mailjet_Client::get_preview_html('consulta_abierta');
 assert_true(!empty($preview['subject']) && strpos($preview['html'], 'FLACSO Uruguay') !== false, 'Expected institutional HTML preview');
 $sync_res = FLACSO_Mailjet_Client::sync_contact_to_lists('ana@ejemplo.com', 'Ana Pérez', ['pais' => 'Uruguay'], [100, 200]);
 assert_true($sync_res['ok'] === true && count($sync_res['synced']) === 2, 'Expected contact synced to 2 lists');
+
+// Test 8: Consultas Admin & Analytics filter by offer_status and context columns
+$page_abierta = FLACSO_Inquiry_Analytics_Repository::get_paginated_inquiries([
+    'table'        => 'offer_inquiries',
+    'mode'         => 'grouped',
+    'offer_status' => 'abierta',
+    'desde'        => $today,
+    'hasta'        => $today,
+]);
+assert_true($page_abierta['pageInfo']['totalItems'] === 1, 'Expected exactly 1 group for offer_status=abierta');
+assert_true($page_abierta['items'][0]['item_name'] === 'Maestría en Género', 'Expected Maestría en Género in abierta filter');
+assert_true($page_abierta['items'][0]['offerAbbreviation'] === 'mg', 'Expected offerAbbreviation mg in paginated item');
+assert_true((int)$page_abierta['items'][0]['cohortNumber'] === 2, 'Expected cohortNumber 2 in paginated item');
+assert_true($page_abierta['items'][0]['offerStatus'] === 'abierta', 'Expected offerStatus abierta in paginated item');
+
+$page_cerrada = FLACSO_Inquiry_Analytics_Repository::get_paginated_inquiries([
+    'table'        => 'offer_inquiries',
+    'mode'         => 'grouped',
+    'offer_status' => 'cerrada',
+    'desde'        => $today,
+    'hasta'        => $today,
+]);
+assert_true($page_cerrada['pageInfo']['totalItems'] === 1, 'Expected exactly 1 group for offer_status=cerrada');
+assert_true($page_cerrada['items'][0]['item_name'] === 'Diploma en Educación', 'Expected Diploma en Educación in cerrada filter');
+
+// Test 9: Rendering Consultas Admin page with offer columns & badges
+$_GET = [
+    'page'  => 'flacso-consultas',
+    'tab'   => 'historico',
+    'table' => 'offer_inquiries',
+];
+ob_start();
+FLACSO_Consultas_Admin::render_page();
+$admin_html = ob_get_clean();
+
+assert_true(strpos($admin_html, '<th>Oferta</th>') !== false, 'Admin header must contain Oferta column');
+assert_true(strpos($admin_html, '<th>Cohorte</th>') !== false, 'Admin header must contain Cohorte column');
+assert_true(strpos($admin_html, '<th>Al consultar</th>') !== false, 'Admin header must contain Al consultar column');
+assert_true(strpos($admin_html, '<select name="offer_status">') !== false, 'Admin filters must contain offer_status select');
+assert_true(strpos($admin_html, '<span class="flacso-badge abbr" title="Abreviación canónica">mg</span>') !== false, 'Admin must render abbreviation badge');
+assert_true(strpos($admin_html, 'Cohorte 2') !== false, 'Admin must render Cohorte 2');
+assert_true(strpos($admin_html, 'status-abierta') !== false, 'Admin must render status-abierta badge');
+assert_true(strpos($admin_html, 'status-cerrada') !== false, 'Admin must render status-cerrada badge');
 
 echo "OK mail-console-and-consultas-admin-test\n";

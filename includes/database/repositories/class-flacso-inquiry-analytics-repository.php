@@ -82,6 +82,47 @@ class FLACSO_Inquiry_Analytics_Repository {
         }
     }
 
+    protected static array $columns_cache = [];
+
+    /**
+     * Obtiene la lista de columnas existentes en la tabla para evitar errores de columnas faltantes.
+     */
+    public static function get_table_columns(PDO $pdo, string $table): array {
+        $table = trim($table, '"');
+        $pdo_id = spl_object_id($pdo);
+        $cache_key = "{$pdo_id}:{$table}";
+
+        if (isset(self::$columns_cache[$cache_key])) {
+            return self::$columns_cache[$cache_key];
+        }
+
+        try {
+            $driver = (string) $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+            $columns = [];
+
+            if ($driver === 'sqlite') {
+                $stmt = $pdo->query("PRAGMA table_info(\"{$table}\")");
+                if ($stmt) {
+                    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                        if (isset($row['name'])) {
+                            $columns[] = $row['name'];
+                        }
+                    }
+                }
+            } else {
+                $stmt = $pdo->prepare('SELECT column_name FROM information_schema.columns WHERE table_name = :tbl');
+                $stmt->execute([':tbl' => $table]);
+                $columns = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            }
+
+            if (!empty($columns)) {
+                return self::$columns_cache[$cache_key] = $columns;
+            }
+        } catch (Throwable $e) {}
+
+        return self::$columns_cache[$cache_key] = [];
+    }
+
     /**
      * Métricas rápidas de entrega de correos y volumen para la Consola de Correos y cabecera.
      */
@@ -711,6 +752,13 @@ class FLACSO_Inquiry_Analytics_Repository {
             $params[':email_status'] = $email_status;
         }
 
+        $columns = self::get_table_columns($pdo, $table);
+        $offer_status = trim((string) ($filters['offer_status'] ?? $filters['status'] ?? ''));
+        if ($offer_status !== '' && in_array('offerStatus', $columns, true)) {
+            $where[] = "\"offerStatus\" = :offer_status";
+            $params[':offer_status'] = $offer_status;
+        }
+
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $desde)) {
             $where[] = "\"inquiryAt\" >= :desde";
             $params[':desde'] = $desde . ' 00:00:00';
@@ -729,6 +777,22 @@ class FLACSO_Inquiry_Analytics_Repository {
             ? "\"emailStatus\", \"emailSender\", \"mailjetMessageId\", \"mailjetMessageUuid\","
             : "'skipped' AS \"emailStatus\", '' AS \"emailSender\", '' AS \"mailjetMessageId\", '' AS \"mailjetMessageUuid\",";
 
+        $select_context = '';
+        if ($table === 'offer_inquiries') {
+            if (in_array('offerAbbreviation', $columns, true)) {
+                $select_context .= '"offerAbbreviation", ';
+            }
+            if (in_array('cohortNumber', $columns, true)) {
+                $select_context .= '"cohortNumber", ';
+            }
+            if (in_array('cohortName', $columns, true)) {
+                $select_context .= '"cohortName", ';
+            }
+        }
+        if (in_array('offerStatus', $columns, true)) {
+            $select_context .= '"offerStatus", ';
+        }
+
         if ($mode === 'raw') {
             try {
                 $stmt_cnt = $pdo->prepare("SELECT COUNT(*) FROM \"{$table}\" {$where_sql}");
@@ -738,6 +802,7 @@ class FLACSO_Inquiry_Analytics_Repository {
 
                 $sql_rows = "SELECT
                                 \"id\", \"consultaId\", {$select_wp} \"{$item_col}\" AS item_name,
+                                {$select_context}
                                 \"firstName\", \"lastName\", \"fullName\", \"email\", \"emailNormalized\",
                                 \"country\", \"source\", \"campaignName\", \"campaignSource\", \"campaignMedium\",
                                 {$select_email}
@@ -800,6 +865,7 @@ class FLACSO_Inquiry_Analytics_Repository {
                 $stmt_children = $pdo->prepare(
                     "SELECT
                         \"id\", \"consultaId\", {$select_wp} \"{$item_col}\" AS item_name,
+                        {$select_context}
                         \"firstName\", \"lastName\", \"fullName\", \"email\", \"emailNormalized\",
                         \"country\", \"source\", \"campaignName\", \"campaignSource\", \"campaignMedium\",
                         {$select_email}

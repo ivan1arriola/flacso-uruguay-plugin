@@ -28,6 +28,9 @@ if (!class_exists('FLACSO_Offer_Inquiry_Repository')) {
 if (!class_exists('FLACSO_Mailjet_Client')) {
     require_once dirname(__DIR__, 3) . '/includes/integrations/class-flacso-mailjet-client.php';
 }
+if (!class_exists('FLACSO_Inquiry_Context_Service')) {
+    require_once __DIR__ . '/class-flacso-inquiry-context-service.php';
+}
 
 class FLACSO_Offer_Inquiry_Service {
 
@@ -51,11 +54,14 @@ class FLACSO_Offer_Inquiry_Service {
             $existing = $repo->find_by_consulta_id($consulta_id);
             if ($existing !== null) {
                 return [
-                    'ok'          => true,
-                    'consulta_id' => $consulta_id,
-                    'duplicate'   => true,
-                    'email'       => $existing['emailStatus'] ?? 'skipped',
-                    'code'        => 200,
+                    'ok'                 => true,
+                    'consulta_id'        => $consulta_id,
+                    'duplicate'          => true,
+                    'email'              => $existing['emailStatus'] ?? 'skipped',
+                    'offer_status'       => $existing['offerStatus'] ?? null,
+                    'cohort_number'      => isset($existing['cohortNumber']) && $existing['cohortNumber'] !== '' ? (int)$existing['cohortNumber'] : null,
+                    'offer_abbreviation' => $existing['offerAbbreviation'] ?? null,
+                    'code'               => 200,
                 ];
             }
         } catch (\Throwable $e) {
@@ -122,30 +128,26 @@ class FLACSO_Offer_Inquiry_Service {
             ];
         }
 
-        // 4. Enriquecimiento / resolución de oferta académica
-        $catalog_data = [];
-        if ($offer_id !== null && $offer_id > 0) {
-            if (class_exists('FLACSO_Academic_Catalog') && method_exists('FLACSO_Academic_Catalog', 'get_offer')) {
-                try {
-                    $catalog_data = FLACSO_Academic_Catalog::get_offer($offer_id);
-                } catch (\Throwable $t) {
-                    $catalog_data = [];
-                }
-            }
+        // 4. Enriquecimiento / resolución de oferta académica vía FLACSO_Inquiry_Context_Service
+        $context = class_exists('FLACSO_Inquiry_Context_Service')
+            ? FLACSO_Inquiry_Context_Service::resolve((int)($offer_id ?? 0), $data)
+            : [];
 
-            if ($offer_name === '' && !empty($catalog_data['nombre'])) {
-                $offer_name = (string)$catalog_data['nombre'];
-            } elseif ($offer_name === '' && function_exists('get_post')) {
-                $post = get_post($offer_id);
-                if ($post && !empty($post->post_title)) {
-                    $offer_name = (string)$post->post_title;
-                }
-            }
+        $offer_id = $context['offerWpId'] ?? $offer_id;
+        $offer_name = !empty($context['offerName']) ? (string)$context['offerName'] : $offer_name;
+        $offer_type = $context['offerType'] ?? $offer_type;
+        $offer_abbr = $context['offerAbbreviation'] ?? null;
+        $cohort_wp_id = $context['cohortWpId'] ?? null;
+        $cohort_number = $context['cohortNumber'] ?? null;
+        $cohort_name = $context['cohortName'] ?? null;
+        $reg_open_at = $context['registrationOpenAt'] ?? null;
+        $reg_close_at = $context['registrationCloseAt'] ?? null;
 
-            if ($offer_type === null && !empty($catalog_data['tipo'])) {
-                $offer_type = (string)$catalog_data['tipo'];
-            }
-        }
+        $offer_status = !empty($data['offerStatus'])
+            ? (string)$data['offerStatus']
+            : ($context['offerStatus'] ?? 'sin_cohorte');
+
+        $is_open = ($offer_status === 'abierta');
 
         $program_url = !empty($data['programUrl'])
             ? (string)$data['programUrl']
@@ -174,50 +176,32 @@ class FLACSO_Offer_Inquiry_Service {
             ? (string)$data['preinscripcionUrl']
             : (!empty($data['url_preinscripcion'])
                 ? (string)$data['url_preinscripcion']
-                : (!empty($catalog_data['cohorte_vigente']['preinscripcion']['url'])
-                    ? (string)$catalog_data['cohorte_vigente']['preinscripcion']['url']
-                    : null));
-
-        $is_open = !empty($data['isInscripcionesAbiertas'])
-            || !empty($data['inscripciones_abiertas'])
-            || !empty($catalog_data['cohorte_vigente']['preinscripcion']['abierta']);
-
-        $offer_status = !empty($data['offerStatus'])
-            ? (string)$data['offerStatus']
-            : ($is_open ? 'abierta' : 'cerrada');
+                : ($context['preinscripcionUrl'] ?? null));
 
         $start_value = !empty($data['startValue'])
             ? (string)$data['startValue']
             : (!empty($data['fecha_inicio'])
                 ? (string)$data['fecha_inicio']
-                : (!empty($catalog_data['cohorte_vigente']['fecha_inicio'])
-                    ? (string)$catalog_data['cohorte_vigente']['fecha_inicio']
-                    : ''));
+                : ($context['startValue'] ?? ''));
 
         $modality = !empty($data['modalityLabel'])
             ? (string)$data['modalityLabel']
             : (!empty($data['modalidad'])
                 ? (string)$data['modalidad']
-                : (!empty($catalog_data['cohorte_vigente']['modalidad'])
-                    ? (string)$catalog_data['cohorte_vigente']['modalidad']
-                    : (!empty($catalog_data['modalidad'])
-                        ? (string)$catalog_data['modalidad']
-                        : '')));
+                : ($context['modalityLabel'] ?? ''));
 
         $start_precision = !empty($data['startPrecision'])
             ? (string)$data['startPrecision']
             : (!empty($data['precision_fecha_inicio'])
                 ? (string)$data['precision_fecha_inicio']
-                : (!empty($catalog_data['cohorte_vigente']['precision_fecha_inicio'])
-                    ? (string)$catalog_data['cohorte_vigente']['precision_fecha_inicio']
-                    : 'dia'));
+                : ($context['startPrecision'] ?? 'dia'));
 
         $country = isset($data['country']) ? (string)$data['country'] : (isset($data['pais']) ? (string)$data['pais'] : null);
         $profession = isset($data['profession']) ? (string)$data['profession'] : (isset($data['profesion']) ? (string)$data['profesion'] : null);
         $education_level = isset($data['educationLevel']) ? (string)$data['educationLevel'] : (isset($data['nivel_academico']) ? (string)$data['nivel_academico'] : null);
         $reply_to = isset($data['replyToEmail']) ? (string)$data['replyToEmail'] : (isset($data['reply_to']) ? (string)$data['reply_to'] : null);
-        if (($reply_to === null || trim($reply_to) === '') && !empty($catalog_data['correo'])) {
-            $reply_to = (string)$catalog_data['correo'];
+        if (($reply_to === null || trim($reply_to) === '') && !empty($context['replyToEmail'])) {
+            $reply_to = (string)$context['replyToEmail'];
         }
         $source = isset($data['source']) ? (string)$data['source'] : (isset($data['origen']) ? (string)$data['origen'] : 'Web');
 
@@ -253,37 +237,43 @@ class FLACSO_Offer_Inquiry_Service {
 
         // 5. Inserción en Base de Datos (Guardar primero)
         $record = [
-            'consultaId'         => $consulta_id,
-            'offerWpId'          => $offer_id,
-            'offerName'          => $offer_name,
-            'offerType'          => $offer_type,
-            'firstName'          => $first_name,
-            'lastName'           => $last_name,
-            'fullName'           => $full_name,
-            'email'              => $email,
-            'country'            => $country,
-            'profession'         => $profession,
-            'educationLevel'     => $education_level,
-            'source'             => $source,
-            'campaignProvider'   => $data['campaignProvider'] ?? $data['campaign_provider'] ?? $data['utm_provider'] ?? null,
-            'campaignSource'     => $data['campaignSource'] ?? $data['campaign_source'] ?? $data['utm_source'] ?? null,
-            'campaignMedium'     => $data['campaignMedium'] ?? $data['campaign_medium'] ?? $data['utm_medium'] ?? null,
-            'campaignName'       => $data['campaignName'] ?? $data['campaign_name'] ?? $data['utm_campaign'] ?? null,
-            'campaignExternalId' => $data['campaignExternalId'] ?? $data['campaign_external_id'] ?? $data['utm_id'] ?? null,
-            'campaignContent'    => $data['campaignContent'] ?? $data['campaign_content'] ?? $data['utm_content'] ?? null,
-            'campaignTerm'       => $data['campaignTerm'] ?? $data['campaign_term'] ?? $data['utm_term'] ?? null,
-            'urlBase'            => $program_url,
-            'urlReferer'         => $url_referer,
-            'inquiryAt'          => $inquiry_at,
-            'ipAddress'          => $ip,
-            'userAgent'          => $user_agent,
-            'replyToEmail'       => $reply_to,
-            'programUrl'         => $program_url,
-            'cartaUrl'           => $carta_url,
-            'preinscripcionUrl'  => $preinscripcion_url,
-            'offerStatus'        => $offer_status,
-            'emailStatus'        => 'skipped',
-            'payload'            => $data,
+            'consultaId'          => $consulta_id,
+            'offerWpId'           => $offer_id,
+            'offerName'           => $offer_name,
+            'offerAbbreviation'   => $offer_abbr,
+            'offerType'           => $offer_type,
+            'cohortWpId'          => $cohort_wp_id,
+            'cohortNumber'        => $cohort_number,
+            'cohortName'          => $cohort_name,
+            'registrationOpenAt'  => $reg_open_at,
+            'registrationCloseAt' => $reg_close_at,
+            'firstName'           => $first_name,
+            'lastName'            => $last_name,
+            'fullName'            => $full_name,
+            'email'               => $email,
+            'country'             => $country,
+            'profession'          => $profession,
+            'educationLevel'      => $education_level,
+            'source'              => $source,
+            'campaignProvider'    => $data['campaignProvider'] ?? $data['campaign_provider'] ?? $data['utm_provider'] ?? null,
+            'campaignSource'      => $data['campaignSource'] ?? $data['campaign_source'] ?? $data['utm_source'] ?? null,
+            'campaignMedium'      => $data['campaignMedium'] ?? $data['campaign_medium'] ?? $data['utm_medium'] ?? null,
+            'campaignName'        => $data['campaignName'] ?? $data['campaign_name'] ?? $data['utm_campaign'] ?? null,
+            'campaignExternalId'  => $data['campaignExternalId'] ?? $data['campaign_external_id'] ?? $data['utm_id'] ?? null,
+            'campaignContent'     => $data['campaignContent'] ?? $data['campaign_content'] ?? $data['utm_content'] ?? null,
+            'campaignTerm'        => $data['campaignTerm'] ?? $data['campaign_term'] ?? $data['utm_term'] ?? null,
+            'urlBase'             => $program_url,
+            'urlReferer'          => $url_referer,
+            'inquiryAt'           => $inquiry_at,
+            'ipAddress'           => $ip,
+            'userAgent'           => $user_agent,
+            'replyToEmail'        => $reply_to,
+            'programUrl'          => $program_url,
+            'cartaUrl'            => $carta_url,
+            'preinscripcionUrl'   => $preinscripcion_url,
+            'offerStatus'         => $offer_status,
+            'emailStatus'         => 'skipped',
+            'payload'             => $data,
         ];
 
         try {
@@ -301,11 +291,14 @@ class FLACSO_Offer_Inquiry_Service {
         // Si ocurrió colisión de unicidad capturada como duplicado en insert()
         if (!empty($insert_result['duplicate'])) {
             return [
-                'ok'          => true,
-                'consulta_id' => $consulta_id,
-                'duplicate'   => true,
-                'email'       => 'skipped',
-                'code'        => 200,
+                'ok'                 => true,
+                'consulta_id'        => $consulta_id,
+                'duplicate'          => true,
+                'email'              => 'skipped',
+                'offer_status'       => $offer_status,
+                'cohort_number'      => $cohort_number,
+                'offer_abbreviation' => $offer_abbr,
+                'code'               => 200,
             ];
         }
 
@@ -406,6 +399,9 @@ class FLACSO_Offer_Inquiry_Service {
             'email_sender'         => $email_sender,
             'mailjet_message_id'   => $message_id,
             'mailjet_message_uuid' => $message_uuid,
+            'offer_status'         => $offer_status,
+            'cohort_number'        => $cohort_number,
+            'offer_abbreviation'   => $offer_abbr,
             'code'                 => 200,
         ];
     }
