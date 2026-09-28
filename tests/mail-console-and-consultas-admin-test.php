@@ -1016,5 +1016,96 @@ assert_true(strpos($rendered_consultas_page, '.flacso-badge.sent.mautic') !== fa
 assert_true(strpos($rendered_consultas_page, '.flacso-badge.failed.fallback') !== false, 'Page must include .flacso-badge.failed.fallback CSS');
 assert_true(strpos($rendered_consultas_page, 'Mailjet (Conmutación por fallo de Mautic)') !== false, 'Modal script must contain fallback label formatting');
 
+// Test 23: Follow-up configuration settings, sanitizers, helper and UI rendering
+assert_true(defined('FLACSO_Mail_Settings::OPTION_FOLLOWUP_ENABLED'), 'FLACSO_Mail_Settings must define OPTION_FOLLOWUP_ENABLED');
+assert_true(defined('FLACSO_Mail_Settings::OPTION_FOLLOWUP_DAYS'), 'FLACSO_Mail_Settings must define OPTION_FOLLOWUP_DAYS');
+assert_true(defined('FLACSO_Mail_Settings::OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_ABIERTA'), 'FLACSO_Mail_Settings must define OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_ABIERTA');
+assert_true(defined('FLACSO_Mail_Settings::OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_CERRADA'), 'FLACSO_Mail_Settings must define OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_CERRADA');
+
+assert_true(FLACSO_Mail_Settings::OPTION_FOLLOWUP_ENABLED === 'flacso_inquiry_followup_enabled', 'OPTION_FOLLOWUP_ENABLED option key');
+assert_true(FLACSO_Mail_Settings::OPTION_FOLLOWUP_DAYS === 'flacso_inquiry_followup_days', 'OPTION_FOLLOWUP_DAYS option key');
+assert_true(FLACSO_Mail_Settings::OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_ABIERTA === 'flacso_mautic_template_seguimiento_abierta', 'OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_ABIERTA option key');
+assert_true(FLACSO_Mail_Settings::OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_CERRADA === 'flacso_mautic_template_seguimiento_cerrada', 'OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_CERRADA option key');
+
+FLACSO_Mail_Settings::register_settings();
+$mail_settings_group = $GLOBALS['flacso_registered_settings']['flacso_correos_group'] ?? [];
+
+assert_true(isset($mail_settings_group['flacso_inquiry_followup_enabled']), 'flacso_inquiry_followup_enabled must be registered');
+assert_true(isset($mail_settings_group['flacso_inquiry_followup_days']), 'flacso_inquiry_followup_days must be registered');
+assert_true(isset($mail_settings_group['flacso_mautic_template_seguimiento_abierta']), 'flacso_mautic_template_seguimiento_abierta must be registered');
+assert_true(isset($mail_settings_group['flacso_mautic_template_seguimiento_cerrada']), 'flacso_mautic_template_seguimiento_cerrada must be registered');
+
+// Sanitization callbacks
+$followup_enabled_cb = $mail_settings_group['flacso_inquiry_followup_enabled']['sanitize_callback'];
+assert_true(call_user_func($followup_enabled_cb, '1') === '1', 'Followup enabled callback should accept 1');
+assert_true(call_user_func($followup_enabled_cb, true) === '1', 'Followup enabled callback should accept boolean true');
+assert_true(call_user_func($followup_enabled_cb, '0') === '0', 'Followup enabled callback should accept 0');
+assert_true(call_user_func($followup_enabled_cb, '') === '0', 'Followup enabled callback should accept empty string as 0');
+
+$followup_days_cb = $mail_settings_group['flacso_inquiry_followup_days']['sanitize_callback'];
+assert_true(call_user_func($followup_days_cb, 0) === 1, 'Followup days callback: 0 should clamp to 1');
+assert_true(call_user_func($followup_days_cb, -10) === 1, 'Followup days callback: negative should clamp to 1');
+assert_true(call_user_func($followup_days_cb, 99) === 60, 'Followup days callback: 99 should clamp to 60');
+assert_true(call_user_func($followup_days_cb, '5') === 5, 'Followup days callback: 5 should remain 5');
+assert_true(call_user_func($followup_days_cb, 30) === 30, 'Followup days callback: 30 should remain 30');
+
+$tpl_seg_open_cb = $mail_settings_group['flacso_mautic_template_seguimiento_abierta']['sanitize_callback'];
+assert_true(call_user_func($tpl_seg_open_cb, -5) === 0, 'Template seguimiento abierta: negative should clamp to 0');
+assert_true(call_user_func($tpl_seg_open_cb, 15) === 15, 'Template seguimiento abierta: 15 should remain 15');
+assert_true(call_user_func($tpl_seg_open_cb, '25') === 25, 'Template seguimiento abierta: numeric string should sanitize to int 25');
+
+$tpl_seg_closed_cb = $mail_settings_group['flacso_mautic_template_seguimiento_cerrada']['sanitize_callback'];
+assert_true(call_user_func($tpl_seg_closed_cb, -1) === 0, 'Template seguimiento cerrada: negative should clamp to 0');
+assert_true(call_user_func($tpl_seg_closed_cb, 42) === 42, 'Template seguimiento cerrada: 42 should remain 42');
+assert_true(call_user_func($tpl_seg_closed_cb, '0') === 0, 'Template seguimiento cerrada: 0 should remain 0');
+
+// Helper method get_followup_settings()
+assert_true(method_exists('FLACSO_Mail_Settings', 'get_followup_settings'), 'FLACSO_Mail_Settings must define get_followup_settings');
+
+// Case 23a: Default / empty settings
+unset($GLOBALS['flacso_test_options']['flacso_inquiry_followup_enabled']);
+unset($GLOBALS['flacso_test_options']['flacso_inquiry_followup_days']);
+unset($GLOBALS['flacso_test_options']['flacso_mautic_template_seguimiento_abierta']);
+unset($GLOBALS['flacso_test_options']['flacso_mautic_template_seguimiento_cerrada']);
+
+$f_settings_default = FLACSO_Mail_Settings::get_followup_settings();
+assert_true($f_settings_default['enabled'] === false, 'Default followup enabled must be false');
+assert_true($f_settings_default['days'] === 5, 'Default followup days must be 5');
+assert_true($f_settings_default['template_seguimiento_open'] === 0, 'Default template open must be 0');
+assert_true($f_settings_default['template_seguimiento_closed'] === 0, 'Default template closed must be 0');
+
+// Case 23b: Custom valid settings
+$GLOBALS['flacso_test_options']['flacso_inquiry_followup_enabled'] = '1';
+$GLOBALS['flacso_test_options']['flacso_inquiry_followup_days'] = '7';
+$GLOBALS['flacso_test_options']['flacso_mautic_template_seguimiento_abierta'] = '14';
+$GLOBALS['flacso_test_options']['flacso_mautic_template_seguimiento_cerrada'] = '15';
+
+$f_settings_custom = FLACSO_Mail_Settings::get_followup_settings();
+assert_true($f_settings_custom['enabled'] === true, 'Followup enabled must be true when set to 1');
+assert_true($f_settings_custom['days'] === 7, 'Followup days must be 7');
+assert_true($f_settings_custom['template_seguimiento_open'] === 14, 'Template open must be 14');
+assert_true($f_settings_custom['template_seguimiento_closed'] === 15, 'Template closed must be 15');
+
+// Case 23c: Clamping in helper if raw option is out of bounds
+$GLOBALS['flacso_test_options']['flacso_inquiry_followup_days'] = 0;
+assert_true(FLACSO_Mail_Settings::get_followup_settings()['days'] === 1, 'Helper must clamp days <= 0 to 1');
+$GLOBALS['flacso_test_options']['flacso_inquiry_followup_days'] = 100;
+assert_true(FLACSO_Mail_Settings::get_followup_settings()['days'] === 60, 'Helper must clamp days > 60 to 60');
+
+// Case 23d: UI rendering verification
+ob_start();
+FLACSO_Mail_Settings::render_page();
+$rendered_html = ob_get_clean();
+
+assert_true(strpos($rendered_html, 'Seguimiento Automático de Consultas (+X días)') !== false, 'Render must contain section title: Seguimiento Automático de Consultas (+X días)');
+assert_true(strpos($rendered_html, 'name="flacso_inquiry_followup_enabled"') !== false, 'Render must contain flacso_inquiry_followup_enabled input');
+assert_true(strpos($rendered_html, 'Habilitar seguimiento automático de consultas') !== false, 'Render must contain label: Habilitar seguimiento automático de consultas');
+assert_true(strpos($rendered_html, 'name="flacso_inquiry_followup_days"') !== false, 'Render must contain flacso_inquiry_followup_days input');
+assert_true(strpos($rendered_html, 'name="flacso_mautic_template_seguimiento_abierta"') !== false, 'Render must contain flacso_mautic_template_seguimiento_abierta input');
+assert_true(strpos($rendered_html, 'Plantilla Mautic: Cohorte abierta (recordatorio preinscripción)') !== false, 'Render must contain label for open template');
+assert_true(strpos($rendered_html, 'name="flacso_mautic_template_seguimiento_cerrada"') !== false, 'Render must contain flacso_mautic_template_seguimiento_cerrada input');
+assert_true(strpos($rendered_html, 'Plantilla Mautic: Cohorte cerrada / sin cohorte (seguimiento institucional)') !== false, 'Render must contain label for closed template');
+
 echo "OK mail-console-and-consultas-admin-test\n";
+
 

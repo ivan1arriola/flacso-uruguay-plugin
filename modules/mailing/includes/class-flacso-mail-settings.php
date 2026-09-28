@@ -44,6 +44,11 @@ final class FLACSO_Mail_Settings {
     public const OPTION_MAUTIC_TEMPLATE_OPEN = 'flacso_mautic_template_consulta_abierta';
     public const OPTION_MAUTIC_TEMPLATE_CLOSED = 'flacso_mautic_template_consulta_cerrada';
 
+    public const OPTION_FOLLOWUP_ENABLED = 'flacso_inquiry_followup_enabled';
+    public const OPTION_FOLLOWUP_DAYS = 'flacso_inquiry_followup_days';
+    public const OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_ABIERTA = 'flacso_mautic_template_seguimiento_abierta';
+    public const OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_CERRADA = 'flacso_mautic_template_seguimiento_cerrada';
+
     public static function init(): void {
         if (!is_admin()) {
             return;
@@ -172,6 +177,36 @@ final class FLACSO_Mail_Settings {
             'sanitize_callback' => [self::class, 'sanitize_numeric_id'],
             'default' => '',
         ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_FOLLOWUP_ENABLED, [
+            'type' => 'string',
+            'sanitize_callback' => static function ($val): string {
+                return !empty($val) && $val !== '0' ? '1' : '0';
+            },
+            'default' => '0',
+        ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_FOLLOWUP_DAYS, [
+            'type' => 'integer',
+            'sanitize_callback' => [self::class, 'sanitize_followup_days'],
+            'default' => 5,
+        ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_ABIERTA, [
+            'type' => 'integer',
+            'sanitize_callback' => [self::class, 'sanitize_template_id_int'],
+            'default' => 0,
+        ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_CERRADA, [
+            'type' => 'integer',
+            'sanitize_callback' => [self::class, 'sanitize_template_id_int'],
+            'default' => 0,
+        ]);
+    }
+
+    public static function sanitize_followup_days($val): int {
+        return max(1, min(60, (int) $val));
+    }
+
+    public static function sanitize_template_id_int($val): int {
+        return max(0, (int) $val);
     }
 
     public static function sanitize_mautic_base_url($value): string {
@@ -230,6 +265,16 @@ final class FLACSO_Mail_Settings {
                 'consulta_abierta' => trim((string) get_option(self::OPTION_MAUTIC_TEMPLATE_OPEN, '')),
                 'consulta_cerrada' => trim((string) get_option(self::OPTION_MAUTIC_TEMPLATE_CLOSED, '')),
             ],
+            'followup' => self::get_followup_settings(),
+        ];
+    }
+
+    public static function get_followup_settings(): array {
+        return [
+            'enabled'                   => !empty(get_option(self::OPTION_FOLLOWUP_ENABLED, '0')),
+            'days'                      => max(1, min(60, (int) get_option(self::OPTION_FOLLOWUP_DAYS, 5))),
+            'template_seguimiento_open' => (int) get_option(self::OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_ABIERTA, 0),
+            'template_seguimiento_closed' => (int) get_option(self::OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_CERRADA, 0),
         ];
     }
 
@@ -590,6 +635,9 @@ final class FLACSO_Mail_Settings {
         $inquiry_engine = (string) get_option(self::OPTION_INQUIRY_EMAIL_ENGINE, 'mailjet');
         $mautic_tpl_open = (string) get_option(self::OPTION_MAUTIC_TEMPLATE_OPEN, '');
         $mautic_tpl_closed = (string) get_option(self::OPTION_MAUTIC_TEMPLATE_CLOSED, '');
+        $followup_settings = self::get_followup_settings();
+        $tpl_seguimiento_open = (string) get_option(self::OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_ABIERTA, '');
+        $tpl_seguimiento_closed = (string) get_option(self::OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_CERRADA, '');
 
         // Obtener Ofertas Académicas y Seminarios publicados para mapeo de listas
         $offers = get_posts([
@@ -947,6 +995,48 @@ final class FLACSO_Mail_Settings {
                                 </div>
 
                                 <div id="flacso-mautic-send-test-result" style="margin-top:12px;display:none;padding:12px 16px;border-radius:8px;font-size:13px;"></div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top:20px;padding-top:18px;border-top:1px solid #e2e8f0;" id="flacso-followup-settings-section">
+                            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:8px;">
+                                <div>
+                                    <h3 style="margin:0 0 4px;font-size:15px;color:#0f172a;"><?php esc_html_e('Seguimiento Automático de Consultas (+X días)', 'flacso-uruguay'); ?></h3>
+                                    <p class="desc" style="margin:0;font-size:12.5px;"><?php esc_html_e('Programación y despacho automatizado vía WP-Cron para prospectos que realizaron una consulta académica, reevaluando la cohorte en tiempo real.', 'flacso-uruguay'); ?></p>
+                                </div>
+                                <span class="flacso-badge <?php echo $followup_settings['enabled'] ? 'flacso-badge-ok' : 'flacso-badge-warn'; ?>">
+                                    <?php echo $followup_settings['enabled'] ? esc_html__('SEGUIMIENTO ACTIVO', 'flacso-uruguay') : esc_html__('DESHABILITADO', 'flacso-uruguay'); ?>
+                                </span>
+                            </div>
+
+                            <div style="margin:16px 0 16px;padding:12px 16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;">
+                                <label style="display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px;color:#0f172a;cursor:pointer;">
+                                    <input type="hidden" name="<?php echo esc_attr(self::OPTION_FOLLOWUP_ENABLED); ?>" value="0">
+                                    <input type="checkbox" id="<?php echo esc_attr(self::OPTION_FOLLOWUP_ENABLED); ?>" name="<?php echo esc_attr(self::OPTION_FOLLOWUP_ENABLED); ?>" value="1" <?php checked($followup_settings['enabled']); ?>>
+                                    <span><?php esc_html_e('Habilitar seguimiento automático de consultas', 'flacso-uruguay'); ?></span>
+                                </label>
+                                <p style="margin:4px 0 0 28px;font-size:12.5px;color:#64748b;">
+                                    <?php esc_html_e('Al activarse, cada consulta recibida programa automáticamente un seguimiento posterior tras X días.', 'flacso-uruguay'); ?>
+                                </p>
+                            </div>
+
+                            <div class="flacso-field-group" style="max-width:320px;margin-bottom:16px;">
+                                <label for="<?php echo esc_attr(self::OPTION_FOLLOWUP_DAYS); ?>"><?php esc_html_e('Días de espera para seguimiento (+X días)', 'flacso-uruguay'); ?></label>
+                                <input class="regular-text" style="width:120px;" type="number" min="1" max="60" id="<?php echo esc_attr(self::OPTION_FOLLOWUP_DAYS); ?>" name="<?php echo esc_attr(self::OPTION_FOLLOWUP_DAYS); ?>" value="<?php echo esc_attr((string) $followup_settings['days']); ?>">
+                                <p style="font-size:12px;color:#64748b;margin:4px 0 0;"><?php esc_html_e('Cantidad de días posteriores a la consulta para disparar el seguimiento (1 a 60 días, por defecto 5).', 'flacso-uruguay'); ?></p>
+                            </div>
+
+                            <div class="flacso-grid-2">
+                                <div class="flacso-field-group">
+                                    <label for="<?php echo esc_attr(self::OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_ABIERTA); ?>"><?php esc_html_e('Plantilla Mautic: Cohorte abierta (recordatorio preinscripción)', 'flacso-uruguay'); ?></label>
+                                    <input class="regular-text code" type="number" min="0" id="<?php echo esc_attr(self::OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_ABIERTA); ?>" name="<?php echo esc_attr(self::OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_ABIERTA); ?>" value="<?php echo esc_attr($tpl_seguimiento_open !== '' ? $tpl_seguimiento_open : ($followup_settings['template_seguimiento_open'] > 0 ? (string) $followup_settings['template_seguimiento_open'] : '')); ?>" placeholder="Ej: 14">
+                                    <p style="font-size:12px;color:#64748b;margin:4px 0 0;"><?php esc_html_e('ID numérico del correo en Mautic para ofertas cuya cohorte se encuentre abierta al momento del seguimiento.', 'flacso-uruguay'); ?></p>
+                                </div>
+                                <div class="flacso-field-group">
+                                    <label for="<?php echo esc_attr(self::OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_CERRADA); ?>"><?php esc_html_e('Plantilla Mautic: Cohorte cerrada / sin cohorte (seguimiento institucional)', 'flacso-uruguay'); ?></label>
+                                    <input class="regular-text code" type="number" min="0" id="<?php echo esc_attr(self::OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_CERRADA); ?>" name="<?php echo esc_attr(self::OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_CERRADA); ?>" value="<?php echo esc_attr($tpl_seguimiento_closed !== '' ? $tpl_seguimiento_closed : ($followup_settings['template_seguimiento_closed'] > 0 ? (string) $followup_settings['template_seguimiento_closed'] : '')); ?>" placeholder="Ej: 15">
+                                    <p style="font-size:12px;color:#64748b;margin:4px 0 0;"><?php esc_html_e('ID numérico del correo en Mautic para ofertas cuya cohorte se encuentre cerrada o sin cohorte activa.', 'flacso-uruguay'); ?></p>
+                                </div>
                             </div>
                         </div>
                     </div>
