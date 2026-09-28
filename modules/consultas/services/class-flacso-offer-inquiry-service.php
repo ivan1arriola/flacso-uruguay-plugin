@@ -389,17 +389,34 @@ class FLACSO_Offer_Inquiry_Service {
                         $message_id   = (string) $template_id;
                         $message_uuid = null;
                     } else {
-                        error_log('[FLACSO] Fallo al enviar correo por Mautic: ' . ($send_res['error'] ?? 'desconocido') . '. Activando fallback a Mailjet.');
+                        $send_err = $send_res['error'] ?? 'desconocido';
+                        error_log('[FLACSO] Fallo al enviar correo por Mautic: ' . $send_err . '. Activando fallback a Mailjet.');
+                        if ($record_id !== '' && method_exists($repo, 'update_mautic_status')) {
+                            $repo->update_mautic_status($record_id, [
+                                'mauticLastError' => 'Fallo al enviar correo: ' . $send_err,
+                            ]);
+                        }
                     }
                 } catch (\Throwable $e) {
                     error_log('[FLACSO] Excepción al enviar correo por Mautic: ' . $e->getMessage() . '. Activando fallback a Mailjet.');
+                    if ($record_id !== '' && method_exists($repo, 'update_mautic_status')) {
+                        $repo->update_mautic_status($record_id, [
+                            'mauticLastError' => 'Excepción al enviar correo: ' . $e->getMessage(),
+                        ]);
+                    }
                 }
             } else {
                 if ($contact_id <= 0) {
                     error_log('[FLACSO] Mautic no devolvió un contact_id válido (' . $contact_id . '). Activando fallback a Mailjet.');
                 }
                 if ($template_id <= 0) {
-                    error_log('[FLACSO] Plantilla de Mautic no configurada para consulta (' . ($is_open ? 'abierta' : 'cerrada') . '). Activando fallback a Mailjet.');
+                    $tmpl_msg = 'Plantilla de Mautic no configurada para consulta (' . ($is_open ? 'abierta' : 'cerrada') . '). Activando fallback a Mailjet.';
+                    error_log('[FLACSO] ' . $tmpl_msg);
+                    if ($record_id !== '' && method_exists($repo, 'update_mautic_status')) {
+                        $repo->update_mautic_status($record_id, [
+                            'mauticLastError' => 'Plantilla Mautic (' . ($is_open ? 'abierta' : 'cerrada') . ') no configurada',
+                        ]);
+                    }
                 }
             }
 

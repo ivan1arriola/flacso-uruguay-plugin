@@ -704,6 +704,7 @@ srv_assert($saved_m_fail['emailStatus'] === 'sent', '11.2: emailStatus en BD deb
 srv_assert($saved_m_fail['emailSender'] === 'mailjet_fallback', '11.2: emailSender en BD debe ser mailjet_fallback');
 srv_assert($saved_m_fail['mailjetMessageId'] === '288230407340150000', '11.2: mailjetMessageId debe registrar el ID devuelto por Mailjet');
 srv_assert((string)$saved_m_fail['mauticContactId'] === '9902', '11.2: mauticContactId debe haberse registrado correctamente');
+srv_assert(strpos($saved_m_fail['mauticLastError'] ?? '', 'Spool queue locked') !== false, '11.2: mauticLastError debe registrar el error que motivó el fallback');
 
 // 11.3 Motor Mautic sin plantilla configurada -> Fallback automático a Mailjet
 $GLOBALS['mailjet_mock_options']['flacso_mautic_template_consulta_abierta'] = 0;
@@ -750,6 +751,7 @@ srv_assert(count($GLOBALS['mailjet_http_calls']) === 1, '11.3: Debe llamar a Mai
 $saved_m_notemplate = $repo->find_by_consulta_id('srv-offer-mautic-notemplate');
 srv_assert(!empty($saved_m_notemplate), '11.3: Registro debe existir en BD');
 srv_assert($saved_m_notemplate['emailSender'] === 'mailjet_fallback', '11.3: emailSender en BD debe ser mailjet_fallback');
+srv_assert(strpos($saved_m_notemplate['mauticLastError'] ?? '', 'no configurada') !== false, '11.3: mauticLastError debe indicar plantilla no configurada');
 
 // 11.4 Motor Mailjet seleccionado -> Mailjet envía directamente, emailSender === 'mailjet'
 $GLOBALS['mailjet_mock_options']['flacso_inquiry_email_engine'] = 'mailjet';

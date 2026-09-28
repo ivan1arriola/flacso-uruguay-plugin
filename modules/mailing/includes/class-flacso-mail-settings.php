@@ -408,7 +408,10 @@ final class FLACSO_Mail_Settings {
         }
 
         if (function_exists('check_ajax_referer')) {
-            check_ajax_referer('flacso_mail_console_nonce', 'nonce');
+            if (!check_ajax_referer('flacso_mail_console_nonce', 'nonce', false)) {
+                wp_send_json_error(['message' => 'Sesión expirada o nonce inválido.', 'code' => 403], 403);
+                return;
+            }
         }
 
         if (!class_exists('FLACSO_Mautic_Client')) {
@@ -446,7 +449,10 @@ final class FLACSO_Mail_Settings {
         }
 
         if (function_exists('check_ajax_referer')) {
-            check_ajax_referer('flacso_mail_console_nonce', 'nonce');
+            if (!check_ajax_referer('flacso_mail_console_nonce', 'nonce', false)) {
+                wp_send_json_error(['message' => 'Sesión expirada o nonce inválido.', 'code' => 403], 403);
+                return;
+            }
         }
 
         $scenario_raw = sanitize_key((string) ($_POST['scenario'] ?? 'abierta'));
