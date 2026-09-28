@@ -85,6 +85,13 @@ class FLACSO_Inquiry_Analytics_Repository {
     protected static array $columns_cache = [];
 
     /**
+     * Limpia la caché de columnas en memoria (útil para pruebas).
+     */
+    public static function clear_cache(): void {
+        self::$columns_cache = [];
+    }
+
+    /**
      * Obtiene la lista de columnas existentes en la tabla para evitar errores de columnas faltantes.
      */
     public static function get_table_columns(PDO $pdo, string $table): array {
@@ -799,6 +806,21 @@ class FLACSO_Inquiry_Analytics_Repository {
             }
             if (in_array('mauticLastError', $columns, true)) {
                 $select_context .= '"mauticLastError", ';
+            }
+            if (in_array('followupStatus', $columns, true)) {
+                $select_context .= '"followupStatus", ';
+            }
+            if (in_array('followupDueAt', $columns, true)) {
+                $select_context .= '"followupDueAt", ';
+            }
+            if (in_array('followupSentAt', $columns, true)) {
+                $select_context .= '"followupSentAt", ';
+            }
+            if (in_array('followupAttempts', $columns, true)) {
+                $select_context .= '"followupAttempts", ';
+            }
+            if (in_array('followupLastError', $columns, true)) {
+                $select_context .= '"followupLastError", ';
             }
         }
         if (in_array('offerStatus', $columns, true)) {

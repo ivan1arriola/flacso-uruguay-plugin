@@ -20,6 +20,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			add_action( 'wp_ajax_flacso_consultas_detail', array( __CLASS__, 'ajax_get_detail' ) );
 			add_action( 'wp_ajax_flacso_consultas_retry_email', array( __CLASS__, 'ajax_retry_email' ) );
 			add_action( 'wp_ajax_flacso_consultas_retry_mautic', array( __CLASS__, 'ajax_retry_mautic' ) );
+			add_action( 'wp_ajax_flacso_consultas_trigger_followup', array( __CLASS__, 'ajax_trigger_followup' ) );
 			add_action( 'wp_ajax_flacso_consultas_toggle_campaign', array( __CLASS__, 'ajax_toggle_campaign' ) );
 			add_action( 'admin_post_flacso_consultas_export_csv', array( __CLASS__, 'handle_export_csv' ) );
 		}
@@ -164,6 +165,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 
 			$item_col            = FLACSO_Inquiry_Analytics_Repository::ALLOWED_TABLES[ $table ]['item_col'] ?? 'offerName';
 			$detail['item_name'] = $detail[ $item_col ] ?? '';
+			$detail['table']     = $table;
 
 			wp_send_json_success( $detail );
 		}
@@ -376,6 +378,96 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 		}
 
 		/**
+		 * Renderiza el badge HTML correspondiente al estado del seguimiento automático (+X días).
+		 *
+		 * @param array $row Fila de consulta con followupStatus, followupDueAt, followupSentAt, followupLastError.
+		 * @return string HTML seguro del badge o cadena vacía si no aplica.
+		 */
+		public static function render_followup_status_badge( array $row ): string {
+			$status = strtolower( trim( (string) ( $row['followupStatus'] ?? 'none' ) ) );
+
+			if ( 'pending' === $status ) {
+				$due   = ! empty( $row['followupDueAt'] ) ? (string) $row['followupDueAt'] : '';
+				$title = '' !== $due
+					? sprintf( __( 'Vencimiento: %s', 'flacso-uruguay' ), $due )
+					: __( 'Seguimiento pendiente', 'flacso-uruguay' );
+				return '<span class="flacso-badge followup-pending" title="' . esc_attr( $title ) . '">⏰ ' . esc_html__( 'Seg. pend.', 'flacso-uruguay' ) . '</span>';
+			}
+
+			if ( 'sent' === $status ) {
+				$sent  = ! empty( $row['followupSentAt'] ) ? (string) $row['followupSentAt'] : '';
+				$title = '' !== $sent
+					? sprintf( __( 'Seguimiento enviado: %s', 'flacso-uruguay' ), $sent )
+					: __( 'Seguimiento enviado', 'flacso-uruguay' );
+				return '<span class="flacso-badge followup-sent" title="' . esc_attr( $title ) . '">✅ ' . esc_html__( 'Seg. enviado', 'flacso-uruguay' ) . '</span>';
+			}
+
+			if ( 'skipped' === $status ) {
+				$err   = ! empty( $row['followupLastError'] ) ? (string) $row['followupLastError'] : __( 'Seguimiento omitido', 'flacso-uruguay' );
+				$title = sprintf( __( 'Omitido: %s', 'flacso-uruguay' ), $err );
+				return '<span class="flacso-badge followup-skipped" title="' . esc_attr( $title ) . '">⏭ ' . esc_html__( 'Seg. omitido', 'flacso-uruguay' ) . '</span>';
+			}
+
+			if ( 'failed' === $status ) {
+				$err   = ! empty( $row['followupLastError'] ) ? (string) $row['followupLastError'] : __( 'Error en seguimiento', 'flacso-uruguay' );
+				$title = sprintf( __( 'Error: %s', 'flacso-uruguay' ), $err );
+				return '<span class="flacso-badge followup-failed" title="' . esc_attr( $title ) . '">❌ ' . esc_html__( 'Seg. falló', 'flacso-uruguay' ) . '</span>';
+			}
+
+			if ( 'processing' === $status ) {
+				return '<span class="flacso-badge followup-processing" title="' . esc_attr__( 'Seguimiento en procesamiento', 'flacso-uruguay' ) . '">⏳ ' . esc_html__( 'Seg. procesando', 'flacso-uruguay' ) . '</span>';
+			}
+
+			return '';
+		}
+
+		/**
+		 * AJAX: Disparo manual interactivo del seguimiento automático (+X días).
+		 */
+		public static function ajax_trigger_followup(): void {
+			check_ajax_referer( self::NONCE_ACTION, 'nonce' );
+			if ( ! current_user_can( 'manage_options' ) ) {
+				wp_send_json_error( array( 'message' => 'No autorizado' ), 403 );
+			}
+
+			$id = isset( $_POST['id'] ) ? sanitize_text_field( wp_unslash( $_POST['id'] ) ) : '';
+			if ( '' === $id ) {
+				wp_send_json_error( array( 'message' => 'ID inválido' ), 400 );
+			}
+
+			if ( ! class_exists( 'FLACSO_Inquiry_Followup_Service' ) ) {
+				wp_send_json_error( array( 'status' => 'failed', 'message' => 'Servicio de seguimiento no disponible' ), 500 );
+			}
+
+			$repo    = new FLACSO_Offer_Inquiry_Repository();
+			$inquiry = $repo->find_by_id( $id );
+			if ( ! $inquiry ) {
+				wp_send_json_error( array( 'message' => 'Consulta no encontrada en PostgreSQL.' ), 404 );
+			}
+
+			$res = FLACSO_Inquiry_Followup_Service::process_single_followup( $inquiry, $repo );
+
+			if ( ! empty( $res['ok'] ) ) {
+				wp_send_json_success(
+					array(
+						'status'  => $res['status'] ?? 'sent',
+						'message' => ! empty( $res['reason'] ) ? $res['reason'] : 'Seguimiento ejecutado con éxito',
+						'result'  => $res,
+					)
+				);
+			}
+
+			wp_send_json_error(
+				array(
+					'status'  => $res['status'] ?? 'failed',
+					'message' => $res['error'] ?? 'Error al ejecutar seguimiento',
+					'result'  => $res,
+				),
+				500
+			);
+		}
+
+		/**
 		 * AJAX: Ocultar o restaurar campaña en el análisis de atribución.
 		 */
 		public static function ajax_toggle_campaign(): void {
@@ -488,6 +580,11 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					.flacso-badge.mautic-failed { background: #fee2e2; color: #991b1b; }
 					.flacso-badge.mautic-pending { background: #fef3c7; color: #92400e; }
 					.flacso-badge.mautic-skipped { background: #f1f5f9; color: #64748b; }
+					.flacso-badge.followup-pending { background: #e0f2fe; color: #0369a1; }
+					.flacso-badge.followup-sent { background: #dcfce7; color: #15803d; }
+					.flacso-badge.followup-skipped { background: #f1f5f9; color: #64748b; }
+					.flacso-badge.followup-failed { background: #fee2e2; color: #b91c1c; }
+					.flacso-badge.followup-processing { background: #fef3c7; color: #b45309; }
 					.flacso-chip {
 						display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px;
 						border: 1px solid #cbd5e1; background: #f8fafc; font-size: 12.5px; cursor: pointer; user-select: none;
@@ -781,6 +878,14 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 									</td>
 									<td class="flacso-status-cell" data-id="<?php echo esc_attr( (string) $row['id'] ); ?>">
 										<?php echo self::render_email_status_badge( $row ); ?>
+										<?php
+										if ( 'offer_inquiries' === $table ) {
+											$followup_badge = self::render_followup_status_badge( $row );
+											if ( '' !== $followup_badge ) {
+												echo ' ' . $followup_badge;
+											}
+										}
+										?>
 									</td>
 									<td style="white-space:nowrap;">
 										<button type="button" class="button button-small flacso-js-detail"
@@ -882,6 +987,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 											<tr><th>Estado Email</th><td><strong>${d.emailStatus || ''}</strong> (Remitente: ${senderLabel})</td></tr>
 											<tr><th>Mailjet Message ID / UUID</th><td><code>${d.mailjetMessageId || '—'}</code> / <code>${d.mailjetMessageUuid || '—'}</code></td></tr>
 											${d.mauticSyncStatus ? `<tr><th>Estado Mautic</th><td><strong>${d.mauticSyncStatus}</strong> (Contact ID: ${d.mauticContactId || '—'} | Sincronizado: ${d.mauticSyncedAt || '—'}${d.mauticLastError ? ' | Error: ' + d.mauticLastError : ''})</td></tr>` : ''}
+											<tr><th>Seguimiento (+X días)</th><td><strong>${d.followupStatus || 'none'}</strong> (Vencimiento: ${d.followupDueAt || '—'} | Enviado: ${d.followupSentAt || '—'}${d.followupLastError ? ' | Nota: ' + d.followupLastError : ''})${d.table === 'offer_inquiries' && d.followupStatus !== 'sent' ? '<div style="margin-top:8px;"><button type="button" class="button button-secondary flacso-js-trigger-followup" data-id="' + d.id + '">🚀 Enviar Seguimiento Ahora</button></div>' : ''}</td></tr>
 											<tr><th>UTM / Campaña</th><td>Source: ${d.campaignSource || '—'} | Medium: ${d.campaignMedium || '—'} | Campaign: ${d.campaignName || '—'}</td></tr>
 											<tr><th>Página Origen</th><td><a href="${d.pageUrl || '#'}" target="_blank">${d.pageUrl || '—'}</a></td></tr>
 										</tbody>
@@ -889,6 +995,58 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 									<h4 style="margin:10px 0 6px;">Payload Original (JSON)</h4>
 									<pre style="background:#0f172a; color:#e2e8f0; padding:12px; border-radius:8px; overflow:auto; max-height:240px; font-size:12px;">${JSON.stringify(d.payload_decoded || {}, null, 2)}</pre>
 								`;
+
+								const triggerBtn = content.querySelector('.flacso-js-trigger-followup');
+								if (triggerBtn) {
+									triggerBtn.addEventListener('click', function(){
+										const trigId = this.getAttribute('data-id');
+										const origBtnText = this.textContent;
+										this.disabled = true;
+										this.textContent = '⏳ Procesando...';
+										const tfd = new FormData();
+										tfd.append('action', 'flacso_consultas_trigger_followup');
+										tfd.append('nonce', nonce);
+										tfd.append('id', trigId);
+										fetch(ajaxurl, { method: 'POST', body: tfd })
+											.then(r => r.json())
+											.then(res => {
+												if (res.success) {
+													this.textContent = '✅ Procesado';
+													alert(res.data?.message || 'Seguimiento ejecutado con éxito');
+													const cell = document.querySelector(`.flacso-status-cell[data-id="${trigId}"]`);
+													if (cell && res.data?.status) {
+														const st = res.data.status;
+														const badgeClass = 'followup-' + st;
+														let badgeLabel = 'Seg. ' + st;
+														if (st === 'sent') badgeLabel = '✅ Seg. enviado';
+														else if (st === 'skipped') badgeLabel = '⏭ Seg. omitido';
+														else if (st === 'failed') badgeLabel = '❌ Seg. falló';
+														else if (st === 'pending') badgeLabel = '⏰ Seg. pend.';
+														let existingFollowup = cell.querySelector('.flacso-badge[class*="followup-"]');
+														if (existingFollowup) {
+															existingFollowup.className = 'flacso-badge ' + badgeClass;
+															existingFollowup.textContent = badgeLabel;
+														} else {
+															const newBadge = document.createElement('span');
+															newBadge.className = 'flacso-badge ' + badgeClass;
+															newBadge.textContent = badgeLabel;
+															cell.appendChild(document.createTextNode(' '));
+															cell.appendChild(newBadge);
+														}
+													}
+												} else {
+													this.disabled = false;
+													this.textContent = origBtnText;
+													alert('Error: ' + (res.data?.message || 'Error al procesar seguimiento'));
+												}
+											})
+											.catch(err => {
+												this.disabled = false;
+												this.textContent = origBtnText;
+												alert('Error de conexión: ' + err.message);
+											});
+									});
+								}
 							});
 					});
 				});

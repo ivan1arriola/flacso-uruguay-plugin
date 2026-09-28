@@ -100,7 +100,12 @@ if (!function_exists('wp_json_encode')) {
 }
 if (!function_exists('current_user_can')) {
     function current_user_can(string $cap): bool {
-        return true;
+        return $GLOBALS['flacso_test_current_user_can'] ?? true;
+    }
+}
+if (!function_exists('get_post_status')) {
+    function get_post_status($post_id) {
+        return $GLOBALS['flacso_test_post_status'][$post_id] ?? 'publish';
     }
 }
 if (!function_exists('wp_unslash')) {
@@ -363,6 +368,11 @@ $pdo->exec('CREATE TABLE "offer_inquiries" (
     "mauticSyncStatus" TEXT,
     "mauticSyncedAt" TEXT,
     "mauticLastError" TEXT,
+    "followupDueAt" TEXT,
+    "followupStatus" TEXT,
+    "followupSentAt" TEXT,
+    "followupAttempts" INTEGER DEFAULT 0,
+    "followupLastError" TEXT,
     "payload" TEXT,
     "inquiryAt" TEXT,
     "createdAt" TEXT,
@@ -1106,6 +1116,130 @@ assert_true(strpos($rendered_html, 'Plantilla Mautic: Cohorte abierta (recordato
 assert_true(strpos($rendered_html, 'name="flacso_mautic_template_seguimiento_cerrada"') !== false, 'Render must contain flacso_mautic_template_seguimiento_cerrada input');
 assert_true(strpos($rendered_html, 'Plantilla Mautic: Cohorte cerrada / sin cohorte (seguimiento institucional)') !== false, 'Render must contain label for closed template');
 
+// Test 24: FLACSO_Consultas_Admin::render_followup_status_badge() for all statuses
+assert_true(method_exists('FLACSO_Consultas_Admin', 'render_followup_status_badge'), 'FLACSO_Consultas_Admin must define render_followup_status_badge');
+
+// 24a: pending
+$badge_pending = FLACSO_Consultas_Admin::render_followup_status_badge(['followupStatus' => 'pending', 'followupDueAt' => '2026-10-05 12:00:00']);
+assert_true(strpos($badge_pending, 'flacso-badge followup-pending') !== false, 'Badge pending class');
+assert_true(strpos($badge_pending, '2026-10-05 12:00:00') !== false, 'Badge pending title must include due date');
+assert_true(strpos($badge_pending, '⏰ Seg. pend.') !== false, 'Badge pending label');
+
+// 24b: sent
+$badge_sent = FLACSO_Consultas_Admin::render_followup_status_badge(['followupStatus' => 'sent', 'followupSentAt' => '2026-10-05 12:05:00']);
+assert_true(strpos($badge_sent, 'flacso-badge followup-sent') !== false, 'Badge sent class');
+assert_true(strpos($badge_sent, '2026-10-05 12:05:00') !== false, 'Badge sent title must include sent date');
+assert_true(strpos($badge_sent, '✅ Seg. enviado') !== false, 'Badge sent label');
+
+// 24c: skipped
+$badge_skipped = FLACSO_Consultas_Admin::render_followup_status_badge(['followupStatus' => 'skipped', 'followupLastError' => 'Existe consulta más reciente para esta oferta']);
+assert_true(strpos($badge_skipped, 'flacso-badge followup-skipped') !== false, 'Badge skipped class');
+assert_true(strpos($badge_skipped, 'Existe consulta más reciente para esta oferta') !== false, 'Badge skipped title must include last error/reason');
+assert_true(strpos($badge_skipped, '⏭ Seg. omitido') !== false, 'Badge skipped label');
+
+// 24d: failed
+$badge_failed = FLACSO_Consultas_Admin::render_followup_status_badge(['followupStatus' => 'failed', 'followupLastError' => 'Plantilla Mautic inválida']);
+assert_true(strpos($badge_failed, 'flacso-badge followup-failed') !== false, 'Badge failed class');
+assert_true(strpos($badge_failed, 'Plantilla Mautic inválida') !== false, 'Badge failed title must include last error');
+assert_true(strpos($badge_failed, '❌ Seg. falló') !== false, 'Badge failed label');
+
+// 24e: processing
+$badge_processing = FLACSO_Consultas_Admin::render_followup_status_badge(['followupStatus' => 'processing']);
+assert_true(strpos($badge_processing, 'flacso-badge followup-processing') !== false, 'Badge processing class');
+assert_true(strpos($badge_processing, '⏳ Seg. procesando') !== false, 'Badge processing label');
+
+// 24f: none or empty
+assert_true(FLACSO_Consultas_Admin::render_followup_status_badge(['followupStatus' => 'none']) === '', 'Badge none must return empty string');
+assert_true(FLACSO_Consultas_Admin::render_followup_status_badge([]) === '', 'Badge empty array must return empty string');
+assert_true(FLACSO_Consultas_Admin::render_followup_status_badge(['followupStatus' => '']) === '', 'Badge empty string must return empty string');
+
+// Test 25: AJAX wp_ajax_flacso_consultas_trigger_followup endpoint
+assert_true(method_exists('FLACSO_Consultas_Admin', 'ajax_trigger_followup'), 'FLACSO_Consultas_Admin must define ajax_trigger_followup');
+FLACSO_Consultas_Admin::init();
+$followup_trigger_hooks = $GLOBALS['wp_actions']['wp_ajax_flacso_consultas_trigger_followup'] ?? [];
+assert_true(!empty($followup_trigger_hooks), 'init() must register wp_ajax_flacso_consultas_trigger_followup action');
+
+// Case 25a: Without permissions -> 403
+$GLOBALS['flacso_test_current_user_can'] = false;
+$_POST = ['nonce' => 'mock-nonce', 'id' => 'c01'];
+$ajax_caught = null;
+try {
+    FLACSO_Consultas_Admin::ajax_trigger_followup();
+} catch (TestAjaxException $e) {
+    $ajax_caught = $e;
+}
+assert_true($ajax_caught !== null && $ajax_caught->is_success === false && $ajax_caught->status_code === 403, 'ajax_trigger_followup must return 403 when user lacks manage_options');
+$GLOBALS['flacso_test_current_user_can'] = true;
+
+// Case 25b: Empty ID -> 400
+$_POST = ['nonce' => 'mock-nonce', 'id' => ''];
+$ajax_caught = null;
+try {
+    FLACSO_Consultas_Admin::ajax_trigger_followup();
+} catch (TestAjaxException $e) {
+    $ajax_caught = $e;
+}
+assert_true($ajax_caught !== null && $ajax_caught->is_success === false && $ajax_caught->status_code === 400, 'ajax_trigger_followup must return 400 on empty id');
+
+// Case 25c: Nonexistent ID -> 404
+$_POST = ['nonce' => 'mock-nonce', 'id' => 'nonexistent-id-999'];
+$ajax_caught = null;
+try {
+    FLACSO_Consultas_Admin::ajax_trigger_followup();
+} catch (TestAjaxException $e) {
+    $ajax_caught = $e;
+}
+assert_true($ajax_caught !== null && $ajax_caught->is_success === false && $ajax_caught->status_code === 404, 'ajax_trigger_followup must return 404 on nonexistent id');
+
+// Case 25d: Successful execution -> 200
+$time_trig = gmdate('Y-m-d H:i:s');
+$pdo->exec("INSERT INTO \"offer_inquiries\"
+    (\"id\",\"consultaId\",\"offerWpId\",\"offerName\",\"offerAbbreviation\",\"cohortNumber\",\"cohortName\",\"offerStatus\",\"firstName\",\"lastName\",\"fullName\",\"email\",\"emailNormalized\",\"phone\",\"country\",\"source\",\"campaignProvider\",\"campaignSource\",\"campaignMedium\",\"campaignName\",\"emailStatus\",\"followupStatus\",\"followupDueAt\",\"payload\",\"inquiryAt\",\"createdAt\",\"updatedAt\")
+    VALUES ('c-trig-1','cid-trig-1',501,'Maestría en Género','mg',2,'2ª Cohorte','abierta','Laura','Gómez','Laura Gómez','laura@ejemplo.com','laura@ejemplo.com','099333','Uruguay','web','meta','facebook','cpc','Campaña Género','sent','pending','{$time_trig}','{}','{$time_trig}','{$time_trig}','{$time_trig}')");
+
+$_POST = ['nonce' => 'mock-nonce', 'id' => 'c-trig-1'];
+$ajax_caught = null;
+try {
+    FLACSO_Consultas_Admin::ajax_trigger_followup();
+} catch (TestAjaxException $e) {
+    $ajax_caught = $e;
+}
+assert_true($ajax_caught !== null && $ajax_caught->is_success === true && $ajax_caught->status_code === 200, 'ajax_trigger_followup must return 200 on success');
+assert_true(isset($ajax_caught->data['status']), 'ajax_trigger_followup success response must contain status');
+
+// Verify DB updated
+$stmt_check = $pdo->prepare('SELECT "followupStatus" FROM "offer_inquiries" WHERE "id" = ?');
+$stmt_check->execute(['c-trig-1']);
+$status_after_trigger = (string) $stmt_check->fetchColumn();
+assert_true($status_after_trigger === 'sent' || $status_after_trigger === 'skipped', 'DB followupStatus must be updated after manual trigger');
+
+// Test 26: Column projection in FLACSO_Inquiry_Analytics_Repository and CSS/modal rendering in FLACSO_Consultas_Admin
+FLACSO_Inquiry_Analytics_Repository::clear_cache();
+$paginated_res = FLACSO_Inquiry_Analytics_Repository::get_paginated_inquiries(['table' => 'offer_inquiries', 'mode' => 'raw']);
+assert_true(!empty($paginated_res['items']), 'get_paginated_inquiries must return items');
+$first_item = $paginated_res['items'][0];
+assert_true(array_key_exists('followupStatus', $first_item), 'offer_inquiries projection must include followupStatus');
+assert_true(array_key_exists('followupDueAt', $first_item), 'offer_inquiries projection must include followupDueAt');
+assert_true(array_key_exists('followupSentAt', $first_item), 'offer_inquiries projection must include followupSentAt');
+assert_true(array_key_exists('followupAttempts', $first_item), 'offer_inquiries projection must include followupAttempts');
+assert_true(array_key_exists('followupLastError', $first_item), 'offer_inquiries projection must include followupLastError');
+
+// Render page check
+$_GET = ['page' => 'flacso-consultas', 'tab' => 'historico', 'table' => 'offer_inquiries'];
+ob_start();
+FLACSO_Consultas_Admin::render_page();
+$rendered_admin_html = ob_get_clean();
+
+assert_true(strpos($rendered_admin_html, '.flacso-badge.followup-pending') !== false, 'Admin CSS must define .flacso-badge.followup-pending');
+assert_true(strpos($rendered_admin_html, '.flacso-badge.followup-sent') !== false, 'Admin CSS must define .flacso-badge.followup-sent');
+assert_true(strpos($rendered_admin_html, '.flacso-badge.followup-skipped') !== false, 'Admin CSS must define .flacso-badge.followup-skipped');
+assert_true(strpos($rendered_admin_html, '.flacso-badge.followup-failed') !== false, 'Admin CSS must define .flacso-badge.followup-failed');
+assert_true(strpos($rendered_admin_html, '.flacso-badge.followup-processing') !== false, 'Admin CSS must define .flacso-badge.followup-processing');
+assert_true(strpos($rendered_admin_html, 'Seguimiento (+X días)') !== false, 'Modal detail must include Seguimiento (+X días) row');
+assert_true(strpos($rendered_admin_html, 'flacso-js-trigger-followup') !== false, 'Modal detail must include flacso-js-trigger-followup button');
+assert_true(strpos($rendered_admin_html, 'class="flacso-badge followup-sent"') !== false, 'Table cell must render followup-sent badge');
+
 echo "OK mail-console-and-consultas-admin-test\n";
+
 
 
