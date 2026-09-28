@@ -722,7 +722,6 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 							<tr><td colspan="<?php echo 'offer_inquiries' === $table ? 10 : 7; ?>" style="text-align:center; padding:26px; color:#64748b;">No se encontraron consultas con los filtros seleccionados.</td></tr>
 						<?php else : ?>
 							<?php foreach ( $result['items'] as $row ) :
-								$status_val = strtolower( (string) ( $row['emailStatus'] ?? 'skipped' ) );
 								$count_val  = (int) ( $row['count'] ?? 1 );
 								$date_val   = (string) ( $row['latestAt'] ?? $row['inquiryAt'] ?? '' );
 								?>
