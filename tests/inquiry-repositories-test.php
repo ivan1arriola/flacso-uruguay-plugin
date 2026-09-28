@@ -392,4 +392,190 @@ function test_update_mautic_status(FLACSO_Offer_Inquiry_Repository $repo): void 
 
 test_update_mautic_status($repo);
 
+// 8. Probar métodos de seguimiento: claim_due_followups, update_followup_status, has_newer_inquiry_for_offer
+function test_followup_methods(FLACSO_Offer_Inquiry_Repository $repo): void {
+    $now_ts = time();
+    $past_due_a = gmdate('Y-m-d H:i:s', $now_ts - 7200);   // Hace 2 horas
+    $future_due_b = gmdate('Y-m-d H:i:s', $now_ts + 172800); // En 2 días
+    $past_due_c = gmdate('Y-m-d H:i:s', $now_ts - 3600);   // Hace 1 hora
+    $past_due_d = gmdate('Y-m-d H:i:s', $now_ts - 10800);  // Hace 3 horas
+
+    // Consulta A: followupStatus = 'pending', followupDueAt en el pasado, attempts = 0
+    $ins_a = $repo->insert([
+        'consultaId'       => 'c-followup-a',
+        'offerWpId'        => 601,
+        'offerName'        => 'Oferta Followup A',
+        'email'            => 'aspirante.a@example.com',
+        'inquiryAt'        => '2026-09-20 10:00:00',
+        'followupStatus'   => 'pending',
+        'followupDueAt'    => $past_due_a,
+        'followupAttempts' => 0,
+    ]);
+    repo_assert(!empty($ins_a['id']), 'Debe insertar Consulta A');
+    $id_a = $ins_a['id'];
+
+    // Consulta B: followupStatus = 'pending', followupDueAt en el futuro, attempts = 0
+    $ins_b = $repo->insert([
+        'consultaId'       => 'c-followup-b',
+        'offerWpId'        => 601,
+        'offerName'        => 'Oferta Followup B',
+        'email'            => 'aspirante.b@example.com',
+        'inquiryAt'        => '2026-09-27 10:00:00',
+        'followupStatus'   => 'pending',
+        'followupDueAt'    => $future_due_b,
+        'followupAttempts' => 0,
+    ]);
+    repo_assert(!empty($ins_b['id']), 'Debe insertar Consulta B');
+    $id_b = $ins_b['id'];
+
+    // Consulta C: followupStatus = 'pending', followupDueAt en el pasado, attempts = 3
+    $ins_c = $repo->insert([
+        'consultaId'       => 'c-followup-c',
+        'offerWpId'        => 602,
+        'offerName'        => 'Oferta Followup C',
+        'email'            => 'aspirante.c@example.com',
+        'inquiryAt'        => '2026-09-20 12:00:00',
+        'followupStatus'   => 'pending',
+        'followupDueAt'    => $past_due_c,
+        'followupAttempts' => 3,
+    ]);
+    repo_assert(!empty($ins_c['id']), 'Debe insertar Consulta C');
+    $id_c = $ins_c['id'];
+
+    // Consulta D: followupStatus = 'sent', followupDueAt en el pasado
+    $ins_d = $repo->insert([
+        'consultaId'       => 'c-followup-d',
+        'offerWpId'        => 603,
+        'offerName'        => 'Oferta Followup D',
+        'email'            => 'aspirante.d@example.com',
+        'inquiryAt'        => '2026-09-18 09:00:00',
+        'followupStatus'   => 'sent',
+        'followupDueAt'    => $past_due_d,
+        'followupAttempts' => 1,
+    ]);
+    repo_assert(!empty($ins_d['id']), 'Debe insertar Consulta D');
+    $id_d = $ins_d['id'];
+
+    // 8.1 Ejecutar claim_due_followups(): sólo debe reclamar Consulta A
+    $claimed = $repo->claim_due_followups();
+    repo_assert(count($claimed) === 1, 'claim_due_followups debe reclamar exactamente 1 consulta');
+    repo_assert($claimed[0]['id'] === $id_a, 'La consulta reclamada debe ser la Consulta A');
+    repo_assert($claimed[0]['followupStatus'] === 'processing', 'El estado devuelto en el array debe ser processing');
+
+    // Verificar en BD que Consulta A pasó a processing
+    $db_a = $repo->find_by_id($id_a);
+    repo_assert($db_a !== null, 'Consulta A debe existir en BD');
+    repo_assert($db_a['followupStatus'] === 'processing', 'Consulta A en BD debe estar en estado processing');
+
+    // 8.2 Ejecutar claim_due_followups() nuevamente: debe devolver [] (Consulta A ya está en processing)
+    $claimed_again = $repo->claim_due_followups();
+    repo_assert(empty($claimed_again), 'Segunda llamada a claim_due_followups debe retornar array vacío');
+
+    // 8.3 Probar update_followup_status() actualizando Consulta A a 'sent'
+    $ok_update = $repo->update_followup_status($id_a, 'sent');
+    repo_assert($ok_update === true, 'update_followup_status debe retornar true al actualizar a sent');
+
+    $db_a_sent = $repo->find_by_id($id_a);
+    repo_assert($db_a_sent !== null, 'Consulta A debe encontrarse tras update');
+    repo_assert($db_a_sent['followupStatus'] === 'sent', 'followupStatus debe ser sent');
+    repo_assert((int)$db_a_sent['followupAttempts'] === 1, 'followupAttempts debe haberse incrementado a 1');
+    repo_assert(!empty($db_a_sent['followupSentAt']), 'followupSentAt debe haberse poblado automáticamente con gmdate(c)');
+    repo_assert($db_a_sent['followupLastError'] === null, 'followupLastError debe ser null');
+
+    // Probar update_followup_status a 'failed' con error
+    $ok_fail = $repo->update_followup_status($id_b, 'failed', 'Error timeout con Mautic API');
+    repo_assert($ok_fail === true, 'update_followup_status debe retornar true al actualizar a failed');
+    $db_b_fail = $repo->find_by_id($id_b);
+    repo_assert($db_b_fail['followupStatus'] === 'failed', 'followupStatus debe ser failed');
+    repo_assert((int)$db_b_fail['followupAttempts'] === 1, 'followupAttempts debe ser 1');
+    repo_assert($db_b_fail['followupLastError'] === 'Error timeout con Mautic API', 'followupLastError debe coincidir');
+
+    // Probar update_followup_status a 'skipped'
+    $ok_skip = $repo->update_followup_status($id_c, 'skipped', 'Existe consulta más reciente');
+    repo_assert($ok_skip === true, 'update_followup_status debe retornar true al actualizar a skipped');
+    $db_c_skip = $repo->find_by_id($id_c);
+    repo_assert($db_c_skip['followupStatus'] === 'skipped', 'followupStatus debe ser skipped');
+    repo_assert((int)$db_c_skip['followupAttempts'] === 4, 'followupAttempts debe incrementarse de 3 a 4');
+    repo_assert($db_c_skip['followupLastError'] === 'Existe consulta más reciente', 'followupLastError debe coincidir');
+
+    // Defensivos de update_followup_status
+    repo_assert($repo->update_followup_status('', 'sent') === false, 'ID vacío debe retornar false');
+    repo_assert($repo->update_followup_status('   ', 'sent') === false, 'ID con solo espacios debe retornar false');
+    repo_assert($repo->update_followup_status($id_a, 'estado_invalido') === false, 'Estado inválido debe retornar false');
+    repo_assert($repo->update_followup_status('id-inexistente-12345', 'sent') === false, 'ID inexistente debe retornar false');
+
+    // 8.4 Probar has_newer_inquiry_for_offer()
+    // Caso 1: Insertar una consulta posterior para aspirante.a@example.com y oferta 601
+    // Consulta original A tiene inquiryAt = '2026-09-20 10:00:00'
+    $has_newer_before = $repo->has_newer_inquiry_for_offer('aspirante.a@example.com', 601, '2026-09-20 10:00:00');
+    repo_assert($has_newer_before === false, 'has_newer_inquiry_for_offer debe ser false antes de registrar consulta posterior');
+
+    // Insertar consulta posterior (2 días después)
+    $ins_newer = $repo->insert([
+        'consultaId' => 'c-followup-newer',
+        'offerWpId'  => 601,
+        'offerName'  => 'Oferta Followup A',
+        'email'      => 'aspirante.a@example.com',
+        'inquiryAt'  => '2026-09-22 15:00:00',
+    ]);
+    repo_assert(!empty($ins_newer['id']), 'Debe insertar consulta posterior');
+
+    $has_newer_after = $repo->has_newer_inquiry_for_offer('aspirante.a@example.com', 601, '2026-09-20 10:00:00');
+    repo_assert($has_newer_after === true, 'has_newer_inquiry_for_offer debe ser true tras registrar consulta posterior');
+
+    // Normalización de email (mayúsculas con espacios)
+    $has_newer_upper = $repo->has_newer_inquiry_for_offer('  ASPIRANTE.A@EXAMPLE.COM  ', 601, '2026-09-20 10:00:00');
+    repo_assert($has_newer_upper === true, 'has_newer_inquiry_for_offer debe normalizar mayúsculas y espacios');
+
+    // Misma fecha o fecha posterior a la segunda consulta -> debe ser false
+    $has_newer_from_second = $repo->has_newer_inquiry_for_offer('aspirante.a@example.com', 601, '2026-09-22 15:00:00');
+    repo_assert($has_newer_from_second === false, 'has_newer_inquiry_for_offer con la fecha más reciente debe retornar false');
+
+    // Otra oferta no debe interferir
+    $has_newer_other_offer = $repo->has_newer_inquiry_for_offer('aspirante.a@example.com', 999, '2026-09-20 10:00:00');
+    repo_assert($has_newer_other_offer === false, 'has_newer_inquiry_for_offer con otra oferta debe retornar false');
+
+    // Boundary checks de has_newer_inquiry_for_offer
+    repo_assert($repo->has_newer_inquiry_for_offer('', 601, '2026-09-20 10:00:00') === false, 'Email vacío debe retornar false');
+    repo_assert($repo->has_newer_inquiry_for_offer('   ', 601, '2026-09-20 10:00:00') === false, 'Email con espacios debe retornar false');
+    repo_assert($repo->has_newer_inquiry_for_offer('aspirante.a@example.com', 0, '2026-09-20 10:00:00') === false, 'offer_wp_id = 0 debe retornar false');
+    repo_assert($repo->has_newer_inquiry_for_offer('aspirante.a@example.com', -5, '2026-09-20 10:00:00') === false, 'offer_wp_id negativo debe retornar false');
+    repo_assert($repo->has_newer_inquiry_for_offer('aspirante.a@example.com', 601, '') === false, 'current_inquiry_at vacío debe retornar false');
+    repo_assert($repo->has_newer_inquiry_for_offer('aspirante.a@example.com', 601, '   ') === false, 'current_inquiry_at con solo espacios debe retornar false');
+
+    // 8.5 Test update_followup_status con fecha explícita y otros estados válidos ('processing', 'none')
+    $custom_sent_at = '2026-09-28 14:30:00';
+    $ok_custom = $repo->update_followup_status($id_d, 'sent', 'Enviado por Mailjet', $custom_sent_at);
+    repo_assert($ok_custom === true, 'update_followup_status debe aceptar sent_at personalizado');
+    $db_d_custom = $repo->find_by_id($id_d);
+    repo_assert($db_d_custom['followupSentAt'] === $custom_sent_at, 'followupSentAt debe coincidir con el personalizado');
+    repo_assert($db_d_custom['followupLastError'] === 'Enviado por Mailjet', 'followupLastError debe coincidir');
+
+    $ok_none = $repo->update_followup_status($id_d, 'none');
+    repo_assert($ok_none === true, 'update_followup_status debe permitir estado none');
+    $db_d_none = $repo->find_by_id($id_d);
+    repo_assert($db_d_none['followupStatus'] === 'none', 'followupStatus debe ser none');
+
+    // 8.6 Test límite en claim_due_followups: insertar 3 registros vencidos y pedir limit = 2
+    for ($i = 1; $i <= 3; $i++) {
+        $repo->insert([
+            'consultaId'       => "c-limit-{$i}",
+            'offerWpId'        => 700,
+            'offerName'        => 'Oferta Límite',
+            'email'            => "limit{$i}@example.com",
+            'followupStatus'   => 'pending',
+            'followupDueAt'    => gmdate('Y-m-d H:i:s', $now_ts - 5000 + ($i * 10)),
+            'followupAttempts' => 0,
+        ]);
+    }
+    $claimed_limited = $repo->claim_due_followups(2);
+    repo_assert(count($claimed_limited) === 2, 'claim_due_followups(2) debe retornar exactamente 2 registros');
+    // El tercer registro restante todavía debe poder ser reclamado
+    $claimed_remaining = $repo->claim_due_followups(10);
+    repo_assert(count($claimed_remaining) === 1, 'claim_due_followups siguiente debe retornar el registro restante');
+    repo_assert($claimed_remaining[0]['consultaId'] === 'c-limit-3', 'El restante debe ser c-limit-3');
+}
+
+test_followup_methods($repo);
+
 echo "OK inquiry-repositories-test\n";

@@ -274,4 +274,160 @@ class FLACSO_Offer_Inquiry_Repository extends FLACSO_Base_Inquiry_Repository {
             return false;
         }
     }
+
+    /**
+     * Reclama atómicamente hasta $limit consultas vencidas transicionándolas de 'pending' a 'processing'.
+     *
+     * @param int $limit Máximo de registros a reclamar por ciclo (defecto 25, máx 100).
+     * @return array Lista de registros asociativos completos reclamados.
+     */
+    public function claim_due_followups(int $limit = 25): array {
+        $limit = max(1, min(100, (int)$limit));
+        $now = gmdate('Y-m-d H:i:s');
+        $table = $this->get_table_name();
+
+        try {
+            $pdo = FLACSO_DB::connection();
+
+            $select_sql = "SELECT * FROM {$table}
+                           WHERE \"followupStatus\" = 'pending'
+                             AND \"followupDueAt\" IS NOT NULL
+                             AND \"followupDueAt\" <= :now
+                             AND COALESCE(\"followupAttempts\", 0) < 3
+                           ORDER BY \"followupDueAt\" ASC
+                           LIMIT " . $limit;
+
+            $stmt = $pdo->prepare($select_sql);
+            $stmt->execute([':now' => $now]);
+            $candidates = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (empty($candidates)) {
+                return [];
+            }
+
+            $update_sql = "UPDATE {$table}
+                           SET \"followupStatus\" = 'processing',
+                               \"updatedAt\" = :updated_at
+                           WHERE \"id\" = :id
+                             AND \"followupStatus\" = 'pending'";
+            $update_stmt = $pdo->prepare($update_sql);
+
+            $claimed = [];
+            $updated_at = gmdate('c');
+
+            foreach ($candidates as $candidate) {
+                $candidate_id = (string)$candidate['id'];
+                $update_stmt->execute([
+                    ':id'         => $candidate_id,
+                    ':updated_at' => $updated_at,
+                ]);
+
+                if ($update_stmt->rowCount() > 0) {
+                    $candidate['followupStatus'] = 'processing';
+                    $candidate['updatedAt'] = $updated_at;
+                    $claimed[] = $candidate;
+                }
+            }
+
+            return $claimed;
+        } catch (\Throwable $e) {
+            error_log('[FLACSO] Error en claim_due_followups: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Actualiza el resultado del seguimiento de una consulta.
+     *
+     * @param string      $id       ID CUID del registro.
+     * @param string      $status   'pending' | 'processing' | 'sent' | 'skipped' | 'failed' | 'none'
+     * @param string|null $error    Mensaje de error o motivo de descarte.
+     * @param string|null $sent_at  Timestamp ISO-8601 del envío.
+     * @return bool True si se actualizó el registro, false en caso contrario.
+     */
+    public function update_followup_status(string $id, string $status, ?string $error = null, ?string $sent_at = null): bool {
+        $id = trim($id);
+        if ($id === '') {
+            return false;
+        }
+
+        $allowed_statuses = ['pending', 'processing', 'sent', 'skipped', 'failed', 'none'];
+        if (!in_array($status, $allowed_statuses, true)) {
+            return false;
+        }
+
+        if (($sent_at === null || trim($sent_at) === '') && $status === 'sent') {
+            $sent_at = gmdate('c');
+        } elseif ($sent_at !== null) {
+            $sent_at = trim($sent_at) !== '' ? trim($sent_at) : null;
+        }
+
+        $error = ($error !== null && trim($error) !== '') ? trim($error) : null;
+        $updated_at = gmdate('c');
+
+        $table = $this->get_table_name();
+        $sql = "UPDATE {$table}
+                SET \"followupStatus\" = :status,
+                    \"followupAttempts\" = COALESCE(\"followupAttempts\", 0) + 1,
+                    \"followupLastError\" = :error,
+                    \"followupSentAt\" = :sent_at,
+                    \"updatedAt\" = :updated_at
+                WHERE \"id\" = :id";
+
+        try {
+            $pdo = FLACSO_DB::connection();
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':id'         => $id,
+                ':status'     => $status,
+                ':error'      => $error,
+                ':sent_at'    => $sent_at,
+                ':updated_at' => $updated_at,
+            ]);
+
+            return $stmt->rowCount() > 0;
+        } catch (\Throwable $e) {
+            error_log('[FLACSO] Error en update_followup_status: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Determina si existe una consulta posterior del mismo correo para la misma oferta.
+     *
+     * @param string $email_normalized Correo electrónico normalizado.
+     * @param int    $offer_wp_id      ID de WordPress de la oferta académica.
+     * @param string $current_inquiry_at Timestamp de la consulta actual a comparar.
+     * @return bool True si existe al menos una consulta posterior, false en caso contrario.
+     */
+    public function has_newer_inquiry_for_offer(string $email_normalized, int $offer_wp_id, string $current_inquiry_at): bool {
+        $email_norm = strtolower(trim($email_normalized));
+        $current_inquiry_at = trim($current_inquiry_at);
+
+        if ($email_norm === '' || $offer_wp_id <= 0 || $current_inquiry_at === '') {
+            return false;
+        }
+
+        $table = $this->get_table_name();
+        $sql = "SELECT 1 FROM {$table}
+                WHERE \"emailNormalized\" = :email
+                  AND \"offerWpId\" = :offer_id
+                  AND \"inquiryAt\" > :current_at
+                LIMIT 1";
+
+        try {
+            $pdo = FLACSO_DB::connection();
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':email'      => $email_norm,
+                ':offer_id'   => $offer_wp_id,
+                ':current_at' => $current_inquiry_at,
+            ]);
+
+            return (bool) $stmt->fetchColumn();
+        } catch (\Throwable $e) {
+            error_log('[FLACSO] Error en has_newer_inquiry_for_offer: ' . $e->getMessage());
+            return false;
+        }
+    }
 }
