@@ -775,7 +775,176 @@ try {
 }
 assert_true($ajax_caught !== null && $ajax_caught->is_success === false && $ajax_caught->status_code === 500, 'ajax_retry_mautic must return 500 when Mautic fails');
 assert_true($ajax_caught->data['status'] === 'failed', 'ajax_retry_mautic error response status must be failed');
+// Test 18: Engine and Mautic template constants and settings registration
+assert_true(defined('FLACSO_Mail_Settings::OPTION_INQUIRY_EMAIL_ENGINE'), 'FLACSO_Mail_Settings must define OPTION_INQUIRY_EMAIL_ENGINE');
+assert_true(defined('FLACSO_Mail_Settings::OPTION_MAUTIC_TEMPLATE_OPEN'), 'FLACSO_Mail_Settings must define OPTION_MAUTIC_TEMPLATE_OPEN');
+assert_true(defined('FLACSO_Mail_Settings::OPTION_MAUTIC_TEMPLATE_CLOSED'), 'FLACSO_Mail_Settings must define OPTION_MAUTIC_TEMPLATE_CLOSED');
+
+FLACSO_Mail_Settings::register_settings();
+$mail_settings_group = $GLOBALS['flacso_registered_settings']['flacso_correos_group'] ?? [];
+
+assert_true(isset($mail_settings_group['flacso_inquiry_email_engine']), 'flacso_inquiry_email_engine must be registered');
+assert_true(isset($mail_settings_group['flacso_mautic_template_consulta_abierta']), 'flacso_mautic_template_consulta_abierta must be registered');
+assert_true(isset($mail_settings_group['flacso_mautic_template_consulta_cerrada']), 'flacso_mautic_template_consulta_cerrada must be registered');
+
+// Test sanitization callbacks for engine and templates
+$engine_cb = $mail_settings_group['flacso_inquiry_email_engine']['sanitize_callback'];
+assert_true(call_user_func($engine_cb, 'mailjet') === 'mailjet', 'Engine callback should accept mailjet');
+assert_true(call_user_func($engine_cb, 'mautic') === 'mautic', 'Engine callback should accept mautic');
+assert_true(call_user_func($engine_cb, 'invalid') === 'mailjet', 'Engine callback should default to mailjet');
+
+$tpl_open_cb = $mail_settings_group['flacso_mautic_template_consulta_abierta']['sanitize_callback'];
+assert_true(call_user_func($tpl_open_cb, '12abc') === '12', 'Template open callback should sanitize numeric ID');
+
+$tpl_closed_cb = $mail_settings_group['flacso_mautic_template_consulta_cerrada']['sanitize_callback'];
+assert_true(call_user_func($tpl_closed_cb, '34') === '34', 'Template closed callback should sanitize numeric ID');
+
+// Test 19: ajax_send_test_mautic_email endpoint
+assert_true(method_exists('FLACSO_Mail_Settings', 'ajax_send_test_mautic_email'), 'FLACSO_Mail_Settings must define ajax_send_test_mautic_email');
+FLACSO_Mail_Settings::init();
+$mautic_send_ajax_hooks = $GLOBALS['wp_actions']['wp_ajax_flacso_mautic_send_test_email'] ?? [];
+assert_true(!empty($mautic_send_ajax_hooks), 'init() must register wp_ajax_flacso_mautic_send_test_email action');
+
+// Case 19a: Invalid email
+$_POST = ['nonce' => 'mock-nonce', 'test_email' => ''];
+$ajax_caught = null;
+try {
+    FLACSO_Mail_Settings::ajax_send_test_mautic_email();
+} catch (TestAjaxException $e) {
+    $ajax_caught = $e;
+}
+assert_true($ajax_caught !== null && $ajax_caught->is_success === false && $ajax_caught->status_code === 400, 'ajax_send_test_mautic_email must return 400 on empty email');
+
+// Case 19b: Mautic not configured / disabled
+$GLOBALS['flacso_test_options']['flacso_mautic_enabled'] = '0';
+$_POST = ['nonce' => 'mock-nonce', 'test_email' => 'admin@flacso.edu.uy', 'scenario' => 'abierta'];
+$ajax_caught = null;
+try {
+    FLACSO_Mail_Settings::ajax_send_test_mautic_email();
+} catch (TestAjaxException $e) {
+    $ajax_caught = $e;
+}
+assert_true($ajax_caught !== null && $ajax_caught->is_success === false && $ajax_caught->status_code === 400, 'ajax_send_test_mautic_email must return 400 when Mautic disabled');
+
+// Configure Mautic credentials for next tests
+$GLOBALS['flacso_test_options']['flacso_mautic_enabled'] = '1';
+$GLOBALS['flacso_test_options']['flacso_mautic_base_url'] = 'https://envios.flacso.edu.uy';
+$GLOBALS['flacso_test_options']['flacso_mautic_auth_type'] = 'basic';
+$GLOBALS['flacso_test_options']['flacso_mautic_username'] = 'admin';
+$GLOBALS['flacso_test_options']['flacso_mautic_password'] = 'secret123';
+
+// Case 19c: Template not configured
+$GLOBALS['flacso_test_options']['flacso_mautic_template_consulta_abierta'] = '';
+$_POST = ['nonce' => 'mock-nonce', 'test_email' => 'admin@flacso.edu.uy', 'scenario' => 'abierta'];
+$ajax_caught = null;
+try {
+    FLACSO_Mail_Settings::ajax_send_test_mautic_email();
+} catch (TestAjaxException $e) {
+    $ajax_caught = $e;
+}
+assert_true($ajax_caught !== null && $ajax_caught->is_success === false && $ajax_caught->status_code === 400, 'ajax_send_test_mautic_email must return 400 when template empty');
+
+// Case 19d: Mautic contact creation failure
+$GLOBALS['flacso_test_options']['flacso_mautic_template_consulta_abierta'] = '12';
+$GLOBALS['custom_http_handler'] = function (string $url, array $args) {
+    return [
+        'response' => ['code' => 500],
+        'body'     => json_encode(['errors' => [['message' => 'Failed to create contact']]]),
+    ];
+};
+$_POST = ['nonce' => 'mock-nonce', 'test_email' => 'admin@flacso.edu.uy', 'scenario' => 'abierta'];
+$ajax_caught = null;
+try {
+    FLACSO_Mail_Settings::ajax_send_test_mautic_email();
+} catch (TestAjaxException $e) {
+    $ajax_caught = $e;
+}
+assert_true($ajax_caught !== null && $ajax_caught->is_success === false && $ajax_caught->status_code === 500, 'ajax_send_test_mautic_email must return 500 when contact creation fails');
+
+// Case 19e: Mautic email send failure
+$GLOBALS['custom_http_handler'] = function (string $url, array $args) {
+    if (strpos($url, '/api/contacts?search=email') !== false) {
+        return ['response' => ['code' => 200], 'body' => json_encode(['total' => 0, 'contacts' => []])];
+    }
+    if (strpos($url, '/api/contacts/new') !== false) {
+        return ['response' => ['code' => 201], 'body' => json_encode(['contact' => ['id' => 8888]])];
+    }
+    if (strpos($url, '/send') !== false) {
+        return ['response' => ['code' => 500], 'body' => json_encode(['errors' => [['message' => 'Template render error']]])];
+    }
+    return ['response' => ['code' => 404], 'body' => ''];
+};
+$_POST = ['nonce' => 'mock-nonce', 'test_email' => 'admin@flacso.edu.uy', 'scenario' => 'abierta'];
+$ajax_caught = null;
+try {
+    FLACSO_Mail_Settings::ajax_send_test_mautic_email();
+} catch (TestAjaxException $e) {
+    $ajax_caught = $e;
+}
+assert_true($ajax_caught !== null && $ajax_caught->is_success === false && $ajax_caught->status_code === 500, 'ajax_send_test_mautic_email must return 500 when sending email fails');
+
+// Case 19f: Mautic email send success
+$GLOBALS['custom_http_handler'] = function (string $url, array $args) {
+    if (strpos($url, '/api/contacts?search=email') !== false) {
+        return ['response' => ['code' => 200], 'body' => json_encode(['total' => 0, 'contacts' => []])];
+    }
+    if (strpos($url, '/api/contacts/new') !== false) {
+        return ['response' => ['code' => 201], 'body' => json_encode(['contact' => ['id' => 8888]])];
+    }
+    if (strpos($url, '/send') !== false) {
+        return ['response' => ['code' => 200], 'body' => json_encode(['success' => true])];
+    }
+    return ['response' => ['code' => 404], 'body' => ''];
+};
+$_POST = ['nonce' => 'mock-nonce', 'test_email' => 'admin@flacso.edu.uy', 'scenario' => 'abierta'];
+$ajax_caught = null;
+try {
+    FLACSO_Mail_Settings::ajax_send_test_mautic_email();
+} catch (TestAjaxException $e) {
+    $ajax_caught = $e;
+}
+assert_true($ajax_caught !== null && $ajax_caught->is_success === true, 'ajax_send_test_mautic_email must succeed when Mautic sends email');
+assert_true(!empty($ajax_caught->data['message']), 'ajax_send_test_mautic_email success must return message');
+
+// Case 19g: Mautic email send scenario cerrada uses closed template
+$GLOBALS['flacso_test_options']['flacso_mautic_template_consulta_cerrada'] = '77';
+$sent_url = null;
+$GLOBALS['custom_http_handler'] = function (string $url, array $args) use (&$sent_url) {
+    if (strpos($url, '/api/contacts?search=email') !== false) {
+        return ['response' => ['code' => 200], 'body' => json_encode(['total' => 0, 'contacts' => []])];
+    }
+    if (strpos($url, '/api/contacts/new') !== false) {
+        return ['response' => ['code' => 201], 'body' => json_encode(['contact' => ['id' => 9999]])];
+    }
+    if (strpos($url, '/send') !== false) {
+        $sent_url = $url;
+        return ['response' => ['code' => 200], 'body' => json_encode(['success' => true])];
+    }
+    return ['response' => ['code' => 404], 'body' => ''];
+};
+$_POST = ['nonce' => 'mock-nonce', 'test_email' => 'admin@flacso.edu.uy', 'scenario' => 'cerrada'];
+$ajax_caught = null;
+try {
+    FLACSO_Mail_Settings::ajax_send_test_mautic_email();
+} catch (TestAjaxException $e) {
+    $ajax_caught = $e;
+}
+assert_true($ajax_caught !== null && $ajax_caught->is_success === true, 'ajax_send_test_mautic_email cerrada must succeed');
+assert_true(strpos($sent_url, '/api/emails/77/contact/9999/send') !== false, 'ajax_send_test_mautic_email cerrada must target template ID 77');
 $GLOBALS['custom_http_handler'] = null;
+
+// Test 20: Render page contains engine selector, Mautic template inputs and Mautic test sender
+ob_start();
+FLACSO_Mail_Settings::render_page();
+$rendered_html = ob_get_clean();
+
+assert_true(strpos($rendered_html, 'name="flacso_inquiry_email_engine"') !== false, 'Render must contain flacso_inquiry_email_engine control');
+assert_true(strpos($rendered_html, 'value="mailjet"') !== false, 'Render must contain mailjet engine option');
+assert_true(strpos($rendered_html, 'value="mautic"') !== false, 'Render must contain mautic engine option');
+assert_true(strpos($rendered_html, 'name="flacso_mautic_template_consulta_abierta"') !== false, 'Render must contain flacso_mautic_template_consulta_abierta input');
+assert_true(strpos($rendered_html, 'name="flacso_mautic_template_consulta_cerrada"') !== false, 'Render must contain flacso_mautic_template_consulta_cerrada input');
+assert_true(strpos($rendered_html, 'id="flacso-btn-send-test-mautic"') !== false, 'Render must contain #flacso-btn-send-test-mautic button');
+assert_true(strpos($rendered_html, 'flacso_mautic_send_test_email') !== false, 'Render script must call flacso_mautic_send_test_email AJAX action');
 
 echo "OK mail-console-and-consultas-admin-test\n";
 

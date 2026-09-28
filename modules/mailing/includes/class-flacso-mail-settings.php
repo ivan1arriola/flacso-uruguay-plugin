@@ -40,6 +40,10 @@ final class FLACSO_Mail_Settings {
     public const OPTION_MAUTIC_PASSWORD = 'flacso_mautic_password';
     public const OPTION_MAUTIC_TOKEN = 'flacso_mautic_token';
 
+    public const OPTION_INQUIRY_EMAIL_ENGINE = 'flacso_inquiry_email_engine';
+    public const OPTION_MAUTIC_TEMPLATE_OPEN = 'flacso_mautic_template_consulta_abierta';
+    public const OPTION_MAUTIC_TEMPLATE_CLOSED = 'flacso_mautic_template_consulta_cerrada';
+
     public static function init(): void {
         if (!is_admin()) {
             return;
@@ -51,6 +55,7 @@ final class FLACSO_Mail_Settings {
         add_action('wp_ajax_flacso_mail_send_test', [self::class, 'ajax_send_test']);
         add_action('wp_ajax_flacso_mail_preview_html', [self::class, 'ajax_preview_html']);
         add_action('wp_ajax_flacso_mautic_test_connection', [self::class, 'ajax_test_mautic_connection']);
+        add_action('wp_ajax_flacso_mautic_send_test_email', [self::class, 'ajax_send_test_mautic_email']);
     }
 
     public static function register_menu(): void {
@@ -149,6 +154,24 @@ final class FLACSO_Mail_Settings {
             'sanitize_callback' => 'sanitize_text_field',
             'default' => '',
         ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_INQUIRY_EMAIL_ENGINE, [
+            'type' => 'string',
+            'sanitize_callback' => static function ($val): string {
+                $val = strtolower(trim((string) $val));
+                return in_array($val, ['mailjet', 'mautic'], true) ? $val : 'mailjet';
+            },
+            'default' => 'mailjet',
+        ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_MAUTIC_TEMPLATE_OPEN, [
+            'type' => 'string',
+            'sanitize_callback' => [self::class, 'sanitize_numeric_id'],
+            'default' => '',
+        ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_MAUTIC_TEMPLATE_CLOSED, [
+            'type' => 'string',
+            'sanitize_callback' => [self::class, 'sanitize_numeric_id'],
+            'default' => '',
+        ]);
     }
 
     public static function sanitize_mautic_base_url($value): string {
@@ -202,6 +225,11 @@ final class FLACSO_Mail_Settings {
             'offer_lists' => is_array($offer_lists) ? $offer_lists : [],
             'seminar_lists' => is_array($seminar_lists) ? $seminar_lists : [],
             'sync_inquiries_to_global' => (string) get_option(self::OPTION_SYNC_INQUIRIES_GLOBAL, '1') === '1',
+            'inquiry_email_engine' => (string) get_option(self::OPTION_INQUIRY_EMAIL_ENGINE, 'mailjet'),
+            'mautic_templates' => [
+                'consulta_abierta' => trim((string) get_option(self::OPTION_MAUTIC_TEMPLATE_OPEN, '')),
+                'consulta_cerrada' => trim((string) get_option(self::OPTION_MAUTIC_TEMPLATE_CLOSED, '')),
+            ],
         ];
     }
 
@@ -411,6 +439,108 @@ final class FLACSO_Mail_Settings {
         ], $error_code);
     }
 
+    public static function ajax_send_test_mautic_email(): void {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Sin permisos', 'code' => 403], 403);
+            return;
+        }
+
+        if (function_exists('check_ajax_referer')) {
+            check_ajax_referer('flacso_mail_console_nonce', 'nonce');
+        }
+
+        $scenario_raw = sanitize_key((string) ($_POST['scenario'] ?? 'abierta'));
+        $scenario = ($scenario_raw === 'cerrada' || $scenario_raw === 'consulta_cerrada') ? 'cerrada' : 'abierta';
+
+        $raw_email = (string) ($_POST['test_email'] ?? $_POST['email'] ?? '');
+        $test_email = function_exists('sanitize_email') ? sanitize_email($raw_email) : trim($raw_email);
+
+        if ($test_email === '' || !filter_var($test_email, FILTER_VALIDATE_EMAIL)) {
+            wp_send_json_error(['message' => 'Correo de prueba inválido o vacío.', 'code' => 400], 400);
+            return;
+        }
+
+        if (!class_exists('FLACSO_Mautic_Client')) {
+            $mautic_file = dirname(__DIR__, 3) . '/includes/integrations/class-flacso-mautic-client.php';
+            if (file_exists($mautic_file)) {
+                require_once $mautic_file;
+            }
+        }
+
+        if (!class_exists('FLACSO_Mautic_Client') || !FLACSO_Mautic_Client::is_configured()) {
+            wp_send_json_error(['message' => 'Mautic no está configurado o está deshabilitado.', 'code' => 400], 400);
+            return;
+        }
+
+        $template_id_str = ($scenario === 'cerrada')
+            ? (string) get_option(self::OPTION_MAUTIC_TEMPLATE_CLOSED, '')
+            : (string) get_option(self::OPTION_MAUTIC_TEMPLATE_OPEN, '');
+        $template_id = (int) self::sanitize_numeric_id($template_id_str);
+
+        if ($template_id <= 0) {
+            wp_send_json_error(['message' => 'Plantilla Mautic no configurada para este escenario.', 'code' => 400], 400);
+            return;
+        }
+
+        $contact_res = FLACSO_Mautic_Client::create_or_update_contact(
+            $test_email,
+            ['firstname' => 'Prueba', 'lastname' => 'Admin'],
+            ['test-consulta']
+        );
+
+        if (empty($contact_res['ok']) || empty($contact_res['contact_id'])) {
+            $error_msg = !empty($contact_res['error']) ? (string) $contact_res['error'] : 'Error desconocido al crear contacto de prueba en Mautic.';
+            wp_send_json_error(['message' => 'Fallo al sincronizar contacto en Mautic: ' . $error_msg, 'code' => 500], 500);
+            return;
+        }
+        $contact_id = (int) $contact_res['contact_id'];
+
+        if (!class_exists('FLACSO_Inquiry_Marketing_Service')) {
+            $marketing_file = dirname(__DIR__, 3) . '/modules/consultas/services/class-flacso-inquiry-marketing-service.php';
+            if (file_exists($marketing_file)) {
+                require_once $marketing_file;
+            }
+        }
+
+        $is_open = ($scenario === 'abierta');
+        $dummy_inquiry = [
+            'firstName'      => 'Prueba',
+            'lastName'       => 'Admin',
+            'fullName'       => 'Prueba Admin',
+            'email'          => $test_email,
+            'country'        => 'Uruguay',
+            'profession'     => 'Docente',
+            'educationLevel' => 'Universitario',
+            'cohortName'     => '1ª Cohorte',
+            'cohortNumber'   => 1,
+            'offerName'      => 'Programa de Prueba',
+            'offerStatus'    => $is_open ? 'abierta' : 'cerrada',
+        ];
+        $dummy_program = [
+            'name'              => 'Programa de Prueba',
+            'urlBase'           => 'https://flacso.edu.uy/oferta/programa-prueba',
+            'startValue'        => date('Y') . '-10-01',
+            'startPrecision'    => 'dia',
+            'modalityLabel'     => 'Virtual',
+            'preinscripcionUrl' => 'https://flacso.edu.uy/preinscripcion',
+            'cartaUrl'          => 'https://flacso.edu.uy/carta.pdf',
+        ];
+
+        $tokens = class_exists('FLACSO_Inquiry_Marketing_Service')
+            ? FLACSO_Inquiry_Marketing_Service::compile_tokens($dummy_inquiry, $dummy_program, $is_open)
+            : [];
+
+        $send_res = FLACSO_Mautic_Client::send_email_to_contact($template_id, $contact_id, $tokens);
+
+        if (!empty($send_res['ok'])) {
+            wp_send_json_success(['message' => 'Correo de prueba enviado con éxito vía Mautic.']);
+            return;
+        }
+
+        $error_msg = !empty($send_res['error']) ? (string) $send_res['error'] : 'Error desconocido';
+        wp_send_json_error(['message' => 'Fallo al enviar correo vía Mautic: ' . $error_msg, 'code' => 500], 500);
+    }
+
     public static function get_page_url(array $args = []): string {
         return add_query_arg(
             array_merge(['page' => self::PAGE_SLUG], $args),
@@ -450,6 +580,10 @@ final class FLACSO_Mail_Settings {
         $metrics = class_exists('FLACSO_Inquiry_Analytics_Repository')
             ? FLACSO_Inquiry_Analytics_Repository::get_email_delivery_metrics()
             : ['db_connected' => false, 'last_24h' => ['total' => 0, 'sent' => 0, 'failed' => 0, 'skipped' => 0, 'rate' => 100], 'last_7d' => ['total' => 0, 'sent' => 0, 'failed' => 0, 'skipped' => 0, 'rate' => 100]];
+
+        $inquiry_engine = (string) get_option(self::OPTION_INQUIRY_EMAIL_ENGINE, 'mailjet');
+        $mautic_tpl_open = (string) get_option(self::OPTION_MAUTIC_TEMPLATE_OPEN, '');
+        $mautic_tpl_closed = (string) get_option(self::OPTION_MAUTIC_TEMPLATE_CLOSED, '');
 
         // Obtener Ofertas Académicas y Seminarios publicados para mapeo de listas
         $offers = get_posts([
@@ -752,6 +886,63 @@ final class FLACSO_Mail_Settings {
                         </div>
 
                         <div id="flacso-mautic-test-result" style="margin-top:14px;display:none;padding:12px 16px;border-radius:8px;font-size:13px;"></div>
+
+                        <div style="margin-top:20px;padding-top:18px;border-top:1px solid #e2e8f0;">
+                            <h3 style="margin:0 0 6px;font-size:15px;color:#0f172a;"><?php esc_html_e('Motor de Envío para Consultas de Oferta Académica', 'flacso-uruguay'); ?></h3>
+                            <p class="desc" style="margin:0 0 12px;font-size:12.5px;"><?php esc_html_e('Define si las respuestas transaccionales automáticas a consultas se despachan vía Mailjet o a través de Mautic (con conmutación automática de emergencia por fallback a Mailjet ante caídas de API o fallos).', 'flacso-uruguay'); ?></p>
+
+                            <div style="display:flex;gap:24px;flex-wrap:wrap;padding:12px 16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:16px;">
+                                <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:13.5px;cursor:pointer;">
+                                    <input type="radio" name="<?php echo esc_attr(self::OPTION_INQUIRY_EMAIL_ENGINE); ?>" value="mailjet" <?php checked($inquiry_engine, 'mailjet'); ?>>
+                                    <span><?php esc_html_e('Mailjet (por defecto)', 'flacso-uruguay'); ?></span>
+                                </label>
+                                <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:13.5px;cursor:pointer;">
+                                    <input type="radio" name="<?php echo esc_attr(self::OPTION_INQUIRY_EMAIL_ENGINE); ?>" value="mautic" <?php checked($inquiry_engine, 'mautic'); ?>>
+                                    <span><?php esc_html_e('Mautic (con fallback automático a Mailjet)', 'flacso-uruguay'); ?></span>
+                                </label>
+                            </div>
+
+                            <div class="flacso-grid-2">
+                                <div class="flacso-field-group">
+                                    <label for="<?php echo esc_attr(self::OPTION_MAUTIC_TEMPLATE_OPEN); ?>"><?php esc_html_e('ID Plantilla Mautic – Consulta Abierta', 'flacso-uruguay'); ?></label>
+                                    <input class="regular-text code" type="text" inputmode="numeric" id="<?php echo esc_attr(self::OPTION_MAUTIC_TEMPLATE_OPEN); ?>" name="<?php echo esc_attr(self::OPTION_MAUTIC_TEMPLATE_OPEN); ?>" value="<?php echo esc_attr($mautic_tpl_open); ?>" placeholder="12">
+                                    <p style="font-size:12px;color:#64748b;margin:4px 0 0;"><?php esc_html_e('ID numérico del correo en Mautic para ofertas con inscripciones abiertas.', 'flacso-uruguay'); ?></p>
+                                </div>
+                                <div class="flacso-field-group">
+                                    <label for="<?php echo esc_attr(self::OPTION_MAUTIC_TEMPLATE_CLOSED); ?>"><?php esc_html_e('ID Plantilla Mautic – Consulta Cerrada', 'flacso-uruguay'); ?></label>
+                                    <input class="regular-text code" type="text" inputmode="numeric" id="<?php echo esc_attr(self::OPTION_MAUTIC_TEMPLATE_CLOSED); ?>" name="<?php echo esc_attr(self::OPTION_MAUTIC_TEMPLATE_CLOSED); ?>" value="<?php echo esc_attr($mautic_tpl_closed); ?>" placeholder="13">
+                                    <p style="font-size:12px;color:#64748b;margin:4px 0 0;"><?php esc_html_e('ID numérico del correo en Mautic para ofertas con inscripciones cerradas.', 'flacso-uruguay'); ?></p>
+                                </div>
+                            </div>
+
+                            <div style="margin-top:16px;padding:16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;">
+                                <h4 style="margin:0 0 6px;font-size:13.5px;color:#0f172a;"><?php esc_html_e('Probador de Envío Transaccional vía Mautic', 'flacso-uruguay'); ?></h4>
+                                <p style="font-size:12px;color:#64748b;margin:0 0 12px;"><?php esc_html_e('Envía una prueba real despachada desde Mautic con los tokens compilados del escenario seleccionado.', 'flacso-uruguay'); ?></p>
+
+                                <div class="flacso-grid-2">
+                                    <div class="flacso-field-group">
+                                        <label for="flacso-mautic-test-scenario"><?php esc_html_e('Escenario Mautic', 'flacso-uruguay'); ?></label>
+                                        <select id="flacso-mautic-test-scenario">
+                                            <option value="abierta"><?php esc_html_e('Consulta Oferta Abierta', 'flacso-uruguay'); ?></option>
+                                            <option value="cerrada"><?php esc_html_e('Consulta Oferta Cerrada', 'flacso-uruguay'); ?></option>
+                                        </select>
+                                    </div>
+                                    <div class="flacso-field-group">
+                                        <label for="flacso-mautic-test-recipient"><?php esc_html_e('Correo destinatario de la prueba', 'flacso-uruguay'); ?></label>
+                                        <input type="email" id="flacso-mautic-test-recipient" value="<?php echo esc_attr(wp_get_current_user()->user_email ?: $settings['sender_email']); ?>" placeholder="tu-correo@flacso.edu.uy">
+                                    </div>
+                                </div>
+
+                                <div style="margin-top:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                                    <button type="button" class="flacso-mail-btn flacso-mail-btn-secondary" id="flacso-btn-send-test-mautic">
+                                        ✉️ <?php esc_html_e('Enviar correo de prueba vía Mautic', 'flacso-uruguay'); ?>
+                                    </button>
+                                    <span style="font-size:12px;color:#64748b;"><?php esc_html_e('Sincroniza un contacto de prueba y despacha la plantilla Mautic configurada.', 'flacso-uruguay'); ?></span>
+                                </div>
+
+                                <div id="flacso-mautic-send-test-result" style="margin-top:12px;display:none;padding:12px 16px;border-radius:8px;font-size:13px;"></div>
+                            </div>
+                        </div>
                     </div>
 
                     <?php submit_button(__('Guardar configuración de correos', 'flacso-uruguay'), 'primary large'); ?>
@@ -1120,6 +1311,62 @@ final class FLACSO_Mail_Settings {
                             testMauticResult.style.background = '#fee2e2';
                             testMauticResult.style.color = '#991b1b';
                             testMauticResult.textContent = 'Error de red: ' + err.message;
+                        });
+                });
+            }
+
+            // Mautic Live Test Send Email
+            const testMauticSendBtn = document.getElementById('flacso-btn-send-test-mautic');
+            const testMauticSendResult = document.getElementById('flacso-mautic-send-test-result');
+
+            if (testMauticSendBtn && testMauticSendResult) {
+                testMauticSendBtn.addEventListener('click', function() {
+                    const emailInput = document.getElementById('flacso-mautic-test-recipient');
+                    const email = emailInput ? emailInput.value.trim() : '';
+                    const scenarioSelect = document.getElementById('flacso-mautic-test-scenario');
+                    const scenario = scenarioSelect ? scenarioSelect.value : 'abierta';
+
+                    if (!email) {
+                        alert('Ingresá un correo destinatario.');
+                        return;
+                    }
+
+                    testMauticSendBtn.disabled = true;
+                    testMauticSendBtn.textContent = '⏳ Despachando plantilla desde Mautic...';
+                    testMauticSendResult.style.display = 'block';
+                    testMauticSendResult.style.background = '#f1f5f9';
+                    testMauticSendResult.style.color = '#334155';
+                    testMauticSendResult.textContent = 'Enviando petición a la API de Mautic...';
+
+                    const body = new URLSearchParams({
+                        action: 'flacso_mautic_send_test_email',
+                        nonce: nonce,
+                        test_email: email,
+                        scenario: scenario
+                    });
+
+                    fetch(ajaxUrl, { method: 'POST', body: body })
+                        .then(r => r.json())
+                        .then(res => {
+                            testMauticSendBtn.disabled = false;
+                            testMauticSendBtn.textContent = '✉️ Enviar correo de prueba vía Mautic';
+                            const d = res.data || {};
+                            if (res.success) {
+                                testMauticSendResult.style.background = '#dcfce7';
+                                testMauticSendResult.style.color = '#166534';
+                                testMauticSendResult.innerHTML = '<strong>✅ Envío exitoso:</strong> ' + (d.message || 'Correo de prueba enviado con éxito vía Mautic.');
+                            } else {
+                                testMauticSendResult.style.background = '#fee2e2';
+                                testMauticSendResult.style.color = '#991b1b';
+                                testMauticSendResult.innerHTML = '<strong>❌ Falló el envío:</strong> ' + (d.message || 'Error desconocido al enviar correo vía Mautic.');
+                            }
+                        })
+                        .catch(err => {
+                            testMauticSendBtn.disabled = false;
+                            testMauticSendBtn.textContent = '✉️ Enviar correo de prueba vía Mautic';
+                            testMauticSendResult.style.background = '#fee2e2';
+                            testMauticSendResult.style.color = '#991b1b';
+                            testMauticSendResult.textContent = 'Error de red: ' + err.message;
                         });
                 });
             }
