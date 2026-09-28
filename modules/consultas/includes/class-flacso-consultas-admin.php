@@ -445,7 +445,19 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 				wp_send_json_error( array( 'message' => 'Consulta no encontrada en PostgreSQL.' ), 404 );
 			}
 
-			$res = FLACSO_Inquiry_Followup_Service::process_single_followup( $inquiry, $repo );
+			try {
+				$res = FLACSO_Inquiry_Followup_Service::process_single_followup( $inquiry, $repo );
+			} catch ( \Throwable $e ) {
+				error_log( '[FLACSO Consultas] Error inesperado en trigger_followup: ' . $e->getMessage() );
+				wp_send_json_error(
+					array(
+						'status'  => 'failed',
+						'message' => 'Error al procesar seguimiento: ' . $e->getMessage(),
+					),
+					500
+				);
+				return;
+			}
 
 			if ( ! empty( $res['ok'] ) ) {
 				wp_send_json_success(
@@ -987,7 +999,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 											<tr><th>Estado Email</th><td><strong>${d.emailStatus || ''}</strong> (Remitente: ${senderLabel})</td></tr>
 											<tr><th>Mailjet Message ID / UUID</th><td><code>${d.mailjetMessageId || '—'}</code> / <code>${d.mailjetMessageUuid || '—'}</code></td></tr>
 											${d.mauticSyncStatus ? `<tr><th>Estado Mautic</th><td><strong>${d.mauticSyncStatus}</strong> (Contact ID: ${d.mauticContactId || '—'} | Sincronizado: ${d.mauticSyncedAt || '—'}${d.mauticLastError ? ' | Error: ' + d.mauticLastError : ''})</td></tr>` : ''}
-											<tr><th>Seguimiento (+X días)</th><td><strong>${d.followupStatus || 'none'}</strong> (Vencimiento: ${d.followupDueAt || '—'} | Enviado: ${d.followupSentAt || '—'}${d.followupLastError ? ' | Nota: ' + d.followupLastError : ''})${d.table === 'offer_inquiries' && d.followupStatus !== 'sent' ? '<div style="margin-top:8px;"><button type="button" class="button button-secondary flacso-js-trigger-followup" data-id="' + d.id + '">🚀 Enviar Seguimiento Ahora</button></div>' : ''}</td></tr>
+											${(d.table === 'offer_inquiries' || tbl === 'offer_inquiries') ? `<tr><th>Seguimiento (+X días)</th><td><strong>${d.followupStatus || 'none'}</strong> (Vencimiento: ${d.followupDueAt || '—'} | Enviado: ${d.followupSentAt || '—'}${d.followupLastError ? ' | Nota: ' + d.followupLastError : ''})${d.followupStatus !== 'sent' ? '<div style="margin-top:8px;"><button type="button" class="button button-secondary flacso-js-trigger-followup" data-id="' + d.id + '">🚀 Enviar Seguimiento Ahora</button></div>' : ''}</td></tr>` : ''}
 											<tr><th>UTM / Campaña</th><td>Source: ${d.campaignSource || '—'} | Medium: ${d.campaignMedium || '—'} | Campaign: ${d.campaignName || '—'}</td></tr>
 											<tr><th>Página Origen</th><td><a href="${d.pageUrl || '#'}" target="_blank">${d.pageUrl || '—'}</a></td></tr>
 										</tbody>
