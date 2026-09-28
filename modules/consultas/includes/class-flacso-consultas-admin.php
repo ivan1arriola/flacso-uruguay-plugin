@@ -221,12 +221,81 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 						'inscripcion_state' => 'open',
 					);
 					if ( $wp_id > 0 && class_exists( 'FLACSO_Academic_Catalog' ) && method_exists( 'FLACSO_Academic_Catalog', 'get_offer' ) ) {
-						$offer_obj = FLACSO_Academic_Catalog::get_offer( $wp_id );
-						if ( is_array( $offer_obj ) && ! empty( $offer_obj['titulo'] ) ) {
-							$program = array_merge( $program, $offer_obj );
+						if ( ! class_exists( 'FLACSO_Academic_Repository' ) ) {
+							$repo_file = dirname( __DIR__, 2 ) . '/oferta-academica/includes/class-academic-repositories.php';
+							if ( file_exists( $repo_file ) ) {
+								require_once $repo_file;
+							}
+						}
+						if ( class_exists( 'FLACSO_Academic_Repository' ) ) {
+							try {
+								$offer_obj = FLACSO_Academic_Catalog::get_offer( $wp_id );
+								if ( is_array( $offer_obj ) && ! empty( $offer_obj['titulo'] ) ) {
+									$program = array_merge( $program, $offer_obj );
+								}
+							} catch ( Throwable $e ) {
+								// Ignorar y mantener program base
+							}
 						}
 					}
-					$mail_res = FLACSO_Mailjet_Client::send_offer_inquiry( $detail, $program );
+
+					$engine = function_exists( 'get_option' ) ? (string) get_option( 'flacso_inquiry_email_engine', 'mautic' ) : 'mautic';
+					$engine = strtolower( trim( $engine ) );
+					if ( 'mailjet' !== $engine ) {
+						$engine = 'mautic';
+					}
+
+					if ( 'mautic' === $engine ) {
+						$contact_id = (int) ( $detail['mauticContactId'] ?? 0 );
+						if ( $contact_id <= 0 && class_exists( 'FLACSO_Inquiry_Marketing_Service' ) ) {
+							try {
+								$sync_res = FLACSO_Inquiry_Marketing_Service::sync_inquiry( (string) ( $detail['id'] ?? '' ), $detail, $retry_repository );
+								if ( ! empty( $sync_res['contact_id'] ) ) {
+									$contact_id = (int) $sync_res['contact_id'];
+								}
+							} catch ( Throwable $e ) {
+								error_log( '[FLACSO Consultas] Error al sincronizar contacto en reintento: ' . $e->getMessage() );
+							}
+						}
+
+						$is_open = ( 'open' === ( $program['inscripcion_state'] ?? '' ) || 'abierta' === ( $program['estado'] ?? '' ) || 'abierta' === ( $detail['offerStatus'] ?? '' ) );
+						$template_id = $is_open
+							? (int) ( function_exists( 'get_option' ) ? get_option( 'flacso_mautic_template_consulta_abierta', 0 ) : 0 )
+							: (int) ( function_exists( 'get_option' ) ? get_option( 'flacso_mautic_template_consulta_cerrada', 0 ) : 0 );
+
+						$mautic_sent = false;
+						if ( $contact_id > 0 && $template_id > 0 && class_exists( 'FLACSO_Mautic_Client' ) && method_exists( 'FLACSO_Mautic_Client', 'send_email_to_contact' ) ) {
+							try {
+								$tokens = class_exists( 'FLACSO_Inquiry_Marketing_Service' )
+									? FLACSO_Inquiry_Marketing_Service::compile_tokens( $detail, $program, $is_open )
+									: array();
+								$send_res = FLACSO_Mautic_Client::send_email_to_contact( $template_id, $contact_id, $tokens );
+								if ( ! empty( $send_res['ok'] ) ) {
+									$mautic_sent = true;
+									$mail_res = array(
+										'ok'           => true,
+										'status'       => 'sent',
+										'sender'       => 'mautic',
+										'message_id'   => (string) $template_id,
+										'message_uuid' => null,
+									);
+								} else {
+									error_log( '[FLACSO Consultas] Fallo al reenviar correo por Mautic: ' . ( $send_res['error'] ?? '' ) . '. Conmutando a Mailjet fallback.' );
+								}
+							} catch ( Throwable $e ) {
+								error_log( '[FLACSO Consultas] Excepción al reenviar correo por Mautic: ' . $e->getMessage() . '. Conmutando a Mailjet fallback.' );
+							}
+						}
+
+						if ( ! $mautic_sent ) {
+							$mail_res = FLACSO_Mailjet_Client::send_offer_inquiry( $detail, $program );
+							if ( ! empty( $mail_res['ok'] ) ) {
+								$mail_res['sender'] = 'mailjet_fallback';
+							}
+						}
+					} else {
+						$mail_res = FLACSO_Mailjet_Client::send_offer_inquiry( $detail, $program );
+					}
 				}
 
 				if ( ! $retry_repository->update_email_status(

@@ -1265,6 +1265,99 @@ assert_true(strpos($p5_rendered_html, 'Modo Legado / Contingencia') !== false, '
 assert_true(strpos($p5_rendered_html, 'Respaldo Mailjet') !== false, 'Render must indicate Mailjet offer templates are fallback');
 assert_true(strpos($p5_rendered_html, 'Motor de Ofertas') !== false, 'Render KPI must display Motor de Ofertas');
 
+// Test 28: Phase 5 - ajax_retry_email orchestrating Mautic and fallback for offers, and Mailjet for seminars
+assert_true(method_exists('FLACSO_Consultas_Admin', 'ajax_retry_email'), 'FLACSO_Consultas_Admin must define ajax_retry_email');
+$retry_email_hooks = $GLOBALS['wp_actions']['wp_ajax_flacso_consultas_retry_email'] ?? [];
+assert_true(!empty($retry_email_hooks), 'init() must register wp_ajax_flacso_consultas_retry_email action');
+
+// Case 28a: Offer inquiry retry with Mautic success
+$pdo->exec("INSERT INTO \"offer_inquiries\"
+    (\"id\",\"consultaId\",\"offerWpId\",\"offerName\",\"offerAbbreviation\",\"cohortNumber\",\"cohortName\",\"offerStatus\",\"firstName\",\"lastName\",\"fullName\",\"email\",\"emailNormalized\",\"phone\",\"country\",\"source\",\"campaignProvider\",\"campaignSource\",\"campaignMedium\",\"campaignName\",\"emailStatus\",\"emailSender\",\"mauticContactId\",\"mauticSyncStatus\",\"payload\",\"inquiryAt\",\"createdAt\",\"updatedAt\")
+    VALUES ('c-ret-off-1','cid-ret-off-1',501,'Maestría en Género','mg',2,'2ª Cohorte','abierta','Patricia','Vidal','Patricia Vidal','patricia@ejemplo.com','patricia@ejemplo.com','099444','Uruguay','web','meta','facebook','cpc','Campaña Género','failed','mailjet',9911,'synced','{}','{$time_trig}','{$time_trig}','{$time_trig}')");
+
+$GLOBALS['flacso_test_options']['flacso_inquiry_email_engine'] = 'mautic';
+$GLOBALS['flacso_test_options']['flacso_mautic_template_consulta_abierta'] = 201;
+
+$mautic_retry_sent_url = null;
+$GLOBALS['custom_http_handler'] = function($url, $args) use (&$mautic_retry_sent_url) {
+    if (strpos($url, '/api/emails/201/contact/9911/send') !== false) {
+        $mautic_retry_sent_url = $url;
+        return ['response' => ['code' => 200], 'body' => json_encode(['success' => true])];
+    }
+    return ['response' => ['code' => 200], 'body' => json_encode(['success' => true])];
+};
+
+$_POST = ['nonce' => 'mock-nonce', 'table' => 'offer_inquiries', 'id' => 'c-ret-off-1'];
+$ajax_caught = null;
+try {
+    FLACSO_Consultas_Admin::ajax_retry_email();
+} catch (TestAjaxException $e) {
+    $ajax_caught = $e;
+}
+assert_true($ajax_caught !== null && $ajax_caught->is_success === true, 'ajax_retry_email offer with mautic must succeed');
+assert_true($ajax_caught->data['sender'] === 'mautic', 'ajax_retry_email offer sender must be mautic');
+
+$stmt_check_off1 = $pdo->prepare('SELECT "emailStatus", "emailSender" FROM "offer_inquiries" WHERE "id" = ?');
+$stmt_check_off1->execute(['c-ret-off-1']);
+$off1_res = $stmt_check_off1->fetch(PDO::FETCH_ASSOC);
+assert_true($off1_res['emailStatus'] === 'sent', 'DB emailStatus must be sent');
+assert_true($off1_res['emailSender'] === 'mautic', 'DB emailSender must be mautic');
+
+// Case 28b: Offer inquiry retry with Mautic failure -> Mailjet fallback
+$pdo->exec("INSERT INTO \"offer_inquiries\"
+    (\"id\",\"consultaId\",\"offerWpId\",\"offerName\",\"offerAbbreviation\",\"cohortNumber\",\"cohortName\",\"offerStatus\",\"firstName\",\"lastName\",\"fullName\",\"email\",\"emailNormalized\",\"phone\",\"country\",\"source\",\"campaignProvider\",\"campaignSource\",\"campaignMedium\",\"campaignName\",\"emailStatus\",\"emailSender\",\"mauticContactId\",\"mauticSyncStatus\",\"payload\",\"inquiryAt\",\"createdAt\",\"updatedAt\")
+    VALUES ('c-ret-off-2','cid-ret-off-2',501,'Maestría en Género','mg',2,'2ª Cohorte','abierta','Marcos','Brum','Marcos Brum','marcos@ejemplo.com','marcos@ejemplo.com','099555','Uruguay','web','meta','facebook','cpc','Campaña Género','failed','mailjet',9912,'synced','{}','{$time_trig}','{$time_trig}','{$time_trig}')");
+
+$GLOBALS['custom_http_handler'] = function($url, $args) {
+    if (strpos($url, '/api/emails/201/contact/9912/send') !== false) {
+        return ['response' => ['code' => 500], 'body' => json_encode(['errors' => [['message' => 'Mautic down']]])];
+    }
+    // Mailjet send endpoint responds 200
+    if (strpos($url, 'api.mailjet.com') !== false) {
+        return ['response' => ['code' => 200], 'body' => json_encode(['Messages' => [['Status' => 'success', 'To' => [['MessageID' => 'mj-fb-1', 'MessageUUID' => 'uuid-fb-1']]]]])];
+    }
+    return ['response' => ['code' => 200], 'body' => json_encode(['success' => true])];
+};
+
+$_POST = ['nonce' => 'mock-nonce', 'table' => 'offer_inquiries', 'id' => 'c-ret-off-2'];
+$ajax_caught = null;
+try {
+    FLACSO_Consultas_Admin::ajax_retry_email();
+} catch (TestAjaxException $e) {
+    $ajax_caught = $e;
+}
+assert_true($ajax_caught !== null && $ajax_caught->is_success === true, 'ajax_retry_email offer fallback must succeed');
+assert_true($ajax_caught->data['sender'] === 'mailjet_fallback', 'ajax_retry_email offer fallback sender must be mailjet_fallback');
+
+$stmt_check_off2 = $pdo->prepare('SELECT "emailStatus", "emailSender" FROM "offer_inquiries" WHERE "id" = ?');
+$stmt_check_off2->execute(['c-ret-off-2']);
+$off2_res = $stmt_check_off2->fetch(PDO::FETCH_ASSOC);
+assert_true($off2_res['emailStatus'] === 'sent', 'DB emailStatus must be sent');
+assert_true($off2_res['emailSender'] === 'mailjet_fallback', 'DB emailSender must be mailjet_fallback');
+
+// Case 28c: Seminar inquiry retry uses Mailjet
+$pdo->exec("INSERT INTO \"seminar_inquiries\"
+    (\"id\",\"consultaId\",\"seminarWpId\",\"seminarName\",\"firstName\",\"lastName\",\"fullName\",\"email\",\"emailNormalized\",\"phone\",\"country\",\"source\",\"campaignProvider\",\"campaignSource\",\"campaignMedium\",\"campaignName\",\"emailStatus\",\"emailSender\",\"payload\",\"inquiryAt\",\"createdAt\",\"updatedAt\")
+    VALUES ('c-ret-sem-1','cid-ret-sem-1',301,'Seminario Bioética','Carlos','Sosa','Carlos Sosa','carlos@ejemplo.com','carlos@ejemplo.com','099666','Uruguay','web','meta','facebook','cpc','Campaña Bioética','failed','mailjet','{}','{$time_trig}','{$time_trig}','{$time_trig}')");
+
+$_POST = ['nonce' => 'mock-nonce', 'table' => 'seminar_inquiries', 'id' => 'c-ret-sem-1'];
+$ajax_caught = null;
+try {
+    FLACSO_Consultas_Admin::ajax_retry_email();
+} catch (TestAjaxException $e) {
+    $ajax_caught = $e;
+}
+assert_true($ajax_caught !== null && $ajax_caught->is_success === true, 'ajax_retry_email seminar must succeed');
+assert_true(!empty($ajax_caught->data['sender']), 'ajax_retry_email seminar sender must not be empty');
+
+$stmt_check_sem1 = $pdo->prepare('SELECT "emailStatus", "emailSender" FROM "seminar_inquiries" WHERE "id" = ?');
+$stmt_check_sem1->execute(['c-ret-sem-1']);
+$sem1_res = $stmt_check_sem1->fetch(PDO::FETCH_ASSOC);
+assert_true($sem1_res['emailStatus'] === 'sent', 'DB emailStatus for seminar must be sent');
+assert_true(!empty($sem1_res['emailSender']), 'DB emailSender for seminar must not be empty');
+
+$GLOBALS['custom_http_handler'] = null;
+
 echo "OK mail-console-and-consultas-admin-test\n";
 
 
