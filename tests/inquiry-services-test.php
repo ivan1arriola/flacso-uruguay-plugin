@@ -189,6 +189,7 @@ CREATE TABLE offer_inquiries (
     urlBase TEXT, urlReferer TEXT, inquiryAt TEXT, ipAddress TEXT, userAgent TEXT, replyToEmail TEXT,
     programUrl TEXT, cartaUrl TEXT, preinscripcionUrl TEXT, offerStatus TEXT,
     mauticContactId TEXT, mauticSyncStatus TEXT DEFAULT "skipped", mauticSyncedAt TEXT, mauticLastError TEXT,
+    followupDueAt TEXT, followupStatus TEXT DEFAULT "none", followupSentAt TEXT, followupAttempts INTEGER DEFAULT 0, followupLastError TEXT,
     emailStatus TEXT, emailSender TEXT, gmailMessageUrl TEXT, mailjetMessageId TEXT, mailjetMessageUuid TEXT, payload TEXT, createdAt TEXT, updatedAt TEXT
 );
 CREATE TABLE seminar_inquiries (
@@ -776,4 +777,83 @@ $saved_mj_engine = $repo->find_by_consulta_id('srv-offer-mailjet-engine');
 srv_assert(!empty($saved_mj_engine), '11.4: Registro debe existir en BD');
 srv_assert($saved_mj_engine['emailSender'] === 'mailjet', '11.4: emailSender en BD debe ser mailjet');
 
+// -----------------------------------------------------------------------------
+// GRUPO 12: Programación Inicial de Seguimiento (+X días) en FLACSO_Offer_Inquiry_Service::submit()
+// -----------------------------------------------------------------------------
+
+// 12.1: Seguimiento habilitado ('1') con ventana de 7 días
+$GLOBALS['mailjet_mock_options']['flacso_inquiry_followup_enabled'] = '1';
+$GLOBALS['mailjet_mock_options']['flacso_inquiry_followup_days'] = 7;
+$GLOBALS['mailjet_http_calls'] = [];
+$GLOBALS['mautic_http_calls'] = [];
+
+$inquiry_at_12_1 = '2026-09-28 10:00:00';
+$expected_due_12_1 = gmdate('Y-m-d H:i:s', strtotime('+7 days', strtotime($inquiry_at_12_1)));
+
+$result_followup_on = FLACSO_Offer_Inquiry_Service::submit([
+    'event_id'   => 'srv-offer-followup-on',
+    'id_pagina'  => 13,
+    'nombre'     => 'Valeria',
+    'apellido'   => 'López',
+    'correo'     => 'valeria@ejemplo.com',
+    'inquiryAt'  => $inquiry_at_12_1,
+]);
+
+srv_assert($result_followup_on['ok'] === true, '12.1: Submit debe ser ok con seguimiento habilitado');
+srv_assert(($result_followup_on['followup_status'] ?? null) === 'pending', '12.1: Retorno debe contener followup_status === pending');
+srv_assert(($result_followup_on['followup_due_at'] ?? null) === $expected_due_12_1, '12.1: Retorno debe contener followup_due_at esperado');
+
+$saved_followup_on = $repo->find_by_consulta_id('srv-offer-followup-on');
+srv_assert(!empty($saved_followup_on), '12.1: Registro debe existir en BD');
+srv_assert($saved_followup_on['followupStatus'] === 'pending', '12.1: BD debe registrar followupStatus === pending');
+srv_assert($saved_followup_on['followupDueAt'] === $expected_due_12_1, '12.1: BD debe registrar followupDueAt esperado (+7 días)');
+
+// 12.2: Seguimiento deshabilitado ('0')
+$GLOBALS['mailjet_mock_options']['flacso_inquiry_followup_enabled'] = '0';
+$GLOBALS['mailjet_mock_options']['flacso_inquiry_followup_days'] = 7;
+$GLOBALS['mailjet_http_calls'] = [];
+$GLOBALS['mautic_http_calls'] = [];
+
+$result_followup_off = FLACSO_Offer_Inquiry_Service::submit([
+    'event_id'   => 'srv-offer-followup-off',
+    'id_pagina'  => 13,
+    'nombre'     => 'Carlos',
+    'apellido'   => 'Méndez',
+    'correo'     => 'carlos@ejemplo.com',
+]);
+
+srv_assert($result_followup_off['ok'] === true, '12.2: Submit debe ser ok con seguimiento deshabilitado');
+srv_assert(($result_followup_off['followup_status'] ?? null) === 'none', '12.2: Retorno debe contener followup_status === none');
+srv_assert(array_key_exists('followup_due_at', $result_followup_off) && $result_followup_off['followup_due_at'] === null, '12.2: Retorno debe contener followup_due_at === null');
+
+$saved_followup_off = $repo->find_by_consulta_id('srv-offer-followup-off');
+srv_assert(!empty($saved_followup_off), '12.2: Registro debe existir en BD');
+srv_assert($saved_followup_off['followupStatus'] === 'none', '12.2: BD debe registrar followupStatus === none');
+srv_assert($saved_followup_off['followupDueAt'] === null, '12.2: BD debe registrar followupDueAt === null');
+
+// 12.3: Seguimiento habilitado con días por defecto (5 días cuando no está configurado)
+unset($GLOBALS['mailjet_mock_options']['flacso_inquiry_followup_days']);
+$GLOBALS['mailjet_mock_options']['flacso_inquiry_followup_enabled'] = '1';
+$inquiry_at_12_3 = '2026-09-28 12:00:00';
+$expected_due_12_3 = gmdate('Y-m-d H:i:s', strtotime('+5 days', strtotime($inquiry_at_12_3)));
+
+$result_followup_default = FLACSO_Offer_Inquiry_Service::submit([
+    'event_id'   => 'srv-offer-followup-default-days',
+    'id_pagina'  => 13,
+    'nombre'     => 'Ana',
+    'apellido'   => 'Gómez',
+    'correo'     => 'ana@ejemplo.com',
+    'inquiryAt'  => $inquiry_at_12_3,
+]);
+
+srv_assert($result_followup_default['ok'] === true, '12.3: Submit debe ser ok');
+srv_assert(($result_followup_default['followup_status'] ?? null) === 'pending', '12.3: followup_status debe ser pending');
+srv_assert(($result_followup_default['followup_due_at'] ?? null) === $expected_due_12_3, '12.3: followup_due_at debe calcular +5 días por defecto');
+
+$saved_followup_def = $repo->find_by_consulta_id('srv-offer-followup-default-days');
+srv_assert(!empty($saved_followup_def), '12.3: Registro debe existir en BD');
+srv_assert($saved_followup_def['followupStatus'] === 'pending', '12.3: BD debe registrar followupStatus === pending');
+srv_assert($saved_followup_def['followupDueAt'] === $expected_due_12_3, '12.3: BD debe registrar followupDueAt === +5 días');
+
 echo "OK inquiry-services-test\n";
+

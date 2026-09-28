@@ -243,6 +243,17 @@ class FLACSO_Offer_Inquiry_Service {
                 ? (string)$data['fecha_envio']
                 : gmdate('c'));
 
+        $followup_enabled = function_exists('get_option') ? !empty(get_option('flacso_inquiry_followup_enabled', false)) : false;
+        if ($followup_enabled) {
+            $followup_days = function_exists('get_option') ? max(1, min(60, (int) get_option('flacso_inquiry_followup_days', 5))) : 5;
+            $inquiry_ts    = strtotime($inquiry_at) ?: time();
+            $followup_due_at = gmdate('Y-m-d H:i:s', strtotime("+{$followup_days} days", $inquiry_ts));
+            $followup_status = 'pending';
+        } else {
+            $followup_due_at = null;
+            $followup_status = 'none';
+        }
+
         // 5. Inserción en Base de Datos (Guardar primero)
         $record = [
             'consultaId'          => $consulta_id,
@@ -280,6 +291,8 @@ class FLACSO_Offer_Inquiry_Service {
             'cartaUrl'            => $carta_url,
             'preinscripcionUrl'   => $preinscripcion_url,
             'offerStatus'         => $offer_status,
+            'followupDueAt'       => $followup_due_at,
+            'followupStatus'      => $followup_status,
             'emailStatus'         => 'skipped',
             'payload'             => $data,
         ];
@@ -533,6 +546,8 @@ class FLACSO_Offer_Inquiry_Service {
             'cohort_number'        => $cohort_number,
             'offer_abbreviation'   => $offer_abbr,
             'mautic_sync'          => $mautic_sync_result,
+            'followup_status'      => $followup_status,
+            'followup_due_at'      => $followup_due_at,
             'code'                 => 200,
         ];
     }
