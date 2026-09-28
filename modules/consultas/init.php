@@ -32,6 +32,7 @@ $flacso_consultas_files = [
     'modules/consultas/services/class-flacso-seminar-inquiry-service.php',
     'modules/consultas/services/class-flacso-inquiry-context-service.php',
     'modules/consultas/services/class-flacso-inquiry-marketing-service.php',
+    'modules/consultas/services/class-flacso-inquiry-followup-service.php',
     'modules/consultas/includes/class-flacso-consultas-admin.php',
 ];
 
@@ -43,6 +44,10 @@ foreach ($flacso_consultas_files as $flacso_file) {
     } else {
         require_once rtrim($flacso_base_dir, '/') . '/' . ltrim($flacso_file, '/');
     }
+}
+
+if (class_exists('FLACSO_Inquiry_Followup_Service')) {
+    FLACSO_Inquiry_Followup_Service::init();
 }
 
 if (class_exists('FLACSO_Consultas_Admin') && function_exists('add_action')) {
