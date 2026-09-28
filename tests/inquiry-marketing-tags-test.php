@@ -688,5 +688,145 @@ test_assert((int)$record_update['mauticContactId'] === 44332, 'DB record has con
 
 echo "Suite 2: sync_inquiry workflows passed.\n";
 
+// ==========================================================================
+// Suite 3: compile_tokens
+// ==========================================================================
+echo "\n--- Suite 3: compile_tokens ---\n";
+
+// Caso 1: Consulta completa con cohorte y programa abierto -> comprueba todos los tokens presentes y valores correctos
+$inquiry_1 = [
+    'firstName'      => 'Ana',
+    'lastName'       => 'Pérez',
+    'fullName'       => 'Ana Pérez',
+    'email'          => 'ana.perez@example.com',
+    'country'        => 'Uruguay',
+    'profession'     => 'Socióloga',
+    'educationLevel' => 'Maestría',
+    'cohortName'     => 'Cohorte 4',
+    'cohortNumber'   => 4,
+];
+$program_1 = [
+    'name'              => 'Diploma en Derechos Humanos',
+    'urlBase'           => 'https://flacso.edu.uy/oferta/derechos-humanos/',
+    'preinscripcionUrl' => 'https://preinscripciones.flacso.edu.uy/oferta/10',
+    'startValue'        => '2026-05-15',
+    'startPrecision'    => 'dia',
+    'modalityLabel'     => 'virtual',
+    'cartaUrl'          => 'https://flacso.edu.uy/oferta/derechos-humanos/brochure.pdf',
+];
+
+$tokens_1 = FLACSO_Inquiry_Marketing_Service::compile_tokens($inquiry_1, $program_1, true);
+
+test_assert(is_array($tokens_1), 'compile_tokens retorna un array');
+
+// Tokens personales
+test_assert(($tokens_1['{nombre}'] ?? '') === 'Ana', 'Caso 1: {nombre} es Ana');
+test_assert(($tokens_1['{apellido}'] ?? '') === 'Pérez', 'Caso 1: {apellido} es Pérez');
+test_assert(($tokens_1['{nombre_completo}'] ?? '') === 'Ana Pérez', 'Caso 1: {nombre_completo} es Ana Pérez');
+test_assert(($tokens_1['{correo}'] ?? '') === 'ana.perez@example.com', 'Caso 1: {correo} es ana.perez@example.com');
+test_assert(($tokens_1['{pais}'] ?? '') === 'Uruguay', 'Caso 1: {pais} es Uruguay');
+test_assert(($tokens_1['{profesion}'] ?? '') === 'Socióloga', 'Caso 1: {profesion} es Socióloga');
+test_assert(($tokens_1['{nivel_academico}'] ?? '') === 'Maestría', 'Caso 1: {nivel_academico} es Maestría');
+
+// Tokens académicos y de oferta
+test_assert(($tokens_1['{programa}'] ?? '') === 'Diploma en Derechos Humanos', 'Caso 1: {programa} es correcto');
+test_assert(($tokens_1['{oferta_academica_nombre}'] ?? '') === 'Diploma en Derechos Humanos', 'Caso 1: {oferta_academica_nombre} es alias idéntico');
+test_assert(($tokens_1['{oferta_academica_url}'] ?? '') === 'https://flacso.edu.uy/oferta/derechos-humanos/', 'Caso 1: {oferta_academica_url} es correcto');
+test_assert(($tokens_1['{url_oferta_academica}'] ?? '') === 'https://flacso.edu.uy/oferta/derechos-humanos/', 'Caso 1: {url_oferta_academica} es alias idéntico');
+test_assert(($tokens_1['{cohorte_nombre}'] ?? '') === 'Cohorte 4', 'Caso 1: {cohorte_nombre} es Cohorte 4');
+test_assert(($tokens_1['{cohorte_numero}'] ?? '') === '4', 'Caso 1: {cohorte_numero} es 4');
+test_assert(($tokens_1['{fecha_inicio}'] ?? '') === '15 de mayo de 2026', 'Caso 1: {fecha_inicio} formateada legible');
+test_assert(($tokens_1['{oferta_academica_fecha_inicio}'] ?? '') === '15 de mayo de 2026', 'Caso 1: {oferta_academica_fecha_inicio} es alias idéntico');
+test_assert(($tokens_1['{modalidad}'] ?? '') === 'Virtual', 'Caso 1: {modalidad} humanizada a Virtual');
+test_assert(($tokens_1['{oferta_academica_modalidad}'] ?? '') === 'Virtual', 'Caso 1: {oferta_academica_modalidad} es alias idéntico');
+test_assert(($tokens_1['{url_preinscripcion}'] ?? '') === 'https://preinscripciones.flacso.edu.uy/oferta/10', 'Caso 1: {url_preinscripcion} presente');
+test_assert(($tokens_1['{oferta_academica_url_preinscripcion}'] ?? '') === 'https://preinscripciones.flacso.edu.uy/oferta/10', 'Caso 1: {oferta_academica_url_preinscripcion} alias');
+test_assert(($tokens_1['{link_preinscripcion}'] ?? '') === 'https://preinscripciones.flacso.edu.uy/oferta/10', 'Caso 1: {link_preinscripcion} alias');
+test_assert(($tokens_1['{url_carta}'] ?? '') === 'https://flacso.edu.uy/oferta/derechos-humanos/brochure.pdf', 'Caso 1: {url_carta} es correcto');
+
+// Caso 2: Consulta sin primer nombre pero con fullName -> comprueba extracción correcta de {nombre}
+$inquiry_2 = [
+    'fullName'       => 'Lucía Méndez Gómez',
+    'lastName'       => 'Méndez Gómez',
+    'email'          => 'lucia@example.com',
+    'country'        => 'Argentina',
+    'profession'     => 'Abogada',
+    'educationLevel' => 'Grado',
+];
+$program_2 = [
+    'name'    => 'Maestría en Género',
+    'urlBase' => 'https://flacso.edu.uy/oferta/genero/',
+];
+
+$tokens_2 = FLACSO_Inquiry_Marketing_Service::compile_tokens($inquiry_2, $program_2, false);
+
+test_assert(($tokens_2['{nombre}'] ?? '') === 'Lucía', 'Caso 2: {nombre} extraído de primera palabra de fullName');
+test_assert(($tokens_2['{apellido}'] ?? '') === 'Méndez Gómez', 'Caso 2: {apellido} es Méndez Gómez');
+test_assert(($tokens_2['{nombre_completo}'] ?? '') === 'Lucía Méndez Gómez', 'Caso 2: {nombre_completo} coincide con fullName');
+test_assert(($tokens_2['{correo}'] ?? '') === 'lucia@example.com', 'Caso 2: {correo} es correcto');
+
+// Caso 3: Consulta mínima sin país ni profesión ni cohorte -> comprueba valores por defecto 'Prefiere no responder' y 'a confirmar'
+$inquiry_3 = [
+    'firstName' => 'Carlos',
+    'lastName'  => '',
+    'email'     => 'carlos@example.com',
+];
+$program_3 = [
+    'name' => 'Seminario de Políticas',
+];
+
+$tokens_3 = FLACSO_Inquiry_Marketing_Service::compile_tokens($inquiry_3, $program_3, false);
+
+test_assert(($tokens_3['{nombre}'] ?? '') === 'Carlos', 'Caso 3: {nombre} es Carlos');
+test_assert(($tokens_3['{apellido}'] ?? '') === '', 'Caso 3: {apellido} es vacío');
+test_assert(($tokens_3['{nombre_completo}'] ?? '') === 'Carlos', 'Caso 3: {nombre_completo} fallback a trim(nombre apellido)');
+test_assert(($tokens_3['{pais}'] ?? '') === 'Prefiere no responder', 'Caso 3: {pais} por defecto Prefiere no responder');
+test_assert(($tokens_3['{profesion}'] ?? '') === 'Prefiere no responder', 'Caso 3: {profesion} por defecto Prefiere no responder');
+test_assert(($tokens_3['{nivel_academico}'] ?? '') === 'Prefiere no responder', 'Caso 3: {nivel_academico} por defecto Prefiere no responder');
+test_assert(($tokens_3['{cohorte_nombre}'] ?? '') === '', 'Caso 3: {cohorte_nombre} vacío');
+test_assert(($tokens_3['{cohorte_numero}'] ?? '') === '', 'Caso 3: {cohorte_numero} vacío');
+test_assert(($tokens_3['{fecha_inicio}'] ?? '') === 'a confirmar', 'Caso 3: {fecha_inicio} por defecto a confirmar');
+test_assert(($tokens_3['{oferta_academica_fecha_inicio}'] ?? '') === 'a confirmar', 'Caso 3: {oferta_academica_fecha_inicio} por defecto a confirmar');
+test_assert(($tokens_3['{modalidad}'] ?? '') === 'a confirmar', 'Caso 3: {modalidad} por defecto a confirmar');
+test_assert(($tokens_3['{oferta_academica_modalidad}'] ?? '') === 'a confirmar', 'Caso 3: {oferta_academica_modalidad} por defecto a confirmar');
+test_assert(($tokens_3['{url_preinscripcion}'] ?? '') === '', 'Caso 3: {url_preinscripcion} vacío');
+test_assert(($tokens_3['{oferta_academica_url_preinscripcion}'] ?? '') === '', 'Caso 3: {oferta_academica_url_preinscripcion} vacío');
+test_assert(($tokens_3['{link_preinscripcion}'] ?? '') === '', 'Caso 3: {link_preinscripcion} vacío');
+test_assert(($tokens_3['{url_carta}'] ?? '') === '', 'Caso 3: {url_carta} vacío');
+
+// Caso 4: Precisión de mes, modalidades y claves alternativas (snake_case)
+$inquiry_4 = [
+    'nombre'           => 'María José',
+    'apellido'         => 'González',
+    'correo'           => 'mj@example.com',
+    'pais'             => 'Chile',
+    'profesion'        => 'Investigadora',
+    'nivel_educativo'  => 'Doctorado',
+    'cohort_name'      => '2ª Cohorte',
+    'cohort_number'    => '2',
+];
+$program_4 = [
+    'titulo_posgrado'       => 'Doctorado en Ciencias Sociales',
+    'url'                   => 'https://flacso.edu.uy/oferta/doctorado/',
+    'link_preinscripcion'   => 'https://preinscripciones.flacso.edu.uy/oferta/doc',
+    'fecha_inicio'          => '2026-08',
+    'startPrecision'        => 'mes',
+    'modalidad'             => 'híbrida',
+    'carta_url'             => 'https://flacso.edu.uy/oferta/doctorado/carta.pdf',
+];
+$tokens_4 = FLACSO_Inquiry_Marketing_Service::compile_tokens($inquiry_4, $program_4, true);
+
+test_assert($tokens_4['{nombre}'] === 'María José', 'Caso 4: {nombre} respeta nombre compuesto');
+test_assert($tokens_4['{nombre_completo}'] === 'María José González', 'Caso 4: {nombre_completo} correcto');
+test_assert($tokens_4['{fecha_inicio}'] === 'Agosto de 2026', 'Caso 4: {fecha_inicio} formateada con precisión mes');
+test_assert($tokens_4['{modalidad}'] === 'Híbrida', 'Caso 4: {modalidad} humanizada a Híbrida');
+test_assert($tokens_4['{cohorte_nombre}'] === '2ª Cohorte', 'Caso 4: {cohorte_nombre} desde cohort_name');
+test_assert($tokens_4['{cohorte_numero}'] === '2', 'Caso 4: {cohorte_numero} desde cohort_number');
+test_assert($tokens_4['{url_carta}'] === 'https://flacso.edu.uy/oferta/doctorado/carta.pdf', 'Caso 4: {url_carta} desde carta_url');
+
+echo "Suite 3: compile_tokens passed.\n";
+
 echo "\nOK inquiry-marketing-tags-test\n";
+
+
 

@@ -253,4 +253,163 @@ class FLACSO_Inquiry_Marketing_Service {
             'error'  => $error_msg,
         ];
     }
+
+    /**
+     * Compila los tokens canónicos asociativos con sintaxis {token} para plantillas de correo de Mautic.
+     *
+     * @param array $inquiry Datos de la consulta (prospecto y snapshot).
+     * @param array $program Datos de la oferta o contexto del programa.
+     * @param bool  $is_open Indica si las inscripciones están abiertas.
+     * @return array Diccionario asociativo ['{token}' => 'valor'].
+     */
+    public static function compile_tokens(array $inquiry, array $program = [], bool $is_open = false): array {
+        // Datos personales
+        $nombre = trim((string)($inquiry['firstName'] ?? $inquiry['firstname'] ?? $inquiry['first_name'] ?? $inquiry['nombre'] ?? ''));
+        $apellido = trim((string)($inquiry['lastName'] ?? $inquiry['lastname'] ?? $inquiry['last_name'] ?? $inquiry['apellido'] ?? ''));
+        $full_name = trim((string)($inquiry['fullName'] ?? $inquiry['fullname'] ?? $inquiry['nombre_completo'] ?? $inquiry['nombre_apellido'] ?? ''));
+
+        if ($nombre === '' && $full_name !== '') {
+            $parts = preg_split('/\s+/', $full_name);
+            $nombre = $parts[0] ?? '';
+        }
+
+        if ($full_name === '') {
+            $full_name = trim("{$nombre} {$apellido}");
+        }
+
+        $correo = trim((string)($inquiry['email'] ?? $inquiry['correo'] ?? $inquiry['user_email'] ?? ''));
+
+        $pais_raw = trim((string)($inquiry['country'] ?? $inquiry['pais'] ?? ''));
+        $pais = $pais_raw !== '' ? $pais_raw : 'Prefiere no responder';
+
+        $profesion_raw = trim((string)($inquiry['profession'] ?? $inquiry['profesion'] ?? ''));
+        $profesion = $profesion_raw !== '' ? $profesion_raw : 'Prefiere no responder';
+
+        $nivel_raw = trim((string)($inquiry['educationLevel'] ?? $inquiry['education_level'] ?? $inquiry['educationlevel'] ?? $inquiry['nivel_academico'] ?? $inquiry['nivel_educativo'] ?? ''));
+        $nivel_academico = $nivel_raw !== '' ? $nivel_raw : 'Prefiere no responder';
+
+        // Datos académicos y de oferta
+        $programa = trim((string)($program['name'] ?? $program['titulo_posgrado'] ?? $program['title'] ?? $program['offerName'] ?? $program['offer_name'] ?? $program['programa'] ?? $inquiry['offerName'] ?? $inquiry['offer_name'] ?? $inquiry['programa'] ?? ''));
+
+        $oferta_url = trim((string)($program['urlBase'] ?? $program['programUrl'] ?? $program['url'] ?? $program['link'] ?? $program['url_base'] ?? $program['program_url'] ?? $inquiry['urlBase'] ?? $inquiry['programUrl'] ?? $inquiry['url_base'] ?? $inquiry['program_url'] ?? ''));
+
+        $cohorte_nombre = trim((string)($inquiry['cohortName'] ?? $inquiry['cohort_name'] ?? $inquiry['cohorte_nombre'] ?? $program['cohortName'] ?? $program['cohort_name'] ?? $program['cohorte_nombre'] ?? ''));
+
+        $cohorte_num_raw = $inquiry['cohortNumber'] ?? $inquiry['cohort_number'] ?? $inquiry['cohorte_numero'] ?? $program['cohortNumber'] ?? $program['cohort_number'] ?? $program['cohorte_numero'] ?? null;
+        $cohorte_numero = ($cohorte_num_raw !== null && $cohorte_num_raw !== '') ? (string)$cohorte_num_raw : '';
+
+        $start_raw = trim((string)($program['startValue'] ?? $program['fecha_inicio'] ?? $program['start_value'] ?? $program['periodo_inicio'] ?? $inquiry['startValue'] ?? $inquiry['fecha_inicio'] ?? ''));
+        $precision = trim((string)($program['startPrecision'] ?? $program['precision_fecha_inicio'] ?? $program['start_precision'] ?? $inquiry['startPrecision'] ?? $inquiry['precision_fecha_inicio'] ?? 'dia'));
+        $fecha_inicio = self::format_start_date($start_raw, $precision);
+
+        $modality_raw = trim((string)($program['modalityLabel'] ?? $program['modalidad'] ?? $program['modality'] ?? $inquiry['modalityLabel'] ?? $inquiry['modalidad'] ?? ''));
+        $modalidad = self::humanize_modality($modality_raw);
+
+        $url_pre = trim((string)($program['preinscripcionUrl'] ?? $program['preinscripcion_url'] ?? $program['link_preinscripcion'] ?? $inquiry['preinscripcionUrl'] ?? $inquiry['preinscripcion_url'] ?? $inquiry['link_preinscripcion'] ?? ''));
+
+        $url_carta = trim((string)($program['cartaUrl'] ?? $program['carta_url'] ?? $program['brochureUrl'] ?? $program['brochure_url'] ?? $program['url_carta'] ?? $inquiry['cartaUrl'] ?? $inquiry['carta_url'] ?? ''));
+
+        return [
+            '{nombre}'                              => $nombre,
+            '{apellido}'                            => $apellido,
+            '{nombre_completo}'                     => $full_name,
+            '{correo}'                              => $correo,
+            '{pais}'                                => $pais,
+            '{profesion}'                           => $profesion,
+            '{nivel_academico}'                     => $nivel_academico,
+            '{programa}'                            => $programa,
+            '{oferta_academica_nombre}'             => $programa,
+            '{oferta_academica_url}'                => $oferta_url,
+            '{url_oferta_academica}'                => $oferta_url,
+            '{cohorte_nombre}'                      => $cohorte_nombre,
+            '{cohorte_numero}'                      => $cohorte_numero,
+            '{fecha_inicio}'                        => $fecha_inicio,
+            '{oferta_academica_fecha_inicio}'       => $fecha_inicio,
+            '{modalidad}'                           => $modalidad,
+            '{oferta_academica_modalidad}'          => $modalidad,
+            '{url_preinscripcion}'                  => $url_pre,
+            '{oferta_academica_url_preinscripcion}' => $url_pre,
+            '{link_preinscripcion}'                 => $url_pre,
+            '{url_carta}'                           => $url_carta,
+        ];
+    }
+
+    /**
+     * Formatea fechas de inicio para tokens legibles en correos.
+     *
+     * @param string|null $value
+     * @param string|null $precision
+     * @return string
+     */
+    protected static function format_start_date(?string $value, ?string $precision = 'dia'): string {
+        $raw = trim((string)($value ?? ''));
+        if ($raw === '') {
+            return 'a confirmar';
+        }
+
+        $prec = strtolower(trim((string)($precision ?? 'dia')));
+        $prec = [
+            'day'   => 'dia',
+            'month' => 'mes',
+            'year'  => 'anio',
+        ][$prec] ?? $prec;
+
+        if ($prec === 'anio' && preg_match('/^(\d{4})/', $raw, $m)) {
+            return $m[1];
+        }
+
+        if (preg_match('/^(\d{4})-(\d{2})(?:-(\d{2}))?/', $raw, $m)) {
+            $year  = (int)$m[1];
+            $month = (int)$m[2];
+            $day   = isset($m[3]) ? (int)$m[3] : 1;
+            $months = [
+                1 => 'enero', 2 => 'febrero', 3 => 'marzo', 4 => 'abril',
+                5 => 'mayo', 6 => 'junio', 7 => 'julio', 8 => 'agosto',
+                9 => 'septiembre', 10 => 'octubre', 11 => 'noviembre', 12 => 'diciembre',
+            ];
+
+            if (isset($months[$month])) {
+                if ($prec === 'mes') {
+                    return ucfirst($months[$month] . ' de ' . $year);
+                }
+                if (checkdate($month, $day, $year)) {
+                    return $day . ' de ' . $months[$month] . ' de ' . $year;
+                }
+            }
+        }
+
+        return $raw;
+    }
+
+    /**
+     * Normaliza la modalidad a un texto humanizado ('Virtual', 'Híbrida', 'Presencial') o 'a confirmar'.
+     *
+     * @param string|null $value
+     * @return string
+     */
+    protected static function humanize_modality(?string $value): string {
+        $raw = trim((string)($value ?? ''));
+        if ($raw === '') {
+            return 'a confirmar';
+        }
+
+        $clean = strtolower($raw);
+        $clean = strtr($clean, [
+            'á'=>'a', 'é'=>'e', 'í'=>'i', 'ó'=>'o', 'ú'=>'u',
+            'Á'=>'a', 'É'=>'e', 'Í'=>'i', 'Ó'=>'o', 'Ú'=>'u',
+            'ü'=>'u', 'Ü'=>'u',
+        ]);
+        $clean = trim($clean);
+
+        $labels = [
+            'virtual'        => 'Virtual',
+            'presencial'     => 'Presencial',
+            'semipresencial' => 'Semipresencial',
+            'hibrida'        => 'Híbrida',
+            'hibrido'        => 'Híbrida',
+        ];
+
+        return $labels[$clean] ?? $raw;
+    }
 }
+
