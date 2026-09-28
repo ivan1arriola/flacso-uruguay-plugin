@@ -564,4 +564,212 @@ srv_assert(!empty($saved_m_exc), '10.4: Registro debe guardarse en BD');
 srv_assert($saved_m_exc['mauticSyncStatus'] === 'failed', '10.4: mauticSyncStatus en BD debe ser failed tras excepción');
 srv_assert(strpos($saved_m_exc['mauticLastError'], 'timed out') !== false, '10.4: mauticLastError debe contener el mensaje de la excepción');
 
+// =========================================================================
+// 11. Orquestación del Envío y Fallback Automático (Fase 3)
+// =========================================================================
+
+// 11.1 Motor Mautic con envío exitoso: Mautic envía, Mailjet NO es llamado, emailSender === 'mautic'
+$GLOBALS['mailjet_mock_options']['flacso_inquiry_email_engine'] = 'mautic';
+$GLOBALS['mailjet_mock_options']['flacso_mautic_enabled'] = '1';
+$GLOBALS['mailjet_mock_options']['flacso_mautic_base_url'] = 'https://envios.flacso.edu.uy';
+$GLOBALS['mailjet_mock_options']['flacso_mautic_auth_type'] = 'basic';
+$GLOBALS['mailjet_mock_options']['flacso_mautic_username'] = 'testuser';
+$GLOBALS['mailjet_mock_options']['flacso_mautic_password'] = 'testpass';
+$GLOBALS['mailjet_mock_options']['flacso_mautic_template_consulta_abierta'] = 101;
+$GLOBALS['mailjet_mock_options']['flacso_mautic_template_consulta_cerrada'] = 102;
+
+$GLOBALS['mailjet_http_calls'] = [];
+$GLOBALS['mautic_http_calls'] = [];
+$GLOBALS['mautic_http_handler'] = function($url, $args) {
+    if (strpos($url, '/api/contacts?search=') !== false) {
+        return [
+            'response' => ['code' => 200, 'message' => 'OK'],
+            'body'     => json_encode(['contacts' => []]),
+        ];
+    }
+    if (strpos($url, '/api/contacts/new') !== false) {
+        return [
+            'response' => ['code' => 201, 'message' => 'Created'],
+            'body'     => json_encode([
+                'contact' => [
+                    'id'     => 9901,
+                    'fields' => ['all' => json_decode($args['body'], true)],
+                ]
+            ]),
+        ];
+    }
+    if (strpos($url, '/api/emails/101/contact/9901/send') !== false) {
+        return [
+            'response' => ['code' => 200, 'message' => 'OK'],
+            'body'     => json_encode(['success' => true]),
+        ];
+    }
+    return [
+        'response' => ['code' => 200, 'message' => 'OK'],
+        'body'     => json_encode(['success' => true]),
+    ];
+};
+
+$result_m_success = FLACSO_Offer_Inquiry_Service::submit([
+    'event_id'        => 'srv-offer-mautic-success',
+    'id_pagina'       => 13, // Abierta -> usa template 101
+    'nombre'          => 'Gabriela',
+    'apellido'        => 'Méndez',
+    'correo'          => 'gabriela@ejemplo.com',
+    'pais'            => 'Uruguay',
+    'profesion'       => 'Socióloga',
+    'nivel_academico' => 'Posgrado',
+]);
+
+srv_assert($result_m_success['ok'] === true, '11.1: Submit debe ser ok con motor Mautic');
+srv_assert($result_m_success['code'] === 200, '11.1: Código debe ser 200');
+srv_assert($result_m_success['email'] === 'sent', '11.1: Email status debe ser sent');
+srv_assert($result_m_success['email_sender'] === 'mautic', '11.1: email_sender debe ser mautic');
+srv_assert($result_m_success['email_engine'] === 'mautic', '11.1: email_engine debe ser mautic');
+srv_assert($result_m_success['mailjet_message_id'] === '101', '11.1: mailjet_message_id debe guardar el template_id de Mautic');
+srv_assert(count($GLOBALS['mailjet_http_calls']) === 0, '11.1: Mailjet NO debe ser llamado si Mautic envía con éxito');
+
+// Verificar que se llamó a /api/emails/101/contact/9901/send con tokens compilados
+$send_calls = array_filter($GLOBALS['mautic_http_calls'], function($call) {
+    return strpos($call['url'], '/api/emails/101/contact/9901/send') !== false;
+});
+srv_assert(count($send_calls) === 1, '11.1: Debe haber exactamente 1 llamada al endpoint de envío de Mautic');
+$send_call = reset($send_calls);
+$send_body = json_decode($send_call['args']['body'], true);
+srv_assert(!empty($send_body['tokens']), '11.1: Cuerpo del envío Mautic debe contener tokens');
+srv_assert(($send_body['tokens']['{nombre}'] ?? '') === 'Gabriela', '11.1: Token {nombre} debe coincidir');
+srv_assert(($send_body['tokens']['{programa}'] ?? '') === 'Diploma con cohorte canónica', '11.1: Token {programa} debe coincidir');
+
+$saved_m_success = $repo->find_by_consulta_id('srv-offer-mautic-success');
+srv_assert(!empty($saved_m_success), '11.1: Registro debe existir en BD');
+srv_assert($saved_m_success['emailStatus'] === 'sent', '11.1: emailStatus en BD debe ser sent');
+srv_assert($saved_m_success['emailSender'] === 'mautic', '11.1: emailSender en BD debe ser mautic');
+srv_assert($saved_m_success['mailjetMessageId'] === '101', '11.1: mailjetMessageId en BD debe ser 101');
+srv_assert((string)$saved_m_success['mauticContactId'] === '9901', '11.1: mauticContactId en BD debe ser 9901');
+srv_assert($saved_m_success['mauticSyncStatus'] === 'synced', '11.1: mauticSyncStatus en BD debe ser synced');
+
+// 11.2 Motor Mautic con fallo de Mautic -> Fallback automático a Mailjet
+$GLOBALS['mailjet_http_calls'] = [];
+$GLOBALS['mautic_http_calls'] = [];
+$GLOBALS['mautic_http_handler'] = function($url, $args) {
+    if (strpos($url, '/api/contacts?search=') !== false) {
+        return [
+            'response' => ['code' => 200, 'message' => 'OK'],
+            'body'     => json_encode(['contacts' => []]),
+        ];
+    }
+    if (strpos($url, '/api/contacts/new') !== false) {
+        return [
+            'response' => ['code' => 201, 'message' => 'Created'],
+            'body'     => json_encode([
+                'contact' => [
+                    'id'     => 9902,
+                    'fields' => ['all' => json_decode($args['body'], true)],
+                ]
+            ]),
+        ];
+    }
+    if (strpos($url, '/api/emails/') !== false) {
+        return [
+            'response' => ['code' => 500, 'message' => 'Internal Server Error'],
+            'body'     => json_encode(['errors' => [['message' => 'Spool queue locked']]]),
+        ];
+    }
+    return [
+        'response' => ['code' => 200, 'message' => 'OK'],
+        'body'     => json_encode(['success' => true]),
+    ];
+};
+
+$result_m_fail = FLACSO_Offer_Inquiry_Service::submit([
+    'event_id'        => 'srv-offer-mautic-fallback',
+    'id_pagina'       => 13,
+    'nombre'          => 'Esteban',
+    'apellido'        => 'Quirós',
+    'correo'          => 'esteban@ejemplo.com',
+]);
+
+srv_assert($result_m_fail['ok'] === true, '11.2: Submit debe ser ok ante fallo de Mautic (fallback exitoso)');
+srv_assert($result_m_fail['code'] === 200, '11.2: Código debe ser 200');
+srv_assert($result_m_fail['email'] === 'sent', '11.2: Email status debe ser sent gracias al fallback Mailjet');
+srv_assert($result_m_fail['email_sender'] === 'mailjet_fallback', '11.2: email_sender debe ser mailjet_fallback');
+srv_assert($result_m_fail['email_engine'] === 'mautic', '11.2: email_engine configurado debe ser mautic');
+srv_assert(count($GLOBALS['mailjet_http_calls']) === 1, '11.2: Debe invocar a Mailjet como fallback');
+
+$saved_m_fail = $repo->find_by_consulta_id('srv-offer-mautic-fallback');
+srv_assert(!empty($saved_m_fail), '11.2: Registro debe existir en BD');
+srv_assert($saved_m_fail['emailStatus'] === 'sent', '11.2: emailStatus en BD debe ser sent');
+srv_assert($saved_m_fail['emailSender'] === 'mailjet_fallback', '11.2: emailSender en BD debe ser mailjet_fallback');
+srv_assert($saved_m_fail['mailjetMessageId'] === '288230407340150000', '11.2: mailjetMessageId debe registrar el ID devuelto por Mailjet');
+srv_assert((string)$saved_m_fail['mauticContactId'] === '9902', '11.2: mauticContactId debe haberse registrado correctamente');
+
+// 11.3 Motor Mautic sin plantilla configurada -> Fallback automático a Mailjet
+$GLOBALS['mailjet_mock_options']['flacso_mautic_template_consulta_abierta'] = 0;
+$GLOBALS['mailjet_mock_options']['flacso_mautic_template_consulta_cerrada'] = 0;
+$GLOBALS['mailjet_http_calls'] = [];
+$GLOBALS['mautic_http_calls'] = [];
+$GLOBALS['mautic_http_handler'] = function($url, $args) {
+    if (strpos($url, '/api/contacts?search=') !== false) {
+        return [
+            'response' => ['code' => 200, 'message' => 'OK'],
+            'body'     => json_encode(['contacts' => []]),
+        ];
+    }
+    if (strpos($url, '/api/contacts/new') !== false) {
+        return [
+            'response' => ['code' => 201, 'message' => 'Created'],
+            'body'     => json_encode([
+                'contact' => [
+                    'id'     => 9903,
+                    'fields' => ['all' => json_decode($args['body'], true)],
+                ]
+            ]),
+        ];
+    }
+    return [
+        'response' => ['code' => 200, 'message' => 'OK'],
+        'body'     => json_encode(['success' => true]),
+    ];
+};
+
+$result_m_notemplate = FLACSO_Offer_Inquiry_Service::submit([
+    'event_id'        => 'srv-offer-mautic-notemplate',
+    'id_pagina'       => 13,
+    'nombre'          => 'Mariana',
+    'apellido'        => 'Ríos',
+    'correo'          => 'mariana@ejemplo.com',
+]);
+
+srv_assert($result_m_notemplate['ok'] === true, '11.3: Submit debe ser ok sin plantilla Mautic configurada');
+srv_assert($result_m_notemplate['email'] === 'sent', '11.3: Email status debe ser sent');
+srv_assert($result_m_notemplate['email_sender'] === 'mailjet_fallback', '11.3: email_sender debe ser mailjet_fallback cuando no hay plantilla');
+srv_assert(count($GLOBALS['mailjet_http_calls']) === 1, '11.3: Debe llamar a Mailjet ante plantilla no configurada');
+
+$saved_m_notemplate = $repo->find_by_consulta_id('srv-offer-mautic-notemplate');
+srv_assert(!empty($saved_m_notemplate), '11.3: Registro debe existir en BD');
+srv_assert($saved_m_notemplate['emailSender'] === 'mailjet_fallback', '11.3: emailSender en BD debe ser mailjet_fallback');
+
+// 11.4 Motor Mailjet seleccionado -> Mailjet envía directamente, emailSender === 'mailjet'
+$GLOBALS['mailjet_mock_options']['flacso_inquiry_email_engine'] = 'mailjet';
+$GLOBALS['mailjet_http_calls'] = [];
+$GLOBALS['mautic_http_calls'] = [];
+
+$result_mj_engine = FLACSO_Offer_Inquiry_Service::submit([
+    'event_id'        => 'srv-offer-mailjet-engine',
+    'id_pagina'       => 13,
+    'nombre'          => 'Diego',
+    'apellido'        => 'Torres',
+    'correo'          => 'diego@ejemplo.com',
+]);
+
+srv_assert($result_mj_engine['ok'] === true, '11.4: Submit debe ser ok con motor Mailjet');
+srv_assert($result_mj_engine['email'] === 'sent', '11.4: Email status debe ser sent');
+srv_assert($result_mj_engine['email_sender'] === 'mailjet', '11.4: email_sender debe ser mailjet');
+srv_assert($result_mj_engine['email_engine'] === 'mailjet', '11.4: email_engine debe ser mailjet');
+srv_assert(count($GLOBALS['mailjet_http_calls']) === 1, '11.4: Debe llamar a Mailjet directamente');
+
+$saved_mj_engine = $repo->find_by_consulta_id('srv-offer-mailjet-engine');
+srv_assert(!empty($saved_mj_engine), '11.4: Registro debe existir en BD');
+srv_assert($saved_mj_engine['emailSender'] === 'mailjet', '11.4: emailSender en BD debe ser mailjet');
+
 echo "OK inquiry-services-test\n";
