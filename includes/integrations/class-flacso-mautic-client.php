@@ -323,6 +323,133 @@ class FLACSO_Mautic_Client {
     }
 
     /**
+     * Despacha una plantilla de correo en Mautic hacia un contacto específico con tokens de personalización.
+     *
+     * @param int $email_id ID de la plantilla de correo en Mautic.
+     * @param int $contact_id ID del contacto en Mautic.
+     * @param array $tokens Mapa de tokens de personalización (ej: ['{nombre}' => 'Juan']).
+     * @return array{
+     *     ok: bool,
+     *     status: 'sent'|'failed',
+     *     email_id: int,
+     *     contact_id: int,
+     *     error: ?string
+     * }
+     */
+    public static function send_email_to_contact(int $email_id, int $contact_id, array $tokens = []): array {
+        if ($email_id <= 0 || $contact_id <= 0) {
+            return [
+                'ok'         => false,
+                'status'     => 'failed',
+                'email_id'   => $email_id,
+                'contact_id' => $contact_id,
+                'error'      => 'Email ID y Contact ID deben ser enteros positivos.',
+            ];
+        }
+
+        if (!self::is_configured()) {
+            return [
+                'ok'         => false,
+                'status'     => 'failed',
+                'email_id'   => $email_id,
+                'contact_id' => $contact_id,
+                'error'      => 'Mautic no está configurado o está deshabilitado.',
+            ];
+        }
+
+        $settings = self::get_settings();
+        $url = $settings['base_url'] . '/api/emails/' . $email_id . '/contact/' . $contact_id . '/send';
+
+        $payload = [
+            'tokens' => $tokens,
+        ];
+
+        $args = [
+            'method'  => 'POST',
+            'headers' => self::get_request_headers($settings),
+            'body'    => function_exists('wp_json_encode') ? wp_json_encode($payload) : json_encode($payload),
+            'timeout' => self::TIMEOUT_SECONDS,
+        ];
+
+        $response = function_exists('wp_remote_request')
+            ? wp_remote_request($url, $args)
+            : (function_exists('wp_remote_post') ? wp_remote_post($url, $args) : null);
+
+        if (is_wp_error($response)) {
+            return [
+                'ok'         => false,
+                'status'     => 'failed',
+                'email_id'   => $email_id,
+                'contact_id' => $contact_id,
+                'error'      => $response->get_error_message(),
+            ];
+        }
+
+        if (!is_array($response)) {
+            return [
+                'ok'         => false,
+                'status'     => 'failed',
+                'email_id'   => $email_id,
+                'contact_id' => $contact_id,
+                'error'      => 'Respuesta HTTP inválida o no disponible.',
+            ];
+        }
+
+        $code = function_exists('wp_remote_retrieve_response_code')
+            ? (int) wp_remote_retrieve_response_code($response)
+            : ($response['response']['code'] ?? 0);
+
+        $body = function_exists('wp_remote_retrieve_body')
+            ? wp_remote_retrieve_body($response)
+            : ($response['body'] ?? '');
+
+        $data = json_decode($body, true);
+
+        if ($code >= 200 && $code < 300) {
+            $is_success = is_array($data) && (!empty($data['success']) || !empty($data['result']));
+            if ($is_success) {
+                return [
+                    'ok'         => true,
+                    'status'     => 'sent',
+                    'email_id'   => $email_id,
+                    'contact_id' => $contact_id,
+                    'error'      => null,
+                ];
+            }
+
+            $error_msg = null;
+            if (is_array($data) && !empty($data['failedRecipients'])) {
+                $failed = is_array($data['failedRecipients'])
+                    ? implode(', ', array_map(function($item) {
+                        return is_scalar($item) ? (string) $item : json_encode($item);
+                    }, $data['failedRecipients']))
+                    : (string) $data['failedRecipients'];
+                $error_msg = 'Destinatarios fallidos: ' . $failed;
+            } else {
+                $error_msg = self::extract_error_message($response, $code);
+            }
+
+            return [
+                'ok'         => false,
+                'status'     => 'failed',
+                'email_id'   => $email_id,
+                'contact_id' => $contact_id,
+                'error'      => $error_msg,
+            ];
+        }
+
+        $error_msg = self::extract_error_message($response, $code);
+
+        return [
+            'ok'         => false,
+            'status'     => 'failed',
+            'email_id'   => $email_id,
+            'contact_id' => $contact_id,
+            'error'      => $error_msg,
+        ];
+    }
+
+    /**
      * Prepara las cabeceras HTTP de autenticación y contenido para las peticiones a la API de Mautic.
      *
      * @param array $settings
@@ -362,6 +489,14 @@ class FLACSO_Mautic_Client {
         if (!empty($body)) {
             $data = json_decode($body, true);
             if (is_array($data)) {
+                if (!empty($data['failedRecipients'])) {
+                    $failed = is_array($data['failedRecipients'])
+                        ? implode(', ', array_map(function($item) {
+                            return is_scalar($item) ? (string) $item : json_encode($item);
+                        }, $data['failedRecipients']))
+                        : (string) $data['failedRecipients'];
+                    return 'Destinatarios fallidos: ' . $failed;
+                }
                 if (!empty($data['errors']) && is_array($data['errors'])) {
                     $first = reset($data['errors']);
                     if (is_array($first) && !empty($first['message'])) {

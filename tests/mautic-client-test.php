@@ -482,10 +482,166 @@ mautic_assert($timeout_res['contact_id'] === null, 'Returns contact_id => null o
 mautic_assert($timeout_res['action'] === 'failed', 'Returns action => failed on timeout');
 mautic_assert(str_contains($timeout_res['error'], 'timed out'), 'Error message preserves timeout text');
 
-// Disabled client
+// --------------------------------------------------------------------------
+// Test Group 8: send_email_to_contact()
+// --------------------------------------------------------------------------
+echo "\n--- Test Group 8: send_email_to_contact() ---\n";
+
+// 1. Invalid IDs (<= 0)
+$inv1 = FLACSO_Mautic_Client::send_email_to_contact(0, 10, ['{nombre}' => 'Juan']);
+mautic_assert($inv1['ok'] === false, 'send_email_to_contact fails when email_id <= 0');
+mautic_assert($inv1['status'] === 'failed', 'send_email_to_contact status is failed for email_id <= 0');
+mautic_assert($inv1['email_id'] === 0, 'send_email_to_contact preserves email_id 0');
+mautic_assert($inv1['contact_id'] === 10, 'send_email_to_contact preserves contact_id 10');
+mautic_assert($inv1['error'] === 'Email ID y Contact ID deben ser enteros positivos.', 'send_email_to_contact returns expected validation error');
+
+$inv2 = FLACSO_Mautic_Client::send_email_to_contact(5, -1);
+mautic_assert($inv2['ok'] === false, 'send_email_to_contact fails when contact_id <= 0');
+mautic_assert($inv2['error'] === 'Email ID y Contact ID deben ser enteros positivos.', 'send_email_to_contact returns expected validation error for negative contact_id');
+
+$inv3 = FLACSO_Mautic_Client::send_email_to_contact(-3, 0);
+mautic_assert($inv3['ok'] === false, 'send_email_to_contact fails when both IDs <= 0');
+
+// 2. Unconfigured / disabled client
 $GLOBALS['mautic_mock_options']['flacso_mautic_enabled'] = '0';
-$disabled_res = FLACSO_Mautic_Client::create_or_update_contact('disabled@ejemplo.com');
-mautic_assert($disabled_res['ok'] === false, 'Returns ok => false when client disabled');
-mautic_assert($disabled_res['action'] === 'failed', 'Action is failed when client disabled');
+$dis_res = FLACSO_Mautic_Client::send_email_to_contact(10, 20);
+mautic_assert($dis_res['ok'] === false, 'send_email_to_contact fails when client is disabled');
+mautic_assert($dis_res['status'] === 'failed', 'send_email_to_contact status is failed when disabled');
+mautic_assert($dis_res['email_id'] === 10, 'send_email_to_contact preserves email_id when disabled');
+mautic_assert($dis_res['contact_id'] === 20, 'send_email_to_contact preserves contact_id when disabled');
+mautic_assert($dis_res['error'] === 'Mautic no está configurado o está deshabilitado.', 'send_email_to_contact returns expected unconfigured error');
+
+// 3. Successful send (HTTP 200 with success: true and Basic auth)
+$GLOBALS['mautic_mock_options'] = [
+    'flacso_mautic_enabled'   => '1',
+    'flacso_mautic_base_url'  => 'https://envios.flacso.edu.uy',
+    'flacso_mautic_auth_type' => 'basic',
+    'flacso_mautic_username'  => 'mailer_user',
+    'flacso_mautic_password'  => 'mailer_pass',
+];
+$GLOBALS['mautic_http_calls'] = [];
+$GLOBALS['mautic_http_handler'] = function($url, $args) {
+    return [
+        'response' => ['code' => 200, 'message' => 'OK'],
+        'body'     => json_encode(['success' => true, 'result' => true]),
+    ];
+};
+
+$tokens = [
+    '{nombre}'                   => 'Ana',
+    '{apellido}'                 => 'García',
+    '{oferta_academica_nombre}'  => 'Diploma en Políticas Públicas',
+];
+$success_res = FLACSO_Mautic_Client::send_email_to_contact(15, 88, $tokens);
+
+mautic_assert($success_res['ok'] === true, 'send_email_to_contact returns ok => true on success');
+mautic_assert($success_res['status'] === 'sent', 'send_email_to_contact returns status => sent');
+mautic_assert($success_res['email_id'] === 15, 'send_email_to_contact returns email_id');
+mautic_assert($success_res['contact_id'] === 88, 'send_email_to_contact returns contact_id');
+mautic_assert($success_res['error'] === null, 'send_email_to_contact error is null on success');
+
+// Verify HTTP call details
+mautic_assert(count($GLOBALS['mautic_http_calls']) === 1, 'Exactly one HTTP request made for send_email_to_contact');
+$send_call = $GLOBALS['mautic_http_calls'][0];
+mautic_assert($send_call['url'] === 'https://envios.flacso.edu.uy/api/emails/15/contact/88/send', 'URL matches Mautic email send endpoint');
+mautic_assert(($send_call['args']['method'] ?? '') === 'POST', 'HTTP method is POST');
+mautic_assert(($send_call['args']['timeout'] ?? 0) === 4, 'HTTP timeout is 4 seconds');
+$expected_auth = 'Basic ' . base64_encode('mailer_user:mailer_pass');
+mautic_assert(($send_call['args']['headers']['Authorization'] ?? '') === $expected_auth, 'Authorization header is Basic encoded');
+mautic_assert(($send_call['args']['headers']['Content-Type'] ?? '') === 'application/json', 'Content-Type is application/json');
+mautic_assert(($send_call['args']['headers']['Accept'] ?? '') === 'application/json', 'Accept header is application/json');
+
+$send_body = json_decode($send_call['args']['body'] ?? '{}', true);
+mautic_assert(isset($send_body['tokens']), 'Body contains tokens key');
+mautic_assert($send_body['tokens']['{nombre}'] === 'Ana', 'Body tokens preserve keys and values');
+mautic_assert($send_body['tokens']['{oferta_academica_nombre}'] === 'Diploma en Políticas Públicas', 'Body tokens contains program name');
+
+// 3b. Successful send with Bearer auth and result: true
+$GLOBALS['mautic_mock_options'] = [
+    'flacso_mautic_enabled'   => '1',
+    'flacso_mautic_base_url'  => 'https://envios.flacso.edu.uy',
+    'flacso_mautic_auth_type' => 'bearer',
+    'flacso_mautic_token'     => 'secret-bearer-tok',
+];
+$GLOBALS['mautic_http_calls'] = [];
+$GLOBALS['mautic_http_handler'] = function($url, $args) {
+    return [
+        'response' => ['code' => 200, 'message' => 'OK'],
+        'body'     => json_encode(['result' => true]), // only result: true
+    ];
+};
+$bearer_res = FLACSO_Mautic_Client::send_email_to_contact(4, 99);
+mautic_assert($bearer_res['ok'] === true, 'send_email_to_contact accepts result: true as success');
+mautic_assert(($GLOBALS['mautic_http_calls'][0]['args']['headers']['Authorization'] ?? '') === 'Bearer secret-bearer-tok', 'Authorization header is Bearer token');
+
+// 4. Failure: HTTP 200 but failedRecipients
+$GLOBALS['mautic_http_calls'] = [];
+$GLOBALS['mautic_http_handler'] = function($url, $args) {
+    return [
+        'response' => ['code' => 200, 'message' => 'OK'],
+        'body'     => json_encode([
+            'success'          => false,
+            'failedRecipients' => ['bounced@flacso.edu.uy'],
+        ]),
+    ];
+};
+$fail_recip_res = FLACSO_Mautic_Client::send_email_to_contact(15, 88);
+mautic_assert($fail_recip_res['ok'] === false, 'send_email_to_contact returns ok => false on failedRecipients');
+mautic_assert($fail_recip_res['status'] === 'failed', 'send_email_to_contact status is failed');
+mautic_assert($fail_recip_res['email_id'] === 15, 'send_email_to_contact preserves email_id on failedRecipients');
+mautic_assert($fail_recip_res['contact_id'] === 88, 'send_email_to_contact preserves contact_id on failedRecipients');
+mautic_assert(str_contains($fail_recip_res['error'], 'bounced@flacso.edu.uy'), 'Error message contains failed recipient email');
+
+// 4b. Failure: HTTP 200 but errors array
+$GLOBALS['mautic_http_handler'] = function($url, $args) {
+    return [
+        'response' => ['code' => 200, 'message' => 'OK'],
+        'body'     => json_encode([
+            'success' => false,
+            'errors'  => [['message' => 'Template is unpublished or drafted']],
+        ]),
+    ];
+};
+$fail_err_res = FLACSO_Mautic_Client::send_email_to_contact(15, 88);
+mautic_assert($fail_err_res['ok'] === false, 'send_email_to_contact returns ok => false on errors array');
+mautic_assert(str_contains($fail_err_res['error'], 'Template is unpublished'), 'Error message contains error details');
+
+// 5. Failure: HTTP 404 (template not found)
+$GLOBALS['mautic_http_calls'] = [];
+$GLOBALS['mautic_http_handler'] = function($url, $args) {
+    return [
+        'response' => ['code' => 404, 'message' => 'Not Found'],
+        'body'     => json_encode(['errors' => [['message' => 'Email not found']]]),
+    ];
+};
+$res_404 = FLACSO_Mautic_Client::send_email_to_contact(999, 88);
+mautic_assert($res_404['ok'] === false, 'send_email_to_contact returns ok => false on HTTP 404');
+mautic_assert($res_404['status'] === 'failed', 'send_email_to_contact status is failed on 404');
+mautic_assert($res_404['email_id'] === 999, 'email_id is 999');
+mautic_assert($res_404['contact_id'] === 88, 'contact_id is 88');
+mautic_assert(str_contains($res_404['error'], 'Email not found'), 'Error message contains 404 message');
+
+// 5b. Failure: HTTP 500 internal server error
+$GLOBALS['mautic_http_handler'] = function($url, $args) {
+    return [
+        'response' => ['code' => 500, 'message' => 'Internal Server Error'],
+        'body'     => '<html>500 Internal Server Error</html>',
+    ];
+};
+$res_500 = FLACSO_Mautic_Client::send_email_to_contact(15, 88);
+mautic_assert($res_500['ok'] === false, 'send_email_to_contact returns ok => false on HTTP 500');
+mautic_assert($res_500['status'] === 'failed', 'status is failed on 500');
+mautic_assert(str_contains($res_500['error'], '500'), 'Error message mentions HTTP 500');
+
+// 6. Network error / timeout
+$GLOBALS['mautic_http_handler'] = function($url, $args) {
+    return new WP_Error('cURL error 28: Operation timed out after 4001 milliseconds with 0 bytes received', 'http_request_failed');
+};
+$timeout_res = FLACSO_Mautic_Client::send_email_to_contact(15, 88);
+mautic_assert($timeout_res['ok'] === false, 'send_email_to_contact returns ok => false on cURL timeout');
+mautic_assert($timeout_res['status'] === 'failed', 'status is failed on timeout');
+mautic_assert($timeout_res['email_id'] === 15, 'preserves email_id on timeout');
+mautic_assert($timeout_res['contact_id'] === 88, 'preserves contact_id on timeout');
+mautic_assert(str_contains($timeout_res['error'], 'timed out'), 'Error message preserves timeout text');
 
 echo "\nALL TESTS PASSED (100%)\n";
