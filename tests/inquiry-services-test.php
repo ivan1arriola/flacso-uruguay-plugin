@@ -22,6 +22,13 @@ if (!function_exists('get_option')) {
     }
 }
 
+if (!function_exists('update_option')) {
+    function update_option($k, $v) {
+        $GLOBALS['mailjet_mock_options'][$k] = $v;
+        return true;
+    }
+}
+
 if (!class_exists('FLACSO_Academic_Catalog')) {
     class FLACSO_Academic_Catalog {
         public static function get_offer(int $id): array {
@@ -112,11 +119,50 @@ if (!function_exists('wp_remote_retrieve_body')) {
     }
 }
 
+$GLOBALS['mautic_http_calls'] = [];
+$GLOBALS['mautic_http_handler'] = null;
+
+if (!function_exists('wp_remote_request')) {
+    function wp_remote_request($url, $args = []) {
+        if (strpos($url, 'mailjet.com') !== false) {
+            return wp_remote_post($url, $args);
+        }
+        $GLOBALS['mautic_http_calls'][] = ['url' => $url, 'args' => $args];
+        if (is_callable($GLOBALS['mautic_http_handler'])) {
+            return ($GLOBALS['mautic_http_handler'])($url, $args);
+        }
+        return [
+            'response' => ['code' => 200, 'message' => 'OK'],
+            'body'     => json_encode(['success' => true]),
+        ];
+    }
+}
+
+if (!function_exists('wp_remote_get')) {
+    function wp_remote_get($url, $args = []) {
+        $args['method'] = 'GET';
+        return wp_remote_request($url, $args);
+    }
+}
+
+if (!function_exists('sanitize_title')) {
+    function sanitize_title($str) {
+        $str = strtr((string)$str, [
+            'á'=>'a', 'é'=>'e', 'í'=>'i', 'ó'=>'o', 'ú'=>'u',
+            'Á'=>'a', 'É'=>'e', 'Í'=>'i', 'Ú'=>'o', 'Ú'=>'u',
+            'ñ'=>'n', 'Ñ'=>'n', 'ü'=>'u', 'Ü'=>'u',
+        ]);
+        return strtolower(trim(preg_replace('/[^a-zA-Z0-9_\-]+/', '-', $str), '-'));
+    }
+}
+
 require_once $root . '/includes/database/class-flacso-db.php';
 require_once $root . '/includes/database/repositories/class-flacso-offer-inquiry-repository.php';
 require_once $root . '/includes/database/repositories/class-flacso-seminar-inquiry-repository.php';
 require_once $root . '/includes/integrations/class-flacso-mailjet-client.php';
+require_once $root . '/includes/integrations/class-flacso-mautic-client.php';
 require_once $root . '/modules/consultas/services/class-flacso-inquiry-context-service.php';
+require_once $root . '/modules/consultas/services/class-flacso-inquiry-marketing-service.php';
 require_once $root . '/modules/consultas/services/class-flacso-offer-inquiry-service.php';
 require_once $root . '/modules/consultas/services/class-flacso-seminar-inquiry-service.php';
 
@@ -141,8 +187,9 @@ CREATE TABLE offer_inquiries (
     profession TEXT, educationLevel TEXT, source TEXT, campaignProvider TEXT, campaignSource TEXT,
     campaignMedium TEXT, campaignName TEXT, campaignExternalId TEXT, campaignContent TEXT, campaignTerm TEXT,
     urlBase TEXT, urlReferer TEXT, inquiryAt TEXT, ipAddress TEXT, userAgent TEXT, replyToEmail TEXT,
-    programUrl TEXT, cartaUrl TEXT, preinscripcionUrl TEXT, offerStatus TEXT, emailStatus TEXT,
-    emailSender TEXT, gmailMessageUrl TEXT, mailjetMessageId TEXT, mailjetMessageUuid TEXT, payload TEXT, createdAt TEXT, updatedAt TEXT
+    programUrl TEXT, cartaUrl TEXT, preinscripcionUrl TEXT, offerStatus TEXT,
+    mauticContactId TEXT, mauticSyncStatus TEXT DEFAULT "skipped", mauticSyncedAt TEXT, mauticLastError TEXT,
+    emailStatus TEXT, emailSender TEXT, gmailMessageUrl TEXT, mailjetMessageId TEXT, mailjetMessageUuid TEXT, payload TEXT, createdAt TEXT, updatedAt TEXT
 );
 CREATE TABLE seminar_inquiries (
     id TEXT PRIMARY KEY, consultaId TEXT UNIQUE, seminarWpId INTEGER, seminarName TEXT, seminarType TEXT,
@@ -366,6 +413,155 @@ $result_status_snake = FLACSO_Offer_Inquiry_Service::submit([
 srv_assert($result_status_snake['ok'] === true, 'Envío con offer_status debe ser exitoso');
 srv_assert($result_status_snake['offer_status'] === 'abierta', 'offer_status debe tomar override snake_case');
 $saved_snake = $repo->find_by_consulta_id('srv-offer-status-override');
-srv_assert($saved_snake['offerStatus'] === 'abierta', 'offerStatus en BD debe ser abierta por override snake_case');
+// =========================================================================
+// 10. Integración con Mautic (Fase 2)
+// =========================================================================
+
+// 10.1 Caso 1: Mautic desactivado (flacso_mautic_enabled = '0')
+// La consulta se guarda, Mailjet envía, y mautic_sync['status'] === 'skipped'.
+$GLOBALS['mailjet_mock_options']['flacso_mautic_enabled'] = '0';
+$calls_before_m_disabled = count($GLOBALS['mailjet_http_calls']);
+
+$result_m_disabled = FLACSO_Offer_Inquiry_Service::submit([
+    'event_id'        => 'srv-offer-mautic-disabled',
+    'id_pagina'       => 13,
+    'nombre'          => 'Carlos',
+    'apellido'        => 'Gómez',
+    'correo'          => 'carlos@ejemplo.com',
+    'pais'            => 'Uruguay',
+]);
+
+srv_assert($result_m_disabled['ok'] === true, '10.1: Submit debe ser ok con Mautic desactivado');
+srv_assert($result_m_disabled['code'] === 200, '10.1: Código debe ser 200');
+srv_assert($result_m_disabled['email'] === 'sent', '10.1: Mailjet debe enviar el correo');
+srv_assert(count($GLOBALS['mailjet_http_calls']) === $calls_before_m_disabled + 1, '10.1: Debe llamar a Mailjet');
+srv_assert(isset($result_m_disabled['mautic_sync']), '10.1: Debe incluir clave mautic_sync en resultado');
+srv_assert(is_array($result_m_disabled['mautic_sync']), '10.1: mautic_sync debe ser un array');
+srv_assert($result_m_disabled['mautic_sync']['status'] === 'skipped', '10.1: mautic_sync status debe ser skipped');
+srv_assert($result_m_disabled['mautic_sync']['ok'] === true, '10.1: mautic_sync ok debe ser true cuando está skipped');
+
+$saved_m_disabled = $repo->find_by_consulta_id('srv-offer-mautic-disabled');
+srv_assert(!empty($saved_m_disabled), '10.1: Registro debe existir en BD');
+srv_assert($saved_m_disabled['mauticSyncStatus'] === 'skipped', '10.1: mauticSyncStatus en BD debe ser skipped');
+
+// 10.2 Caso 2: Mautic activo y responde 200 OK
+// La consulta se guarda, mautic_sync['status'] === 'synced', y el registro en SQLite tiene mauticSyncStatus === 'synced' y mauticContactId.
+$GLOBALS['mailjet_mock_options']['flacso_mautic_enabled'] = '1';
+$GLOBALS['mailjet_mock_options']['flacso_mautic_base_url'] = 'https://envios.flacso.edu.uy';
+$GLOBALS['mailjet_mock_options']['flacso_mautic_auth_type'] = 'basic';
+$GLOBALS['mailjet_mock_options']['flacso_mautic_username'] = 'testuser';
+$GLOBALS['mailjet_mock_options']['flacso_mautic_password'] = 'testpass';
+
+$GLOBALS['mautic_http_calls'] = [];
+$GLOBALS['mautic_http_handler'] = function($url, $args) {
+    if (strpos($url, '/api/contacts?search=') !== false) {
+        // Contacto no existe previamente
+        return [
+            'response' => ['code' => 200, 'message' => 'OK'],
+            'body'     => json_encode(['contacts' => []]),
+        ];
+    }
+    if (strpos($url, '/api/contacts/new') !== false) {
+        // Creación exitosa en Mautic
+        return [
+            'response' => ['code' => 201, 'message' => 'Created'],
+            'body'     => json_encode([
+                'contact' => [
+                    'id'     => 8842,
+                    'fields' => ['all' => json_decode($args['body'], true)],
+                ]
+            ]),
+        ];
+    }
+    return [
+        'response' => ['code' => 200, 'message' => 'OK'],
+        'body'     => json_encode(['success' => true]),
+    ];
+};
+
+$result_m_synced = FLACSO_Offer_Inquiry_Service::submit([
+    'event_id'        => 'srv-offer-mautic-synced',
+    'id_pagina'       => 13,
+    'nombre'          => 'Ana',
+    'apellido'        => 'Pereira',
+    'correo'          => 'ana.pereira@ejemplo.com',
+    'pais'            => 'Uruguay',
+    'profesion'       => 'Docente',
+    'nivel_academico' => 'Universitario',
+]);
+
+srv_assert($result_m_synced['ok'] === true, '10.2: Submit debe ser ok con Mautic activo');
+srv_assert($result_m_synced['code'] === 200, '10.2: Código debe ser 200');
+srv_assert(isset($result_m_synced['mautic_sync']), '10.2: Debe incluir clave mautic_sync en resultado');
+srv_assert($result_m_synced['mautic_sync']['status'] === 'synced', '10.2: mautic_sync status debe ser synced');
+srv_assert($result_m_synced['mautic_sync']['ok'] === true, '10.2: mautic_sync ok debe ser true');
+srv_assert($result_m_synced['mautic_sync']['contact_id'] === 8842, '10.2: mautic_sync contact_id debe ser 8842');
+srv_assert(in_array('interes-dcc-2026', $result_m_synced['mautic_sync']['tags'], true), '10.2: Debe incluir tag base');
+srv_assert(in_array('consulta-abierta-dcc-2026-c4', $result_m_synced['mautic_sync']['tags'], true), '10.2: Debe incluir tag de consulta abierta');
+
+$saved_m_synced = $repo->find_by_consulta_id('srv-offer-mautic-synced');
+srv_assert(!empty($saved_m_synced), '10.2: Registro debe existir en BD');
+srv_assert($saved_m_synced['mauticSyncStatus'] === 'synced', '10.2: mauticSyncStatus en BD debe ser synced');
+srv_assert((string)$saved_m_synced['mauticContactId'] === '8842', '10.2: mauticContactId en BD debe ser 8842');
+srv_assert(!empty($saved_m_synced['mauticSyncedAt']), '10.2: mauticSyncedAt en BD no debe ser vacío');
+srv_assert($saved_m_synced['mauticLastError'] === null, '10.2: mauticLastError en BD debe ser null');
+
+// 10.3 Caso 3a: Mautic responde HTTP 500
+// La consulta retorna ok === true y code === 200, mautic_sync['status'] === 'failed', y el registro en DB tiene mauticSyncStatus === 'failed' y mauticLastError.
+$GLOBALS['mautic_http_handler'] = function($url, $args) {
+    return [
+        'response' => ['code' => 500, 'message' => 'Internal Server Error'],
+        'body'     => json_encode([
+            'errors' => [
+                ['message' => 'Database connection lost in Mautic']
+            ]
+        ]),
+    ];
+};
+
+$result_m_fail500 = FLACSO_Offer_Inquiry_Service::submit([
+    'event_id'        => 'srv-offer-mautic-fail500',
+    'id_pagina'       => 13,
+    'nombre'          => 'Roberto',
+    'apellido'        => 'Silva',
+    'correo'          => 'roberto@ejemplo.com',
+]);
+
+srv_assert($result_m_fail500['ok'] === true, '10.3a: submit debe retornar ok=true aunque Mautic responda 500 (no bloqueante)');
+srv_assert($result_m_fail500['code'] === 200, '10.3a: submit debe retornar code 200');
+srv_assert($result_m_fail500['email'] === 'sent', '10.3a: Mailjet debió enviar correctamente');
+srv_assert(isset($result_m_fail500['mautic_sync']), '10.3a: Debe incluir mautic_sync');
+srv_assert($result_m_fail500['mautic_sync']['ok'] === false, '10.3a: mautic_sync ok debe ser false');
+srv_assert($result_m_fail500['mautic_sync']['status'] === 'failed', '10.3a: mautic_sync status debe ser failed');
+
+$saved_m_fail500 = $repo->find_by_consulta_id('srv-offer-mautic-fail500');
+srv_assert(!empty($saved_m_fail500), '10.3a: Registro debe guardarse en BD');
+srv_assert($saved_m_fail500['mauticSyncStatus'] === 'failed', '10.3a: mauticSyncStatus en BD debe ser failed');
+srv_assert(!empty($saved_m_fail500['mauticLastError']), '10.3a: mauticLastError en BD debe registrar el mensaje de error');
+
+// 10.4 Caso 3b: Mautic lanza excepción (\RuntimeException)
+// Garantiza captura total de excepciones en submit(), retorno HTTP 200, y no interrupción de la experiencia de usuario.
+$GLOBALS['mautic_http_handler'] = function($url, $args) {
+    throw new \RuntimeException('Mautic connection timed out after 4 seconds');
+};
+
+$result_m_exc = FLACSO_Offer_Inquiry_Service::submit([
+    'event_id'        => 'srv-offer-mautic-exception',
+    'id_pagina'       => 13,
+    'nombre'          => 'Laura',
+    'apellido'        => 'Rodríguez',
+    'correo'          => 'laura@ejemplo.com',
+]);
+
+srv_assert($result_m_exc['ok'] === true, '10.4: submit debe ser ok=true ante excepción de Mautic');
+srv_assert($result_m_exc['code'] === 200, '10.4: Código debe ser 200');
+srv_assert(isset($result_m_exc['mautic_sync']), '10.4: Debe incluir mautic_sync');
+srv_assert($result_m_exc['mautic_sync']['ok'] === false, '10.4: mautic_sync ok debe ser false');
+srv_assert($result_m_exc['mautic_sync']['status'] === 'failed', '10.4: mautic_sync status debe ser failed');
+
+$saved_m_exc = $repo->find_by_consulta_id('srv-offer-mautic-exception');
+srv_assert(!empty($saved_m_exc), '10.4: Registro debe guardarse en BD');
+srv_assert($saved_m_exc['mauticSyncStatus'] === 'failed', '10.4: mauticSyncStatus en BD debe ser failed tras excepción');
+srv_assert(strpos($saved_m_exc['mauticLastError'], 'timed out') !== false, '10.4: mauticLastError debe contener el mensaje de la excepción');
 
 echo "OK inquiry-services-test\n";

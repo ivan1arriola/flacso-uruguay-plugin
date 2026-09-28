@@ -31,6 +31,9 @@ if (!class_exists('FLACSO_Mailjet_Client')) {
 if (!class_exists('FLACSO_Inquiry_Context_Service')) {
     require_once __DIR__ . '/class-flacso-inquiry-context-service.php';
 }
+if (!class_exists('FLACSO_Inquiry_Marketing_Service')) {
+    require_once __DIR__ . '/class-flacso-inquiry-marketing-service.php';
+}
 
 class FLACSO_Offer_Inquiry_Service {
 
@@ -392,6 +395,22 @@ class FLACSO_Offer_Inquiry_Service {
             error_log('[FLACSO] Aviso al sincronizar contacto en lista Mailjet (oferta): ' . $e->getMessage());
         }
 
+        // 7c. Sincronización en paralelo con Mautic
+        $mautic_sync_result = null;
+        if (class_exists('FLACSO_Inquiry_Marketing_Service')) {
+            try {
+                $record_id = !empty($insert_result['id']) ? (string)$insert_result['id'] : (string)$consulta_id;
+                $mautic_sync_result = FLACSO_Inquiry_Marketing_Service::sync_inquiry($record_id, $record, $repo);
+            } catch (\Throwable $e) {
+                error_log('[FLACSO] Error en sincronización de consulta con Mautic: ' . $e->getMessage());
+                $mautic_sync_result = [
+                    'ok'     => false,
+                    'status' => 'failed',
+                    'error'  => $e->getMessage(),
+                ];
+            }
+        }
+
         // 8. Retornar resultado
         return [
             'ok'                   => true,
@@ -404,6 +423,7 @@ class FLACSO_Offer_Inquiry_Service {
             'offer_status'         => $offer_status,
             'cohort_number'        => $cohort_number,
             'offer_abbreviation'   => $offer_abbr,
+            'mautic_sync'          => $mautic_sync_result,
             'code'                 => 200,
         ];
     }
