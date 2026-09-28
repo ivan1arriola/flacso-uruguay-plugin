@@ -889,9 +889,14 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 								if (res.success) {
 									const cell = document.querySelector(`.flacso-mautic-cell[data-id="${id}"]`);
 									if (cell) {
-										const cid = res.data?.contact_id;
-										const label = cid ? `🟣 ID ${cid}` : '🟣 Sincronizado';
-										cell.innerHTML = `<span class="flacso-badge mautic-synced" title="Sincronizado con Mautic">${label}</span>`;
+										const status = res.data?.status;
+										if (status === 'skipped') {
+											cell.innerHTML = '<span class="flacso-badge mautic-skipped" title="Sincronización desactivada u omitida">⚪ Omitido</span>';
+										} else {
+											const cid = res.data?.contact_id;
+											const label = cid ? `🟣 ID ${cid}` : '🟣 Sincronizado';
+											cell.innerHTML = `<span class="flacso-badge mautic-synced" title="Sincronizado con Mautic">${label}</span>`;
+										}
 									}
 									this.style.display = 'none';
 								} else {
