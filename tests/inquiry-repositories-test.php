@@ -311,4 +311,85 @@ $found_uppercase = $repo->find_pending_by_email_and_cohort('ANA@EXAMPLE.COM', 81
 repo_assert($found_uppercase !== null, 'Email en mayúsculas debe normalizarse y encontrar el registro');
 repo_assert($found_uppercase['consultaId'] === 'c-pending-01', 'consultaId coincide para email en mayúsculas');
 
+// 7. Probar método update_mautic_status
+function test_update_mautic_status(FLACSO_Offer_Inquiry_Repository $repo): void {
+    // Inserta una consulta académica
+    $insert_res = $repo->insert([
+        'consultaId'        => 'c-mautic-test-01',
+        'offerWpId'         => 500,
+        'offerName'         => 'Programa Mautic Test',
+        'offerAbbreviation' => 'pmt',
+        'firstName'         => 'Lucía',
+        'lastName'          => 'Méndez',
+        'email'             => 'lucia.mendez@example.com',
+    ]);
+
+    repo_assert(!empty($insert_res['id']), 'Debe retornar ID al insertar consulta');
+    $id = $insert_res['id'];
+
+    // Llama a update_mautic_status con datos exitosos
+    $synced_at = '2026-09-27 15:00:00';
+    $ok1 = $repo->update_mautic_status($id, [
+        'mauticContactId'  => 1234,
+        'mauticSyncStatus' => 'synced',
+        'mauticSyncedAt'   => $synced_at,
+        'mauticLastError'  => null,
+    ]);
+    repo_assert($ok1 === true, 'update_mautic_status debe retornar true en éxito');
+
+    $found1 = $repo->find_by_id($id);
+    repo_assert($found1 !== null, 'find_by_id debe encontrar la consulta');
+    repo_assert((int)$found1['mauticContactId'] === 1234, 'mauticContactId debe ser 1234');
+    repo_assert($found1['mauticSyncStatus'] === 'synced', 'mauticSyncStatus debe ser synced');
+    repo_assert($found1['mauticSyncedAt'] === $synced_at, 'mauticSyncedAt debe coincidir con la fecha provista');
+    repo_assert($found1['mauticLastError'] === null, 'mauticLastError debe ser null');
+    repo_assert(!empty($found1['updatedAt']), 'updatedAt debe estar actualizado');
+
+    // Llama a update_mautic_status para registrar una falla
+    $error_msg = 'Connection timed out after 4 seconds';
+    $ok2 = $repo->update_mautic_status($id, [
+        'mauticSyncStatus' => 'failed',
+        'mauticLastError'  => $error_msg,
+    ]);
+    repo_assert($ok2 === true, 'update_mautic_status debe retornar true al actualizar a failed');
+
+    $found2 = $repo->find_by_id($id);
+    repo_assert($found2 !== null, 'find_by_id debe encontrar la consulta tras falla');
+    repo_assert((int)$found2['mauticContactId'] === 1234, 'mauticContactId debe preservar el valor previo');
+    repo_assert($found2['mauticSyncStatus'] === 'failed', 'mauticSyncStatus debe ser failed');
+    repo_assert($found2['mauticLastError'] === $error_msg, 'mauticLastError debe ser el mensaje de error');
+    repo_assert($found2['mauticSyncedAt'] === $synced_at, 'mauticSyncedAt debe preservar el valor previo');
+
+    // Comportamiento defensivo: ID inexistente
+    repo_assert($repo->update_mautic_status('c-inexistente-uuid-999', ['mauticSyncStatus' => 'synced']) === false, 'ID inexistente debe retornar false');
+
+    // Comportamiento defensivo: ID vacío o espacios
+    repo_assert($repo->update_mautic_status('', ['mauticSyncStatus' => 'synced']) === false, 'ID vacío debe retornar false');
+    repo_assert($repo->update_mautic_status('   ', ['mauticSyncStatus' => 'synced']) === false, 'ID con solo espacios debe retornar false');
+
+    // Comportamiento defensivo: datos vacíos o sin campos válidos
+    repo_assert($repo->update_mautic_status($id, []) === false, 'Array de datos vacío debe retornar false');
+    repo_assert($repo->update_mautic_status($id, ['campoInvalido' => 'valor']) === false, 'Array sin campos válidos debe retornar false');
+    repo_assert($repo->update_mautic_status($id, ['mauticSyncStatus' => 'estado_invalido']) === false, 'Estado Mautic no permitido debe retornar false');
+
+    // Estados adicionales permitidos: skipped, pending y reset de contactId
+    $ok_skipped = $repo->update_mautic_status($id, ['mauticSyncStatus' => 'skipped', 'mauticContactId' => null]);
+    repo_assert($ok_skipped === true, 'update_mautic_status debe permitir estado skipped y contactId null');
+    $found_skipped = $repo->find_by_id($id);
+    repo_assert($found_skipped['mauticSyncStatus'] === 'skipped', 'mauticSyncStatus debe ser skipped');
+    repo_assert($found_skipped['mauticContactId'] === null, 'mauticContactId debe ser null tras reset');
+
+    $ok_pending = $repo->update_mautic_status($id, ['mauticSyncStatus' => 'pending']);
+    repo_assert($ok_pending === true, 'update_mautic_status debe permitir estado pending');
+    $found_pending = $repo->find_by_id($id);
+    repo_assert($found_pending['mauticSyncStatus'] === 'pending', 'mauticSyncStatus debe ser pending');
+
+    // Edge cases de find_by_id
+    repo_assert($repo->find_by_id('') === null, 'find_by_id con string vacío debe retornar null');
+    repo_assert($repo->find_by_id('   ') === null, 'find_by_id con espacios debe retornar null');
+    repo_assert($repo->find_by_id('inexistente-id-999') === null, 'find_by_id inexistente debe retornar null');
+}
+
+test_update_mautic_status($repo);
+
 echo "OK inquiry-repositories-test\n";

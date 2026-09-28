@@ -175,4 +175,103 @@ class FLACSO_Offer_Inquiry_Repository extends FLACSO_Base_Inquiry_Repository {
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row ?: null;
     }
+
+    /**
+     * Busca un registro por su ID primario.
+     */
+    public function find_by_id(string $id): ?array {
+        $id = trim($id);
+        if ($id === '') {
+            return null;
+        }
+
+        $pdo = FLACSO_DB::connection();
+        $table = $this->get_table_name();
+        $sql = "SELECT * FROM {$table} WHERE \"id\" = :id LIMIT 1";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':id' => $id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row ?: null;
+    }
+
+    /**
+     * Actualiza atómicamente el estado de sincronización y el ID de contacto de Mautic.
+     *
+     * @param string $id UUID / CUID de la consulta en offer_inquiries.
+     * @param array  $mautic_data Datos a actualizar (mauticContactId, mauticSyncStatus, mauticSyncedAt, mauticLastError).
+     * @return bool True si se actualizó con éxito al menos un registro, false en caso contrario.
+     */
+    public function update_mautic_status(string $id, array $mautic_data): bool {
+        $id = trim($id);
+        if ($id === '' || empty($mautic_data)) {
+            return false;
+        }
+
+        $allowed_fields = [
+            'mauticContactId',
+            'mauticSyncStatus',
+            'mauticSyncedAt',
+            'mauticLastError',
+        ];
+
+        $fields = [];
+        $params = [
+            ':id'         => $id,
+            ':updated_at' => gmdate('c'),
+        ];
+
+        $available_cols = $this->get_table_columns();
+        $valid_field_count = 0;
+
+        foreach ($allowed_fields as $col) {
+            if (!array_key_exists($col, $mautic_data)) {
+                continue;
+            }
+
+            if (!empty($available_cols) && !in_array($col, $available_cols, true)) {
+                continue;
+            }
+
+            $val = $mautic_data[$col];
+
+            if ($col === 'mauticSyncStatus') {
+                $allowed_statuses = ['synced', 'failed', 'skipped', 'pending'];
+                if (!is_string($val) || !in_array($val, $allowed_statuses, true)) {
+                    continue;
+                }
+            } elseif ($col === 'mauticContactId') {
+                if ($val !== null) {
+                    $val = (string)$val;
+                }
+            } elseif ($col === 'mauticSyncedAt' || $col === 'mauticLastError') {
+                if ($val !== null) {
+                    $val = (string)$val;
+                }
+            }
+
+            $fields[] = "\"{$col}\" = :{$col}";
+            $params[":{$col}"] = $val;
+            $valid_field_count++;
+        }
+
+        if ($valid_field_count === 0) {
+            return false;
+        }
+
+        $fields[] = '"updatedAt" = :updated_at';
+
+        $table = $this->get_table_name();
+        $sql = "UPDATE {$table} SET " . implode(', ', $fields) . ' WHERE "id" = :id';
+
+        try {
+            $pdo = FLACSO_DB::connection();
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->rowCount() > 0;
+        } catch (\PDOException $e) {
+            return false;
+        }
+    }
 }
