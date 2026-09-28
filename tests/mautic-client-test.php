@@ -482,6 +482,12 @@ mautic_assert($timeout_res['contact_id'] === null, 'Returns contact_id => null o
 mautic_assert($timeout_res['action'] === 'failed', 'Returns action => failed on timeout');
 mautic_assert(str_contains($timeout_res['error'], 'timed out'), 'Error message preserves timeout text');
 
+// Disabled client
+$GLOBALS['mautic_mock_options']['flacso_mautic_enabled'] = '0';
+$disabled_res = FLACSO_Mautic_Client::create_or_update_contact('disabled@ejemplo.com');
+mautic_assert($disabled_res['ok'] === false, 'Returns ok => false when client disabled');
+mautic_assert($disabled_res['action'] === 'failed', 'Action is failed when client disabled');
+
 // --------------------------------------------------------------------------
 // Test Group 8: send_email_to_contact()
 // --------------------------------------------------------------------------

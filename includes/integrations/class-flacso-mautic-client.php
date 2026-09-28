@@ -417,17 +417,7 @@ class FLACSO_Mautic_Client {
                 ];
             }
 
-            $error_msg = null;
-            if (is_array($data) && !empty($data['failedRecipients'])) {
-                $failed = is_array($data['failedRecipients'])
-                    ? implode(', ', array_map(function($item) {
-                        return is_scalar($item) ? (string) $item : json_encode($item);
-                    }, $data['failedRecipients']))
-                    : (string) $data['failedRecipients'];
-                $error_msg = 'Destinatarios fallidos: ' . $failed;
-            } else {
-                $error_msg = self::extract_error_message($response, $code);
-            }
+            $error_msg = self::extract_error_message($response, $code);
 
             return [
                 'ok'         => false,
