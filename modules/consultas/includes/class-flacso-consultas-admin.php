@@ -999,7 +999,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 											<tr><th>Estado Email</th><td><strong>${d.emailStatus || ''}</strong> (Remitente: ${senderLabel})</td></tr>
 											<tr><th>Mailjet Message ID / UUID</th><td><code>${d.mailjetMessageId || '—'}</code> / <code>${d.mailjetMessageUuid || '—'}</code></td></tr>
 											${d.mauticSyncStatus ? `<tr><th>Estado Mautic</th><td><strong>${d.mauticSyncStatus}</strong> (Contact ID: ${d.mauticContactId || '—'} | Sincronizado: ${d.mauticSyncedAt || '—'}${d.mauticLastError ? ' | Error: ' + d.mauticLastError : ''})</td></tr>` : ''}
-											${(d.table === 'offer_inquiries' || tbl === 'offer_inquiries') ? `<tr><th>Seguimiento (+X días)</th><td><strong>${d.followupStatus || 'none'}</strong> (Vencimiento: ${d.followupDueAt || '—'} | Enviado: ${d.followupSentAt || '—'}${d.followupLastError ? ' | Nota: ' + d.followupLastError : ''})${d.followupStatus !== 'sent' ? '<div style="margin-top:8px;"><button type="button" class="button button-secondary flacso-js-trigger-followup" data-id="' + d.id + '">🚀 Enviar Seguimiento Ahora</button></div>' : ''}</td></tr>` : ''}
+											${(d.table === 'offer_inquiries' || tbl === 'offer_inquiries') ? `<tr><th>Seguimiento (+X días)</th><td><strong>${d.followupStatus || 'none'}</strong> (Vencimiento: ${d.followupDueAt || '—'} | Enviado: ${d.followupSentAt || '—'}${d.followupLastError ? ' | Nota: ' + d.followupLastError : ''})${d.followupStatus !== 'sent' ? '<div style="margin-top:8px;"><button type="button" class="button button-secondary flacso-js-trigger-followup" data-id="' + d.id + '">🚀 Enviar Seguimiento Ahora</button><span class="flacso-followup-msg" style="margin-left:10px;font-size:12px;font-weight:600;display:inline-block;vertical-align:middle;"></span></div>' : ''}</td></tr>` : ''}
 											<tr><th>UTM / Campaña</th><td>Source: ${d.campaignSource || '—'} | Medium: ${d.campaignMedium || '—'} | Campaign: ${d.campaignName || '—'}</td></tr>
 											<tr><th>Página Origen</th><td><a href="${d.pageUrl || '#'}" target="_blank">${d.pageUrl || '—'}</a></td></tr>
 										</tbody>
@@ -1013,6 +1013,11 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 									triggerBtn.addEventListener('click', function(){
 										const trigId = this.getAttribute('data-id');
 										const origBtnText = this.textContent;
+										const msgEl = this.parentNode ? this.parentNode.querySelector('.flacso-followup-msg') : null;
+										if (msgEl) {
+											msgEl.textContent = '';
+											msgEl.style.color = '#64748b';
+										}
 										this.disabled = true;
 										this.textContent = '⏳ Procesando...';
 										const tfd = new FormData();
@@ -1024,7 +1029,10 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 											.then(res => {
 												if (res.success) {
 													this.textContent = '✅ Procesado';
-													alert(res.data?.message || 'Seguimiento ejecutado con éxito');
+													if (msgEl) {
+														msgEl.style.color = '#15803d';
+														msgEl.textContent = '✔ ' + (res.data?.message || 'Seguimiento ejecutado con éxito');
+													}
 													const cell = document.querySelector(`.flacso-status-cell[data-id="${trigId}"]`);
 													if (cell && res.data?.status) {
 														const st = res.data.status;
@@ -1049,13 +1057,19 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 												} else {
 													this.disabled = false;
 													this.textContent = origBtnText;
-													alert('Error: ' + (res.data?.message || 'Error al procesar seguimiento'));
+													if (msgEl) {
+														msgEl.style.color = '#b91c1c';
+														msgEl.textContent = '✖ ' + (res.data?.message || 'Error al procesar seguimiento');
+													}
 												}
 											})
 											.catch(err => {
 												this.disabled = false;
 												this.textContent = origBtnText;
-												alert('Error de conexión: ' + err.message);
+												if (msgEl) {
+													msgEl.style.color = '#b91c1c';
+													msgEl.textContent = '✖ Error de conexión: ' + err.message;
+												}
 											});
 									});
 								}
