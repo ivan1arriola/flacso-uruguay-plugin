@@ -5,6 +5,15 @@ declare(strict_types=1);
 if (!defined('ABSPATH')) {
     define('ABSPATH', dirname(__DIR__) . '/');
 }
+if (!defined('MINUTE_IN_SECONDS')) {
+    define('MINUTE_IN_SECONDS', 60);
+}
+if (!defined('HOUR_IN_SECONDS')) {
+    define('HOUR_IN_SECONDS', 3600);
+}
+if (!defined('DAY_IN_SECONDS')) {
+    define('DAY_IN_SECONDS', 86400);
+}
 
 $GLOBALS['flacso_test_options'] = [
     'flacso_mailjet_api_key' => 'key-123',
@@ -51,8 +60,19 @@ if (!function_exists('wp_remote_post')) {
 }
 if (!function_exists('wp_remote_request')) {
     function wp_remote_request(string $url, array $args = []) {
+        if (!empty($GLOBALS['custom_http_handler']) && is_callable($GLOBALS['custom_http_handler'])) {
+            return call_user_func($GLOBALS['custom_http_handler'], $url, $args);
+        }
         $GLOBALS['mailjet_http_calls'][] = ['method' => $args['method'] ?? 'POST', 'url' => $url, 'args' => $args];
         return ['response' => ['code' => 201], 'body' => '{"Count":1}'];
+    }
+}
+if (!function_exists('wp_remote_get')) {
+    function wp_remote_get(string $url, array $args = []) {
+        if (!empty($GLOBALS['custom_http_handler']) && is_callable($GLOBALS['custom_http_handler'])) {
+            return call_user_func($GLOBALS['custom_http_handler'], $url, $args);
+        }
+        return ['response' => ['code' => 200], 'body' => json_encode(['Data' => [], 'Total' => 0])];
     }
 }
 if (!function_exists('is_wp_error')) {
@@ -147,6 +167,120 @@ if (!function_exists('esc_attr__')) {
 if (!function_exists('esc_html__')) {
     function esc_html__($text, $domain = 'default') {
         return htmlspecialchars((string)$text, ENT_NOQUOTES, 'UTF-8');
+    }
+}
+if (!function_exists('esc_html_e')) {
+    function esc_html_e($text, $domain = 'default') {
+        echo htmlspecialchars((string)$text, ENT_NOQUOTES, 'UTF-8');
+    }
+}
+if (!function_exists('esc_attr_e')) {
+    function esc_attr_e($text, $domain = 'default') {
+        echo htmlspecialchars((string)$text, ENT_QUOTES, 'UTF-8');
+    }
+}
+if (!function_exists('is_admin')) {
+    function is_admin(): bool {
+        return true;
+    }
+}
+if (!function_exists('register_setting')) {
+    function register_setting(string $option_group, string $option_name, array $args = []): void {
+        $GLOBALS['flacso_registered_settings'][$option_group][$option_name] = $args;
+    }
+}
+if (!function_exists('settings_errors')) {
+    function settings_errors(): void {}
+}
+if (!function_exists('settings_fields')) {
+    function settings_fields($group): void {
+        echo '<input type="hidden" name="option_page" value="' . esc_attr($group) . '" />';
+    }
+}
+if (!function_exists('submit_button')) {
+    function submit_button($text = 'Save', $type = 'primary', $name = 'submit', $wrap = true, $other_attributes = null): void {
+        echo '<button type="submit" name="' . esc_attr($name) . '">' . esc_html($text) . '</button>';
+    }
+}
+if (!function_exists('number_format_i18n')) {
+    function number_format_i18n($number, $decimals = 0) {
+        return (string)$number;
+    }
+}
+if (!function_exists('wp_get_current_user')) {
+    function wp_get_current_user() {
+        return (object)['user_email' => 'admin@flacso.edu.uy'];
+    }
+}
+if (!function_exists('get_transient')) {
+    function get_transient($t) { return false; }
+}
+if (!function_exists('set_transient')) {
+    function set_transient($t, $val, $exp = 0) { return true; }
+}
+if (!function_exists('delete_transient')) {
+    function delete_transient($t) { return true; }
+}
+if (!function_exists('checked')) {
+    function checked($checked, $current = true, $echo = true) {
+        $result = (string)$checked === (string)$current ? ' checked="checked"' : '';
+        if ($echo) {
+            echo $result;
+        }
+        return $result;
+    }
+}
+if (!function_exists('sanitize_email')) {
+    function sanitize_email($email) {
+        return trim((string)$email);
+    }
+}
+if (!function_exists('absint')) {
+    function absint($maybeint) {
+        return abs((int)$maybeint);
+    }
+}
+if (!function_exists('get_bloginfo')) {
+    function get_bloginfo($show = '') {
+        return 'FLACSO Uruguay';
+    }
+}
+if (!function_exists('wp_specialchars_decode')) {
+    function wp_specialchars_decode($str, $quote_style = ENT_NOQUOTES) {
+        return htmlspecialchars_decode($str, $quote_style);
+    }
+}
+if (!function_exists('esc_url_raw')) {
+    function esc_url_raw($url) {
+        return trim((string)$url);
+    }
+}
+if (!function_exists('get_posts')) {
+    function get_posts(array $args = []): array {
+        return [];
+    }
+}
+
+class TestAjaxException extends Exception {
+    public $data;
+    public $status_code;
+    public $is_success;
+    public function __construct(bool $is_success, $data, $status_code = null) {
+        $this->is_success = $is_success;
+        $this->data = $data;
+        $this->status_code = $status_code;
+        parent::__construct($is_success ? 'AJAX Success' : 'AJAX Error');
+    }
+}
+
+if (!function_exists('wp_send_json_success')) {
+    function wp_send_json_success($data = null, $status_code = null) {
+        throw new TestAjaxException(true, $data, $status_code ?? 200);
+    }
+}
+if (!function_exists('wp_send_json_error')) {
+    function wp_send_json_error($data = null, $status_code = null) {
+        throw new TestAjaxException(false, $data, $status_code ?? 500);
     }
 }
 
@@ -364,5 +498,116 @@ assert_true(strpos($admin_html, '<span class="flacso-badge abbr" title="Abreviac
 assert_true(strpos($admin_html, 'Cohorte 2') !== false, 'Admin must render Cohorte 2');
 assert_true(strpos($admin_html, 'status-abierta') !== false, 'Admin must render status-abierta badge');
 assert_true(strpos($admin_html, 'status-cerrada') !== false, 'Admin must render status-cerrada badge');
+
+// Test 10: Mautic settings registration in FLACSO_Mail_Settings
+assert_true(defined('FLACSO_Mail_Settings::OPTION_MAUTIC_ENABLED'), 'FLACSO_Mail_Settings must define OPTION_MAUTIC_ENABLED');
+assert_true(defined('FLACSO_Mail_Settings::OPTION_MAUTIC_BASE_URL'), 'FLACSO_Mail_Settings must define OPTION_MAUTIC_BASE_URL');
+assert_true(defined('FLACSO_Mail_Settings::OPTION_MAUTIC_AUTH_TYPE'), 'FLACSO_Mail_Settings must define OPTION_MAUTIC_AUTH_TYPE');
+assert_true(defined('FLACSO_Mail_Settings::OPTION_MAUTIC_USERNAME'), 'FLACSO_Mail_Settings must define OPTION_MAUTIC_USERNAME');
+assert_true(defined('FLACSO_Mail_Settings::OPTION_MAUTIC_PASSWORD'), 'FLACSO_Mail_Settings must define OPTION_MAUTIC_PASSWORD');
+assert_true(defined('FLACSO_Mail_Settings::OPTION_MAUTIC_TOKEN'), 'FLACSO_Mail_Settings must define OPTION_MAUTIC_TOKEN');
+
+FLACSO_Mail_Settings::register_settings();
+$mail_settings_group = $GLOBALS['flacso_registered_settings']['flacso_correos_group'] ?? [];
+
+assert_true(isset($mail_settings_group['flacso_mautic_enabled']), 'flacso_mautic_enabled must be registered');
+assert_true(isset($mail_settings_group['flacso_mautic_base_url']), 'flacso_mautic_base_url must be registered');
+assert_true(isset($mail_settings_group['flacso_mautic_auth_type']), 'flacso_mautic_auth_type must be registered');
+assert_true(isset($mail_settings_group['flacso_mautic_username']), 'flacso_mautic_username must be registered');
+assert_true(isset($mail_settings_group['flacso_mautic_password']), 'flacso_mautic_password must be registered');
+assert_true(isset($mail_settings_group['flacso_mautic_token']), 'flacso_mautic_token must be registered');
+
+// Test sanitization callbacks
+$enabled_cb = $mail_settings_group['flacso_mautic_enabled']['sanitize_callback'];
+assert_true($enabled_cb('1') === '1', 'Enabled callback should normalize 1 to 1');
+assert_true($enabled_cb('0') === '0', 'Enabled callback should normalize 0 to 0');
+assert_true($enabled_cb('') === '0', 'Enabled callback should normalize empty to 0');
+
+$url_cb = $mail_settings_group['flacso_mautic_base_url']['sanitize_callback'];
+assert_true(call_user_func($url_cb, 'https://envios.flacso.edu.uy/') === 'https://envios.flacso.edu.uy', 'URL callback should strip trailing slash');
+
+$auth_cb = $mail_settings_group['flacso_mautic_auth_type']['sanitize_callback'];
+assert_true(call_user_func($auth_cb, 'basic') === 'basic', 'Auth type callback should accept basic');
+assert_true(call_user_func($auth_cb, 'BEARER') === 'bearer', 'Auth type callback should accept bearer and normalize');
+assert_true(call_user_func($auth_cb, 'invalid') === 'basic', 'Auth type callback should default to basic');
+
+// Test 11: AJAX test connection endpoint
+assert_true(method_exists('FLACSO_Mail_Settings', 'ajax_test_mautic_connection'), 'FLACSO_Mail_Settings must define ajax_test_mautic_connection');
+
+// Case 11a: Mautic not configured / disabled
+$GLOBALS['flacso_test_options']['flacso_mautic_enabled'] = '0';
+$ajax_caught = null;
+try {
+    FLACSO_Mail_Settings::ajax_test_mautic_connection();
+} catch (TestAjaxException $e) {
+    $ajax_caught = $e;
+}
+assert_true($ajax_caught !== null && $ajax_caught->is_success === false, 'ajax_test_mautic_connection must fail when Mautic disabled');
+
+// Case 11b: Successful connection
+$GLOBALS['flacso_test_options']['flacso_mautic_enabled'] = '1';
+$GLOBALS['flacso_test_options']['flacso_mautic_base_url'] = 'https://envios.flacso.edu.uy';
+$GLOBALS['flacso_test_options']['flacso_mautic_auth_type'] = 'basic';
+$GLOBALS['flacso_test_options']['flacso_mautic_username'] = 'admin';
+$GLOBALS['flacso_test_options']['flacso_mautic_password'] = 'secret123';
+
+$GLOBALS['custom_http_handler'] = function (string $url, array $args) {
+    if (strpos($url, '/api/contacts') !== false) {
+        return [
+            'response' => ['code' => 200],
+            'body' => json_encode(['total' => 5, 'contacts' => []]),
+        ];
+    }
+    return ['response' => ['code' => 404], 'body' => ''];
+};
+
+$ajax_caught = null;
+try {
+    FLACSO_Mail_Settings::ajax_test_mautic_connection();
+} catch (TestAjaxException $e) {
+    $ajax_caught = $e;
+}
+assert_true($ajax_caught !== null && $ajax_caught->is_success === true, 'ajax_test_mautic_connection must succeed when Mautic returns 200');
+assert_true(!empty($ajax_caught->data['message']), 'ajax_test_mautic_connection success must return message');
+
+// Case 11c: Failed connection (Mautic returns 401 Unauthorized)
+$GLOBALS['custom_http_handler'] = function (string $url, array $args) {
+    if (strpos($url, '/api/contacts') !== false) {
+        return [
+            'response' => ['code' => 401],
+            'body' => json_encode(['errors' => [['message' => 'Credenciales inválidas']]]),
+        ];
+    }
+    return ['response' => ['code' => 500], 'body' => ''];
+};
+
+$ajax_caught = null;
+try {
+    FLACSO_Mail_Settings::ajax_test_mautic_connection();
+} catch (TestAjaxException $e) {
+    $ajax_caught = $e;
+}
+assert_true($ajax_caught !== null && $ajax_caught->is_success === false, 'ajax_test_mautic_connection must fail when Mautic returns 401');
+$GLOBALS['custom_http_handler'] = null;
+
+// Test 12: FLACSO_Mail_Settings::render_page() HTML contains Mautic settings section and controls
+ob_start();
+FLACSO_Mail_Settings::render_page();
+$mail_settings_html = ob_get_clean();
+
+assert_true(strpos($mail_settings_html, 'Mautic Marketing Automation') !== false, 'Render must contain Mautic section title');
+assert_true(strpos($mail_settings_html, 'name="flacso_mautic_enabled"') !== false, 'Render must contain flacso_mautic_enabled checkbox');
+assert_true(strpos($mail_settings_html, 'name="flacso_mautic_base_url"') !== false, 'Render must contain flacso_mautic_base_url input');
+assert_true(strpos($mail_settings_html, 'name="flacso_mautic_auth_type"') !== false, 'Render must contain flacso_mautic_auth_type select');
+assert_true(strpos($mail_settings_html, 'name="flacso_mautic_username"') !== false, 'Render must contain flacso_mautic_username input');
+assert_true(strpos($mail_settings_html, 'name="flacso_mautic_password"') !== false, 'Render must contain flacso_mautic_password input');
+assert_true(strpos($mail_settings_html, 'name="flacso_mautic_token"') !== false, 'Render must contain flacso_mautic_token input');
+assert_true(strpos($mail_settings_html, 'id="flacso-test-mautic-btn"') !== false, 'Render must contain Mautic test button');
+assert_true(strpos($mail_settings_html, 'flacso_mautic_test_connection') !== false, 'Render script must call flacso_mautic_test_connection AJAX action');
+
+// Test 13: FLACSO_Mail_Settings::init() registers wp_ajax_flacso_mautic_test_connection
+FLACSO_Mail_Settings::init();
+$ajax_hooks = $GLOBALS['wp_actions']['wp_ajax_flacso_mautic_test_connection'] ?? [];
+assert_true(!empty($ajax_hooks), 'init() must register wp_ajax_flacso_mautic_test_connection action');
 
 echo "OK mail-console-and-consultas-admin-test\n";
