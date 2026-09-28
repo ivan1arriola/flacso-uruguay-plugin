@@ -336,6 +336,46 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 		}
 
 		/**
+		 * Renderiza el badge HTML correspondiente al estado y motor de envío del correo.
+		 *
+		 * @param array $row Fila de consulta con emailStatus y emailSender.
+		 * @return string HTML seguro del badge.
+		 */
+		public static function render_email_status_badge( array $row ): string {
+			$status = strtolower( trim( (string) ( $row['emailStatus'] ?? 'skipped' ) ) );
+			if ( '' === $status ) {
+				$status = 'skipped';
+			}
+			$sender = strtolower( trim( (string) ( $row['emailSender'] ?? '' ) ) );
+
+			if ( 'sent' === $status ) {
+				if ( 'mautic' === $sender ) {
+					return '<span class="flacso-badge sent mautic" title="' . esc_attr__( 'Enviado vía Mautic', 'flacso-uruguay' ) . '">sent (Mautic)</span>';
+				}
+				if ( 'mailjet_fallback' === $sender ) {
+					return '<span class="flacso-badge sent fallback" title="' . esc_attr__( 'Enviado vía Mailjet por conmutación (fallback Mautic)', 'flacso-uruguay' ) . '">sent (Fallback)</span>';
+				}
+				return '<span class="flacso-badge sent" title="' . esc_attr__( 'Enviado vía Mailjet', 'flacso-uruguay' ) . '">sent</span>';
+			}
+
+			if ( 'failed' === $status ) {
+				if ( 'mailjet_fallback' === $sender ) {
+					return '<span class="flacso-badge failed fallback" title="' . esc_attr__( 'Falló el envío vía Mailjet tras conmutación desde Mautic', 'flacso-uruguay' ) . '">failed (Fallback)</span>';
+				}
+				if ( 'mautic' === $sender ) {
+					return '<span class="flacso-badge failed mautic" title="' . esc_attr__( 'Falló el envío vía Mautic', 'flacso-uruguay' ) . '">failed (Mautic)</span>';
+				}
+				return '<span class="flacso-badge failed" title="' . esc_attr__( 'Envío fallido', 'flacso-uruguay' ) . '">failed</span>';
+			}
+
+			if ( 'skipped' === $status ) {
+				return '<span class="flacso-badge skipped" title="' . esc_attr__( 'Envío omitido', 'flacso-uruguay' ) . '">skipped</span>';
+			}
+
+			return '<span class="flacso-badge ' . esc_attr( $status ) . '">' . esc_html( $status ) . '</span>';
+		}
+
+		/**
 		 * AJAX: Ocultar o restaurar campaña en el análisis de atribución.
 		 */
 		public static function ajax_toggle_campaign(): void {
@@ -432,7 +472,10 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 						font-size: 11.5px; font-weight: 600;
 					}
 					.flacso-badge.sent { background: #dcfce7; color: #166534; }
+					.flacso-badge.sent.fallback { background: #ffedd5; color: #9a3412; }
+					.flacso-badge.sent.mautic { background: #f3e8ff; color: #6b21a8; }
 					.flacso-badge.failed { background: #fee2e2; color: #991b1b; }
+					.flacso-badge.failed.fallback { background: #fee2e2; color: #991b1b; border: 1px dashed #ef4444; }
 					.flacso-badge.skipped { background: #fef3c7; color: #92400e; }
 					.flacso-badge.offer_inquiries { background: #dbeafe; color: #1e40af; }
 					.flacso-badge.seminar_inquiries { background: #f3e8ff; color: #6b21a8; }
@@ -738,9 +781,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 										<?php echo esc_html( (string) ( $row['country'] ?: '—' ) ); ?>
 									</td>
 									<td class="flacso-status-cell" data-id="<?php echo esc_attr( (string) $row['id'] ); ?>">
-										<span class="flacso-badge <?php echo esc_attr( $status_val ); ?>">
-											<?php echo esc_html( $status_val ); ?>
-										</span>
+										<?php echo self::render_email_status_badge( $row ); ?>
 									</td>
 									<td style="white-space:nowrap;">
 										<button type="button" class="button button-small flacso-js-detail"
@@ -823,6 +864,14 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 									return;
 								}
 								const d = res.data;
+								let senderLabel = d.emailSender || '—';
+								if (d.emailSender === 'mailjet_fallback') {
+									senderLabel = 'Mailjet (Conmutación por fallo de Mautic)';
+								} else if (d.emailSender === 'mautic') {
+									senderLabel = 'Mautic';
+								} else if (d.emailSender === 'mailjet') {
+									senderLabel = 'Mailjet';
+								}
 								content.innerHTML = `
 									<table class="widefat striped" style="margin-bottom:14px;">
 										<tbody>
@@ -831,7 +880,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 											<tr><th>Correo electrónico</th><td>${d.email || ''}</td></tr>
 											<tr><th>Oferta / Programa</th><td>${d.item_name || ''}</td></tr>
 											<tr><th>País / Teléfono</th><td>${d.country || '—'} / ${d.phone || '—'}</td></tr>
-											<tr><th>Estado Email</th><td><strong>${d.emailStatus || ''}</strong> (Remitente: ${d.emailSender || '—'})</td></tr>
+											<tr><th>Estado Email</th><td><strong>${d.emailStatus || ''}</strong> (Remitente: ${senderLabel})</td></tr>
 											<tr><th>Mailjet Message ID / UUID</th><td><code>${d.mailjetMessageId || '—'}</code> / <code>${d.mailjetMessageUuid || '—'}</code></td></tr>
 											${d.mauticSyncStatus ? `<tr><th>Estado Mautic</th><td><strong>${d.mauticSyncStatus}</strong> (Contact ID: ${d.mauticContactId || '—'} | Sincronizado: ${d.mauticSyncedAt || '—'}${d.mauticLastError ? ' | Error: ' + d.mauticLastError : ''})</td></tr>` : ''}
 											<tr><th>UTM / Campaña</th><td>Source: ${d.campaignSource || '—'} | Medium: ${d.campaignMedium || '—'} | Campaign: ${d.campaignName || '—'}</td></tr>

@@ -946,5 +946,75 @@ assert_true(strpos($rendered_html, 'name="flacso_mautic_template_consulta_cerrad
 assert_true(strpos($rendered_html, 'id="flacso-btn-send-test-mautic"') !== false, 'Render must contain #flacso-btn-send-test-mautic button');
 assert_true(strpos($rendered_html, 'flacso_mautic_send_test_email') !== false, 'Render script must call flacso_mautic_send_test_email AJAX action');
 
+// Test 21: FLACSO_Consultas_Admin::render_email_status_badge() for all combinations
+assert_true(method_exists('FLACSO_Consultas_Admin', 'render_email_status_badge'), 'FLACSO_Consultas_Admin must define render_email_status_badge');
+
+// 21a: sent via mautic
+$badge_sent_mautic = FLACSO_Consultas_Admin::render_email_status_badge(['emailStatus' => 'sent', 'emailSender' => 'mautic']);
+assert_true(strpos($badge_sent_mautic, 'flacso-badge sent mautic') !== false, 'Badge sent via mautic class');
+assert_true(strpos($badge_sent_mautic, 'title="Enviado vía Mautic"') !== false, 'Badge sent via mautic title');
+assert_true(strpos($badge_sent_mautic, 'sent (Mautic)') !== false, 'Badge sent via mautic label');
+
+// 21b: sent via fallback
+$badge_sent_fallback = FLACSO_Consultas_Admin::render_email_status_badge(['emailStatus' => 'sent', 'emailSender' => 'mailjet_fallback']);
+assert_true(strpos($badge_sent_fallback, 'flacso-badge sent fallback') !== false, 'Badge sent via fallback class');
+assert_true(strpos($badge_sent_fallback, 'title="Enviado vía Mailjet por conmutación (fallback Mautic)"') !== false, 'Badge sent via fallback title');
+assert_true(strpos($badge_sent_fallback, 'sent (Fallback)') !== false, 'Badge sent via fallback label');
+
+// 21c: sent via mailjet (explicit and default)
+$badge_sent_mailjet = FLACSO_Consultas_Admin::render_email_status_badge(['emailStatus' => 'sent', 'emailSender' => 'mailjet']);
+assert_true(strpos($badge_sent_mailjet, 'class="flacso-badge sent"') !== false, 'Badge sent via mailjet class');
+assert_true(strpos($badge_sent_mailjet, 'title="Enviado vía Mailjet"') !== false, 'Badge sent via mailjet title');
+assert_true(strpos($badge_sent_mailjet, '>sent<') !== false, 'Badge sent via mailjet label');
+
+$badge_sent_def = FLACSO_Consultas_Admin::render_email_status_badge(['emailStatus' => 'sent', 'emailSender' => '']);
+assert_true(strpos($badge_sent_def, 'class="flacso-badge sent"') !== false, 'Badge sent default class');
+assert_true(strpos($badge_sent_def, 'title="Enviado vía Mailjet"') !== false, 'Badge sent default title');
+assert_true(strpos($badge_sent_def, '>sent<') !== false, 'Badge sent default label');
+
+// 21d: failed via fallback
+$badge_failed_fallback = FLACSO_Consultas_Admin::render_email_status_badge(['emailStatus' => 'failed', 'emailSender' => 'mailjet_fallback']);
+assert_true(strpos($badge_failed_fallback, 'flacso-badge failed fallback') !== false, 'Badge failed via fallback class');
+assert_true(strpos($badge_failed_fallback, 'title="Falló el envío vía Mailjet tras conmutación desde Mautic"') !== false, 'Badge failed via fallback title');
+assert_true(strpos($badge_failed_fallback, 'failed (Fallback)') !== false, 'Badge failed via fallback label');
+
+// 21e: failed via mautic
+$badge_failed_mautic = FLACSO_Consultas_Admin::render_email_status_badge(['emailStatus' => 'failed', 'emailSender' => 'mautic']);
+assert_true(strpos($badge_failed_mautic, 'flacso-badge failed mautic') !== false, 'Badge failed via mautic class');
+assert_true(strpos($badge_failed_mautic, 'title="Falló el envío vía Mautic"') !== false, 'Badge failed via mautic title');
+assert_true(strpos($badge_failed_mautic, 'failed (Mautic)') !== false, 'Badge failed via mautic label');
+
+// 21f: failed default
+$badge_failed_def = FLACSO_Consultas_Admin::render_email_status_badge(['emailStatus' => 'failed', 'emailSender' => 'mailjet']);
+assert_true(strpos($badge_failed_def, 'class="flacso-badge failed"') !== false, 'Badge failed default class');
+assert_true(strpos($badge_failed_def, 'title="Envío fallido"') !== false, 'Badge failed default title');
+assert_true(strpos($badge_failed_def, '>failed<') !== false, 'Badge failed default label');
+
+// 21g: skipped
+$badge_skipped = FLACSO_Consultas_Admin::render_email_status_badge(['emailStatus' => 'skipped']);
+assert_true(strpos($badge_skipped, 'flacso-badge skipped') !== false, 'Badge skipped class');
+assert_true(strpos($badge_skipped, 'title="Envío omitido"') !== false, 'Badge skipped title');
+assert_true(strpos($badge_skipped, '>skipped<') !== false, 'Badge skipped label');
+
+// 21h: other status fallback
+$badge_other = FLACSO_Consultas_Admin::render_email_status_badge(['emailStatus' => 'processing']);
+assert_true(strpos($badge_other, 'flacso-badge processing') !== false, 'Badge processing class');
+assert_true(strpos($badge_other, '>processing<') !== false, 'Badge processing label');
+
+// Test 22: HTML rendering contains fallback CSS classes and modal sender formatting
+$_GET = [
+    'page'  => 'flacso-consultas',
+    'tab'   => 'historico',
+    'table' => 'offer_inquiries',
+];
+ob_start();
+FLACSO_Consultas_Admin::render_page();
+$rendered_consultas_page = ob_get_clean();
+
+assert_true(strpos($rendered_consultas_page, '.flacso-badge.sent.fallback') !== false, 'Page must include .flacso-badge.sent.fallback CSS');
+assert_true(strpos($rendered_consultas_page, '.flacso-badge.sent.mautic') !== false, 'Page must include .flacso-badge.sent.mautic CSS');
+assert_true(strpos($rendered_consultas_page, '.flacso-badge.failed.fallback') !== false, 'Page must include .flacso-badge.failed.fallback CSS');
+assert_true(strpos($rendered_consultas_page, 'Mailjet (Conmutación por fallo de Mautic)') !== false, 'Modal script must contain fallback label formatting');
+
 echo "OK mail-console-and-consultas-admin-test\n";
 
