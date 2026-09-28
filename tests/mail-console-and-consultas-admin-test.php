@@ -46,6 +46,9 @@ if (!function_exists('add_action')) {
 }
 if (!function_exists('wp_remote_post')) {
     function wp_remote_post(string $url, array $args = []) {
+        if (!empty($GLOBALS['custom_http_handler']) && is_callable($GLOBALS['custom_http_handler'])) {
+            return call_user_func($GLOBALS['custom_http_handler'], $url, $args);
+        }
         $GLOBALS['mailjet_http_calls'][] = ['method' => 'POST', 'url' => $url, 'args' => $args];
         return [
             'response' => ['code' => 200],
@@ -260,6 +263,11 @@ if (!function_exists('get_posts')) {
         return [];
     }
 }
+if (!function_exists('check_ajax_referer')) {
+    function check_ajax_referer($action = -1, $query_arg = false, $die = true) {
+        return 1;
+    }
+}
 
 class TestAjaxException extends Exception {
     public $data;
@@ -351,6 +359,10 @@ $pdo->exec('CREATE TABLE "offer_inquiries" (
     "emailSender" TEXT,
     "mailjetMessageId" TEXT,
     "mailjetMessageUuid" TEXT,
+    "mauticContactId" TEXT,
+    "mauticSyncStatus" TEXT,
+    "mauticSyncedAt" TEXT,
+    "mauticLastError" TEXT,
     "payload" TEXT,
     "inquiryAt" TEXT,
     "createdAt" TEXT,
@@ -399,11 +411,19 @@ $stmt = $pdo->prepare('INSERT INTO "offer_inquiries"
     ("id","consultaId","offerWpId","offerName","offerAbbreviation","cohortNumber","cohortName","offerStatus","firstName","lastName","fullName","email","emailNormalized","phone","country","source","campaignProvider","campaignSource","campaignMedium","campaignName","emailStatus","payload","inquiryAt","createdAt","updatedAt")
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
 
+$time_c01 = gmdate('Y-m-d H:i:s', time() - 5);
+$time_c02 = gmdate('Y-m-d H:i:s', time() - 10);
+$time_c03 = gmdate('Y-m-d H:i:s', time() - 15);
+
 // Ana in Uruguay (2 inquiries for same Maestría -> deduplicates to 1 pair)
-$stmt->execute(['c01', 'cid-1', 501, 'Maestría en Género', 'mg', 2, '2ª Cohorte', 'abierta', 'Ana', 'Pérez', 'Ana Pérez', 'ana@ejemplo.com', 'ana@ejemplo.com', '099111', 'Uruguay', 'web', 'meta', 'facebook', 'cpc', 'Campaña Género', 'sent', '{"test":1}', $now, $now, $now]);
-$stmt->execute(['c02', 'cid-2', 501, 'Maestría en Género', 'mg', 2, '2ª Cohorte', 'abierta', 'Ana', 'Pérez', 'Ana Pérez', 'ana@ejemplo.com', 'ana@ejemplo.com', '099111', 'Uruguay', 'web', 'meta', 'facebook', 'cpc', 'Campaña Género', 'sent', '{"test":2}', $now, $now, $now]);
+$stmt->execute(['c01', 'cid-1', 501, 'Maestría en Género', 'mg', 2, '2ª Cohorte', 'abierta', 'Ana', 'Pérez', 'Ana Pérez', 'ana@ejemplo.com', 'ana@ejemplo.com', '099111', 'Uruguay', 'web', 'meta', 'facebook', 'cpc', 'Campaña Género', 'sent', '{"test":1}', $time_c01, $time_c01, $time_c01]);
+$stmt->execute(['c02', 'cid-2', 501, 'Maestría en Género', 'mg', 2, '2ª Cohorte', 'abierta', 'Ana', 'Pérez', 'Ana Pérez', 'ana@ejemplo.com', 'ana@ejemplo.com', '099111', 'Uruguay', 'web', 'meta', 'facebook', 'cpc', 'Campaña Género', 'sent', '{"test":2}', $time_c02, $time_c02, $time_c02]);
 // Ana also in Argentina for another offer -> creates UY/EXT intersection for ana@ejemplo.com
-$stmt->execute(['c03', 'cid-3', 502, 'Diploma en Educación', null, null, null, 'cerrada', 'Ana', 'Pérez', 'Ana Pérez', 'ana@ejemplo.com', 'ana@ejemplo.com', '099111', 'Argentina', 'web', 'google', 'google', 'cpc', 'Campaña Educación', 'failed', '{"test":3}', $now, $now, $now]);
+$stmt->execute(['c03', 'cid-3', 502, 'Diploma en Educación', null, null, null, 'cerrada', 'Ana', 'Pérez', 'Ana Pérez', 'ana@ejemplo.com', 'ana@ejemplo.com', '099111', 'Argentina', 'web', 'google', 'google', 'cpc', 'Campaña Educación', 'failed', '{"test":3}', $time_c03, $time_c03, $time_c03]);
+
+$pdo->exec("UPDATE \"offer_inquiries\" SET \"mauticSyncStatus\" = 'synced', \"mauticContactId\" = '7788', \"mauticSyncedAt\" = '{$time_c01}' WHERE \"id\" = 'c01'");
+$pdo->exec("UPDATE \"offer_inquiries\" SET \"mauticSyncStatus\" = 'pending' WHERE \"id\" = 'c02'");
+$pdo->exec("UPDATE \"offer_inquiries\" SET \"mauticSyncStatus\" = 'failed', \"mauticLastError\" = 'Connection timeout' WHERE \"id\" = 'c03'");
 
 // Seminar inquiry
 $stmt_sem = $pdo->prepare('INSERT INTO "seminar_inquiries"
@@ -610,4 +630,152 @@ FLACSO_Mail_Settings::init();
 $ajax_hooks = $GLOBALS['wp_actions']['wp_ajax_flacso_mautic_test_connection'] ?? [];
 assert_true(!empty($ajax_hooks), 'init() must register wp_ajax_flacso_mautic_test_connection action');
 
+// Test 14: get_paginated_inquiries projects Mautic columns for offer_inquiries
+$page_mautic = FLACSO_Inquiry_Analytics_Repository::get_paginated_inquiries([
+    'table' => 'offer_inquiries',
+    'mode'  => 'grouped',
+    'desde' => $today,
+    'hasta' => $today,
+]);
+assert_true(array_key_exists('mauticSyncStatus', $page_mautic['items'][0]), 'Grouped inquiry must project mauticSyncStatus');
+assert_true(array_key_exists('mauticContactId', $page_mautic['items'][0]), 'Grouped inquiry must project mauticContactId');
+assert_true(array_key_exists('mauticSyncedAt', $page_mautic['items'][0]), 'Grouped inquiry must project mauticSyncedAt');
+assert_true(array_key_exists('mauticLastError', $page_mautic['items'][0]), 'Grouped inquiry must project mauticLastError');
+
+$raw_mautic = FLACSO_Inquiry_Analytics_Repository::get_paginated_inquiries([
+    'table' => 'offer_inquiries',
+    'mode'  => 'raw',
+    'desde' => $today,
+    'hasta' => $today,
+]);
+assert_true(array_key_exists('mauticSyncStatus', $raw_mautic['items'][0]), 'Raw inquiry must project mauticSyncStatus');
+assert_true(array_key_exists('mauticContactId', $raw_mautic['items'][0]), 'Raw inquiry must project mauticContactId');
+assert_true(array_key_exists('mauticSyncedAt', $raw_mautic['items'][0]), 'Raw inquiry must project mauticSyncedAt');
+assert_true(array_key_exists('mauticLastError', $raw_mautic['items'][0]), 'Raw inquiry must project mauticLastError');
+
+// Test 15: HTML Rendering of Mautic column, badges, and retry button
+$_GET = [
+    'page'  => 'flacso-consultas',
+    'tab'   => 'historico',
+    'table' => 'offer_inquiries',
+];
+ob_start();
+FLACSO_Consultas_Admin::render_page();
+$consultas_html = ob_get_clean();
+
+assert_true(strpos($consultas_html, '<th>Mautic</th>') !== false, 'Admin table header must contain Mautic column');
+assert_true(strpos($consultas_html, 'flacso-mautic-cell') !== false, 'Admin table must render flacso-mautic-cell');
+assert_true(strpos($consultas_html, 'mautic-synced') !== false, 'Admin must render mautic-synced badge');
+assert_true(strpos($consultas_html, '🟣 ID 7788') !== false, 'Admin must render contact ID in synced badge');
+assert_true(strpos($consultas_html, 'mautic-failed') !== false, 'Admin must render mautic-failed badge');
+assert_true(strpos($consultas_html, 'Connection timeout') !== false, 'Admin must render error message in failed badge title');
+assert_true(strpos($consultas_html, 'flacso-js-retry-mautic') !== false, 'Admin must render retry button for failed/pending inquiries');
+assert_true(strpos($consultas_html, 'data-id="c03"') !== false, 'Retry button must exist for failed row c03');
+
+// Raw mode renders pending inquiry c02
+$_GET['mode'] = 'raw';
+ob_start();
+FLACSO_Consultas_Admin::render_page();
+$raw_consultas_html = ob_get_clean();
+assert_true(strpos($raw_consultas_html, 'mautic-pending') !== false, 'Admin must render mautic-pending badge in raw mode');
+assert_true(strpos($raw_consultas_html, 'data-id="c02"') !== false, 'Retry button must exist for pending row c02 in raw mode');
+unset($_GET['mode']);
+
+// Unit testing render_mautic_badge() for all 4 states
+assert_true(strpos(FLACSO_Consultas_Admin::render_mautic_badge(['mauticSyncStatus' => 'synced', 'mauticContactId' => '123']), '🟣 ID 123') !== false, 'Badge synced with contact ID');
+assert_true(strpos(FLACSO_Consultas_Admin::render_mautic_badge(['mauticSyncStatus' => 'synced']), '🟣 Sincronizado') !== false, 'Badge synced without contact ID');
+assert_true(strpos(FLACSO_Consultas_Admin::render_mautic_badge(['mauticSyncStatus' => 'failed', 'mauticLastError' => 'Bad request']), '🔴 Error') !== false, 'Badge failed');
+assert_true(strpos(FLACSO_Consultas_Admin::render_mautic_badge(['mauticSyncStatus' => 'pending']), '🟡 Pendiente') !== false, 'Badge pending');
+assert_true(strpos(FLACSO_Consultas_Admin::render_mautic_badge(['mauticSyncStatus' => 'skipped']), '⚪ Omitido') !== false, 'Badge skipped');
+
+// Test 16: Seminar inquiries table does NOT render Mautic header column or retry button
+$_GET = [
+    'page'  => 'flacso-consultas',
+    'tab'   => 'historico',
+    'table' => 'seminar_inquiries',
+];
+ob_start();
+FLACSO_Consultas_Admin::render_page();
+$seminar_html = ob_get_clean();
+assert_true(strpos($seminar_html, '<th>Mautic</th>') === false, 'Seminar inquiries must NOT render Mautic header column');
+assert_true(strpos($seminar_html, '<button type="button" class="button button-small flacso-js-retry-mautic"') === false, 'Seminar inquiries must NOT render retry mautic button');
+assert_true(strpos($seminar_html, '🔄 Mautic') === false, 'Seminar inquiries must NOT render retry mautic button label');
+
+// Test 17: ajax_retry_mautic endpoint
+assert_true(method_exists('FLACSO_Consultas_Admin', 'ajax_retry_mautic'), 'FLACSO_Consultas_Admin must implement ajax_retry_mautic');
+FLACSO_Consultas_Admin::init();
+$consultas_ajax_hooks = $GLOBALS['wp_actions']['wp_ajax_flacso_consultas_retry_mautic'] ?? [];
+assert_true(!empty($consultas_ajax_hooks), 'init() must register wp_ajax_flacso_consultas_retry_mautic action');
+
+// Case 17a: Invalid ID
+$_POST = ['nonce' => 'mock-nonce', 'id' => ''];
+$ajax_caught = null;
+try {
+    FLACSO_Consultas_Admin::ajax_retry_mautic();
+} catch (TestAjaxException $e) {
+    $ajax_caught = $e;
+}
+assert_true($ajax_caught !== null && $ajax_caught->is_success === false && $ajax_caught->status_code === 400, 'ajax_retry_mautic must return 400 when ID is empty');
+
+// Case 17b: Successful retry
+$GLOBALS['flacso_test_options']['flacso_mautic_enabled'] = '1';
+$GLOBALS['flacso_test_options']['flacso_mautic_base_url'] = 'https://envios.flacso.edu.uy';
+$GLOBALS['flacso_test_options']['flacso_mautic_auth_type'] = 'basic';
+$GLOBALS['flacso_test_options']['flacso_mautic_username'] = 'admin';
+$GLOBALS['flacso_test_options']['flacso_mautic_password'] = 'secret123';
+
+$GLOBALS['custom_http_handler'] = function (string $url, array $args) {
+    if (strpos($url, '/api/contacts?search=email') !== false) {
+        return [
+            'response' => ['code' => 200],
+            'body'     => json_encode(['total' => 0, 'contacts' => []]),
+        ];
+    }
+    if (strpos($url, '/api/contacts/new') !== false) {
+        return [
+            'response' => ['code' => 201],
+            'body'     => json_encode(['contact' => ['id' => 9999]]),
+        ];
+    }
+    return ['response' => ['code' => 404], 'body' => ''];
+};
+
+$_POST = ['nonce' => 'mock-nonce', 'id' => 'c03'];
+$ajax_caught = null;
+try {
+    FLACSO_Consultas_Admin::ajax_retry_mautic();
+} catch (TestAjaxException $e) {
+    $ajax_caught = $e;
+}
+assert_true($ajax_caught !== null && $ajax_caught->is_success === true, 'ajax_retry_mautic must succeed when Mautic client returns success');
+assert_true($ajax_caught->data['status'] === 'synced', 'ajax_retry_mautic response status must be synced');
+assert_true((int)$ajax_caught->data['contact_id'] === 9999, 'ajax_retry_mautic response must return contact_id 9999');
+
+// Verify DB updated
+$stmt_check = $pdo->prepare('SELECT "mauticSyncStatus", "mauticContactId" FROM "offer_inquiries" WHERE "id" = ?');
+$stmt_check->execute(['c03']);
+$updated_row = $stmt_check->fetch(PDO::FETCH_ASSOC);
+assert_true($updated_row['mauticSyncStatus'] === 'synced', 'DB mauticSyncStatus must be synced after successful retry');
+assert_true($updated_row['mauticContactId'] === '9999', 'DB mauticContactId must be 9999 after successful retry');
+
+// Case 17c: Failed retry (Mautic returns 500 error)
+$GLOBALS['custom_http_handler'] = function (string $url, array $args) {
+    return [
+        'response' => ['code' => 500],
+        'body'     => json_encode(['errors' => [['message' => 'Internal server error in Mautic']]]),
+    ];
+};
+
+$_POST = ['nonce' => 'mock-nonce', 'id' => 'c02'];
+$ajax_caught = null;
+try {
+    FLACSO_Consultas_Admin::ajax_retry_mautic();
+} catch (TestAjaxException $e) {
+    $ajax_caught = $e;
+}
+assert_true($ajax_caught !== null && $ajax_caught->is_success === false && $ajax_caught->status_code === 500, 'ajax_retry_mautic must return 500 when Mautic fails');
+assert_true($ajax_caught->data['status'] === 'failed', 'ajax_retry_mautic error response status must be failed');
+$GLOBALS['custom_http_handler'] = null;
+
 echo "OK mail-console-and-consultas-admin-test\n";
+

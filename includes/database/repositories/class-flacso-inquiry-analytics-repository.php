@@ -788,6 +788,18 @@ class FLACSO_Inquiry_Analytics_Repository {
             if (in_array('cohortName', $columns, true)) {
                 $select_context .= '"cohortName", ';
             }
+            if (in_array('mauticSyncStatus', $columns, true)) {
+                $select_context .= '"mauticSyncStatus", ';
+            }
+            if (in_array('mauticContactId', $columns, true)) {
+                $select_context .= '"mauticContactId", ';
+            }
+            if (in_array('mauticSyncedAt', $columns, true)) {
+                $select_context .= '"mauticSyncedAt", ';
+            }
+            if (in_array('mauticLastError', $columns, true)) {
+                $select_context .= '"mauticLastError", ';
+            }
         }
         if (in_array('offerStatus', $columns, true)) {
             $select_context .= '"offerStatus", ';

@@ -19,6 +19,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			add_action( 'admin_menu', array( __CLASS__, 'register_menu' ), 12 );
 			add_action( 'wp_ajax_flacso_consultas_detail', array( __CLASS__, 'ajax_get_detail' ) );
 			add_action( 'wp_ajax_flacso_consultas_retry_email', array( __CLASS__, 'ajax_retry_email' ) );
+			add_action( 'wp_ajax_flacso_consultas_retry_mautic', array( __CLASS__, 'ajax_retry_mautic' ) );
 			add_action( 'wp_ajax_flacso_consultas_toggle_campaign', array( __CLASS__, 'ajax_toggle_campaign' ) );
 			add_action( 'admin_post_flacso_consultas_export_csv', array( __CLASS__, 'handle_export_csv' ) );
 		}
@@ -263,6 +264,78 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 		}
 
 		/**
+		 * AJAX: Reintentar manualmente la sincronización con Mautic para una consulta de oferta.
+		 */
+		public static function ajax_retry_mautic(): void {
+			check_ajax_referer( self::NONCE_ACTION, 'nonce' );
+			if ( ! current_user_can( 'manage_options' ) ) {
+				wp_send_json_error( array( 'message' => 'No autorizado' ), 403 );
+			}
+
+			$id = isset( $_POST['id'] ) ? sanitize_text_field( wp_unslash( $_POST['id'] ) ) : '';
+			if ( '' === $id ) {
+				wp_send_json_error( array( 'message' => 'ID inválido' ), 400 );
+			}
+
+			if ( ! class_exists( 'FLACSO_Inquiry_Marketing_Service' ) ) {
+				wp_send_json_error( array( 'status' => 'failed', 'message' => 'Servicio de marketing no disponible' ), 500 );
+			}
+
+			$res = FLACSO_Inquiry_Marketing_Service::sync_inquiry( $id );
+
+			if ( ! empty( $res['ok'] ) ) {
+				wp_send_json_success(
+					array(
+						'status'     => $res['status'] ?? 'synced',
+						'contact_id' => $res['contact_id'] ?? null,
+						'message'    => 'Sincronizado con éxito',
+					)
+				);
+			}
+
+			wp_send_json_error(
+				array(
+					'status'  => 'failed',
+					'message' => $res['error'] ?? 'Error',
+				),
+				500
+			);
+		}
+
+		/**
+		 * Renderiza el badge HTML correspondiente al estado de sincronización con Mautic.
+		 *
+		 * @param array $row Fila de consulta con mauticSyncStatus, mauticContactId, mauticSyncedAt, mauticLastError.
+		 * @return string HTML seguro del badge.
+		 */
+		public static function render_mautic_badge( array $row ): string {
+			$status = strtolower( trim( (string) ( $row['mauticSyncStatus'] ?? 'pending' ) ) );
+			if ( '' === $status ) {
+				$status = 'pending';
+			}
+
+			if ( 'synced' === $status ) {
+				$cid   = ! empty( $row['mauticContactId'] ) ? (string) $row['mauticContactId'] : '';
+				$label = '' !== $cid ? sprintf( '🟣 ID %s', $cid ) : '🟣 ' . __( 'Sincronizado', 'flacso-uruguay' );
+				$title = ! empty( $row['mauticSyncedAt'] )
+					? sprintf( __( 'Sincronizado con Mautic: %s', 'flacso-uruguay' ), $row['mauticSyncedAt'] )
+					: __( 'Sincronizado con Mautic', 'flacso-uruguay' );
+				return '<span class="flacso-badge mautic-synced" title="' . esc_attr( $title ) . '">' . esc_html( $label ) . '</span>';
+			}
+
+			if ( 'failed' === $status ) {
+				$err = ! empty( $row['mauticLastError'] ) ? (string) $row['mauticLastError'] : __( 'Error al sincronizar con Mautic', 'flacso-uruguay' );
+				return '<span class="flacso-badge mautic-failed" title="' . esc_attr( $err ) . '">🔴 ' . esc_html__( 'Error', 'flacso-uruguay' ) . '</span>';
+			}
+
+			if ( 'skipped' === $status ) {
+				return '<span class="flacso-badge mautic-skipped" title="' . esc_attr__( 'Sincronización omitida (Mautic inactivo)', 'flacso-uruguay' ) . '">⚪ ' . esc_html__( 'Omitido', 'flacso-uruguay' ) . '</span>';
+			}
+
+			return '<span class="flacso-badge mautic-pending" title="' . esc_attr__( 'Pendiente de sincronización con Mautic', 'flacso-uruguay' ) . '">🟡 ' . esc_html__( 'Pendiente', 'flacso-uruguay' ) . '</span>';
+		}
+
+		/**
 		 * AJAX: Ocultar o restaurar campaña en el análisis de atribución.
 		 */
 		public static function ajax_toggle_campaign(): void {
@@ -368,6 +441,10 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					.flacso-badge.status-cerrada { background: #f1f5f9; color: #475569; }
 					.flacso-badge.status-sin_cohorte { background: #f8fafc; color: #64748b; border: 1px dashed #cbd5e1; }
 					.flacso-badge.abbr { background: #eff6ff; color: #1d4ed8; font-size: 11px; text-transform: lowercase; font-weight: 700; }
+					.flacso-badge.mautic-synced { background: #f3e8ff; color: #6b21a8; }
+					.flacso-badge.mautic-failed { background: #fee2e2; color: #991b1b; }
+					.flacso-badge.mautic-pending { background: #fef3c7; color: #92400e; }
+					.flacso-badge.mautic-skipped { background: #f1f5f9; color: #64748b; }
 					.flacso-chip {
 						display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px;
 						border: 1px solid #cbd5e1; background: #f8fafc; font-size: 12.5px; cursor: pointer; user-select: none;
@@ -588,6 +665,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 								<th>Oferta</th>
 								<th>Cohorte</th>
 								<th>Al consultar</th>
+								<th>Mautic</th>
 							<?php else : ?>
 								<th>Oferta / Seminario</th>
 							<?php endif; ?>
@@ -598,7 +676,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					</thead>
 					<tbody>
 						<?php if ( empty( $result['items'] ) ) : ?>
-							<tr><td colspan="<?php echo 'offer_inquiries' === $table ? 9 : 7; ?>" style="text-align:center; padding:26px; color:#64748b;">No se encontraron consultas con los filtros seleccionados.</td></tr>
+							<tr><td colspan="<?php echo 'offer_inquiries' === $table ? 10 : 7; ?>" style="text-align:center; padding:26px; color:#64748b;">No se encontraron consultas con los filtros seleccionados.</td></tr>
 						<?php else : ?>
 							<?php foreach ( $result['items'] as $row ) :
 								$status_val = strtolower( (string) ( $row['emailStatus'] ?? 'skipped' ) );
@@ -647,6 +725,9 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 											}
 											?>
 										</td>
+										<td class="flacso-mautic-cell" data-id="<?php echo esc_attr( (string) $row['id'] ); ?>">
+											<?php echo self::render_mautic_badge( $row ); ?>
+										</td>
 									<?php else : ?>
 										<td>
 											<span class="flacso-badge <?php echo esc_attr( $table ); ?>"><?php echo esc_html( FLACSO_Inquiry_Analytics_Repository::ALLOWED_TABLES[ $table ]['label'] ?? $table ); ?></span>
@@ -673,6 +754,15 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 												data-table="<?php echo esc_attr( $table ); ?>"
 												title="Reenviar correo transaccional vía Mailjet">
 												✉️ Reenviar
+											</button>
+										<?php endif; ?>
+										<?php
+										$m_status = strtolower( trim( (string) ( $row['mauticSyncStatus'] ?? 'pending' ) ) );
+										if ( 'offer_inquiries' === $table && in_array( $m_status, array( 'failed', 'pending' ), true ) ) : ?>
+											<button type="button" class="button button-small flacso-js-retry-mautic"
+												data-id="<?php echo esc_attr( (string) $row['id'] ); ?>"
+												title="<?php esc_attr_e( 'Reintentar sincronización con Mautic', 'flacso-uruguay' ); ?>">
+												🔄 Mautic
 											</button>
 										<?php endif; ?>
 									</td>
@@ -743,6 +833,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 											<tr><th>País / Teléfono</th><td>${d.country || '—'} / ${d.phone || '—'}</td></tr>
 											<tr><th>Estado Email</th><td><strong>${d.emailStatus || ''}</strong> (Remitente: ${d.emailSender || '—'})</td></tr>
 											<tr><th>Mailjet Message ID / UUID</th><td><code>${d.mailjetMessageId || '—'}</code> / <code>${d.mailjetMessageUuid || '—'}</code></td></tr>
+											${d.mauticSyncStatus ? `<tr><th>Estado Mautic</th><td><strong>${d.mauticSyncStatus}</strong> (Contact ID: ${d.mauticContactId || '—'} | Sincronizado: ${d.mauticSyncedAt || '—'}${d.mauticLastError ? ' | Error: ' + d.mauticLastError : ''})</td></tr>` : ''}
 											<tr><th>UTM / Campaña</th><td>Source: ${d.campaignSource || '—'} | Medium: ${d.campaignMedium || '—'} | Campaign: ${d.campaignName || '—'}</td></tr>
 											<tr><th>Página Origen</th><td><a href="${d.pageUrl || '#'}" target="_blank">${d.pageUrl || '—'}</a></td></tr>
 										</tbody>
@@ -778,6 +869,41 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 									this.textContent = origText;
 									alert('Error al enviar: ' + (res.data?.message || 'Fallo Mailjet'));
 								}
+							});
+					});
+				});
+
+				document.querySelectorAll('.flacso-js-retry-mautic').forEach(btn => {
+					btn.addEventListener('click', function(){
+						const id = this.getAttribute('data-id');
+						const origText = this.textContent;
+						this.disabled = true;
+						this.textContent = '⏳ Sincronizando...';
+						const fd = new FormData();
+						fd.append('action', 'flacso_consultas_retry_mautic');
+						fd.append('nonce', nonce);
+						fd.append('id', id);
+						fetch(ajaxurl, { method: 'POST', body: fd })
+							.then(r => r.json())
+							.then(res => {
+								if (res.success) {
+									const cell = document.querySelector(`.flacso-mautic-cell[data-id="${id}"]`);
+									if (cell) {
+										const cid = res.data?.contact_id;
+										const label = cid ? `🟣 ID ${cid}` : '🟣 Sincronizado';
+										cell.innerHTML = `<span class="flacso-badge mautic-synced" title="Sincronizado con Mautic">${label}</span>`;
+									}
+									this.style.display = 'none';
+								} else {
+									this.disabled = false;
+									this.textContent = origText;
+									alert('Error al sincronizar con Mautic: ' + (res.data?.message || 'Error'));
+								}
+							})
+							.catch(err => {
+								this.disabled = false;
+								this.textContent = origText;
+								alert('Error al conectar con Mautic: ' + err.message);
 							});
 					});
 				});
