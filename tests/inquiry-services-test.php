@@ -639,6 +639,8 @@ $send_body = json_decode($send_call['args']['body'], true);
 srv_assert(!empty($send_body['tokens']), '11.1: Cuerpo del envío Mautic debe contener tokens');
 srv_assert(($send_body['tokens']['{nombre}'] ?? '') === 'Gabriela', '11.1: Token {nombre} debe coincidir');
 srv_assert(($send_body['tokens']['{programa}'] ?? '') === 'Diploma con cohorte canónica', '11.1: Token {programa} debe coincidir');
+srv_assert(($send_body['tokens']['{cohorte_nombre}'] ?? '') === 'Cohorte 4', '11.1: Token {cohorte_nombre} debe coincidir');
+srv_assert(($send_body['tokens']['{cohorte_numero}'] ?? '') === '4', '11.1: Token {cohorte_numero} debe coincidir');
 
 $saved_m_success = $repo->find_by_consulta_id('srv-offer-mautic-success');
 srv_assert(!empty($saved_m_success), '11.1: Registro debe existir en BD');

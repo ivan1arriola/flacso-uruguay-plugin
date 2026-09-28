@@ -327,6 +327,8 @@ class FLACSO_Offer_Inquiry_Service {
             'profession'     => $profession,
             'educationLevel' => $education_level,
             'replyToEmail'   => $reply_to,
+            'cohortName'     => $cohort_name,
+            'cohortNumber'   => $cohort_number,
         ];
 
         $program_payload = [
