@@ -163,9 +163,9 @@ final class FLACSO_Mail_Settings {
             'type' => 'string',
             'sanitize_callback' => static function ($val): string {
                 $val = strtolower(trim((string) $val));
-                return in_array($val, ['mailjet', 'mautic'], true) ? $val : 'mailjet';
+                return in_array($val, ['mailjet', 'mautic'], true) ? $val : 'mautic';
             },
-            'default' => 'mailjet',
+            'default' => 'mautic',
         ]);
         register_setting(self::SETTINGS_GROUP, self::OPTION_MAUTIC_TEMPLATE_OPEN, [
             'type' => 'string',
@@ -260,7 +260,7 @@ final class FLACSO_Mail_Settings {
             'offer_lists' => is_array($offer_lists) ? $offer_lists : [],
             'seminar_lists' => is_array($seminar_lists) ? $seminar_lists : [],
             'sync_inquiries_to_global' => (string) get_option(self::OPTION_SYNC_INQUIRIES_GLOBAL, '1') === '1',
-            'inquiry_email_engine' => (string) get_option(self::OPTION_INQUIRY_EMAIL_ENGINE, 'mailjet'),
+            'inquiry_email_engine' => (string) get_option(self::OPTION_INQUIRY_EMAIL_ENGINE, 'mautic'),
             'mautic_templates' => [
                 'consulta_abierta' => trim((string) get_option(self::OPTION_MAUTIC_TEMPLATE_OPEN, '')),
                 'consulta_cerrada' => trim((string) get_option(self::OPTION_MAUTIC_TEMPLATE_CLOSED, '')),
@@ -275,6 +275,48 @@ final class FLACSO_Mail_Settings {
             'days'                      => max(1, min(60, (int) get_option(self::OPTION_FOLLOWUP_DAYS, 5))),
             'template_seguimiento_open' => (int) get_option(self::OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_ABIERTA, 0),
             'template_seguimiento_closed' => (int) get_option(self::OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_CERRADA, 0),
+        ];
+    }
+
+    public static function get_offer_inquiry_engine_status(): array {
+        $settings = self::get_settings();
+        $engine = $settings['inquiry_email_engine'] ?? 'mautic';
+        if ($engine !== 'mautic' && $engine !== 'mailjet') {
+            $engine = 'mautic';
+        }
+
+        $mautic_enabled = (string) get_option(self::OPTION_MAUTIC_ENABLED, '0') === '1';
+        $tpl_open = (int) get_option(self::OPTION_MAUTIC_TEMPLATE_OPEN, 0);
+        $tpl_closed = (int) get_option(self::OPTION_MAUTIC_TEMPLATE_CLOSED, 0);
+        $mautic_ready = $mautic_enabled
+            && class_exists('FLACSO_Mautic_Client')
+            && FLACSO_Mautic_Client::is_configured()
+            && $tpl_open > 0
+            && $tpl_closed > 0;
+
+        $mailjet_fallback_ready = self::is_transactional_ready();
+
+        $status_label = 'Mautic Activo';
+        if ($engine === 'mautic') {
+            if ($mautic_ready && $mailjet_fallback_ready) {
+                $status_label = 'Mautic Primario + Fallback Mailjet OK';
+            } elseif ($mautic_ready) {
+                $status_label = 'Mautic Primario (Sin Fallback Mailjet)';
+            } elseif ($mailjet_fallback_ready) {
+                $status_label = 'Mautic Pendiente (Fallback Mailjet Disponible)';
+            } else {
+                $status_label = 'Configuración Requerida';
+            }
+        } else {
+            $status_label = 'Mailjet Modo Legado';
+        }
+
+        return [
+            'engine'                 => $engine,
+            'is_mautic_primary'      => ($engine === 'mautic'),
+            'mautic_ready'           => $mautic_ready,
+            'mailjet_fallback_ready' => $mailjet_fallback_ready,
+            'status_label'           => $status_label,
         ];
     }
 
@@ -632,7 +674,8 @@ final class FLACSO_Mail_Settings {
             ? FLACSO_Inquiry_Analytics_Repository::get_email_delivery_metrics()
             : ['db_connected' => false, 'last_24h' => ['total' => 0, 'sent' => 0, 'failed' => 0, 'skipped' => 0, 'rate' => 100], 'last_7d' => ['total' => 0, 'sent' => 0, 'failed' => 0, 'skipped' => 0, 'rate' => 100]];
 
-        $inquiry_engine = (string) get_option(self::OPTION_INQUIRY_EMAIL_ENGINE, 'mailjet');
+        $inquiry_engine = (string) get_option(self::OPTION_INQUIRY_EMAIL_ENGINE, 'mautic');
+        $engine_status = self::get_offer_inquiry_engine_status();
         $mautic_tpl_open = (string) get_option(self::OPTION_MAUTIC_TEMPLATE_OPEN, '');
         $mautic_tpl_closed = (string) get_option(self::OPTION_MAUTIC_TEMPLATE_CLOSED, '');
         $followup_settings = self::get_followup_settings();
@@ -782,6 +825,22 @@ final class FLACSO_Mail_Settings {
                         <?php echo esc_html(sprintf('%d ofertas · %d seminarios con lista propia', count($settings['offer_lists']), count($settings['seminar_lists']))); ?>
                     </div>
                 </div>
+
+                <div class="flacso-mail-kpi">
+                    <div class="flacso-mail-kpi-label">
+                        <span><?php esc_html_e('Motor de Ofertas', 'flacso-uruguay'); ?></span>
+                        <span class="flacso-badge <?php echo $engine_status['is_mautic_primary'] ? ($engine_status['mautic_ready'] ? 'flacso-badge-ok' : 'flacso-badge-warn') : 'flacso-badge-info'; ?>">
+                            <?php echo $engine_status['is_mautic_primary'] ? esc_html__('MAUTIC PRIMARIO', 'flacso-uruguay') : esc_html__('MODO LEGADO', 'flacso-uruguay'); ?>
+                        </span>
+                    </div>
+                    <div class="flacso-mail-kpi-value" style="font-size:22px;">
+                        <?php echo $engine_status['is_mautic_primary'] ? esc_html__('Mautic (Primario)', 'flacso-uruguay') : esc_html__('Mailjet (Legado)', 'flacso-uruguay'); ?>
+                    </div>
+                    <div class="flacso-mail-kpi-sub">
+                        <strong><?php echo esc_html($engine_status['status_label']); ?></strong> ·
+                        <span><?php echo $engine_status['mailjet_fallback_ready'] ? esc_html__('Fallback Mailjet Activo', 'flacso-uruguay') : esc_html__('Sin Fallback', 'flacso-uruguay'); ?></span>
+                    </div>
+                </div>
             </section>
 
             <!-- Navegación de pestañas -->
@@ -833,16 +892,16 @@ final class FLACSO_Mail_Settings {
                         <?php
                         $template_rows = [
                             self::OPTION_TEMPLATE_OPEN => [
-                                'label'    => 'Consulta de Oferta con Inscripciones Abiertas',
+                                'label'    => 'Consulta de Oferta con Inscripciones Abiertas (Respaldo Mailjet)',
                                 'val'      => $settings['templates']['consulta_abierta'],
                                 'scenario' => 'consulta_abierta',
-                                'desc'     => 'Incluye enlaces al programa, carta descriptiva, calendario y botón directo de preinscripción.',
+                                'desc'     => 'Plantilla de respaldo: se utiliza si Mautic presenta incidencias de API o si se usa el modo legado.',
                             ],
                             self::OPTION_TEMPLATE_CLOSED => [
-                                'label'    => 'Consulta de Oferta con Inscripciones Cerradas',
+                                'label'    => 'Consulta de Oferta con Inscripciones Cerradas (Respaldo Mailjet)',
                                 'val'      => $settings['templates']['consulta_cerrada'],
                                 'scenario' => 'consulta_cerrada',
-                                'desc'     => 'Informa la próxima cohorte estimada e invita a conocer el programa académico.',
+                                'desc'     => 'Plantilla de respaldo: se utiliza si Mautic presenta incidencias de API o si se usa el modo legado.',
                             ],
                             self::OPTION_TEMPLATE_SEMINAR => [
                                 'label'    => 'Consulta de Seminario de Posgrado',
@@ -947,12 +1006,12 @@ final class FLACSO_Mail_Settings {
 
                             <div style="display:flex;gap:24px;flex-wrap:wrap;padding:12px 16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:16px;">
                                 <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:13.5px;cursor:pointer;">
-                                    <input type="radio" name="<?php echo esc_attr(self::OPTION_INQUIRY_EMAIL_ENGINE); ?>" value="mailjet" <?php checked($inquiry_engine, 'mailjet'); ?>>
-                                    <span><?php esc_html_e('Mailjet (por defecto)', 'flacso-uruguay'); ?></span>
+                                    <input type="radio" name="<?php echo esc_attr(self::OPTION_INQUIRY_EMAIL_ENGINE); ?>" value="mautic" <?php checked($inquiry_engine, 'mautic'); ?>>
+                                    <span><?php esc_html_e('Mautic (Motor Principal y Recomendado) — Automatización completa, tags y seguimiento (+X días)', 'flacso-uruguay'); ?></span>
                                 </label>
                                 <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:13.5px;cursor:pointer;">
-                                    <input type="radio" name="<?php echo esc_attr(self::OPTION_INQUIRY_EMAIL_ENGINE); ?>" value="mautic" <?php checked($inquiry_engine, 'mautic'); ?>>
-                                    <span><?php esc_html_e('Mautic (con fallback automático a Mailjet)', 'flacso-uruguay'); ?></span>
+                                    <input type="radio" name="<?php echo esc_attr(self::OPTION_INQUIRY_EMAIL_ENGINE); ?>" value="mailjet" <?php checked($inquiry_engine, 'mailjet'); ?>>
+                                    <span><?php esc_html_e('Mailjet Directo (Modo Legado / Contingencia) — Despacho transaccional clásico sin orquestación avanzada', 'flacso-uruguay'); ?></span>
                                 </label>
                             </div>
 

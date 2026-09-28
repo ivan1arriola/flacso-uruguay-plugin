@@ -796,12 +796,13 @@ $mail_settings_group = $GLOBALS['flacso_registered_settings']['flacso_correos_gr
 assert_true(isset($mail_settings_group['flacso_inquiry_email_engine']), 'flacso_inquiry_email_engine must be registered');
 assert_true(isset($mail_settings_group['flacso_mautic_template_consulta_abierta']), 'flacso_mautic_template_consulta_abierta must be registered');
 assert_true(isset($mail_settings_group['flacso_mautic_template_consulta_cerrada']), 'flacso_mautic_template_consulta_cerrada must be registered');
+assert_true($mail_settings_group['flacso_inquiry_email_engine']['default'] === 'mautic', 'flacso_inquiry_email_engine default must be mautic in register_setting');
 
 // Test sanitization callbacks for engine and templates
 $engine_cb = $mail_settings_group['flacso_inquiry_email_engine']['sanitize_callback'];
 assert_true(call_user_func($engine_cb, 'mailjet') === 'mailjet', 'Engine callback should accept mailjet');
 assert_true(call_user_func($engine_cb, 'mautic') === 'mautic', 'Engine callback should accept mautic');
-assert_true(call_user_func($engine_cb, 'invalid') === 'mailjet', 'Engine callback should default to mailjet');
+assert_true(call_user_func($engine_cb, 'invalid') === 'mautic', 'Engine callback should default to mautic');
 
 $tpl_open_cb = $mail_settings_group['flacso_mautic_template_consulta_abierta']['sanitize_callback'];
 assert_true(call_user_func($tpl_open_cb, '12abc') === '12', 'Template open callback should sanitize numeric ID');
@@ -1238,6 +1239,31 @@ assert_true(strpos($rendered_admin_html, '.flacso-badge.followup-processing') !=
 assert_true(strpos($rendered_admin_html, 'Seguimiento (+X días)') !== false, 'Modal detail must include Seguimiento (+X días) row');
 assert_true(strpos($rendered_admin_html, 'flacso-js-trigger-followup') !== false, 'Modal detail must include flacso-js-trigger-followup button');
 assert_true(strpos($rendered_admin_html, 'class="flacso-badge followup-sent"') !== false, 'Table cell must render followup-sent badge');
+
+// Test 27: Phase 5 - Mautic default engine, health status helper, and render_page updates
+unset($GLOBALS['flacso_test_options']['flacso_inquiry_email_engine']);
+$default_settings = FLACSO_Mail_Settings::get_settings();
+assert_true($default_settings['inquiry_email_engine'] === 'mautic', 'get_settings inquiry_email_engine must default to mautic');
+
+assert_true(method_exists('FLACSO_Mail_Settings', 'get_offer_inquiry_engine_status'), 'get_offer_inquiry_engine_status must exist');
+$status = FLACSO_Mail_Settings::get_offer_inquiry_engine_status();
+assert_true(is_array($status), 'get_offer_inquiry_engine_status must return array');
+assert_true(isset($status['engine']), 'status must have engine');
+assert_true(isset($status['is_mautic_primary']), 'status must have is_mautic_primary');
+assert_true(isset($status['mautic_ready']), 'status must have mautic_ready');
+assert_true(isset($status['mailjet_fallback_ready']), 'status must have mailjet_fallback_ready');
+assert_true(isset($status['status_label']), 'status must have status_label');
+assert_true($status['is_mautic_primary'] === true, 'is_mautic_primary must be true by default');
+
+// Render page Phase 5 checks
+ob_start();
+FLACSO_Mail_Settings::render_page();
+$p5_rendered_html = ob_get_clean();
+
+assert_true(strpos($p5_rendered_html, 'Motor Principal y Recomendado') !== false, 'Render must indicate Mautic is primary and recommended');
+assert_true(strpos($p5_rendered_html, 'Modo Legado / Contingencia') !== false, 'Render must indicate Mailjet is legacy/contingency');
+assert_true(strpos($p5_rendered_html, 'Respaldo Mailjet') !== false, 'Render must indicate Mailjet offer templates are fallback');
+assert_true(strpos($p5_rendered_html, 'Motor de Ofertas') !== false, 'Render KPI must display Motor de Ofertas');
 
 echo "OK mail-console-and-consultas-admin-test\n";
 
