@@ -324,10 +324,10 @@ class FLACSO_Offer_Inquiry_Service {
         }
 
         // 6. Selección de motor de correo y despacho (Enviar después)
-        $engine = function_exists('get_option') ? (string) get_option('flacso_inquiry_email_engine', 'mailjet') : 'mailjet';
+        $engine = function_exists('get_option') ? (string) get_option('flacso_inquiry_email_engine', 'mautic') : 'mautic';
         $engine = strtolower(trim($engine));
-        if ($engine !== 'mautic') {
-            $engine = 'mailjet';
+        if ($engine !== 'mailjet') {
+            $engine = 'mautic';
         }
 
         $inquiry_payload = [

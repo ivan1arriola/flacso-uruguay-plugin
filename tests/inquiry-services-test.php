@@ -447,6 +447,7 @@ srv_assert($saved_m_disabled['mauticSyncStatus'] === 'skipped', '10.1: mauticSyn
 
 // 10.2 Caso 2: Mautic activo y responde 200 OK
 // La consulta se guarda, mautic_sync['status'] === 'synced', y el registro en SQLite tiene mauticSyncStatus === 'synced' y mauticContactId.
+$GLOBALS['mailjet_mock_options']['flacso_inquiry_email_engine'] = 'mailjet';
 $GLOBALS['mailjet_mock_options']['flacso_mautic_enabled'] = '1';
 $GLOBALS['mailjet_mock_options']['flacso_mautic_base_url'] = 'https://envios.flacso.edu.uy';
 $GLOBALS['mailjet_mock_options']['flacso_mautic_auth_type'] = 'basic';
@@ -776,6 +777,25 @@ srv_assert(count($GLOBALS['mailjet_http_calls']) === 1, '11.4: Debe llamar a Mai
 $saved_mj_engine = $repo->find_by_consulta_id('srv-offer-mailjet-engine');
 srv_assert(!empty($saved_mj_engine), '11.4: Registro debe existir en BD');
 srv_assert($saved_mj_engine['emailSender'] === 'mailjet', '11.4: emailSender en BD debe ser mailjet');
+
+// 11.5 Motor por defecto (sin opción en BD o vacía) -> Mautic como primario por defecto (Fase 5)
+unset($GLOBALS['mailjet_mock_options']['flacso_inquiry_email_engine']);
+$GLOBALS['mailjet_mock_options']['flacso_mautic_template_consulta_abierta'] = 101;
+$GLOBALS['mailjet_mock_options']['flacso_mautic_template_consulta_cerrada'] = 102;
+$GLOBALS['mailjet_http_calls'] = [];
+$GLOBALS['mautic_http_calls'] = [];
+
+$result_default_engine = FLACSO_Offer_Inquiry_Service::submit([
+    'event_id'        => 'srv-offer-default-engine',
+    'id_pagina'       => 13,
+    'nombre'          => 'Lucía',
+    'apellido'        => 'Gómez',
+    'correo'          => 'lucia@ejemplo.com',
+]);
+
+srv_assert($result_default_engine['ok'] === true, '11.5: Submit debe ser ok con motor por defecto');
+srv_assert($result_default_engine['email_engine'] === 'mautic', '11.5: email_engine por defecto debe ser mautic');
+srv_assert($result_default_engine['email_sender'] === 'mautic', '11.5: email_sender debe ser mautic');
 
 // -----------------------------------------------------------------------------
 // GRUPO 12: Programación Inicial de Seguimiento (+X días) en FLACSO_Offer_Inquiry_Service::submit()
