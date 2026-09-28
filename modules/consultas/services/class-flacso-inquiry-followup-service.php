@@ -93,7 +93,20 @@ class FLACSO_Inquiry_Followup_Service {
 
         $results = [];
         foreach ($claimed as $inquiry) {
-            $results[] = self::process_single_followup($inquiry, $repo);
+            try {
+                $results[] = self::process_single_followup($inquiry, $repo);
+            } catch (\Throwable $e) {
+                error_log('[FLACSO Followup] Excepción inesperada procesando consulta ' . ($inquiry['id'] ?? '') . ': ' . $e->getMessage());
+                if (!empty($inquiry['id'])) {
+                    $repo->update_followup_status((string)$inquiry['id'], 'failed', 'Error inesperado: ' . $e->getMessage());
+                }
+                $results[] = [
+                    'ok'     => false,
+                    'id'     => (string)($inquiry['id'] ?? ''),
+                    'action' => 'failed',
+                    'error'  => $e->getMessage(),
+                ];
+            }
         }
 
         return [
@@ -218,9 +231,7 @@ class FLACSO_Inquiry_Followup_Service {
         if ($cohort_number !== null && $cohort_number > 0) {
             $inquiry_payload['cohortNumber'] = $cohort_number;
         }
-        if ($preinscripcion_url !== '') {
-            $inquiry_payload['preinscripcionUrl'] = $preinscripcion_url;
-        }
+        $inquiry_payload['preinscripcionUrl'] = $preinscripcion_url;
         if ($start_value !== '') {
             $inquiry_payload['startValue'] = $start_value;
         }
