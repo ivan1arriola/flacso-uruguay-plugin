@@ -379,7 +379,7 @@ final class FLACSO_Mail_Settings {
             return;
         }
 
-        if (isset($_REQUEST['nonce']) && function_exists('check_ajax_referer')) {
+        if (function_exists('check_ajax_referer')) {
             check_ajax_referer('flacso_mail_console_nonce', 'nonce');
         }
 
