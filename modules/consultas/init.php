@@ -27,9 +27,11 @@ $flacso_consultas_files = [
     'includes/database/repositories/class-flacso-seminar-inquiry-repository.php',
     'includes/database/repositories/class-flacso-inquiry-analytics-repository.php',
     'includes/integrations/class-flacso-mailjet-client.php',
+    'includes/integrations/class-flacso-mautic-client.php',
     'modules/consultas/services/class-flacso-offer-inquiry-service.php',
     'modules/consultas/services/class-flacso-seminar-inquiry-service.php',
     'modules/consultas/services/class-flacso-inquiry-context-service.php',
+    'modules/consultas/services/class-flacso-inquiry-marketing-service.php',
     'modules/consultas/includes/class-flacso-consultas-admin.php',
 ];
 
