@@ -28,6 +28,15 @@ if (!class_exists('FLACSO_Seminar_Inquiry_Repository')) {
 if (!class_exists('FLACSO_Mailjet_Client')) {
     require_once dirname(__DIR__, 3) . '/includes/integrations/class-flacso-mailjet-client.php';
 }
+if (!class_exists('FLACSO_Inquiry_Snapshot')) {
+    require_once __DIR__ . '/class-flacso-inquiry-snapshot.php';
+}
+if (!class_exists('FLACSO_Inquiry_Delivery_Repository')) {
+    require_once dirname(__DIR__, 3) . '/includes/database/repositories/class-flacso-inquiry-delivery-repository.php';
+}
+if (!class_exists('FLACSO_Inquiry_Marketing_Service')) {
+    require_once __DIR__ . '/class-flacso-inquiry-marketing-service.php';
+}
 
 class FLACSO_Seminar_Inquiry_Service {
 
@@ -178,23 +187,35 @@ class FLACSO_Seminar_Inquiry_Service {
                     ? (string)$catalog_data['edicion_vigente']['preinscripcion']['url']
                     : null));
 
-        $start_value = !empty($data['startValue'])
-            ? (string)$data['startValue']
-            : (!empty($data['periodo_inicio'])
-                ? (string)$data['periodo_inicio']
-                : (!empty($data['fecha_inicio'])
-                    ? (string)$data['fecha_inicio']
-                    : (!empty($catalog_data['edicion_vigente']['fecha_inicio'])
-                        ? (string)$catalog_data['edicion_vigente']['fecha_inicio']
+        $start_value = !empty($data['startDate'])
+            ? (string)$data['startDate']
+            : (!empty($data['startValue'])
+                ? (string)$data['startValue']
+                : (!empty($data['periodo_inicio'])
+                    ? (string)$data['periodo_inicio']
+                    : (!empty($data['fecha_inicio'])
+                        ? (string)$data['fecha_inicio']
+                        : (!empty($catalog_data['edicion_vigente']['fecha_inicio'])
+                            ? (string)$catalog_data['edicion_vigente']['fecha_inicio']
+                            : ''))));
+
+        $modality = !empty($data['modality'])
+            ? (string)$data['modality']
+            : (!empty($data['modalityLabel'])
+                ? (string)$data['modalityLabel']
+                : (!empty($data['modalidad'])
+                    ? (string)$data['modalidad']
+                    : (!empty($catalog_data['modalidad'])
+                        ? (string)$catalog_data['modalidad']
                         : '')));
 
-        $modality = !empty($data['modalityLabel'])
-            ? (string)$data['modalityLabel']
-            : (!empty($data['modalidad'])
-                ? (string)$data['modalidad']
-                : (!empty($catalog_data['modalidad'])
-                    ? (string)$catalog_data['modalidad']
-                    : ''));
+        $start_precision = !empty($data['startDatePrecision'])
+            ? (string)$data['startDatePrecision']
+            : (!empty($data['startPrecision'])
+                ? (string)$data['startPrecision']
+                : (!empty($data['precision_fecha_inicio'])
+                    ? (string)$data['precision_fecha_inicio']
+                    : 'day'));
 
         $phone = trim((string)($data['telefono'] ?? $data['phone'] ?? ''));
         $message = trim((string)($data['consulta'] ?? $data['message'] ?? $data['mensaje'] ?? ''));
@@ -266,47 +287,95 @@ class FLACSO_Seminar_Inquiry_Service {
             'cartaUrl'           => $carta_url,
             'preinscripcionUrl'  => $preinscripcion_url,
             'offerStatus'        => null,
-            'emailStatus'        => 'skipped',
+            'emailStatus'        => 'pending',
+            'emailSender'        => 'mautic_transactional_queue',
             'payload'            => $data,
         ];
 
+        $snapshot_form = array_merge($data, [
+            'firstName' => $first_name,
+            'lastName' => $last_name,
+            'fullName' => $full_name,
+            'email' => $email,
+            'country' => $country,
+            'profession' => $profession,
+            'educationLevel' => $education_level,
+            'programUrl' => $seminar_url,
+            'cartaUrl' => $carta_url,
+            'preinscripcionUrl' => $preinscripcion_url,
+            'replyToEmail' => $reply_to,
+            'inquiryAt' => $inquiry_at,
+            'startDate' => $start_value,
+            'startDatePrecision' => $start_precision,
+            'modality' => $modality,
+        ]);
+        $snapshot_context = [
+            'seminarWpId' => $seminar_id,
+            'seminarName' => $seminar_name,
+            'seminarType' => $seminar_type,
+            'seminarAbbreviation' => $data['seminarAbbreviation'] ?? $data['abreviacion'] ?? '',
+            'startDate' => $start_value,
+            'startDatePrecision' => $start_precision,
+            'modality' => $modality,
+            'preinscripcionUrl' => $preinscripcion_url,
+            'replyToEmail' => $reply_to,
+        ];
+
         try {
-            $insert_result = $repo->insert($record);
+            $snapshot = FLACSO_Inquiry_Snapshot::from_seminar($snapshot_form, $snapshot_context, $consulta_id);
+            $delivery_repo = new FLACSO_Inquiry_Delivery_Repository();
+            $insert_result = $delivery_repo->persist_inquiry_with_delivery(
+                $repo,
+                $record,
+                $snapshot,
+                'seminar'
+            );
         } catch (\Throwable $e) {
-            error_log('[FLACSO] Error al insertar consulta de seminario en base de datos: ' . $e->getMessage());
+            error_log('[FLACSO] Error al persistir consulta/snapshot/entrega de seminario: ' . $e->getMessage());
             return [
-                'ok'      => false,
-                'code'    => 500,
-                'error'   => 'db_error',
+                'ok' => false,
+                'code' => 500,
+                'error' => 'db_error',
                 'message' => $e->getMessage(),
             ];
         }
 
-        // Si ocurrió colisión de unicidad capturada como duplicado en insert()
         if (!empty($insert_result['duplicate'])) {
             return [
-                'ok'          => true,
+                'ok' => true,
                 'consulta_id' => $consulta_id,
-                'duplicate'   => true,
-                'email'       => 'skipped',
-                'code'        => 200,
+                'duplicate' => true,
+                'email' => $insert_result['state'] ?? 'pending',
+                'delivery_id' => $insert_result['delivery_id'] ?? null,
+                'code' => 200,
             ];
         }
 
-        // Mautic administra las comunicaciones posteriores a esta consulta.
-        // WordPress conserva la persistencia, pero no despacha por proveedores.
-        try {
-            $repo->update_email_status($consulta_id, 'skipped', 'mautic_campaign');
-        } catch (\Throwable $e) {
-            error_log('[FLACSO] Error al actualizar estado Mautic del seminario: ' . $e->getMessage());
+        $marketing = ['ok' => true, 'status' => 'skipped', 'reason' => 'consent_required'];
+        if (class_exists('FLACSO_Inquiry_Marketing_Service')) {
+            try {
+                $marketing = FLACSO_Inquiry_Marketing_Service::sync_commercial_contact(
+                    $snapshot,
+                    FLACSO_Inquiry_Marketing_Service::extract_consent($data),
+                    null,
+                    ''
+                );
+            } catch (\Throwable $e) {
+                error_log('[FLACSO] Error en sincronización comercial de seminario: ' . $e->getMessage());
+                $marketing = ['ok' => false, 'status' => 'failed', 'error' => $e->getMessage()];
+            }
         }
 
         return [
             'ok'                   => true,
             'consulta_id'          => $consulta_id,
             'duplicate'            => false,
-            'email'                => 'skipped',
-            'email_sender'         => 'mautic_campaign',
+            'email'                => 'pending',
+            'email_sender'         => 'mautic_transactional_queue',
+            'email_engine'         => 'mautic_transactional_queue',
+            'delivery_id'          => $insert_result['delivery_id'] ?? null,
+            'snapshot_id'          => $insert_result['snapshot_id'] ?? null,
+            'marketing_sync'       => $marketing,
             'mailjet_message_id'   => null,
             'mailjet_message_uuid' => null,
             'code'                 => 200,
