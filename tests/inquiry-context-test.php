@@ -121,9 +121,9 @@ test_assert($ctx1['registrationCloseAt'] === '2026-10-01', 'Test 1: registration
 test_assert($ctx1['offerStatus'] === 'abierta', 'Test 1: offerStatus debe ser abierta');
 test_assert($ctx1['preinscripcionUrl'] === 'https://pre.flacso.edu.uy/met/3', 'Test 1: preinscripcionUrl capturada');
 test_assert($ctx1['replyToEmail'] === 'met@flacso.edu.uy', 'Test 1: replyToEmail capturado');
-test_assert($ctx1['startValue'] === '2026-10-15', 'Test 1: startValue capturado');
-test_assert($ctx1['startPrecision'] === 'dia', 'Test 1: startPrecision capturado');
-test_assert($ctx1['modalityLabel'] === 'virtual', 'Test 1: modalityLabel capturado');
+test_assert($ctx1['startDate'] === '2026-10-15', 'Test 1: startDate capturado');
+test_assert($ctx1['startDatePrecision'] === 'day', 'Test 1: startDatePrecision capturado');
+test_assert($ctx1['modality'] === 'virtual', 'Test 1: modality capturado');
 
 // -------------------------------------------------------------
 // Test 2: Oferta con cohorte planificada (preinscripción no abierta)
