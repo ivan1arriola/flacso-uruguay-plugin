@@ -203,6 +203,113 @@ class FLACSO_Mautic_Client {
     }
 
     /**
+     * Obtiene las etiquetas actualmente asociadas a un contacto.
+     *
+     * @return array{ok: bool, status: string, http_code: int, error: ?string, tags: array}
+     */
+    public static function get_contact_tags(int $contact_id): array {
+        if ($contact_id <= 0) {
+            return self::contact_operation_failure('El ID de contacto debe ser un entero positivo.');
+        }
+
+        $response = self::request_contact_endpoint('/api/contacts/' . $contact_id, 'GET');
+        if (!$response['ok']) {
+            return $response;
+        }
+
+        $contact = isset($response['data']['contact']) && is_array($response['data']['contact'])
+            ? $response['data']['contact']
+            : [];
+        $response['tags'] = self::normalize_tags($contact['tags'] ?? []);
+
+        return $response;
+    }
+
+    /**
+     * Une etiquetas nuevas a las existentes sin eliminar las previamente guardadas.
+     *
+     * @return array{ok: bool, status: string, http_code: int, error: ?string, tags: array}
+     */
+    public static function merge_contact_tags(int $contact_id, array $tags): array {
+        $current = self::get_contact_tags($contact_id);
+        if (!$current['ok']) {
+            return $current;
+        }
+
+        $merged = self::normalize_tags(array_merge($current['tags'], $tags));
+        $response = self::request_contact_endpoint(
+            '/api/contacts/' . $contact_id . '/edit',
+            'PATCH',
+            ['tags' => $merged]
+        );
+        $response['tags'] = $merged;
+
+        return $response;
+    }
+
+    /**
+     * Consulta las campañas a las que pertenece un contacto.
+     *
+     * @return array{ok: bool, status: string, http_code: int, error: ?string, campaigns: array}
+     */
+    public static function get_contact_campaigns(int $contact_id): array {
+        if ($contact_id <= 0) {
+            $failure = self::contact_operation_failure('El ID de contacto debe ser un entero positivo.');
+            $failure['campaigns'] = [];
+            return $failure;
+        }
+
+        $response = self::request_contact_endpoint('/api/contacts/' . $contact_id . '/campaigns', 'GET');
+        $response['campaigns'] = [];
+        if (!$response['ok']) {
+            return $response;
+        }
+
+        $campaigns = $response['data']['campaigns'] ?? [];
+        if (!is_array($campaigns)) {
+            $campaigns = [];
+        }
+        $response['campaigns'] = array_values($campaigns);
+
+        return $response;
+    }
+
+    /**
+     * Incorpora un contacto a una campaña, sin repetir una membresía existente.
+     *
+     * @return array{ok: bool, status: string, http_code: int, error: ?string}
+     */
+    public static function add_contact_to_campaign(int $campaign_id, int $contact_id): array {
+        if ($campaign_id <= 0 || $contact_id <= 0) {
+            return self::contact_operation_failure('Los IDs de campaña y contacto deben ser enteros positivos.');
+        }
+
+        $membership = self::get_contact_campaigns($contact_id);
+        if (!$membership['ok']) {
+            unset($membership['campaigns']);
+            return $membership;
+        }
+
+        foreach ($membership['campaigns'] as $campaign) {
+            $existing_id = is_array($campaign) ? ($campaign['id'] ?? 0) : $campaign;
+            if ((int) $existing_id === $campaign_id) {
+                return [
+                    'ok'        => true,
+                    'status'    => 'already_member',
+                    'http_code' => $membership['http_code'],
+                    'error'     => null,
+                ];
+            }
+        }
+
+        return self::request_contact_endpoint(
+            '/api/campaigns/' . $campaign_id . '/contact/' . $contact_id . '/add',
+            'POST',
+            []
+        );
+    }
+
+    /**
      * Crea o actualiza un contacto en Mautic con deduplicación por correo.
      *
      * @param string $email
@@ -247,7 +354,16 @@ class FLACSO_Mautic_Client {
 
             $payload = $fields;
             if (!empty($tags)) {
-                $payload['tags'] = array_values(array_unique($tags));
+                $current_tags = self::get_contact_tags($contact_id);
+                if (!$current_tags['ok']) {
+                    return [
+                        'ok'         => false,
+                        'contact_id' => null,
+                        'action'     => 'failed',
+                        'error'      => $current_tags['error'],
+                    ];
+                }
+                $payload['tags'] = self::normalize_tags(array_merge($current_tags['tags'], $tags));
             }
         } else {
             // Crear nuevo contacto
@@ -437,6 +553,98 @@ class FLACSO_Mautic_Client {
             'contact_id' => $contact_id,
             'error'      => $error_msg,
         ];
+    }
+
+    /**
+     * Ejecuta una operación de contacto/campaña y normaliza su resultado.
+     *
+     * @param string $endpoint Ruta relativa de la API Mautic.
+     * @param string $method Método HTTP.
+     * @param array|null $payload Cuerpo JSON, o null si la operación no lo requiere.
+     * @return array{ok: bool, status: string, http_code: int, error: ?string, data: array}
+     */
+    private static function request_contact_endpoint(string $endpoint, string $method, ?array $payload = null): array {
+        if (!self::is_configured()) {
+            return self::contact_operation_failure('Mautic no está configurado o está deshabilitado.');
+        }
+
+        $settings = self::get_settings();
+        $args = [
+            'method'  => $method,
+            'headers' => self::get_request_headers($settings),
+            'timeout' => self::TIMEOUT_SECONDS,
+        ];
+        if ($payload !== null) {
+            $args['body'] = function_exists('wp_json_encode') ? wp_json_encode($payload) : json_encode($payload);
+        }
+
+        $response = function_exists('wp_remote_request')
+            ? wp_remote_request($settings['base_url'] . $endpoint, $args)
+            : null;
+
+        if (is_wp_error($response)) {
+            return self::contact_operation_failure($response->get_error_message());
+        }
+        if (!is_array($response)) {
+            return self::contact_operation_failure('Respuesta HTTP inválida o no disponible.');
+        }
+
+        $code = function_exists('wp_remote_retrieve_response_code')
+            ? (int) wp_remote_retrieve_response_code($response)
+            : ($response['response']['code'] ?? 0);
+        $body = function_exists('wp_remote_retrieve_body')
+            ? wp_remote_retrieve_body($response)
+            : ($response['body'] ?? '');
+        $data = json_decode($body, true);
+
+        if ($code < 200 || $code >= 300) {
+            $failure = self::contact_operation_failure(self::extract_error_message($response, $code), $code);
+            $failure['data'] = is_array($data) ? $data : [];
+            return $failure;
+        }
+
+        return [
+            'ok'        => true,
+            'status'    => 'added',
+            'http_code' => $code,
+            'error'     => null,
+            'data'      => is_array($data) ? $data : [],
+        ];
+    }
+
+    /**
+     * @return array{ok: false, status: string, http_code: int, error: string, data: array}
+     */
+    private static function contact_operation_failure(string $error, int $http_code = 0): array {
+        return [
+            'ok'        => false,
+            'status'    => 'failed',
+            'http_code' => $http_code,
+            'error'     => $error,
+            'data'      => [],
+        ];
+    }
+
+    /**
+     * @param array $tags Etiquetas como texto o respuestas de la API de Mautic.
+     * @return array
+     */
+    private static function normalize_tags(array $tags): array {
+        $normalized = [];
+        foreach ($tags as $tag) {
+            if (is_array($tag)) {
+                $tag = $tag['tag'] ?? $tag['name'] ?? '';
+            }
+            if (!is_scalar($tag)) {
+                continue;
+            }
+            $tag = trim((string) $tag);
+            if ($tag !== '') {
+                $normalized[$tag] = $tag;
+            }
+        }
+
+        return array_values($normalized);
     }
 
     /**

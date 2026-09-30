@@ -410,7 +410,14 @@ $GLOBALS['mautic_http_handler'] = function($url, $args) {
             ]),
         ];
     }
-    // 2. PATCH /api/contacts/42/edit updates contact
+    // 2. Existing tags are retrieved before the PATCH update.
+    if (str_ends_with($url, '/api/contacts/42') && ($args['method'] ?? '') === 'GET') {
+        return [
+            'response' => ['code' => 200, 'message' => 'OK'],
+            'body'     => json_encode(['contact' => ['id' => 42, 'tags' => [['tag' => 'legado']]]]),
+        ];
+    }
+    // 3. PATCH /api/contacts/42/edit updates contact
     if (str_contains($url, '/api/contacts/42/edit') && ($args['method'] ?? '') === 'PATCH') {
         return [
             'response' => ['code' => 200, 'message' => 'OK'],
@@ -435,14 +442,14 @@ mautic_assert($update_res['contact_id'] === 42, 'create_or_update_contact return
 mautic_assert($update_res['action'] === 'updated', 'create_or_update_contact action is "updated"');
 mautic_assert($update_res['error'] === null, 'create_or_update_contact error is null on update');
 
-// Verify calls made: 1st search, 2nd PATCH
-mautic_assert(count($GLOBALS['mautic_http_calls']) === 2, 'Update makes 2 calls: search then PATCH');
-$patch_call = $GLOBALS['mautic_http_calls'][1];
-mautic_assert(str_ends_with($patch_call['url'], '/api/contacts/42/edit'), 'Second call target is /api/contacts/42/edit');
-mautic_assert(($patch_call['args']['method'] ?? '') === 'PATCH', 'Second call uses PATCH');
+// Verify calls made: search, tags, then PATCH.
+mautic_assert(count($GLOBALS['mautic_http_calls']) === 3, 'Update reads tags before PATCH');
+$patch_call = $GLOBALS['mautic_http_calls'][2];
+mautic_assert(str_ends_with($patch_call['url'], '/api/contacts/42/edit'), 'Third call target is /api/contacts/42/edit');
+mautic_assert(($patch_call['args']['method'] ?? '') === 'PATCH', 'Third call uses PATCH');
 $patch_payload = json_decode($patch_call['args']['body'], true);
 mautic_assert($patch_payload['firstname'] === 'Carlos Updated', 'PATCH payload contains updated field');
-mautic_assert($patch_payload['tags'] === ['nuevo-tag-c2'], 'PATCH payload contains tags');
+mautic_assert($patch_payload['tags'] === ['legado', 'nuevo-tag-c2'], 'PATCH payload preserves and merges tags');
 
 // --------------------------------------------------------------------------
 // Test Group 7: Failure modes & error resilience
@@ -649,5 +656,75 @@ mautic_assert($timeout_res['status'] === 'failed', 'status is failed on timeout'
 mautic_assert($timeout_res['email_id'] === 15, 'preserves email_id on timeout');
 mautic_assert($timeout_res['contact_id'] === 88, 'preserves contact_id on timeout');
 mautic_assert(str_contains($timeout_res['error'], 'timed out'), 'Error message preserves timeout text');
+
+// Test group 9: campaign membership and non-destructive tag updates.
+$GLOBALS['mautic_mock_options'] = [
+    'flacso_mautic_enabled' => '1',
+    'flacso_mautic_base_url' => 'https://mautic.example.org',
+    'flacso_mautic_auth_type' => 'basic',
+    'flacso_mautic_username' => 'admin',
+    'flacso_mautic_password' => 'secret',
+];
+$GLOBALS['mautic_http_calls'] = [];
+$GLOBALS['mautic_http_handler'] = function($url, $args) {
+    if (false !== strpos($url, '/api/contacts/42') && 'GET' === $args['method']) {
+        return [
+            'response' => ['code' => 200],
+            'body' => json_encode(['contact' => ['id' => 42, 'tags' => [['tag' => 'legado'], ['tag' => 'interes:curso']]]]),
+        ];
+    }
+
+    return ['response' => ['code' => 200], 'body' => json_encode(['success' => true])];
+};
+$merged_tags = FLACSO_Mautic_Client::merge_contact_tags(42, ['interes:curso', 'consulta:nueva']);
+mautic_assert(true === $merged_tags['ok'], 'merge_contact_tags succeeds for a valid response');
+mautic_assert(2 === count($GLOBALS['mautic_http_calls']), 'merge_contact_tags reads before updating');
+$merge_request = $GLOBALS['mautic_http_calls'][1];
+$merge_body = json_decode($merge_request['args']['body'], true);
+mautic_assert('PATCH' === $merge_request['args']['method'], 'merge_contact_tags uses PATCH');
+mautic_assert(in_array('legado', $merge_body['tags'], true), 'merge_contact_tags preserves old tags');
+mautic_assert(in_array('consulta:nueva', $merge_body['tags'], true), 'merge_contact_tags adds incoming tags');
+mautic_assert(false === str_contains($merge_request['args']['body'], 'secret'), 'merge_contact_tags never sends credentials in its body');
+
+$GLOBALS['mautic_http_calls'] = [];
+$GLOBALS['mautic_http_handler'] = function($url, $args) {
+    if (false !== strpos($url, '/api/contacts/42/campaigns')) {
+        return ['response' => ['code' => 200], 'body' => json_encode(['campaigns' => []])];
+    }
+
+    return ['response' => ['code' => 200], 'body' => json_encode(['success' => true])];
+};
+$campaign_added = FLACSO_Mautic_Client::add_contact_to_campaign(7, 42);
+mautic_assert(true === $campaign_added['ok'], 'add_contact_to_campaign adds a non-member');
+mautic_assert('added' === $campaign_added['status'], 'add_contact_to_campaign reports added');
+mautic_assert(2 === count($GLOBALS['mautic_http_calls']), 'add_contact_to_campaign checks membership first');
+mautic_assert(false !== strpos($GLOBALS['mautic_http_calls'][1]['url'], '/api/campaigns/7/contact/42/add'), 'add_contact_to_campaign uses the campaign endpoint');
+mautic_assert(false === str_contains($GLOBALS['mautic_http_calls'][1]['args']['body'], 'secret'), 'campaign request body never includes credentials');
+
+$GLOBALS['mautic_http_calls'] = [];
+$GLOBALS['mautic_http_handler'] = function($url, $args) {
+    return ['response' => ['code' => 200], 'body' => json_encode(['campaigns' => [['id' => 7, 'name' => 'Consulta abierta']]])];
+};
+$campaign_existing = FLACSO_Mautic_Client::add_contact_to_campaign(7, 42);
+mautic_assert(true === $campaign_existing['ok'], 'add_contact_to_campaign accepts an existing member');
+mautic_assert('already_member' === $campaign_existing['status'], 'add_contact_to_campaign is idempotent');
+mautic_assert(1 === count($GLOBALS['mautic_http_calls']), 'already-member contacts are not posted again');
+
+foreach ([401, 422, 500] as $error_code) {
+    $GLOBALS['mautic_http_calls'] = [];
+    $GLOBALS['mautic_http_handler'] = function($url, $args) use ($error_code) {
+        return ['response' => ['code' => $error_code], 'body' => json_encode(['errors' => [['message' => 'Mautic error']]])];
+    };
+    $campaign_error = FLACSO_Mautic_Client::add_contact_to_campaign(7, 42);
+    mautic_assert(false === $campaign_error['ok'], 'campaign errors fail for HTTP ' . $error_code);
+    mautic_assert($error_code === $campaign_error['http_code'], 'campaign errors preserve HTTP ' . $error_code);
+}
+
+$GLOBALS['mautic_http_handler'] = function($url, $args) {
+    return new WP_Error('http_request_failed', 'Timeout');
+};
+$campaign_timeout = FLACSO_Mautic_Client::add_contact_to_campaign(7, 42);
+mautic_assert(false === $campaign_timeout['ok'], 'campaign timeout fails');
+mautic_assert(0 === $campaign_timeout['http_code'], 'campaign timeout has no HTTP code');
 
 echo "\nALL TESTS PASSED (100%)\n";
