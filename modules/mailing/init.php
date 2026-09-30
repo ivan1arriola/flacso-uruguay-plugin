@@ -21,12 +21,7 @@ if (!defined('FLACSO_MAILING_MODULE_VERSION')) {
 }
 
 flacso_safe_require('modules/mailing/includes/class-flacso-mail-settings.php');
-flacso_safe_require('modules/mailing/includes/class-flacso-mailing-subscription.php');
 
 if (class_exists('FLACSO_Mail_Settings')) {
     FLACSO_Mail_Settings::init();
-}
-
-if (class_exists('Flacso_Mailing_Subscription')) {
-    Flacso_Mailing_Subscription::init();
 }

@@ -18,9 +18,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 		public static function init(): void {
 			add_action( 'admin_menu', array( __CLASS__, 'register_menu' ), 12 );
 			add_action( 'wp_ajax_flacso_consultas_detail', array( __CLASS__, 'ajax_get_detail' ) );
-			add_action( 'wp_ajax_flacso_consultas_retry_email', array( __CLASS__, 'ajax_retry_email' ) );
 			add_action( 'wp_ajax_flacso_consultas_retry_mautic', array( __CLASS__, 'ajax_retry_mautic' ) );
-			add_action( 'wp_ajax_flacso_consultas_trigger_followup', array( __CLASS__, 'ajax_trigger_followup' ) );
 			add_action( 'wp_ajax_flacso_consultas_toggle_campaign', array( __CLASS__, 'ajax_toggle_campaign' ) );
 			add_action( 'admin_post_flacso_consultas_export_csv', array( __CLASS__, 'handle_export_csv' ) );
 		}
