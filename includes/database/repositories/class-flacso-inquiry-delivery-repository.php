@@ -416,7 +416,41 @@ final class FLACSO_Inquiry_Delivery_Repository {
             ':now'          => $now,
             ':id'           => $delivery_id,
         ]);
-        return $stmt->rowCount() === 1;
+        $changed = $stmt->rowCount() === 1;
+        if ($changed) {
+            $this->sync_source_email_status($delivery_id, $state);
+        }
+        return $changed;
+    }
+
+    private function sync_source_email_status(string $delivery_id, string $state): void {
+        $stmt = $this->pdo->prepare(
+            'SELECT "inquiryType", "inquiryId" FROM inquiry_deliveries WHERE id = :id LIMIT 1'
+        );
+        $stmt->execute([':id' => $delivery_id]);
+        $delivery = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$delivery || empty($delivery['inquiryId'])) {
+            return;
+        }
+
+        $table = ($delivery['inquiryType'] ?? '') === 'seminar'
+            ? 'seminar_inquiries'
+            : (($delivery['inquiryType'] ?? '') === 'offer' ? 'offer_inquiries' : '');
+        if ($table === '') {
+            return;
+        }
+
+        $update = $this->pdo->prepare(
+            'UPDATE ' . $table . '
+             SET "emailStatus" = :status, "emailSender" = :sender, "updatedAt" = :updated_at
+             WHERE id = :id'
+        );
+        $update->execute([
+            ':status' => $state,
+            ':sender' => 'mautic_transactional_queue',
+            ':updated_at' => gmdate('c'),
+            ':id' => (string) $delivery['inquiryId'],
+        ]);
     }
 
     private function template_identity(): array {
