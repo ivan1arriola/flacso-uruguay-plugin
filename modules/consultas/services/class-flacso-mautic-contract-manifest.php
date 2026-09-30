@@ -34,7 +34,7 @@ final class FLACSO_Mautic_Contract_Manifest {
                 'content_sha256' => '',
             ],
             'marketing_campaign' => [
-                'id' => 2,
+                'id' => 3,
                 'required_for_acknowledgement' => false,
             ],
         ];

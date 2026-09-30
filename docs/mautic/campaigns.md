@@ -2,9 +2,10 @@
 
 ## Acuse transaccional
 
-- Plantilla Mautic: Acuse de recibo de consulta académica
-- ID: 3
-- Uso: envío directo a un contacto desde la cola transaccional.
+- La operación vigente usa dos plantillas Mautic de envío directo desde WordPress:
+  - F1 consulta abierta: ID `4`.
+  - F1 consulta cerrada: ID `5`.
+- La cola transaccional de snapshots continúa deshabilitada hasta aprobar una plantilla versionada con SHA-256.
 - Fuente de datos: tokens persistidos con cada InquirySnapshot.
 - Campaña Mautic: **no interviene en el acuse**.
 
@@ -14,8 +15,9 @@ El manifiesto mantiene deliberadamente vacío content_sha256 hasta completar la 
 
 ## Campaña comercial
 
-- Campaña existente: Consultas web FLACSO
-- ID: 2
+- Campaña: Consultas web FLACSO
+- ID operativo actual: `3`
+- Estado: inactiva durante la transición y las pruebas internas.
 - Rol nuevo: seguimiento/marketing posterior, no acuse.
 - Opción de WordPress: flacso_mautic_campaign_enabled
 - Estado operativo durante la transición: desactivada.
@@ -24,7 +26,7 @@ Aunque la opción se active posteriormente, sync_commercial_contact() exige cons
 
 ## Estado de la transición
 
-1. Consulta, snapshot y entrega se persisten atómicamente.
+1. La consulta y su contexto se persisten en WordPress/PostgreSQL.
 2. La entrega empieza en pending.
 3. El worker sólo procesa si flacso_inquiry_delivery_queue_enabled = 1.
 4. El contrato Mautic debe validar campos, plantilla y SHA-256.
