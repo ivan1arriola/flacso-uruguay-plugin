@@ -700,6 +700,7 @@ final class FLACSO_Mail_Settings {
         $engine_status = self::get_offer_inquiry_engine_status();
         $mautic_tpl_open = (string) get_option(self::OPTION_MAUTIC_TEMPLATE_OPEN, '');
         $mautic_tpl_closed = (string) get_option(self::OPTION_MAUTIC_TEMPLATE_CLOSED, '');
+        $mautic_campaign = self::get_mautic_campaign_settings();
         $followup_settings = self::get_followup_settings();
         $tpl_seguimiento_open = (string) get_option(self::OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_ABIERTA, '');
         $tpl_seguimiento_closed = (string) get_option(self::OPTION_MAUTIC_TEMPLATE_SEGUIMIENTO_CERRADA, '');
@@ -1021,6 +1022,31 @@ final class FLACSO_Mail_Settings {
                         </div>
 
                         <div id="flacso-mautic-test-result" style="margin-top:14px;display:none;padding:12px 16px;border-radius:8px;font-size:13px;"></div>
+
+                        <div style="margin-top:20px;padding:16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+                                <div>
+                                    <h3 style="margin:0 0 4px;font-size:15px;color:#0f172a;"><?php esc_html_e('Campaña de Consultas', 'flacso-uruguay'); ?></h3>
+                                    <p style="margin:0;font-size:12.5px;color:#64748b;"><?php esc_html_e('Incorpora contactos sincronizados a una campaña de Mautic. No modifica el envío transaccional.', 'flacso-uruguay'); ?></p>
+                                </div>
+                                <span class="flacso-badge <?php echo $mautic_campaign['enabled'] && $mautic_campaign['consultas_id'] > 0 ? 'flacso-badge-ok' : 'flacso-badge-warn'; ?>">
+                                    <?php echo $mautic_campaign['enabled'] && $mautic_campaign['consultas_id'] > 0 ? esc_html__('CONFIGURADA', 'flacso-uruguay') : esc_html__('PENDIENTE', 'flacso-uruguay'); ?>
+                                </span>
+                            </div>
+                            <div class="flacso-grid-2">
+                                <div class="flacso-field-group">
+                                    <label style="display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px;color:#0f172a;cursor:pointer;">
+                                        <input type="hidden" name="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_ENABLED); ?>" value="0">
+                                        <input type="checkbox" id="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_ENABLED); ?>" name="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_ENABLED); ?>" value="1" <?php checked($mautic_campaign['enabled']); ?>>
+                                        <span><?php esc_html_e('Activar incorporación a campaña', 'flacso-uruguay'); ?></span>
+                                    </label>
+                                </div>
+                                <div class="flacso-field-group">
+                                    <label for="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_CONSULTAS_ID); ?>"><?php esc_html_e('ID de campaña en Mautic', 'flacso-uruguay'); ?></label>
+                                    <input class="regular-text code" type="number" min="0" step="1" inputmode="numeric" id="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_CONSULTAS_ID); ?>" name="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_CONSULTAS_ID); ?>" value="<?php echo esc_attr($mautic_campaign['consultas_id'] > 0 ? (string) $mautic_campaign['consultas_id'] : ''); ?>" placeholder="Ej: 7">
+                                </div>
+                            </div>
+                        </div>
 
                         <div style="margin-top:20px;padding-top:18px;border-top:1px solid #e2e8f0;">
                             <h3 style="margin:0 0 6px;font-size:15px;color:#0f172a;"><?php esc_html_e('Motor de Envío para Consultas de Oferta Académica', 'flacso-uruguay'); ?></h3>
