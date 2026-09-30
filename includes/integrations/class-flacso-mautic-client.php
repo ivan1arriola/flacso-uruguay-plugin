@@ -734,6 +734,89 @@ class FLACSO_Mautic_Client {
     }
 
     /**
+     * Envía un acuse transaccional y distingue una respuesta perdida de un
+     * rechazo HTTP comprobado. Sólo esta vía se usa por la nueva cola.
+     */
+    public static function send_transactional_email_to_contact(int $email_id, int $contact_id, array $tokens): array {
+        if ($email_id <= 0 || $contact_id <= 0) {
+            return [
+                'ok' => false, 'status' => 'failed', 'http_code' => 0,
+                'email_id' => $email_id, 'contact_id' => $contact_id,
+                'error' => 'Email ID y Contact ID deben ser enteros positivos.',
+                'acceptance_unknown' => false,
+            ];
+        }
+        if (!self::is_configured()) {
+            return [
+                'ok' => false, 'status' => 'failed', 'http_code' => 0,
+                'email_id' => $email_id, 'contact_id' => $contact_id,
+                'error' => 'Mautic no está configurado o está deshabilitado.',
+                'acceptance_unknown' => false,
+            ];
+        }
+
+        $settings = self::get_settings();
+        $url = $settings['base_url'] . '/api/emails/' . $email_id . '/contact/' . $contact_id . '/send';
+        $args = [
+            'method' => 'POST',
+            'headers' => self::get_request_headers($settings),
+            'body' => function_exists('wp_json_encode')
+                ? wp_json_encode(['tokens' => $tokens])
+                : json_encode(['tokens' => $tokens]),
+            'timeout' => self::TIMEOUT_SECONDS,
+        ];
+
+        try {
+            $response = self::http_request($url, $args);
+        } catch (Throwable $e) {
+            return [
+                'ok' => false, 'status' => 'acceptance_unknown', 'http_code' => 0,
+                'email_id' => $email_id, 'contact_id' => $contact_id,
+                'error' => $e->getMessage(), 'acceptance_unknown' => true,
+            ];
+        }
+
+        if (is_wp_error($response) || !is_array($response)) {
+            $error = is_wp_error($response)
+                ? $response->get_error_message()
+                : 'Respuesta HTTP no disponible después de iniciar el envío.';
+            return [
+                'ok' => false, 'status' => 'acceptance_unknown', 'http_code' => 0,
+                'email_id' => $email_id, 'contact_id' => $contact_id,
+                'error' => $error, 'acceptance_unknown' => true,
+            ];
+        }
+
+        $code = function_exists('wp_remote_retrieve_response_code')
+            ? (int) wp_remote_retrieve_response_code($response)
+            : (int) ($response['response']['code'] ?? 0);
+        $body = function_exists('wp_remote_retrieve_body')
+            ? wp_remote_retrieve_body($response)
+            : (string) ($response['body'] ?? '');
+        $data = json_decode($body, true);
+
+        if ($code >= 200 && $code < 300) {
+            return [
+                'ok' => true, 'status' => 'accepted', 'http_code' => $code,
+                'email_id' => $email_id, 'contact_id' => $contact_id,
+                'error' => null, 'acceptance_unknown' => false,
+                'data' => is_array($data) ? $data : [],
+            ];
+        }
+
+        return [
+            'ok' => false,
+            'status' => $code >= 500 ? 'retryable_failed' : 'failed',
+            'http_code' => $code,
+            'email_id' => $email_id,
+            'contact_id' => $contact_id,
+            'error' => self::extract_error_message($response, $code),
+            'acceptance_unknown' => false,
+            'data' => is_array($data) ? $data : [],
+        ];
+    }
+
+    /**
      * Ejecuta una operación de contacto/campaña y normaliza su resultado.
      *
      * @param string $endpoint Ruta relativa de la API Mautic.
