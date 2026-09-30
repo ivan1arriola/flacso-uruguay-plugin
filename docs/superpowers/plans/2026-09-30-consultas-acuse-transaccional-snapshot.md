@@ -13,6 +13,9 @@
 ## Global Constraints
 
 - No activar cola, campana comercial ni envio productivo hasta aprobar la prueba interna de dos snapshots para el mismo contacto.
+- Ninguna tarea autoriza por si misma mutaciones de Mautic, envios de correo,
+  cambios de produccion ni instalacion de cron; cada accion requiere aprobacion
+  operativa explicita en el momento de ejecutarse.
 - El acuse usa tokens por entrega; nunca campos de contacto flacso_ para datos de una consulta.
 - ensureDeliveryRecipient solo crea o actualiza email, nombre y apellido; no puede asignar tags, campanas ni datos de consulta.
 - Consulta, snapshot y entrega inicial se escriben en una unica transaccion PDO.
@@ -51,6 +54,7 @@
 - Create: tests/inquiry-delivery-service-test.php
 - Create: tests/inquiry-delivery-worker-test.php
 - Create: tests/inquiry-marketing-consent-test.php
+- Create: tests/support/inquiry-delivery-bootstrap.php
 - Create: docs/mautic/token-delivery-proof.md
 - Create: docs/operations/consultas-transaccionales.md
 - Modify: modules/consultas/init.php
@@ -65,32 +69,47 @@
 - Modify: docs/mautic/data-contract.md
 - Modify: docs/mautic/campaigns.md
 
-### Task 1: Probar tokens de Mautic como puerta obligatoria
+### Task 1: Preparar pruebas locales y documentar la puerta de tokens
 
 **Files:**
+- Create: tests/support/inquiry-delivery-bootstrap.php
+- Modify: tests/mautic-client-test.php
 - Create: docs/mautic/token-delivery-proof.md
 - Modify: docs/mautic/campaigns.md
 
 **Interfaces:**
-- Consumes: FLACSO_Mautic_Client::send_email_to_contact(int $email_id, int $contact_id, array $tokens): array.
-- Produces: decision approved o rejected, sintaxis confirmada, hash de plantilla y evidencia redactada.
+- Produces: bootstrap SQLite que replica restricciones e indices relevantes de PostgreSQL.
+- Produces: transporte HTTP inyectable para FLACSO_Mautic_Client.
+- Produces: procedimiento de prueba de tokens pendiente de autorizacion operativa.
 
-- [ ] **Step 1: Respaldar y crear recursos internos de prueba**
+- [ ] **Step 1: Escribir el bootstrap y las pruebas de transporte**
 
-Exportar por API la configuracion actual antes de mutarla. Crear una plantilla de evento aislada y un contacto interno, sin campanas ni datos reales.
+Crear el bootstrap SQLite reutilizable para snapshots, entregas, intentos,
+transacciones y claves unicas. Hacer que el cliente Mautic acepte un transporte
+HTTP inyectable en pruebas, capaz de simular 2xx, 4xx, timeout y respuesta
+perdida sin red ni datos reales.
 
-- [ ] **Step 2: Enviar dos snapshots diferentes**
+- [ ] **Step 2: Ejecutar la base de pruebas en rojo**
 
-Enviar dos solicitudes consecutivas al mismo contacto, con oferta, fecha, modalidad, enlaces y asunto diferentes. No incluir texto libre ni datos de terceros.
+Run: php tests/mautic-client-test.php
 
-- [ ] **Step 3: Registrar la puerta**
+Expected: FAIL por no existir el transporte inyectable o el bootstrap.
 
-Verificar que cada render usa sus tokens y no un campo mutable de contacto. Documentar endpoint, sintaxis, hashes, fecha y evidencia. Si falla, escribir rejected y detener las tareas de envio.
+- [ ] **Step 3: Documentar el procedimiento externo, sin ejecutarlo**
 
-- [ ] **Step 4: Commit**
+Describir en token-delivery-proof.md que la futura prueba requiere autorizacion
+operativa, backup previo, una plantilla aislada y contacto interno autorizado.
+Exigir dos snapshots distintos, evidencia redactada y resultado approved o
+rejected. Un resultado rejected detiene toda activacion productiva.
 
-    git add docs/mautic/token-delivery-proof.md docs/mautic/campaigns.md
-    git commit -m "docs(mautic): verificar tokens transaccionales"
+- [ ] **Step 4: Ejecutar la prueba local y commit**
+
+Run: php tests/mautic-client-test.php
+
+Expected: la simulacion de transporte termina OK y no hace red.
+
+    git add tests/support/inquiry-delivery-bootstrap.php tests/mautic-client-test.php docs/mautic/token-delivery-proof.md docs/mautic/campaigns.md
+    git commit -m "test(consultas): aislar transporte de Mautic"
 
 ### Task 2: Crear persistencia atomica de snapshot y entrega
 
@@ -98,6 +117,7 @@ Verificar que cada render usa sus tokens y no un campo mutable de contacto. Docu
 - Create: scripts/migrations/2026-09-30-inquiry-transactional-deliveries.sql
 - Create: includes/database/repositories/class-flacso-inquiry-delivery-repository.php
 - Create: tests/inquiry-delivery-repository-test.php
+- Modify: tests/support/inquiry-delivery-bootstrap.php
 - Modify: includes/database/repositories/class-flacso-offer-inquiry-repository.php
 - Modify: includes/database/repositories/class-flacso-seminar-inquiry-repository.php
 
@@ -107,7 +127,7 @@ Verificar que cada render usa sus tokens y no un campo mutable de contacto. Docu
 
 - [ ] **Step 1: Escribir prueba de transaccion y anonimizado**
 
-Crear una consulta de oferta y afirmar una sola fila en consulta, snapshot y entrega. Forzar error al insertar entrega y afirmar rollback de las tres escrituras. Repetir consultaId y afirmar que no hay nuevas filas. Probar que una entrega terminal de mas de 90 dias pierde snapshotId, consulta_id, referencia de consulta, email, contact ID y payload, conservando tipo, estado, mes agregado y metadatos no identificables.
+Usar el bootstrap SQLite. Crear una consulta de oferta y afirmar una sola fila en consulta, snapshot y entrega. Forzar error al insertar entrega y afirmar rollback de las tres escrituras. Repetir consultaId y afirmar que no hay nuevas filas. Probar que una entrega terminal de mas de 90 dias pierde snapshotId, consulta_id, referencia de consulta, email, contact ID y payload, conservando tipo, estado, mes agregado y metadatos no identificables.
 
 - [ ] **Step 2: Ejecutar prueba en rojo**
 
@@ -121,7 +141,7 @@ Crear inquiry_snapshots con id, inquiryType, inquiryId, consultaId, schemaVersio
 
 - [ ] **Step 4: Implementar el repositorio**
 
-Usar beginTransaction, insert de consulta existente, insert de snapshot y insert de entrega pending, con rollback ante cualquier excepcion. Implementar claim_pending_batch, record_attempt_start, mark_accepted, mark_retryable_failure, mark_acceptance_unknown, mark_blocked, find_for_reconciliation y anonymize_due_deliveries.
+Usar beginTransaction, insert de consulta existente, insert de snapshot y insert de entrega pending, con rollback ante cualquier excepcion. Implementar claim_pending_batch mediante UPDATE condicional o bloqueo de filas como garantia primaria de exclusividad; el bloqueo de worker no sustituye esa condicion. Implementar record_attempt_start, mark_accepted, mark_retryable_failure, mark_acceptance_unknown, mark_blocked, find_for_reconciliation y anonymize_due_deliveries.
 
 - [ ] **Step 5: Ejecutar pruebas en verde**
 
@@ -190,7 +210,7 @@ Expected: los cuatro tests terminan OK.
 
 - [ ] **Step 1: Escribir pruebas de destinatario y manifiesto**
 
-Simular contacto existente y afirmar PATCH limitado a email, firstname y lastname, sin tags ni aliases flacso_. Simular timeout de POST, buscar por email y afirmar resultado incierto si la conciliacion no encuentra contacto. Probar alias, tipo, select, plantilla publicada y hash; cada divergencia invalida contrato.
+Usar el transporte inyectable. Simular contacto existente y afirmar PATCH limitado a email, firstname y lastname, sin tags ni aliases flacso_. Simular timeout de POST, buscar por email y afirmar resultado incierto si la conciliacion no encuentra contacto. Probar alias, tipo, select, plantilla publicada y hash; cada divergencia invalida contrato.
 
 - [ ] **Step 2: Ejecutar pruebas en rojo**
 
@@ -277,7 +297,7 @@ Expected: FAIL porque no existe worker ni comando.
 
 - [ ] **Step 3: Implementar worker y WP-CLI**
 
-Usar bloqueo global con token y vencimiento para impedir paralelismo, lote maximo de 10 y delegacion al servicio. Registrar CLI solo bajo WP_CLI. El comando manual de una entrega acceptance_unknown debe requerir opcion explicita de conciliacion.
+Reclamar lotes por SQL condicional o bloqueo de filas, que es la garantia de idempotencia. Usar bloqueo global con token y vencimiento solo como proteccion adicional contra ejecuciones paralelas, lote maximo de 10 y delegacion al servicio. Registrar CLI solo bajo WP_CLI. El comando manual de una entrega acceptance_unknown debe requerir opcion explicita de conciliacion.
 
 - [ ] **Step 4: Documentar cron y ejecutar pruebas en verde**
 
@@ -322,7 +342,7 @@ Hacer que oferta y seminario construyan snapshot y usen persistencia atomica. Ex
 
 - [ ] **Step 4: Ejecutar piloto controlado**
 
-Con cola apagada, aplicar migracion a backup validado. Con contacto interno y activacion temporal aprobada, procesar dos consultas del mismo email y revisar ambos acuses accepted. Confirmar que no ingreso a campana comercial sin consentimiento.
+No ejecutar acciones externas dentro de esta tarea. Documentar el piloto requerido: con backup validado, contacto interno y autorizacion temporal, procesar dos consultas del mismo email y revisar ambos acuses accepted. Confirmar que no ingresa a campana comercial sin consentimiento.
 
 - [ ] **Step 5: Retirar legado solo despues de piloto aprobado**
 
@@ -363,7 +383,7 @@ Instalar cron por minuto, verificar usuario, ruta y salida protegida. Con cola a
 
 - [ ] **Step 4: Prueba interna y reporte**
 
-Activar cola solo para contacto interno aprobado, enviar dos entregas, verificar snapshots, intentos y accepted. Mantener campana comercial inactiva. Reportar por separado pruebas, CI, SHA, migracion, cron, manifiesto, aceptacion API y entrega interna; no afirmar entrega general por un HTTP 2xx.
+Solicitar autorizacion operativa separada antes de activar cola, crear recursos internos, instalar cron o enviar dos entregas. Tras aprobarla, verificar snapshots, intentos y accepted; mantener campana comercial inactiva. Reportar por separado pruebas, CI, SHA, migracion, cron, manifiesto, aceptacion API y entrega interna; no afirmar entrega general por un HTTP 2xx.
 
 ---
 
