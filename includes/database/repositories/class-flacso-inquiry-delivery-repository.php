@@ -345,6 +345,7 @@ final class FLACSO_Inquiry_Delivery_Repository {
         );
         $stmt->execute([
             ':state'       => 'retryable_failed',
+            ':processing'  => 'processing',
             ':next_attempt'=> $next,
             ':http_code'   => $http_code,
             ':error_class' => self::redact($error_class),
@@ -456,6 +457,7 @@ final class FLACSO_Inquiry_Delivery_Repository {
         );
         $stmt->execute([
             ':state'        => $state,
+            ':processing'   => 'processing',
             ':accepted_at'  => $accepted ? $now : null,
             ':terminal_at'  => $now,
             ':http_code'    => $http_code,
