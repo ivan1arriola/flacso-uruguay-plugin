@@ -23,6 +23,33 @@ class FLACSO_Mautic_Client {
     private const DEFAULT_AUTH_TYPE = 'basic';
     private const TIMEOUT_SECONDS = 4;
 
+    /** @var callable|null Transporte HTTP inyectable exclusivamente para pruebas. */
+    private static $http_transport = null;
+
+    public static function set_http_transport(?callable $transport): void {
+        self::$http_transport = $transport;
+    }
+
+    private static function http_request(string $url, array $args) {
+        if (is_callable(self::$http_transport)) {
+            return call_user_func(self::$http_transport, $url, $args);
+        }
+
+        if (function_exists('wp_remote_request')) {
+            return wp_remote_request($url, $args);
+        }
+
+        $method = strtoupper((string) ($args['method'] ?? 'GET'));
+        if ($method === 'GET' && function_exists('wp_remote_get')) {
+            return wp_remote_get($url, $args);
+        }
+        if ($method === 'POST' && function_exists('wp_remote_post')) {
+            return wp_remote_post($url, $args);
+        }
+
+        return null;
+    }
+
     /**
      * Obtiene la configuración normalizada de la integración con Mautic.
      *
@@ -107,9 +134,7 @@ class FLACSO_Mautic_Client {
             'timeout' => self::TIMEOUT_SECONDS,
         ];
 
-        $response = function_exists('wp_remote_request')
-            ? wp_remote_request($url, $args)
-            : (function_exists('wp_remote_get') ? wp_remote_get($url, $args) : null);
+        $response = self::http_request($url, $args);
 
         if (is_wp_error($response)) {
             return [
@@ -173,9 +198,7 @@ class FLACSO_Mautic_Client {
             'timeout' => self::TIMEOUT_SECONDS,
         ];
 
-        $response = function_exists('wp_remote_request')
-            ? wp_remote_request($url, $args)
-            : (function_exists('wp_remote_get') ? wp_remote_get($url, $args) : null);
+        $response = self::http_request($url, $args);
 
         if (is_wp_error($response) || !is_array($response)) {
             return null;
@@ -386,9 +409,7 @@ class FLACSO_Mautic_Client {
             'timeout' => self::TIMEOUT_SECONDS,
         ];
 
-        $response = function_exists('wp_remote_request')
-            ? wp_remote_request($url, $args)
-            : (function_exists('wp_remote_post') && $method === 'POST' ? wp_remote_post($url, $args) : null);
+        $response = self::http_request($url, $args);
 
         if (is_wp_error($response)) {
             return [
@@ -435,6 +456,165 @@ class FLACSO_Mautic_Client {
             'contact_id' => null,
             'action'     => 'failed',
             'error'      => $error_msg,
+        ];
+    }
+
+    /**
+     * Asegura un destinatario mínimo para una entrega transaccional.
+     *
+     * Sólo puede escribir email, firstname y lastname. Nunca agrega tags,
+     * campañas ni campos flacso_ de una consulta.
+     */
+    public static function ensure_delivery_recipient(string $email, string $first_name, string $last_name): array {
+        $email = strtolower(trim($email));
+        if ($email === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            return [
+                'ok' => false, 'status' => 'failed', 'contact_id' => null,
+                'action' => 'failed', 'error' => 'Email inválido o vacío.',
+                'acceptance_unknown' => false,
+            ];
+        }
+        if (!self::is_configured()) {
+            return [
+                'ok' => false, 'status' => 'failed', 'contact_id' => null,
+                'action' => 'failed', 'error' => 'Mautic no está configurado o está deshabilitado.',
+                'acceptance_unknown' => false,
+            ];
+        }
+
+        $search = self::search_contact_result($email);
+        if (!$search['ok']) {
+            return [
+                'ok' => false, 'status' => 'failed', 'contact_id' => null,
+                'action' => 'failed', 'error' => $search['error'],
+                'acceptance_unknown' => false,
+            ];
+        }
+
+        $payload = [
+            'email' => $email,
+            'firstname' => trim($first_name),
+            'lastname' => trim($last_name),
+        ];
+
+        if (!empty($search['contact']['id'])) {
+            $contact_id = (int) $search['contact']['id'];
+            $updated = self::request_contact_endpoint(
+                '/api/contacts/' . $contact_id . '/edit',
+                'PATCH',
+                $payload
+            );
+            return [
+                'ok' => !empty($updated['ok']),
+                'status' => !empty($updated['ok']) ? 'ready' : 'failed',
+                'contact_id' => !empty($updated['ok']) ? $contact_id : null,
+                'action' => !empty($updated['ok']) ? 'updated' : 'failed',
+                'error' => $updated['error'] ?? null,
+                'acceptance_unknown' => false,
+            ];
+        }
+
+        $created = self::request_contact_endpoint('/api/contacts/new', 'POST', $payload);
+        if (!empty($created['ok'])) {
+            $contact = $created['data']['contact'] ?? [];
+            $contact_id = is_array($contact) ? (int) ($contact['id'] ?? 0) : 0;
+            if ($contact_id > 0) {
+                return [
+                    'ok' => true, 'status' => 'ready', 'contact_id' => $contact_id,
+                    'action' => 'created', 'error' => null, 'acceptance_unknown' => false,
+                ];
+            }
+        }
+
+        // Un POST con fallo de transporte puede haber llegado a Mautic. Antes
+        // de repetirlo se reconcilia por email para no crear duplicados.
+        if ((int) ($created['http_code'] ?? 0) === 0) {
+            $reconciled = self::search_contact_result($email);
+            if (!empty($reconciled['ok']) && !empty($reconciled['contact']['id'])) {
+                return [
+                    'ok' => true,
+                    'status' => 'ready',
+                    'contact_id' => (int) $reconciled['contact']['id'],
+                    'action' => 'reconciled',
+                    'error' => null,
+                    'acceptance_unknown' => false,
+                ];
+            }
+
+            return [
+                'ok' => false,
+                'status' => 'acceptance_unknown',
+                'contact_id' => null,
+                'action' => 'unknown',
+                'error' => 'No fue posible determinar si Mautic creó el destinatario.',
+                'acceptance_unknown' => true,
+            ];
+        }
+
+        return [
+            'ok' => false,
+            'status' => 'failed',
+            'contact_id' => null,
+            'action' => 'failed',
+            'error' => $created['error'] ?? 'No fue posible crear el destinatario.',
+            'acceptance_unknown' => false,
+        ];
+    }
+
+    /**
+     * Lectura de metadatos de campos para validación de contrato.
+     */
+    public static function get_contact_fields(): array {
+        $response = self::request_contact_endpoint('/api/fields/contact?limit=200', 'GET');
+        if (!$response['ok']) {
+            return $response;
+        }
+        $fields = $response['data']['fields'] ?? [];
+        $response['fields'] = is_array($fields) ? array_values($fields) : [];
+        return $response;
+    }
+
+    /**
+     * Lectura de una plantilla de email sin mutaciones.
+     */
+    public static function get_email_template(int $email_id): array {
+        if ($email_id <= 0) {
+            return self::contact_operation_failure('El ID de email debe ser positivo.');
+        }
+        $response = self::request_contact_endpoint('/api/emails/' . $email_id, 'GET');
+        if (!$response['ok']) {
+            return $response;
+        }
+        $email = $response['data']['email'] ?? [];
+        $response['email'] = is_array($email) ? $email : [];
+        return $response;
+    }
+
+    private static function search_contact_result(string $email): array {
+        $response = self::request_contact_endpoint(
+            '/api/contacts?search=email:' . urlencode(strtolower(trim($email))),
+            'GET'
+        );
+        if (!$response['ok']) {
+            return [
+                'ok' => false,
+                'contact' => null,
+                'http_code' => $response['http_code'] ?? 0,
+                'error' => $response['error'] ?? 'Error al buscar contacto.',
+            ];
+        }
+
+        $contacts = $response['data']['contacts'] ?? [];
+        if (!is_array($contacts) || empty($contacts)) {
+            return ['ok' => true, 'contact' => null, 'http_code' => $response['http_code'], 'error' => null];
+        }
+
+        $first = reset($contacts);
+        return [
+            'ok' => true,
+            'contact' => is_array($first) ? $first : null,
+            'http_code' => $response['http_code'],
+            'error' => null,
         ];
     }
 
@@ -487,9 +667,7 @@ class FLACSO_Mautic_Client {
             'timeout' => self::TIMEOUT_SECONDS,
         ];
 
-        $response = function_exists('wp_remote_request')
-            ? wp_remote_request($url, $args)
-            : (function_exists('wp_remote_post') ? wp_remote_post($url, $args) : null);
+        $response = self::http_request($url, $args);
 
         if (is_wp_error($response)) {
             return [
@@ -578,9 +756,7 @@ class FLACSO_Mautic_Client {
             $args['body'] = function_exists('wp_json_encode') ? wp_json_encode($payload) : json_encode($payload);
         }
 
-        $response = function_exists('wp_remote_request')
-            ? wp_remote_request($settings['base_url'] . $endpoint, $args)
-            : null;
+        $response = self::http_request($settings['base_url'] . $endpoint, $args);
 
         if (is_wp_error($response)) {
             return self::contact_operation_failure($response->get_error_message());
