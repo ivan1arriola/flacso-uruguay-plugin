@@ -298,14 +298,13 @@ $result_sem = FLACSO_Seminar_Inquiry_Service::submit([
 srv_assert($result_sem['ok'] === true, 'Seminar submit debe ser ok');
 srv_assert($result_sem['consulta_id'] === 'srv-sem-001', 'Debe retornar consulta_id del seminario');
 srv_assert($result_sem['duplicate'] === false, 'No debe ser duplicado');
-srv_assert($result_sem['email'] === 'sent', 'Email status del seminario debe ser sent');
-srv_assert(count($GLOBALS['mailjet_http_calls']) === $calls_before_sem + 1, 'Debe haber llamado a Mailjet para el seminario');
+srv_assert($result_sem['email'] === 'skipped', 'La comunicación del seminario debe quedar a cargo de Mautic');
+srv_assert(count($GLOBALS['mailjet_http_calls']) === $calls_before_sem, 'El seminario no debe llamar Mailjet');
 
 $sem_repo = new FLACSO_Seminar_Inquiry_Repository();
 $saved_sem = $sem_repo->find_by_consulta_id('srv-sem-001');
 srv_assert(!empty($saved_sem), 'La fila debe existir en seminar_inquiries');
-srv_assert($saved_sem['emailStatus'] === 'sent', 'emailStatus en BD para seminario debe ser sent');
-srv_assert($saved_sem['mailjetMessageId'] === '288230407340150000', 'mailjetMessageId del seminario debe guardarse en BD');
+srv_assert($saved_sem['emailStatus'] === 'skipped', 'emailStatus en BD para seminario debe ser skipped');
 
 // =========================================================================
 // 4. Idempotencia de seminario: reenvío con mismo event_id no envía correo
@@ -876,4 +875,3 @@ srv_assert($saved_followup_def['followupStatus'] === 'pending', '12.3: BD debe r
 srv_assert($saved_followup_def['followupDueAt'] === $expected_due_12_3, '12.3: BD debe registrar followupDueAt === +5 días');
 
 echo "OK inquiry-services-test\n";
-

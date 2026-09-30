@@ -293,6 +293,25 @@ class FLACSO_Seminar_Inquiry_Service {
             ];
         }
 
+        // Mautic administra las comunicaciones posteriores a esta consulta.
+        // WordPress conserva la persistencia, pero no despacha por proveedores.
+        try {
+            $repo->update_email_status($consulta_id, 'skipped', 'mautic_campaign');
+        } catch (\Throwable $e) {
+            error_log('[FLACSO] Error al actualizar estado Mautic del seminario: ' . $e->getMessage());
+        }
+
+        return [
+            'ok'                   => true,
+            'consulta_id'          => $consulta_id,
+            'duplicate'            => false,
+            'email'                => 'skipped',
+            'email_sender'         => 'mautic_campaign',
+            'mailjet_message_id'   => null,
+            'mailjet_message_uuid' => null,
+            'code'                 => 200,
+        ];
+
         // 6. Despacho Mailjet (Enviar después)
         $inquiry_payload = [
             'consultaId'       => $consulta_id,
