@@ -454,6 +454,13 @@ final class FLACSO_Inquiry_Delivery_Repository {
     }
 
     private function template_identity(): array {
+        if (!class_exists('FLACSO_Mautic_Contract_Manifest')) {
+            $manifest_file = dirname(__DIR__, 3) . '/modules/consultas/services/class-flacso-mautic-contract-manifest.php';
+            if (is_file($manifest_file)) {
+                require_once $manifest_file;
+            }
+        }
+
         if (class_exists('FLACSO_Mautic_Contract_Manifest')) {
             $definition = FLACSO_Mautic_Contract_Manifest::definition();
             return [
