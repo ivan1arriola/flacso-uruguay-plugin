@@ -373,20 +373,65 @@ final class FLACSO_Inquiry_Delivery_Repository {
         $days = max(1, $days);
         $cutoff = gmdate('c', time() - ($days * 86400));
         $now = gmdate('c');
+        $owns_transaction = !$this->pdo->inTransaction();
 
-        $stmt = $this->pdo->prepare(
-            "UPDATE inquiry_deliveries
-             SET \"snapshotId\" = NULL, \"inquiryId\" = NULL, \"consultaId\" = NULL, email = NULL,
-                 \"contactId\" = NULL, \"payloadJson\" = NULL, \"claimToken\" = NULL,
-                 \"lastError\" = NULL, \"anonymizedAt\" = :now, \"updatedAt\" = :now
-             WHERE \"anonymizedAt\" IS NULL
-               AND \"terminalAt\" IS NOT NULL
-               AND \"terminalAt\" < :cutoff
-               AND state IN ('accepted','acceptance_unknown','failed','blocked')"
-        );
-        $stmt->execute([':now' => $now, ':cutoff' => $cutoff]);
+        if ($owns_transaction) {
+            $this->pdo->beginTransaction();
+        }
 
-        return $stmt->rowCount();
+        try {
+            $select = $this->pdo->prepare(
+                "SELECT id, \"snapshotId\"
+                 FROM inquiry_deliveries
+                 WHERE \"anonymizedAt\" IS NULL
+                   AND \"terminalAt\" IS NOT NULL
+                   AND \"terminalAt\" < :cutoff
+                   AND state IN ('accepted','acceptance_unknown','failed','blocked')"
+            );
+            $select->execute([':cutoff' => $cutoff]);
+            $due = $select->fetchAll(PDO::FETCH_ASSOC);
+
+            if (empty($due)) {
+                if ($owns_transaction) {
+                    $this->pdo->commit();
+                }
+                return 0;
+            }
+
+            $update = $this->pdo->prepare(
+                'UPDATE inquiry_deliveries
+                 SET "snapshotId" = NULL, "inquiryId" = NULL, "consultaId" = NULL, email = NULL,
+                     "contactId" = NULL, "payloadJson" = NULL, "claimToken" = NULL,
+                     "lastError" = NULL, "anonymizedAt" = :now, "updatedAt" = :now
+                 WHERE id = :id AND "anonymizedAt" IS NULL'
+            );
+            $delete_snapshot = $this->pdo->prepare(
+                'DELETE FROM inquiry_snapshots WHERE id = :snapshot_id'
+            );
+
+            $count = 0;
+            foreach ($due as $row) {
+                $update->execute([':now' => $now, ':id' => (string) $row['id']]);
+                if ($update->rowCount() !== 1) {
+                    continue;
+                }
+                $count++;
+                $snapshot_id = trim((string) ($row['snapshotId'] ?? ''));
+                if ($snapshot_id !== '') {
+                    $delete_snapshot->execute([':snapshot_id' => $snapshot_id]);
+                }
+            }
+
+            if ($owns_transaction) {
+                $this->pdo->commit();
+            }
+            return $count;
+        } catch (Throwable $e) {
+            if ($owns_transaction && $this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $e;
+        }
     }
 
     private function transition_terminal(
@@ -494,6 +539,6 @@ final class FLACSO_Inquiry_Delivery_Repository {
             return null;
         }
         $value = preg_replace('/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i', '[email]', $value);
-        return mb_substr((string) $value, 0, 500);
+        return function_exists('mb_substr') ? mb_substr((string) $value, 0, 500) : substr((string) $value, 0, 500);
     }
 }
