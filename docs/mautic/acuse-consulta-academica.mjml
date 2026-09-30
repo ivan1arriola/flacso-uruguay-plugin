@@ -1,0 +1,64 @@
+<mjml>
+  <mj-head>
+    <mj-title>Información solicitada</mj-title>
+    <mj-preview>Recibimos tu solicitud de información sobre {contactfield=flacso_oferta_articulo} {contactfield=flacso_oferta_nombre}.</mj-preview>
+    <mj-font name="Roboto" href="https://fonts.googleapis.com/css?family=Roboto:400,500,700" />
+    <mj-attributes>
+      <mj-all font-family="Roboto, Arial, Helvetica, sans-serif" />
+      <mj-text color="#2e2f34" font-size="16px" line-height="1.6" padding="0" font-family="Roboto, Arial, Helvetica, sans-serif" />
+      <mj-section padding="0" />
+      <mj-column padding="0" />
+      <mj-button border-radius="999px" font-size="15px" font-weight="700" inner-padding="14px 22px" width="100%" font-family="Roboto, Arial, Helvetica, sans-serif" />
+    </mj-attributes>
+  </mj-head>
+  <mj-body background-color="#f8f9fa">
+    <mj-section background-color="#f8f9fa" padding="22px 12px 0 12px"><mj-column><mj-spacer height="1px" /></mj-column></mj-section>
+    <mj-section background-color="#16396f" padding="30px 24px 24px 24px">
+      <mj-column>
+        <mj-image src="https://081g5.mjt.lu/img2/081g5/bdb8cb4d-7c60-432b-995a-ffa64b382811/content" alt="Logo alternativo de FLACSO Uruguay por sus 20 años" width="230px" padding="0 0 16px 0" />
+        <mj-text align="center" color="#fed222" font-size="13px" font-weight="700" letter-spacing="1px" padding="0 0 8px 0">SOLICITUD DE INFORMACIÓN</mj-text>
+        <mj-text align="center" color="#ffffff" font-size="28px" font-weight="700" line-height="1.25" padding="0 0 10px 0">Recibimos tu consulta</mj-text>
+        <mj-text align="center" color="#dbe4ef" font-size="15px" line-height="1.5" padding="0">Te enviamos la información principal para que puedas conocer la propuesta y avanzar con tu postulación.</mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section background-color="#fed222" padding="18px 28px"><mj-column><mj-text color="#0f1a2d" font-size="18px" font-weight="700" line-height="1.4" padding="0">{contactfield=flacso_oferta_nombre}</mj-text></mj-column></mj-section>
+    <mj-section background-color="#ffffff" padding="30px 28px 10px 28px">
+      <mj-column>
+        <mj-text padding="0 0 16px 0">Estimada/o <strong>{contactfield=firstname} {contactfield=lastname}</strong>,</mj-text>
+        <mj-text padding="0 0 16px 0">Gracias por completar el formulario de solicitud de información. Te hacemos llegar los datos principales sobre {contactfield=flacso_oferta_articulo} <strong>{contactfield=flacso_oferta_nombre}</strong>.</mj-text>
+        <mj-text padding="0 0 16px 0">Esta propuesta forma parte de FLACSO Uruguay. En la página correspondiente podés consultar costos, programa, requisitos y detalles para iniciar tu postulación.</mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section background-color="#ffffff" padding="0 22px 10px 22px">
+      <mj-column width="50%" padding="0 6px 12px 6px"><mj-text container-background-color="#edf3fb" color="#16396f" font-size="14px" line-height="1.5" padding="14px 16px"><strong style="font-size:13px;color:#7a8696;">Modalidad</strong><br /><strong style="font-size:16px;color:#16396f;">{contactfield=flacso_modalidad}</strong></mj-text></mj-column>
+      <mj-column width="50%" padding="0 6px 12px 6px"><mj-text container-background-color="#edf3fb" color="#16396f" font-size="14px" line-height="1.5" padding="14px 16px"><strong style="font-size:13px;color:#7a8696;">Inicio</strong><br /><strong style="font-size:16px;color:#16396f;">{contactfield=flacso_fecha_inicio}</strong></mj-text></mj-column>
+    </mj-section>
+    <mj-section background-color="#ffffff" padding="4px 28px 26px 28px"><mj-column>
+      <mj-button background-color="#248138" color="#ffffff" href="{contactfield=flacso_preinscripcion_url}" padding="0 0 12px 0" width="100%">Iniciar preinscripción</mj-button>
+      <mj-button background-color="#16396f" color="#ffffff" href="{contactfield=flacso_oferta_url}carta" padding="0" width="100%">Ver costos, programa y requisitos</mj-button>
+    </mj-column></mj-section>
+    <mj-section background-color="#fff7d6" padding="24px 28px"><mj-column>
+      <mj-text color="#0f1a2d" font-size="18px" font-weight="700" line-height="1.4" padding="0 0 12px 0">Formación de posgrado con respaldo institucional</mj-text>
+      <mj-text color="#2e2f34" font-size="15px" line-height="1.7" padding="0 0 14px 0"><strong>FLACSO Uruguay</strong> es un organismo internacional, público y regional que busca formar a sus estudiantes con <strong>excelencia académica</strong>, <strong>proyección profesional</strong> y <strong>compromiso social</strong>. Nos respaldan <strong>20 años de trayectoria a nivel nacional</strong> y más de <strong>68 años a nivel internacional</strong>, consolidando un sistema académico regional de referencia en formación e investigación.</mj-text>
+      <mj-text color="#2e2f34" font-size="15px" line-height="1.7" padding="0 0 14px 0">Además, más de <strong>7000 personas egresadas</strong> de FLACSO Uruguay trabajan en el ámbito público, privado y en organismos internacionales.</mj-text>
+      <mj-text color="#2e2f34" font-size="15px" line-height="1.7" padding="0 0 14px 0">Nos distingue un sistema de gestión académica eficiente y cercano, que acompaña de forma personalizada a cada estudiante y garantiza altos niveles de egreso, superiores al <strong>90%</strong>.</mj-text>
+      <mj-text color="#2e2f34" font-size="15px" line-height="1.7" padding="0">Nuestras cursadas son <strong>100% online</strong>*, al igual que las instancias de evaluación académica, lo que garantiza flexibilidad en el acceso, permanencia y calidad en la formación.</mj-text>
+      <mj-text color="#7a8696" font-size="12px" line-height="1.5" padding="8px 0 0">*La modalidad 100% online no aplica al Diploma en Conservación Preventiva y Primeras Intervenciones para Documentos Históricos</mj-text>
+    </mj-column></mj-section>
+    <mj-section background-color="#ffffff" padding="24px 28px 10px 28px"><mj-column>
+      <mj-text color="#16396f" font-size="18px" font-weight="700" line-height="1.4" padding="0 0 12px 0">Facilidades de pago y beneficios</mj-text>
+      <mj-text padding="0 0 16px 0">Podés cursar {contactfield=flacso_oferta_articulo} <strong>{contactfield=flacso_oferta_nombre}</strong> abonando en <strong>cuotas mensuales</strong> durante toda la formación. Contamos con múltiples <strong>descuentos por convenios institucionales</strong>, beneficios para egresados, becas parciales y facilidades de pago adaptadas a cada situación personal.</mj-text>
+      <mj-button background-color="#fed222" color="#0f1a2d" href="https://flacso.edu.uy/convenios" padding="0 0 18px 0" width="100%">Convenios FLACSO Uruguay</mj-button>
+      <mj-text padding="0 0 14px 0">Si tenés dudas sobre cursada, inscripción, financiación o documentación, podés responder este correo y el equipo de FLACSO Uruguay te orientará.</mj-text>
+    </mj-column></mj-section>
+    <mj-section background-color="#edf3fb" padding="24px 28px"><mj-column>
+      <mj-text color="#16396f" font-size="18px" font-weight="700" padding="0 0 12px 0">Datos ingresados en el formulario</mj-text>
+      <mj-text font-size="15px" line-height="1.7" padding="0"><strong>Nombre:</strong> {contactfield=firstname}<br /><strong>Apellido:</strong> {contactfield=lastname}<br /><strong>País de residencia:</strong> {contactfield=flacso_pais}<br /><strong>Nivel académico:</strong> {contactfield=flacso_nivel_academico}<br /><strong>Correo electrónico:</strong> {contactfield=email}<br /><strong>Profesión:</strong> {contactfield=flacso_profesion}</mj-text>
+    </mj-column></mj-section>
+    <mj-section background-color="#16396f" padding="22px 24px"><mj-column>
+      <mj-text align="center" color="#ffffff" font-size="14px" line-height="1.6" padding="0 0 8px 0">Saludos cordiales,<br /><strong>Equipo FLACSO Uruguay</strong></mj-text>
+      <mj-text align="center" color="#dbe4ef" font-size="14px" line-height="1.6" padding="0">Por consultas: <strong>inscripciones@flacso.edu.uy</strong></mj-text>
+    </mj-column></mj-section>
+    <mj-section background-color="#f8f9fa" padding="16px 12px 24px 12px"><mj-column><mj-text align="center" color="#7a8696" font-size="12px" line-height="1.5" padding="0 0 4px 0">© 2026 FLACSO Uruguay · Facultad Latinoamericana de Ciencias Sociales. Todos los derechos reservados.</mj-text></mj-column></mj-section>
+  </mj-body>
+</mjml>
