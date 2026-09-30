@@ -7,8 +7,18 @@ if ($template === false) {
     exit(1);
 }
 
-if (strpos($template, 'href="{contactfield=flacso_oferta_url}"') === false) {
-    fwrite(STDERR, "FAIL: el enlace carta debe usar un token Mautic completo\n");
+if (strpos($template, 'href="{oferta_academica_url}"') === false) {
+    fwrite(STDERR, "FAIL: el enlace de la oferta debe usar el token del snapshot\n");
+    exit(1);
+}
+
+if (strpos($template, 'contactfield=flacso_oferta_') !== false) {
+    fwrite(STDERR, "FAIL: la plantilla no debe depender de campos mutables de la oferta\n");
+    exit(1);
+}
+
+if (strpos($template, '{oferta_academica_url_preinscripcion}') === false) {
+    fwrite(STDERR, "FAIL: el enlace de preinscripción debe usar el token del snapshot\n");
     exit(1);
 }
 
