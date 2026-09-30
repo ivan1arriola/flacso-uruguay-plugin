@@ -751,7 +751,8 @@ $recipient = FLACSO_Mautic_Client::ensure_delivery_recipient('persona@example.or
 mautic_assert($recipient['ok'] === true && $recipient['contact_id'] === 77, 'ensure_delivery_recipient reutiliza contacto');
 mautic_assert(count($transport_calls) === 2, 'destinatario existente realiza búsqueda y PATCH');
 $minimal_body = json_decode($transport_calls[1]['args']['body'], true);
-$minimal_keys = array_keys($minimal_body);\nsort($minimal_keys);
+$minimal_keys = array_keys($minimal_body);
+sort($minimal_keys);
 mautic_assert($minimal_keys === ['email', 'firstname', 'lastname'], 'PATCH del destinatario sólo contiene identidad mínima');
 mautic_assert(!str_contains($transport_calls[1]['args']['body'], 'tags'), 'destinatario mínimo no agrega tags');
 mautic_assert(!str_contains($transport_calls[1]['args']['body'], 'flacso_'), 'destinatario mínimo no escribe campos de consulta');
