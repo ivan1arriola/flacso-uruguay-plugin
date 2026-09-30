@@ -417,6 +417,22 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			}
 			$sender = strtolower( trim( (string) ( $row['emailSender'] ?? '' ) ) );
 
+			if ( 'pending' === $status ) {
+				return '<span class="flacso-badge pending" title="' . esc_attr__( 'Acuse persistido y pendiente de procesamiento', 'flacso-uruguay' ) . '">pending</span>';
+			}
+			if ( 'accepted' === $status ) {
+				return '<span class="flacso-badge sent mautic" title="' . esc_attr__( 'Mautic aceptó la solicitud de envío; no implica entrega ni lectura', 'flacso-uruguay' ) . '">accepted (Mautic)</span>';
+			}
+			if ( 'retryable_failed' === $status ) {
+				return '<span class="flacso-badge pending" title="' . esc_attr__( 'Fallo comprobado antes de aceptación; la cola puede reintentar dentro del límite', 'flacso-uruguay' ) . '">retryable</span>';
+			}
+			if ( 'acceptance_unknown' === $status ) {
+				return '<span class="flacso-badge failed" title="' . esc_attr__( 'No se pudo determinar si Mautic aceptó el envío. Requiere conciliación manual y no se reintenta automáticamente.', 'flacso-uruguay' ) . '">acceptance unknown</span>';
+			}
+			if ( 'blocked' === $status ) {
+				return '<span class="flacso-badge failed" title="' . esc_attr__( 'Envío bloqueado por contrato o configuración incompatible', 'flacso-uruguay' ) . '">blocked</span>';
+			}
+
 			if ( 'sent' === $status ) {
 				if ( 'mautic' === $sender ) {
 					return '<span class="flacso-badge sent mautic" title="' . esc_attr__( 'Enviado vía Mautic', 'flacso-uruguay' ) . '">sent (Mautic)</span>';
@@ -568,12 +584,63 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 		}
 
 		/**
+		 * Diagnóstico operativo sin PII ni payloads.
+		 */
+		private static function render_transactional_diagnostics(): void {
+			$queue_enabled = function_exists( 'get_option' )
+				&& '1' === (string) get_option( 'flacso_inquiry_delivery_queue_enabled', '0' );
+
+			$contract_status = 'unavailable';
+			if ( class_exists( 'FLACSO_Mautic_Contract_Validator' ) ) {
+				try {
+					$validation      = FLACSO_Mautic_Contract_Validator::validate();
+					$contract_status = ! empty( $validation['ok'] ) ? 'valid' : 'blocked';
+				} catch ( Throwable $e ) {
+					$contract_status = 'blocked';
+				}
+			}
+
+			$counts         = array();
+			$reconciliation = 0;
+			try {
+				$pdo  = FLACSO_DB::connection();
+				$stmt = $pdo->query( 'SELECT state, COUNT(*) AS total FROM inquiry_deliveries GROUP BY state ORDER BY state' );
+				if ( $stmt ) {
+					foreach ( $stmt->fetchAll( PDO::FETCH_ASSOC ) as $row ) {
+						$counts[ (string) $row['state'] ] = (int) $row['total'];
+					}
+				}
+				$reconciliation = (int) $pdo->query(
+					"SELECT COUNT(*) FROM inquiry_deliveries WHERE state = 'acceptance_unknown'"
+				)->fetchColumn();
+			} catch ( Throwable $e ) {
+				$counts = array();
+			}
+
+			$parts = array();
+			foreach ( $counts as $state => $total ) {
+				$parts[] = $state . ': ' . $total;
+			}
+			$summary = empty( $parts ) ? 'sin datos de cola' : implode( ' · ', $parts );
+
+			echo '<div class="notice notice-info flacso-transactional-diagnostics"><p>';
+			echo '<strong>' . esc_html__( 'Acuses transaccionales', 'flacso-uruguay' ) . ':</strong> ';
+			echo esc_html( $queue_enabled ? 'cola habilitada' : 'cola deshabilitada' );
+			echo ' · ' . esc_html( 'contrato Mautic: ' . $contract_status );
+			echo ' · ' . esc_html( $summary );
+			echo ' · ' . esc_html( 'conciliación manual: ' . $reconciliation );
+			echo '</p></div>';
+		}
+
+		/**
 		 * Renderiza la plataforma principal de Consultas con 6 pestañas.
 		 */
 		public static function render_page(): void {
 			if ( ! current_user_can( 'manage_options' ) ) {
 				return;
 			}
+
+			self::render_transactional_diagnostics();
 
 			$active_tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'historico';
 			$valid_tabs = array( 'historico', 'oferta', 'oferta-pais', 'comparacion', 'campanas', 'exportar' );
