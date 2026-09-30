@@ -7,41 +7,9 @@ if (!defined('ABSPATH')) {
     define('ABSPATH', __DIR__ . '/');
 }
 
-function flacso_test_delivery_pdo(): PDO {
-    $pdo = new PDO('sqlite::memory:', null, null, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    ]);
-
+function flacso_test_install_delivery_tables(PDO $pdo): void {
     $pdo->exec('
-    CREATE TABLE offer_inquiries (
-        id TEXT PRIMARY KEY, consultaId TEXT UNIQUE, offerWpId INTEGER, offerName TEXT,
-        offerAbbreviation TEXT, offerType TEXT, cohortWpId INTEGER, cohortNumber INTEGER, cohortName TEXT,
-        registrationOpenAt TEXT, registrationCloseAt TEXT,
-        firstName TEXT, lastName TEXT, fullName TEXT, email TEXT, emailNormalized TEXT, country TEXT,
-        profession TEXT, educationLevel TEXT, source TEXT, campaignProvider TEXT, campaignSource TEXT,
-        campaignMedium TEXT, campaignName TEXT, campaignExternalId TEXT, campaignContent TEXT, campaignTerm TEXT,
-        urlBase TEXT, urlReferer TEXT, inquiryAt TEXT, ipAddress TEXT, userAgent TEXT, replyToEmail TEXT,
-        programUrl TEXT, cartaUrl TEXT, preinscripcionUrl TEXT, offerStatus TEXT,
-        mauticContactId TEXT, mauticSyncStatus TEXT DEFAULT "skipped", mauticSyncedAt TEXT, mauticLastError TEXT,
-        followupDueAt TEXT, followupStatus TEXT DEFAULT "none", followupSentAt TEXT,
-        followupAttempts INTEGER DEFAULT 0, followupLastError TEXT,
-        emailStatus TEXT, emailSender TEXT, gmailMessageUrl TEXT, mailjetMessageId TEXT,
-        mailjetMessageUuid TEXT, payload TEXT, createdAt TEXT, updatedAt TEXT
-    );
-
-    CREATE TABLE seminar_inquiries (
-        id TEXT PRIMARY KEY, consultaId TEXT UNIQUE, seminarWpId INTEGER, seminarName TEXT, seminarType TEXT,
-        firstName TEXT, lastName TEXT, fullName TEXT, email TEXT, emailNormalized TEXT, country TEXT,
-        profession TEXT, educationLevel TEXT, source TEXT, campaignProvider TEXT, campaignSource TEXT,
-        campaignMedium TEXT, campaignName TEXT, campaignExternalId TEXT, campaignContent TEXT, campaignTerm TEXT,
-        urlBase TEXT, urlReferer TEXT, inquiryAt TEXT, ipAddress TEXT, userAgent TEXT, replyToEmail TEXT,
-        programUrl TEXT, cartaUrl TEXT, preinscripcionUrl TEXT, offerStatus TEXT, emailStatus TEXT,
-        emailSender TEXT, gmailMessageUrl TEXT, mailjetMessageId TEXT, mailjetMessageUuid TEXT,
-        payload TEXT, createdAt TEXT, updatedAt TEXT
-    );
-
-    CREATE TABLE inquiry_snapshots (
+    CREATE TABLE IF NOT EXISTS inquiry_snapshots (
         id TEXT PRIMARY KEY,
         inquiryType TEXT NOT NULL,
         inquiryId TEXT NOT NULL,
@@ -52,7 +20,7 @@ function flacso_test_delivery_pdo(): PDO {
         UNIQUE(inquiryType, inquiryId)
     );
 
-    CREATE TABLE inquiry_deliveries (
+    CREATE TABLE IF NOT EXISTS inquiry_deliveries (
         id TEXT PRIMARY KEY,
         snapshotId TEXT NULL,
         inquiryType TEXT NOT NULL,
@@ -83,7 +51,7 @@ function flacso_test_delivery_pdo(): PDO {
         UNIQUE(snapshotId, deliveryType)
     );
 
-    CREATE TABLE inquiry_delivery_attempts (
+    CREATE TABLE IF NOT EXISTS inquiry_delivery_attempts (
         id TEXT PRIMARY KEY,
         deliveryId TEXT NOT NULL,
         attemptId TEXT NOT NULL UNIQUE,
@@ -95,6 +63,44 @@ function flacso_test_delivery_pdo(): PDO {
         errorMessage TEXT NULL
     );
     ');
+}
+
+function flacso_test_delivery_pdo(): PDO {
+    $pdo = new PDO('sqlite::memory:', null, null, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    ]);
+
+    $pdo->exec('
+    CREATE TABLE offer_inquiries (
+        id TEXT PRIMARY KEY, consultaId TEXT UNIQUE, offerWpId INTEGER, offerName TEXT,
+        offerAbbreviation TEXT, offerType TEXT, cohortWpId INTEGER, cohortNumber INTEGER, cohortName TEXT,
+        registrationOpenAt TEXT, registrationCloseAt TEXT,
+        firstName TEXT, lastName TEXT, fullName TEXT, email TEXT, emailNormalized TEXT, phone TEXT, country TEXT,
+        profession TEXT, educationLevel TEXT, source TEXT, campaignProvider TEXT, campaignSource TEXT,
+        campaignMedium TEXT, campaignName TEXT, campaignExternalId TEXT, campaignContent TEXT, campaignTerm TEXT,
+        urlBase TEXT, urlReferer TEXT, inquiryAt TEXT, ipAddress TEXT, userAgent TEXT, replyToEmail TEXT,
+        programUrl TEXT, cartaUrl TEXT, preinscripcionUrl TEXT, offerStatus TEXT,
+        mauticContactId TEXT, mauticSyncStatus TEXT DEFAULT "skipped", mauticSyncedAt TEXT, mauticLastError TEXT,
+        followupDueAt TEXT, followupStatus TEXT DEFAULT "none", followupSentAt TEXT,
+        followupAttempts INTEGER DEFAULT 0, followupLastError TEXT,
+        emailStatus TEXT, emailSender TEXT, gmailMessageUrl TEXT, mailjetMessageId TEXT,
+        mailjetMessageUuid TEXT, payload TEXT, createdAt TEXT, updatedAt TEXT
+    );
+
+    CREATE TABLE seminar_inquiries (
+        id TEXT PRIMARY KEY, consultaId TEXT UNIQUE, seminarWpId INTEGER, seminarName TEXT, seminarType TEXT,
+        firstName TEXT, lastName TEXT, fullName TEXT, email TEXT, emailNormalized TEXT, phone TEXT, country TEXT,
+        profession TEXT, educationLevel TEXT, source TEXT, campaignProvider TEXT, campaignSource TEXT,
+        campaignMedium TEXT, campaignName TEXT, campaignExternalId TEXT, campaignContent TEXT, campaignTerm TEXT,
+        urlBase TEXT, urlReferer TEXT, inquiryAt TEXT, ipAddress TEXT, userAgent TEXT, replyToEmail TEXT,
+        programUrl TEXT, cartaUrl TEXT, preinscripcionUrl TEXT, offerStatus TEXT, emailStatus TEXT,
+        emailSender TEXT, gmailMessageUrl TEXT, mailjetMessageId TEXT, mailjetMessageUuid TEXT,
+        payload TEXT, createdAt TEXT, updatedAt TEXT
+    );
+    ');
+
+    flacso_test_install_delivery_tables($pdo);
 
     return $pdo;
 }
