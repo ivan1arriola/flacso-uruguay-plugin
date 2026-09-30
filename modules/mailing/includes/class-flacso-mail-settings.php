@@ -39,6 +39,8 @@ final class FLACSO_Mail_Settings {
     public const OPTION_MAUTIC_USERNAME = 'flacso_mautic_username';
     public const OPTION_MAUTIC_PASSWORD = 'flacso_mautic_password';
     public const OPTION_MAUTIC_TOKEN = 'flacso_mautic_token';
+    public const OPTION_MAUTIC_CAMPAIGN_ENABLED = 'flacso_mautic_campaign_enabled';
+    public const OPTION_MAUTIC_CAMPAIGN_CONSULTAS_ID = 'flacso_mautic_campaign_consultas_id';
 
     public const OPTION_INQUIRY_EMAIL_ENGINE = 'flacso_inquiry_email_engine';
     public const OPTION_MAUTIC_TEMPLATE_OPEN = 'flacso_mautic_template_consulta_abierta';
@@ -159,6 +161,18 @@ final class FLACSO_Mail_Settings {
             'sanitize_callback' => 'sanitize_text_field',
             'default' => '',
         ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_MAUTIC_CAMPAIGN_ENABLED, [
+            'type' => 'string',
+            'sanitize_callback' => static function ($val): string {
+                return !empty($val) && $val !== '0' ? '1' : '0';
+            },
+            'default' => '0',
+        ]);
+        register_setting(self::SETTINGS_GROUP, self::OPTION_MAUTIC_CAMPAIGN_CONSULTAS_ID, [
+            'type' => 'integer',
+            'sanitize_callback' => [self::class, 'sanitize_template_id_int'],
+            'default' => 0,
+        ]);
         register_setting(self::SETTINGS_GROUP, self::OPTION_INQUIRY_EMAIL_ENGINE, [
             'type' => 'string',
             'sanitize_callback' => static function ($val): string {
@@ -265,7 +279,15 @@ final class FLACSO_Mail_Settings {
                 'consulta_abierta' => trim((string) get_option(self::OPTION_MAUTIC_TEMPLATE_OPEN, '')),
                 'consulta_cerrada' => trim((string) get_option(self::OPTION_MAUTIC_TEMPLATE_CLOSED, '')),
             ],
+            'mautic_campaign' => self::get_mautic_campaign_settings(),
             'followup' => self::get_followup_settings(),
+        ];
+    }
+
+    public static function get_mautic_campaign_settings(): array {
+        return [
+            'enabled' => (string) get_option(self::OPTION_MAUTIC_CAMPAIGN_ENABLED, '0') === '1',
+            'consultas_id' => max(0, (int) get_option(self::OPTION_MAUTIC_CAMPAIGN_CONSULTAS_ID, 0)),
         ];
     }
 

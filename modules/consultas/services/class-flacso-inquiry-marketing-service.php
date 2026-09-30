@@ -22,6 +22,12 @@ if (!class_exists('FLACSO_Offer_Inquiry_Repository')) {
 if (!class_exists('FLACSO_Mautic_Client')) {
     require_once dirname(__DIR__, 3) . '/includes/integrations/class-flacso-mautic-client.php';
 }
+if (!class_exists('FLACSO_Mautic_Payload_Builder')) {
+    require_once __DIR__ . '/class-flacso-mautic-payload-builder.php';
+}
+if (!class_exists('FLACSO_Mautic_Integration_Log')) {
+    require_once dirname(__DIR__, 3) . '/includes/core/class-flacso-mautic-integration-log.php';
+}
 
 class FLACSO_Inquiry_Marketing_Service {
 
@@ -206,7 +212,9 @@ class FLACSO_Inquiry_Marketing_Service {
 
         $tags = self::generate_tags($abbreviation, $cohort_number, $offer_status);
 
-        // 5. Invocar cliente Mautic
+        // 5. Invocar cliente Mautic con snapshot canónico más perfil estable.
+        $canonical = FLACSO_Mautic_Payload_Builder::build(array_merge($inquiry_data, ['id' => $inquiry_id_str]));
+        $contact_fields = array_merge($contact_fields, $canonical['fields']);
         try {
             $res = FLACSO_Mautic_Client::create_or_update_contact($email, $contact_fields, $tags);
         } catch (\Throwable $e) {
@@ -220,6 +228,7 @@ class FLACSO_Inquiry_Marketing_Service {
         // 6. Procesar respuesta y actualizar repositorio
         if (!empty($res['ok'])) {
             $contact_id = isset($res['contact_id']) ? (int)$res['contact_id'] : null;
+            $campaign = self::sync_campaign($inquiry_id_str, $email, (int) $contact_id, $tags, $repository);
 
             if ($repository !== null && $inquiry_id_str !== '') {
                 $repository->update_mautic_status($inquiry_id_str, [
@@ -235,6 +244,7 @@ class FLACSO_Inquiry_Marketing_Service {
                 'status'     => 'synced',
                 'contact_id' => $contact_id,
                 'tags'       => $tags,
+                'campaign'   => $campaign,
             ];
         }
 
@@ -252,6 +262,54 @@ class FLACSO_Inquiry_Marketing_Service {
             'status' => 'failed',
             'error'  => $error_msg,
         ];
+    }
+
+    /**
+     * Agrega el contacto sincronizado a la campaña configurada sin afectar el flujo transaccional.
+     */
+    private static function sync_campaign(string $inquiry_id, string $email, int $contact_id, array $tags, ?FLACSO_Offer_Inquiry_Repository $repository): array {
+        $enabled = function_exists('get_option') && (string) get_option('flacso_mautic_campaign_enabled', '0') === '1';
+        $campaign_id = function_exists('get_option') ? (int) get_option('flacso_mautic_campaign_consultas_id', 0) : 0;
+        if (!$enabled || $campaign_id <= 0 || $contact_id <= 0) {
+            return ['ok' => true, 'status' => 'skipped'];
+        }
+
+        try {
+            $merge = FLACSO_Mautic_Client::merge_contact_tags($contact_id, $tags);
+            if (empty($merge['ok'])) {
+                throw new \RuntimeException((string) ($merge['error'] ?? 'No fue posible actualizar etiquetas.'));
+            }
+            $result = FLACSO_Mautic_Client::add_contact_to_campaign($campaign_id, $contact_id);
+            $status = !empty($result['ok']) ? 'joined' : 'failed';
+            if ($repository !== null && $inquiry_id !== '') {
+                $repository->update_mautic_campaign_status($inquiry_id, [
+                    'mauticCampaignId' => $campaign_id,
+                    'mauticCampaignStatus' => $status,
+                    'mauticCampaignLastError' => $result['error'] ?? null,
+                ]);
+            }
+            FLACSO_Mautic_Integration_Log::write([
+                'consulta_id' => $inquiry_id, 'email' => $email, 'contact_id' => $contact_id,
+                'campaign_id' => $campaign_id, 'operation' => 'campaign_membership',
+                'result' => $status, 'http_code' => $result['http_code'] ?? 0,
+                'error_class' => empty($result['ok']) ? 'mautic_api' : null,
+            ]);
+            return ['ok' => !empty($result['ok']), 'status' => $status, 'error' => $result['error'] ?? null];
+        } catch (\Throwable $e) {
+            if ($repository !== null && $inquiry_id !== '') {
+                $repository->update_mautic_campaign_status($inquiry_id, [
+                    'mauticCampaignId' => $campaign_id,
+                    'mauticCampaignStatus' => 'failed',
+                    'mauticCampaignLastError' => $e->getMessage(),
+                ]);
+            }
+            FLACSO_Mautic_Integration_Log::write([
+                'consulta_id' => $inquiry_id, 'email' => $email, 'contact_id' => $contact_id,
+                'campaign_id' => $campaign_id, 'operation' => 'campaign_membership',
+                'result' => 'failed', 'http_code' => 0, 'error_class' => 'exception',
+            ]);
+            return ['ok' => false, 'status' => 'failed', 'error' => $e->getMessage()];
+        }
     }
 
     /**
@@ -412,4 +470,3 @@ class FLACSO_Inquiry_Marketing_Service {
         return $labels[$clean] ?? $raw;
     }
 }
-

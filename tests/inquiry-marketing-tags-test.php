@@ -346,6 +346,12 @@ $GLOBALS['http_handler'] = function($url, $args) use (&$last_mautic_payload) {
             'body'     => json_encode(['total' => 0, 'contacts' => []]),
         ];
     }
+    if (str_ends_with($url, '/api/contacts/44332') && ($args['method'] ?? '') === 'GET') {
+        return [
+            'response' => ['code' => 200, 'message' => 'OK'],
+            'body' => json_encode(['contact' => ['id' => 44332, 'tags' => [['tag' => 'legado']]]]),
+        ];
+    }
     if (strpos($url, '/api/contacts/new') !== false) {
         $last_mautic_payload = json_decode($args['body'], true);
         return [
@@ -650,6 +656,12 @@ $GLOBALS['http_handler'] = function($url, $args) use (&$patched_payload) {
             ]),
         ];
     }
+    if (str_ends_with($url, '/api/contacts/44332') && ($args['method'] ?? '') === 'GET') {
+        return [
+            'response' => ['code' => 200, 'message' => 'OK'],
+            'body' => json_encode(['contact' => ['id' => 44332, 'tags' => [['tag' => 'legado']]]]),
+        ];
+    }
     if (strpos($url, '/api/contacts/44332/edit') !== false) {
         $patched_payload = json_decode($args['body'], true);
         return [
@@ -678,8 +690,8 @@ test_assert($res_update['status'] === 'synced', 'sync_inquiry with existing cont
 test_assert($res_update['contact_id'] === 44332, 'sync_inquiry returns existing contact ID 44332');
 test_assert(is_array($patched_payload), 'PATCH payload was sent to Mautic');
 test_assert(
-    $patched_payload['tags'] === ['interes-davia', 'interes-davia-c10', 'consulta-abierta-davia-c10'],
-    'Tags correctly merged into existing contact payload'
+    $patched_payload['tags'] === ['legado', 'interes-davia', 'interes-davia-c10', 'consulta-abierta-davia-c10'],
+    'Tags correctly preserve and merge into existing contact payload'
 );
 
 $record_update = $repo->find_by_id($id_update);
@@ -827,6 +839,3 @@ test_assert($tokens_4['{url_carta}'] === 'https://flacso.edu.uy/oferta/doctorado
 echo "Suite 3: compile_tokens passed.\n";
 
 echo "\nOK inquiry-marketing-tags-test\n";
-
-
-
