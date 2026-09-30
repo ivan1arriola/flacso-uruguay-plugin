@@ -115,7 +115,9 @@ $disabled = FLACSO_Inquiry_Delivery_Worker::run(10);
 worker_assert($disabled['status'] === 'disabled', 'cola desactivada no procesa');
 $GLOBALS['worker_options']['flacso_inquiry_delivery_queue_enabled'] = '1';
 
-$pdo->exec("UPDATE inquiry_deliveries SET terminalAt='2026-01-01T00:00:00+00:00', anonymizedAt=NULL");
+$expired_terminal = gmdate('c', time() - (91 * 86400));
+$stmt = $pdo->prepare('UPDATE inquiry_deliveries SET terminalAt=:terminal_at, anonymizedAt=NULL');
+$stmt->execute([':terminal_at' => $expired_terminal]);
 $retention = FLACSO_Inquiry_Delivery_Worker::retention(90);
 worker_assert($retention['anonymized'] === 1, 'worker ejecuta retención');
 
