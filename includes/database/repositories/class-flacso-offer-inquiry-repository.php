@@ -276,6 +276,90 @@ class FLACSO_Offer_Inquiry_Repository extends FLACSO_Base_Inquiry_Repository {
     }
 
     /**
+     * Registra el resultado de la incorporación de una consulta a una campaña de Mautic.
+     * Los datos personales y el snapshot de la consulta nunca se modifican aquí.
+     *
+     * @param string $id ID CUID del registro en offer_inquiries.
+     * @param array $state mauticCampaignId, mauticCampaignStatus, mauticCampaignAttemptedAt,
+     *                     mauticCampaignAttempts (ignorado, se controla internamente) y mauticCampaignLastError.
+     */
+    public function update_mautic_campaign_status(string $id, array $state): bool {
+        $id = trim($id);
+        if ($id === '' || empty($state)) {
+            return false;
+        }
+
+        $available_cols = $this->get_table_columns();
+        $required_columns = [
+            'mauticCampaignId',
+            'mauticCampaignStatus',
+            'mauticCampaignAttemptedAt',
+            'mauticCampaignAttempts',
+            'mauticCampaignLastError',
+        ];
+        foreach ($required_columns as $column) {
+            if (!in_array($column, $available_cols, true)) {
+                return false;
+            }
+        }
+
+        $status = $state['mauticCampaignStatus'] ?? null;
+        $allowed_statuses = ['pending', 'joined', 'failed', 'skipped'];
+        if (!is_string($status) || !in_array($status, $allowed_statuses, true)) {
+            return false;
+        }
+
+        $fields = ['"mauticCampaignStatus" = :status'];
+        $params = [
+            ':id' => $id,
+            ':status' => $status,
+            ':updated_at' => gmdate('c'),
+            ':increment_attempt' => $status === 'pending' ? 0 : 1,
+        ];
+
+        if (array_key_exists('mauticCampaignId', $state)) {
+            $campaign_id = $state['mauticCampaignId'];
+            if ($campaign_id !== null && (!is_numeric($campaign_id) || (int) $campaign_id <= 0)) {
+                return false;
+            }
+            $fields[] = '"mauticCampaignId" = :campaign_id';
+            $params[':campaign_id'] = $campaign_id === null ? null : (int) $campaign_id;
+        }
+
+        if (array_key_exists('mauticCampaignLastError', $state)) {
+            $fields[] = '"mauticCampaignLastError" = :last_error';
+            $params[':last_error'] = $state['mauticCampaignLastError'] === null
+                ? null
+                : (string) $state['mauticCampaignLastError'];
+        }
+
+        if (array_key_exists('mauticCampaignAttemptedAt', $state)) {
+            $attempted_at = $state['mauticCampaignAttemptedAt'];
+            $fields[] = '"mauticCampaignAttemptedAt" = :attempted_at';
+            $params[':attempted_at'] = $attempted_at === null ? null : (string) $attempted_at;
+        } elseif ($status !== 'pending') {
+            $fields[] = '"mauticCampaignAttemptedAt" = :attempted_at';
+            $params[':attempted_at'] = gmdate('c');
+        }
+
+        $fields[] = '"mauticCampaignAttempts" = CASE WHEN CAST(:increment_attempt AS INTEGER) = 1 THEN CASE WHEN COALESCE("mauticCampaignAttempts", 0) < 3 THEN COALESCE("mauticCampaignAttempts", 0) + 1 ELSE 3 END ELSE COALESCE("mauticCampaignAttempts", 0) END';
+        $fields[] = '"updatedAt" = :updated_at';
+
+        $table = $this->get_table_name();
+        $sql = "UPDATE {$table} SET " . implode(', ', $fields) . ' WHERE "id" = :id';
+
+        try {
+            $pdo = FLACSO_DB::connection();
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->rowCount() > 0;
+        } catch (\Throwable $e) {
+            error_log('[FLACSO] Error en update_mautic_campaign_status: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Reclama atómicamente hasta $limit consultas vencidas transicionándolas de 'pending' a 'processing'.
      *
      * @param int $limit Máximo de registros a reclamar por ciclo (defecto 25, máx 100).

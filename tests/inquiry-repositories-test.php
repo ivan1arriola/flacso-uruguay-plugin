@@ -61,6 +61,11 @@ CREATE TABLE offer_inquiries (
     mauticSyncStatus TEXT DEFAULT "skipped",
     mauticSyncedAt TEXT,
     mauticLastError TEXT,
+    mauticCampaignId INTEGER,
+    mauticCampaignStatus TEXT DEFAULT "pending",
+    mauticCampaignAttemptedAt TEXT,
+    mauticCampaignAttempts INTEGER DEFAULT 0,
+    mauticCampaignLastError TEXT,
     followupDueAt TEXT,
     followupStatus TEXT DEFAULT "none",
     followupSentAt TEXT,
@@ -391,6 +396,45 @@ function test_update_mautic_status(FLACSO_Offer_Inquiry_Repository $repo): void 
 }
 
 test_update_mautic_status($repo);
+
+// 7b. Estado de incorporación a campaña Mautic: sólo muta campos operativos.
+repo_assert(method_exists($repo, 'update_mautic_campaign_status'), 'Debe existir update_mautic_campaign_status');
+$campaign_snapshot = $repo->find_by_id($res['id']);
+repo_assert($campaign_snapshot['mauticCampaignStatus'] === 'pending', 'La campaña comienza pending');
+repo_assert((int) $campaign_snapshot['mauticCampaignAttempts'] === 0, 'La campaña comienza sin intentos');
+
+$campaign_pending = $repo->update_mautic_campaign_status($res['id'], [
+    'mauticCampaignId' => 7,
+    'mauticCampaignStatus' => 'pending',
+]);
+repo_assert($campaign_pending === true, 'Debe persistir el estado pending de campaña');
+
+$campaign_joined = $repo->update_mautic_campaign_status($res['id'], [
+    'mauticCampaignStatus' => 'joined',
+    'mauticCampaignAttemptedAt' => '2026-09-30T12:00:00Z',
+    'mauticCampaignLastError' => null,
+]);
+repo_assert($campaign_joined === true, 'Debe persistir el ingreso a campaña');
+$campaign_joined_row = $repo->find_by_id($res['id']);
+repo_assert((int) $campaign_joined_row['mauticCampaignId'] === 7, 'Debe conservar el ID de campaña');
+repo_assert($campaign_joined_row['mauticCampaignStatus'] === 'joined', 'Debe marcar la campaña como joined');
+repo_assert($campaign_joined_row['mauticCampaignAttemptedAt'] === '2026-09-30T12:00:00Z', 'Debe registrar el instante del intento');
+repo_assert((int) $campaign_joined_row['mauticCampaignAttempts'] === 1, 'Un ingreso a campaña cuenta como un intento');
+repo_assert($campaign_joined_row['fullName'] === $campaign_snapshot['fullName'], 'El estado de campaña no altera el nombre del snapshot');
+repo_assert($campaign_joined_row['email'] === $campaign_snapshot['email'], 'El estado de campaña no altera el email del snapshot');
+
+for ($attempt = 0; $attempt < 4; $attempt++) {
+    repo_assert($repo->update_mautic_campaign_status($res['id'], [
+        'mauticCampaignStatus' => 'failed',
+        'mauticCampaignLastError' => 'Mautic no disponible',
+    ]) === true, 'Debe registrar un fallo de campaña');
+}
+$campaign_failed_row = $repo->find_by_id($res['id']);
+repo_assert($campaign_failed_row['mauticCampaignStatus'] === 'failed', 'Debe marcar la campaña como failed');
+repo_assert($campaign_failed_row['mauticCampaignLastError'] === 'Mautic no disponible', 'Debe guardar el último error de campaña');
+repo_assert((int) $campaign_failed_row['mauticCampaignAttempts'] === 3, 'Los intentos de campaña deben quedar acotados a tres');
+repo_assert($repo->update_mautic_campaign_status('', ['mauticCampaignStatus' => 'joined']) === false, 'ID vacío no actualiza campaña');
+repo_assert($repo->update_mautic_campaign_status($res['id'], ['mauticCampaignStatus' => 'invalido']) === false, 'Estado de campaña inválido no actualiza');
 
 // 8. Probar métodos de seguimiento: claim_due_followups, update_followup_status, has_newer_inquiry_for_offer
 function test_followup_methods(FLACSO_Offer_Inquiry_Repository $repo): void {
