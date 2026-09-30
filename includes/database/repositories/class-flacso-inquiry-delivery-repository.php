@@ -380,16 +380,19 @@ final class FLACSO_Inquiry_Delivery_Repository {
         }
 
         try {
-            $select = $this->pdo->prepare(
-                "SELECT id, \"snapshotId\"
+            $select = $this->pdo->query(
+                "SELECT id, \"snapshotId\", \"terminalAt\"
                  FROM inquiry_deliveries
                  WHERE \"anonymizedAt\" IS NULL
                    AND \"terminalAt\" IS NOT NULL
-                   AND \"terminalAt\" < :cutoff
                    AND state IN ('accepted','acceptance_unknown','failed','blocked')"
             );
-            $select->execute([':cutoff' => $cutoff]);
-            $due = $select->fetchAll(PDO::FETCH_ASSOC);
+            $candidates = $select ? $select->fetchAll(PDO::FETCH_ASSOC) : [];
+            $cutoff_ts = strtotime($cutoff);
+            $due = array_values(array_filter($candidates, static function(array $row) use ($cutoff_ts): bool {
+                $terminal_ts = strtotime((string) ($row['terminalAt'] ?? ''));
+                return $terminal_ts !== false && $cutoff_ts !== false && $terminal_ts < $cutoff_ts;
+            }));
 
             if (empty($due)) {
                 if ($owns_transaction) {
