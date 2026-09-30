@@ -358,10 +358,10 @@ final class FLACSO_Inquiry_Delivery_Repository {
     public function find_for_reconciliation(int $limit = 50): array {
         $limit = max(1, min(200, $limit));
         $stmt = $this->pdo->query(
-            'SELECT * FROM inquiry_deliveries
+            "SELECT * FROM inquiry_deliveries
              WHERE state = 'acceptance_unknown'
-             ORDER BY "updatedAt" ASC
-             LIMIT ' . $limit
+             ORDER BY \"updatedAt\" ASC
+             LIMIT " . $limit
         );
         return $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
     }
@@ -375,14 +375,14 @@ final class FLACSO_Inquiry_Delivery_Repository {
         $now = gmdate('c');
 
         $stmt = $this->pdo->prepare(
-            'UPDATE inquiry_deliveries
-             SET "snapshotId" = NULL, "inquiryId" = NULL, "consultaId" = NULL, email = NULL,
-                 "contactId" = NULL, "payloadJson" = NULL, "claimToken" = NULL,
-                 "lastError" = NULL, "anonymizedAt" = :now, "updatedAt" = :now
-             WHERE "anonymizedAt" IS NULL
-               AND "terminalAt" IS NOT NULL
-               AND "terminalAt" < :cutoff
-               AND state IN ('accepted','acceptance_unknown','failed','blocked')'
+            "UPDATE inquiry_deliveries
+             SET \"snapshotId\" = NULL, \"inquiryId\" = NULL, \"consultaId\" = NULL, email = NULL,
+                 \"contactId\" = NULL, \"payloadJson\" = NULL, \"claimToken\" = NULL,
+                 \"lastError\" = NULL, \"anonymizedAt\" = :now, \"updatedAt\" = :now
+             WHERE \"anonymizedAt\" IS NULL
+               AND \"terminalAt\" IS NOT NULL
+               AND \"terminalAt\" < :cutoff
+               AND state IN ('accepted','acceptance_unknown','failed','blocked')"
         );
         $stmt->execute([':now' => $now, ':cutoff' => $cutoff]);
 
