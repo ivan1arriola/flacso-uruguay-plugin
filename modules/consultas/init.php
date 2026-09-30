@@ -31,6 +31,7 @@ $flacso_consultas_files = [
     'modules/consultas/services/class-flacso-offer-inquiry-service.php',
     'modules/consultas/services/class-flacso-seminar-inquiry-service.php',
     'modules/consultas/services/class-flacso-inquiry-context-service.php',
+    'modules/consultas/services/class-flacso-mautic-payload-builder.php',
     'modules/consultas/services/class-flacso-inquiry-marketing-service.php',
     'modules/consultas/services/class-flacso-inquiry-followup-service.php',
     'modules/consultas/includes/class-flacso-consultas-admin.php',
@@ -53,4 +54,3 @@ if (class_exists('FLACSO_Inquiry_Followup_Service')) {
 if (class_exists('FLACSO_Consultas_Admin') && function_exists('add_action')) {
     FLACSO_Consultas_Admin::init();
 }
-
