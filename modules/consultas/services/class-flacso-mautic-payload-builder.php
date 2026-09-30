@@ -34,6 +34,9 @@ final class FLACSO_Mautic_Payload_Builder {
             'flacso_creditos' => (string) ($inquiry['creditos'] ?? ''),
             'flacso_preinscripcion_url' => (string) ($inquiry['preinscripcionUrl'] ?? ''),
             'flacso_consulta_texto' => (string) ($inquiry['message'] ?? $inquiry['consulta'] ?? ''),
+            'flacso_pais' => (string) ($inquiry['country'] ?? $inquiry['pais'] ?? ''),
+            'flacso_nivel_academico' => (string) ($inquiry['education_level'] ?? $inquiry['educationLevel'] ?? $inquiry['nivel_academico'] ?? ''),
+            'flacso_profesion' => (string) ($inquiry['profession'] ?? $inquiry['profesion'] ?? ''),
         ];
         $tags = [];
         if ($code !== '') {

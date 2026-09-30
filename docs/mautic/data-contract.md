@@ -22,3 +22,6 @@ Los campos estandar son `email`, `firstname` y `lastname`. El resto pertenece al
 | `flacso_creditos` | number | snapshot | opcional |
 | `flacso_preinscripcion_url` | url | snapshot | URL valida o vacia |
 | `flacso_consulta_texto` | textarea | consulta | no se registra en logs |
+| `flacso_pais` | text | `pais` | opcional; cadena vacia si falta |
+| `flacso_nivel_academico` | text | `nivel_academico` | opcional; cadena vacia si falta |
+| `flacso_profesion` | text | `profesion` | opcional; cadena vacia si falta |
