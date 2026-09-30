@@ -97,7 +97,9 @@ delivery_repo_assert(count($claimed1) === 1, 'primer worker reclama entrega');
 delivery_repo_assert(count($claimed2) === 0, 'segundo worker no reclama la misma entrega');
 
 $deliveries->mark_accepted($result['delivery_id'], 200);
-$pdo->exec("UPDATE inquiry_deliveries SET terminalAt = '2026-01-01T00:00:00+00:00'");
+$expired_terminal = gmdate('c', time() - (91 * 86400));
+$stmt = $pdo->prepare('UPDATE inquiry_deliveries SET terminalAt = :terminal_at');
+$stmt->execute([':terminal_at' => $expired_terminal]);
 $anonymized = $deliveries->anonymize_due_deliveries(90);
 delivery_repo_assert($anonymized === 1, 'retención anonimiza entrega vencida');
 $anon = $pdo->query('SELECT * FROM inquiry_deliveries LIMIT 1')->fetch(PDO::FETCH_ASSOC);
