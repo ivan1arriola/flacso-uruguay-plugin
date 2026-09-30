@@ -368,7 +368,7 @@ $offer_row = $stmt->fetch();
 wiring_assert(!empty($offer_row), 'Registro de oferta debe persistirse en offer_inquiries');
 wiring_assert($offer_row['email'] === 'ana.garcia@example.com', 'Email de oferta debe coincidir');
 wiring_assert((int)$offer_row['offerWpId'] === 101, 'offerWpId debe ser 101');
-wiring_assert($offer_row['emailStatus'] === 'sent', 'emailStatus de oferta debe ser sent');
+wiring_assert($offer_row['emailStatus'] === 'skipped', 'emailStatus de oferta debe quedar en skipped para Mautic');
 
 // 3.2 Duplicate submission for offer (idempotency)
 $offer_dup_res = flacso_consultas_dispatch_single_info_request(array_merge($offer_test_data, [
@@ -429,7 +429,7 @@ wiring_assert($res_valid->get_status() === 200, 'Consulta de seminario válida d
 $data_valid = $res_valid->get_data();
 wiring_assert(!empty($data_valid['success']), 'Respuesta debe tener success => true');
 wiring_assert(!empty($data_valid['consulta_id']), 'Respuesta debe contener consulta_id');
-wiring_assert($data_valid['email_status'] === 'sent', 'Respuesta debe contener email_status => sent');
+wiring_assert($data_valid['email_status'] === 'skipped', 'Respuesta debe contener email_status => skipped');
 
 $stmt_sem = $pdo->prepare('SELECT * FROM seminar_inquiries WHERE consultaId = ?');
 $stmt_sem->execute([$data_valid['consulta_id']]);
@@ -437,7 +437,7 @@ $seminar_row = $stmt_sem->fetch();
 wiring_assert(!empty($seminar_row), 'Registro de seminario debe persistirse en seminar_inquiries');
 wiring_assert($seminar_row['email'] === 'carlos.perez@example.com', 'Email de seminario debe coincidir');
 wiring_assert((int)$seminar_row['seminarWpId'] === 202, 'seminarWpId debe ser 202');
-wiring_assert($seminar_row['emailStatus'] === 'sent', 'emailStatus de seminario debe ser sent');
+wiring_assert($seminar_row['emailStatus'] === 'skipped', 'emailStatus de seminario debe quedar en skipped para Mautic');
 
 // 4.4 Duplicate submission for seminar (idempotency)
 $GLOBALS['mailjet_http_calls'] = [];
