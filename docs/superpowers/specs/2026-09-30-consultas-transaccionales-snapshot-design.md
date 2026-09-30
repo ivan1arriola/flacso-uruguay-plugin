@@ -39,7 +39,7 @@ sale de WordPress ni se escribe en logs operativos.
 | `InquirySnapshot` | Representar los datos inmutables que se usaran para persistencia, acuse y contexto academico. |
 | Repositorio WordPress | Guardar consulta, snapshot y entrega, y ofrecer transiciones de estado seguras. |
 | Cola transaccional | Seleccionar entregas pendientes, aplicar reintentos acotados e impedir duplicados. |
-| Adaptador Mautic | Validar contrato, sincronizar datos de contacto permitidos y enviar el acuse con tokens por entrega. |
+| Adaptador Mautic | Validar contrato, asegurar un destinatario minimo, sincronizar datos comerciales permitidos y enviar el acuse con tokens por entrega. |
 | Campanas Mautic | Marketing y seguimiento posterior; nunca el acuse inmediato. |
 | Consola WordPress | Mostrar configuracion, validacion, estados y errores redactados; no secretos ni datos personales. |
 
@@ -119,11 +119,18 @@ persistido.
 
 ### Contacto y etiquetas
 
-La sincronizacion de contacto es una operacion independiente de la entrega.
-Solo actualiza perfil permitido, consentimiento, procedencia y etiquetas
-acumulativas. No escribe en el contacto valores que representen una consulta
-particular: oferta, cohorte, fecha, modalidad, enlaces ni identificador de
-consulta dejan de ser requisitos para campanas.
+El envio directo de Mautic requiere un contacto. Antes de enviar el acuse,
+`ensureDeliveryRecipient` busca o crea y actualiza solamente email, nombre y
+apellido del destinatario, y devuelve el `contact_id`. No agrega el contacto
+a campanas, no escribe datos de la consulta ni aplica etiquetas comerciales.
+Es parte del camino de entrega y puede ejecutarse aun sin consentimiento de
+marketing.
+
+La sincronizacion comercial es una operacion independiente de la entrega y de
+`ensureDeliveryRecipient`. Solo actualiza perfil permitido, consentimiento,
+procedencia y etiquetas acumulativas. No escribe en el contacto valores que
+representen una consulta particular: oferta, cohorte, fecha, modalidad, enlaces
+ni identificador de consulta dejan de ser requisitos para campanas.
 
 Una unica fabrica de etiquetas recibe `InquirySnapshot` y devuelve las
 etiquetas normalizadas. El contrato inicial es:
@@ -171,6 +178,25 @@ La configuracion separa ID de plantilla transaccional, activacion de cola y
 configuracion de campana de marketing. Ningun ID de plantilla aparece como
 detalle de negocio en el formulario ni en la consola general.
 
+## Custodia del payload y revision de plantilla
+
+El payload exacto contiene datos personales. Se almacena en una tabla de
+entregas de acceso restringido a administradores autorizados y al procesador;
+no se expone en vistas generales, logs, alertas ni respuestas AJAX. Se conserva
+durante 90 dias desde el estado terminal o desde que se resuelva una
+`acceptance_unknown`. Al vencer ese plazo, se eliminan o anonimizan el payload
+y los identificadores personales de la entrega, preservando solo metadatos
+operativos no identificables. Una solicitud valida de borrado o anonimizacion
+adelanta ese proceso para la entrega; la retencion del registro historico de la
+consulta se rige por su politica propia y no se modifica en este alcance.
+
+El manifiesto de la plantilla transaccional incluye `template_id`, version
+funcional y huella SHA-256 del contenido aprobado. El validador recupera el
+contenido disponible desde Mautic, aplica la normalizacion definida por el
+manifiesto y compara la huella antes de permitir procesar la cola. Si Mautic no
+expone contenido suficiente para comprobarla, o la huella no coincide, la cola
+queda `blocked`; ninguna actualizacion automatica de plantilla esta permitida.
+
 ## Ejecutor de cola
 
 El acuse no depende de WP-Cron ni de visitas publicas. Un cron del servidor se
@@ -191,9 +217,10 @@ requiere una accion explicita para procesar una entrega marcada
 
 El contrato deja de ser solamente Markdown. Un manifiesto PHP versionado
 describe, como minimo, la version, aliases de perfil permitidos, opciones de
-select, tipo de cada campo requerido, tags, plantilla transaccional y campana
-de marketing opcional. La documentacion se genera o se contrasta contra ese
-manifiesto; no puede convertirse en una tercera fuente de verdad.
+select, tipo de cada campo requerido, tags, `template_id`, version funcional,
+huella de contenido aprobada y campana de marketing opcional. La documentacion
+se genera o se contrasta contra ese manifiesto; no puede convertirse en una
+tercera fuente de verdad.
 
 Un validador de solo lectura consulta Mautic y produce un resultado estructurado
 por requisito: presente, alias, tipo, opciones, publicacion de plantilla y
@@ -213,7 +240,8 @@ flowchart LR
     S --> W[Persistir consulta y entrega pending]
     W --> Q[Procesador de cola]
     Q --> V[Validar manifiesto Mautic]
-    V -->|valido| T[Enviar acuse con tokens del snapshot]
+    V -->|valido| R[ensureDeliveryRecipient]
+    R --> T[Enviar acuse con tokens del snapshot]
     T --> D[Registrar accepted, fallo o conciliacion]
     S --> C[Sincronizar contacto, consentimiento y tags]
     C --> M[Campanas de marketing posteriores]
@@ -269,12 +297,18 @@ de persistencia que cubran al menos:
   datos respectivos;
 - transaccion atomica de consulta, snapshot y entrega;
 - identidad de intento, payload exacto y plantilla/revision inmutables;
+- acceso restringido, retencion de 90 dias y anonimizacion del payload de
+  entrega;
 - idempotencia y paso de una reserva vencida a `acceptance_unknown`, sin
   reenvio automatico;
 - bloqueo de ejecuciones concurrentes y ejecucion desde cron del servidor;
 - aliases ausentes, tipos incompatibles y opciones select invalidas en el
   manifiesto;
 - bloqueo de cola ante contrato invalido;
+- bloqueo ante plantilla sin huella verificable o con contenido distinto al
+  aprobado;
+- `ensureDeliveryRecipient` limitado a email y nombre, sin campanas, etiquetas
+  ni datos propios de la consulta;
 - exclusion de `flacso_consulta_texto` de todo payload y log Mautic;
 - acuse permitido sin consentimiento comercial e imposibilidad de ingresar a
   campanas sin fecha, origen y version del consentimiento;
