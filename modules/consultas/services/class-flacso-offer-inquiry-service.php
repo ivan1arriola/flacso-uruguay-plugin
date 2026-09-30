@@ -323,6 +323,36 @@ class FLACSO_Offer_Inquiry_Service {
             ];
         }
 
+        $record_id = !empty($insert_result['id']) ? (string) $insert_result['id'] : (string) $consulta_id;
+        $mautic_sync_result = ['ok' => true, 'status' => 'skipped'];
+        if (class_exists('FLACSO_Inquiry_Marketing_Service')) {
+            try {
+                $mautic_sync_result = FLACSO_Inquiry_Marketing_Service::sync_inquiry($record_id, $record, $repo);
+            } catch (\Throwable $e) {
+                error_log('[FLACSO] Error al sincronizar consulta con Mautic: ' . $e->getMessage());
+                $mautic_sync_result = ['ok' => false, 'status' => 'failed', 'error' => $e->getMessage()];
+            }
+        }
+        $repo->update_email_status($consulta_id, 'skipped', 'mautic_campaign');
+
+        return [
+            'ok'                   => true,
+            'consulta_id'          => $consulta_id,
+            'duplicate'            => false,
+            'email'                => 'skipped',
+            'email_sender'         => 'mautic_campaign',
+            'email_engine'         => 'mautic_campaign',
+            'mailjet_message_id'   => null,
+            'mailjet_message_uuid' => null,
+            'offer_status'         => $offer_status,
+            'cohort_number'        => $cohort_number,
+            'offer_abbreviation'   => $offer_abbr,
+            'mautic_sync'          => $mautic_sync_result,
+            'followup_status'      => 'none',
+            'followup_due_at'      => null,
+            'code'                 => 200,
+        ];
+
         // 6. Selección de motor de correo y despacho (Enviar después)
         $engine = function_exists('get_option') ? (string) get_option('flacso_inquiry_email_engine', 'mautic') : 'mautic';
         $engine = strtolower(trim($engine));

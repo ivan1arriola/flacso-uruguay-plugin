@@ -47,9 +47,8 @@ foreach ($flacso_consultas_files as $flacso_file) {
     }
 }
 
-if (class_exists('FLACSO_Inquiry_Followup_Service')) {
-    FLACSO_Inquiry_Followup_Service::init();
-}
+// Los seguimientos de comunicación se ejecutan en campañas de Mautic.
+// No registrar WP-Cron evita que WordPress despache correos por proveedores.
 
 if (class_exists('FLACSO_Consultas_Admin') && function_exists('add_action')) {
     FLACSO_Consultas_Admin::init();
