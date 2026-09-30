@@ -35,7 +35,7 @@
     </mj-section>
     <mj-section background-color="#ffffff" padding="4px 28px 26px 28px"><mj-column>
       <mj-button background-color="#248138" color="#ffffff" href="{contactfield=flacso_preinscripcion_url}" padding="0 0 12px 0" width="100%">Iniciar preinscripción</mj-button>
-      <mj-button background-color="#16396f" color="#ffffff" href="{contactfield=flacso_oferta_url}carta" padding="0" width="100%">Ver costos, programa y requisitos</mj-button>
+      <mj-button background-color="#16396f" color="#ffffff" href="{contactfield=flacso_oferta_url}" padding="0" width="100%">Ver costos, programa y requisitos</mj-button>
     </mj-column></mj-section>
     <mj-section background-color="#fff7d6" padding="24px 28px"><mj-column>
       <mj-text color="#0f1a2d" font-size="18px" font-weight="700" line-height="1.4" padding="0 0 12px 0">Formación de posgrado con respaldo institucional</mj-text>

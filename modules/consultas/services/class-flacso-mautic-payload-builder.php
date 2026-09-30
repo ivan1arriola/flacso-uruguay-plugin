@@ -11,6 +11,10 @@ final class FLACSO_Mautic_Payload_Builder {
         $status = self::status((string) ($inquiry['offerStatus'] ?? $inquiry['offer_status'] ?? 'sin_cohorte'));
         $date = (string) ($inquiry['fechaInicio'] ?? $inquiry['fecha_inicio'] ?? '');
         $cohort_code = $code !== '' && $number > 0 ? $code . '-c' . $number : '';
+        $offer_url = trim((string) ($inquiry['programUrl'] ?? $inquiry['urlBase'] ?? ''));
+        if ($offer_url !== '' && substr($offer_url, -5) !== 'carta') {
+            $offer_url .= 'carta';
+        }
 
         $fields = [
             'email' => trim((string) ($inquiry['email'] ?? '')),
@@ -23,7 +27,7 @@ final class FLACSO_Mautic_Payload_Builder {
             'flacso_oferta_codigo' => $code,
             'flacso_oferta_nombre' => (string) ($inquiry['offerName'] ?? $inquiry['offer_name'] ?? ''),
             'flacso_oferta_articulo' => (string) ($inquiry['offerArticle'] ?? ''),
-            'flacso_oferta_url' => (string) ($inquiry['programUrl'] ?? $inquiry['urlBase'] ?? ''),
+            'flacso_oferta_url' => $offer_url,
             'flacso_cohorte_codigo' => $cohort_code,
             'flacso_cohorte_numero' => $number > 0 ? $number : '',
             'flacso_cohorte_nombre' => (string) ($inquiry['cohortName'] ?? $inquiry['cohort_name'] ?? ''),

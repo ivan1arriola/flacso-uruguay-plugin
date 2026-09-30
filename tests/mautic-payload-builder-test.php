@@ -20,7 +20,7 @@ $open = FLACSO_Mautic_Payload_Builder::build([
     'firstName' => 'Ana', 'lastName' => 'Perez', 'offerType' => 'oferta',
     'offerAbbreviation' => 'DAVIA', 'offerName' => 'Diploma', 'cohortNumber' => 10,
     'cohortName' => 'Cohorte 10', 'offerStatus' => 'abierta', 'modalidad' => 'Virtual',
-    'fechaInicio' => '2027-04-08', 'preinscripcionUrl' => 'https://flacso.edu.uy/pre', 'message' => 'Hola',
+    'fechaInicio' => '2027-04-08', 'programUrl' => 'https://flacso.edu.uy/diploma/', 'preinscripcionUrl' => 'https://flacso.edu.uy/pre', 'message' => 'Hola',
     'country' => 'Uruguay', 'education_level' => 'Título universitario', 'profession' => 'Docente',
 ]);
 payload_assert($open['fields']['flacso_cohorte_estado'] === 'abierta', 'normaliza estado');
@@ -29,6 +29,7 @@ payload_assert($open['fields']['flacso_cohorte_codigo'] === 'davia-c10', 'crea c
 payload_assert($open['fields']['flacso_pais'] === 'Uruguay', 'mapea país');
 payload_assert($open['fields']['flacso_nivel_academico'] === 'Título universitario', 'mapea nivel académico');
 payload_assert($open['fields']['flacso_profesion'] === 'Docente', 'mapea profesión');
+payload_assert($open['fields']['flacso_oferta_url'] === 'https://flacso.edu.uy/diploma/carta', 'conserva el destino carta como URL completa');
 payload_assert($open['tags'] === ['interes-davia', 'davia-c10', 'origen-web-consultas'], 'crea tags canonicos');
 
 $missing = FLACSO_Mautic_Payload_Builder::build(['id' => 'q-2', 'offerType' => 'seminario', 'offerStatus' => 'CERRADA', 'modalidad' => 'mixta', 'fechaInicio' => '2027']);

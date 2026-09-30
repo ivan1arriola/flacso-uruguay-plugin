@@ -11,7 +11,7 @@ Los campos estandar son `email`, `firstname` y `lastname`. El resto pertenece al
 | `flacso_oferta_codigo` | text | abreviacion | kebab-case |
 | `flacso_oferta_nombre` | text | snapshot | opcional |
 | `flacso_oferta_articulo` | text | snapshot | opcional |
-| `flacso_oferta_url` | url | snapshot | URL valida |
+| `flacso_oferta_url` | url | snapshot | URL valida de información, con sufijo `carta` |
 | `flacso_cohorte_codigo` | text | snapshot | `{codigo}-c{numero}` o vacio |
 | `flacso_cohorte_numero` | number | snapshot | positivo o vacio |
 | `flacso_cohorte_nombre` | text | snapshot | opcional |
