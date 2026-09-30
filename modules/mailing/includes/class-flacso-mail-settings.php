@@ -1594,32 +1594,121 @@ final class FLACSO_Mail_Settings {
 
         $mautic = class_exists('FLACSO_Mautic_Client') ? FLACSO_Mautic_Client::get_settings() : self::get_settings();
         $campaign = self::get_mautic_campaign_settings();
+        $auth_type = ($mautic['auth_type'] ?? 'basic') === 'bearer' ? 'bearer' : 'basic';
+        $has_credentials = $auth_type === 'bearer'
+            ? !empty($mautic['token'])
+            : !empty($mautic['username']) && !empty($mautic['password']);
+        $connection_ready = !empty($mautic['enabled']) && !empty($mautic['base_url']) && $has_credentials;
+        $campaign_ready = !empty($campaign['enabled']) && !empty($campaign['consultas_id']);
         ?>
         <div class="wrap flacso-mail-console">
             <h1><?php esc_html_e('Comunicaciones Mautic', 'flacso-uruguay'); ?></h1>
             <p class="description"><?php esc_html_e('Las consultas se guardan en WordPress y Mautic gestiona las comunicaciones mediante campañas y automatizaciones.', 'flacso-uruguay'); ?></p>
+            <style>
+                .flacso-mautic-console { max-width: 1120px; margin-top: 20px; }
+                .flacso-mautic-status { display: grid; grid-template-columns: repeat(3, minmax(180px, 1fr)); gap: 12px; margin: 20px 0; }
+                .flacso-mautic-status__item, .flacso-mautic-panel { background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; box-sizing: border-box; }
+                .flacso-mautic-status__item { padding: 14px 16px; }
+                .flacso-mautic-status__label { color: #50575e; display: block; font-size: 12px; margin-bottom: 5px; text-transform: uppercase; }
+                .flacso-mautic-status__value { font-size: 15px; font-weight: 600; }
+                .flacso-mautic-status__value.is-ready { color: #0a6b31; }
+                .flacso-mautic-status__value.is-pending { color: #8a5600; }
+                .flacso-mautic-panels { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(280px, .9fr); gap: 18px; align-items: start; }
+                .flacso-mautic-panel { padding: 18px 20px; }
+                .flacso-mautic-panel h2 { font-size: 18px; margin: 0 0 6px; }
+                .flacso-mautic-panel .form-table { margin-top: 8px; }
+                .flacso-mautic-panel .form-table th { width: 160px; }
+                .flacso-mautic-test-result { display: none; margin: 12px 0 0; padding: 10px 12px; border-left: 4px solid #2271b1; }
+                .flacso-mautic-test-result.is-success { background: #edfaef; border-color: #00a32a; color: #0a4b20; }
+                .flacso-mautic-test-result.is-error { background: #fcf0f1; border-color: #d63638; color: #8a2424; }
+                .flacso-mautic-checklist { margin: 16px 0 0; }
+                .flacso-mautic-checklist li { margin: 0 0 12px; }
+                .flacso-mautic-checklist .is-ready { color: #0a6b31; }
+                .flacso-mautic-checklist .is-pending { color: #8a5600; }
+                @media screen and (max-width: 782px) { .flacso-mautic-status, .flacso-mautic-panels { grid-template-columns: 1fr; } .flacso-mautic-panel .form-table th { width: auto; } }
+            </style>
+            <div class="flacso-mautic-console">
+                <section aria-labelledby="flacso-mautic-status-heading">
+                    <h2 class="screen-reader-text" id="flacso-mautic-status-heading"><?php esc_html_e('Estado de configuración', 'flacso-uruguay'); ?></h2>
+                    <div class="flacso-mautic-status">
+                        <div class="flacso-mautic-status__item"><span class="flacso-mautic-status__label"><?php esc_html_e('Mautic', 'flacso-uruguay'); ?></span><span class="flacso-mautic-status__value <?php echo $connection_ready ? 'is-ready' : 'is-pending'; ?>"><?php echo $connection_ready ? esc_html__('Listo para conectar', 'flacso-uruguay') : esc_html__('Configuración pendiente', 'flacso-uruguay'); ?></span></div>
+                        <div class="flacso-mautic-status__item"><span class="flacso-mautic-status__label"><?php esc_html_e('Campaña de consultas', 'flacso-uruguay'); ?></span><span class="flacso-mautic-status__value <?php echo $campaign_ready ? 'is-ready' : 'is-pending'; ?>"><?php echo $campaign_ready ? esc_html__('Activa', 'flacso-uruguay') : esc_html__('Pendiente', 'flacso-uruguay'); ?></span></div>
+                        <div class="flacso-mautic-status__item"><span class="flacso-mautic-status__label"><?php esc_html_e('Canal operativo', 'flacso-uruguay'); ?></span><span class="flacso-mautic-status__value is-ready"><?php esc_html_e('Mautic', 'flacso-uruguay'); ?></span></div>
+                    </div>
+                </section>
+            </div>
             <form method="post" action="options.php">
                 <?php settings_fields(self::SETTINGS_GROUP); ?>
-                <h2><?php esc_html_e('Conexión Mautic', 'flacso-uruguay'); ?></h2>
-                <table class="form-table" role="presentation">
-                    <tr><th scope="row"><label for="<?php echo esc_attr(self::OPTION_MAUTIC_ENABLED); ?>"><?php esc_html_e('Sincronización de contactos', 'flacso-uruguay'); ?></label></th><td>
-                        <input type="hidden" name="<?php echo esc_attr(self::OPTION_MAUTIC_ENABLED); ?>" value="0">
-                        <label><input type="checkbox" id="<?php echo esc_attr(self::OPTION_MAUTIC_ENABLED); ?>" name="<?php echo esc_attr(self::OPTION_MAUTIC_ENABLED); ?>" value="1" <?php checked(!empty($mautic['enabled'])); ?>> <?php esc_html_e('Activar sincronización con Mautic', 'flacso-uruguay'); ?></label>
-                    </td></tr>
-                    <tr><th scope="row"><label for="<?php echo esc_attr(self::OPTION_MAUTIC_BASE_URL); ?>"><?php esc_html_e('URL de Mautic', 'flacso-uruguay'); ?></label></th><td><input class="regular-text" type="url" id="<?php echo esc_attr(self::OPTION_MAUTIC_BASE_URL); ?>" name="<?php echo esc_attr(self::OPTION_MAUTIC_BASE_URL); ?>" value="<?php echo esc_attr((string) ($mautic['base_url'] ?? '')); ?>"></td></tr>
-                    <tr><th scope="row"><label for="<?php echo esc_attr(self::OPTION_MAUTIC_AUTH_TYPE); ?>"><?php esc_html_e('Autenticación API', 'flacso-uruguay'); ?></label></th><td><select id="<?php echo esc_attr(self::OPTION_MAUTIC_AUTH_TYPE); ?>" name="<?php echo esc_attr(self::OPTION_MAUTIC_AUTH_TYPE); ?>"><option value="basic" <?php selected(($mautic['auth_type'] ?? 'basic'), 'basic'); ?>>Basic</option><option value="bearer" <?php selected(($mautic['auth_type'] ?? 'basic'), 'bearer'); ?>>Bearer</option></select></td></tr>
-                    <tr><th scope="row"><label for="<?php echo esc_attr(self::OPTION_MAUTIC_USERNAME); ?>"><?php esc_html_e('Usuario API', 'flacso-uruguay'); ?></label></th><td><input class="regular-text" type="text" id="<?php echo esc_attr(self::OPTION_MAUTIC_USERNAME); ?>" name="<?php echo esc_attr(self::OPTION_MAUTIC_USERNAME); ?>" value="<?php echo esc_attr((string) ($mautic['username'] ?? '')); ?>"></td></tr>
-                    <tr><th scope="row"><label for="<?php echo esc_attr(self::OPTION_MAUTIC_PASSWORD); ?>"><?php esc_html_e('Contraseña API', 'flacso-uruguay'); ?></label></th><td><input class="regular-text" type="password" id="<?php echo esc_attr(self::OPTION_MAUTIC_PASSWORD); ?>" name="<?php echo esc_attr(self::OPTION_MAUTIC_PASSWORD); ?>" value="<?php echo esc_attr((string) ($mautic['password'] ?? '')); ?>"></td></tr>
-                    <tr><th scope="row"><label for="<?php echo esc_attr(self::OPTION_MAUTIC_TOKEN); ?>"><?php esc_html_e('Token Bearer', 'flacso-uruguay'); ?></label></th><td><input class="regular-text" type="password" id="<?php echo esc_attr(self::OPTION_MAUTIC_TOKEN); ?>" name="<?php echo esc_attr(self::OPTION_MAUTIC_TOKEN); ?>" value="<?php echo esc_attr((string) ($mautic['token'] ?? '')); ?>"></td></tr>
-                </table>
-                <h2><?php esc_html_e('Campaña de Consultas', 'flacso-uruguay'); ?></h2>
-                <table class="form-table" role="presentation">
-                    <tr><th scope="row"><?php esc_html_e('Incorporación a campaña', 'flacso-uruguay'); ?></th><td><input type="hidden" name="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_ENABLED); ?>" value="0"><label><input type="checkbox" name="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_ENABLED); ?>" value="1" <?php checked($campaign['enabled']); ?>> <?php esc_html_e('Activar incorporación automática', 'flacso-uruguay'); ?></label></td></tr>
-                    <tr><th scope="row"><label for="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_CONSULTAS_ID); ?>"><?php esc_html_e('ID de campaña', 'flacso-uruguay'); ?></label></th><td><input class="small-text" type="number" min="0" id="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_CONSULTAS_ID); ?>" name="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_CONSULTAS_ID); ?>" value="<?php echo esc_attr((string) $campaign['consultas_id']); ?>"><p class="description"><?php esc_html_e('Las reglas y mensajes se configuran dentro de la campaña en Mautic.', 'flacso-uruguay'); ?></p></td></tr>
-                </table>
-                <?php submit_button(__('Guardar configuración Mautic', 'flacso-uruguay')); ?>
+                <div class="flacso-mautic-console flacso-mautic-panels">
+                    <section class="flacso-mautic-panel" aria-labelledby="flacso-mautic-connection-heading">
+                        <h2 id="flacso-mautic-connection-heading"><?php esc_html_e('Conexión Mautic', 'flacso-uruguay'); ?></h2>
+                        <p class="description"><?php esc_html_e('Configura la API que recibe y actualiza los contactos de consulta.', 'flacso-uruguay'); ?></p>
+                        <table class="form-table" role="presentation">
+                            <tr><th scope="row"><label for="<?php echo esc_attr(self::OPTION_MAUTIC_ENABLED); ?>"><?php esc_html_e('Sincronización', 'flacso-uruguay'); ?></label></th><td><input type="hidden" name="<?php echo esc_attr(self::OPTION_MAUTIC_ENABLED); ?>" value="0"><label><input type="checkbox" id="<?php echo esc_attr(self::OPTION_MAUTIC_ENABLED); ?>" name="<?php echo esc_attr(self::OPTION_MAUTIC_ENABLED); ?>" value="1" <?php checked(!empty($mautic['enabled'])); ?>> <?php esc_html_e('Activar sincronización con Mautic', 'flacso-uruguay'); ?></label></td></tr>
+                            <tr><th scope="row"><label for="<?php echo esc_attr(self::OPTION_MAUTIC_BASE_URL); ?>"><?php esc_html_e('URL de Mautic', 'flacso-uruguay'); ?></label></th><td><input class="regular-text" type="url" id="<?php echo esc_attr(self::OPTION_MAUTIC_BASE_URL); ?>" name="<?php echo esc_attr(self::OPTION_MAUTIC_BASE_URL); ?>" value="<?php echo esc_attr((string) ($mautic['base_url'] ?? '')); ?>"></td></tr>
+                            <tr><th scope="row"><label for="<?php echo esc_attr(self::OPTION_MAUTIC_AUTH_TYPE); ?>"><?php esc_html_e('Método de acceso', 'flacso-uruguay'); ?></label></th><td><select id="<?php echo esc_attr(self::OPTION_MAUTIC_AUTH_TYPE); ?>" name="<?php echo esc_attr(self::OPTION_MAUTIC_AUTH_TYPE); ?>"><option value="basic" <?php selected($auth_type, 'basic'); ?>><?php esc_html_e('Clave pública y clave secreta', 'flacso-uruguay'); ?></option><option value="bearer" <?php selected($auth_type, 'bearer'); ?>><?php esc_html_e('Token Bearer', 'flacso-uruguay'); ?></option></select></td></tr>
+                            <tr class="flacso-mautic-basic-field"><th scope="row"><label for="<?php echo esc_attr(self::OPTION_MAUTIC_USERNAME); ?>"><?php esc_html_e('Clave Pública', 'flacso-uruguay'); ?></label></th><td><input class="regular-text" type="text" autocomplete="off" id="<?php echo esc_attr(self::OPTION_MAUTIC_USERNAME); ?>" name="<?php echo esc_attr(self::OPTION_MAUTIC_USERNAME); ?>" value="<?php echo esc_attr((string) ($mautic['username'] ?? '')); ?>"><p class="description"><?php esc_html_e('Identificador de la credencial de API de Mautic.', 'flacso-uruguay'); ?></p></td></tr>
+                            <tr class="flacso-mautic-basic-field"><th scope="row"><label for="<?php echo esc_attr(self::OPTION_MAUTIC_PASSWORD); ?>"><?php esc_html_e('Clave Secreta', 'flacso-uruguay'); ?></label></th><td><input class="regular-text" type="password" autocomplete="new-password" id="<?php echo esc_attr(self::OPTION_MAUTIC_PASSWORD); ?>" name="<?php echo esc_attr(self::OPTION_MAUTIC_PASSWORD); ?>" value="<?php echo esc_attr((string) ($mautic['password'] ?? '')); ?>"><p class="description"><?php esc_html_e('Se usa junto con la clave pública para la autenticación Basic.', 'flacso-uruguay'); ?></p></td></tr>
+                            <tr class="flacso-mautic-bearer-field"><th scope="row"><label for="<?php echo esc_attr(self::OPTION_MAUTIC_TOKEN); ?>"><?php esc_html_e('Token Bearer', 'flacso-uruguay'); ?></label></th><td><input class="regular-text" type="password" autocomplete="new-password" id="<?php echo esc_attr(self::OPTION_MAUTIC_TOKEN); ?>" name="<?php echo esc_attr(self::OPTION_MAUTIC_TOKEN); ?>" value="<?php echo esc_attr((string) ($mautic['token'] ?? '')); ?>"></td></tr>
+                        </table>
+                        <p><button type="button" class="button button-secondary" id="flacso-test-mautic-btn"><?php esc_html_e('Probar conexión', 'flacso-uruguay'); ?></button></p>
+                        <div class="flacso-mautic-test-result" id="flacso-mautic-test-result" role="status" aria-live="polite"></div>
+                    </section>
+                    <section class="flacso-mautic-panel" aria-labelledby="flacso-mautic-campaign-heading">
+                        <h2 id="flacso-mautic-campaign-heading"><?php esc_html_e('Campaña de Consultas', 'flacso-uruguay'); ?></h2>
+                        <p class="description"><?php esc_html_e('Mautic define las reglas, mensajes y automatizaciones de la campaña.', 'flacso-uruguay'); ?></p>
+                        <table class="form-table" role="presentation">
+                            <tr><th scope="row"><?php esc_html_e('Incorporación', 'flacso-uruguay'); ?></th><td><input type="hidden" name="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_ENABLED); ?>" value="0"><label><input type="checkbox" name="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_ENABLED); ?>" value="1" <?php checked($campaign['enabled']); ?>> <?php esc_html_e('Incorporar contactos automáticamente', 'flacso-uruguay'); ?></label></td></tr>
+                            <tr><th scope="row"><label for="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_CONSULTAS_ID); ?>"><?php esc_html_e('ID de campaña', 'flacso-uruguay'); ?></label></th><td><input class="small-text" type="number" min="0" id="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_CONSULTAS_ID); ?>" name="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_CONSULTAS_ID); ?>" value="<?php echo esc_attr((string) $campaign['consultas_id']); ?>"><p class="description"><?php esc_html_e('Ingresa el ID cuando la campaña haya sido creada en Mautic.', 'flacso-uruguay'); ?></p></td></tr>
+                        </table>
+                        <h3><?php esc_html_e('Estado de configuración', 'flacso-uruguay'); ?></h3>
+                        <ul class="flacso-mautic-checklist">
+                            <li class="<?php echo $connection_ready ? 'is-ready' : 'is-pending'; ?>"><?php echo $connection_ready ? esc_html__('Conexión preparada', 'flacso-uruguay') : esc_html__('Faltan datos de conexión', 'flacso-uruguay'); ?></li>
+                            <li class="<?php echo $campaign_ready ? 'is-ready' : 'is-pending'; ?>"><?php echo $campaign_ready ? esc_html__('Campaña activa', 'flacso-uruguay') : esc_html__('Falta activar o identificar la campaña', 'flacso-uruguay'); ?></li>
+                        </ul>
+                    </section>
+                </div>
+                <div class="flacso-mautic-console"><?php submit_button(__('Guardar configuración Mautic', 'flacso-uruguay')); ?></div>
             </form>
         </div>
+        <script>
+        (function () {
+            const messages = <?php echo wp_json_encode([
+                'testing' => __('Probando conexión con Mautic...', 'flacso-uruguay'),
+                'invalid' => __('No se recibió una respuesta válida.', 'flacso-uruguay'),
+                'network' => __('No fue posible comprobar la conexión.', 'flacso-uruguay'),
+            ]); ?>;
+            const authType = document.getElementById('<?php echo esc_attr(self::OPTION_MAUTIC_AUTH_TYPE); ?>');
+            const basicFields = document.querySelectorAll('.flacso-mautic-basic-field');
+            const bearerFields = document.querySelectorAll('.flacso-mautic-bearer-field');
+            const toggleCredentials = function () {
+                const useBearer = authType && authType.value === 'bearer';
+                basicFields.forEach(function (field) { field.style.display = useBearer ? 'none' : ''; });
+                bearerFields.forEach(function (field) { field.style.display = useBearer ? '' : 'none'; });
+            };
+            if (authType) { authType.addEventListener('change', toggleCredentials); toggleCredentials(); }
+
+            const button = document.getElementById('flacso-test-mautic-btn');
+            const result = document.getElementById('flacso-mautic-test-result');
+            if (!button || !result) { return; }
+            button.addEventListener('click', function () {
+                button.disabled = true;
+                result.className = 'flacso-mautic-test-result';
+                result.style.display = 'block';
+                result.textContent = messages.testing;
+                const body = new URLSearchParams({ action: 'flacso_mautic_test_connection', nonce: <?php echo wp_json_encode(wp_create_nonce('flacso_mail_console_nonce')); ?> });
+                fetch('<?php echo esc_url(admin_url('admin-ajax.php')); ?>', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' }, body: body.toString() })
+                    .then(function (response) { return response.json(); })
+                    .then(function (response) {
+                        const message = response && response.data && response.data.message ? response.data.message : messages.invalid;
+                        result.className = 'flacso-mautic-test-result ' + (response && response.success ? 'is-success' : 'is-error');
+                        result.textContent = message;
+                    })
+                    .catch(function () { result.className = 'flacso-mautic-test-result is-error'; result.textContent = messages.network; })
+                    .finally(function () { button.disabled = false; });
+            });
+        }());
+        </script>
         <?php
     }
 }

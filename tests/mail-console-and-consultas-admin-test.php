@@ -634,6 +634,10 @@ assert_true(strpos($mail_settings_html, 'name="flacso_mautic_password"') !== fal
 assert_true(strpos($mail_settings_html, 'name="flacso_mautic_token"') !== false, 'Render must contain flacso_mautic_token input');
 assert_true(strpos($mail_settings_html, 'name="flacso_mautic_campaign_enabled"') !== false, 'Render must contain campaign enable checkbox');
 assert_true(strpos($mail_settings_html, 'name="flacso_mautic_campaign_consultas_id"') !== false, 'Render must contain campaign ID input');
+assert_true(strpos($mail_settings_html, 'Clave Pública') !== false, 'Render must label the Basic API identifier as Clave Pública');
+assert_true(strpos($mail_settings_html, 'Clave Secreta') !== false, 'Render must label the Basic API secret as Clave Secreta');
+assert_true(strpos($mail_settings_html, 'id="flacso-test-mautic-btn"') !== false, 'Render must expose the Mautic connection test action');
+assert_true(strpos($mail_settings_html, 'Estado de configuración') !== false, 'Render must show the configuration readiness status');
 assert_true(strpos($mail_settings_html, 'Mailjet') === false, 'Render must not expose Mailjet');
 
 // Test 13: FLACSO_Mail_Settings::init() registers wp_ajax_flacso_mautic_test_connection
