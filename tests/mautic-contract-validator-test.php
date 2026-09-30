@@ -1,0 +1,104 @@
+<?php
+$root = dirname(__DIR__);
+
+if (!defined('ABSPATH')) {
+    define('ABSPATH', __DIR__ . '/');
+}
+if (!class_exists('WP_Error')) {
+    class WP_Error {
+        public function __construct(private string $message) {}
+        public function get_error_message(): string { return $this->message; }
+    }
+}
+if (!function_exists('is_wp_error')) {
+    function is_wp_error($value) { return $value instanceof WP_Error; }
+}
+if (!function_exists('get_option')) {
+    function get_option($key, $default = false) {
+        $options = [
+            'flacso_mautic_enabled' => '1',
+            'flacso_mautic_base_url' => 'https://mautic.example.org',
+            'flacso_mautic_auth_type' => 'basic',
+            'flacso_mautic_username' => 'test',
+            'flacso_mautic_password' => 'secret',
+        ];
+        return $options[$key] ?? $default;
+    }
+}
+
+require_once $root . '/includes/integrations/class-flacso-mautic-client.php';
+require_once $root . '/modules/consultas/services/class-flacso-mautic-contract-manifest.php';
+require_once $root . '/modules/consultas/services/class-flacso-mautic-contract-validator.php';
+
+function contract_assert(bool $condition, string $message): void {
+    if (!$condition) {
+        fwrite(STDERR, "FAIL: {$message}\n");
+        exit(1);
+    }
+}
+
+$template = [
+    'id' => 3,
+    'subject' => 'Recibimos tu consulta sobre {programa}',
+    'customHtml' => '<p>Hola {nombre}</p>',
+    'isPublished' => true,
+];
+$sha = hash('sha256', FLACSO_Mautic_Contract_Validator::normalized_template_content($template));
+$manifest = [
+    'version' => 'test-1',
+    'contact_fields' => [
+        'flacso_origen' => ['type' => 'text'],
+        'flacso_modalidad_perfil' => ['type' => 'select', 'options' => ['virtual', 'presencial']],
+    ],
+    'template' => [
+        'id' => 3,
+        'functional_version' => 'ack-test',
+        'content_sha256' => $sha,
+    ],
+];
+
+FLACSO_Mautic_Client::set_http_transport(function(string $url, array $args) use ($template) {
+    if (str_contains($url, '/api/fields/contact')) {
+        return [
+            'response' => ['code' => 200],
+            'body' => json_encode(['fields' => [
+                ['alias' => 'flacso_origen', 'type' => 'text'],
+                ['alias' => 'flacso_modalidad_perfil', 'type' => 'select', 'properties' => ['list' => [
+                    ['value' => 'virtual'], ['value' => 'presencial'],
+                ]]],
+            ]]),
+        ];
+    }
+    if (str_contains($url, '/api/emails/3')) {
+        return ['response' => ['code' => 200], 'body' => json_encode(['email' => $template])];
+    }
+    return ['response' => ['code' => 404], 'body' => '{}'];
+});
+
+$valid = FLACSO_Mautic_Contract_Validator::validate($manifest);
+contract_assert($valid['ok'] === true && $valid['status'] === 'valid', 'contrato compatible es válido');
+
+$missing = $manifest;
+$missing['contact_fields']['alias_inexistente'] = ['type' => 'text'];
+$result = FLACSO_Mautic_Contract_Validator::validate($missing);
+contract_assert($result['ok'] === false && $result['status'] === 'blocked', 'alias ausente bloquea');
+
+$wrongType = $manifest;
+$wrongType['contact_fields']['flacso_origen']['type'] = 'number';
+contract_assert(FLACSO_Mautic_Contract_Validator::validate($wrongType)['ok'] === false, 'tipo incompatible bloquea');
+
+$wrongOptions = $manifest;
+$wrongOptions['contact_fields']['flacso_modalidad_perfil']['options'][] = 'hibrida';
+contract_assert(FLACSO_Mautic_Contract_Validator::validate($wrongOptions)['ok'] === false, 'opción select ausente bloquea');
+
+$wrongHash = $manifest;
+$wrongHash['template']['content_sha256'] = str_repeat('0', 64);
+contract_assert(FLACSO_Mautic_Contract_Validator::validate($wrongHash)['ok'] === false, 'hash distinto bloquea');
+
+$noHash = $manifest;
+$noHash['template']['content_sha256'] = '';
+contract_assert(FLACSO_Mautic_Contract_Validator::validate($noHash)['ok'] === false, 'hash no aprobado bloquea');
+
+FLACSO_Mautic_Client::set_http_transport(null);
+
+echo "OK mautic-contract-validator-test\n";

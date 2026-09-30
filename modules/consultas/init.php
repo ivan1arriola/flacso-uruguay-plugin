@@ -1,9 +1,9 @@
 <?php
 /**
- * Módulo Consultas - FLACSO Uruguay
+ * Módulo Consultas - FLACSO Uruguay.
  *
- * Persistencia directa en base de datos PostgreSQL y despacho
- * de correos transaccionales a través de Mailjet.
+ * Persistencia PostgreSQL, snapshots inmutables, cola transaccional Mautic y
+ * sincronización comercial separada por consentimiento.
  *
  * @package FLACSO_Uruguay
  */
@@ -26,14 +26,28 @@ $flacso_consultas_files = [
     'includes/database/repositories/class-flacso-offer-inquiry-repository.php',
     'includes/database/repositories/class-flacso-seminar-inquiry-repository.php',
     'includes/database/repositories/class-flacso-inquiry-analytics-repository.php',
+    'includes/database/repositories/class-flacso-inquiry-delivery-repository.php',
+
+    // Mailjet se conserva únicamente mientras exista código legado que deba
+    // retirarse después del piloto; el flujo nuevo no lo invoca.
     'includes/integrations/class-flacso-mailjet-client.php',
     'includes/integrations/class-flacso-mautic-client.php',
-    'modules/consultas/services/class-flacso-offer-inquiry-service.php',
-    'modules/consultas/services/class-flacso-seminar-inquiry-service.php',
+
+    'modules/consultas/services/class-flacso-inquiry-tag-factory.php',
+    'modules/consultas/services/class-flacso-inquiry-snapshot.php',
     'modules/consultas/services/class-flacso-inquiry-context-service.php',
+    'modules/consultas/services/class-flacso-mautic-contract-manifest.php',
+    'modules/consultas/services/class-flacso-mautic-contract-validator.php',
     'modules/consultas/services/class-flacso-mautic-payload-builder.php',
     'modules/consultas/services/class-flacso-inquiry-marketing-service.php',
+    'modules/consultas/services/class-flacso-inquiry-delivery-service.php',
+    'modules/consultas/services/class-flacso-inquiry-delivery-worker.php',
+
+    'modules/consultas/services/class-flacso-offer-inquiry-service.php',
+    'modules/consultas/services/class-flacso-seminar-inquiry-service.php',
     'modules/consultas/services/class-flacso-inquiry-followup-service.php',
+
+    'modules/consultas/includes/class-flacso-consultas-cli.php',
     'modules/consultas/includes/class-flacso-consultas-admin.php',
 ];
 
@@ -47,8 +61,10 @@ foreach ($flacso_consultas_files as $flacso_file) {
     }
 }
 
-// Los seguimientos de comunicación se ejecutan en campañas de Mautic.
-// No registrar WP-Cron evita que WordPress despache correos por proveedores.
+// No registrar WP-Cron: la cola está diseñada para cron de servidor + WP-CLI.
+if (class_exists('FLACSO_Consultas_CLI')) {
+    FLACSO_Consultas_CLI::register();
+}
 
 if (class_exists('FLACSO_Consultas_Admin') && function_exists('add_action')) {
     FLACSO_Consultas_Admin::init();

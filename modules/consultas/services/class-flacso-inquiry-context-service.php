@@ -1,6 +1,6 @@
 <?php
 /**
- * Servicio de resolución del contexto académico y snapshots para consultas de ofertas.
+ * Servicio de resolución del contexto académico para consultas de ofertas.
  *
  * @package FLACSO_Uruguay
  */
@@ -20,7 +20,6 @@ class FLACSO_Inquiry_Context_Service {
             }
         }
 
-        // 1. Nombre de la oferta
         $offer_name = trim((string)($inquiry_data['offerName'] ?? $inquiry_data['titulo_posgrado'] ?? ''));
         if ($offer_name === '' && !empty($catalog_data['nombre'])) {
             $offer_name = (string)$catalog_data['nombre'];
@@ -31,10 +30,8 @@ class FLACSO_Inquiry_Context_Service {
             }
         }
 
-        // 2. Tipo de oferta
         $offer_type = $inquiry_data['offerType'] ?? $inquiry_data['tipo_oferta'] ?? ($catalog_data['tipo'] ?? null);
 
-        // 3. Abreviación canónica
         $raw_abbr = $inquiry_data['offerAbbreviation'] ?? ($catalog_data['abreviacion'] ?? null);
         $offer_abbr = null;
         if ($raw_abbr !== null && trim((string)$raw_abbr) !== '') {
@@ -45,7 +42,6 @@ class FLACSO_Inquiry_Context_Service {
             error_log(sprintf('[FLACSO] Oferta ID %d (%s) sin abreviacion configurada al procesar consulta.', $offer_id, $offer_name));
         }
 
-        // 4. Cohorte de consulta
         $inquiry_cohort = $catalog_data['cohorte_consulta'] ?? null;
         if ($inquiry_cohort === null && class_exists('FLACSO_Academic_Catalog') && method_exists('FLACSO_Academic_Catalog', 'get_inquiry_cohort')) {
             try {
@@ -67,32 +63,42 @@ class FLACSO_Inquiry_Context_Service {
             $cohort_wp_id = (function_exists('absint') ? absint($inquiry_cohort['id'] ?? 0) : abs((int)($inquiry_cohort['id'] ?? 0))) ?: null;
             $cohort_number = (function_exists('absint') ? absint($inquiry_cohort['numero'] ?? 0) : abs((int)($inquiry_cohort['numero'] ?? 0))) ?: null;
             $cohort_name = (string)($inquiry_cohort['nombre'] ?? '');
-            
+
             $reg_data = $inquiry_cohort['preinscripcion'] ?? [];
-            $is_open = !empty($reg_data['abierta']);
-            $offer_status = $is_open ? 'abierta' : 'cerrada';
-            
+            $offer_status = !empty($reg_data['abierta']) ? 'abierta' : 'cerrada';
             $reg_open_at = !empty($reg_data['desde']) ? (string)$reg_data['desde'] : null;
             $reg_close_at = !empty($reg_data['hasta']) ? (string)$reg_data['hasta'] : null;
             $preinscripcion_url = !empty($reg_data['url']) ? (string)$reg_data['url'] : null;
         }
 
         return [
-            'offerWpId'           => $offer_id > 0 ? $offer_id : null,
-            'offerName'           => $offer_name,
-            'offerType'           => $offer_type,
-            'offerAbbreviation'   => $offer_abbr,
-            'cohortWpId'          => $cohort_wp_id,
-            'cohortNumber'        => $cohort_number,
-            'cohortName'          => $cohort_name,
-            'registrationOpenAt'  => $reg_open_at,
-            'registrationCloseAt' => $reg_close_at,
-            'offerStatus'         => $offer_status,
-            'preinscripcionUrl'   => $preinscripcion_url,
-            'replyToEmail'        => $catalog_data['correo'] ?? null,
-            'startValue'          => $inquiry_cohort['fecha_inicio'] ?? ($catalog_data['cohorte_vigente']['fecha_inicio'] ?? ''),
-            'startPrecision'      => $inquiry_cohort['precision_fecha_inicio'] ?? ($catalog_data['cohorte_vigente']['precision_fecha_inicio'] ?? 'dia'),
-            'modalityLabel'       => $inquiry_cohort['modalidad'] ?? ($catalog_data['cohorte_vigente']['modalidad'] ?? ''),
+            'offerWpId'            => $offer_id > 0 ? $offer_id : null,
+            'offerName'            => $offer_name,
+            'offerType'            => $offer_type,
+            'offerAbbreviation'    => $offer_abbr,
+            'cohortWpId'           => $cohort_wp_id,
+            'cohortNumber'         => $cohort_number,
+            'cohortName'           => $cohort_name,
+            'registrationOpenAt'   => $reg_open_at,
+            'registrationCloseAt'  => $reg_close_at,
+            'offerStatus'          => $offer_status,
+            'preinscripcionUrl'    => $preinscripcion_url,
+            'replyToEmail'         => $catalog_data['correo'] ?? null,
+            'startDate'            => $inquiry_cohort['fecha_inicio'] ?? ($catalog_data['cohorte_vigente']['fecha_inicio'] ?? ''),
+            'startDatePrecision'   => self::normalize_precision((string) ($inquiry_cohort['precision_fecha_inicio'] ?? ($catalog_data['cohorte_vigente']['precision_fecha_inicio'] ?? 'dia'))),
+            'modality'             => self::normalize_modality((string) ($inquiry_cohort['modalidad'] ?? ($catalog_data['cohorte_vigente']['modalidad'] ?? ''))),
         ];
+    }
+
+    private static function normalize_precision(string $value): string {
+        $value = strtolower(trim($value));
+        return ['dia'=>'day','mes'=>'month','anio'=>'year','año'=>'year'][$value] ?? (in_array($value, ['day','month','year'], true) ? $value : 'day');
+    }
+
+    private static function normalize_modality(string $value): string {
+        $value = strtolower(trim($value));
+        $value = strtr($value, ['á'=>'a','é'=>'e','í'=>'i','ó'=>'o','ú'=>'u','ü'=>'u']);
+        $value = ['hibrido'=>'hibrida','mixta'=>'hibrida','mixto'=>'hibrida'][$value] ?? $value;
+        return in_array($value, ['virtual','presencial','semipresencial','hibrida'], true) ? $value : '';
     }
 }

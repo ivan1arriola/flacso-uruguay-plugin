@@ -1,27 +1,68 @@
-# Contrato de datos WordPress a Mautic
+# Contrato de datos WordPress -> Mautic
 
-Los campos estandar son `email`, `firstname` y `lastname`. El resto pertenece al contrato de consultas y se crea con alias `flacso_`:
+Este contrato separa dos conceptos distintos:
 
-| Alias | Tipo | Fuente | Regla |
-| --- | --- | --- | --- |
-| `flacso_consulta_id` | text | id persistido | requerido |
-| `flacso_consulta_fecha` | datetime | inquiryAt | ISO 8601 UTC |
-| `flacso_origen` | text | formulario | `web-consultas` |
-| `flacso_tipo` | select | consulta | `oferta` o `seminario` |
-| `flacso_oferta_codigo` | text | abreviacion | kebab-case |
-| `flacso_oferta_nombre` | text | snapshot | opcional |
-| `flacso_oferta_articulo` | text | snapshot | opcional |
-| `flacso_oferta_url` | url | snapshot | URL valida de información, con sufijo `carta` |
-| `flacso_cohorte_codigo` | text | snapshot | `{codigo}-c{numero}` o vacio |
-| `flacso_cohorte_numero` | number | snapshot | positivo o vacio |
-| `flacso_cohorte_nombre` | text | snapshot | opcional |
-| `flacso_cohorte_estado` | select | snapshot | `abierta`, `cerrada` o `sin_cohorte` |
-| `flacso_modalidad` | select | snapshot | `virtual`, `presencial` o `hibrida` |
-| `flacso_fecha_inicio` | date | snapshot | `YYYY-MM-DD` con precision suficiente |
-| `flacso_duracion` | text | snapshot | opcional |
-| `flacso_creditos` | number | snapshot | opcional |
-| `flacso_preinscripcion_url` | url | snapshot | URL valida o vacia |
-| `flacso_consulta_texto` | textarea | consulta | no se registra en logs |
-| `flacso_pais` | text | `pais` | opcional; cadena vacia si falta |
-| `flacso_nivel_academico` | text | `nivel_academico` | opcional; cadena vacia si falta |
-| `flacso_profesion` | text | `profesion` | opcional; cadena vacia si falta |
+1. **Acuse transaccional por consulta**: usa un InquirySnapshot inmutable y tokens suministrados en esa entrega.
+2. **Marketing posterior**: sincroniza únicamente perfil estable, tags y pertenencia a campaña cuando existe consentimiento verificable.
+
+Los datos de una consulta concreta **no se almacenan como campos mutables del contacto**.
+
+## Perfil estable permitido en el contacto
+
+Además de los campos estándar email, firstname y lastname, WordPress sólo puede escribir estos aliases desde el flujo de consultas:
+
+| Alias | Tipo | Fuente |
+| --- | --- | --- |
+| flacso_origen | text | constante web-consultas |
+| flacso_pais | text | perfil declarado |
+| flacso_nivel_academico | text | perfil declarado |
+| flacso_profesion | text | perfil declarado |
+
+El manifiesto versionado está en modules/consultas/services/class-flacso-mautic-contract-manifest.php. El validador comprueba estos aliases y tipos en modo de solo lectura.
+
+## Snapshot de consulta
+
+Cada consulta conserva en WordPress un snapshot con versión de esquema, destinatario, perfil, atribución, contexto académico, cohorte, fecha de inicio, modalidad, enlaces y tags calculados. El snapshot no cambia aunque el contacto consulte otra oferta posteriormente.
+
+Aliases canónicos:
+
+- startDate
+- startDatePrecision: day, month o year
+- modality: virtual, presencial, semipresencial o hibrida
+
+No existen aliases paralelos startValue / modalityLabel dentro del contrato nuevo.
+
+## Tags
+
+La única fábrica es FLACSO_Inquiry_Tag_Factory:
+
+- interes-{codigo}
+- {codigo}-c{numero} cuando existe cohorte
+- origen-web-consultas
+
+Las etiquetas no contienen el estado abierto/cerrado de la cohorte.
+
+## Acuse transaccional
+
+La entrega persiste su propio conjunto de tokens antes de contactar Mautic. La plantilla nunca debe depender de contactfield=flacso_oferta_* para reconstruir la consulta.
+
+La identidad de plantilla incluye ID de Mautic, versión funcional y SHA-256 del contenido aprobado. Una huella ausente o distinta deja el contrato en estado blocked.
+
+accepted significa que Mautic aceptó la solicitud HTTP. No demuestra entrega, apertura ni lectura.
+
+## Privacidad
+
+flacso_consulta_texto queda fuera del contrato. El texto libre permanece exclusivamente en el registro de WordPress/PostgreSQL y no se envía a Mautic, logs, alertas ni diagnósticos.
+
+El payload transaccional restringido se anonimiza después de 90 días y pierde las referencias reversibles a email, contacto, consulta y snapshot.
+
+## Consentimiento comercial
+
+Una campaña sólo puede incorporarse si la evidencia contiene simultáneamente:
+
+- granted = true;
+- acceptedAt válido;
+- source;
+- textVersion.
+
+La ausencia o incompletitud del consentimiento no bloquea la creación de la consulta ni su acuse transaccional.

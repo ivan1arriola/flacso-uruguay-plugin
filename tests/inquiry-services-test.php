@@ -1,6 +1,7 @@
 <?php
 // tests/inquiry-services-test.php
 $root = dirname(__DIR__);
+require_once __DIR__ . '/support/inquiry-delivery-bootstrap.php';
 
 if (!defined('ABSPATH')) {
     define('ABSPATH', __DIR__ . '/');
@@ -173,35 +174,8 @@ function srv_assert(bool $cond, string $msg): void {
     }
 }
 
-// Configurar SQLite en memoria con esquema idéntico a producción
-$pdo = new PDO('sqlite::memory:', null, null, [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-]);
-$pdo->exec('
-CREATE TABLE offer_inquiries (
-    id TEXT PRIMARY KEY, consultaId TEXT UNIQUE, offerWpId INTEGER, offerName TEXT,
-    offerAbbreviation TEXT, offerType TEXT, cohortWpId INTEGER, cohortNumber INTEGER, cohortName TEXT,
-    registrationOpenAt TEXT, registrationCloseAt TEXT,
-    firstName TEXT, lastName TEXT, fullName TEXT, email TEXT, emailNormalized TEXT, country TEXT,
-    profession TEXT, educationLevel TEXT, source TEXT, campaignProvider TEXT, campaignSource TEXT,
-    campaignMedium TEXT, campaignName TEXT, campaignExternalId TEXT, campaignContent TEXT, campaignTerm TEXT,
-    urlBase TEXT, urlReferer TEXT, inquiryAt TEXT, ipAddress TEXT, userAgent TEXT, replyToEmail TEXT,
-    programUrl TEXT, cartaUrl TEXT, preinscripcionUrl TEXT, offerStatus TEXT,
-    mauticContactId TEXT, mauticSyncStatus TEXT DEFAULT "skipped", mauticSyncedAt TEXT, mauticLastError TEXT,
-    followupDueAt TEXT, followupStatus TEXT DEFAULT "none", followupSentAt TEXT, followupAttempts INTEGER DEFAULT 0, followupLastError TEXT,
-    emailStatus TEXT, emailSender TEXT, gmailMessageUrl TEXT, mailjetMessageId TEXT, mailjetMessageUuid TEXT, payload TEXT, createdAt TEXT, updatedAt TEXT
-);
-CREATE TABLE seminar_inquiries (
-    id TEXT PRIMARY KEY, consultaId TEXT UNIQUE, seminarWpId INTEGER, seminarName TEXT, seminarType TEXT,
-    firstName TEXT, lastName TEXT, fullName TEXT, email TEXT, emailNormalized TEXT, country TEXT,
-    profession TEXT, educationLevel TEXT, source TEXT, campaignProvider TEXT, campaignSource TEXT,
-    campaignMedium TEXT, campaignName TEXT, campaignExternalId TEXT, campaignContent TEXT, campaignTerm TEXT,
-    urlBase TEXT, urlReferer TEXT, inquiryAt TEXT, ipAddress TEXT, userAgent TEXT, replyToEmail TEXT,
-    programUrl TEXT, cartaUrl TEXT, preinscripcionUrl TEXT, offerStatus TEXT, emailStatus TEXT,
-    emailSender TEXT, gmailMessageUrl TEXT, mailjetMessageId TEXT, mailjetMessageUuid TEXT, payload TEXT, createdAt TEXT, updatedAt TEXT
-);
-');
+// SQLite compartido con tablas fuente, snapshots y entregas.
+$pdo = flacso_test_delivery_pdo();
 FLACSO_DB::set_connection($pdo);
 
 // =========================================================================
@@ -220,7 +194,7 @@ $result_offer = FLACSO_Offer_Inquiry_Service::submit([
 srv_assert($result_offer['ok'] === true, 'Offer submit debe ser ok');
 srv_assert($result_offer['consulta_id'] === 'srv-offer-001', 'Debe retornar consulta_id');
 srv_assert($result_offer['duplicate'] === false, 'No debe ser duplicado');
-srv_assert($result_offer['email'] === 'skipped', 'La comunicación debe quedar a cargo de Mautic');
+srv_assert($result_offer['email'] === 'pending', 'El acuse debe quedar pendiente en la cola transaccional');
 srv_assert($result_offer['mailjet_message_id'] === null, 'No debe retornar identificador Mailjet');
 srv_assert(count($GLOBALS['mailjet_http_calls']) === $initial_mail_calls, 'No debe llamar a Mailjet');
 srv_assert(isset($result_offer['offer_status']) && $result_offer['offer_status'] === 'sin_cohorte', 'Debe retornar offer_status = sin_cohorte si no hay cohorte');
@@ -230,7 +204,7 @@ srv_assert(array_key_exists('offer_abbreviation', $result_offer) && $result_offe
 $repo = new FLACSO_Offer_Inquiry_Repository();
 $saved = $repo->find_by_consulta_id('srv-offer-001');
 srv_assert(!empty($saved), 'La fila debe existir en offer_inquiries');
-srv_assert($saved['emailStatus'] === 'skipped', 'emailStatus en BD debe ser skipped');
+srv_assert($saved['emailStatus'] === 'pending', 'emailStatus en BD debe ser pending');
 srv_assert($saved['offerStatus'] === 'sin_cohorte', 'offerStatus en BD debe ser sin_cohorte');
 srv_assert($saved['cohortNumber'] === null, 'cohortNumber en BD debe ser null');
 srv_assert($saved['offerAbbreviation'] === null, 'offerAbbreviation en BD debe ser null');
@@ -260,6 +234,12 @@ srv_assert($saved_catalog['registrationOpenAt'] === '2026-08-01', 'registrationO
 srv_assert($saved_catalog['registrationCloseAt'] === '2026-09-01', 'registrationCloseAt debe guardarse en BD');
 
 srv_assert(count($GLOBALS['mailjet_http_calls']) === $initial_mail_calls, 'El catálogo no debe provocar un envío Mailjet');
+
+srv_assert((int)$pdo->query("SELECT COUNT(*) FROM inquiry_snapshots WHERE consultaId = 'srv-offer-001'")->fetchColumn() === 1, 'Oferta crea un snapshot');
+srv_assert((int)$pdo->query("SELECT COUNT(*) FROM inquiry_deliveries WHERE consultaId = 'srv-offer-001'")->fetchColumn() === 1, 'Oferta crea una entrega');
+$delivery_offer = $pdo->query("SELECT state, email FROM inquiry_deliveries WHERE consultaId = 'srv-offer-001'")->fetch(PDO::FETCH_ASSOC);
+srv_assert($delivery_offer['state'] === 'pending', 'Entrega de oferta comienza pending');
+srv_assert($delivery_offer['email'] === 'lucia@ejemplo.com', 'Entrega conserva destinatario mínimo');
 
 // =========================================================================
 // 2. Idempotencia de oferta: reenvío con mismo event_id retorna duplicate sin enviar correo
@@ -292,13 +272,16 @@ $result_sem = FLACSO_Seminar_Inquiry_Service::submit([
 srv_assert($result_sem['ok'] === true, 'Seminar submit debe ser ok');
 srv_assert($result_sem['consulta_id'] === 'srv-sem-001', 'Debe retornar consulta_id del seminario');
 srv_assert($result_sem['duplicate'] === false, 'No debe ser duplicado');
-srv_assert($result_sem['email'] === 'skipped', 'La comunicación del seminario debe quedar a cargo de Mautic');
+srv_assert($result_sem['email'] === 'pending', 'El seminario debe quedar pendiente en la cola transaccional');
 srv_assert(count($GLOBALS['mailjet_http_calls']) === $calls_before_sem, 'El seminario no debe llamar Mailjet');
 
 $sem_repo = new FLACSO_Seminar_Inquiry_Repository();
 $saved_sem = $sem_repo->find_by_consulta_id('srv-sem-001');
 srv_assert(!empty($saved_sem), 'La fila debe existir en seminar_inquiries');
-srv_assert($saved_sem['emailStatus'] === 'skipped', 'emailStatus en BD para seminario debe ser skipped');
+srv_assert($saved_sem['emailStatus'] === 'pending', 'emailStatus en BD para seminario debe ser pending');
+
+srv_assert((int)$pdo->query("SELECT COUNT(*) FROM inquiry_snapshots WHERE consultaId = 'srv-sem-001'")->fetchColumn() === 1, 'Seminario crea un snapshot');
+srv_assert((int)$pdo->query("SELECT COUNT(*) FROM inquiry_deliveries WHERE consultaId = 'srv-sem-001'")->fetchColumn() === 1, 'Seminario crea una entrega');
 
 // =========================================================================
 // 4. Idempotencia de seminario: reenvío con mismo event_id no envía correo

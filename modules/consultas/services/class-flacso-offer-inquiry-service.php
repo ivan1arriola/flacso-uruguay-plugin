@@ -37,6 +37,12 @@ if (!class_exists('FLACSO_Inquiry_Context_Service')) {
 if (!class_exists('FLACSO_Inquiry_Marketing_Service')) {
     require_once __DIR__ . '/class-flacso-inquiry-marketing-service.php';
 }
+if (!class_exists('FLACSO_Inquiry_Snapshot')) {
+    require_once __DIR__ . '/class-flacso-inquiry-snapshot.php';
+}
+if (!class_exists('FLACSO_Inquiry_Delivery_Repository')) {
+    require_once dirname(__DIR__, 3) . '/includes/database/repositories/class-flacso-inquiry-delivery-repository.php';
+}
 
 class FLACSO_Offer_Inquiry_Service {
 
@@ -186,23 +192,29 @@ class FLACSO_Offer_Inquiry_Service {
                 ? (string)$data['url_preinscripcion']
                 : ($context['preinscripcionUrl'] ?? null));
 
-        $start_value = !empty($data['startValue'])
-            ? (string)$data['startValue']
-            : (!empty($data['fecha_inicio'])
-                ? (string)$data['fecha_inicio']
-                : ($context['startValue'] ?? ''));
+        $start_value = !empty($data['startDate'])
+            ? (string)$data['startDate']
+            : (!empty($data['startValue'])
+                ? (string)$data['startValue']
+                : (!empty($data['fecha_inicio'])
+                    ? (string)$data['fecha_inicio']
+                    : ($context['startDate'] ?? '')));
 
-        $modality = !empty($data['modalityLabel'])
-            ? (string)$data['modalityLabel']
-            : (!empty($data['modalidad'])
-                ? (string)$data['modalidad']
-                : ($context['modalityLabel'] ?? ''));
+        $modality = !empty($data['modality'])
+            ? (string)$data['modality']
+            : (!empty($data['modalityLabel'])
+                ? (string)$data['modalityLabel']
+                : (!empty($data['modalidad'])
+                    ? (string)$data['modalidad']
+                    : ($context['modality'] ?? '')));
 
-        $start_precision = !empty($data['startPrecision'])
-            ? (string)$data['startPrecision']
-            : (!empty($data['precision_fecha_inicio'])
-                ? (string)$data['precision_fecha_inicio']
-                : ($context['startPrecision'] ?? 'dia'));
+        $start_precision = !empty($data['startDatePrecision'])
+            ? (string)$data['startDatePrecision']
+            : (!empty($data['startPrecision'])
+                ? (string)$data['startPrecision']
+                : (!empty($data['precision_fecha_inicio'])
+                    ? (string)$data['precision_fecha_inicio']
+                    : ($context['startDatePrecision'] ?? 'day')));
 
         $country = isset($data['country']) ? (string)$data['country'] : (isset($data['pais']) ? (string)$data['pais'] : null);
         $profession = isset($data['profession']) ? (string)$data['profession'] : (isset($data['profesion']) ? (string)$data['profesion'] : null);
@@ -243,16 +255,10 @@ class FLACSO_Offer_Inquiry_Service {
                 ? (string)$data['fecha_envio']
                 : gmdate('c'));
 
-        $followup_enabled = function_exists('get_option') ? !empty(get_option('flacso_inquiry_followup_enabled', false)) : false;
-        if ($followup_enabled) {
-            $followup_days = function_exists('get_option') ? max(1, min(60, (int) get_option('flacso_inquiry_followup_days', 5))) : 5;
-            $inquiry_ts    = strtotime($inquiry_at) ?: time();
-            $followup_due_at = gmdate('Y-m-d H:i:s', strtotime("+{$followup_days} days", $inquiry_ts));
-            $followup_status = 'pending';
-        } else {
-            $followup_due_at = null;
-            $followup_status = 'none';
-        }
+        // El seguimiento comercial nuevo pertenece a Mautic y sólo se habilita
+        // con consentimiento explícito. No crear followups locales nuevos.
+        $followup_due_at = null;
+        $followup_status = 'none';
 
         // 5. Inserción en Base de Datos (Guardar primero)
         $record = [
@@ -293,61 +299,111 @@ class FLACSO_Offer_Inquiry_Service {
             'offerStatus'         => $offer_status,
             'followupDueAt'       => $followup_due_at,
             'followupStatus'      => $followup_status,
-            'emailStatus'         => 'skipped',
+            'emailStatus'         => 'pending',
+            'emailSender'         => 'mautic_transactional_queue',
             'payload'             => $data,
         ];
 
+        $snapshot_form = array_merge($data, [
+            'firstName' => $first_name,
+            'lastName' => $last_name,
+            'fullName' => $full_name,
+            'email' => $email,
+            'country' => $country,
+            'profession' => $profession,
+            'educationLevel' => $education_level,
+            'programUrl' => $program_url,
+            'cartaUrl' => $carta_url,
+            'preinscripcionUrl' => $preinscripcion_url,
+            'replyToEmail' => $reply_to,
+            'inquiryAt' => $inquiry_at,
+            'offerStatus' => $offer_status,
+            'startDate' => $start_value,
+            'startDatePrecision' => $start_precision,
+            'modality' => $modality,
+        ]);
+        $snapshot_context = array_merge($context, [
+            'offerWpId' => $offer_id,
+            'offerName' => $offer_name,
+            'offerType' => $offer_type,
+            'offerAbbreviation' => $offer_abbr,
+            'cohortWpId' => $cohort_wp_id,
+            'cohortNumber' => $cohort_number,
+            'cohortName' => $cohort_name,
+            'registrationOpenAt' => $reg_open_at,
+            'registrationCloseAt' => $reg_close_at,
+            'offerStatus' => $offer_status,
+            'preinscripcionUrl' => $preinscripcion_url,
+            'replyToEmail' => $reply_to,
+            'startDate' => $start_value,
+            'startDatePrecision' => $start_precision,
+            'modality' => $modality,
+        ]);
+
         try {
-            $insert_result = $repo->insert($record);
+            $snapshot = FLACSO_Inquiry_Snapshot::from_offer($snapshot_form, $snapshot_context, $consulta_id);
+            $delivery_repo = new FLACSO_Inquiry_Delivery_Repository();
+            $insert_result = $delivery_repo->persist_inquiry_with_delivery(
+                $repo,
+                $record,
+                $snapshot,
+                'offer'
+            );
         } catch (\Throwable $e) {
-            error_log('[FLACSO] Error al insertar consulta de oferta en base de datos: ' . $e->getMessage());
+            error_log('[FLACSO] Error al persistir consulta/snapshot/entrega de oferta: ' . $e->getMessage());
             return [
-                'ok'      => false,
-                'code'    => 500,
-                'error'   => 'db_error',
+                'ok' => false,
+                'code' => 500,
+                'error' => 'db_error',
                 'message' => $e->getMessage(),
             ];
         }
 
-        // Si ocurrió colisión de unicidad capturada como duplicado en insert()
         if (!empty($insert_result['duplicate'])) {
             return [
                 'ok'                 => true,
                 'consulta_id'        => $consulta_id,
                 'duplicate'          => true,
-                'email'              => 'skipped',
+                'email'              => $insert_result['state'] ?? 'pending',
                 'offer_status'       => $offer_status,
                 'cohort_number'      => $cohort_number,
                 'offer_abbreviation' => $offer_abbr,
+                'delivery_id'        => $insert_result['delivery_id'] ?? null,
                 'code'               => 200,
             ];
         }
 
-        $record_id = !empty($insert_result['id']) ? (string) $insert_result['id'] : (string) $consulta_id;
-        $mautic_sync_result = ['ok' => true, 'status' => 'skipped'];
+        $record_id = (string) ($insert_result['id'] ?? '');
+        $marketing = ['ok' => true, 'status' => 'skipped', 'reason' => 'consent_required'];
         if (class_exists('FLACSO_Inquiry_Marketing_Service')) {
             try {
-                $mautic_sync_result = FLACSO_Inquiry_Marketing_Service::sync_inquiry($record_id, $record, $repo);
+                $marketing = FLACSO_Inquiry_Marketing_Service::sync_commercial_contact(
+                    $snapshot,
+                    FLACSO_Inquiry_Marketing_Service::extract_consent($data),
+                    $repo,
+                    $record_id
+                );
             } catch (\Throwable $e) {
-                error_log('[FLACSO] Error al sincronizar consulta con Mautic: ' . $e->getMessage());
-                $mautic_sync_result = ['ok' => false, 'status' => 'failed', 'error' => $e->getMessage()];
+                error_log('[FLACSO] Error en sincronización comercial separada: ' . $e->getMessage());
+                $marketing = ['ok' => false, 'status' => 'failed', 'error' => $e->getMessage()];
             }
         }
-        $repo->update_email_status($consulta_id, 'skipped', 'mautic_campaign');
 
         return [
             'ok'                   => true,
             'consulta_id'          => $consulta_id,
             'duplicate'            => false,
-            'email'                => 'skipped',
-            'email_sender'         => 'mautic_campaign',
-            'email_engine'         => 'mautic_campaign',
+            'email'                => 'pending',
+            'email_sender'         => 'mautic_transactional_queue',
+            'email_engine'         => 'mautic_transactional_queue',
+            'delivery_id'          => $insert_result['delivery_id'] ?? null,
+            'snapshot_id'          => $insert_result['snapshot_id'] ?? null,
             'mailjet_message_id'   => null,
             'mailjet_message_uuid' => null,
             'offer_status'         => $offer_status,
             'cohort_number'        => $cohort_number,
             'offer_abbreviation'   => $offer_abbr,
-            'mautic_sync'          => $mautic_sync_result,
+            'marketing_sync'       => $marketing,
             'followup_status'      => 'none',
             'followup_due_at'      => null,
             'code'                 => 200,

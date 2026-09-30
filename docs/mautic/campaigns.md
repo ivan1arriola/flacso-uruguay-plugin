@@ -1,24 +1,36 @@
-# Campaña de consultas
+# Consultas: correo transaccional y campañas
 
-## Correo transaccional
+## Acuse transaccional
 
-- Nombre: `Acuse de recibo de consulta académica`
-- ID de Mautic: `3`
-- Tipo: email por evento (`template` en la API de Mautic)
-- Estado: publicado
-- Asunto: `Recibimos tu consulta sobre {contactfield=flacso_oferta_nombre}`
+- Plantilla Mautic: Acuse de recibo de consulta académica
+- ID: 3
+- Uso: envío directo a un contacto desde la cola transaccional.
+- Fuente de datos: tokens persistidos con cada InquirySnapshot.
+- Campaña Mautic: **no interviene en el acuse**.
 
-El correo usa el HTML compilado desde `acuse-consulta-academica.mjml`. La vista previa y la entrega siguen pendientes de una prueba con un contacto interno; esta entrega no envió correos.
+La plantilla debe resolver datos como oferta, cohorte, fecha, modalidad y enlaces desde los tokens de la entrega. No debe reconstruirlos desde campos mutables del contacto.
 
-## Flujo preparado, sin activar
+El manifiesto mantiene deliberadamente vacío content_sha256 hasta completar la prueba controlada descrita en token-delivery-proof.md. Mientras la huella no esté aprobada, el validador devuelve blocked y la cola no puede enviar.
 
-- Campaña: `Consultas web FLACSO`
-- ID de Mautic: `2`
-- Fuente: segmento `Prueba` (ID `10`)
-- Nodo único: `Enviar correo electrónico`, inmediato, correo ID `3`, tipo `template`
-- `Activo`: no
-- `Permitir reinicio`: no
+## Campaña comercial
 
-WordPress conoce el ID `2`, pero la opción `flacso_mautic_campaign_enabled` permanece en `0`. No se incorporarán contactos ni se ejecutará la campaña hasta aprobar una prueba interna de extremo a extremo.
+- Campaña existente: Consultas web FLACSO
+- ID: 2
+- Rol nuevo: seguimiento/marketing posterior, no acuse.
+- Opción de WordPress: flacso_mautic_campaign_enabled
+- Estado operativo durante la transición: desactivada.
 
-La aceptación de la API confirma sincronización y pertenencia a campaña; no confirma entrega de correo.
+Aunque la opción se active posteriormente, sync_commercial_contact() exige consentimiento completo (granted, acceptedAt, source, textVersion) antes de añadir un contacto a la campaña.
+
+## Estado de la transición
+
+1. Consulta, snapshot y entrega se persisten atómicamente.
+2. La entrega empieza en pending.
+3. El worker sólo procesa si flacso_inquiry_delivery_queue_enabled = 1.
+4. El contrato Mautic debe validar campos, plantilla y SHA-256.
+5. Un timeout después de iniciar el POST de envío pasa a acceptance_unknown y requiere conciliación manual.
+6. No existe fallback automático a Mailjet ni a wp_mail en el flujo nuevo.
+
+Los bloques Mailjet heredados permanecen inalcanzables únicamente hasta que el piloto sea aprobado. Su retirada se realiza después de esa evidencia, tal como indica el plan de implementación.
+
+La aceptación HTTP de Mautic confirma aceptación API, no entrega efectiva del mensaje.

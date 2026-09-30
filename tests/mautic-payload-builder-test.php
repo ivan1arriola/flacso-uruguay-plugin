@@ -13,32 +13,47 @@ function payload_assert(bool $condition, string $message): void {
     }
 }
 
-require_once dirname(__DIR__) . '/modules/consultas/services/class-flacso-mautic-payload-builder.php';
+$root = dirname(__DIR__);
+require_once $root . '/modules/consultas/services/class-flacso-inquiry-tag-factory.php';
+require_once $root . '/modules/consultas/services/class-flacso-inquiry-snapshot.php';
+require_once $root . '/modules/consultas/services/class-flacso-mautic-payload-builder.php';
 
-$open = FLACSO_Mautic_Payload_Builder::build([
-    'id' => 'q-1', 'inquiryAt' => '2026-09-30T12:00:00+00:00', 'email' => 'ana@example.org',
-    'firstName' => 'Ana', 'lastName' => 'Perez', 'offerType' => 'oferta',
-    'offerAbbreviation' => 'DAVIA', 'offerName' => 'Diploma', 'cohortNumber' => 10,
-    'cohortName' => 'Cohorte 10', 'offerStatus' => 'abierta', 'modalidad' => 'Virtual',
-    'fechaInicio' => '2027-04-08', 'programUrl' => 'https://flacso.edu.uy/diploma/', 'preinscripcionUrl' => 'https://flacso.edu.uy/pre', 'message' => 'Hola',
-    'country' => 'Uruguay', 'education_level' => 'Título universitario', 'profession' => 'Docente',
-]);
-payload_assert($open['fields']['flacso_cohorte_estado'] === 'abierta', 'normaliza estado');
-payload_assert($open['fields']['flacso_modalidad'] === 'virtual', 'normaliza modalidad');
-payload_assert($open['fields']['flacso_cohorte_codigo'] === 'davia-c10', 'crea codigo cohorte');
-payload_assert($open['fields']['flacso_pais'] === 'Uruguay', 'mapea país');
-payload_assert($open['fields']['flacso_nivel_academico'] === 'Título universitario', 'mapea nivel académico');
-payload_assert($open['fields']['flacso_profesion'] === 'Docente', 'mapea profesión');
-payload_assert($open['fields']['flacso_oferta_url'] === 'https://flacso.edu.uy/diploma/carta', 'conserva el destino carta como URL completa');
-payload_assert($open['tags'] === ['interes-davia', 'davia-c10', 'origen-web-consultas'], 'crea tags canonicos');
+$snapshot = FLACSO_Inquiry_Snapshot::from_offer(
+    [
+        'inquiryAt' => '2026-09-30T12:00:00+00:00',
+        'email' => 'ana@example.org',
+        'firstName' => 'Ana',
+        'lastName' => 'Perez',
+        'country' => 'Uruguay',
+        'educationLevel' => 'Título universitario',
+        'profession' => 'Docente',
+        'programUrl' => 'https://flacso.edu.uy/diploma/',
+        'preinscripcionUrl' => 'https://flacso.edu.uy/pre',
+        'message' => 'No sale de WordPress',
+    ],
+    [
+        'offerType' => 'oferta',
+        'offerAbbreviation' => 'DAVIA',
+        'offerName' => 'Diploma',
+        'cohortNumber' => 10,
+        'cohortName' => 'Cohorte 10',
+        'offerStatus' => 'abierta',
+        'modality' => 'virtual',
+        'startDate' => '2027-04-08',
+        'startDatePrecision' => 'day',
+    ],
+    'q-1'
+);
 
-$missing = FLACSO_Mautic_Payload_Builder::build(['id' => 'q-2', 'offerType' => 'seminario', 'offerStatus' => 'CERRADA', 'modalidad' => 'mixta', 'fechaInicio' => '2027']);
-payload_assert($missing['fields']['flacso_cohorte_estado'] === 'cerrada', 'acepta estado historico normalizado');
-payload_assert($missing['fields']['flacso_modalidad'] === '', 'omite modalidad no canonica');
-payload_assert($missing['fields']['flacso_fecha_inicio'] === '', 'omite fecha sin precision');
-payload_assert($missing['fields']['flacso_pais'] === '', 'omite país faltante');
-payload_assert($missing['fields']['flacso_nivel_academico'] === '', 'omite nivel académico faltante');
-payload_assert($missing['fields']['flacso_profesion'] === '', 'omite profesión faltante');
-payload_assert($missing['tags'] === ['origen-web-consultas'], 'sin codigo no inventa tags');
+$built = FLACSO_Mautic_Payload_Builder::build($snapshot);
+payload_assert($built['fields']['flacso_pais'] === 'Uruguay', 'mapea país estable');
+payload_assert($built['fields']['flacso_nivel_academico'] === 'Título universitario', 'mapea nivel académico estable');
+payload_assert($built['fields']['flacso_profesion'] === 'Docente', 'mapea profesión estable');
+payload_assert($built['tags'] === ['interes-davia', 'davia-c10', 'origen-web-consultas'], 'tags canónicos');
+payload_assert($built['tokens']['{programa}'] === 'Diploma', 'tokens de consulta salen del snapshot');
+payload_assert($built['tokens']['{fecha_inicio}'] === '8 de abril de 2027', 'fecha de token canónica');
+payload_assert(!array_key_exists('flacso_consulta_texto', $built['fields']), 'texto libre excluido');
+payload_assert(!array_key_exists('flacso_oferta_codigo', $built['fields']), 'oferta no se persiste como estado mutable del contacto');
+payload_assert(!array_key_exists('flacso_cohorte_codigo', $built['fields']), 'cohorte no se persiste como estado mutable del contacto');
 
 echo "OK mautic payload builder\n";

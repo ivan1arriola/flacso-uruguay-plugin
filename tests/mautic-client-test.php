@@ -727,4 +727,70 @@ $campaign_timeout = FLACSO_Mautic_Client::add_contact_to_campaign(7, 42);
 mautic_assert(false === $campaign_timeout['ok'], 'campaign timeout fails');
 mautic_assert(0 === $campaign_timeout['http_code'], 'campaign timeout has no HTTP code');
 
+// Test group 10: transporte inyectable y destinatario mínimo.
+$GLOBALS['mautic_mock_options'] = [
+    'flacso_mautic_enabled' => '1',
+    'flacso_mautic_base_url' => 'https://mautic.example.org',
+    'flacso_mautic_auth_type' => 'basic',
+    'flacso_mautic_username' => 'admin',
+    'flacso_mautic_password' => 'secret',
+];
+
+$transport_calls = [];
+FLACSO_Mautic_Client::set_http_transport(function($url, $args) use (&$transport_calls) {
+    $transport_calls[] = ['url' => $url, 'args' => $args];
+    if (str_contains($url, '/api/contacts?search=')) {
+        return ['response' => ['code' => 200], 'body' => json_encode(['contacts' => [['id' => 77]]])];
+    }
+    if (str_contains($url, '/api/contacts/77/edit')) {
+        return ['response' => ['code' => 200], 'body' => json_encode(['contact' => ['id' => 77]])];
+    }
+    return ['response' => ['code' => 404], 'body' => '{}'];
+});
+$recipient = FLACSO_Mautic_Client::ensure_delivery_recipient('persona@example.org', 'Ana', 'Pérez');
+mautic_assert($recipient['ok'] === true && $recipient['contact_id'] === 77, 'ensure_delivery_recipient reutiliza contacto');
+mautic_assert(count($transport_calls) === 2, 'destinatario existente realiza búsqueda y PATCH');
+$minimal_body = json_decode($transport_calls[1]['args']['body'], true);
+$minimal_keys = array_keys($minimal_body);
+sort($minimal_keys);
+mautic_assert($minimal_keys === ['email', 'firstname', 'lastname'], 'PATCH del destinatario sólo contiene identidad mínima');
+mautic_assert(!str_contains($transport_calls[1]['args']['body'], 'tags'), 'destinatario mínimo no agrega tags');
+mautic_assert(!str_contains($transport_calls[1]['args']['body'], 'flacso_'), 'destinatario mínimo no escribe campos de consulta');
+
+$create_calls = 0;
+$search_calls = 0;
+FLACSO_Mautic_Client::set_http_transport(function($url, $args) use (&$create_calls, &$search_calls) {
+    if (str_contains($url, '/api/contacts?search=')) {
+        $search_calls++;
+        if ($search_calls === 1) {
+            return ['response' => ['code' => 200], 'body' => json_encode(['contacts' => []])];
+        }
+        return ['response' => ['code' => 200], 'body' => json_encode(['contacts' => [['id' => 88]]])];
+    }
+    if (str_contains($url, '/api/contacts/new')) {
+        $create_calls++;
+        return new WP_Error('cURL error 28: Operation timed out', 'http_request_failed');
+    }
+    return ['response' => ['code' => 500], 'body' => '{}'];
+});
+$reconciled = FLACSO_Mautic_Client::ensure_delivery_recipient('nuevo@example.org', 'Nuevo', 'Contacto');
+mautic_assert($reconciled['ok'] === true && $reconciled['action'] === 'reconciled', 'timeout de creación reconcilia por email');
+mautic_assert($create_calls === 1, 'timeout de creación nunca repite POST automáticamente');
+
+$unknown_posts = 0;
+FLACSO_Mautic_Client::set_http_transport(function($url, $args) use (&$unknown_posts) {
+    if (str_contains($url, '/api/contacts?search=')) {
+        return ['response' => ['code' => 200], 'body' => json_encode(['contacts' => []])];
+    }
+    if (str_contains($url, '/api/contacts/new')) {
+        $unknown_posts++;
+        return new WP_Error('Connection reset after request', 'http_request_failed');
+    }
+    return ['response' => ['code' => 500], 'body' => '{}'];
+});
+$unknown = FLACSO_Mautic_Client::ensure_delivery_recipient('incierto@example.org', 'I', 'N');
+mautic_assert($unknown['ok'] === false && $unknown['acceptance_unknown'] === true, 'creación incierta queda acceptance_unknown');
+mautic_assert($unknown_posts === 1, 'resultado incierto no dispara un segundo POST');
+FLACSO_Mautic_Client::set_http_transport(null);
+
 echo "\nALL TESTS PASSED (100%)\n";
