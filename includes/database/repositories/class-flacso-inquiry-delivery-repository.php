@@ -207,6 +207,7 @@ final class FLACSO_Inquiry_Delivery_Repository {
             'SELECT id
              FROM inquiry_deliveries
              WHERE (state = :pending OR state = :retryable)
+               AND attempts < 3
                AND ("nextAttemptAt" IS NULL OR "nextAttemptAt" <= :now)
              ORDER BY "createdAt" ASC
              LIMIT ' . $limit
@@ -227,6 +228,7 @@ final class FLACSO_Inquiry_Delivery_Repository {
                      "claimToken" = :claim_token, "updatedAt" = :now
                  WHERE id = :id
                    AND (state = :pending OR state = :retryable)
+                   AND attempts < 3
                    AND ("nextAttemptAt" IS NULL OR "nextAttemptAt" <= :now)'
             );
             $update->execute([
