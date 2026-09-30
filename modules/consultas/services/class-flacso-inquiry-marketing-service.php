@@ -64,6 +64,37 @@ final class FLACSO_Inquiry_Marketing_Service {
         ]);
     }
 
+    public static function extract_consent(array $data): array {
+        $provided = $data['marketingConsent'] ?? $data['marketing_consent'] ?? null;
+        if (is_array($provided)) {
+            return [
+                'granted' => $provided['granted'] ?? $provided['accepted'] ?? false,
+                'acceptedAt' => $provided['acceptedAt'] ?? $provided['accepted_at'] ?? '',
+                'source' => $provided['source'] ?? '',
+                'textVersion' => $provided['textVersion'] ?? $provided['text_version'] ?? '',
+            ];
+        }
+
+        return [
+            'granted' => $data['marketingConsentGranted']
+                ?? $data['marketing_consent_granted']
+                ?? $data['consentimiento_marketing']
+                ?? false,
+            'acceptedAt' => $data['marketingConsentAcceptedAt']
+                ?? $data['marketing_consent_accepted_at']
+                ?? $data['consentimiento_marketing_fecha']
+                ?? '',
+            'source' => $data['marketingConsentSource']
+                ?? $data['marketing_consent_source']
+                ?? $data['consentimiento_marketing_origen']
+                ?? '',
+            'textVersion' => $data['marketingConsentTextVersion']
+                ?? $data['marketing_consent_text_version']
+                ?? $data['consentimiento_marketing_version']
+                ?? '',
+        ];
+    }
+
     /**
      * Nuevo punto de entrada comercial. Sin consentimiento válido no realiza
      * ninguna llamada a Mautic.
