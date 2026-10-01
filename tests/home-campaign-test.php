@@ -14,4 +14,5 @@ home_assert(FLACSO_Home_Campaign::sanitize_url('//evil.example/x') === '', 'rech
 $fallback = FLACSO_Home_Campaign::fallback();
 home_assert($fallback['variant'] === 'institutional', 'fallback institucional');
 home_assert(stripos($fallback['title'], 'preinscripciones abiertas') === false, 'fallback no promete apertura');
+home_assert($fallback['cta_primary']['url'] === '/formacion/', 'fallback ofrece formación');
 echo "OK home campaign contract\n";
