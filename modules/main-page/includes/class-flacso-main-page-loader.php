@@ -147,8 +147,12 @@ class Flacso_Main_Page_Loader {
             return false;
         }
 
-        if (is_front_page()) {
+        if (is_front_page() && (!class_exists('FLACSO_Home_Campaign') || !FLACSO_Home_Campaign::is_enabled())) {
             return true;
+        }
+
+        if (is_front_page()) {
+            return false;
         }
 
         if (!is_singular()) {
