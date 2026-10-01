@@ -29,9 +29,9 @@ final class FLACSO_Mautic_Contract_Manifest {
                 'origen-web-consultas',
             ],
             'template' => [
-                'id' => 3,
+                'id' => 4,
                 'functional_version' => 'ack-v1',
-                'content_sha256' => '',
+                'content_sha256' => '97c56233bc6419f9978c26c8ba3aea8ff68fb667ba3b0e999d3e1b44485c3cbc',
             ],
             'marketing_campaign' => [
                 'id' => 3,
