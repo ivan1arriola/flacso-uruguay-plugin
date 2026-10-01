@@ -273,7 +273,11 @@ final class FLACSO_Inquiry_Delivery_Repository {
              SET attempts = attempts + 1, "updatedAt" = :now
              WHERE id = :id AND state = :processing'
         );
-        $update->execute([':now' => $now, ':id' => $delivery_id]);
+        $update->execute([
+            ':now'        => $now,
+            ':id'         => $delivery_id,
+            ':processing' => 'processing',
+        ]);
 
         return $attempt_row_id;
     }

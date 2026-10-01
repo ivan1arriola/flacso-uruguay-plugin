@@ -95,6 +95,10 @@ $claimed1 = $deliveries->claim_pending_batch(10, 60);
 $claimed2 = $deliveries->claim_pending_batch(10, 60);
 delivery_repo_assert(count($claimed1) === 1, 'primer worker reclama entrega');
 delivery_repo_assert(count($claimed2) === 0, 'segundo worker no reclama la misma entrega');
+$attempt_id = bin2hex(random_bytes(16));
+$attempt_row_id = $deliveries->record_attempt_start($result['delivery_id'], $attempt_id);
+delivery_repo_assert($attempt_row_id !== '', 'registra intento de entrega');
+delivery_repo_assert((int) $pdo->query('SELECT attempts FROM inquiry_deliveries LIMIT 1')->fetchColumn() === 1, 'incrementa intentos de entrega');
 
 $deliveries->mark_accepted($result['delivery_id'], 200);
 $expired_terminal = gmdate('c', time() - (91 * 86400));
