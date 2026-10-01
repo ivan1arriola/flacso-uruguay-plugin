@@ -147,12 +147,10 @@ class Flacso_Main_Page_Loader {
             return false;
         }
 
-        if (is_front_page() && (!class_exists('FLACSO_Home_Campaign') || !FLACSO_Home_Campaign::is_enabled())) {
-            return true;
-        }
-
         if (is_front_page()) {
-            return false;
+            // La portada v2 reutiliza los renderers de secciones existentes;
+            // sus estilos siguen siendo necesarios durante el rollout.
+            return true;
         }
 
         if (!is_singular()) {
