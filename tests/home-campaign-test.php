@@ -14,5 +14,10 @@ home_assert(FLACSO_Home_Campaign::sanitize_url('//evil.example/x') === '', 'rech
 $fallback = FLACSO_Home_Campaign::fallback();
 home_assert($fallback['variant'] === 'institutional', 'fallback institucional');
 home_assert(stripos($fallback['title'], 'preinscripciones abiertas') === false, 'fallback no promete apertura');
+home_assert($fallback['kicker'] === 'EXCELENCIA ACADÉMICA. SIN FRONTERAS.', 'fallback comunica excelencia sin fronteras');
+home_assert($fallback['title'] === 'Posgrados y especializaciones de FLACSO Uruguay.', 'fallback presenta la propuesta académica');
+home_assert($fallback['description'] === '100% online, estés donde estés.', 'fallback explicita modalidad online');
+home_assert($fallback['cta_primary']['label'] === 'Conocé nuestra propuesta académica.', 'fallback usa el CTA aprobado');
 home_assert($fallback['cta_primary']['url'] === '/formacion/', 'fallback ofrece formación');
+home_assert($fallback['cta_secondary'] === null, 'fallback no muestra un botón de consulta');
 echo "OK home campaign contract\n";
