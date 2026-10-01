@@ -31,7 +31,7 @@ final class FLACSO_Mautic_Contract_Manifest {
             'template' => [
                 'id' => 4,
                 'functional_version' => 'ack-v1',
-                'content_sha256' => '97c56233bc6419f9978c26c8ba3aea8ff68fb667ba3b0e999d3e1b44485c3cbc',
+                'content_sha256' => '3b17e9f2353f20492bbb05e0ec2291aec0d200d7b8846be03b37a80f4244e717',
             ],
             'marketing_campaign' => [
                 'id' => 3,
