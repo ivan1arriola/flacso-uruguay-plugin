@@ -41,8 +41,20 @@ assistant_interface_assert(
     'la vista del panel debe contar con accesos rápidos'
 );
 assistant_interface_assert(
+    strpos($panel, 'flacso-academic-assistant__quick-action') !== false,
+    'los accesos rápidos deben indicar la acción que ejecutan'
+);
+assistant_interface_assert(
+    strpos($panel, 'Gestionar ofertas') !== false && strpos($panel, 'Gestionar seminarios') !== false,
+    'el encabezado debe ofrecer acciones principales con verbos claros'
+);
+assistant_interface_assert(
     strpos($styles, 'flacso-academic-assistant__quick-links') !== false,
     'los accesos rápidos deben tener estilos propios'
+);
+assistant_interface_assert(
+    strpos($styles, 'focus-visible') !== false && strpos($styles, 'max-width: 782px') !== false,
+    'los controles deben contemplar foco visible y pantallas angostas'
 );
 
 fwrite(STDOUT, "OK academic assistant interface contract\n");

@@ -45,6 +45,27 @@
     border-color: #2c4777;
 }
 
+.flacso-academic-assistant .flacso-panel__hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.flacso-academic-assistant .flacso-panel__hero-actions .button {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 40px;
+    padding: 7px 13px;
+    font-weight: 600;
+}
+
+.flacso-academic-assistant .flacso-panel__hero-actions .dashicons {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+}
+
 .flacso-academic-assistant .button-primary:hover,
 .flacso-academic-assistant .button-primary:focus {
     background: #223a63;
@@ -73,6 +94,11 @@
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 14px;
+}
+
+.flacso-academic-assistant__section-intro {
+    margin: 5px 0 0;
+    color: #637083;
 }
 
 .flacso-academic-assistant__quick-link {
@@ -119,8 +145,45 @@
     line-height: 1.35;
 }
 
-.flacso-academic-assistant__quick-link > .dashicons:last-child {
-    color: #637083;
+.flacso-academic-assistant__quick-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 3px;
+    color: #2c4777;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.25;
+    text-align: right;
+}
+
+.flacso-academic-assistant__quick-action .dashicons {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+}
+
+.flacso-academic-assistant__quick-link:hover .flacso-academic-assistant__quick-action,
+.flacso-academic-assistant__quick-link:focus .flacso-academic-assistant__quick-action {
+    color: #1f365c;
+}
+
+.flacso-academic-assistant .flacso-panel__workflow {
+    position: relative;
+    transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+.flacso-academic-assistant .flacso-panel__workflow:hover {
+    border-color: #b6c4d8;
+    box-shadow: 0 6px 18px rgba(31, 54, 92, 0.1);
+    transform: translateY(-1px);
+}
+
+.flacso-academic-assistant .flacso-panel__flow a:focus-visible,
+.flacso-academic-assistant .flacso-academic-assistant__quick-link:focus-visible,
+.flacso-academic-assistant .flacso-panel__hero-actions .button:focus-visible {
+    outline: 3px solid rgba(44, 71, 119, 0.35);
+    outline-offset: 2px;
 }
 
 @media (max-width: 782px) {
@@ -136,5 +199,21 @@
 
     .flacso-academic-assistant__quick-links {
         grid-template-columns: 1fr;
+    }
+
+    .flacso-academic-assistant .flacso-panel__hero-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .flacso-academic-assistant .flacso-panel__hero-actions .button {
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .flacso-academic-assistant__quick-link {
+        grid-template-columns: 38px minmax(0, 1fr) auto;
+        min-height: 76px;
+        padding: 14px;
     }
 }

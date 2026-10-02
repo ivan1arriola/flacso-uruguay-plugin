@@ -278,8 +278,8 @@ final class FLACSO_Admin_Panel {
                     <p><?php esc_html_e('Encontrá rápidamente las ofertas, seminarios y personas que necesitás actualizar.', 'flacso-uruguay'); ?></p>
                 </div>
                 <div class="flacso-panel__hero-actions">
-                    <a class="button button-primary" href="<?php echo esc_url(admin_url('edit.php?post_type=oferta-academica')); ?>"><?php esc_html_e('Ver ofertas', 'flacso-uruguay'); ?></a>
-                    <a class="button" href="<?php echo esc_url(admin_url('edit.php?post_type=seminario')); ?>"><?php esc_html_e('Ver seminarios', 'flacso-uruguay'); ?></a>
+                    <a class="button button-primary" href="<?php echo esc_url(admin_url('edit.php?post_type=oferta-academica')); ?>"><?php esc_html_e('Gestionar ofertas', 'flacso-uruguay'); ?><span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span></a>
+                    <a class="button" href="<?php echo esc_url(admin_url('edit.php?post_type=seminario')); ?>"><?php esc_html_e('Gestionar seminarios', 'flacso-uruguay'); ?><span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span></a>
                 </div>
             </header>
 
@@ -295,12 +295,13 @@ final class FLACSO_Admin_Panel {
                     <div>
                         <p class="flacso-panel__eyebrow"><?php esc_html_e('Accesos rápidos', 'flacso-uruguay'); ?></p>
                         <h2 id="flacso-assistant-links-title"><?php esc_html_e('Tareas frecuentes', 'flacso-uruguay'); ?></h2>
+                        <p class="flacso-academic-assistant__section-intro"><?php esc_html_e('Elegí una acción para continuar con tu trabajo.', 'flacso-uruguay'); ?></p>
                     </div>
                 </div>
                 <div class="flacso-academic-assistant__quick-links">
-                    <?php self::assistant_quick_link('dashicons-groups', __('Personas / Equipo', 'flacso-uruguay'), __('Editar docentes y equipos académicos.', 'flacso-uruguay'), admin_url('edit.php?post_type=docente')); ?>
-                    <?php self::assistant_quick_link('dashicons-external', __('Preinscripciones', 'flacso-uruguay'), __('Abrir la plataforma de formularios.', 'flacso-uruguay'), FLACSO_Academic_Assistant::preinscripciones_url(), true); ?>
-                    <?php self::assistant_quick_link('dashicons-video-alt3', __('Sala Virtual', 'flacso-uruguay'), __('Acceder a la gestión de encuentros.', 'flacso-uruguay'), FLACSO_Academic_Assistant::sala_virtual_url(), true); ?>
+                    <?php self::assistant_quick_link('dashicons-groups', __('Personas / Equipo', 'flacso-uruguay'), __('Editar docentes y equipos académicos.', 'flacso-uruguay'), __('Abrir gestión', 'flacso-uruguay'), admin_url('edit.php?post_type=docente')); ?>
+                    <?php self::assistant_quick_link('dashicons-external', __('Preinscripciones', 'flacso-uruguay'), __('Abrir la plataforma de formularios.', 'flacso-uruguay'), __('Abrir plataforma', 'flacso-uruguay'), FLACSO_Academic_Assistant::preinscripciones_url(), true); ?>
+                    <?php self::assistant_quick_link('dashicons-video-alt3', __('Sala Virtual', 'flacso-uruguay'), __('Acceder a la gestión de encuentros.', 'flacso-uruguay'), __('Abrir plataforma', 'flacso-uruguay'), FLACSO_Academic_Assistant::sala_virtual_url(), true); ?>
                 </div>
             </section>
 
@@ -350,12 +351,12 @@ final class FLACSO_Admin_Panel {
         <?php
     }
 
-    private static function assistant_quick_link(string $icon, string $title, string $description, string $url, bool $external = false): void {
+    private static function assistant_quick_link(string $icon, string $title, string $description, string $action, string $url, bool $external = false): void {
         ?>
         <a class="flacso-academic-assistant__quick-link" href="<?php echo esc_url($url); ?>"<?php echo $external ? ' target="_blank" rel="noopener noreferrer"' : ''; ?>>
             <span class="dashicons <?php echo esc_attr($icon); ?>" aria-hidden="true"></span>
             <span><strong><?php echo esc_html($title); ?></strong><small><?php echo esc_html($description); ?></small></span>
-            <span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span>
+            <span class="flacso-academic-assistant__quick-action"><?php echo esc_html($action); ?><span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span></span>
         </a>
         <?php
     }
