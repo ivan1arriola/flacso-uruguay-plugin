@@ -53,6 +53,7 @@ require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-error-notifier.ph
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-mautic-integration-log.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-rest-visibility.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-rest-dto-loader.php';
+require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-academic-assistant.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-editor-admin-mode.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-integrations-settings.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-admin-panel.php';

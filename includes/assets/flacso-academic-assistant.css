@@ -1,0 +1,140 @@
+.flacso-academic-assistant #screen-meta-links,
+.flacso-academic-assistant #wp-admin-bar-comments,
+.flacso-academic-assistant .row-actions .trash,
+.flacso-academic-assistant .row-actions .delete,
+.flacso-academic-assistant .row-actions .inline {
+    display: none !important;
+}
+
+.flacso-academic-assistant #wpcontent {
+    background: #f6f7f9;
+}
+
+.flacso-academic-assistant .wrap {
+    max-width: 1440px;
+}
+
+.flacso-academic-assistant .wrap > h1,
+.flacso-academic-assistant .wrap > .wp-heading-inline {
+    color: #1f365c;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+}
+
+.flacso-academic-assistant .wp-list-table,
+.flacso-academic-assistant .postbox,
+.flacso-academic-assistant .flacso-academic-section {
+    border-color: #d9dee7;
+    box-shadow: 0 1px 2px rgba(31, 54, 92, 0.05);
+}
+
+.flacso-academic-assistant .wp-list-table thead th,
+.flacso-academic-assistant .wp-list-table tfoot th {
+    color: #34445d;
+    font-weight: 650;
+}
+
+.flacso-academic-assistant .wp-list-table td,
+.flacso-academic-assistant .wp-list-table th {
+    padding-top: 11px;
+    padding-bottom: 11px;
+}
+
+.flacso-academic-assistant .button-primary {
+    background: #2c4777;
+    border-color: #2c4777;
+}
+
+.flacso-academic-assistant .button-primary:hover,
+.flacso-academic-assistant .button-primary:focus {
+    background: #223a63;
+    border-color: #223a63;
+}
+
+.flacso-academic-assistant #adminmenu .wp-has-current-submenu > a.wp-has-current-submenu,
+.flacso-academic-assistant #adminmenu .current a.menu-top {
+    background: #2c4777;
+}
+
+.flacso-academic-assistant .page-title-action {
+    border-radius: 6px;
+}
+
+.flacso-academic-assistant .flacso-assistant-note {
+    margin: 14px 0 20px;
+    padding: 12px 14px;
+    background: #eef3fa;
+    border-left: 4px solid #2c4777;
+    border-radius: 4px;
+    color: #34445d;
+}
+
+.flacso-academic-assistant__quick-links {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.flacso-academic-assistant__quick-link {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr) 18px;
+    align-items: center;
+    gap: 12px;
+    min-height: 82px;
+    padding: 16px;
+    border: 1px solid #d9dee7;
+    border-radius: 12px;
+    color: #1f365c;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(31, 54, 92, 0.05);
+    text-decoration: none;
+}
+
+.flacso-academic-assistant__quick-link:hover,
+.flacso-academic-assistant__quick-link:focus {
+    border-color: #2c4777;
+    color: #1f365c;
+    box-shadow: 0 5px 16px rgba(31, 54, 92, 0.11);
+}
+
+.flacso-academic-assistant__quick-link > .dashicons:first-child {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    border-radius: 10px;
+    color: #2c4777;
+    background: #eef3fa;
+    font-size: 20px;
+}
+
+.flacso-academic-assistant__quick-link strong,
+.flacso-academic-assistant__quick-link small {
+    display: block;
+}
+
+.flacso-academic-assistant__quick-link small {
+    margin-top: 4px;
+    color: #637083;
+    line-height: 1.35;
+}
+
+.flacso-academic-assistant__quick-link > .dashicons:last-child {
+    color: #637083;
+}
+
+@media (max-width: 782px) {
+    .flacso-academic-assistant .wrap {
+        margin-right: 12px;
+    }
+
+    .flacso-academic-assistant .wp-list-table td,
+    .flacso-academic-assistant .wp-list-table th {
+        padding-top: 13px;
+        padding-bottom: 13px;
+    }
+
+    .flacso-academic-assistant__quick-links {
+        grid-template-columns: 1fr;
+    }
+}

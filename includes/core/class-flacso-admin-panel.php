@@ -7,8 +7,6 @@ if (!defined('ABSPATH')) {
 /** Panel de entrada a la gestión institucional y académica. */
 final class FLACSO_Admin_Panel {
     public const PAGE_SLUG = 'flacso-panel';
-    private const CAPABILITY = 'edit_posts';
-
     public static function init(): void {
         add_action('admin_bar_menu', [self::class, 'register_admin_bar_item'], 35);
         if (!is_admin()) {
@@ -23,7 +21,7 @@ final class FLACSO_Admin_Panel {
         add_menu_page(
             __('FLACSO Uruguay', 'flacso-uruguay'),
             __('FLACSO', 'flacso-uruguay'),
-            self::CAPABILITY,
+            self::capability(),
             self::PAGE_SLUG,
             [self::class, 'render'],
             'dashicons-building',
@@ -33,14 +31,14 @@ final class FLACSO_Admin_Panel {
             self::PAGE_SLUG,
             __('Resumen FLACSO', 'flacso-uruguay'),
             __('Resumen', 'flacso-uruguay'),
-            self::CAPABILITY,
+            self::capability(),
             self::PAGE_SLUG,
             [self::class, 'render']
         );
     }
 
     public static function register_admin_bar_item(WP_Admin_Bar $admin_bar): void {
-        if (!is_admin_bar_showing() || !current_user_can(self::CAPABILITY)) {
+        if (!is_admin_bar_showing() || !current_user_can(self::capability())) {
             return;
         }
 
@@ -49,8 +47,9 @@ final class FLACSO_Admin_Panel {
         if (!$admin_bar->get_node('site-name')) {
             return;
         }
-        /*
-        $items = [
+        $items = FLACSO_Academic_Assistant::is_assistant()
+            ? FLACSO_Academic_Assistant::assistant_admin_bar_items()
+            : [
             'resumen'     => ['title' => __('Panel FLACSO', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=' . self::PAGE_SLUG)],
             'programas'   => ['title' => __('Programas Académicos', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=programa-academico')],
             'ofertas'     => ['title' => __('Ofertas Académicas', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=oferta-academica')],
@@ -65,8 +64,7 @@ final class FLACSO_Admin_Panel {
             'correos'      => ['title' => __('Correos', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-correos')],
             'analitica'    => ['title' => __('Analítica / Meta', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-integracion-meta')],
             'sistema'      => ['title' => __('Sistema', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-sistema')],
-        ];
-        */
+            ];
 
         $admin_bar->add_node([
             'id'     => 'site-name-flacso-group',
@@ -74,22 +72,6 @@ final class FLACSO_Admin_Panel {
             'title'  => '--- ' . esc_html__('FLACSO Gestión', 'flacso-uruguay') . ' ---',
             'href'   => admin_url('admin.php?page=' . self::PAGE_SLUG),
         ]);
-
-        $items = [
-            'panel'      => ['title' => __('Panel FLACSO', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=' . self::PAGE_SLUG)],
-            'programas'  => ['title' => __('Programas Académicos', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=programa-academico')],
-            'ofertas'    => ['title' => __('Ofertas Académicas', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=oferta-academica')],
-            'seminarios' => ['title' => __('Seminarios', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=seminario')],
-            'tablas'     => ['title' => __('Tablas de Aranceles', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=tabla-precio')],
-            'docentes'   => ['title' => __('Personas / Equipo', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=docente')],
-            'convenios'  => ['title' => __('Convenios', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=convenio')],
-            'eventos'    => ['title' => __('Eventos', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=evento')],
-            'faqs'       => ['title' => __('Preguntas Frecuentes', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=flacso_faq')],
-            'portada'    => ['title' => __('Portada FLACSO', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-main-page')],
-            'correos'    => ['title' => __('Correos', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-correos')],
-            'analitica'  => ['title' => __('Analítica / Meta', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-integracion-meta')],
-            'sistema'    => ['title' => __('Sistema', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-sistema')],
-        ];
 
         foreach ($items as $key => $item) {
             $admin_bar->add_node([
@@ -158,12 +140,17 @@ final class FLACSO_Admin_Panel {
     }
 
     public static function render(): void {
-        if (!current_user_can(self::CAPABILITY)) {
+        if (!current_user_can(self::capability())) {
             wp_die(esc_html__('No tenés permisos para acceder a este panel.', 'flacso-uruguay'));
         }
 
         $counts = self::counts();
         $open_registrations = self::open_registration_count();
+        if (FLACSO_Academic_Assistant::is_assistant()) {
+            self::render_assistant_view($counts, $open_registrations);
+            return;
+        }
+
         $alerts = self::integrity_alerts();
         $upcoming = self::upcoming_items();
         ?>
@@ -264,7 +251,7 @@ final class FLACSO_Admin_Panel {
 
     private static function counts(): array {
         $result = [];
-        foreach (['programa-academico', 'oferta-academica', 'cohorte', 'seminario', 'edicion', 'tabla-precio'] as $post_type) {
+        foreach (['programa-academico', 'oferta-academica', 'cohorte', 'seminario', 'edicion', 'tabla-precio', 'docente'] as $post_type) {
             $counts = wp_count_posts($post_type);
             $total = 0;
             foreach (['publish', 'draft', 'pending', 'private', 'future'] as $status) {
@@ -273,6 +260,104 @@ final class FLACSO_Admin_Panel {
             $result[$post_type] = $total;
         }
         return $result;
+    }
+
+    private static function capability(): string {
+        return class_exists('FLACSO_Academic_Assistant')
+            ? FLACSO_Academic_Assistant::ACCESS
+            : 'edit_posts';
+    }
+
+    private static function render_assistant_view(array $counts, int $open_registrations): void {
+        ?>
+        <div class="wrap flacso-panel flacso-panel--assistant">
+            <header class="flacso-panel__hero">
+                <div class="flacso-panel__hero-copy">
+                    <p class="flacso-panel__eyebrow"><?php esc_html_e('Gestión académica', 'flacso-uruguay'); ?></p>
+                    <h1><?php esc_html_e('FLACSO Gestión', 'flacso-uruguay'); ?></h1>
+                    <p><?php esc_html_e('Encontrá rápidamente las ofertas, seminarios y personas que necesitás actualizar.', 'flacso-uruguay'); ?></p>
+                </div>
+                <div class="flacso-panel__hero-actions">
+                    <a class="button button-primary" href="<?php echo esc_url(admin_url('edit.php?post_type=oferta-academica')); ?>"><?php esc_html_e('Ver ofertas', 'flacso-uruguay'); ?></a>
+                    <a class="button" href="<?php echo esc_url(admin_url('edit.php?post_type=seminario')); ?>"><?php esc_html_e('Ver seminarios', 'flacso-uruguay'); ?></a>
+                </div>
+            </header>
+
+            <section class="flacso-panel__metrics" aria-label="<?php esc_attr_e('Resumen de gestión académica', 'flacso-uruguay'); ?>">
+                <?php self::metric(__('Ofertas', 'flacso-uruguay'), $counts['oferta-academica'], 'dashicons-welcome-learn-more'); ?>
+                <?php self::metric(__('Seminarios', 'flacso-uruguay'), $counts['seminario'], 'dashicons-book-alt'); ?>
+                <?php self::metric(__('Personas / Equipo', 'flacso-uruguay'), $counts['docente'], 'dashicons-groups'); ?>
+                <?php self::metric(__('Preinscripciones abiertas', 'flacso-uruguay'), $open_registrations, 'dashicons-yes-alt'); ?>
+            </section>
+
+            <section class="flacso-panel__section" aria-labelledby="flacso-assistant-links-title">
+                <div class="flacso-panel__section-heading">
+                    <div>
+                        <p class="flacso-panel__eyebrow"><?php esc_html_e('Accesos rápidos', 'flacso-uruguay'); ?></p>
+                        <h2 id="flacso-assistant-links-title"><?php esc_html_e('Tareas frecuentes', 'flacso-uruguay'); ?></h2>
+                    </div>
+                </div>
+                <div class="flacso-academic-assistant__quick-links">
+                    <?php self::assistant_quick_link('dashicons-groups', __('Personas / Equipo', 'flacso-uruguay'), __('Editar docentes y equipos académicos.', 'flacso-uruguay'), admin_url('edit.php?post_type=docente')); ?>
+                    <?php self::assistant_quick_link('dashicons-external', __('Preinscripciones', 'flacso-uruguay'), __('Abrir la plataforma de formularios.', 'flacso-uruguay'), FLACSO_Academic_Assistant::preinscripciones_url(), true); ?>
+                    <?php self::assistant_quick_link('dashicons-video-alt3', __('Sala Virtual', 'flacso-uruguay'), __('Acceder a la gestión de encuentros.', 'flacso-uruguay'), FLACSO_Academic_Assistant::sala_virtual_url(), true); ?>
+                </div>
+            </section>
+
+            <div class="flacso-panel__layout">
+                <main>
+                    <section class="flacso-panel__section" aria-labelledby="flacso-assistant-workflows-title">
+                        <div class="flacso-panel__section-heading">
+                            <div>
+                                <p class="flacso-panel__eyebrow"><?php esc_html_e('Gestión académica', 'flacso-uruguay'); ?></p>
+                                <h2 id="flacso-assistant-workflows-title"><?php esc_html_e('Elegí un recorrido para comenzar', 'flacso-uruguay'); ?></h2>
+                            </div>
+                        </div>
+                        <div class="flacso-panel__workflows">
+                            <?php self::workflow_card(
+                                __('Ofertas académicas', 'flacso-uruguay'),
+                                __('Actualizá la información de una oferta y sus cohortes.', 'flacso-uruguay'),
+                                [
+                                    ['Oferta', 'oferta-academica', $counts['oferta-academica']],
+                                    ['Cohorte', 'cohorte', $counts['cohorte']],
+                                ],
+                                'flacso-panel__workflow--offer'
+                            ); ?>
+                            <?php self::workflow_card(
+                                __('Seminarios', 'flacso-uruguay'),
+                                __('Mantené los seminarios y sus ediciones disponibles.', 'flacso-uruguay'),
+                                [
+                                    ['Seminario', 'seminario', $counts['seminario']],
+                                    ['Edición', 'edicion', $counts['edicion']],
+                                ],
+                                'flacso-panel__workflow--seminar'
+                            ); ?>
+                        </div>
+                    </section>
+                </main>
+
+                <aside class="flacso-panel__sidebar">
+                    <section class="flacso-panel__side-card" aria-labelledby="flacso-assistant-upcoming-title">
+                        <div class="flacso-panel__side-heading">
+                            <h2 id="flacso-assistant-upcoming-title"><?php esc_html_e('Próximos comienzos', 'flacso-uruguay'); ?></h2>
+                            <span class="dashicons dashicons-calendar-alt" aria-hidden="true"></span>
+                        </div>
+                        <?php self::render_upcoming(self::upcoming_items()); ?>
+                    </section>
+                </aside>
+            </div>
+        </div>
+        <?php
+    }
+
+    private static function assistant_quick_link(string $icon, string $title, string $description, string $url, bool $external = false): void {
+        ?>
+        <a class="flacso-academic-assistant__quick-link" href="<?php echo esc_url($url); ?>"<?php echo $external ? ' target="_blank" rel="noopener noreferrer"' : ''; ?>>
+            <span class="dashicons <?php echo esc_attr($icon); ?>" aria-hidden="true"></span>
+            <span><strong><?php echo esc_html($title); ?></strong><small><?php echo esc_html($description); ?></small></span>
+            <span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span>
+        </a>
+        <?php
     }
 
     private static function open_registration_count(): int {
