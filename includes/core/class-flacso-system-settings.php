@@ -82,6 +82,21 @@ final class FLACSO_System_Settings {
             'sanitize_callback' => 'sanitize_text_field',
             'default' => '',
         ]);
+        register_setting(self::SETTINGS_GROUP, FLACSO_Error_Notifier::OPTION_TELEGRAM_BOT_TOKEN, [
+            'type' => 'string',
+            'sanitize_callback' => 'sanitize_text_field',
+            'default' => '',
+        ]);
+        register_setting(self::SETTINGS_GROUP, FLACSO_Error_Notifier::OPTION_TELEGRAM_CHAT_ID, [
+            'type' => 'string',
+            'sanitize_callback' => 'sanitize_text_field',
+            'default' => '',
+        ]);
+        register_setting(self::SETTINGS_GROUP, FLACSO_Error_Notifier::OPTION_EMAIL, [
+            'type' => 'string',
+            'sanitize_callback' => 'sanitize_email',
+            'default' => '',
+        ]);
         register_setting(self::SETTINGS_GROUP, self::OPTION_USE_RECAPTCHA, [
             'type' => 'string',
             'sanitize_callback' => [self::class, 'sanitize_toggle'],
@@ -162,6 +177,7 @@ final class FLACSO_System_Settings {
         $consultas_url = trim((string) get_option(self::OPTION_CONSULTAS_WEBHOOK_URL, ''));
         $charlas_url = trim((string) get_option(self::OPTION_CHARLAS_WEBHOOK_URL, ''));
         $preinscripciones_url = trim((string) get_option(self::OPTION_PREINSCRIPCIONES_WEBHOOK_URL, ''));
+        $error_alert_email = (string) get_option(FLACSO_Error_Notifier::OPTION_EMAIL, '');
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('Sistema', 'flacso-uruguay'); ?></h1>
@@ -224,6 +240,21 @@ final class FLACSO_System_Settings {
                     <tr>
                         <th scope="row"><label for="<?php echo esc_attr(self::OPTION_TELEGRAM_CHAT_ID); ?>"><?php esc_html_e('Telegram Chat ID', 'flacso-uruguay'); ?></label></th>
                         <td><input class="regular-text code" type="text" id="<?php echo esc_attr(self::OPTION_TELEGRAM_CHAT_ID); ?>" name="<?php echo esc_attr(self::OPTION_TELEGRAM_CHAT_ID); ?>" value="<?php echo esc_attr((string) get_option(self::OPTION_TELEGRAM_CHAT_ID, '')); ?>"></td>
+                    </tr>
+                    <tr>
+                        <th colspan="2"><h3><?php esc_html_e('Alertas de errores del plugin', 'flacso-uruguay'); ?></h3></th>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="<?php echo esc_attr(FLACSO_Error_Notifier::OPTION_TELEGRAM_BOT_TOKEN); ?>"><?php esc_html_e('Bot Token de alertas', 'flacso-uruguay'); ?></label></th>
+                        <td><input class="regular-text code" type="password" autocomplete="new-password" id="<?php echo esc_attr(FLACSO_Error_Notifier::OPTION_TELEGRAM_BOT_TOKEN); ?>" name="<?php echo esc_attr(FLACSO_Error_Notifier::OPTION_TELEGRAM_BOT_TOKEN); ?>" value="<?php echo esc_attr((string) get_option(FLACSO_Error_Notifier::OPTION_TELEGRAM_BOT_TOKEN, '')); ?>"><p class="description"><?php esc_html_e('Configurar junto con el destinatario para recibir alertas técnicas por Telegram.', 'flacso-uruguay'); ?></p></td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="<?php echo esc_attr(FLACSO_Error_Notifier::OPTION_TELEGRAM_CHAT_ID); ?>"><?php esc_html_e('Chat ID de alertas', 'flacso-uruguay'); ?></label></th>
+                        <td><input class="regular-text code" type="text" id="<?php echo esc_attr(FLACSO_Error_Notifier::OPTION_TELEGRAM_CHAT_ID); ?>" name="<?php echo esc_attr(FLACSO_Error_Notifier::OPTION_TELEGRAM_CHAT_ID); ?>" value="<?php echo esc_attr((string) get_option(FLACSO_Error_Notifier::OPTION_TELEGRAM_CHAT_ID, '')); ?>"></td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="<?php echo esc_attr(FLACSO_Error_Notifier::OPTION_EMAIL); ?>"><?php esc_html_e('Correo de respaldo', 'flacso-uruguay'); ?></label></th>
+                        <td><input class="regular-text" type="email" id="<?php echo esc_attr(FLACSO_Error_Notifier::OPTION_EMAIL); ?>" name="<?php echo esc_attr(FLACSO_Error_Notifier::OPTION_EMAIL); ?>" value="<?php echo esc_attr($error_alert_email); ?>"><p class="description"><?php esc_html_e('Se utiliza si Telegram no está configurado o no responde. Vacío: correo de administración de WordPress.', 'flacso-uruguay'); ?></p></td>
                     </tr>
                     <tr>
                         <th scope="row"><?php esc_html_e('reCAPTCHA', 'flacso-uruguay'); ?></th>

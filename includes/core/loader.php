@@ -31,6 +31,7 @@ class FLACSO_Uruguay_Loader {
         
         if (!is_dir($module_path)) {
             error_log("[FLACSO] Módulo no encontrado: $module_name");
+            FLACSO_Error_Notifier::report("Módulo no encontrado: $module_name", __FILE__, __LINE__, 'loader');
             return false;
         }
         
@@ -39,6 +40,7 @@ class FLACSO_Uruguay_Loader {
         
         if (!file_exists($init_file)) {
             error_log("[FLACSO] No se encontró init.php en: $module_path");
+            FLACSO_Error_Notifier::report("No se encontró init.php en: $module_name", __FILE__, __LINE__, 'loader');
             return false;
         }
         
@@ -48,6 +50,7 @@ class FLACSO_Uruguay_Loader {
             return true;
         } catch (Throwable $e) {
             error_log("[FLACSO] Error cargando módulo $module_name: " . $e->getMessage());
+            FLACSO_Error_Notifier::report_exception($e);
             return false;
         }
     }

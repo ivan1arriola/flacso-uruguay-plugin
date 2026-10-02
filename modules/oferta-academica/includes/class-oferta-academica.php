@@ -54,10 +54,43 @@ final class FLACSO_Oferta_Academica {
         return self::tipo_valido($tipo) ? $tipo : '';
     }
 
+    public static function normalize_abbreviation(string $raw): string {
+        $clean = function_exists('sanitize_title') ? sanitize_title(strtolower(trim($raw))) : strtolower(trim(preg_replace('/[^a-zA-Z0-9_\-]+/', '-', $raw), '-'));
+        return $clean;
+    }
+
+    public static function is_abbreviation_available(string $abbr, int $exclude_post_id = 0): bool {
+        $norm = self::normalize_abbreviation($abbr);
+        if ($norm === '') {
+            return true;
+        }
+        if (!function_exists('get_posts')) {
+            return true;
+        }
+        $args = [
+            'post_type'      => self::POST_TYPE,
+            'post_status'    => ['publish', 'draft', 'pending', 'private'],
+            'posts_per_page' => 1,
+            'fields'         => 'ids',
+            'meta_query'     => [
+                [
+                    'key'     => 'abreviacion',
+                    'value'   => $norm,
+                    'compare' => '=',
+                ],
+            ],
+        ];
+        if ($exclude_post_id > 0) {
+            $args['exclude'] = [$exclude_post_id];
+        }
+        $existing = get_posts($args);
+        return empty($existing);
+    }
+
     public static function register_meta(): void {
         $definitions = [
             self::META_PROGRAM_ID => ['type' => 'integer', 'sanitize_callback' => 'absint'],
-            'abreviacion' => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
+            'abreviacion' => ['type' => 'string', 'sanitize_callback' => [self::class, 'normalize_abbreviation']],
             'correo' => ['type' => 'string', 'sanitize_callback' => 'sanitize_email'],
             'presentacion' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'objetivo_general' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],

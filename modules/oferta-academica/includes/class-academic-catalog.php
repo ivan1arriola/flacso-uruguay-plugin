@@ -14,7 +14,79 @@ final class FLACSO_Academic_Catalog {
         $cohorts = FLACSO_Academic_Repository::list('cohortes', ['parent_id' => $offer_id, 'per_page' => 200]);
         $offer['cohortes'] = $cohorts;
         $offer['cohorte_vigente'] = self::current_item($cohorts);
+        $offer['cohorte_consulta'] = self::get_inquiry_cohort($offer_id, $cohorts);
         return $offer;
+    }
+
+    public static function get_inquiry_cohort(int $offer_id, ?array $cohorts = null): ?array {
+        if ($cohorts === null) {
+            $cohorts = FLACSO_Academic_Repository::list('cohortes', ['parent_id' => $offer_id, 'per_page' => 200]);
+        }
+        if (empty($cohorts)) {
+            return null;
+        }
+
+        $today = function_exists('current_time') ? current_time('Y-m-d') : date('Y-m-d');
+
+        // 1. Cohorte con preinscripción abierta
+        $open_cohorts = [];
+        foreach ($cohorts as $cohort) {
+            if (!empty($cohort['preinscripcion']['abierta'])) {
+                $open_cohorts[] = $cohort;
+            }
+        }
+
+        if (!empty($open_cohorts)) {
+            usort($open_cohorts, static function (array $a, array $b): int {
+                $date_a = (string) ($a['fecha_inicio'] ?? '');
+                $date_b = (string) ($b['fecha_inicio'] ?? '');
+                if ($date_a !== '' && $date_b !== '') {
+                    $cmp = strcmp($date_a, $date_b);
+                    if ($cmp !== 0) {
+                        return $cmp;
+                    }
+                } elseif ($date_a !== '') {
+                    return -1;
+                } elseif ($date_b !== '') {
+                    return 1;
+                }
+                return absint($b['numero'] ?? 0) <=> absint($a['numero'] ?? 0);
+            });
+            return $open_cohorts[0];
+        }
+
+        // 2. Cohorte planificada futura
+        $upcoming_planificadas = [];
+        foreach ($cohorts as $cohort) {
+            if (($cohort['estado'] ?? '') === 'planificada') {
+                $start = (string) ($cohort['fecha_inicio'] ?? '');
+                if ($start === '' || $start >= $today) {
+                    $upcoming_planificadas[] = $cohort;
+                }
+            }
+        }
+
+        if (!empty($upcoming_planificadas)) {
+            usort($upcoming_planificadas, static function (array $a, array $b): int {
+                $date_a = (string) ($a['fecha_inicio'] ?? '');
+                $date_b = (string) ($b['fecha_inicio'] ?? '');
+                if ($date_a !== '' && $date_b !== '') {
+                    $cmp = strcmp($date_a, $date_b);
+                    if ($cmp !== 0) {
+                        return $cmp;
+                    }
+                } elseif ($date_a !== '') {
+                    return -1;
+                } elseif ($date_b !== '') {
+                    return 1;
+                }
+                return absint($a['numero'] ?? 0) <=> absint($b['numero'] ?? 0);
+            });
+            return $upcoming_planificadas[0];
+        }
+
+        // 3. Ninguna cohorte abierta ni futura
+        return null;
     }
 
     public static function get_seminar(int $seminar_id): array {

@@ -12,6 +12,14 @@ Incluye, entre otros módulos:
 - docentes y eventos;
 - shortcodes y bloques de Gutenberg.
 
+## Comunicaciones
+
+Mautic es el único canal operativo de comunicaciones. WordPress guarda la
+consulta, sincroniza el contacto y lo incorpora a la campaña configurada; los
+correos, seguimientos y automatizaciones se definen en Mautic. Las opciones y
+registros históricos de proveedores anteriores se preservan sólo para consulta
+de auditoría y no se usan para nuevos envíos.
+
 ## Requisitos
 
 - WordPress 6.0 o posterior;

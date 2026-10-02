@@ -148,6 +148,8 @@ class Flacso_Main_Page_Loader {
         }
 
         if (is_front_page()) {
+            // La portada v2 reutiliza los renderers de secciones existentes;
+            // sus estilos siguen siendo necesarios durante el rollout.
             return true;
         }
 

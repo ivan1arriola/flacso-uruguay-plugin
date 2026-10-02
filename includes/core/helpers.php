@@ -34,6 +34,7 @@ if (!function_exists('flacso_safe_require')) {
         
         if (!file_exists($full_path)) {
             error_log("[FLACSO] Archivo no encontrado: $path");
+            FLACSO_Error_Notifier::report("Archivo no encontrado: $path", __FILE__, __LINE__, 'loader');
             return false;
         }
         
@@ -42,6 +43,7 @@ if (!function_exists('flacso_safe_require')) {
             return true;
         } catch (Throwable $e) {
             error_log("[FLACSO] Error al cargar $path: " . $e->getMessage());
+            FLACSO_Error_Notifier::report_exception($e);
             return false;
         }
     }

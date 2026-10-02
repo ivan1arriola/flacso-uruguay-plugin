@@ -13,6 +13,10 @@
  * @package FLACSO_Uruguay
  */
 
+// No usar declare(strict_types=1): WP-CLI ejecuta `wp eval-file` mediante
+// eval(), donde PHP rechaza una declaración strict_types aunque el archivo
+// sea válido cuando se invoca directamente desde la CLI.
+
 // Cargar configuración de WordPress si no están definidas las constantes de conexión
 if (!defined('FLACSO_PG_HOST')) {
     $current_dir = __DIR__;

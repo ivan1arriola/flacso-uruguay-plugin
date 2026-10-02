@@ -167,6 +167,22 @@ function flacso_consultas_build_offer_choices( $offer_ids ) {
 	return $choices;
 }
 
+/**
+ * Respuesta segura cuando el módulo de persistencia directa no está disponible.
+ *
+ * No se usa el webhook histórico como fallback: hacerlo reintroduciría una
+ * dependencia oculta de Editor justo cuando el formulario debe ser autónomo.
+ */
+function flacso_consultas_direct_service_unavailable_response(): array {
+	return array(
+		'ok'      => false,
+		'error'   => 'offer_inquiry_service_unavailable',
+		'message' => 'El servicio de consultas no está disponible. Intente nuevamente más tarde.',
+		'code'    => 503,
+		'body'    => '',
+	);
+}
+
 function flacso_consultas_dispatch_single_info_request( array $data ) {
 	if ( function_exists( 'fc_enrich_info_request_program_context' ) ) {
 		$data = fc_enrich_info_request_program_context( $data );
@@ -204,9 +220,7 @@ function flacso_consultas_dispatch_single_info_request( array $data ) {
 		return FLACSO_Offer_Inquiry_Service::submit( $data );
 	}
 
-	return function_exists( 'fc_send_info_request_webhook' )
-		? fc_send_info_request_webhook( $data )
-		: array( 'ok' => false, 'error' => 'FLACSO_Offer_Inquiry_Service no disponible', 'code' => 500, 'body' => '' );
+	return flacso_consultas_direct_service_unavailable_response();
 }
 
 /**

@@ -2,6 +2,7 @@
 .antigravityignore
 
 # Local/generated artifacts
+.worktrees/
 __pycache__/
 *.pyc
 *.orig

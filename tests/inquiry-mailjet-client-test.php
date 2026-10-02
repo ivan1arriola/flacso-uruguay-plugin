@@ -22,12 +22,24 @@ if (!function_exists('get_option')) {
 
 $GLOBALS['mailjet_http_calls'] = [];
 $GLOBALS['mailjet_mock_simulate_error'] = false;
+$GLOBALS['mailjet_mock_error_code'] = 500;
+$GLOBALS['mailjet_mock_transport_error'] = false;
+
+if (!class_exists('WP_Error')) {
+    class WP_Error {
+        public function __construct(private string $message) {}
+        public function get_error_message(): string { return $this->message; }
+    }
+}
 
 if (!function_exists('wp_remote_post')) {
     function wp_remote_post($url, $args) {
         $GLOBALS['mailjet_http_calls'][] = ['url' => $url, 'args' => $args];
+        if (!empty($GLOBALS['mailjet_mock_transport_error'])) {
+            return new WP_Error('Timeout simulado');
+        }
         if (!empty($GLOBALS['mailjet_mock_simulate_error'])) {
-            return ['response' => ['code' => 500, 'message' => 'Internal Error'], 'body' => '{"ErrorMessage":"Error"}'];
+            return ['response' => ['code' => $GLOBALS['mailjet_mock_error_code'], 'message' => 'Error simulado'], 'body' => '{"ErrorMessage":"Error"}'];
         }
         $body = json_decode($args['body'], true);
         return [
@@ -51,7 +63,7 @@ if (!function_exists('wp_remote_post')) {
     }
 }
 
-if (!function_exists('is_wp_error')) { function is_wp_error($thing) { return false; } }
+if (!function_exists('is_wp_error')) { function is_wp_error($thing) { return $thing instanceof WP_Error; } }
 if (!function_exists('wp_remote_retrieve_response_code')) { function wp_remote_retrieve_response_code($res) { return $res['response']['code'] ?? 0; } }
 if (!function_exists('wp_remote_retrieve_body')) { function wp_remote_retrieve_body($res) { return $res['body'] ?? ''; } }
 
@@ -132,8 +144,27 @@ $res_failed = FLACSO_Mailjet_Client::send_offer_inquiry(
     ]
 );
 mj_assert($res_failed['ok'] === false, 'Debe fallar');
-mj_assert($res_failed['status'] === 'failed', 'Status debe ser failed');
+mj_assert($res_failed['status'] === 'processing', 'Un HTTP 5xx deja el envío en estado incierto para impedir reenvíos duplicados');
 mj_assert(count($GLOBALS['mailjet_http_calls']) === $call_count_before + 1, 'No debe intentar un segundo envío con HTML tras error remoto');
+
+// 3.1 Un rechazo HTTP 4xx es determinista y sí puede volver a failed.
+$GLOBALS['mailjet_mock_error_code'] = 400;
+$res_rejected = FLACSO_Mailjet_Client::send_offer_inquiry(
+    ['consultaId' => 'cid-mj-004', 'email' => 'rechazado@ejemplo.com', 'firstName' => 'Lucía'],
+    ['id' => 55, 'name' => 'Diploma', 'isInscripcionesAbiertas' => true]
+);
+mj_assert($res_rejected['status'] === 'failed', 'Un HTTP 4xx debe quedar failed porque Mailjet rechazó el envío');
+
+// 3.2 Un timeout no confirma si Mailjet recibió el mensaje y queda processing.
+$GLOBALS['mailjet_mock_simulate_error'] = false;
+$GLOBALS['mailjet_mock_transport_error'] = true;
+$res_timeout = FLACSO_Mailjet_Client::send_offer_inquiry(
+    ['consultaId' => 'cid-mj-005', 'email' => 'timeout@ejemplo.com', 'firstName' => 'Lucía'],
+    ['id' => 55, 'name' => 'Diploma', 'isInscripcionesAbiertas' => true]
+);
+mj_assert($res_timeout['status'] === 'processing', 'Un timeout debe quedar processing hasta conciliación');
+$GLOBALS['mailjet_mock_transport_error'] = false;
+$GLOBALS['mailjet_mock_error_code'] = 500;
 
 // 4. Envío de consulta de seminario con TemplateID
 $GLOBALS['mailjet_mock_simulate_error'] = false;

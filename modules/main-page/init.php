@@ -60,6 +60,7 @@ add_filter('gettext', 'flacso_main_page_remove_seminarios_proximos_tagline', 10,
 
 // Cargar clases principales (siempre necesarias)
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-settings.php';
+require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-home-campaign.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-blocks.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-loader.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-migrations.php';
@@ -92,6 +93,7 @@ require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/blocks/contacto-seccion/bl
 add_action('init', function() {
     // Inicializar clases
     Flacso_Main_Page_Loader::init();
+    FLACSO_Home_Campaign::register();
     Flacso_Main_Page_Blocks::init();
 
     if (class_exists('Flacso_Main_Page_Admin')) {

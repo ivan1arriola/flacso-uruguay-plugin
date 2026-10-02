@@ -1,10 +1,12 @@
-# Desmantelamiento del Editor y Persistencia Directa de Consultas - Plan de Implementación
+# Migración Directa de Consultas - Plan de Implementación
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Registro histórico:** Las casillas describen la ejecución original ya integrada. No deben reutilizarse para repetir cambios; seguir únicamente las puertas de despliegue y observación de la guía asociada.
 
-**Goal:** Reemplazar únicamente los webhooks de consultas de ofertas académicas y seminarios por persistencia directa en PostgreSQL y envío transaccional Mailjet dentro del plugin, manteniendo el Editor activo hasta validar ambos flujos en producción.
+**Estado:** La implementación de las tareas 1–7 y sus pruebas unitarias ya está integrada en `main`. Esta lista conserva el detalle histórico de ejecución; no acredita CI, despliegue ni validación en producción. Los pasos pendientes son exclusivamente las puertas de despliegue y observación definidas en la guía asociada.
 
-**Architecture:** Capa desacoplada en `flacso-uruguay-plugin`: conexión PDO (`FLACSO_DB`) usando las 5 constantes de producción existentes, repositorios para `offer_inquiries` y `seminar_inquiries`, cliente `FLACSO_Mailjet_Client` reutilizando la configuración centralizada de `FLACSO_Integrations_Settings` con fallback conservador, servicios de negocio ("guardar primero, enviar después"), y carga modular a través de `modules/consultas/init.php`.
+**Goal:** Reemplazar únicamente los webhooks de consultas de ofertas académicas y seminarios por persistencia directa en PostgreSQL y envío transaccional Mailjet dentro del plugin. La ausencia del servicio interno debe fallar de forma explícita; nunca debe restaurar silenciosamente el webhook del Editor.
+
+**Architecture:** Capa desacoplada en `flacso-uruguay-plugin`: conexión PDO (`FLACSO_DB`) usando las 5 constantes de producción existentes, repositorios para `offer_inquiries` y `seminar_inquiries`, cliente `FLACSO_Mailjet_Client` reutilizando la configuración centralizada de `FLACSO_Integrations_Settings`, servicios de negocio ("guardar primero, enviar después"), y carga modular a través de `modules/consultas/init.php`.
 
 **Tech Stack:** PHP 8+, PDO (`pdo_pgsql` en producción, SQLite en memoria para tests), Mailjet API v3.1 Send vía `wp_remote_post()`, WordPress AJAX / REST endpoints.
 
@@ -14,14 +16,16 @@
 
 - Utilizar las constantes existentes de producción en `wp-config.php`: `FLACSO_PG_HOST`, `FLACSO_PG_PORT`, `FLACSO_PG_DATABASE`, `FLACSO_PG_USER`, `FLACSO_PG_PASSWORD`.
 - Exclusivamente para `offer_inquiries` y `seminar_inquiries`. El formulario de contacto general queda fuera de esta fase para minimizar riesgo.
+- La consola analítica y cualquier reenvío manual no forman parte de la migración de captura. Se gobiernan como una extensión separada; un reenvío sólo puede operar sobre `emailStatus = 'failed'`, debe reservar atómicamente el registro como `processing` antes de contactar Mailjet y debe conservar trazabilidad operativa. Ante un resultado incierto, `processing` no se reintenta: requiere conciliación contra Mailjet para evitar duplicados.
 - Guardar primero en PostgreSQL; nunca invocar a Mailjet si el `INSERT` falla.
-- Si Mailjet falla o da timeout, la consulta permanece a salvo en la base y se marca `emailStatus = 'failed'`.
+- Si Mailjet rechaza de forma determinista la consulta (HTTP 4xx o error explícito), permanece a salvo en la base y se marca `emailStatus = 'failed'`. Ante timeout, red, HTTP 5xx o resultado incierto, se conserva `emailStatus = 'processing'` hasta conciliación para evitar duplicados.
 - En caso de error remoto de Mailjet con `TemplateID`, NO reintentar automáticamente con HTML (evita correos duplicados por timeout).
 - Almacenar tanto `mailjetMessageId` como `mailjetMessageUuid`.
 - Idempotencia: comprobar `find_by_consulta_id` antes del `INSERT`. Si ya existe, retornar `duplicate = true` sin validar campos obligatorios no relevantes para el duplicado ni volver a enviar correo. Capturar SQLSTATE `23505` ante carreras.
 - Todos los tests unitarios deben correr con `php tests/<test>.php` y pasar en verde con SQLite en memoria.
 - Incluir script de validación real contra PostgreSQL ejecutando `SELECT`, `INSERT`, `UPDATE`, `ROLLBACK` en transacción.
 - Cargar las clases a través de `modules/consultas/init.php` invocado por el ciclo de módulos de `flacso-uruguay.php`.
+- El retiro de `flacso-editor.service` queda fuera de este plan. Requiere un inventario independiente de sus dependencias restantes, migración aprobada y validación de cada flujo.
 
 ---
 
@@ -867,7 +871,7 @@ El script CLI comprueba:
 5. Transacción `BEGIN`: insert de prueba $\rightarrow$ update de prueba $\rightarrow$ select de verificación $\rightarrow$ `ROLLBACK`.
 6. Salida clara con `OK` o detalle del fallo.
 
-La guía documenta el despliegue con ventana de observación antes de apagar el Editor.
+La guía documenta el despliegue con una ventana de observación de las consultas directas; no autoriza apagar el Editor.
 
 - [ ] **Step 4: Run test to verify it passes**
 

@@ -1,6 +1,7 @@
 <?php
 // tests/inquiry-handler-wiring-test.php
 $root = dirname(__DIR__);
+require_once __DIR__ . '/support/inquiry-delivery-bootstrap.php';
 
 function wiring_assert(bool $cond, string $msg): void {
     if (!$cond) {
@@ -317,6 +318,7 @@ CREATE TABLE seminar_inquiries (
     emailSender TEXT, gmailMessageUrl TEXT, mailjetMessageId TEXT, mailjetMessageUuid TEXT, payload TEXT, createdAt TEXT, updatedAt TEXT
 );
 ');
+flacso_test_install_delivery_tables($pdo);
 FLACSO_DB::set_connection($pdo);
 
 // Include handlers
@@ -324,6 +326,19 @@ require_once $root . '/modules/main-page/includes/flacso-consultas.php';
 require_once $root . '/modules/formularios/includes/helpers.php';
 require_once $root . '/modules/posgrados/includes/class-flacso-posgrados-consultas-form.php';
 require_once $root . '/modules/oferta-academica/includes/class-academic-api.php';
+
+wiring_assert(
+    function_exists('flacso_consultas_direct_service_unavailable_response'),
+    'la ausencia del servicio directo debe producir un error seguro, sin volver al webhook del Editor'
+);
+
+$unavailable_response = flacso_consultas_direct_service_unavailable_response();
+wiring_assert(
+    ($unavailable_response['ok'] ?? true) === false
+    && ($unavailable_response['error'] ?? '') === 'offer_inquiry_service_unavailable'
+    && ($unavailable_response['code'] ?? 0) === 503,
+    'el formulario de oferta debe informar indisponibilidad del servicio directo con HTTP 503'
+);
 
 // ---------------------------------------------------------------------------
 // 3. Test flacso_consultas_dispatch_single_info_request execution
@@ -355,7 +370,7 @@ $offer_row = $stmt->fetch();
 wiring_assert(!empty($offer_row), 'Registro de oferta debe persistirse en offer_inquiries');
 wiring_assert($offer_row['email'] === 'ana.garcia@example.com', 'Email de oferta debe coincidir');
 wiring_assert((int)$offer_row['offerWpId'] === 101, 'offerWpId debe ser 101');
-wiring_assert($offer_row['emailStatus'] === 'sent', 'emailStatus de oferta debe ser sent');
+wiring_assert($offer_row['emailStatus'] === 'pending', 'emailStatus de oferta debe quedar pending en la cola transaccional');
 
 // 3.2 Duplicate submission for offer (idempotency)
 $offer_dup_res = flacso_consultas_dispatch_single_info_request(array_merge($offer_test_data, [
@@ -416,7 +431,7 @@ wiring_assert($res_valid->get_status() === 200, 'Consulta de seminario válida d
 $data_valid = $res_valid->get_data();
 wiring_assert(!empty($data_valid['success']), 'Respuesta debe tener success => true');
 wiring_assert(!empty($data_valid['consulta_id']), 'Respuesta debe contener consulta_id');
-wiring_assert($data_valid['email_status'] === 'sent', 'Respuesta debe contener email_status => sent');
+wiring_assert($data_valid['email_status'] === 'pending', 'Respuesta debe contener email_status => pending');
 
 $stmt_sem = $pdo->prepare('SELECT * FROM seminar_inquiries WHERE consultaId = ?');
 $stmt_sem->execute([$data_valid['consulta_id']]);
@@ -424,7 +439,7 @@ $seminar_row = $stmt_sem->fetch();
 wiring_assert(!empty($seminar_row), 'Registro de seminario debe persistirse en seminar_inquiries');
 wiring_assert($seminar_row['email'] === 'carlos.perez@example.com', 'Email de seminario debe coincidir');
 wiring_assert((int)$seminar_row['seminarWpId'] === 202, 'seminarWpId debe ser 202');
-wiring_assert($seminar_row['emailStatus'] === 'sent', 'emailStatus de seminario debe ser sent');
+wiring_assert($seminar_row['emailStatus'] === 'pending', 'emailStatus de seminario debe quedar pending en la cola transaccional');
 
 // 4.4 Duplicate submission for seminar (idempotency)
 $GLOBALS['mailjet_http_calls'] = [];
