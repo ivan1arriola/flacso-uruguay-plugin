@@ -28,6 +28,8 @@ document_source_assert(strpos($helper, "library: { type: 'application/pdf' }") !
 document_source_assert(strpos($helper, "attachment.mime !== 'application/pdf'") !== false, 'el cliente debe rechazar archivos que no sean PDF');
 document_source_assert(strpos($helper, "get_post_mime_type(\$attachment_id) === 'application/pdf'") !== false, 'el servidor debe validar MIME PDF');
 document_source_assert(strpos($helper, 'wp_get_attachment_url($attachment_id)') !== false, 'el servidor debe derivar la URL desde el attachment');
+document_source_assert(strpos($helper, 'remove_legacy_malla_document') !== false, 'guardar la malla debe limpiar la fuente legacy documentos[malla]');
+document_source_assert(strpos($helper, "unset($documents['malla']);") !== false, 'la limpieza debe eliminar solo documentos[malla]');
 
 document_source_assert(strpos($helper, 'input[name="flacso_oferta[malla_curricular]"]') !== false, 'debe integrar el selector con la malla de Oferta');
 document_source_assert(strpos($helper, 'input[name="calendario_academico"]') !== false, 'debe integrar el selector con el calendario de Cohorte');
