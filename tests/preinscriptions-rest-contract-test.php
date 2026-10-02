@@ -160,23 +160,41 @@ if (!is_file($rest_file)) {
 }
 require_once $rest_file;
 
+if (!class_exists('FLACSO_Oferta_Academica')) {
+    class FLACSO_Oferta_Academica {
+        public static $tipos = [];
+        public static function get_tipo(int $oferta_id): string {
+            return self::$tipos[$oferta_id] ?? '';
+        }
+    }
+}
+
 // Set up mock WordPress entities
-// 1. Parent Oferta (DAVIA)
+// 1. Parent Oferta (Maestría)
 $GLOBALS['flacso_test_posts'][100] = (object) [
     'ID'          => 100,
     'post_type'   => 'oferta-academica',
     'post_status' => 'publish',
-    'post_title'  => 'Diploma Superior en Aprendizaje Visual e Inteligencia Artificial',
-    'post_name'   => 'davia',
+    'post_title'  => 'Maestría en Género y Políticas de Igualdad',
+    'post_name'   => 'maestria-genero',
 ];
-$GLOBALS['flacso_test_post_meta'][100]['sigla'] = 'DAVIA';
+FLACSO_Oferta_Academica::$tipos[100] = 'maestria';
+$GLOBALS['flacso_test_post_meta'][100]['sigla'] = 'MGPI';
+$GLOBALS['flacso_test_post_meta'][100]['orientaciones'] = [
+    'Derechos humanos',
+    'Políticas públicas',
+    'Derechos humanos', // Duplicate to test deduplication while preserving order
+];
+$GLOBALS['flacso_test_post_meta'][100]['menciones'] = [
+    'Investigación',
+    'Gestión',
+];
+// Legacy preinscripcion meta that should be ignored by the serializer
 $GLOBALS['flacso_test_post_meta'][100]['preinscripcion_orientaciones'] = [
-    ['id' => 'educacion', 'name' => 'Educación'],
-    ['id' => 'politicas', 'name' => 'Políticas Públicas'],
+    ['id' => 'legacy-orientacion', 'name' => 'Legacy Orientacion'],
 ];
 $GLOBALS['flacso_test_post_meta'][100]['preinscripcion_menciones'] = [
-    ['id' => 'tec-edu', 'name' => 'Tecnología Educativa'],
-    ['id' => 'gestion-pub', 'name' => 'Gestión Pública'],
+    ['id' => 'legacy-mencion', 'name' => 'Legacy Mencion'],
 ];
 
 // 2. Child Cohorte 11 (open)
@@ -184,31 +202,20 @@ $GLOBALS['flacso_test_posts'][101] = (object) [
     'ID'          => 101,
     'post_type'   => 'cohorte',
     'post_status' => 'publish',
-    'post_title'  => 'DAVIA - Cohorte 11',
-    'post_name'   => 'davia-cohorte-11',
+    'post_title'  => 'MGPI - Cohorte 11',
+    'post_name'   => 'mgpi-cohorte-11',
 ];
 $GLOBALS['flacso_test_post_meta'][101]['oferta_academica_id'] = 100;
 $GLOBALS['flacso_test_post_meta'][101]['numero'] = 11;
 $GLOBALS['flacso_test_post_meta'][101]['nombre'] = 'Cohorte XI';
 $GLOBALS['flacso_test_post_meta'][101]['link_preinscripcion'] = 'https://flacso.edu.uy/legacy-davia';
 $GLOBALS['flacso_test_post_meta'][101]['fecha_limite_preinscripcion'] = '2026-05-15';
+// Legacy meta to prove serializer does not output them
 $GLOBALS['flacso_test_post_meta'][101]['preinscripcion_formulario'] = [
     ['key' => 'documento', 'position' => 10, 'required' => true],
-    ['key' => 'orientacion', 'position' => 20, 'required' => true],
-    ['key' => 'mencion', 'position' => 30, 'required' => false],
 ];
 $GLOBALS['flacso_test_post_meta'][101]['preinscripcion_documentos'] = [
     ['key' => 'identidad', 'position' => 10, 'required' => true],
-    ['key' => 'cv', 'position' => 20, 'required' => true],
-];
-$GLOBALS['flacso_test_post_meta'][101]['preinscripcion_orientaciones'] = [
-    [
-        'id'       => 'educacion',
-        'name'     => 'Educación',
-        'mentions' => [
-            ['id' => 'tec-edu', 'name' => 'Tecnología Educativa'],
-        ],
-    ],
 ];
 FLACSO_Cohorte::$open_cohorts[101] = true;
 
@@ -218,7 +225,7 @@ $GLOBALS['flacso_test_posts'][102] = (object) [
     'post_type'   => 'cohorte',
     'post_status' => 'publish',
     'post_title'  => 'Cohorte X',
-    'post_name'   => 'davia-cohorte-10',
+    'post_name'   => 'mgpi-cohorte-10',
 ];
 $GLOBALS['flacso_test_post_meta'][102]['oferta_academica_id'] = 100;
 $GLOBALS['flacso_test_post_meta'][102]['numero'] = 10;
@@ -245,34 +252,41 @@ $GLOBALS['flacso_test_posts'][201] = (object) [
 $GLOBALS['flacso_test_post_meta'][201]['seminario_id'] = 200;
 $GLOBALS['flacso_test_post_meta'][201]['numero'] = 3;
 $GLOBALS['flacso_test_post_meta'][201]['nombre'] = 'Edición 2026-03';
+$GLOBALS['flacso_test_post_meta'][201]['preinscripcion_formulario'] = [
+    ['key' => 'documento', 'position' => 10, 'required' => true],
+];
 FLACSO_Edicion::$open_editions[201] = true;
 
 // Test Serializer for single cohort
 $target_cohort = FLACSO_Preinscriptions_Serializer::for_cohort(101);
 flacso_rest_assert_true(is_array($target_cohort), 'cohort target is an array');
 flacso_rest_assert_same('academic_offer', $target_cohort['kind'], 'target kind is academic_offer');
+flacso_rest_assert_same('maestria', $target_cohort['offer']['type'], 'offer type is maestria');
+flacso_rest_assert_same(['Derechos humanos', 'Políticas públicas'], $target_cohort['offer']['orientations'], 'offer orientations are deduplicated strings in presentation order');
+flacso_rest_assert_same(['Investigación', 'Gestión'], $target_cohort['offer']['mentions'], 'offer mentions are text strings');
+flacso_rest_assert_same(['Derechos humanos', 'Políticas públicas'], $target_cohort['orientations'], 'target orientations match offer orientations');
+flacso_rest_assert_same(['Investigación', 'Gestión'], $target_cohort['mentions'], 'target mentions match offer mentions');
+flacso_rest_assert_true(!isset($target_cohort['form']), 'form configuration is no longer emitted by WordPress');
 flacso_rest_assert_same(true, $target_cohort['registrationOpen'], 'cohort 101 registration is open');
 flacso_rest_assert_same(100, $target_cohort['wordpress']['offerId'], 'offerId matches parent');
 flacso_rest_assert_same(101, $target_cohort['wordpress']['cohortId'], 'cohortId matches post ID');
 flacso_rest_assert_true((bool) preg_match('/^sha256:[a-f0-9]{64}$/', $target_cohort['configRevision']), 'configRevision is a valid sha256 hash');
-flacso_rest_assert_same(true, $target_cohort['form']['valid'], 'form is valid');
-flacso_rest_assert_same(2, count($target_cohort['orientations']), 'offer orientations are independent');
-flacso_rest_assert_same(2, count($target_cohort['mentions']), 'offer mentions are independent');
-flacso_rest_assert_same('identidad', $target_cohort['form']['documents'][0]['key'], 'document configuration is serialized');
 flacso_rest_assert_same('https://flacso.edu.uy/legacy-davia', $target_cohort['urls']['legacyRegistration'], 'preserves legacy registration url');
 
 $target_short_cohort = FLACSO_Preinscriptions_Serializer::for_cohort(102);
-flacso_rest_assert_same('Diploma Superior en Aprendizaje Visual e Inteligencia Artificial — Cohorte X', $target_short_cohort['title'], 'a generic cohort title includes its academic offer');
+flacso_rest_assert_same('Maestría en Género y Políticas de Igualdad — Cohorte X', $target_short_cohort['title'], 'a generic cohort title includes its academic offer');
 
 // Test Serializer for single edition
 $target_edition = FLACSO_Preinscriptions_Serializer::for_edition(201);
 flacso_rest_assert_true(is_array($target_edition), 'edition target is an array');
 flacso_rest_assert_same('seminar', $target_edition['kind'], 'target kind is seminar');
+flacso_rest_assert_same('seminar', $target_edition['seminar']['type'], 'seminar type is seminar');
+flacso_rest_assert_same([], $target_edition['orientations'], 'seminars have empty orientations');
+flacso_rest_assert_same([], $target_edition['mentions'], 'seminars have empty mentions');
+flacso_rest_assert_true(!isset($target_edition['form']), 'edition has no form emitted');
 flacso_rest_assert_same(true, $target_edition['registrationOpen'], 'edition 201 registration is open');
 flacso_rest_assert_same(200, $target_edition['wordpress']['seminarId'], 'seminarId matches parent');
 flacso_rest_assert_same(201, $target_edition['wordpress']['editionId'], 'editionId matches post ID');
-flacso_rest_assert_same([], $target_edition['orientations'], 'seminars have no orientations');
-flacso_rest_assert_same([], $target_edition['mentions'], 'seminars have no mentions');
 
 // Test all targets (includes open and closed)
 $all = FLACSO_Preinscriptions_Serializer::all_targets();

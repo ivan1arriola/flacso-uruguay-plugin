@@ -14,45 +14,13 @@ final class FLACSO_Preinscriptions_Admin {
     public const NONCE_FIELD       = 'preinscripcion_admin_nonce';
 
     public static function init(): void {
-        if (function_exists('add_action')) {
-            add_action('add_meta_boxes', [self::class, 'add_meta_boxes']);
-            add_action('save_post_cohorte', [self::class, 'save_cohorte'], 10, 2);
-            add_action('save_post_edicion', [self::class, 'save_edicion'], 10, 2);
-            add_action('save_post_oferta-academica', [self::class, 'save_oferta'], 10, 2);
-        }
+        // Form composition metaboxes are removed from cohorts and editions;
+        // form profiles are managed in the standalone application.
+        // Existing post meta in the database remains untouched.
     }
 
     public static function add_meta_boxes(): void {
-        if (!function_exists('add_meta_box')) {
-            return;
-        }
-
-        add_meta_box(
-            'flacso_preinscripcion_meta_cohorte',
-            __('Formulario de Preinscripción', 'flacso-uruguay'),
-            [self::class, 'render_meta_box'],
-            'cohorte',
-            'normal',
-            'default'
-        );
-
-        add_meta_box(
-            'flacso_preinscripcion_meta_edicion',
-            __('Formulario de Preinscripción', 'flacso-uruguay'),
-            [self::class, 'render_meta_box'],
-            'edicion',
-            'normal',
-            'default'
-        );
-
-        add_meta_box(
-            'flacso_preinscripcion_meta_oferta',
-            __('Configuración de preinscripción', 'flacso-uruguay'),
-            [self::class, 'render_offer_meta_box'],
-            'oferta-academica',
-            'normal',
-            'default'
-        );
+        // Form composition has moved to standalone preinscriptions application.
     }
 
     public static function render_offer_meta_box($post): void {

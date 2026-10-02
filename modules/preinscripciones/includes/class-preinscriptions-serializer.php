@@ -64,38 +64,25 @@ final class FLACSO_Preinscriptions_Serializer {
             ? FLACSO_Cohorte::accepts_registration($cohort_id)
             : false;
 
-        $raw_inputs = get_post_meta($cohort_id, 'preinscripcion_formulario', true);
-        $raw_documents = get_post_meta($cohort_id, 'preinscripcion_documentos', true);
-        $issues = [];
-        $has_invalid_keys = false;
-
-        if (is_array($raw_inputs)) {
-            foreach ($raw_inputs as $candidate) {
-                if (is_array($candidate) && isset($candidate['key'])) {
-                    if (!FLACSO_Preinscriptions_Field_Catalog::has((string) $candidate['key'])) {
-                        $has_invalid_keys = true;
-                        $issues[] = 'unknown_input';
-                        break;
-                    }
-                }
+        $offer_type = '';
+        if (class_exists('FLACSO_Oferta_Academica') && method_exists('FLACSO_Oferta_Academica', 'get_tipo')) {
+            $offer_type = FLACSO_Oferta_Academica::get_tipo((int) $parent->ID);
+        }
+        if ($offer_type === '' && function_exists('wp_get_object_terms')) {
+            $terms = wp_get_object_terms((int) $parent->ID, 'tipo-oferta-academica');
+            if (!is_wp_error($terms) && !empty($terms) && isset($terms[0]->slug)) {
+                $offer_type = sanitize_key((string) $terms[0]->slug);
             }
         }
-
-        $clean_inputs = FLACSO_Preinscriptions_Config::sanitize_inputs($raw_inputs);
-        $raw_orientations = get_post_meta($parent->ID, 'preinscripcion_orientaciones', true);
-        if (!is_array($raw_orientations) || $raw_orientations === []) {
-            $raw_orientations = get_post_meta($cohort_id, 'preinscripcion_orientaciones', true);
+        if ($offer_type === '') {
+            $offer_type = sanitize_key((string) get_post_meta((int) $parent->ID, 'tipo', true));
         }
-        $clean_orientations = FLACSO_Preinscriptions_Config::sanitize_orientations($raw_orientations);
-        $raw_mentions = get_post_meta($parent->ID, 'preinscripcion_menciones', true);
-        if (!is_array($raw_mentions) || $raw_mentions === []) {
-            $raw_mentions = self::mentions_from_legacy_orientations($raw_orientations);
-        }
-        $clean_mentions = FLACSO_Preinscriptions_Config::sanitize_mentions($raw_mentions);
-        $clean_documents = FLACSO_Preinscriptions_Config::sanitize_documents($raw_documents);
 
-        $canonical = FLACSO_Preinscriptions_Config::canonical_payload($clean_inputs, $clean_orientations, $clean_mentions, $clean_documents);
-        $revision = FLACSO_Preinscriptions_Config::revision($canonical);
+        $raw_orientations = get_post_meta((int) $parent->ID, 'orientaciones', true);
+        $clean_orientations = FLACSO_Preinscriptions_Config::sanitize_text_list($raw_orientations);
+
+        $raw_mentions = get_post_meta((int) $parent->ID, 'menciones', true);
+        $clean_mentions = FLACSO_Preinscriptions_Config::sanitize_text_list($raw_mentions);
 
         $fecha_limite = get_post_meta($cohort_id, 'fecha_limite_preinscripcion', true);
         $iso_until = null;
@@ -106,27 +93,39 @@ final class FLACSO_Preinscriptions_Serializer {
             }
         }
 
+        $legacy_link = get_post_meta($cohort_id, 'link_preinscripcion', true);
+        $public_url = get_permalink((int) $parent->ID);
+        $wordpress_url = get_permalink($cohort_id);
+        $edit_url = admin_url('post.php?post=' . $cohort_id . '&action=edit');
+
+        $canonical = [
+            'kind'               => 'academic_offer',
+            'type'               => $offer_type,
+            'orientations'       => $clean_orientations,
+            'mentions'           => $clean_mentions,
+            'registrationOpen'   => $is_open,
+            'registrationWindow' => [
+                'from'  => null,
+                'until' => $iso_until,
+            ],
+            'urls'               => [
+                'public'             => $public_url,
+                'wordpress'          => $wordpress_url,
+                'legacyRegistration' => !empty($legacy_link) ? (string) $legacy_link : null,
+            ],
+        ];
+        $revision = FLACSO_Preinscriptions_Config::revision($canonical);
+
         $target_id = sprintf('target_%s', substr(hash('sha256', 'cohorte:' . $cohort_id), 0, 12));
         $cohort_number = get_post_meta($cohort_id, 'numero', true);
         $cohort_name = get_post_meta($cohort_id, 'nombre', true);
-        $offer_sigla = get_post_meta($parent->ID, 'sigla', true);
+        $offer_sigla = get_post_meta((int) $parent->ID, 'sigla', true);
         $cohort_title = trim((string) $cohort->post_title);
         $is_generic_cohort_title = $cohort_title !== '' && preg_match('/^cohorte(?:\\s|$)/ui', $cohort_title) === 1;
         $public_title = $cohort_title;
         if ($public_title === '' || $is_generic_cohort_title) {
             $public_title = trim((string) $parent->post_title) . ' — ' . ($cohort_title ?: ($cohort_name ?: ('Cohorte ' . $cohort_number)));
         }
-
-        $form_state = [
-            'valid'  => !$has_invalid_keys,
-            'inputs' => $clean_inputs,
-            'documents' => $clean_documents,
-        ];
-        if ($has_invalid_keys) {
-            $form_state['issues'] = array_values(array_unique($issues));
-        }
-
-        $legacy_link = get_post_meta($cohort_id, 'link_preinscripcion', true);
 
         return [
             'id'                 => $target_id,
@@ -137,9 +136,12 @@ final class FLACSO_Preinscriptions_Serializer {
                 'cohortId' => $cohort_id,
             ],
             'offer'              => [
-                'id'   => (int) $parent->ID,
-                'slug' => (string) $parent->post_name,
-                'name' => (string) ($offer_sigla ?: $parent->post_title),
+                'id'           => (int) $parent->ID,
+                'slug'         => (string) $parent->post_name,
+                'name'         => (string) ($offer_sigla ?: $parent->post_title),
+                'type'         => $offer_type,
+                'orientations' => $clean_orientations,
+                'mentions'     => $clean_mentions,
             ],
             'cohort'             => [
                 'number' => is_numeric($cohort_number) ? (int) $cohort_number : $cohort_number,
@@ -151,13 +153,12 @@ final class FLACSO_Preinscriptions_Serializer {
                 'until' => $iso_until,
             ],
             'configRevision'     => $revision,
-            'form'               => $form_state,
             'orientations'       => $clean_orientations,
             'mentions'           => $clean_mentions,
             'urls'               => [
-                'public'             => get_permalink($parent->ID),
-                'wordpress'          => get_permalink($cohort_id),
-                'edit'               => admin_url('post.php?post=' . $cohort_id . '&action=edit'),
+                'public'             => $public_url,
+                'wordpress'          => $wordpress_url,
+                'edit'               => $edit_url,
                 'legacyRegistration' => !empty($legacy_link) ? (string) $legacy_link : null,
             ],
         ];
@@ -182,31 +183,6 @@ final class FLACSO_Preinscriptions_Serializer {
             ? FLACSO_Edicion::accepts_registration($edition_id)
             : false;
 
-        $raw_inputs = get_post_meta($edition_id, 'preinscripcion_formulario', true);
-        $raw_documents = get_post_meta($edition_id, 'preinscripcion_documentos', true);
-        $issues = [];
-        $has_invalid_keys = false;
-
-        if (is_array($raw_inputs)) {
-            foreach ($raw_inputs as $candidate) {
-                if (is_array($candidate) && isset($candidate['key'])) {
-                    if (!FLACSO_Preinscriptions_Field_Catalog::has((string) $candidate['key'])) {
-                        $has_invalid_keys = true;
-                        $issues[] = 'unknown_input';
-                        break;
-                    }
-                }
-            }
-        }
-
-        $clean_inputs = FLACSO_Preinscriptions_Config::sanitize_inputs($raw_inputs);
-        $clean_orientations = []; // Seminars do not use orientations
-        $clean_mentions = []; // Seminars do not use mentions
-        $clean_documents = FLACSO_Preinscriptions_Config::sanitize_documents($raw_documents);
-
-        $canonical = FLACSO_Preinscriptions_Config::canonical_payload($clean_inputs, $clean_orientations, $clean_mentions, $clean_documents);
-        $revision = FLACSO_Preinscriptions_Config::revision($canonical);
-
         $fecha_limite = get_post_meta($edition_id, 'fecha_limite_preinscripcion', true);
         $iso_until = null;
         if (!empty($fecha_limite) && is_string($fecha_limite)) {
@@ -216,20 +192,32 @@ final class FLACSO_Preinscriptions_Serializer {
             }
         }
 
+        $legacy_link = get_post_meta($edition_id, 'link_preinscripcion', true);
+        $public_url = get_permalink((int) $parent->ID);
+        $wordpress_url = get_permalink($edition_id);
+        $edit_url = admin_url('post.php?post=' . $edition_id . '&action=edit');
+
+        $canonical = [
+            'kind'               => 'seminar',
+            'type'               => 'seminar',
+            'orientations'       => [],
+            'mentions'           => [],
+            'registrationOpen'   => $is_open,
+            'registrationWindow' => [
+                'from'  => null,
+                'until' => $iso_until,
+            ],
+            'urls'               => [
+                'public'             => $public_url,
+                'wordpress'          => $wordpress_url,
+                'legacyRegistration' => !empty($legacy_link) ? (string) $legacy_link : null,
+            ],
+        ];
+        $revision = FLACSO_Preinscriptions_Config::revision($canonical);
+
         $target_id = sprintf('target_%s', substr(hash('sha256', 'edicion:' . $edition_id), 0, 12));
         $edition_number = get_post_meta($edition_id, 'numero', true);
         $edition_name = get_post_meta($edition_id, 'nombre', true);
-
-        $form_state = [
-            'valid'  => !$has_invalid_keys,
-            'inputs' => $clean_inputs,
-            'documents' => $clean_documents,
-        ];
-        if ($has_invalid_keys) {
-            $form_state['issues'] = array_values(array_unique($issues));
-        }
-
-        $legacy_link = get_post_meta($edition_id, 'link_preinscripcion', true);
 
         return [
             'id'                 => $target_id,
@@ -243,6 +231,7 @@ final class FLACSO_Preinscriptions_Serializer {
                 'id'   => (int) $parent->ID,
                 'slug' => (string) $parent->post_name,
                 'name' => (string) $parent->post_title,
+                'type' => 'seminar',
             ],
             'edition'            => [
                 'number' => is_numeric($edition_number) ? (int) $edition_number : $edition_number,
@@ -254,30 +243,14 @@ final class FLACSO_Preinscriptions_Serializer {
                 'until' => $iso_until,
             ],
             'configRevision'     => $revision,
-            'form'               => $form_state,
             'orientations'       => [],
             'mentions'           => [],
             'urls'               => [
-                'public'             => get_permalink($parent->ID),
-                'wordpress'          => get_permalink($edition_id),
-                'edit'               => admin_url('post.php?post=' . $edition_id . '&action=edit'),
+                'public'             => $public_url,
+                'wordpress'          => $wordpress_url,
+                'edit'               => $edit_url,
                 'legacyRegistration' => !empty($legacy_link) ? (string) $legacy_link : null,
             ],
         ];
-    }
-
-    private static function mentions_from_legacy_orientations($value): array {
-        if (!is_array($value)) {
-            return [];
-        }
-        $mentions = [];
-        foreach ($value as $orientation) {
-            if (is_array($orientation) && isset($orientation['mentions']) && is_array($orientation['mentions'])) {
-                foreach ($orientation['mentions'] as $mention) {
-                    $mentions[] = $mention;
-                }
-            }
-        }
-        return $mentions;
     }
 }

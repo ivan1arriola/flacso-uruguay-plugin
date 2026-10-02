@@ -5,6 +5,36 @@ if (!defined('ABSPATH')) {
 }
 
 final class FLACSO_Preinscriptions_Config {
+    public static function sanitize_text_list($value): array {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $result = [];
+        $seen = [];
+
+        foreach ($value as $item) {
+            if (!is_scalar($item)) {
+                continue;
+            }
+
+            $text = trim(strip_tags((string) $item));
+            if ($text === '') {
+                continue;
+            }
+
+            $normalized = function_exists('mb_strtolower') ? mb_strtolower($text, 'UTF-8') : strtolower($text);
+            if (isset($seen[$normalized])) {
+                continue;
+            }
+
+            $seen[$normalized] = true;
+            $result[] = $text;
+        }
+
+        return $result;
+    }
+
     public static function sanitize_inputs($value): array {
         if (!is_array($value)) {
             return [];
