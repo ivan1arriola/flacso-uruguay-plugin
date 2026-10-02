@@ -357,6 +357,7 @@ final class FLACSO_Academic_Document_Source_Admin {
                 update_post_meta($post_id, $url_key, esc_url_raw($url));
                 update_post_meta($post_id, $mode_key, self::MODE_PDF);
                 update_post_meta($post_id, $attachment_key, $attachment_id);
+                self::remove_legacy_malla_document($post_id, $payload_key);
                 return;
             }
         }
@@ -366,6 +367,26 @@ final class FLACSO_Academic_Document_Source_Admin {
         // editor original de Oferta/Cohorte antes de este hook.
         update_post_meta($post_id, $mode_key, self::MODE_LINK);
         delete_post_meta($post_id, $attachment_key);
+        self::remove_legacy_malla_document($post_id, $payload_key);
+    }
+
+    private static function remove_legacy_malla_document(int $post_id, string $payload_key): void {
+        if ($payload_key !== 'malla') {
+            return;
+        }
+
+        $documents = FLACSO_Oferta_Academica::sanitize_documents(get_post_meta($post_id, 'documentos', true));
+        if (!array_key_exists('malla', $documents)) {
+            return;
+        }
+
+        unset($documents['malla']);
+        if ($documents === []) {
+            delete_post_meta($post_id, 'documentos');
+            return;
+        }
+
+        update_post_meta($post_id, 'documentos', $documents);
     }
 
     private static function is_pdf_attachment(int $attachment_id): bool {
