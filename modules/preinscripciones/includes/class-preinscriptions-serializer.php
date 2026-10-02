@@ -51,10 +51,10 @@ final class FLACSO_Preinscriptions_Serializer {
             return null;
         }
 
-        $parent_id = (int) get_post_meta($cohort_id, 'parent_oferta_id', true);
-        if (!$parent_id) {
-            $parent_id = (int) get_post_meta($cohort_id, '_parent_oferta_id', true);
-        }
+        $parent_key = defined('FLACSO_Cohorte::META_PARENT_ID')
+            ? FLACSO_Cohorte::META_PARENT_ID
+            : 'oferta_academica_id';
+        $parent_id = (int) get_post_meta($cohort_id, $parent_key, true);
         $parent = $parent_id > 0 ? get_post($parent_id) : null;
         if (!$parent) {
             return null;
@@ -151,10 +151,10 @@ final class FLACSO_Preinscriptions_Serializer {
             return null;
         }
 
-        $parent_id = (int) get_post_meta($edition_id, 'parent_seminario_id', true);
-        if (!$parent_id) {
-            $parent_id = (int) get_post_meta($edition_id, '_parent_seminario_id', true);
-        }
+        $parent_key = defined('FLACSO_Edicion::META_PARENT_ID')
+            ? FLACSO_Edicion::META_PARENT_ID
+            : 'seminario_id';
+        $parent_id = (int) get_post_meta($edition_id, $parent_key, true);
         $parent = $parent_id > 0 ? get_post($parent_id) : null;
         if (!$parent) {
             return null;

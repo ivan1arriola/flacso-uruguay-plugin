@@ -80,6 +80,7 @@ if (!class_exists('WP_REST_Request')) {
 if (!class_exists('FLACSO_Cohorte')) {
     class FLACSO_Cohorte {
         public const POST_TYPE = 'cohorte';
+        public const META_PARENT_ID = 'oferta_academica_id';
         public static $open_cohorts = [];
 
         public static function accepts_registration(int $cohort_id, ?int $timestamp = null): bool {
@@ -91,6 +92,7 @@ if (!class_exists('FLACSO_Cohorte')) {
 if (!class_exists('FLACSO_Edicion')) {
     class FLACSO_Edicion {
         public const POST_TYPE = 'edicion';
+        public const META_PARENT_ID = 'seminario_id';
         public static $open_editions = [];
 
         public static function accepts_registration(int $edition_id, ?int $timestamp = null): bool {
@@ -177,7 +179,7 @@ $GLOBALS['flacso_test_posts'][101] = (object) [
     'post_title'  => 'DAVIA - Cohorte 11',
     'post_name'   => 'davia-cohorte-11',
 ];
-$GLOBALS['flacso_test_post_meta'][101]['parent_oferta_id'] = 100;
+$GLOBALS['flacso_test_post_meta'][101]['oferta_academica_id'] = 100;
 $GLOBALS['flacso_test_post_meta'][101]['numero'] = 11;
 $GLOBALS['flacso_test_post_meta'][101]['nombre'] = 'Cohorte XI';
 $GLOBALS['flacso_test_post_meta'][101]['link_preinscripcion'] = 'https://flacso.edu.uy/legacy-davia';
@@ -206,7 +208,7 @@ $GLOBALS['flacso_test_posts'][102] = (object) [
     'post_title'  => 'DAVIA - Cohorte 10',
     'post_name'   => 'davia-cohorte-10',
 ];
-$GLOBALS['flacso_test_post_meta'][102]['parent_oferta_id'] = 100;
+$GLOBALS['flacso_test_post_meta'][102]['oferta_academica_id'] = 100;
 $GLOBALS['flacso_test_post_meta'][102]['numero'] = 10;
 $GLOBALS['flacso_test_post_meta'][102]['nombre'] = 'Cohorte X';
 FLACSO_Cohorte::$open_cohorts[102] = false;
@@ -228,7 +230,7 @@ $GLOBALS['flacso_test_posts'][201] = (object) [
     'post_title'  => 'Investigación Cualitativa - Edición 2026-03',
     'post_name'   => 'edicion-2026-03',
 ];
-$GLOBALS['flacso_test_post_meta'][201]['parent_seminario_id'] = 200;
+$GLOBALS['flacso_test_post_meta'][201]['seminario_id'] = 200;
 $GLOBALS['flacso_test_post_meta'][201]['numero'] = 3;
 $GLOBALS['flacso_test_post_meta'][201]['nombre'] = 'Edición 2026-03';
 FLACSO_Edicion::$open_editions[201] = true;
