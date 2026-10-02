@@ -129,20 +129,13 @@ if (!is_file($admin_file)) {
 }
 require_once $admin_file;
 
-// Test init hooks
+// Form composition is no longer registered in WordPress admin.
+// It is managed by the standalone preinscriptions application.
 FLACSO_Preinscriptions_Admin::init();
-
-flacso_admin_assert_true(isset($GLOBALS['flacso_registered_actions']['add_meta_boxes']), 'metabox action is registered');
-flacso_admin_assert_true(isset($GLOBALS['flacso_registered_actions']['save_post_cohorte']), 'save_post_cohorte action is registered');
-flacso_admin_assert_true(isset($GLOBALS['flacso_registered_actions']['save_post_edicion']), 'save_post_edicion action is registered');
-
-// Test add_meta_boxes registration
 FLACSO_Preinscriptions_Admin::add_meta_boxes();
 
-flacso_admin_assert_true(isset($GLOBALS['flacso_registered_metaboxes']['flacso_preinscripcion_meta_cohorte']), 'metabox for cohorte is registered');
-flacso_admin_assert_true(isset($GLOBALS['flacso_registered_metaboxes']['flacso_preinscripcion_meta_edicion']), 'metabox for edicion is registered');
-flacso_admin_assert_same('cohorte', $GLOBALS['flacso_registered_metaboxes']['flacso_preinscripcion_meta_cohorte']['screen'], 'screen is cohorte');
-flacso_admin_assert_same('edicion', $GLOBALS['flacso_registered_metaboxes']['flacso_preinscripcion_meta_edicion']['screen'], 'screen is edicion');
+flacso_admin_assert_same([], $GLOBALS['flacso_registered_actions'], 'legacy preinscription metabox hooks are not registered');
+flacso_admin_assert_same([], $GLOBALS['flacso_registered_metaboxes'], 'legacy cohort/edition metaboxes are not registered');
 
 // Test rendering
 $dummy_post = (object) [
