@@ -1,3 +1,12 @@
+## Version 7.1.0 - 1 de octubre de 2026
+
+### Resumen
+- Incorpora módulo `preinscripciones` con catálogo de configuración administrativa de campos en Cohorte y Edición.
+- Publica endpoint público de solo lectura `GET /wp-json/flacso/v1/preinscripciones` con contrato REST v1, huella canónica `configRevision` y caché de 60 segundos.
+- Preserva `link_preinscripcion` y el flujo legacy existente para coexistencia y rollout reversible sin reescritura destructiva.
+
+---
+
 ## Version 7.0.0 - 31 de agosto de 2026
 
 ### Resumen

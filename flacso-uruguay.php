@@ -180,6 +180,7 @@ class FLACSO_Uruguay_Plugin {
         $loader->load_module('shortcodes'); // Shortcodes
         $loader->load_module('mailing'); // Suscripciones al mailing
         $loader->load_module('preguntas-frecuentes'); // FAQ administrables
+        $loader->load_module('preinscripciones'); // Preinscripciones REST v1 y configuración
         $loader->load_module('main-page');  // Landing Page y Secciones
     }
     
