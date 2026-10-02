@@ -12,6 +12,7 @@ $flacso_preinscriptions_files = [
     'modules/preinscripciones/includes/class-preinscriptions-field-catalog.php',
     'modules/preinscripciones/includes/class-preinscriptions-config.php',
     'modules/preinscripciones/includes/class-preinscriptions-meta.php',
+    'modules/preinscripciones/includes/class-preinscriptions-admin.php',
 ];
 $flacso_preinscriptions_base_dir = defined('FLACSO_URUGUAY_PATH')
     ? FLACSO_URUGUAY_PATH
@@ -27,4 +28,7 @@ foreach ($flacso_preinscriptions_files as $flacso_preinscriptions_file) {
 
 if (function_exists('add_action')) {
     add_action('init', [FLACSO_Preinscriptions_Meta::class, 'init'], 5);
+    if (!function_exists('is_admin') || is_admin()) {
+        FLACSO_Preinscriptions_Admin::init();
+    }
 }
