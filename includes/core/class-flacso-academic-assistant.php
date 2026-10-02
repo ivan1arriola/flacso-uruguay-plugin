@@ -280,6 +280,26 @@ final class FLACSO_Academic_Assistant {
         ] as $node_id) {
             $admin_bar->remove_node($node_id);
         }
+
+        if (self::is_assistant()) {
+            foreach (['site-name-flacso-tablas', 'site-name-flacso-portada'] as $node_id) {
+                $admin_bar->remove_node($node_id);
+            }
+        }
+    }
+
+    /**
+     * Navegación mínima para la barra superior de una Asistente Académica.
+     *
+     * @return array<string,array{title:string,href:string}>
+     */
+    public static function assistant_admin_bar_items(): array {
+        return [
+            'resumen'    => ['title' => __('Panel FLACSO', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=' . FLACSO_Admin_Panel::PAGE_SLUG)],
+            'ofertas'    => ['title' => __('Ofertas Académicas', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=oferta-academica')],
+            'seminarios' => ['title' => __('Seminarios', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=seminario')],
+            'docentes'   => ['title' => __('Personas / Equipo', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=docente')],
+        ];
     }
 
     public static function redirect_dashboard(): void {
