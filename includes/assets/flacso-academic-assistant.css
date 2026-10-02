@@ -1,0 +1,82 @@
+.flacso-academic-assistant #screen-meta-links,
+.flacso-academic-assistant #wp-admin-bar-comments,
+.flacso-academic-assistant .row-actions .trash,
+.flacso-academic-assistant .row-actions .delete,
+.flacso-academic-assistant .row-actions .inline {
+    display: none !important;
+}
+
+.flacso-academic-assistant #wpcontent {
+    background: #f6f7f9;
+}
+
+.flacso-academic-assistant .wrap {
+    max-width: 1440px;
+}
+
+.flacso-academic-assistant .wrap > h1,
+.flacso-academic-assistant .wrap > .wp-heading-inline {
+    color: #1f365c;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+}
+
+.flacso-academic-assistant .wp-list-table,
+.flacso-academic-assistant .postbox,
+.flacso-academic-assistant .flacso-academic-section {
+    border-color: #d9dee7;
+    box-shadow: 0 1px 2px rgba(31, 54, 92, 0.05);
+}
+
+.flacso-academic-assistant .wp-list-table thead th,
+.flacso-academic-assistant .wp-list-table tfoot th {
+    color: #34445d;
+    font-weight: 650;
+}
+
+.flacso-academic-assistant .wp-list-table td,
+.flacso-academic-assistant .wp-list-table th {
+    padding-top: 11px;
+    padding-bottom: 11px;
+}
+
+.flacso-academic-assistant .button-primary {
+    background: #2c4777;
+    border-color: #2c4777;
+}
+
+.flacso-academic-assistant .button-primary:hover,
+.flacso-academic-assistant .button-primary:focus {
+    background: #223a63;
+    border-color: #223a63;
+}
+
+.flacso-academic-assistant #adminmenu .wp-has-current-submenu > a.wp-has-current-submenu,
+.flacso-academic-assistant #adminmenu .current a.menu-top {
+    background: #2c4777;
+}
+
+.flacso-academic-assistant .page-title-action {
+    border-radius: 6px;
+}
+
+.flacso-academic-assistant .flacso-assistant-note {
+    margin: 14px 0 20px;
+    padding: 12px 14px;
+    background: #eef3fa;
+    border-left: 4px solid #2c4777;
+    border-radius: 4px;
+    color: #34445d;
+}
+
+@media (max-width: 782px) {
+    .flacso-academic-assistant .wrap {
+        margin-right: 12px;
+    }
+
+    .flacso-academic-assistant .wp-list-table td,
+    .flacso-academic-assistant .wp-list-table th {
+        padding-top: 13px;
+        padding-bottom: 13px;
+    }
+}
