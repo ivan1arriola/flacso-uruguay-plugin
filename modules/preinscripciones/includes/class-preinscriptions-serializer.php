@@ -65,6 +65,7 @@ final class FLACSO_Preinscriptions_Serializer {
             : false;
 
         $raw_inputs = get_post_meta($cohort_id, 'preinscripcion_formulario', true);
+        $raw_documents = get_post_meta($cohort_id, 'preinscripcion_documentos', true);
         $issues = [];
         $has_invalid_keys = false;
 
@@ -81,10 +82,19 @@ final class FLACSO_Preinscriptions_Serializer {
         }
 
         $clean_inputs = FLACSO_Preinscriptions_Config::sanitize_inputs($raw_inputs);
-        $raw_orientations = get_post_meta($cohort_id, 'preinscripcion_orientaciones', true);
+        $raw_orientations = get_post_meta($parent->ID, 'preinscripcion_orientaciones', true);
+        if (!is_array($raw_orientations) || $raw_orientations === []) {
+            $raw_orientations = get_post_meta($cohort_id, 'preinscripcion_orientaciones', true);
+        }
         $clean_orientations = FLACSO_Preinscriptions_Config::sanitize_orientations($raw_orientations);
+        $raw_mentions = get_post_meta($parent->ID, 'preinscripcion_menciones', true);
+        if (!is_array($raw_mentions) || $raw_mentions === []) {
+            $raw_mentions = self::mentions_from_legacy_orientations($raw_orientations);
+        }
+        $clean_mentions = FLACSO_Preinscriptions_Config::sanitize_mentions($raw_mentions);
+        $clean_documents = FLACSO_Preinscriptions_Config::sanitize_documents($raw_documents);
 
-        $canonical = FLACSO_Preinscriptions_Config::canonical_payload($clean_inputs, $clean_orientations);
+        $canonical = FLACSO_Preinscriptions_Config::canonical_payload($clean_inputs, $clean_orientations, $clean_mentions, $clean_documents);
         $revision = FLACSO_Preinscriptions_Config::revision($canonical);
 
         $fecha_limite = get_post_meta($cohort_id, 'fecha_limite_preinscripcion', true);
@@ -104,6 +114,7 @@ final class FLACSO_Preinscriptions_Serializer {
         $form_state = [
             'valid'  => !$has_invalid_keys,
             'inputs' => $clean_inputs,
+            'documents' => $clean_documents,
         ];
         if ($has_invalid_keys) {
             $form_state['issues'] = array_values(array_unique($issues));
@@ -136,6 +147,7 @@ final class FLACSO_Preinscriptions_Serializer {
             'configRevision'     => $revision,
             'form'               => $form_state,
             'orientations'       => $clean_orientations,
+            'mentions'           => $clean_mentions,
             'urls'               => [
                 'public'             => get_permalink($parent->ID),
                 'wordpress'          => get_permalink($cohort_id),
@@ -165,6 +177,7 @@ final class FLACSO_Preinscriptions_Serializer {
             : false;
 
         $raw_inputs = get_post_meta($edition_id, 'preinscripcion_formulario', true);
+        $raw_documents = get_post_meta($edition_id, 'preinscripcion_documentos', true);
         $issues = [];
         $has_invalid_keys = false;
 
@@ -182,8 +195,10 @@ final class FLACSO_Preinscriptions_Serializer {
 
         $clean_inputs = FLACSO_Preinscriptions_Config::sanitize_inputs($raw_inputs);
         $clean_orientations = []; // Seminars do not use orientations
+        $clean_mentions = []; // Seminars do not use mentions
+        $clean_documents = FLACSO_Preinscriptions_Config::sanitize_documents($raw_documents);
 
-        $canonical = FLACSO_Preinscriptions_Config::canonical_payload($clean_inputs, $clean_orientations);
+        $canonical = FLACSO_Preinscriptions_Config::canonical_payload($clean_inputs, $clean_orientations, $clean_mentions, $clean_documents);
         $revision = FLACSO_Preinscriptions_Config::revision($canonical);
 
         $fecha_limite = get_post_meta($edition_id, 'fecha_limite_preinscripcion', true);
@@ -202,6 +217,7 @@ final class FLACSO_Preinscriptions_Serializer {
         $form_state = [
             'valid'  => !$has_invalid_keys,
             'inputs' => $clean_inputs,
+            'documents' => $clean_documents,
         ];
         if ($has_invalid_keys) {
             $form_state['issues'] = array_values(array_unique($issues));
@@ -234,6 +250,7 @@ final class FLACSO_Preinscriptions_Serializer {
             'configRevision'     => $revision,
             'form'               => $form_state,
             'orientations'       => [],
+            'mentions'           => [],
             'urls'               => [
                 'public'             => get_permalink($parent->ID),
                 'wordpress'          => get_permalink($edition_id),
@@ -241,5 +258,20 @@ final class FLACSO_Preinscriptions_Serializer {
                 'legacyRegistration' => !empty($legacy_link) ? (string) $legacy_link : null,
             ],
         ];
+    }
+
+    private static function mentions_from_legacy_orientations($value): array {
+        if (!is_array($value)) {
+            return [];
+        }
+        $mentions = [];
+        foreach ($value as $orientation) {
+            if (is_array($orientation) && isset($orientation['mentions']) && is_array($orientation['mentions'])) {
+                foreach ($orientation['mentions'] as $mention) {
+                    $mentions[] = $mention;
+                }
+            }
+        }
+        return $mentions;
     }
 }

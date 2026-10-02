@@ -170,6 +170,14 @@ $GLOBALS['flacso_test_posts'][100] = (object) [
     'post_name'   => 'davia',
 ];
 $GLOBALS['flacso_test_post_meta'][100]['sigla'] = 'DAVIA';
+$GLOBALS['flacso_test_post_meta'][100]['preinscripcion_orientaciones'] = [
+    ['id' => 'educacion', 'name' => 'Educación'],
+    ['id' => 'politicas', 'name' => 'Políticas Públicas'],
+];
+$GLOBALS['flacso_test_post_meta'][100]['preinscripcion_menciones'] = [
+    ['id' => 'tec-edu', 'name' => 'Tecnología Educativa'],
+    ['id' => 'gestion-pub', 'name' => 'Gestión Pública'],
+];
 
 // 2. Child Cohorte 11 (open)
 $GLOBALS['flacso_test_posts'][101] = (object) [
@@ -188,6 +196,10 @@ $GLOBALS['flacso_test_post_meta'][101]['preinscripcion_formulario'] = [
     ['key' => 'documento', 'position' => 10, 'required' => true],
     ['key' => 'orientacion', 'position' => 20, 'required' => true],
     ['key' => 'mencion', 'position' => 30, 'required' => false],
+];
+$GLOBALS['flacso_test_post_meta'][101]['preinscripcion_documentos'] = [
+    ['key' => 'identidad', 'position' => 10, 'required' => true],
+    ['key' => 'cv', 'position' => 20, 'required' => true],
 ];
 $GLOBALS['flacso_test_post_meta'][101]['preinscripcion_orientaciones'] = [
     [
@@ -244,6 +256,9 @@ flacso_rest_assert_same(100, $target_cohort['wordpress']['offerId'], 'offerId ma
 flacso_rest_assert_same(101, $target_cohort['wordpress']['cohortId'], 'cohortId matches post ID');
 flacso_rest_assert_true((bool) preg_match('/^sha256:[a-f0-9]{64}$/', $target_cohort['configRevision']), 'configRevision is a valid sha256 hash');
 flacso_rest_assert_same(true, $target_cohort['form']['valid'], 'form is valid');
+flacso_rest_assert_same(2, count($target_cohort['orientations']), 'offer orientations are independent');
+flacso_rest_assert_same(2, count($target_cohort['mentions']), 'offer mentions are independent');
+flacso_rest_assert_same('identidad', $target_cohort['form']['documents'][0]['key'], 'document configuration is serialized');
 flacso_rest_assert_same('https://flacso.edu.uy/legacy-davia', $target_cohort['urls']['legacyRegistration'], 'preserves legacy registration url');
 
 // Test Serializer for single edition
@@ -253,6 +268,8 @@ flacso_rest_assert_same('seminar', $target_edition['kind'], 'target kind is semi
 flacso_rest_assert_same(true, $target_edition['registrationOpen'], 'edition 201 registration is open');
 flacso_rest_assert_same(200, $target_edition['wordpress']['seminarId'], 'seminarId matches parent');
 flacso_rest_assert_same(201, $target_edition['wordpress']['editionId'], 'editionId matches post ID');
+flacso_rest_assert_same([], $target_edition['orientations'], 'seminars have no orientations');
+flacso_rest_assert_same([], $target_edition['mentions'], 'seminars have no mentions');
 
 // Test all targets (includes open and closed)
 $all = FLACSO_Preinscriptions_Serializer::all_targets();

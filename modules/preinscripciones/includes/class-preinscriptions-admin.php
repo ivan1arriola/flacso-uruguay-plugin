@@ -9,6 +9,7 @@ if (!defined('ABSPATH')) {
 final class FLACSO_Preinscriptions_Admin {
     public const META_INPUTS       = 'preinscripcion_formulario';
     public const META_ORIENTATIONS = 'preinscripcion_orientaciones';
+    public const META_DOCUMENTS    = 'preinscripcion_documentos';
     public const NONCE_ACTION      = 'flacso_preinscripcion_save';
     public const NONCE_FIELD       = 'preinscripcion_admin_nonce';
 
@@ -17,6 +18,7 @@ final class FLACSO_Preinscriptions_Admin {
             add_action('add_meta_boxes', [self::class, 'add_meta_boxes']);
             add_action('save_post_cohorte', [self::class, 'save_cohorte'], 10, 2);
             add_action('save_post_edicion', [self::class, 'save_edicion'], 10, 2);
+            add_action('save_post_oferta-academica', [self::class, 'save_oferta'], 10, 2);
         }
     }
 
@@ -42,6 +44,34 @@ final class FLACSO_Preinscriptions_Admin {
             'normal',
             'default'
         );
+
+        add_meta_box(
+            'flacso_preinscripcion_meta_oferta',
+            __('Configuración de preinscripción', 'flacso-uruguay'),
+            [self::class, 'render_offer_meta_box'],
+            'oferta-academica',
+            'normal',
+            'default'
+        );
+    }
+
+    public static function render_offer_meta_box($post): void {
+        $post_id = is_object($post) ? (int) $post->ID : (int) $post;
+        wp_nonce_field(self::NONCE_ACTION, self::NONCE_FIELD);
+        $orientations = get_post_meta($post_id, self::META_ORIENTATIONS, true);
+        $mentions = get_post_meta($post_id, 'preinscripcion_menciones', true);
+        $orientations = is_array($orientations) ? $orientations : [];
+        $mentions = is_array($mentions) ? $mentions : [];
+        ?>
+        <p class="description"><?php esc_html_e('Estas listas se aplican a las cohortes de esta oferta. Orientación y mención son independientes.', 'flacso-uruguay'); ?></p>
+        <h4><?php esc_html_e('Orientaciones', 'flacso-uruguay'); ?></h4>
+        <?php for ($i = 0; $i < max(3, count($orientations)); $i++): $item = $orientations[$i] ?? []; ?>
+            <p><input type="text" name="preinscripcion_orientaciones[<?php echo $i; ?>][id]" value="<?php echo esc_attr($item['id'] ?? ''); ?>" placeholder="id" /> <input type="text" name="preinscripcion_orientaciones[<?php echo $i; ?>][name]" value="<?php echo esc_attr($item['name'] ?? ''); ?>" placeholder="Nombre de la orientación" /></p>
+        <?php endfor; ?>
+        <h4><?php esc_html_e('Menciones', 'flacso-uruguay'); ?></h4>
+        <?php for ($i = 0; $i < max(3, count($mentions)); $i++): $item = $mentions[$i] ?? []; ?>
+            <p><input type="text" name="preinscripcion_menciones[<?php echo $i; ?>][id]" value="<?php echo esc_attr($item['id'] ?? ''); ?>" placeholder="id" /> <input type="text" name="preinscripcion_menciones[<?php echo $i; ?>][name]" value="<?php echo esc_attr($item['name'] ?? ''); ?>" placeholder="Nombre de la mención" /></p>
+        <?php endfor;
     }
 
     public static function render_meta_box($post): void {
@@ -58,6 +88,10 @@ final class FLACSO_Preinscriptions_Admin {
         if (!is_array($saved_orientations)) {
             $saved_orientations = [];
         }
+        $saved_documents = get_post_meta($post_id, self::META_DOCUMENTS, true);
+        if (!is_array($saved_documents)) {
+            $saved_documents = [];
+        }
 
         $catalog_labels = FLACSO_Preinscriptions_Field_Catalog::labels();
         $indexed_inputs = [];
@@ -70,7 +104,7 @@ final class FLACSO_Preinscriptions_Admin {
         ?>
         <div class="flacso-preinscriptions-admin-wrapper" style="margin-top: 10px;">
             <p class="description">
-                <?php esc_html_e('Seleccione los campos requeridos para este destino. Los datos universales (nombre, apellido, email, teléfono) se solicitan siempre de manera predeterminada.', 'flacso-uruguay'); ?>
+                <?php esc_html_e('Seleccione los campos requeridos para este destino. Los datos universales se solicitan siempre de manera predeterminada.', 'flacso-uruguay'); ?>
             </p>
 
             <table class="widefat striped" style="margin-top: 12px; margin-bottom: 20px;">
@@ -110,6 +144,41 @@ final class FLACSO_Preinscriptions_Admin {
                         $row_index++;
                     endforeach;
                     ?>
+                </tbody>
+            </table>
+
+            <h4><?php esc_html_e('Documentación requerida', 'flacso-uruguay'); ?></h4>
+            <table class="widefat striped" style="margin-top: 12px; margin-bottom: 20px;">
+                <thead><tr>
+                    <th style="width: 40px; text-align: center;"><?php esc_html_e('Activo', 'flacso-uruguay'); ?></th>
+                    <th><?php esc_html_e('Documento', 'flacso-uruguay'); ?></th>
+                    <th style="width: 100px;"><?php esc_html_e('Posición', 'flacso-uruguay'); ?></th>
+                    <th style="width: 120px; text-align: center;"><?php esc_html_e('Obligatorio', 'flacso-uruguay'); ?></th>
+                    <th style="width: 120px; text-align: center;"><?php esc_html_e('Adjuntar después', 'flacso-uruguay'); ?></th>
+                </tr></thead>
+                <tbody>
+                <?php
+                $document_index = 0;
+                $indexed_documents = [];
+                foreach ($saved_documents as $document) {
+                    if (isset($document['key'])) {
+                        $indexed_documents[$document['key']] = $document;
+                    }
+                }
+                foreach (FLACSO_Preinscriptions_Field_Catalog::document_labels() as $document_key => $document_label):
+                    $document_configured = isset($indexed_documents[$document_key]);
+                    $document_position = $document_configured ? (int) $indexed_documents[$document_key]['position'] : ($document_index + 1) * 10;
+                    $document_required = $document_configured ? !empty($indexed_documents[$document_key]['required']) : false;
+                    $document_defer = $document_configured ? !empty($indexed_documents[$document_key]['canDefer']) : false;
+                ?>
+                    <tr>
+                        <td style="text-align: center;"><input type="checkbox" name="<?php echo esc_attr(self::META_DOCUMENTS); ?>[<?php echo $document_index; ?>][active]" value="1" <?php checked($document_configured, true); ?> /><input type="hidden" name="<?php echo esc_attr(self::META_DOCUMENTS); ?>[<?php echo $document_index; ?>][key]" value="<?php echo esc_attr($document_key); ?>" /></td>
+                        <td><strong><?php echo esc_html($document_label); ?></strong> <code>(<?php echo esc_html($document_key); ?>)</code></td>
+                        <td><input type="number" min="1" step="1" name="<?php echo esc_attr(self::META_DOCUMENTS); ?>[<?php echo $document_index; ?>][position]" value="<?php echo esc_attr($document_position); ?>" class="small-text" /></td>
+                        <td style="text-align: center;"><input type="checkbox" name="<?php echo esc_attr(self::META_DOCUMENTS); ?>[<?php echo $document_index; ?>][required]" value="1" <?php checked($document_required, true); ?> /></td>
+                        <td style="text-align: center;"><input type="checkbox" name="<?php echo esc_attr(self::META_DOCUMENTS); ?>[<?php echo $document_index; ?>][canDefer]" value="1" <?php checked($document_defer, true); ?> /></td>
+                    </tr>
+                <?php $document_index++; endforeach; ?>
                 </tbody>
             </table>
 
@@ -154,6 +223,23 @@ final class FLACSO_Preinscriptions_Admin {
 
     public static function save_edicion(int $post_id, $post): void {
         self::save($post_id, $post);
+    }
+
+    public static function save_oferta(int $post_id, $post): void {
+        if (function_exists('wp_is_post_autosave') && wp_is_post_autosave($post_id)) {
+            return;
+        }
+        if (function_exists('wp_is_post_revision') && wp_is_post_revision($post_id)) {
+            return;
+        }
+        if (!isset($_POST[self::NONCE_FIELD]) || !function_exists('wp_verify_nonce') || !wp_verify_nonce($_POST[self::NONCE_FIELD], self::NONCE_ACTION)) {
+            return;
+        }
+        if (function_exists('current_user_can') && !current_user_can('manage_options') && !current_user_can('edit_post', $post_id)) {
+            return;
+        }
+        update_post_meta($post_id, self::META_ORIENTATIONS, FLACSO_Preinscriptions_Config::sanitize_orientations($_POST[self::META_ORIENTATIONS] ?? []));
+        update_post_meta($post_id, 'preinscripcion_menciones', FLACSO_Preinscriptions_Config::sanitize_mentions($_POST['preinscripcion_menciones'] ?? []));
     }
 
     public static function save(int $post_id, $post): void {
@@ -207,6 +293,22 @@ final class FLACSO_Preinscriptions_Admin {
             $raw_orientations = $_POST[self::META_ORIENTATIONS];
             $clean_orientations = FLACSO_Preinscriptions_Config::sanitize_orientations($raw_orientations);
             update_post_meta($post_id, self::META_ORIENTATIONS, $clean_orientations);
+        }
+
+        $raw_documents = $_POST[self::META_DOCUMENTS] ?? [];
+        if (is_array($raw_documents)) {
+            $filtered_documents = [];
+            foreach ($raw_documents as $candidate) {
+                if (is_array($candidate) && !empty($candidate['active']) && isset($candidate['key'])) {
+                    $filtered_documents[] = [
+                        'key' => $candidate['key'],
+                        'position' => $candidate['position'] ?? 10,
+                        'required' => !empty($candidate['required']),
+                        'canDefer' => !empty($candidate['canDefer']),
+                    ];
+                }
+            }
+            update_post_meta($post_id, self::META_DOCUMENTS, FLACSO_Preinscriptions_Config::sanitize_documents($filtered_documents));
         }
     }
 }

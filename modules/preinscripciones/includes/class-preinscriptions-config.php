@@ -59,25 +59,51 @@ final class FLACSO_Preinscriptions_Config {
                 continue;
             }
 
-            $result[] = [
-                'id'       => $id,
-                'name'     => $name,
-                'mentions' => self::sanitize_mentions($record['mentions'] ?? []),
-            ];
+            $result[] = ['id' => $id, 'name' => $name];
             $seen[$id] = true;
         }
 
         return $result;
     }
 
-    public static function canonical_payload(array $inputs, array $orientations): array {
-        $orientations = self::sanitize_orientations($orientations);
-        foreach ($orientations as &$orientation) {
-            usort($orientation['mentions'], static function (array $left, array $right): int {
-                return strcmp($left['id'], $right['id']);
-            });
+    public static function sanitize_mentions($value): array {
+        return self::sanitize_named_items($value);
+    }
+
+    public static function sanitize_documents($value): array {
+        if (!is_array($value)) {
+            return [];
         }
-        unset($orientation);
+
+        $result = [];
+        $seen = [];
+        foreach ($value as $record) {
+            if (!is_array($record)) {
+                continue;
+            }
+            $key = is_scalar($record['key'] ?? null) ? trim((string) $record['key']) : '';
+            $position = self::positive_integer($record['position'] ?? null);
+            if (!FLACSO_Preinscriptions_Field_Catalog::has_document($key) || $position === null || isset($seen[$key])) {
+                continue;
+            }
+            $result[] = [
+                'key' => $key,
+                'position' => $position,
+                'required' => self::boolean($record['required'] ?? false),
+                'canDefer' => self::boolean($record['canDefer'] ?? false),
+            ];
+            $seen[$key] = true;
+        }
+        usort($result, static function (array $left, array $right): int {
+            return ($left['position'] <=> $right['position']) ?: strcmp($left['key'], $right['key']);
+        });
+        return $result;
+    }
+
+    public static function canonical_payload(array $inputs, array $orientations, array $mentions = [], array $documents = []): array {
+        $orientations = self::sanitize_orientations($orientations);
+        $mentions = self::sanitize_mentions($mentions);
+        $documents = self::sanitize_documents($documents);
 
         usort($orientations, static function (array $left, array $right): int {
             return strcmp($left['id'], $right['id']);
@@ -86,6 +112,8 @@ final class FLACSO_Preinscriptions_Config {
         return [
             'inputs'       => self::sanitize_inputs($inputs),
             'orientations' => $orientations,
+            'mentions'     => $mentions,
+            'documents'    => $documents,
         ];
     }
 
@@ -96,7 +124,7 @@ final class FLACSO_Preinscriptions_Config {
         return 'sha256:' . hash('sha256', $json === false ? 'null' : $json);
     }
 
-    private static function sanitize_mentions($value): array {
+    private static function sanitize_named_items($value): array {
         if (!is_array($value)) {
             return [];
         }

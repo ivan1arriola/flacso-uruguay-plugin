@@ -7,6 +7,8 @@ if (!defined('ABSPATH')) {
 final class FLACSO_Preinscriptions_Meta {
     public const FORM_META = 'preinscripcion_formulario';
     public const ORIENTATIONS_META = 'preinscripcion_orientaciones';
+    public const MENTIONS_META = 'preinscripcion_menciones';
+    public const DOCUMENTS_META = 'preinscripcion_documentos';
 
     public static function init(): void {
         foreach (['cohorte', 'edicion'] as $post_type) {
@@ -18,7 +20,20 @@ final class FLACSO_Preinscriptions_Meta {
                 FLACSO_Preinscriptions_Config::class,
                 'sanitize_orientations',
             ]));
+            register_post_meta($post_type, self::DOCUMENTS_META, self::definition([
+                FLACSO_Preinscriptions_Config::class,
+                'sanitize_documents',
+            ]));
         }
+
+        register_post_meta('oferta-academica', self::ORIENTATIONS_META, self::definition([
+            FLACSO_Preinscriptions_Config::class,
+            'sanitize_orientations',
+        ]));
+        register_post_meta('oferta-academica', self::MENTIONS_META, self::definition([
+            FLACSO_Preinscriptions_Config::class,
+            'sanitize_mentions',
+        ]));
     }
 
     private static function definition(callable $sanitize_callback): array {

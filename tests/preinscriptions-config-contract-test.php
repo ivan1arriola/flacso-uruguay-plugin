@@ -99,15 +99,9 @@ $sanitized_orientations = FLACSO_Preinscriptions_Config::sanitize_orientations([
 ]);
 
 flacso_preinscriptions_assert_same([
-    [
-        'id' => 'educacion',
-        'name' => 'Educación',
-        'mentions' => [
-            ['id' => 'tecnologia-educativa', 'name' => 'Tecnología educativa'],
-        ],
-    ],
-    ['id' => 'gestion', 'name' => 'Gestión', 'mentions' => []],
-], $sanitized_orientations, 'orientations preserve normalized orientation-to-mention nesting and reject duplicate or malformed records');
+    ['id' => 'educacion', 'name' => 'Educación'],
+    ['id' => 'gestion', 'name' => 'Gestión'],
+], $sanitized_orientations, 'orientations are normalized independently from mentions');
 
 $inputs_same_meaning_a = [
     ['required' => false, 'position' => 20, 'key' => 'ocupacion'],
@@ -181,9 +175,13 @@ $registrations = $GLOBALS['flacso_registered_preinscription_meta'];
 flacso_preinscriptions_assert_same([
     'cohorte:preinscripcion_formulario',
     'cohorte:preinscripcion_orientaciones',
+    'cohorte:preinscripcion_documentos',
     'edicion:preinscripcion_formulario',
     'edicion:preinscripcion_orientaciones',
-], array_keys($registrations), 'both serialized meta values are registered for cohorts and editions');
+    'edicion:preinscripcion_documentos',
+    'oferta-academica:preinscripcion_orientaciones',
+    'oferta-academica:preinscripcion_menciones',
+], array_keys($registrations), 'form, document and offer catalog meta are registered');
 
 foreach ($registrations as $registration) {
     flacso_preinscriptions_assert_same('array', $registration['type'] ?? null, 'preinscription meta is registered as an array');

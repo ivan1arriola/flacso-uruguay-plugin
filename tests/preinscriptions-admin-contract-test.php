@@ -195,14 +195,8 @@ flacso_admin_assert_same([
 ], $saved_form, 'saved form is sanitized and stored in post meta');
 
 flacso_admin_assert_same([
-    [
-        'id'       => 'educacion',
-        'name'     => 'Educación',
-        'mentions' => [
-            ['id' => 'tec-edu', 'name' => 'Tecnología Educativa'],
-        ],
-    ],
-], $saved_orientations, 'saved orientations are sanitized and stored in post meta');
+    ['id' => 'educacion', 'name' => 'Educación'],
+], $saved_orientations, 'saved orientations are sanitized and stored independently');
 
 // Test saving guarded by capability
 $GLOBALS['flacso_test_capability_granted'] = false;
