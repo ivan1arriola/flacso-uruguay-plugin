@@ -217,7 +217,7 @@ $GLOBALS['flacso_test_posts'][102] = (object) [
     'ID'          => 102,
     'post_type'   => 'cohorte',
     'post_status' => 'publish',
-    'post_title'  => 'DAVIA - Cohorte 10',
+    'post_title'  => 'Cohorte X',
     'post_name'   => 'davia-cohorte-10',
 ];
 $GLOBALS['flacso_test_post_meta'][102]['oferta_academica_id'] = 100;
@@ -260,6 +260,9 @@ flacso_rest_assert_same(2, count($target_cohort['orientations']), 'offer orienta
 flacso_rest_assert_same(2, count($target_cohort['mentions']), 'offer mentions are independent');
 flacso_rest_assert_same('identidad', $target_cohort['form']['documents'][0]['key'], 'document configuration is serialized');
 flacso_rest_assert_same('https://flacso.edu.uy/legacy-davia', $target_cohort['urls']['legacyRegistration'], 'preserves legacy registration url');
+
+$target_short_cohort = FLACSO_Preinscriptions_Serializer::for_cohort(102);
+flacso_rest_assert_same('Diploma Superior en Aprendizaje Visual e Inteligencia Artificial — Cohorte X', $target_short_cohort['title'], 'a generic cohort title includes its academic offer');
 
 // Test Serializer for single edition
 $target_edition = FLACSO_Preinscriptions_Serializer::for_edition(201);

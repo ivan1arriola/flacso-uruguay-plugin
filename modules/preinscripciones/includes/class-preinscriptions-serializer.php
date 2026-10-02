@@ -110,6 +110,12 @@ final class FLACSO_Preinscriptions_Serializer {
         $cohort_number = get_post_meta($cohort_id, 'numero', true);
         $cohort_name = get_post_meta($cohort_id, 'nombre', true);
         $offer_sigla = get_post_meta($parent->ID, 'sigla', true);
+        $cohort_title = trim((string) $cohort->post_title);
+        $is_generic_cohort_title = $cohort_title !== '' && preg_match('/^cohorte(?:\\s|$)/ui', $cohort_title) === 1;
+        $public_title = $cohort_title;
+        if ($public_title === '' || $is_generic_cohort_title) {
+            $public_title = trim((string) $parent->post_title) . ' — ' . ($cohort_title ?: ($cohort_name ?: ('Cohorte ' . $cohort_number)));
+        }
 
         $form_state = [
             'valid'  => !$has_invalid_keys,
@@ -125,7 +131,7 @@ final class FLACSO_Preinscriptions_Serializer {
         return [
             'id'                 => $target_id,
             'kind'               => 'academic_offer',
-            'title'              => $cohort->post_title ?: ($parent->post_title . ' - Cohorte ' . $cohort_number),
+            'title'              => $public_title,
             'wordpress'          => [
                 'offerId'  => (int) $parent->ID,
                 'cohortId' => $cohort_id,
