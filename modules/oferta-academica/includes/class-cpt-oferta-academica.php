@@ -102,6 +102,8 @@ class CPT_Oferta_Academica {
             'query_var'             => true,
             'rewrite'               => ['slug' => 'formacion/%tipo-oferta-academica%', 'with_front' => false],
             'capability_type'       => 'post',
+            'capabilities'          => FLACSO_Academic_Assistant::post_type_capabilities('offer'),
+            'map_meta_cap'          => true,
             'has_archive'           => false,
             'hierarchical'          => false,
             'menu_position'         => 5,
