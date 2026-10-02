@@ -26,6 +26,7 @@ final class FLACSO_Edicion {
             'rewrite'      => false,
             'query_var'    => false,
             'map_meta_cap' => true,
+            'capabilities' => FLACSO_Academic_Assistant::post_type_capabilities('edition'),
         ]);
 
         $definitions = [

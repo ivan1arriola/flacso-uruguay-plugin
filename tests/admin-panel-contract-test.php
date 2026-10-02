@@ -19,6 +19,9 @@ panel_assert(strpos($panel, 'Programa') !== false && strpos($panel, 'Cohorte') !
 panel_assert(strpos($panel, 'Seminario') !== false && strpos($panel, 'Edición') !== false, 'muestra el flujo de seminarios');
 panel_assert(strpos($panel, 'Calidad de datos') !== false, 'incluye control de integridad');
 panel_assert(strpos($homepage_admin, "add_menu_page(") === false, 'Portada no crea un segundo Panel FLACSO');
+panel_assert(strpos($panel, "'parent' => 'site-name'") !== false, 'la barra superior reutiliza el menú nativo del sitio');
+panel_assert(strpos($panel, "'id'    => 'flacso-panel'") === false, 'la barra superior no crea un segundo menú FLACSO');
+panel_assert(substr_count($panel, "admin_bar->add_node") >= 2, 'la barra superior conserva accesos de gestión dentro del menú del sitio');
 panel_assert(strpos($styles, '@media (max-width: 782px)') !== false, 'el panel tiene diseño móvil');
 
 foreach (['programa-academico', 'oferta-academica', 'cohorte', 'seminario', 'edicion', 'tabla-precio'] as $post_type) {

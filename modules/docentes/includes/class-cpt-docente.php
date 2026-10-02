@@ -43,6 +43,8 @@ class CPT_Docente {
             'has_archive'           => 'equipo',
             'rewrite'               => ['slug' => 'equipo', 'with_front' => false],
             'supports'              => ['title', 'thumbnail', 'revisions'],
+            'map_meta_cap'          => true,
+            'capabilities'          => FLACSO_Academic_Assistant::post_type_capabilities('teacher'),
             'menu_icon'             => 'dashicons-groups',
             'menu_position'         => 6,
         ];
