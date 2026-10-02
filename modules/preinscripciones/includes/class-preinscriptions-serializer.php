@@ -35,12 +35,15 @@ final class FLACSO_Preinscriptions_Serializer {
             'order'          => 'ASC',
         ]);
 
+        $edition_targets = [];
         foreach ($edition_posts as $post) {
             $serialized = self::for_edition((int) $post->ID);
             if ($serialized !== null) {
-                $targets[] = $serialized;
+                $edition_targets[] = $serialized;
             }
         }
+
+        $targets = array_merge($targets, self::resolve_edition_availability($edition_targets));
 
         return $targets;
     }
@@ -179,18 +182,13 @@ final class FLACSO_Preinscriptions_Serializer {
             return null;
         }
 
-        $is_open = class_exists('FLACSO_Edicion')
-            ? FLACSO_Edicion::accepts_registration($edition_id)
-            : false;
-
-        $fecha_limite = get_post_meta($edition_id, 'fecha_limite_preinscripcion', true);
-        $iso_until = null;
-        if (!empty($fecha_limite) && is_string($fecha_limite)) {
-            $ts = strtotime($fecha_limite);
-            if ($ts !== false) {
-                $iso_until = date('c', $ts);
-            }
-        }
+        $availability = class_exists('FLACSO_Edicion')
+            ? FLACSO_Edicion::registration_availability($edition_id)
+            : [
+                'status' => 'closed',
+                'from' => null,
+                'until' => null,
+            ];
 
         $legacy_link = get_post_meta($edition_id, 'link_preinscripcion', true);
         $public_url = get_permalink((int) $parent->ID);
@@ -202,10 +200,11 @@ final class FLACSO_Preinscriptions_Serializer {
             'type'               => 'seminar',
             'orientations'       => [],
             'mentions'           => [],
-            'registrationOpen'   => $is_open,
+            'registrationOpen'   => $availability['status'] === 'open',
+            'registrationAvailability' => $availability['status'],
             'registrationWindow' => [
-                'from'  => null,
-                'until' => $iso_until,
+                'from'  => $availability['from'] ?? null,
+                'until' => $availability['until'] ?? null,
             ],
             'urls'               => [
                 'public'             => $public_url,
@@ -237,10 +236,11 @@ final class FLACSO_Preinscriptions_Serializer {
                 'number' => is_numeric($edition_number) ? (int) $edition_number : $edition_number,
                 'name'   => (string) ($edition_name ?: ('Edición ' . $edition_number)),
             ],
-            'registrationOpen'   => $is_open,
+            'registrationOpen'   => $availability['status'] === 'open',
+            'registrationAvailability' => $availability['status'],
             'registrationWindow' => [
-                'from'  => null,
-                'until' => $iso_until,
+                'from'  => $availability['from'] ?? null,
+                'until' => $availability['until'] ?? null,
             ],
             'configRevision'     => $revision,
             'orientations'       => [],
@@ -252,5 +252,59 @@ final class FLACSO_Preinscriptions_Serializer {
                 'legacyRegistration' => !empty($legacy_link) ? (string) $legacy_link : null,
             ],
         ];
+    }
+
+    private static function resolve_edition_availability(array $edition_targets): array {
+        $groups = [];
+        foreach ($edition_targets as $index => $target) {
+            $seminar_id = (int) ($target['wordpress']['seminarId'] ?? 0);
+            if ($seminar_id > 0) {
+                $groups[$seminar_id][] = $index;
+            }
+        }
+
+        foreach ($groups as $indexes) {
+            $paths = [];
+            $open_indexes = [];
+            foreach ($indexes as $index) {
+                $target = $edition_targets[$index];
+                $path = self::registration_path($target['urls']['legacyRegistration'] ?? null);
+                if ($path !== null) {
+                    $paths[$path] = true;
+                }
+                if (($target['registrationAvailability'] ?? null) === 'open') {
+                    $open_indexes[] = $index;
+                }
+            }
+
+            $has_conflict = count($paths) > 1 || count($open_indexes) > 1;
+            foreach ($indexes as $index) {
+                if ($has_conflict) {
+                    $edition_targets[$index]['registrationOpen'] = false;
+                    $edition_targets[$index]['registrationAvailability'] = 'conflict';
+                    continue;
+                }
+
+                $edition_targets[$index]['registrationOpen'] = in_array($index, $open_indexes, true);
+                $edition_targets[$index]['registrationAvailability'] = $edition_targets[$index]['registrationOpen']
+                    ? 'open'
+                    : 'closed';
+            }
+        }
+
+        return $edition_targets;
+    }
+
+    private static function registration_path($url): ?string {
+        if (!is_string($url) || trim($url) === '') {
+            return null;
+        }
+
+        $path = wp_parse_url($url, PHP_URL_PATH);
+        if (!is_string($path) || $path === '') {
+            return '/';
+        }
+
+        return '/' . trim($path, '/') . '/';
     }
 }

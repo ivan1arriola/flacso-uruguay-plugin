@@ -33,6 +33,10 @@ function get_permalink($post = 0, bool $leavename = false): string {
     return 'https://flacso.edu.uy/?p=' . $id;
 }
 
+function wp_parse_url($url, $component = -1) {
+    return parse_url($url, $component);
+}
+
 if (!class_exists('WP_REST_Response')) {
     class WP_REST_Response {
         public $data;
@@ -97,6 +101,15 @@ if (!class_exists('FLACSO_Edicion')) {
 
         public static function accepts_registration(int $edition_id, ?int $timestamp = null): bool {
             return !empty(self::$open_editions[$edition_id]);
+        }
+
+        public static function registration_availability(int $edition_id, ?int $timestamp = null): array {
+            $open = !empty(self::$open_editions[$edition_id]);
+            return [
+                'status' => $open ? 'open' : 'closed',
+                'from' => null,
+                'until' => null,
+            ];
         }
     }
 }
@@ -252,10 +265,25 @@ $GLOBALS['flacso_test_posts'][201] = (object) [
 $GLOBALS['flacso_test_post_meta'][201]['seminario_id'] = 200;
 $GLOBALS['flacso_test_post_meta'][201]['numero'] = 3;
 $GLOBALS['flacso_test_post_meta'][201]['nombre'] = 'Edición 2026-03';
+$GLOBALS['flacso_test_post_meta'][201]['link_preinscripcion'] = 'https://preinscripciones.flacso.edu.uy/seminario/metodologia/';
 $GLOBALS['flacso_test_post_meta'][201]['preinscripcion_formulario'] = [
     ['key' => 'documento', 'position' => 10, 'required' => true],
 ];
 FLACSO_Edicion::$open_editions[201] = true;
+
+// 6. Segunda edición abierta del mismo seminario para verificar el conflicto.
+$GLOBALS['flacso_test_posts'][202] = (object) [
+    'ID'          => 202,
+    'post_type'   => 'edicion',
+    'post_status' => 'publish',
+    'post_title'  => 'Investigación Cualitativa - Edición 2026-04',
+    'post_name'   => 'edicion-2026-04',
+];
+$GLOBALS['flacso_test_post_meta'][202]['seminario_id'] = 200;
+$GLOBALS['flacso_test_post_meta'][202]['numero'] = 4;
+$GLOBALS['flacso_test_post_meta'][202]['nombre'] = 'Edición 2026-04';
+$GLOBALS['flacso_test_post_meta'][202]['link_preinscripcion'] = 'https://preinscripciones.flacso.edu.uy/seminario/metodologia/';
+FLACSO_Edicion::$open_editions[202] = true;
 
 // Test Serializer for single cohort
 $target_cohort = FLACSO_Preinscriptions_Serializer::for_cohort(101);
@@ -288,9 +316,34 @@ flacso_rest_assert_same(true, $target_edition['registrationOpen'], 'edition 201 
 flacso_rest_assert_same(200, $target_edition['wordpress']['seminarId'], 'seminarId matches parent');
 flacso_rest_assert_same(201, $target_edition['wordpress']['editionId'], 'editionId matches post ID');
 
+// With only one open edition, the shared permalink resolves to it.
+FLACSO_Edicion::$open_editions[202] = false;
+$single_open = FLACSO_Preinscriptions_Serializer::all_targets();
+$single_open_target = array_values(array_filter($single_open, static function ($t) {
+    return ($t['wordpress']['editionId'] ?? null) === 201;
+}))[0] ?? null;
+$single_closed_target = array_values(array_filter($single_open, static function ($t) {
+    return ($t['wordpress']['editionId'] ?? null) === 202;
+}))[0] ?? null;
+flacso_rest_assert_same(true, $single_open_target['registrationOpen'], 'the unique open edition accepts registration');
+flacso_rest_assert_same('open', $single_open_target['registrationAvailability'], 'the unique open edition exposes open state');
+flacso_rest_assert_same(false, $single_closed_target['registrationOpen'], 'the historical edition remains closed');
+flacso_rest_assert_same('closed', $single_closed_target['registrationAvailability'], 'the historical edition exposes closed state');
+
+FLACSO_Edicion::$open_editions[202] = true;
+
 // Test all targets (includes open and closed)
 $all = FLACSO_Preinscriptions_Serializer::all_targets();
-flacso_rest_assert_same(3, count($all), 'all_targets returns both cohorts and edition');
+flacso_rest_assert_same(4, count($all), 'all_targets returns both cohorts and seminar editions');
+
+$conflicting_editions = array_filter($all, static function ($t) {
+    return ($t['wordpress']['editionId'] ?? null) !== null;
+});
+flacso_rest_assert_same(2, count($conflicting_editions), 'both historical editions remain visible');
+foreach ($conflicting_editions as $conflicting_edition) {
+    flacso_rest_assert_same(false, $conflicting_edition['registrationOpen'], 'conflicting editions cannot accept registration');
+    flacso_rest_assert_same('conflict', $conflicting_edition['registrationAvailability'], 'conflicting editions expose conflict state');
+}
 
 // Verify closed cohort is included with registrationOpen = false
 $closed_targets = array_filter($all, static function ($t) { return ($t['wordpress']['cohortId'] ?? null) === 102; });
@@ -318,7 +371,7 @@ flacso_rest_assert_same(200, $response->get_status(), 'status is 200');
 $response_data = $response->get_data();
 flacso_rest_assert_same(1, $response_data['version'], 'top level version is 1');
 flacso_rest_assert_true(is_array($response_data['targets']), 'targets is array');
-flacso_rest_assert_same(3, count($response_data['targets']), 'contains all 3 targets');
+flacso_rest_assert_same(4, count($response_data['targets']), 'contains all 4 targets');
 
 // Check Cache-Control header
 $headers = $response->get_headers();

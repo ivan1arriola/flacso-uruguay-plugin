@@ -102,6 +102,7 @@ final_assert(
 
 $GLOBALS['flacso_test_post_meta'][999] = [
     'estado' => 'planificada',
+    'fecha_inicio' => '2099-01-01',
 ];
 final_assert(
     FLACSO_Edicion::accepts_registration(999),
@@ -110,6 +111,7 @@ final_assert(
 
 $GLOBALS['flacso_test_post_meta'][1000] = [
     'estado' => 'planificada',
+    'fecha_inicio' => '2099-01-01',
     'preinscripcion_habilitada' => true,
 ];
 final_assert(
@@ -125,6 +127,7 @@ final_assert(
 
 $GLOBALS['flacso_test_post_meta'][1000] = [
     'estado' => 'finalizada',
+    'fecha_inicio' => '2099-01-01',
     'preinscripcion_habilitada' => true,
 ];
 final_assert(
@@ -134,6 +137,7 @@ final_assert(
 
 $GLOBALS['flacso_test_post_meta'][1001] = [
     'estado' => 'cancelada',
+    'fecha_inicio' => '2099-01-01',
 ];
 final_assert(
     !FLACSO_Edicion::accepts_registration(1001),
