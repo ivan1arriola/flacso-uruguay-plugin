@@ -1,7 +1,8 @@
 <?php
 /**
  * Test de contrato y funcionamiento de FLACSO_Academic_Settings_API
- * Verifica que los endpoints /ofertas/settings y /ofertas/settings/mailjet-lists existan y funcionen.
+ * Verifica que el endpoint /ofertas/settings exista y que no se vuelva a
+ * exponer la ruta de listas de Mailjet retirada de la arquitectura actual.
  */
 
 $root = dirname(__DIR__);
@@ -130,7 +131,7 @@ require_once $root . "/modules/oferta-academica/includes/class-academic-settings
 // 1. Registro de rutas
 FLACSO_Academic_Settings_API::register_routes();
 settings_assert(isset($GLOBALS["registered_rest_routes"]["/flacso/v1/ofertas/settings"]), "Ruta /flacso/v1/ofertas/settings debe estar registrada");
-settings_assert(isset($GLOBALS["registered_rest_routes"]["/flacso/v1/ofertas/settings/mailjet-lists"]), "Ruta /flacso/v1/ofertas/settings/mailjet-lists debe estar registrada");
+settings_assert(!isset($GLOBALS["registered_rest_routes"]["/flacso/v1/ofertas/settings/mailjet-lists"]), "La ruta retirada /flacso/v1/ofertas/settings/mailjet-lists no debe registrarse");
 
 // 2. Lectura enmascarada (include_secrets = false)
 update_option("flacso_webhook_token", "secret-token-12345");
@@ -174,18 +175,5 @@ settings_assert(get_option("flacso_mailjet_sender_name") === "Facultad FLACSO", 
 settings_assert(get_option("flacso_webhook_token") === "new-token-9999", "Token actualizado");
 settings_assert(get_option("flacso_meta_enabled") === 1, "Meta enabled actualizado a 1");
 settings_assert(get_option("fc_consultas_webhook_url") === "https://editor.flacso.edu.uy/api/consultas", "Webhook url actualizada");
-
-// 5. Integración con FLACSO_Integrations_Settings para mailjet-lists
-class FLACSO_Integrations_Settings {
-    public static function get_mailjet_contact_lists(): array {
-        return [
-            ["id" => 1234, "name" => "Lista Posgrados 2026", "count" => 450],
-        ];
-    }
-}
-
-$res_lists = FLACSO_Academic_Settings_API::get_mailjet_lists_endpoint();
-settings_assert($res_lists->data["ok"] === true, "mailjet lists endpoint ok: true");
-settings_assert($res_lists->data["lists"][0]["id"] === 1234, "mailjet list id 1234 devuelta");
 
 echo "OK FLACSO_Academic_Settings_API contract & functional test\n";
