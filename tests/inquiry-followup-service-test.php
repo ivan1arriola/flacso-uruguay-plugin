@@ -178,7 +178,6 @@ require_once $root . '/includes/database/class-flacso-db.php';
 require_once $root . '/includes/database/repositories/class-flacso-base-inquiry-repository.php';
 require_once $root . '/includes/database/repositories/class-flacso-offer-inquiry-repository.php';
 require_once $root . '/includes/integrations/class-flacso-mautic-client.php';
-require_once $root . '/includes/integrations/class-flacso-mailjet-client.php';
 require_once $root . '/modules/consultas/services/class-flacso-inquiry-marketing-service.php';
 
 // The service under test:
@@ -569,9 +568,9 @@ $updated_4b = $repo->find_by_id($inquiry_4b['id']);
 test_assert($updated_4b['followupStatus'] === 'skipped', 'Offer ID 0 must be skipped');
 
 // --------------------------------------------------------------------------
-// Scenario 5: Mautic failure with automatic fallback to Mailjet
+// Scenario 5: Mautic failure does not activate a second provider
 // --------------------------------------------------------------------------
-echo "\n--- Scenario 5: Mautic failure with Mailjet fallback ---\n";
+echo "\n--- Scenario 5: Mautic failure without fallback ---\n";
 reset_test_environment();
 $repo = setup_in_memory_db();
 
@@ -626,15 +625,10 @@ $GLOBALS['mock_mailjet_handler'] = function ($url, $args) use (&$mailjet_called)
 $res5 = FLACSO_Inquiry_Followup_Service::run_followup_cycle(25, $repo);
 
 test_assert($res5['processed'] === 1, 'Inquiry 5 processed');
-test_assert($mailjet_called === true, 'Mailjet fallback must be called when Mautic fails');
+test_assert($mailjet_called === false, 'No second provider must be called when Mautic fails');
 
 $updated_5 = $repo->find_by_id($inquiry_5['id']);
-test_assert($updated_5['followupStatus'] === 'sent', 'Status must be sent despite Mautic failure');
-test_assert(
-    strpos($updated_5['followupLastError'], 'Enviado vía Mailjet (Fallback)') !== false,
-    'LastError note must record fallback via Mailjet'
-);
-test_assert(!empty($updated_5['followupSentAt']), 'followupSentAt must be recorded');
+test_assert($updated_5['followupStatus'] === 'failed', 'Status must remain failed when Mautic fails');
 
 // --------------------------------------------------------------------------
 // Scenario 6: Globally disabled (flacso_inquiry_followup_enabled = false)

@@ -28,9 +28,6 @@ $flacso_consultas_files = [
     'includes/database/repositories/class-flacso-inquiry-analytics-repository.php',
     'includes/database/repositories/class-flacso-inquiry-delivery-repository.php',
 
-    // Mailjet se conserva únicamente mientras exista código legado que deba
-    // retirarse después del piloto; el flujo nuevo no lo invoca.
-    'includes/integrations/class-flacso-mailjet-client.php',
     'includes/integrations/class-flacso-mautic-client.php',
 
     'modules/consultas/services/class-flacso-inquiry-tag-factory.php',

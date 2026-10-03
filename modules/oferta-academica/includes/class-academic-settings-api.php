@@ -35,13 +35,6 @@ final class FLACSO_Academic_Settings_API {
             ],
         ]);
 
-        register_rest_route("flacso/v1", "/ofertas/settings/mailjet-lists", [
-            [
-                "methods" => WP_REST_Server::READABLE,
-                "callback" => [self::class, "get_mailjet_lists_endpoint"],
-                "permission_callback" => [self::class, "can_manage_settings"],
-            ],
-        ]);
     }
 
     public static function can_read_settings(WP_REST_Request $request): bool {

@@ -290,7 +290,6 @@ if (!class_exists('WP_REST_Request')) {
 require_once $root . '/includes/database/class-flacso-db.php';
 require_once $root . '/includes/database/repositories/class-flacso-offer-inquiry-repository.php';
 require_once $root . '/includes/database/repositories/class-flacso-seminar-inquiry-repository.php';
-require_once $root . '/includes/integrations/class-flacso-mailjet-client.php';
 require_once $root . '/modules/consultas/services/class-flacso-offer-inquiry-service.php';
 require_once $root . '/modules/consultas/services/class-flacso-seminar-inquiry-service.php';
 

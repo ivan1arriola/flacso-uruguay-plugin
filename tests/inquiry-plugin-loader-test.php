@@ -30,7 +30,6 @@ $expected_files_in_order = [
     'includes/database/repositories/class-flacso-base-inquiry-repository.php',
     'includes/database/repositories/class-flacso-offer-inquiry-repository.php',
     'includes/database/repositories/class-flacso-seminar-inquiry-repository.php',
-    'includes/integrations/class-flacso-mailjet-client.php',
     'modules/consultas/services/class-flacso-offer-inquiry-service.php',
     'modules/consultas/services/class-flacso-seminar-inquiry-service.php',
 ];
@@ -91,7 +90,6 @@ $isolated_script_with_helpers = sprintf(
     'class_exists(\'FLACSO_Base_Inquiry_Repository\') && ' .
     'class_exists(\'FLACSO_Offer_Inquiry_Repository\') && ' .
     'class_exists(\'FLACSO_Seminar_Inquiry_Repository\') && ' .
-    'class_exists(\'FLACSO_Mailjet_Client\') && ' .
     'class_exists(\'FLACSO_Offer_Inquiry_Service\') && ' .
     'class_exists(\'FLACSO_Seminar_Inquiry_Service\') && ' .
     'defined(\'FLACSO_CONSULTAS_MODULE_PATH\') && ' .
@@ -116,7 +114,6 @@ $isolated_script_without_helpers = sprintf(
     'class_exists(\'FLACSO_Base_Inquiry_Repository\') && ' .
     'class_exists(\'FLACSO_Offer_Inquiry_Repository\') && ' .
     'class_exists(\'FLACSO_Seminar_Inquiry_Repository\') && ' .
-    'class_exists(\'FLACSO_Mailjet_Client\') && ' .
     'class_exists(\'FLACSO_Offer_Inquiry_Service\') && ' .
     'class_exists(\'FLACSO_Seminar_Inquiry_Service\') && ' .
     'defined(\'FLACSO_CONSULTAS_MODULE_PATH\') && ' .
@@ -150,7 +147,6 @@ loader_assert(class_exists('FLACSO_DB'), "Clase FLACSO_DB debe existir tras carg
 loader_assert(class_exists('FLACSO_Base_Inquiry_Repository'), "Clase FLACSO_Base_Inquiry_Repository debe existir tras cargar init.php");
 loader_assert(class_exists('FLACSO_Offer_Inquiry_Repository'), "Clase FLACSO_Offer_Inquiry_Repository debe existir tras cargar init.php");
 loader_assert(class_exists('FLACSO_Seminar_Inquiry_Repository'), "Clase FLACSO_Seminar_Inquiry_Repository debe existir tras cargar init.php");
-loader_assert(class_exists('FLACSO_Mailjet_Client'), "Clase FLACSO_Mailjet_Client debe existir tras cargar init.php");
 loader_assert(class_exists('FLACSO_Offer_Inquiry_Service'), "Clase FLACSO_Offer_Inquiry_Service debe existir tras cargar init.php");
 loader_assert(class_exists('FLACSO_Seminar_Inquiry_Service'), "Clase FLACSO_Seminar_Inquiry_Service debe existir tras cargar init.php");
 loader_assert(defined('FLACSO_CONSULTAS_MODULE_PATH'), "Constante FLACSO_CONSULTAS_MODULE_PATH debe estar definida");

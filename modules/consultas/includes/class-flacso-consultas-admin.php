@@ -25,7 +25,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 
 		/**
 		 * Un reenvío manual sólo es seguro cuando el envío anterior falló.
-		 * Los estados sent y skipped no prueban que Mailjet no haya entregado
+		 * Los estados aceptado y omitido no prueban entrega final.
 		 * el correo, por lo que reenviarlos podría duplicarlo.
 		 */
 		public static function is_retryable_email_status( string $status ): bool {
@@ -201,6 +201,8 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			if ( ! $retry_repository->claim_failed_email_retry( $consulta_id ) ) {
 				wp_send_json_error( array( 'message' => 'El envío ya fue procesado o está siendo reenviado por otra persona.' ), 409 );
 			}
+
+			wp_send_json_error( array( 'message' => 'Los reintentos de comunicaciones se gestionan exclusivamente desde Mautic.' ), 410 );
 
 			try {
 				if ( 'seminar_inquiries' === $table ) {
@@ -774,10 +776,10 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 				<div class="flacso-cp-hero">
 					<div>
 						<h1>📊 Plataforma de Consultas e Inteligencia Analítica</h1>
-						<p>Gestión operativa de consultas en PostgreSQL, reenvío transaccional Mailjet, atribución de campañas y exportación unificada.</p>
+						<p>Gestión operativa de consultas en PostgreSQL, sincronización con Mautic, atribución de campañas y exportación unificada.</p>
 					</div>
 					<div>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=flacso-correos' ) ); ?>" class="button button-secondary" style="margin-right:8px;">✉️ Consola Mailjet</a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=flacso-correos' ) ); ?>" class="button button-secondary" style="margin-right:8px;">✉️ Comunicaciones Mautic</a>
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=' . self::PAGE_SLUG . '&tab=exportar&table=' . $table ) ); ?>" class="button button-primary">📥 Exportar CSV</a>
 					</div>
 				</div>
@@ -1065,7 +1067,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 											<button type="button" class="button button-small flacso-js-retry-email"
 												data-id="<?php echo esc_attr( (string) $row['id'] ); ?>"
 												data-table="<?php echo esc_attr( $table ); ?>"
-												title="Reenviar correo transaccional vía Mailjet">
+												title="Reintentar comunicación vía Mautic">
 												✉️ Reenviar
 											</button>
 										<?php endif; ?>
@@ -1154,7 +1156,6 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 											<tr><th>Oferta / Programa</th><td>${d.item_name || ''}</td></tr>
 											<tr><th>País / Teléfono</th><td>${d.country || '—'} / ${d.phone || '—'}</td></tr>
 											<tr><th>Estado Email</th><td><strong>${d.emailStatus || ''}</strong> (Remitente: ${senderLabel})</td></tr>
-											<tr><th>Mailjet Message ID / UUID</th><td><code>${d.mailjetMessageId || '—'}</code> / <code>${d.mailjetMessageUuid || '—'}</code></td></tr>
 											${d.mauticSyncStatus ? `<tr><th>Estado Mautic</th><td><strong>${d.mauticSyncStatus}</strong> (Contact ID: ${d.mauticContactId || '—'} | Sincronizado: ${d.mauticSyncedAt || '—'}${d.mauticLastError ? ' | Error: ' + d.mauticLastError : ''})</td></tr>` : ''}
 											${(d.table === 'offer_inquiries' || tbl === 'offer_inquiries') ? `<tr><th>Seguimiento (+X días)</th><td><strong>${d.followupStatus || 'none'}</strong> (Vencimiento: ${d.followupDueAt || '—'} | Enviado: ${d.followupSentAt || '—'}${d.followupLastError ? ' | Nota: ' + d.followupLastError : ''})${d.followupStatus !== 'sent' ? '<div style="margin-top:8px;"><button type="button" class="button button-secondary flacso-js-trigger-followup" data-id="' + d.id + '">🚀 Enviar Seguimiento Ahora</button><span class="flacso-followup-msg" style="margin-left:10px;font-size:12px;font-weight:600;display:inline-block;vertical-align:middle;"></span></div>' : ''}</td></tr>` : ''}
 											<tr><th>UTM / Campaña</th><td>Source: ${d.campaignSource || '—'} | Medium: ${d.campaignMedium || '—'} | Campaign: ${d.campaignName || '—'}</td></tr>
@@ -1256,7 +1257,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 									if (cell) cell.innerHTML = '<span class="flacso-badge sent">sent</span>';
 								} else {
 									this.textContent = origText;
-									alert('Error al enviar: ' + (res.data?.message || 'Fallo Mailjet'));
+									alert('Error al sincronizar: ' + (res.data?.message || 'Fallo Mautic'));
 								}
 							});
 					});

@@ -22,9 +22,6 @@ if (!class_exists('FLACSO_Offer_Inquiry_Repository')) {
 if (!class_exists('FLACSO_Mautic_Client')) {
     require_once dirname(__DIR__, 3) . '/includes/integrations/class-flacso-mautic-client.php';
 }
-if (!class_exists('FLACSO_Mailjet_Client')) {
-    require_once dirname(__DIR__, 3) . '/includes/integrations/class-flacso-mailjet-client.php';
-}
 if (!class_exists('FLACSO_Inquiry_Marketing_Service')) {
     require_once __DIR__ . '/class-flacso-inquiry-marketing-service.php';
 }
@@ -293,7 +290,17 @@ class FLACSO_Inquiry_Followup_Service {
             ];
         }
 
-        // Regla 6 (Fallback Automático a Mailjet)
+        if ($repo !== null) {
+            $repo->update_followup_status($id, 'failed', $mautic_error ?: 'Mautic no pudo aceptar el seguimiento.');
+        }
+        return [
+            'ok' => false,
+            'status' => 'failed',
+            'error' => $mautic_error ?: 'Mautic no disponible.',
+            'inquiry_id' => $id,
+        ];
+
+        // Código histórico inalcanzable conservado temporalmente para lectura de registros antiguos.
         if (class_exists('FLACSO_Mailjet_Client') && method_exists('FLACSO_Mailjet_Client', 'send_offer_inquiry')) {
             $mailjet_res = FLACSO_Mailjet_Client::send_offer_inquiry($inquiry_payload, $program_payload);
             if (!empty($mailjet_res['ok']) && ($mailjet_res['status'] ?? '') === 'sent') {

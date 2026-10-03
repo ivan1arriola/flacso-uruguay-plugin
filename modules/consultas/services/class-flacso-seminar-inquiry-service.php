@@ -4,11 +4,10 @@
  *
  * Aplica el principio "guardar primero, enviar después":
  * 1. Extraer consultaId (o generar UUIDv4).
- * 2. Comprobar idempotencia temprana en repositorio (salir sin llamar a Mailjet si existe).
+ * 2. Comprobar idempotencia temprana en repositorio.
  * 3. Validar campos obligatorios mínimos.
  * 4. Enriquecer datos con catálogo académico o WordPress.
- * 5. Insertar registro en base de datos (si falla, abortar y NO llamar a Mailjet).
- * 6. Despachar correo transaccional vía Mailjet.
+ * 5. Insertar registro en base de datos.
  * 7. Actualizar estado del correo en la base de datos.
  * 8. Retornar resultado estructurado.
  *
@@ -24,9 +23,6 @@ if (!class_exists('FLACSO_DB')) {
 }
 if (!class_exists('FLACSO_Seminar_Inquiry_Repository')) {
     require_once dirname(__DIR__, 3) . '/includes/database/repositories/class-flacso-seminar-inquiry-repository.php';
-}
-if (!class_exists('FLACSO_Mailjet_Client')) {
-    require_once dirname(__DIR__, 3) . '/includes/integrations/class-flacso-mailjet-client.php';
 }
 if (!class_exists('FLACSO_Inquiry_Snapshot')) {
     require_once __DIR__ . '/class-flacso-inquiry-snapshot.php';
@@ -375,9 +371,9 @@ class FLACSO_Seminar_Inquiry_Service {
             'email_engine'         => 'mautic_transactional_queue',
             'delivery_id'          => $insert_result['delivery_id'] ?? null,
             'snapshot_id'          => $insert_result['snapshot_id'] ?? null,
-            'marketing_sync'       => $marketing,
             'mailjet_message_id'   => null,
             'mailjet_message_uuid' => null,
+            'marketing_sync'       => $marketing,
             'code'                 => 200,
         ];
 
