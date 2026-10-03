@@ -699,6 +699,31 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					.flacso-cp-filters .fg { display: flex; flex-direction: column; gap: 4px; }
 					.flacso-cp-filters label { font-size: 12px; font-weight: 600; color: #334155; }
 					.flacso-cp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+						.flacso-cp-inbox-table { table-layout: fixed; }
+						.flacso-cp-inbox-table th,
+						.flacso-cp-inbox-table td { overflow-wrap: anywhere; }
+						.flacso-cp-inbox-table th:nth-child(1) { width: 9%; }
+						.flacso-cp-inbox-table th:nth-child(2) { width: 13%; }
+						.flacso-cp-inbox-table th:nth-child(3) { width: 17%; }
+						.flacso-cp-inbox-table th:nth-child(4) { width: 24%; }
+						.flacso-cp-inbox-table th:nth-child(5) { width: 8%; }
+						.flacso-cp-inbox-table th:nth-child(6) { width: 10%; }
+						.flacso-cp-inbox-table th:nth-child(7) { width: 8%; }
+						.flacso-cp-inbox-table th:nth-child(8) { width: 11%; }
+						.flacso-cp-inbox-table th:nth-child(9) { width: 13%; }
+						.flacso-cp-inbox-table td:nth-child(1),
+						.flacso-cp-inbox-table td:nth-child(5),
+						.flacso-cp-inbox-table td:nth-child(7),
+						.flacso-cp-inbox-table td:nth-child(8) { font-size: 12px; }
+						.flacso-cp-inbox-offer { min-width: 0; }
+						.flacso-cp-inbox-offer__name { display: block; font-weight: 700; color: #1e293b; line-height: 1.35; }
+						.flacso-cp-inbox-offer__cohort { display: block; margin-top: 5px; color: #64748b; font-size: 12px; }
+						.flacso-cp-inbox-actions { white-space: normal; }
+						.flacso-cp-inbox-actions .button { margin: 2px 2px 2px 0; }
+						@media (max-width: 1200px) {
+							.flacso-cp-inbox-table { min-width: 1060px; }
+						}
+						.flacso-cp-table-scroll { overflow-x: auto; }
 					.flacso-cp-table th {
 						text-align: left; padding: 11px 12px; background: #f8fafc; border-bottom: 2px solid #e2e8f0;
 						color: #334155; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .03em;
@@ -941,28 +966,28 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					</span>
 				</div>
 
-				<table class="flacso-cp-table">
+				<div class="flacso-cp-table-scroll">
+				<table class="flacso-cp-table <?php echo 'offer_inquiries' === $table ? 'flacso-cp-inbox-table' : ''; ?>">
 					<thead>
 						<tr>
 							<th>Fecha</th>
 							<th>Persona</th>
 							<th>Correo</th>
 							<?php if ( 'offer_inquiries' === $table ) : ?>
-								<th>Oferta</th>
-								<th>Cohorte</th>
-								<th>Al consultar</th>
+								<th>Oferta / Cohorte</th>
+								<th>Estado de la consulta</th>
 								<th>Mautic</th>
 							<?php else : ?>
 								<th>Oferta / Seminario</th>
 							<?php endif; ?>
 							<th>País</th>
-							<th>Estado Email</th>
-							<th>Acciones</th>
+							<th>Estado del correo</th>
+							<th class="flacso-cp-inbox-actions">Acciones</th>
 						</tr>
 					</thead>
 					<tbody>
 						<?php if ( empty( $result['items'] ) ) : ?>
-							<tr><td colspan="<?php echo 'offer_inquiries' === $table ? 10 : 7; ?>" style="text-align:center; padding:26px; color:#64748b;">No se encontraron consultas con los filtros seleccionados.</td></tr>
+							<tr><td colspan="<?php echo 'offer_inquiries' === $table ? 9 : 7; ?>" style="text-align:center; padding:26px; color:#64748b;">No se encontraron consultas con los filtros seleccionados.</td></tr>
 						<?php else : ?>
 							<?php foreach ( $result['items'] as $row ) :
 								$count_val  = (int) ( $row['count'] ?? 1 );
@@ -981,22 +1006,19 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 									<td><a href="mailto:<?php echo esc_attr( (string) $row['email'] ); ?>"><?php echo esc_html( (string) $row['email'] ); ?></a></td>
 									<?php if ( 'offer_inquiries' === $table ) : ?>
 										<td>
-											<span style="font-weight:600; color:#1e293b;"><?php echo esc_html( (string) $row['item_name'] ); ?></span>
-											<?php if ( ! empty( $row['offerAbbreviation'] ) ) : ?>
-												<span class="flacso-badge abbr" title="Abreviación canónica"><?php echo esc_html( (string) $row['offerAbbreviation'] ); ?></span>
-											<?php endif; ?>
-										</td>
-										<td style="font-size:12px; color:#475569; white-space:nowrap;">
-											<?php
-											$cohort_num = ! empty( $row['cohortNumber'] ) ? (int) $row['cohortNumber'] : 0;
-											if ( $cohort_num > 0 ) {
-												echo esc_html( sprintf( __( 'Cohorte %d', 'flacso-uruguay' ), $cohort_num ) );
-											} elseif ( ! empty( $row['cohortName'] ) ) {
-												echo esc_html( (string) $row['cohortName'] );
-											} else {
-												echo '—';
-											}
-											?>
+											<div class="flacso-cp-inbox-offer">
+												<span class="flacso-cp-inbox-offer__name"><?php echo esc_html( (string) $row['item_name'] ); ?></span>
+												<?php if ( ! empty( $row['offerAbbreviation'] ) ) : ?>
+													<span class="flacso-badge abbr" title="Abreviación canónica"><?php echo esc_html( (string) $row['offerAbbreviation'] ); ?></span>
+												<?php endif; ?>
+												<?php
+												$cohort_num   = ! empty( $row['cohortNumber'] ) ? (int) $row['cohortNumber'] : 0;
+												$cohort_label = $cohort_num > 0
+													? sprintf( __( 'Cohorte %d', 'flacso-uruguay' ), $cohort_num )
+													: ( ! empty( $row['cohortName'] ) ? (string) $row['cohortName'] : __( 'Sin cohorte', 'flacso-uruguay' ) );
+												?>
+												<span class="flacso-cp-inbox-offer__cohort"><?php echo esc_html( $cohort_label ); ?></span>
+											</div>
 										</td>
 										<td>
 											<?php
@@ -1033,7 +1055,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 										}
 										?>
 									</td>
-									<td style="white-space:nowrap;">
+									<td class="flacso-cp-inbox-actions">
 										<button type="button" class="button button-small flacso-js-detail"
 											data-id="<?php echo esc_attr( (string) $row['id'] ); ?>"
 											data-table="<?php echo esc_attr( $table ); ?>">
@@ -1057,11 +1079,12 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 											</button>
 										<?php endif; ?>
 									</td>
-								</tr>
+									</tr>
 							<?php endforeach; ?>
 						<?php endif; ?>
 					</tbody>
 				</table>
+				</div>
 
 				<?php if ( $result['pageInfo']['totalPages'] > 1 ) : ?>
 					<div style="margin-top:16px; display:flex; gap:6px; justify-content:flex-end;">

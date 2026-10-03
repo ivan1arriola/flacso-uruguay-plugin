@@ -520,9 +520,10 @@ ob_start();
 FLACSO_Consultas_Admin::render_page();
 $admin_html = ob_get_clean();
 
-assert_true(strpos($admin_html, '<th>Oferta</th>') !== false, 'Admin header must contain Oferta column');
-assert_true(strpos($admin_html, '<th>Cohorte</th>') !== false, 'Admin header must contain Cohorte column');
-assert_true(strpos($admin_html, '<th>Al consultar</th>') !== false, 'Admin header must contain Al consultar column');
+assert_true(strpos($admin_html, '<th>Oferta / Cohorte</th>') !== false, 'Admin header must contain combined Oferta / Cohorte column');
+assert_true(strpos($admin_html, '<th>Estado de la consulta</th>') !== false, 'Admin header must contain consultation status column');
+assert_true(strpos($admin_html, '<th>Cohorte</th>') === false, 'Admin header must not contain standalone Cohorte column');
+assert_true(strpos($admin_html, '<th>Al consultar</th>') === false, 'Admin header must not contain ambiguous Al consultar column');
 assert_true(strpos($admin_html, '<select name="offer_status">') !== false, 'Admin filters must contain offer_status select');
 assert_true(strpos($admin_html, '<span class="flacso-badge abbr" title="Abreviación canónica">mg</span>') !== false, 'Admin must render abbreviation badge');
 assert_true(strpos($admin_html, 'Cohorte 2') !== false, 'Admin must render Cohorte 2');
