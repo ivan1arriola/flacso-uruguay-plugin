@@ -399,7 +399,7 @@ final class FLACSO_Edicion {
             <div style="background: #f1f5f9; padding: 12px 16px; border-radius: 6px;">
                 <h4 style="margin: 0 0 12px;"><?php esc_html_e('Preinscripción', 'flacso-uruguay'); ?></h4>
                 <?php
-                $url_preinscripcion = FLACSO_Django_API_Client::url_preinscripcion_seminario($parent_id);
+                $url_preinscripcion = FLACSO_Preinscription_Ajax_Handlers::seminar_url($parent_id);
                 $nonce = wp_create_nonce('flacso_preinscripcion_nonce');
                 if ($pre_habilitada):
                 ?>
@@ -494,7 +494,7 @@ final class FLACSO_Edicion {
                         esc_html__('La URL de preinscripción es: %s', 'flacso-uruguay'),
                         $url_preinscripcion
                             ? '<code>' . esc_html($url_preinscripcion) . '</code>'
-                            : esc_html__('(configure FLACSO_DJANGO_API_URL en wp-config.php)', 'flacso-uruguay')
+                            : esc_html__('(asigne un enlace canónico al seminario)', 'flacso-uruguay')
                     ); ?>
                 </p>
             </div>
