@@ -64,11 +64,13 @@ ownership_assert(strpos($mail, "flacso_mautic_enabled") !== false, 'Correos debe
 ownership_assert(strpos($mail, "flacso_mautic_client_id") !== false, 'Correos debe permitir Clave Pública OAuth2 de Mautic');
 ownership_assert(strpos($mail, "flacso_mautic_client_secret") !== false, 'Correos debe permitir Clave Secreta OAuth2 de Mautic');
 ownership_assert(strpos($mail, "flacso_mautic_test_connection") !== false, 'Correos debe exponer prueba de conexión Mautic');
-ownership_assert(strpos($mail, "flacso_mautic_test_campaign") !== false, 'Correos debe exponer prueba de campaña Mautic');
+ownership_assert(strpos($mail, "flacso_mautic_validate_transactional") !== false, 'Correos debe exponer validación del correo transaccional');
 ownership_assert(strpos($mail, "flacso_mautic_test_contact") !== false, 'Correos debe exponer prueba de contactos Mautic');
 ownership_assert(strpos($mail, "flacso_mautic_test_alert") !== false, 'Correos debe exponer prueba de alertas operativas');
 ownership_assert(strpos($mail, "flacso_mautic_error_alerts_enabled") !== false, 'Correos debe controlar alertas de errores Mautic');
 ownership_assert(strpos($mail, "Clave Pública (Client ID)") !== false, 'Correos debe renderizar Clave Pública y Clave Secreta como campos separados');
+ownership_assert(strpos($mail, "Correo transaccional") !== false, 'Correos debe mostrar el flujo transaccional');
+ownership_assert(strpos($mail, "Campaña de consultas") === false, 'Correos no debe presentar campañas como mecanismo de envío');
 ownership_assert(strpos($mail, "flacso_mailjet_api_key") === false, 'Correos no debe reintroducir la configuración retirada de Mailjet');
 ownership_assert(strpos($mail_init, "FLACSO_Mail_Settings::init()") !== false, 'Mailing debe inicializar su configuración');
 
