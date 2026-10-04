@@ -81,15 +81,20 @@ contract_assert($valid['ok'] === true && $valid['status'] === 'valid', 'contrato
 $missing = $manifest;
 $missing['contact_fields']['alias_inexistente'] = ['type' => 'text'];
 $result = FLACSO_Mautic_Contract_Validator::validate($missing);
-contract_assert($result['ok'] === false && $result['status'] === 'blocked', 'alias ausente bloquea');
+contract_assert($result['ok'] === true && $result['status'] === 'valid', 'alias de marketing ausente no bloquea el correo transaccional');
+$missing_requirement = array_values(array_filter(
+    $result['requirements'],
+    static fn(array $requirement): bool => ($requirement['key'] ?? '') === 'field:alias_inexistente'
+));
+contract_assert(!empty($missing_requirement) && ($missing_requirement[0]['blocking'] ?? true) === false, 'campo ausente queda como diagnóstico no bloqueante');
 
 $wrongType = $manifest;
 $wrongType['contact_fields']['flacso_origen']['type'] = 'number';
-contract_assert(FLACSO_Mautic_Contract_Validator::validate($wrongType)['ok'] === false, 'tipo incompatible bloquea');
+contract_assert(FLACSO_Mautic_Contract_Validator::validate($wrongType)['ok'] === true, 'tipo de campo de marketing incompatible no bloquea el correo transaccional');
 
 $wrongOptions = $manifest;
 $wrongOptions['contact_fields']['flacso_modalidad_perfil']['options'][] = 'hibrida';
-contract_assert(FLACSO_Mautic_Contract_Validator::validate($wrongOptions)['ok'] === false, 'opción select ausente bloquea');
+contract_assert(FLACSO_Mautic_Contract_Validator::validate($wrongOptions)['ok'] === true, 'opción de marketing ausente no bloquea el correo transaccional');
 
 $wrongHash = $manifest;
 $wrongHash['template']['content_sha256'] = str_repeat('0', 64);
