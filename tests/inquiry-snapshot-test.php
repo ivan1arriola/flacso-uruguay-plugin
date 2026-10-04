@@ -55,6 +55,23 @@ snapshot_assert(!array_key_exists('flacso_oferta_nombre', $payload['fields']), '
 snapshot_assert($payload['tokens']['{oferta_academica_nombre}'] === 'Diploma DAVIA', 'tokens salen del snapshot');
 snapshot_assert($payload['tokens']['{fecha_inicio}'] === '8 de abril de 2027', 'fecha del token sale del snapshot');
 snapshot_assert($payload['tokens']['{modalidad}'] === 'Híbrida', 'modalidad del token sale del snapshot');
+$expected_email_tokens = [
+    '{nombre}' => 'Ana',
+    '{apellido}' => 'Pérez',
+    '{correo}' => 'ana@example.org',
+    '{pais}' => 'Uruguay',
+    '{profesion}' => 'Docente',
+    '{nivel_academico}' => 'Posgrado',
+    '{oferta_academica_articulo}' => '',
+    '{oferta_academica_fecha_inicio}' => '8 de abril de 2027',
+    '{oferta_academica_modalidad}' => 'Híbrida',
+    '{oferta_academica_nombre}' => 'Diploma DAVIA',
+    '{url_carta}' => 'https://flacso.edu.uy/davia/carta',
+    '{url_preinscripcion}' => 'https://preinscripciones.flacso.edu.uy/davia-c10',
+];
+foreach ($expected_email_tokens as $token => $expected_value) {
+    snapshot_assert(($payload['tokens'][$token] ?? null) === $expected_value, "token {$token} llega a Mautic");
+}
 
 $context2 = $context;
 $context2['offerName'] = 'Maestría MG';
