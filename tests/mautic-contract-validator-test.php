@@ -98,11 +98,43 @@ contract_assert(FLACSO_Mautic_Contract_Validator::validate($wrongOptions)['ok'] 
 
 $wrongHash = $manifest;
 $wrongHash['template']['content_sha256'] = str_repeat('0', 64);
-contract_assert(FLACSO_Mautic_Contract_Validator::validate($wrongHash)['ok'] === false, 'hash distinto bloquea');
+$wrong_hash_result = FLACSO_Mautic_Contract_Validator::validate($wrongHash);
+contract_assert($wrong_hash_result['ok'] === true, 'hash distinto queda como auditoría y no bloquea');
+$hash_requirement = array_values(array_filter(
+    $wrong_hash_result['requirements'],
+    static fn(array $requirement): bool => str_starts_with((string) ($requirement['key'] ?? ''), 'template_sha256:')
+));
+contract_assert(!empty($hash_requirement) && ($hash_requirement[0]['blocking'] ?? true) === false, 'hash distinto se marca no bloqueante');
 
 $noHash = $manifest;
 $noHash['template']['content_sha256'] = '';
-contract_assert(FLACSO_Mautic_Contract_Validator::validate($noHash)['ok'] === false, 'hash no aprobado bloquea');
+contract_assert(FLACSO_Mautic_Contract_Validator::validate($noHash)['ok'] === true, 'una plantilla publicada sin hash aprobado sigue operativa');
+
+// Contrato con los dos F1: se puede validar sólo la plantilla usada por la entrega.
+$multi_template = [
+    'version' => 'test-2',
+    'contact_fields' => [],
+    'templates' => [
+        'initial_open' => [
+            'id' => 3,
+            'name' => 'F1 abierta',
+            'functional_version' => 'open-test',
+            'content_sha256' => $sha,
+            'required' => true,
+        ],
+        'initial_closed' => [
+            'id' => 5,
+            'name' => 'F1 cerrada',
+            'functional_version' => 'closed-test',
+            'content_sha256' => '',
+            'required' => true,
+        ],
+    ],
+];
+$selected = FLACSO_Mautic_Contract_Validator::validate($multi_template, 3);
+contract_assert($selected['ok'] === true, 'una entrega abierta valida sólo su plantilla #3');
+$unknown_template = FLACSO_Mautic_Contract_Validator::validate($multi_template, 99);
+contract_assert($unknown_template['ok'] === false, 'una plantilla no registrada bloquea la entrega');
 
 FLACSO_Mautic_Client::set_http_transport(null);
 
