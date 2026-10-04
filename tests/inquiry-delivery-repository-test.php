@@ -131,7 +131,8 @@ delivery_repo_assert($anonymized === 1, 'retención anonimiza entrega vencida');
 $anon = $pdo->query('SELECT * FROM inquiry_deliveries LIMIT 1')->fetch(PDO::FETCH_ASSOC);
 delivery_repo_assert($anon['snapshotId'] === null && $anon['consultaId'] === null && $anon['email'] === null, 'retención rompe vínculos reversibles');
 delivery_repo_assert($anon['payloadJson'] === null && $anon['contactId'] === null, 'retención elimina payload/contacto');
-delivery_repo_assert((int) $pdo->query('SELECT COUNT(*) FROM inquiry_snapshots')->fetchColumn() === 0, 'retención elimina snapshot transaccional vencido');
+delivery_repo_assert((int) $pdo->query("SELECT COUNT(*) FROM inquiry_snapshots WHERE consultaId = 'atomic-1'")->fetchColumn() === 0, 'retención elimina el snapshot de la entrega terminal vencida');
+delivery_repo_assert((int) $pdo->query("SELECT COUNT(*) FROM inquiry_snapshots WHERE consultaId = 'manual-retry-closed'")->fetchColumn() === 1, 'retención conserva snapshot de una entrega que sigue en processing');
 delivery_repo_assert($anon['reportMonth'] === '2026-09-01', 'retención conserva mes agregado');
 
 echo "OK inquiry-delivery-repository-test\n";
