@@ -161,6 +161,11 @@ final class FLACSO_Inquiry_Delivery_Service {
             return;
         }
 
+        if (function_exists('get_option')
+            && (string) get_option('flacso_mautic_error_alerts_enabled', '1') !== '1') {
+            return;
+        }
+
         $message = sprintf(
             'Entrega transaccional de consulta %s: estado=%s clase=%s',
             $delivery_id,
