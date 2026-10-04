@@ -251,6 +251,55 @@ final class FLACSO_Inquiry_Delivery_Repository {
         return $claimed;
     }
 
+    /**
+     * Reserva manualmente una entrega terminal cuyo resultado fue comprobado
+     * como no enviado. Nunca permite reintentar acceptance_unknown ni accepted.
+     */
+    public function claim_manual_retry(string $delivery_id, int $lease_seconds = 120): bool {
+        $delivery_id = trim($delivery_id);
+        if ($delivery_id === '') {
+            return false;
+        }
+
+        $lease_seconds = max(30, min(900, $lease_seconds));
+        $now = gmdate('c');
+        $until = gmdate('c', time() + $lease_seconds);
+        $token = bin2hex(random_bytes(16));
+
+        $stmt = $this->pdo->prepare(
+            'UPDATE inquiry_deliveries
+             SET state = :processing,
+                 "terminalAt" = NULL,
+                 "acceptedAt" = NULL,
+                 "nextAttemptAt" = NULL,
+                 "claimedAt" = :now,
+                 "claimedUntil" = :until,
+                 "claimToken" = :claim_token,
+                 "lastHttpCode" = NULL,
+                 "lastErrorClass" = NULL,
+                 "lastError" = NULL,
+                 "updatedAt" = :now
+             WHERE id = :id
+               AND (state = :failed OR state = :blocked)'
+        );
+        $stmt->execute([
+            ':processing'  => 'processing',
+            ':failed'      => 'failed',
+            ':blocked'     => 'blocked',
+            ':now'         => $now,
+            ':until'       => $until,
+            ':claim_token' => $token,
+            ':id'          => $delivery_id,
+        ]);
+
+        $claimed = $stmt->rowCount() === 1;
+        if ($claimed) {
+            $this->sync_source_email_status($delivery_id, 'processing');
+        }
+
+        return $claimed;
+    }
+
     public function record_attempt_start(string $delivery_id, string $attempt_id): string {
         $attempt_row_id = FLACSO_Base_Inquiry_Repository::generate_cuid();
         $now = gmdate('c');
