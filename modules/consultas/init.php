@@ -58,7 +58,12 @@ foreach ($flacso_consultas_files as $flacso_file) {
     }
 }
 
-// No registrar WP-Cron: la cola está diseñada para cron de servidor + WP-CLI.
+// Registrar un disparador WP-Cron como fallback; el cron de servidor + WP-CLI
+// sigue siendo preferible cuando está disponible.
+if (class_exists('FLACSO_Inquiry_Delivery_Worker')) {
+    FLACSO_Inquiry_Delivery_Worker::init();
+}
+
 if (class_exists('FLACSO_Consultas_CLI')) {
     FLACSO_Consultas_CLI::register();
 }

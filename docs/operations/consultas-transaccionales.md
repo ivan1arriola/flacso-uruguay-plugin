@@ -4,7 +4,8 @@
 
 La opción `flacso_inquiry_delivery_queue_enabled` debe permanecer en `0` hasta
 que la prueba de tokens de Mautic esté aprobada y el manifiesto contenga la
-huella SHA-256 de la plantilla exacta. El código no registra WP-Cron.
+huella SHA-256 de la plantilla exacta. El plugin registra un evento WP-Cron de
+respaldo cada minuto; el cron de servidor + WP-CLI sigue siendo preferible.
 
 ## Migración
 
