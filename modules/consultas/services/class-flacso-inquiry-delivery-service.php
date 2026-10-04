@@ -73,7 +73,10 @@ final class FLACSO_Inquiry_Delivery_Service {
 
         $contract = is_callable(self::$contract_validator)
             ? call_user_func(self::$contract_validator)
-            : FLACSO_Mautic_Contract_Validator::validate();
+            : FLACSO_Mautic_Contract_Validator::validate(
+                null,
+                (int) ($delivery['templateId'] ?? 0)
+            );
 
         if (empty($contract['ok'])) {
             $detail = self::contract_failure_message($contract);
