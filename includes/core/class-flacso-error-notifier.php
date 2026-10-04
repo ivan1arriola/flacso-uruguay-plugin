@@ -53,6 +53,25 @@ final class FLACSO_Error_Notifier {
         return self::report($error->getMessage(), $error->getFile(), $error->getLine(), 'exception');
     }
 
+    /**
+     * Envía una alerta de prueba sin pasar por la deduplicación de incidentes.
+     */
+    public static function test_notification(string $context = 'Mautic'): bool {
+        $text = implode("\n", [
+            'Prueba de alertas del plugin FLACSO Uruguay',
+            'Contexto: ' . self::truncate(self::redact($context), 300),
+            'Sitio: ' . (function_exists('home_url') ? home_url('/') : ''),
+            'Resultado esperado: si ves este mensaje, Telegram está configurado correctamente.',
+        ]);
+
+        $sent = self::send_telegram($text);
+        if (!$sent) {
+            $sent = self::send_email($text);
+        }
+
+        return $sent;
+    }
+
     public static function report(string $message, string $file, int $line, string $severity = 'error'): bool {
         if (!self::is_plugin_file($file)) {
             return false;
