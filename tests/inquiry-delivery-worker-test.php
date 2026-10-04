@@ -119,6 +119,14 @@ worker_assert($sends === 1, 'worker envía una sola vez');
 worker_assert($repo->find_by_delivery_id($result['delivery_id'])['state'] === 'accepted', 'worker deja accepted');
 worker_assert($repo->find_by_delivery_id($second['delivery_id'])['state'] === 'pending', 'worker no reclama más de una entrega por ejecución');
 
+$claimed_second = $repo->claim_pending_batch(1, 120);
+worker_assert(count($claimed_second) === 1, 'la segunda entrega puede reclamarse después');
+$second_source = $pdo->query("SELECT \"emailStatus\" FROM offer_inquiries WHERE \"consultaId\" = 'worker-2'")->fetchColumn();
+worker_assert($second_source === 'processing', 'el panel debe reflejar processing al reclamar la entrega');
+$repo->mark_retryable_failure($second['delivery_id'], 503, 'mautic_http', 'temporary failure', 60);
+$second_source = $pdo->query("SELECT \"emailStatus\" FROM offer_inquiries WHERE \"consultaId\" = 'worker-2'")->fetchColumn();
+worker_assert($second_source === 'retryable_failed', 'el panel debe reflejar retryable_failed al reprogramar la entrega');
+
 $GLOBALS['worker_options']['flacso_inquiry_delivery_worker_lock'] = json_encode(['token'=>'other','expires'=>time()+120]);
 $locked = FLACSO_Inquiry_Delivery_Worker::run(10);
 worker_assert($locked['status'] === 'locked' && $locked['processed'] === 0, 'lock global evita ejecución paralela');
