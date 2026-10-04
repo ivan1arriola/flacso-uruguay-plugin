@@ -17,7 +17,7 @@ if (!class_exists('FLACSO_Mautic_Contract_Manifest')) {
 }
 
 final class FLACSO_Mautic_Contract_Validator {
-    public static function validate(?array $manifest = null): array {
+    public static function validate(?array $manifest = null, ?int $only_template_id = null): array {
         $manifest = $manifest ?? FLACSO_Mautic_Contract_Manifest::definition();
         $requirements = [];
         $ok = true;
@@ -30,77 +30,115 @@ final class FLACSO_Mautic_Contract_Validator {
                 'requirements' => [[
                     'key' => 'mautic_configuration',
                     'ok' => false,
+                    'blocking' => true,
                     'message' => 'Mautic no está configurado o está deshabilitado.',
                 ]],
             ];
         }
 
+        // Los campos flacso_* son útiles para CRM/segmentación, pero el correo
+        // transaccional se construye desde el snapshot y sus tokens. Por eso
+        // estas comprobaciones son diagnósticas y nunca bloquean el envío.
         $fields_response = FLACSO_Mautic_Client::get_contact_fields();
         if (empty($fields_response['ok'])) {
-            $ok = false;
             $requirements[] = [
                 'key' => 'contact_fields',
                 'ok' => false,
-                'message' => 'No fue posible leer los campos de contacto.',
+                'blocking' => false,
+                'message' => 'No fue posible leer los campos de contacto; esto no bloquea el correo transaccional.',
             ];
         } else {
             $available = self::index_fields($fields_response['fields'] ?? []);
             foreach (($manifest['contact_fields'] ?? []) as $alias => $expected) {
                 $actual = $available[$alias] ?? null;
-                $field_ok = is_array($actual) && strtolower((string) ($actual['type'] ?? '')) === strtolower((string) ($expected['type'] ?? ''));
+                $field_ok = is_array($actual)
+                    && strtolower((string) ($actual['type'] ?? '')) === strtolower((string) ($expected['type'] ?? ''));
                 if ($field_ok && !empty($expected['options'])) {
                     $field_ok = self::contains_options($actual, (array) $expected['options']);
                 }
                 $requirements[] = [
                     'key' => 'field:' . $alias,
                     'ok' => $field_ok,
-                    'message' => $field_ok ? 'Campo compatible.' : 'Campo ausente o incompatible.',
+                    'blocking' => false,
+                    'message' => $field_ok
+                        ? 'Campo compatible.'
+                        : 'Campo ausente o incompatible; no es requisito del correo transaccional.',
                 ];
-                $ok = $ok && $field_ok;
             }
         }
 
-        $template = is_array($manifest['template'] ?? null) ? $manifest['template'] : [];
-        $template_id = (int) ($template['id'] ?? 0);
-        $expected_sha = strtolower(trim((string) ($template['content_sha256'] ?? '')));
-        $identity_ok = $template_id > 0
-            && trim((string) ($template['functional_version'] ?? '')) !== ''
-            && preg_match('/^[a-f0-9]{64}$/', $expected_sha) === 1;
+        $templates = self::templates_to_validate($manifest, $only_template_id);
+        if (empty($templates)) {
+            $requirements[] = [
+                'key' => 'template_manifest',
+                'ok' => false,
+                'blocking' => true,
+                'message' => $only_template_id !== null && $only_template_id > 0
+                    ? 'La plantilla #' . $only_template_id . ' no está registrada en el contrato transaccional.'
+                    : 'No hay plantillas transaccionales obligatorias configuradas.',
+            ];
+            $ok = false;
+        }
 
-        $requirements[] = [
-            'key' => 'template_identity',
-            'ok' => $identity_ok,
-            'message' => $identity_ok ? 'Identidad de plantilla versionada.' : 'Falta ID, versión funcional o SHA-256 aprobado.',
-        ];
-        $ok = $ok && $identity_ok;
+        foreach ($templates as $key => $template) {
+            $template_id = (int) ($template['id'] ?? 0);
+            $name = trim((string) ($template['name'] ?? ''));
+            $version = trim((string) ($template['functional_version'] ?? ''));
+            $expected_sha = strtolower(trim((string) ($template['content_sha256'] ?? '')));
+            $label = $name !== '' ? $name : ('plantilla #' . $template_id);
 
-        if ($template_id > 0) {
+            $identity_ok = $template_id > 0 && $version !== '';
+            $requirements[] = [
+                'key' => 'template_identity:' . $key,
+                'ok' => $identity_ok,
+                'blocking' => true,
+                'message' => $identity_ok
+                    ? sprintf('%s: identidad configurada.', $label)
+                    : sprintf('%s: falta ID o versión funcional.', $label),
+            ];
+            $ok = $ok && $identity_ok;
+            if (!$identity_ok) {
+                continue;
+            }
+
             $email_response = FLACSO_Mautic_Client::get_email_template($template_id);
             if (empty($email_response['ok'])) {
-                $ok = false;
                 $requirements[] = [
-                    'key' => 'template_read',
+                    'key' => 'template_read:' . $key,
                     'ok' => false,
-                    'message' => 'No fue posible leer la plantilla transaccional.',
+                    'blocking' => true,
+                    'message' => sprintf('%s (#%d): no fue posible leer el correo en Mautic.', $label, $template_id),
                 ];
-            } else {
-                $email = is_array($email_response['email'] ?? null) ? $email_response['email'] : [];
-                $published = self::is_published($email);
-                $requirements[] = [
-                    'key' => 'template_published',
-                    'ok' => $published,
-                    'message' => $published ? 'Plantilla publicada.' : 'La plantilla no está publicada.',
-                ];
-                $ok = $ok && $published;
+                $ok = false;
+                continue;
+            }
 
+            $email = is_array($email_response['email'] ?? null) ? $email_response['email'] : [];
+            $published = self::is_published($email);
+            $requirements[] = [
+                'key' => 'template_published:' . $key,
+                'ok' => $published,
+                'blocking' => true,
+                'message' => $published
+                    ? sprintf('%s (#%d): publicado.', $label, $template_id)
+                    : sprintf('%s (#%d): no está publicado.', $label, $template_id),
+            ];
+            $ok = $ok && $published;
+
+            // La huella queda como señal de auditoría. Mautic puede normalizar
+            // HTML o el equipo puede editar el correo sin que eso deba dejar
+            // toda la cola operativa en blocked.
+            if (preg_match('/^[a-f0-9]{64}$/', $expected_sha) === 1) {
                 $actual_sha = hash('sha256', self::normalized_template_content($email));
-                $hash_ok = $identity_ok && hash_equals($expected_sha, $actual_sha);
+                $hash_ok = hash_equals($expected_sha, $actual_sha);
                 $requirements[] = [
-                    'key' => 'template_sha256',
+                    'key' => 'template_sha256:' . $key,
                     'ok' => $hash_ok,
-                    'message' => $hash_ok ? 'Contenido aprobado.' : 'La huella de plantilla no coincide o no está aprobada.',
+                    'blocking' => false,
+                    'message' => $hash_ok
+                        ? sprintf('%s (#%d): huella de contenido coincide.', $label, $template_id)
+                        : sprintf('%s (#%d): la huella cambió; revisar contenido, pero no se bloquea el envío.', $label, $template_id),
                 ];
-                $ok = $ok && $hash_ok;
             }
         }
 
@@ -120,6 +158,36 @@ final class FLACSO_Mautic_Contract_Validator {
         return $subject . "\n---\n" . trim((string) $html);
     }
 
+    private static function templates_to_validate(array $manifest, ?int $only_template_id): array {
+        $templates = is_array($manifest['templates'] ?? null) ? $manifest['templates'] : [];
+
+        if (empty($templates) && is_array($manifest['template'] ?? null)) {
+            $templates = ['template' => $manifest['template']];
+        }
+
+        if ($only_template_id !== null && $only_template_id > 0) {
+            foreach ($templates as $key => $template) {
+                if (is_array($template) && (int) ($template['id'] ?? 0) === $only_template_id) {
+                    return [(string) $key => $template];
+                }
+            }
+            return [];
+        }
+
+        $required = [];
+        foreach ($templates as $key => $template) {
+            if (!is_array($template)) {
+                continue;
+            }
+            if (array_key_exists('required', $template) && empty($template['required'])) {
+                continue;
+            }
+            $required[(string) $key] = $template;
+        }
+
+        return $required;
+    }
+
     private static function index_fields(array $fields): array {
         $indexed = [];
         foreach ($fields as $field) {
@@ -131,6 +199,7 @@ final class FLACSO_Mautic_Contract_Validator {
                 $indexed[$alias] = $field;
             }
         }
+
         return $indexed;
     }
 
@@ -157,6 +226,7 @@ final class FLACSO_Mautic_Contract_Validator {
                 return false;
             }
         }
+
         return true;
     }
 
@@ -166,6 +236,7 @@ final class FLACSO_Mautic_Contract_Validator {
                 return $email[$key] === true || $email[$key] === 1 || $email[$key] === '1';
             }
         }
+
         return false;
     }
 }

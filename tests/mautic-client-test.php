@@ -18,6 +18,7 @@ if (!defined('ABSPATH')) {
 // --------------------------------------------------------------------------
 
 $GLOBALS['mautic_mock_options'] = [];
+$GLOBALS['mautic_mock_transients'] = [];
 
 if (!function_exists('get_option')) {
     function get_option($key, $default = false) {
@@ -28,6 +29,19 @@ if (!function_exists('get_option')) {
 if (!function_exists('update_option')) {
     function update_option($key, $value) {
         $GLOBALS['mautic_mock_options'][$key] = $value;
+        return true;
+    }
+}
+
+if (!function_exists('get_transient')) {
+    function get_transient($key) {
+        return $GLOBALS['mautic_mock_transients'][$key] ?? false;
+    }
+}
+
+if (!function_exists('set_transient')) {
+    function set_transient($key, $value, $expiration) {
+        $GLOBALS['mautic_mock_transients'][$key] = $value;
         return true;
     }
 }
@@ -113,15 +127,19 @@ mautic_assert(FLACSO_Mautic_Client::OPTION_AUTH_TYPE === 'flacso_mautic_auth_typ
 mautic_assert(FLACSO_Mautic_Client::OPTION_USERNAME === 'flacso_mautic_username', 'OPTION_USERNAME constant matches spec');
 mautic_assert(FLACSO_Mautic_Client::OPTION_PASSWORD === 'flacso_mautic_password', 'OPTION_PASSWORD constant matches spec');
 mautic_assert(FLACSO_Mautic_Client::OPTION_TOKEN === 'flacso_mautic_token', 'OPTION_TOKEN constant matches spec');
+mautic_assert(FLACSO_Mautic_Client::OPTION_CLIENT_ID === 'flacso_mautic_client_id', 'OPTION_CLIENT_ID constant matches spec');
+mautic_assert(FLACSO_Mautic_Client::OPTION_CLIENT_SECRET === 'flacso_mautic_client_secret', 'OPTION_CLIENT_SECRET constant matches spec');
 
 $GLOBALS['mautic_mock_options'] = [];
 $settings = FLACSO_Mautic_Client::get_settings();
 mautic_assert($settings['enabled'] === false, 'Default enabled is false');
 mautic_assert($settings['base_url'] === 'https://envios.flacso.edu.uy', 'Default base_url is https://envios.flacso.edu.uy');
-mautic_assert($settings['auth_type'] === 'basic', 'Default auth_type is basic');
+mautic_assert($settings['auth_type'] === 'oauth2', 'Default auth_type is oauth2');
 mautic_assert($settings['username'] === '', 'Default username is empty');
 mautic_assert($settings['password'] === '', 'Default password is empty');
 mautic_assert($settings['token'] === '', 'Default token is empty');
+mautic_assert($settings['client_id'] === '', 'Default client_id is empty');
+mautic_assert($settings['client_secret'] === '', 'Default client_secret is empty');
 mautic_assert(FLACSO_Mautic_Client::is_configured() === false, 'is_configured() is false by default');
 
 // Trimming & trailing slash removal
@@ -179,6 +197,23 @@ mautic_assert(FLACSO_Mautic_Client::is_configured() === false, 'is_configured() 
 $GLOBALS['mautic_mock_options']['flacso_mautic_username'] = 'admin';
 $GLOBALS['mautic_mock_options']['flacso_mautic_password'] = '';
 mautic_assert(FLACSO_Mautic_Client::is_configured() === false, 'is_configured() is false when password missing in basic auth');
+
+// OAuth2 Client Credentials mode
+$GLOBALS['mautic_mock_options'] = [
+    'flacso_mautic_enabled'       => '1',
+    'flacso_mautic_base_url'      => 'https://envios.flacso.edu.uy',
+    'flacso_mautic_auth_type'     => 'oauth2',
+    'flacso_mautic_client_id'     => '',
+    'flacso_mautic_client_secret' => 'oauth-secret',
+];
+mautic_assert(FLACSO_Mautic_Client::is_configured() === false, 'is_configured() is false when client ID missing in oauth2');
+
+$GLOBALS['mautic_mock_options']['flacso_mautic_client_id'] = 'oauth-client';
+$GLOBALS['mautic_mock_options']['flacso_mautic_client_secret'] = '';
+mautic_assert(FLACSO_Mautic_Client::is_configured() === false, 'is_configured() is false when client secret missing in oauth2');
+
+$GLOBALS['mautic_mock_options']['flacso_mautic_client_secret'] = 'oauth-secret';
+mautic_assert(FLACSO_Mautic_Client::is_configured() === true, 'is_configured() is true for OAuth2 client credentials');
 
 // Bearer token mode
 $GLOBALS['mautic_mock_options'] = [
@@ -246,7 +281,55 @@ $res = FLACSO_Mautic_Client::test_connection();
 mautic_assert($res['ok'] === true, 'test_connection with bearer returns ok');
 mautic_assert(($GLOBALS['mautic_http_calls'][0]['args']['headers']['Authorization'] ?? '') === 'Bearer secret-pat-token', 'Bearer auth header sent correctly');
 
+// OAuth2 Client Credentials obtains a token, then calls the API with Bearer auth.
+$GLOBALS['mautic_mock_options'] = [
+    'flacso_mautic_enabled'       => '1',
+    'flacso_mautic_base_url'      => 'https://envios.flacso.edu.uy',
+    'flacso_mautic_auth_type'     => 'oauth2',
+    'flacso_mautic_client_id'     => 'wp-client-diagnostics',
+    'flacso_mautic_client_secret' => 'wp-secret-diagnostics',
+];
+$GLOBALS['mautic_mock_transients'] = [];
+$GLOBALS['mautic_http_calls'] = [];
+$GLOBALS['mautic_http_handler'] = function($url, $args) {
+    if (str_ends_with($url, '/oauth/v2/token')) {
+        return [
+            'response' => ['code' => 200, 'message' => 'OK'],
+            'body' => json_encode([
+                'access_token' => 'oauth-access-token',
+                'token_type' => 'bearer',
+                'expires_in' => 3600,
+            ]),
+        ];
+    }
+
+    return [
+        'response' => ['code' => 200, 'message' => 'OK'],
+        'body' => json_encode(['total' => 0, 'contacts' => []]),
+    ];
+};
+
+$res = FLACSO_Mautic_Client::test_connection();
+mautic_assert($res['ok'] === true, 'test_connection supports OAuth2 client credentials');
+mautic_assert(count($GLOBALS['mautic_http_calls']) === 2, 'OAuth2 connection makes token and API requests');
+$token_call = $GLOBALS['mautic_http_calls'][0];
+mautic_assert(str_ends_with($token_call['url'], '/oauth/v2/token'), 'OAuth2 token endpoint is called');
+mautic_assert(($token_call['args']['method'] ?? '') === 'POST', 'OAuth2 token request uses POST');
+mautic_assert(($token_call['args']['headers']['Content-Type'] ?? '') === 'application/x-www-form-urlencoded', 'OAuth2 token request uses form encoding');
+parse_str((string) ($token_call['args']['body'] ?? ''), $token_body);
+mautic_assert(($token_body['grant_type'] ?? '') === 'client_credentials', 'OAuth2 uses client_credentials grant');
+mautic_assert(($token_body['client_id'] ?? '') === 'wp-client-diagnostics', 'OAuth2 sends client ID');
+mautic_assert(($token_body['client_secret'] ?? '') === 'wp-secret-diagnostics', 'OAuth2 sends client secret');
+$api_call = $GLOBALS['mautic_http_calls'][1];
+mautic_assert(($api_call['args']['headers']['Authorization'] ?? '') === 'Bearer oauth-access-token', 'OAuth2 API call uses acquired Bearer token');
+
 // HTTP 401 Unauthorized
+$GLOBALS['mautic_mock_options'] = [
+    'flacso_mautic_enabled'   => '1',
+    'flacso_mautic_base_url'  => 'https://envios.flacso.edu.uy',
+    'flacso_mautic_auth_type' => 'bearer',
+    'flacso_mautic_token'     => 'secret-pat-token',
+];
 $GLOBALS['mautic_http_handler'] = function($url, $args) {
     return [
         'response' => ['code' => 401, 'message' => 'Unauthorized'],
@@ -792,5 +875,29 @@ $unknown = FLACSO_Mautic_Client::ensure_delivery_recipient('incierto@example.org
 mautic_assert($unknown['ok'] === false && $unknown['acceptance_unknown'] === true, 'creación incierta queda acceptance_unknown');
 mautic_assert($unknown_posts === 1, 'resultado incierto no dispara un segundo POST');
 FLACSO_Mautic_Client::set_http_transport(null);
+
+// Test group 11: diagnóstico de búsqueda de contacto.
+$GLOBALS['mautic_mock_options'] = [
+    'flacso_mautic_enabled' => '1',
+    'flacso_mautic_base_url' => 'https://mautic.example.org',
+    'flacso_mautic_auth_type' => 'basic',
+    'flacso_mautic_username' => 'admin',
+    'flacso_mautic_password' => 'secret',
+];
+$GLOBALS['mautic_http_calls'] = [];
+$GLOBALS['mautic_http_handler'] = function($url, $args) {
+    if (str_contains($url, '/api/contacts?search=email:prueba%40flacso.edu.uy')) {
+        return [
+            'response' => ['code' => 200],
+            'body' => json_encode(['contacts' => [['id' => 10]]]),
+        ];
+    }
+    return ['response' => ['code' => 404], 'body' => json_encode(['errors' => [['message' => 'Not found']]])];
+};
+
+$contact_test = FLACSO_Mautic_Client::test_contact_search('prueba@flacso.edu.uy');
+mautic_assert($contact_test['ok'] === true, 'test_contact_search ejecuta una consulta de solo lectura');
+mautic_assert(str_contains($contact_test['message'], '1 contacto'), 'test_contact_search informa coincidencias');
+mautic_assert(FLACSO_Mautic_Client::test_contact_search('correo-invalido')['ok'] === false, 'test_contact_search valida el correo');
 
 echo "\nALL TESTS PASSED (100%)\n";

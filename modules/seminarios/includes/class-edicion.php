@@ -9,6 +9,7 @@ final class FLACSO_Edicion {
     public const POST_TYPE = 'edicion';
     public const META_PARENT_ID = 'seminario_id';
     public const ESTADOS = ['planificada', 'en_curso', 'finalizada', 'cancelada'];
+    public const REGISTRATION_AVAILABILITY = ['open', 'closed', 'conflict'];
 
     public static function register(): void {
         register_post_type(self::POST_TYPE, [
@@ -189,26 +190,61 @@ final class FLACSO_Edicion {
     }
 
     public static function accepts_registration(int $edition_id, ?int $timestamp = null): bool {
+        $availability = self::registration_availability($edition_id, $timestamp);
+        return $availability['status'] === 'open';
+    }
+
+    /**
+     * Calcula la disponibilidad temporal de una edición.
+     *
+     * La fecha de cierre es inclusiva: la edición permanece abierta hasta las
+     * 23:59:59 del día fecha_inicio + días configurados.
+     *
+     * @return array{status:string,from:?string,until:?string}
+     */
+    public static function registration_availability(int $edition_id, ?int $timestamp = null): array {
+        $timestamp = $timestamp ?? (function_exists('current_time') ? current_time('timestamp', true) : time());
+        $fecha_inicio = (string) get_post_meta($edition_id, 'fecha_inicio', true);
+        $timezone = function_exists('wp_timezone') ? wp_timezone() : new DateTimeZone('UTC');
+        $start = DateTimeImmutable::createFromFormat('!Y-m-d', $fecha_inicio, $timezone);
+
+        if (!$start || $start->format('Y-m-d') !== $fecha_inicio) {
+            return [
+                'status' => 'closed',
+                'from' => null,
+                'until' => null,
+            ];
+        }
+
+        $days = self::get_days_after_start_limit($edition_id);
+        $closing = $start->modify('+' . $days . ' days')->setTime(23, 59, 59);
+        $until = $closing->format(DATE_ATOM);
+
         if (metadata_exists('post', $edition_id, 'preinscripcion_habilitada')) {
-            return rest_sanitize_boolean(
-                get_post_meta($edition_id, 'preinscripcion_habilitada', true)
-            );
+            $enabled = rest_sanitize_boolean(get_post_meta($edition_id, 'preinscripcion_habilitada', true));
+            return [
+                'status' => $enabled && $timestamp <= $closing->getTimestamp() ? 'open' : 'closed',
+                'from' => null,
+                'until' => $until,
+            ];
         }
 
         // Compatibilidad de rollout para ediciones todavía no confirmadas con
         // los nuevos botones. Un booleano explícito siempre prevalece.
         $state = self::sanitize_state(get_post_meta($edition_id, 'estado', true));
         if ($state === 'cancelada') {
-            return false;
+            return [
+                'status' => 'closed',
+                'from' => null,
+                'until' => $until,
+            ];
         }
-        $timestamp = $timestamp ?? (function_exists('current_time') ? current_time('timestamp', true) : time());
-        $fecha_inicio = (string) get_post_meta($edition_id, 'fecha_inicio', true);
-        if ($fecha_inicio === '') {
-            return true;
-        }
-        $days = self::get_days_after_start_limit($edition_id);
-        $closing_time = strtotime($fecha_inicio . ' +' . $days . ' days 23:59:59');
-        return !$closing_time || $timestamp <= $closing_time;
+
+        return [
+            'status' => $timestamp <= $closing->getTimestamp() ? 'open' : 'closed',
+            'from' => null,
+            'until' => $until,
+        ];
     }
 
     public static function sync_title(int $post_id): void {
@@ -363,7 +399,7 @@ final class FLACSO_Edicion {
             <div style="background: #f1f5f9; padding: 12px 16px; border-radius: 6px;">
                 <h4 style="margin: 0 0 12px;"><?php esc_html_e('Preinscripción', 'flacso-uruguay'); ?></h4>
                 <?php
-                $url_preinscripcion = FLACSO_Django_API_Client::url_preinscripcion_seminario($parent_id);
+                $url_preinscripcion = FLACSO_Preinscription_Ajax_Handlers::seminar_url($parent_id);
                 $nonce = wp_create_nonce('flacso_preinscripcion_nonce');
                 if ($pre_habilitada):
                 ?>
@@ -458,7 +494,7 @@ final class FLACSO_Edicion {
                         esc_html__('La URL de preinscripción es: %s', 'flacso-uruguay'),
                         $url_preinscripcion
                             ? '<code>' . esc_html($url_preinscripcion) . '</code>'
-                            : esc_html__('(configure FLACSO_DJANGO_API_URL en wp-config.php)', 'flacso-uruguay')
+                            : esc_html__('(asigne un enlace canónico al seminario)', 'flacso-uruguay')
                     ); ?>
                 </p>
             </div>

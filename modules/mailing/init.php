@@ -1,7 +1,7 @@
 <?php
 /**
- * Módulo de Mailing - FLACSO Uruguay
- * Suscripción de contactos a listas de Mailjet
+ * Módulo de comunicaciones - FLACSO Uruguay.
+ * La entrega y las automatizaciones pertenecen a Mautic.
  */
 
 if (!defined('ABSPATH')) {
@@ -21,7 +21,12 @@ if (!defined('FLACSO_MAILING_MODULE_VERSION')) {
 }
 
 flacso_safe_require('modules/mailing/includes/class-flacso-mail-settings.php');
+flacso_safe_require('modules/mailing/includes/class-flacso-mailing-subscription.php');
 
 if (class_exists('FLACSO_Mail_Settings')) {
     FLACSO_Mail_Settings::init();
+}
+
+if (class_exists('Flacso_Mailing_Subscription')) {
+    Flacso_Mailing_Subscription::init();
 }

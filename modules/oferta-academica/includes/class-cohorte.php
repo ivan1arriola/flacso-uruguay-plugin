@@ -478,7 +478,7 @@ final class FLACSO_Cohorte {
                 'dashicons-forms',
                 $pre_status
             );
-            $url_preinscripcion = FLACSO_Django_API_Client::url_preinscripcion_oferta($parent_id);
+            $url_preinscripcion = FLACSO_Preinscription_Ajax_Handlers::offer_url($parent_id);
             $nonce = wp_create_nonce('flacso_preinscripcion_nonce');
             ?>
                 <div class="flacso-cohort-registration-status <?php echo $pre_habilitada ? 'is-open' : ''; ?>">

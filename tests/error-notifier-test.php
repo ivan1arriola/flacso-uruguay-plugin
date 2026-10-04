@@ -100,6 +100,16 @@ error_notifier_assert(strpos($telegram_call['url'], 'api.telegram.org/bot123%3At
 error_notifier_assert($telegram_call['args']['body']['chat_id'] === '-100123', 'debe usar el destinatario Telegram configurado');
 error_notifier_assert(strpos($telegram_call['args']['body']['text'], 'Database unavailable') !== false, 'debe incluir el diagnostico del error');
 
+error_notifier_assert(
+    FLACSO_Error_Notifier::test_notification('Mautic · FLACSO > Correos'),
+    'la prueba manual debe enviar una notificación sin depender de un error real'
+);
+error_notifier_assert(count($GLOBALS['flacso_error_notifier_http_calls']) === 2, 'la prueba manual debe poder enviarse inmediatamente');
+error_notifier_assert(
+    strpos($GLOBALS['flacso_error_notifier_http_calls'][1]['args']['body']['text'], 'Mautic') !== false,
+    'la prueba manual debe indicar su contexto'
+);
+
 $GLOBALS['flacso_error_notifier_options']['flacso_error_alert_telegram_bot_token'] = '';
 $GLOBALS['flacso_error_notifier_options']['flacso_error_alert_telegram_chat_id'] = '';
 $GLOBALS['flacso_error_notifier_options']['flacso_error_alert_email'] = 'operaciones@flacso.edu.uy';

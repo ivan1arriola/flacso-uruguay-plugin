@@ -58,10 +58,20 @@ $menu_code = substr($legacy, $menu_start, $settings_start - $menu_start);
 ownership_assert(strpos($menu_code, 'self::PAGE_SLUG_META') !== false, 'El adaptador histórico solo debe registrar Analítica / Meta');
 ownership_assert(strpos($menu_code, 'self::PAGE_SLUG,') === false, 'El adaptador histórico no debe registrar la página genérica de Integraciones');
 
-// Correos es dueño de Mailjet.
+// Correos es dueño de las comunicaciones Mautic.
 ownership_assert(strpos($mail, "PAGE_SLUG = 'flacso-correos'") !== false, 'Correos debe tener página propia');
-ownership_assert(strpos($mail, "flacso_mailjet_api_key") !== false, 'Correos debe ser dueño de Mailjet');
-ownership_assert(strpos($mail, "flacso_mailjet_template_consulta_abierta") !== false, 'Correos debe ser dueño de plantillas transaccionales');
+ownership_assert(strpos($mail, "flacso_mautic_enabled") !== false, 'Correos debe ser dueño de la configuración de Mautic');
+ownership_assert(strpos($mail, "flacso_mautic_client_id") !== false, 'Correos debe permitir Clave Pública OAuth2 de Mautic');
+ownership_assert(strpos($mail, "flacso_mautic_client_secret") !== false, 'Correos debe permitir Clave Secreta OAuth2 de Mautic');
+ownership_assert(strpos($mail, "flacso_mautic_test_connection") !== false, 'Correos debe exponer prueba de conexión Mautic');
+ownership_assert(strpos($mail, "flacso_mautic_validate_transactional") !== false, 'Correos debe exponer validación del correo transaccional');
+ownership_assert(strpos($mail, "flacso_mautic_test_contact") !== false, 'Correos debe exponer prueba de contactos Mautic');
+ownership_assert(strpos($mail, "flacso_mautic_test_alert") !== false, 'Correos debe exponer prueba de alertas operativas');
+ownership_assert(strpos($mail, "flacso_mautic_error_alerts_enabled") !== false, 'Correos debe controlar alertas de errores Mautic');
+ownership_assert(strpos($mail, "Clave Pública (Client ID)") !== false, 'Correos debe renderizar Clave Pública y Clave Secreta como campos separados');
+ownership_assert(strpos($mail, "Correos transaccionales") !== false, 'Correos debe mostrar el flujo transaccional');
+ownership_assert(strpos($mail, "Campaña de consultas") === false, 'Correos no debe presentar campañas como mecanismo de envío');
+ownership_assert(strpos($mail, "flacso_mailjet_api_key") === false, 'Correos no debe reintroducir la configuración retirada de Mailjet');
 ownership_assert(strpos($mail_init, "FLACSO_Mail_Settings::init()") !== false, 'Mailing debe inicializar su configuración');
 
 // Sistema solo conserva dependencias técnicas todavía externas.

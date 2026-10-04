@@ -186,7 +186,7 @@ class CPT_Oferta_Academica {
                     $legacy_open = !$configured && FLACSO_Cohorte::accepts_registration($c->ID);
                     $url = (string) get_post_meta($c->ID, 'link_preinscripcion', true);
                     if ($url === '') {
-                        $url = FLACSO_Django_API_Client::url_preinscripcion_oferta($post_id);
+                        $url = FLACSO_Preinscription_Ajax_Handlers::offer_url($post_id);
                     }
 
                     echo '<div class="flacso-cohort-card">';

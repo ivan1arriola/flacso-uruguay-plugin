@@ -1,0 +1,32 @@
+name: Preinscriptions Contract Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'modules/preinscripciones/**'
+      - '.github/workflows/preinscriptions-contract.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'modules/preinscripciones/**'
+      - '.github/workflows/preinscriptions-contract.yml'
+
+jobs:
+  test-contract:
+    name: Run Contract Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: json, mbstring
+
+      - name: Run Preinscriptions Test Suite
+        run: |
+          php modules/preinscripciones/tests/run-tests.php

@@ -160,7 +160,6 @@ if (!function_exists('sanitize_title')) {
 require_once $root . '/includes/database/class-flacso-db.php';
 require_once $root . '/includes/database/repositories/class-flacso-offer-inquiry-repository.php';
 require_once $root . '/includes/database/repositories/class-flacso-seminar-inquiry-repository.php';
-require_once $root . '/includes/integrations/class-flacso-mailjet-client.php';
 require_once $root . '/includes/integrations/class-flacso-mautic-client.php';
 require_once $root . '/modules/consultas/services/class-flacso-inquiry-context-service.php';
 require_once $root . '/modules/consultas/services/class-flacso-inquiry-marketing-service.php';

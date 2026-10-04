@@ -4,8 +4,8 @@
  *
  * Verifies:
  * - Initialization and WP-Cron scheduling.
- * - Scenario 1: Cohort re-evaluation (inquiry originally closed, now opened -> sends open template with active preinscription URL).
- * - Scenario 2: Offer still closed -> sends closed template.
+ * - Scenario 1: Cohort re-evaluation (inquiry originally closed, now opened -> sends F2 #6 with active preinscription URL).
+ * - Scenario 2: Offer still closed -> also sends the standard F2 #6.
  * - Scenario 3: Skipped due to newer inquiry for the same offer (has_newer_inquiry_for_offer).
  * - Scenario 4: Skipped due to unpublished/deleted/trashed offer.
  * - Scenario 5: Mautic failure with automatic fallback to Mailjet.
@@ -178,7 +178,6 @@ require_once $root . '/includes/database/class-flacso-db.php';
 require_once $root . '/includes/database/repositories/class-flacso-base-inquiry-repository.php';
 require_once $root . '/includes/database/repositories/class-flacso-offer-inquiry-repository.php';
 require_once $root . '/includes/integrations/class-flacso-mautic-client.php';
-require_once $root . '/includes/integrations/class-flacso-mailjet-client.php';
 require_once $root . '/modules/consultas/services/class-flacso-inquiry-marketing-service.php';
 
 // The service under test:
@@ -267,8 +266,6 @@ function reset_test_environment(): void {
     $GLOBALS['mock_options'] = [
         'flacso_inquiry_followup_enabled'           => true,
         'flacso_inquiry_followup_days'              => 5,
-        'flacso_mautic_template_seguimiento_abierta' => 101,
-        'flacso_mautic_template_seguimiento_cerrada' => 102,
         'flacso_mautic_base_url'                    => 'https://mautic.flacso.edu.uy',
         'flacso_mautic_auth_type'                   => 'bearer',
         'flacso_mautic_token'                       => 'test_mautic_bearer_token',
@@ -386,8 +383,8 @@ test_assert($res1['processed'] === 1, 'run_followup_cycle must process 1 inquiry
 // Verify Mautic dispatch details
 test_assert($last_mautic_call !== null, 'Mautic email dispatch must be invoked');
 test_assert(
-    strpos($last_mautic_call['url'], '/api/emails/101/contact/401/send') !== false,
-    'Mautic must be called with open template (101) and contact ID 401'
+    strpos($last_mautic_call['url'], '/api/emails/6/contact/401/send') !== false,
+    'Mautic must be called with F2 #6 and contact ID 401'
 );
 
 $mautic_body = json_decode($last_mautic_call['args']['body'], true);
@@ -408,7 +405,7 @@ test_assert(!empty($updated_1['followupSentAt']), 'followupSentAt must be set');
 test_assert($updated_1['followupLastError'] === null, 'followupLastError must be null');
 
 // --------------------------------------------------------------------------
-// Scenario 2: Offer still closed -> sends closed template
+// Scenario 2: Offer still closed -> sends the same standard F2 #6
 // --------------------------------------------------------------------------
 echo "\n--- Scenario 2: Offer still closed ---\n";
 reset_test_environment();
@@ -462,8 +459,8 @@ $res2 = FLACSO_Inquiry_Followup_Service::run_followup_cycle(25, $repo);
 
 test_assert($res2['processed'] === 1, 'Scenario 2 must process 1 inquiry');
 test_assert(
-    strpos($last_mautic_call['url'], '/api/emails/102/contact/402/send') !== false,
-    'Mautic must be called with closed template (102)'
+    strpos($last_mautic_call['url'], '/api/emails/6/contact/402/send') !== false,
+    'Mautic must be called with the standard F2 #6'
 );
 
 $updated_2 = $repo->find_by_id($inquiry_2['id']);
@@ -569,9 +566,9 @@ $updated_4b = $repo->find_by_id($inquiry_4b['id']);
 test_assert($updated_4b['followupStatus'] === 'skipped', 'Offer ID 0 must be skipped');
 
 // --------------------------------------------------------------------------
-// Scenario 5: Mautic failure with automatic fallback to Mailjet
+// Scenario 5: Mautic failure does not activate a second provider
 // --------------------------------------------------------------------------
-echo "\n--- Scenario 5: Mautic failure with Mailjet fallback ---\n";
+echo "\n--- Scenario 5: Mautic failure without fallback ---\n";
 reset_test_environment();
 $repo = setup_in_memory_db();
 
@@ -626,15 +623,10 @@ $GLOBALS['mock_mailjet_handler'] = function ($url, $args) use (&$mailjet_called)
 $res5 = FLACSO_Inquiry_Followup_Service::run_followup_cycle(25, $repo);
 
 test_assert($res5['processed'] === 1, 'Inquiry 5 processed');
-test_assert($mailjet_called === true, 'Mailjet fallback must be called when Mautic fails');
+test_assert($mailjet_called === false, 'No second provider must be called when Mautic fails');
 
 $updated_5 = $repo->find_by_id($inquiry_5['id']);
-test_assert($updated_5['followupStatus'] === 'sent', 'Status must be sent despite Mautic failure');
-test_assert(
-    strpos($updated_5['followupLastError'], 'Enviado vía Mailjet (Fallback)') !== false,
-    'LastError note must record fallback via Mailjet'
-);
-test_assert(!empty($updated_5['followupSentAt']), 'followupSentAt must be recorded');
+test_assert($updated_5['followupStatus'] === 'failed', 'Status must remain failed when Mautic fails');
 
 // --------------------------------------------------------------------------
 // Scenario 6: Globally disabled (flacso_inquiry_followup_enabled = false)

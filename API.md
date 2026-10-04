@@ -23,15 +23,16 @@ Las colecciones temporales aceptan `parent_id`:
 - `/cohortes?parent_id={oferta_id}`
 - `/ediciones?parent_id={seminario_id}`
 
-## Catálogo de preinscripción
+## Catálogo de preinscripción (v1)
 
-`GET /preinscripciones/catalogo` devuelve únicamente cohortes y ediciones con
-preinscripción abierta. Los ítems tienen una de estas formas:
+`GET /wp-json/flacso/v1/preinscripciones`
 
-```json
-{"kind":"oferta_academica","oferta":{},"cohorte":{}}
-{"kind":"seminario","seminario":{},"edicion":{}}
-```
+Devuelve el catálogo de destinos académicos (cohortes y ediciones de seminarios) tanto abiertos como cerrados, con su configuración efectiva de formulario, revisiones canónicas (`configRevision`), orientaciones/menciones y enlaces asociados.
+
+- Acceso público de solo lectura (sin autenticación requerida para GET).
+- Encabezado `Cache-Control: public, max-age=60`.
+- No almacena ni devuelve datos personales ni información sensible.
+- `link_preinscripcion` se conserva en `urls.legacyRegistration` para permitir coexistencia y reversibilidad durante el rollout.
 
 `link_preinscripcion` se carga en cada Cohorte o Edicion y debe apuntar
 a `https://preinscripciones.flacso.edu.uy`. El plugin no presume una estructura

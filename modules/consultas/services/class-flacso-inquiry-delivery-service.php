@@ -33,6 +33,28 @@ final class FLACSO_Inquiry_Delivery_Service {
         self::$contract_validator = $validator;
     }
 
+    public static function contract_failure_message(array $contract): string {
+        $messages = [];
+        $requirements = is_array($contract['requirements'] ?? null) ? $contract['requirements'] : [];
+
+        foreach ($requirements as $requirement) {
+            if (!is_array($requirement) || !empty($requirement['ok']) || ($requirement['blocking'] ?? true) === false) {
+                continue;
+            }
+            $message = trim((string) ($requirement['message'] ?? ''));
+            if ($message !== '') {
+                $messages[] = $message;
+            }
+            if (count($messages) >= 3) {
+                break;
+            }
+        }
+
+        return !empty($messages)
+            ? implode(' ', $messages)
+            : 'El contrato Mautic no superó la validación.';
+    }
+
     public static function process(string $delivery_id): array {
         $repository = self::$repository ?? new FLACSO_Inquiry_Delivery_Repository();
         $delivery = $repository->find_by_delivery_id(trim($delivery_id));
@@ -51,12 +73,16 @@ final class FLACSO_Inquiry_Delivery_Service {
 
         $contract = is_callable(self::$contract_validator)
             ? call_user_func(self::$contract_validator)
-            : FLACSO_Mautic_Contract_Validator::validate();
+            : FLACSO_Mautic_Contract_Validator::validate(
+                null,
+                (int) ($delivery['templateId'] ?? 0)
+            );
 
         if (empty($contract['ok'])) {
-            $repository->mark_blocked($delivery_id, 'mautic_contract', 'El contrato Mautic no superó la validación.');
-            self::notify_failure($delivery_id, 'blocked', 'mautic_contract');
-            return ['ok' => false, 'status' => 'blocked', 'contract' => $contract];
+            $detail = self::contract_failure_message($contract);
+            $repository->mark_blocked($delivery_id, 'mautic_contract', $detail);
+            self::notify_failure($delivery_id, 'blocked', 'mautic_contract', $detail);
+            return ['ok' => false, 'status' => 'blocked', 'contract' => $contract, 'error' => $detail];
         }
 
         $snapshot = json_decode((string) ($delivery['snapshotJson'] ?? ''), true);
@@ -156,16 +182,22 @@ final class FLACSO_Inquiry_Delivery_Service {
         return ['ok' => false, 'status' => 'failed', 'attempt_id' => $attempt_id];
     }
 
-    private static function notify_failure(string $delivery_id, string $state, string $error_class): void {
+    private static function notify_failure(string $delivery_id, string $state, string $error_class, string $detail = ''): void {
         if (!class_exists('FLACSO_Error_Notifier')) {
             return;
         }
 
+        if (function_exists('get_option')
+            && (string) get_option('flacso_mautic_error_alerts_enabled', '1') !== '1') {
+            return;
+        }
+
         $message = sprintf(
-            'Entrega transaccional de consulta %s: estado=%s clase=%s',
+            'Entrega transaccional de consulta %s: estado=%s clase=%s%s',
             $delivery_id,
             $state,
-            $error_class
+            $error_class,
+            trim($detail) !== '' ? ' detalle=' . trim($detail) : ''
         );
 
         try {

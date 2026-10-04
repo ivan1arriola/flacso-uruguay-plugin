@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
 /**
  * Cliente HTTP para interactuar con la API REST de Mautic.
  *
- * Soporta autenticación Basic y Bearer (Personal Access Tokens),
+ * Soporta OAuth2 Client Credentials (recomendado), Basic y Bearer manual,
  * búsqueda y deduplicación de contactos por email, creación (POST /api/contacts/new)
  * y actualización (PATCH /api/contacts/{id}/edit) con tags y campos de perfil.
  */
@@ -18,13 +18,21 @@ class FLACSO_Mautic_Client {
     public const OPTION_USERNAME = 'flacso_mautic_username';
     public const OPTION_PASSWORD = 'flacso_mautic_password';
     public const OPTION_TOKEN = 'flacso_mautic_token';
+    public const OPTION_CLIENT_ID = 'flacso_mautic_client_id';
+    public const OPTION_CLIENT_SECRET = 'flacso_mautic_client_secret';
 
     private const DEFAULT_BASE_URL = 'https://envios.flacso.edu.uy';
-    private const DEFAULT_AUTH_TYPE = 'basic';
+    private const DEFAULT_AUTH_TYPE = 'oauth2';
     private const TIMEOUT_SECONDS = 4;
 
     /** @var callable|null Transporte HTTP inyectable exclusivamente para pruebas. */
     private static $http_transport = null;
+
+    /** @var array<string,array{token:string,expires_at:int}> */
+    private static $oauth2_token_cache = [];
+
+    /** @var string */
+    private static $last_auth_error = '';
 
     public static function set_http_transport(?callable $transport): void {
         self::$http_transport = $transport;
@@ -59,7 +67,9 @@ class FLACSO_Mautic_Client {
      *     auth_type: string,
      *     username: string,
      *     password: string,
-     *     token: string
+     *     token: string,
+     *     client_id: string,
+     *     client_secret: string
      * }
      */
     public static function get_settings(): array {
@@ -74,21 +84,25 @@ class FLACSO_Mautic_Client {
 
         $auth_type_raw = function_exists('get_option') ? get_option(self::OPTION_AUTH_TYPE, self::DEFAULT_AUTH_TYPE) : self::DEFAULT_AUTH_TYPE;
         $auth_type = strtolower(trim((string) $auth_type_raw));
-        if (!in_array($auth_type, ['basic', 'bearer'], true)) {
+        if (!in_array($auth_type, ['oauth2', 'basic', 'bearer'], true)) {
             $auth_type = self::DEFAULT_AUTH_TYPE;
         }
 
         $username = function_exists('get_option') ? trim((string) get_option(self::OPTION_USERNAME, '')) : '';
         $password = function_exists('get_option') ? trim((string) get_option(self::OPTION_PASSWORD, '')) : '';
         $token = function_exists('get_option') ? trim((string) get_option(self::OPTION_TOKEN, '')) : '';
+        $client_id = function_exists('get_option') ? trim((string) get_option(self::OPTION_CLIENT_ID, '')) : '';
+        $client_secret = function_exists('get_option') ? trim((string) get_option(self::OPTION_CLIENT_SECRET, '')) : '';
 
         return [
-            'enabled'   => $enabled,
-            'base_url'  => $base_url,
-            'auth_type' => $auth_type,
-            'username'  => $username,
-            'password'  => $password,
-            'token'     => $token,
+            'enabled'       => $enabled,
+            'base_url'      => $base_url,
+            'auth_type'     => $auth_type,
+            'username'      => $username,
+            'password'      => $password,
+            'token'         => $token,
+            'client_id'     => $client_id,
+            'client_secret' => $client_secret,
         ];
     }
 
@@ -102,6 +116,10 @@ class FLACSO_Mautic_Client {
 
         if (!$settings['enabled'] || empty($settings['base_url'])) {
             return false;
+        }
+
+        if ($settings['auth_type'] === 'oauth2') {
+            return !empty($settings['client_id']) && !empty($settings['client_secret']);
         }
 
         if ($settings['auth_type'] === 'bearer') {
@@ -127,10 +145,19 @@ class FLACSO_Mautic_Client {
             ];
         }
 
+        $headers = self::get_request_headers($settings);
+        if (empty($headers['Authorization'])) {
+            return [
+                'ok'      => false,
+                'code'    => 0,
+                'message' => self::$last_auth_error !== '' ? self::$last_auth_error : 'No se pudo obtener una credencial válida para Mautic.',
+            ];
+        }
+
         $url = $settings['base_url'] . '/api/contacts?limit=1';
         $args = [
             'method'  => 'GET',
-            'headers' => self::get_request_headers($settings),
+            'headers' => $headers,
             'timeout' => self::TIMEOUT_SECONDS,
         ];
 
@@ -170,6 +197,41 @@ class FLACSO_Mautic_Client {
             'ok'      => false,
             'code'    => $code,
             'message' => $error_msg,
+        ];
+    }
+
+    /**
+     * Prueba de solo lectura sobre el endpoint de contactos.
+     *
+     * @return array{ok: bool, code: int, message: string}
+     */
+    public static function test_contact_search(string $email): array {
+        $email = strtolower(trim($email));
+        if ($email === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            return ['ok' => false, 'code' => 0, 'message' => 'Ingresa un correo válido para la prueba.'];
+        }
+
+        $response = self::request_contact_endpoint(
+            '/api/contacts?search=email:' . urlencode($email) . '&limit=5',
+            'GET'
+        );
+        if (empty($response['ok'])) {
+            return [
+                'ok' => false,
+                'code' => (int) ($response['http_code'] ?? 0),
+                'message' => (string) ($response['error'] ?? 'No se pudo consultar contactos.'),
+            ];
+        }
+
+        $contacts = $response['data']['contacts'] ?? [];
+        $count = is_array($contacts) ? count($contacts) : 0;
+
+        return [
+            'ok' => true,
+            'code' => (int) ($response['http_code'] ?? 200),
+            'message' => $count > 0
+                ? sprintf('Mautic respondió correctamente: %d contacto(s) encontrado(s).', $count)
+                : 'Mautic respondió correctamente; no hay contactos con ese correo.',
         ];
     }
 
@@ -830,9 +892,16 @@ class FLACSO_Mautic_Client {
         }
 
         $settings = self::get_settings();
+        $headers = self::get_request_headers($settings);
+        if (empty($headers['Authorization'])) {
+            return self::contact_operation_failure(
+                self::$last_auth_error !== '' ? self::$last_auth_error : 'No se pudo autenticar contra Mautic.'
+            );
+        }
+
         $args = [
             'method'  => $method,
-            'headers' => self::get_request_headers($settings),
+            'headers' => $headers,
             'timeout' => self::TIMEOUT_SECONDS,
         ];
         if ($payload !== null) {
@@ -907,6 +976,97 @@ class FLACSO_Mautic_Client {
     }
 
     /**
+     * Obtiene un access token OAuth2 usando Client Credentials.
+     */
+    private static function get_oauth2_access_token(array $settings): string {
+        self::$last_auth_error = '';
+
+        $client_id = trim((string) ($settings['client_id'] ?? ''));
+        $client_secret = trim((string) ($settings['client_secret'] ?? ''));
+        $base_url = rtrim((string) ($settings['base_url'] ?? ''), '/');
+        if ($client_id === '' || $client_secret === '' || $base_url === '') {
+            self::$last_auth_error = 'Faltan la Clave Pública (Client ID) o la Clave Secreta (Client Secret) de Mautic.';
+            return '';
+        }
+
+        $cache_key = sha1($base_url . '|' . $client_id . '|' . $client_secret);
+        $now = time();
+        if (!empty(self::$oauth2_token_cache[$cache_key]['token'])
+            && (int) self::$oauth2_token_cache[$cache_key]['expires_at'] > $now + 30) {
+            return (string) self::$oauth2_token_cache[$cache_key]['token'];
+        }
+
+        $transient_key = 'flacso_mautic_oauth_' . substr($cache_key, 0, 24);
+        if (function_exists('get_transient')) {
+            $cached = get_transient($transient_key);
+            if (is_array($cached)
+                && !empty($cached['token'])
+                && (int) ($cached['expires_at'] ?? 0) > $now + 30) {
+                self::$oauth2_token_cache[$cache_key] = $cached;
+                return (string) $cached['token'];
+            }
+        }
+
+        $response = self::http_request(
+            $base_url . '/oauth/v2/token',
+            [
+                'method' => 'POST',
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/x-www-form-urlencoded',
+                ],
+                'body' => http_build_query([
+                    'grant_type' => 'client_credentials',
+                    'client_id' => $client_id,
+                    'client_secret' => $client_secret,
+                ], '', '&'),
+                'timeout' => self::TIMEOUT_SECONDS,
+            ]
+        );
+
+        if (is_wp_error($response)) {
+            self::$last_auth_error = 'OAuth2 Mautic: ' . $response->get_error_message();
+            return '';
+        }
+        if (!is_array($response)) {
+            self::$last_auth_error = 'OAuth2 Mautic: respuesta HTTP inválida al solicitar el token.';
+            return '';
+        }
+
+        $code = function_exists('wp_remote_retrieve_response_code')
+            ? (int) wp_remote_retrieve_response_code($response)
+            : (int) ($response['response']['code'] ?? 0);
+        $body = function_exists('wp_remote_retrieve_body')
+            ? (string) wp_remote_retrieve_body($response)
+            : (string) ($response['body'] ?? '');
+        $data = json_decode($body, true);
+
+        if ($code < 200 || $code >= 300 || !is_array($data) || empty($data['access_token'])) {
+            $detail = is_array($data)
+                ? (string) ($data['error_description'] ?? $data['error'] ?? '')
+                : '';
+            self::$last_auth_error = $detail !== ''
+                ? 'OAuth2 Mautic: ' . $detail
+                : sprintf('OAuth2 Mautic: no se pudo obtener el token (HTTP %d).', $code);
+            return '';
+        }
+
+        $expires_in = max(60, (int) ($data['expires_in'] ?? 3600));
+        $cached = [
+            'token' => (string) $data['access_token'],
+            'expires_at' => $now + $expires_in,
+        ];
+        self::$oauth2_token_cache[$cache_key] = $cached;
+
+        if (function_exists('set_transient')) {
+            $ttl = max(60, $expires_in - 60);
+            set_transient($transient_key, $cached, $ttl);
+        }
+
+        return (string) $cached['token'];
+    }
+
+    /**
      * Prepara las cabeceras HTTP de autenticación y contenido para las peticiones a la API de Mautic.
      *
      * @param array $settings
@@ -918,7 +1078,12 @@ class FLACSO_Mautic_Client {
             'Content-Type' => 'application/json',
         ];
 
-        if ($settings['auth_type'] === 'bearer') {
+        if (($settings['auth_type'] ?? '') === 'oauth2') {
+            $token = self::get_oauth2_access_token($settings);
+            if ($token !== '') {
+                $headers['Authorization'] = 'Bearer ' . $token;
+            }
+        } elseif (($settings['auth_type'] ?? '') === 'bearer') {
             $headers['Authorization'] = 'Bearer ' . $settings['token'];
         } else {
             $headers['Authorization'] = 'Basic ' . base64_encode($settings['username'] . ':' . $settings['password']);

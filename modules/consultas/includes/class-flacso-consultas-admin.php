@@ -18,18 +18,20 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 		public static function init(): void {
 			add_action( 'admin_menu', array( __CLASS__, 'register_menu' ), 12 );
 			add_action( 'wp_ajax_flacso_consultas_detail', array( __CLASS__, 'ajax_get_detail' ) );
+			add_action( 'wp_ajax_flacso_consultas_retry_email', array( __CLASS__, 'ajax_retry_email' ) );
 			add_action( 'wp_ajax_flacso_consultas_retry_mautic', array( __CLASS__, 'ajax_retry_mautic' ) );
+			add_action( 'wp_ajax_flacso_consultas_trigger_followup', array( __CLASS__, 'ajax_trigger_followup' ) );
 			add_action( 'wp_ajax_flacso_consultas_toggle_campaign', array( __CLASS__, 'ajax_toggle_campaign' ) );
 			add_action( 'admin_post_flacso_consultas_export_csv', array( __CLASS__, 'handle_export_csv' ) );
 		}
 
 		/**
 		 * Un reenvío manual sólo es seguro cuando el envío anterior falló.
-		 * Los estados sent y skipped no prueban que Mailjet no haya entregado
+		 * Los estados aceptado y omitido no prueban entrega final.
 		 * el correo, por lo que reenviarlos podría duplicarlo.
 		 */
 		public static function is_retryable_email_status( string $status ): bool {
-			return 'failed' === strtolower( trim( $status ) );
+			return in_array( strtolower( trim( $status ) ), array( 'failed', 'blocked' ), true );
 		}
 
 		public static function register_menu(): void {
@@ -169,7 +171,8 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 		}
 
 		/**
-		 * AJAX: Reintentar un envío de correo transaccional que falló.
+		 * AJAX: Reintentar una entrega transaccional cuyo resultado fue
+		 * comprobado como no enviado (failed o blocked).
 		 */
 		public static function ajax_retry_email(): void {
 			check_ajax_referer( self::NONCE_ACTION, 'nonce' );
@@ -180,155 +183,142 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			$table = isset( $_POST['table'] ) ? self::resolve_table( sanitize_key( wp_unslash( $_POST['table'] ) ) ) : 'offer_inquiries';
 			$id    = isset( $_POST['id'] ) ? sanitize_text_field( wp_unslash( $_POST['id'] ) ) : '';
 
-			$detail = FLACSO_Inquiry_Analytics_Repository::get_inquiry_detail( $table, $id );
+			if ( ! in_array( $table, array( 'offer_inquiries', 'seminar_inquiries' ), true ) ) {
+				wp_send_json_error( array( 'message' => 'Este tipo de consulta no tiene correo transaccional reenviable.' ), 422 );
+			}
+			if ( '' === $id ) {
+				wp_send_json_error( array( 'message' => 'ID inválido.' ), 400 );
+			}
 
+			$detail = FLACSO_Inquiry_Analytics_Repository::get_inquiry_detail( $table, $id );
 			if ( ! $detail ) {
 				wp_send_json_error( array( 'message' => 'No se encontró la consulta solicitada.' ), 404 );
 			}
 
-			if ( ! self::is_retryable_email_status( (string) ( $detail['emailStatus'] ?? '' ) ) ) {
-				wp_send_json_error( array( 'message' => 'Sólo se pueden reenviar consultas cuyo envío anterior falló.' ), 409 );
+			$email_status = strtolower( trim( (string) ( $detail['emailStatus'] ?? '' ) ) );
+			if ( ! self::is_retryable_email_status( $email_status ) ) {
+				wp_send_json_error(
+					array(
+						'message' => sprintf(
+							'El estado "%s" no admite reenvío manual. Sólo se reintentan failed o blocked; acceptance_unknown requiere conciliación para evitar duplicados.',
+							$email_status !== '' ? $email_status : 'sin estado'
+						),
+					),
+					409
+				);
 			}
 
-			$consulta_id = (string) ( $detail['consultaId'] ?? '' );
+			$consulta_id = trim( (string) ( $detail['consultaId'] ?? '' ) );
 			if ( '' === $consulta_id ) {
 				wp_send_json_error( array( 'message' => 'El registro no tiene consultaId válido.' ), 422 );
 			}
 
-			$retry_repository = 'seminar_inquiries' === $table
-				? new FLACSO_Seminar_Inquiry_Repository()
-				: new FLACSO_Offer_Inquiry_Repository();
-			if ( ! $retry_repository->claim_failed_email_retry( $consulta_id ) ) {
-				wp_send_json_error( array( 'message' => 'El envío ya fue procesado o está siendo reenviado por otra persona.' ), 409 );
+			if ( ! class_exists( 'FLACSO_Inquiry_Delivery_Repository' )
+				|| ! class_exists( 'FLACSO_Inquiry_Delivery_Service' )
+				|| ! class_exists( 'FLACSO_Mautic_Contract_Validator' ) ) {
+				wp_send_json_error( array( 'message' => 'El servicio de correo transaccional no está disponible.' ), 500 );
 			}
 
 			try {
-				if ( 'seminar_inquiries' === $table ) {
-					$seminar = array(
-						'id'     => (int) ( $detail['seminarWpId'] ?? 0 ),
-						'titulo' => (string) ( $detail['seminarName'] ?? 'Seminario FLACSO' ),
-						'url'    => (string) ( $detail['pageUrl'] ?? 'https://flacso.edu.uy/seminarios/' ),
-					);
-					$mail_res = FLACSO_Mailjet_Client::send_seminar_inquiry( $detail, $seminar );
-				} else {
-					$wp_id   = (int) ( $detail['offerWpId'] ?? 0 );
-					$program = array(
-						'id'                => $wp_id,
-						'titulo'            => (string) ( $detail['offerName'] ?? 'Posgrado FLACSO Uruguay' ),
-						'url'               => (string) ( $detail['pageUrl'] ?? 'https://flacso.edu.uy/formacion/' ),
-						'inscripcion_state' => 'open',
-					);
-					if ( $wp_id > 0 && class_exists( 'FLACSO_Academic_Catalog' ) && method_exists( 'FLACSO_Academic_Catalog', 'get_offer' ) ) {
-						if ( ! class_exists( 'FLACSO_Academic_Repository' ) ) {
-							$repo_file = dirname( __DIR__, 2 ) . '/oferta-academica/includes/class-academic-repositories.php';
-							if ( file_exists( $repo_file ) ) {
-								require_once $repo_file;
-							}
-						}
-						if ( class_exists( 'FLACSO_Academic_Repository' ) ) {
-							try {
-								$offer_obj = FLACSO_Academic_Catalog::get_offer( $wp_id );
-								if ( is_array( $offer_obj ) && ! empty( $offer_obj['titulo'] ) ) {
-									$program = array_merge( $program, $offer_obj );
-								}
-							} catch ( Throwable $e ) {
-								// Ignorar y mantener program base
-							}
-						}
-					}
-
-					$engine = function_exists( 'get_option' ) ? (string) get_option( 'flacso_inquiry_email_engine', 'mautic' ) : 'mautic';
-					$engine = strtolower( trim( $engine ) );
-					if ( 'mailjet' !== $engine ) {
-						$engine = 'mautic';
-					}
-
-					if ( 'mautic' === $engine ) {
-						$contact_id = (int) ( $detail['mauticContactId'] ?? 0 );
-						if ( $contact_id <= 0 && class_exists( 'FLACSO_Inquiry_Marketing_Service' ) ) {
-							try {
-								$sync_res = FLACSO_Inquiry_Marketing_Service::sync_inquiry( (string) ( $detail['id'] ?? '' ), $detail, $retry_repository );
-								if ( ! empty( $sync_res['contact_id'] ) ) {
-									$contact_id = (int) $sync_res['contact_id'];
-								}
-							} catch ( Throwable $e ) {
-								error_log( '[FLACSO Consultas] Error al sincronizar contacto en reintento: ' . $e->getMessage() );
-							}
-						}
-
-						$is_open = ( 'open' === ( $program['inscripcion_state'] ?? '' ) || 'abierta' === ( $program['estado'] ?? '' ) || 'abierta' === ( $detail['offerStatus'] ?? '' ) );
-						$template_id = $is_open
-							? (int) ( function_exists( 'get_option' ) ? get_option( 'flacso_mautic_template_consulta_abierta', 0 ) : 0 )
-							: (int) ( function_exists( 'get_option' ) ? get_option( 'flacso_mautic_template_consulta_cerrada', 0 ) : 0 );
-
-						$mautic_sent = false;
-						if ( $contact_id > 0 && $template_id > 0 && class_exists( 'FLACSO_Mautic_Client' ) && method_exists( 'FLACSO_Mautic_Client', 'send_email_to_contact' ) ) {
-							try {
-								$tokens = class_exists( 'FLACSO_Inquiry_Marketing_Service' )
-									? FLACSO_Inquiry_Marketing_Service::compile_tokens( $detail, $program, $is_open )
-									: array();
-								$send_res = FLACSO_Mautic_Client::send_email_to_contact( $template_id, $contact_id, $tokens );
-								if ( ! empty( $send_res['ok'] ) ) {
-									$mautic_sent = true;
-									$mail_res = array(
-										'ok'           => true,
-										'status'       => 'sent',
-										'sender'       => 'mautic',
-										'message_id'   => (string) $template_id,
-										'message_uuid' => null,
-									);
-								} else {
-									error_log( '[FLACSO Consultas] Fallo al reenviar correo por Mautic: ' . ( $send_res['error'] ?? '' ) . '. Conmutando a Mailjet fallback.' );
-								}
-							} catch ( Throwable $e ) {
-								error_log( '[FLACSO Consultas] Excepción al reenviar correo por Mautic: ' . $e->getMessage() . '. Conmutando a Mailjet fallback.' );
-							}
-						}
-
-						if ( ! $mautic_sent ) {
-							$mail_res = FLACSO_Mailjet_Client::send_offer_inquiry( $detail, $program );
-							if ( ! empty( $mail_res['ok'] ) ) {
-								$mail_res['sender'] = 'mailjet_fallback';
-							}
-						}
-					} else {
-						$mail_res = FLACSO_Mailjet_Client::send_offer_inquiry( $detail, $program );
-					}
-				}
-
-				if ( ! $retry_repository->update_email_status(
-					$consulta_id,
-					(string) ( $mail_res['status'] ?? 'failed' ),
-					$mail_res['sender'] ?? null,
-					$mail_res['message_id'] ?? null,
-					$mail_res['message_uuid'] ?? null
-				) ) {
-					throw new RuntimeException( 'No fue posible persistir el resultado del reenvío.' );
-				}
+				$delivery_repository = new FLACSO_Inquiry_Delivery_Repository();
+				$delivery = $delivery_repository->find_by_consulta_id( $consulta_id );
 			} catch ( Throwable $e ) {
-				// No se restaura `failed`: una excepción de red o de persistencia puede
-				// ocurrir después de que Mailjet aceptó el correo. Mantener processing
-				// impide un duplicado hasta que el equipo concilie el envío en Mailjet.
-				error_log( '[FLACSO Consultas] Reenvío pendiente de conciliación: ' . $e->getMessage() );
-				wp_send_json_error( array( 'message' => 'No se pudo confirmar el resultado del reenvío. No lo reintente: verifique el envío en Mailjet.' ), 502 );
+				wp_send_json_error( array( 'message' => 'No fue posible leer la entrega transaccional: ' . $e->getMessage() ), 500 );
 			}
 
-			if ( ! empty( $mail_res['ok'] ) ) {
+			if ( ! is_array( $delivery ) || empty( $delivery['id'] ) ) {
+				wp_send_json_error( array( 'message' => 'La consulta no tiene una entrega transaccional asociada.' ), 404 );
+			}
+
+			$delivery_id = (string) $delivery['id'];
+			$delivery_state = strtolower( trim( (string) ( $delivery['state'] ?? '' ) ) );
+			if ( ! in_array( $delivery_state, array( 'failed', 'blocked' ), true ) ) {
+				wp_send_json_error(
+					array( 'message' => 'La entrega ya cambió de estado a "' . $delivery_state . '" y no se reenviará.' ),
+					409
+				);
+			}
+
+			if ( method_exists( $delivery_repository, 'refresh_template_identity' ) ) {
+				$refreshed = $delivery_repository->refresh_template_identity( $delivery_id );
+				if ( is_array( $refreshed ) ) {
+					$delivery = $refreshed;
+				}
+			}
+
+			try {
+				$contract = FLACSO_Mautic_Contract_Validator::validate(
+					null,
+					(int) ( $delivery['templateId'] ?? 0 )
+				);
+			} catch ( Throwable $e ) {
+				wp_send_json_error( array( 'message' => 'No fue posible validar Mautic: ' . $e->getMessage() ), 500 );
+			}
+
+			if ( empty( $contract['ok'] ) ) {
+				$reason = method_exists( 'FLACSO_Inquiry_Delivery_Service', 'contract_failure_message' )
+					? FLACSO_Inquiry_Delivery_Service::contract_failure_message( $contract )
+					: 'El contrato del correo transaccional sigue bloqueado.';
+				wp_send_json_error(
+					array(
+						'status' => 'blocked',
+						'message' => 'No se reenvió nada. ' . $reason,
+						'contract' => $contract,
+					),
+					409
+				);
+			}
+
+			if ( ! method_exists( $delivery_repository, 'claim_manual_retry' )
+				|| ! $delivery_repository->claim_manual_retry( $delivery_id, 120 ) ) {
+				wp_send_json_error(
+					array( 'message' => 'La entrega ya fue reclamada, procesada o modificada por otro proceso.' ),
+					409
+				);
+			}
+
+			FLACSO_Inquiry_Delivery_Service::set_repository( $delivery_repository );
+			try {
+				$result = FLACSO_Inquiry_Delivery_Service::process( $delivery_id );
+			} catch ( Throwable $e ) {
+				$result = array(
+					'ok' => false,
+					'status' => 'failed',
+					'error' => $e->getMessage(),
+				);
+			} finally {
+				FLACSO_Inquiry_Delivery_Service::set_repository( null );
+			}
+
+			$status = strtolower( trim( (string) ( $result['status'] ?? 'failed' ) ) );
+			if ( ! empty( $result['ok'] ) && 'accepted' === $status ) {
 				wp_send_json_success(
 					array(
-						'status'       => $mail_res['status'],
-						'message_id'   => $mail_res['message_id'] ?? '',
-						'message_uuid' => $mail_res['message_uuid'] ?? '',
-						'sender'       => $mail_res['sender'] ?? '',
+						'status' => 'accepted',
+						'sender' => 'mautic_transactional_queue',
+						'message' => 'Mautic aceptó el correo transaccional.',
 					)
 				);
 			}
 
+			$current = $delivery_repository->find_by_delivery_id( $delivery_id );
+			$last_error = is_array( $current ) ? trim( (string) ( $current['lastError'] ?? '' ) ) : '';
+			$message = $last_error !== '' ? $last_error : trim( (string) ( $result['error'] ?? '' ) );
+
+			if ( 'acceptance_unknown' === $status ) {
+				$message = 'No se pudo confirmar si Mautic aceptó el correo. No se reintentará automáticamente para evitar duplicados.';
+			} elseif ( 'retryable_failed' === $status ) {
+				$message = 'Mautic devolvió un fallo reintentable. La cola volverá a intentarlo automáticamente.';
+			} elseif ( $message === '' ) {
+				$message = 'Mautic no aceptó el correo transaccional.';
+			}
+
 			wp_send_json_error(
 				array(
-					'status'  => $mail_res['status'] ?? 'failed',
-					'message' => $mail_res['error'] ?? 'Fallo al enviar por Mailjet.',
-				)
+					'status' => $status,
+					'message' => $message,
+				),
+				502
 			);
 		}
 
@@ -699,6 +689,31 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					.flacso-cp-filters .fg { display: flex; flex-direction: column; gap: 4px; }
 					.flacso-cp-filters label { font-size: 12px; font-weight: 600; color: #334155; }
 					.flacso-cp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+						.flacso-cp-inbox-table { table-layout: fixed; }
+						.flacso-cp-inbox-table th,
+						.flacso-cp-inbox-table td { overflow-wrap: anywhere; }
+						.flacso-cp-inbox-table th:nth-child(1) { width: 9%; }
+						.flacso-cp-inbox-table th:nth-child(2) { width: 13%; }
+						.flacso-cp-inbox-table th:nth-child(3) { width: 17%; }
+						.flacso-cp-inbox-table th:nth-child(4) { width: 24%; }
+						.flacso-cp-inbox-table th:nth-child(5) { width: 8%; }
+						.flacso-cp-inbox-table th:nth-child(6) { width: 10%; }
+						.flacso-cp-inbox-table th:nth-child(7) { width: 8%; }
+						.flacso-cp-inbox-table th:nth-child(8) { width: 11%; }
+						.flacso-cp-inbox-table th:nth-child(9) { width: 13%; }
+						.flacso-cp-inbox-table td:nth-child(1),
+						.flacso-cp-inbox-table td:nth-child(5),
+						.flacso-cp-inbox-table td:nth-child(7),
+						.flacso-cp-inbox-table td:nth-child(8) { font-size: 12px; }
+						.flacso-cp-inbox-offer { min-width: 0; }
+						.flacso-cp-inbox-offer__name { display: block; font-weight: 700; color: #1e293b; line-height: 1.35; }
+						.flacso-cp-inbox-offer__cohort { display: block; margin-top: 5px; color: #64748b; font-size: 12px; }
+						.flacso-cp-inbox-actions { white-space: normal; }
+						.flacso-cp-inbox-actions .button { margin: 2px 2px 2px 0; }
+						@media (max-width: 1200px) {
+							.flacso-cp-inbox-table { min-width: 1060px; }
+						}
+						.flacso-cp-table-scroll { overflow-x: auto; }
 					.flacso-cp-table th {
 						text-align: left; padding: 11px 12px; background: #f8fafc; border-bottom: 2px solid #e2e8f0;
 						color: #334155; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .03em;
@@ -749,10 +764,10 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 				<div class="flacso-cp-hero">
 					<div>
 						<h1>📊 Plataforma de Consultas e Inteligencia Analítica</h1>
-						<p>Gestión operativa de consultas en PostgreSQL, reenvío transaccional Mailjet, atribución de campañas y exportación unificada.</p>
+						<p>Gestión operativa de consultas en PostgreSQL, sincronización con Mautic, atribución de campañas y exportación unificada.</p>
 					</div>
 					<div>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=flacso-correos' ) ); ?>" class="button button-secondary" style="margin-right:8px;">✉️ Consola Mailjet</a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=flacso-correos' ) ); ?>" class="button button-secondary" style="margin-right:8px;">✉️ Comunicaciones Mautic</a>
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=' . self::PAGE_SLUG . '&tab=exportar&table=' . $table ) ); ?>" class="button button-primary">📥 Exportar CSV</a>
 					</div>
 				</div>
@@ -941,28 +956,28 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					</span>
 				</div>
 
-				<table class="flacso-cp-table">
+				<div class="flacso-cp-table-scroll">
+				<table class="flacso-cp-table <?php echo 'offer_inquiries' === $table ? 'flacso-cp-inbox-table' : ''; ?>">
 					<thead>
 						<tr>
 							<th>Fecha</th>
 							<th>Persona</th>
 							<th>Correo</th>
 							<?php if ( 'offer_inquiries' === $table ) : ?>
-								<th>Oferta</th>
-								<th>Cohorte</th>
-								<th>Al consultar</th>
+								<th>Oferta / Cohorte</th>
+								<th>Estado de la consulta</th>
 								<th>Mautic</th>
 							<?php else : ?>
 								<th>Oferta / Seminario</th>
 							<?php endif; ?>
 							<th>País</th>
-							<th>Estado Email</th>
-							<th>Acciones</th>
+							<th>Estado del correo</th>
+							<th class="flacso-cp-inbox-actions">Acciones</th>
 						</tr>
 					</thead>
 					<tbody>
 						<?php if ( empty( $result['items'] ) ) : ?>
-							<tr><td colspan="<?php echo 'offer_inquiries' === $table ? 10 : 7; ?>" style="text-align:center; padding:26px; color:#64748b;">No se encontraron consultas con los filtros seleccionados.</td></tr>
+							<tr><td colspan="<?php echo 'offer_inquiries' === $table ? 9 : 7; ?>" style="text-align:center; padding:26px; color:#64748b;">No se encontraron consultas con los filtros seleccionados.</td></tr>
 						<?php else : ?>
 							<?php foreach ( $result['items'] as $row ) :
 								$count_val  = (int) ( $row['count'] ?? 1 );
@@ -981,22 +996,19 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 									<td><a href="mailto:<?php echo esc_attr( (string) $row['email'] ); ?>"><?php echo esc_html( (string) $row['email'] ); ?></a></td>
 									<?php if ( 'offer_inquiries' === $table ) : ?>
 										<td>
-											<span style="font-weight:600; color:#1e293b;"><?php echo esc_html( (string) $row['item_name'] ); ?></span>
-											<?php if ( ! empty( $row['offerAbbreviation'] ) ) : ?>
-												<span class="flacso-badge abbr" title="Abreviación canónica"><?php echo esc_html( (string) $row['offerAbbreviation'] ); ?></span>
-											<?php endif; ?>
-										</td>
-										<td style="font-size:12px; color:#475569; white-space:nowrap;">
-											<?php
-											$cohort_num = ! empty( $row['cohortNumber'] ) ? (int) $row['cohortNumber'] : 0;
-											if ( $cohort_num > 0 ) {
-												echo esc_html( sprintf( __( 'Cohorte %d', 'flacso-uruguay' ), $cohort_num ) );
-											} elseif ( ! empty( $row['cohortName'] ) ) {
-												echo esc_html( (string) $row['cohortName'] );
-											} else {
-												echo '—';
-											}
-											?>
+											<div class="flacso-cp-inbox-offer">
+												<span class="flacso-cp-inbox-offer__name"><?php echo esc_html( (string) $row['item_name'] ); ?></span>
+												<?php if ( ! empty( $row['offerAbbreviation'] ) ) : ?>
+													<span class="flacso-badge abbr" title="Abreviación canónica"><?php echo esc_html( (string) $row['offerAbbreviation'] ); ?></span>
+												<?php endif; ?>
+												<?php
+												$cohort_num   = ! empty( $row['cohortNumber'] ) ? (int) $row['cohortNumber'] : 0;
+												$cohort_label = $cohort_num > 0
+													? sprintf( __( 'Cohorte %d', 'flacso-uruguay' ), $cohort_num )
+													: ( ! empty( $row['cohortName'] ) ? (string) $row['cohortName'] : __( 'Sin cohorte', 'flacso-uruguay' ) );
+												?>
+												<span class="flacso-cp-inbox-offer__cohort"><?php echo esc_html( $cohort_label ); ?></span>
+											</div>
 										</td>
 										<td>
 											<?php
@@ -1033,17 +1045,21 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 										}
 										?>
 									</td>
-									<td style="white-space:nowrap;">
+									<td class="flacso-cp-inbox-actions">
 										<button type="button" class="button button-small flacso-js-detail"
 											data-id="<?php echo esc_attr( (string) $row['id'] ); ?>"
 											data-table="<?php echo esc_attr( $table ); ?>">
 											🔍 Detalle
 										</button>
-										<?php if ( in_array( $table, array( 'offer_inquiries', 'seminar_inquiries' ), true ) ) : ?>
+										<?php
+										$email_status = strtolower( trim( (string) ( $row['emailStatus'] ?? '' ) ) );
+										if ( in_array( $table, array( 'offer_inquiries', 'seminar_inquiries' ), true )
+											&& self::is_retryable_email_status( $email_status ) ) :
+											?>
 											<button type="button" class="button button-small flacso-js-retry-email"
 												data-id="<?php echo esc_attr( (string) $row['id'] ); ?>"
 												data-table="<?php echo esc_attr( $table ); ?>"
-												title="Reenviar correo transaccional vía Mailjet">
+												title="<?php esc_attr_e( 'Reintentar correo transaccional vía Mautic', 'flacso-uruguay' ); ?>">
 												✉️ Reenviar
 											</button>
 										<?php endif; ?>
@@ -1057,11 +1073,12 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 											</button>
 										<?php endif; ?>
 									</td>
-								</tr>
+									</tr>
 							<?php endforeach; ?>
 						<?php endif; ?>
 					</tbody>
 				</table>
+				</div>
 
 				<?php if ( $result['pageInfo']['totalPages'] > 1 ) : ?>
 					<div style="margin-top:16px; display:flex; gap:6px; justify-content:flex-end;">
@@ -1131,7 +1148,6 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 											<tr><th>Oferta / Programa</th><td>${d.item_name || ''}</td></tr>
 											<tr><th>País / Teléfono</th><td>${d.country || '—'} / ${d.phone || '—'}</td></tr>
 											<tr><th>Estado Email</th><td><strong>${d.emailStatus || ''}</strong> (Remitente: ${senderLabel})</td></tr>
-											<tr><th>Mailjet Message ID / UUID</th><td><code>${d.mailjetMessageId || '—'}</code> / <code>${d.mailjetMessageUuid || '—'}</code></td></tr>
 											${d.mauticSyncStatus ? `<tr><th>Estado Mautic</th><td><strong>${d.mauticSyncStatus}</strong> (Contact ID: ${d.mauticContactId || '—'} | Sincronizado: ${d.mauticSyncedAt || '—'}${d.mauticLastError ? ' | Error: ' + d.mauticLastError : ''})</td></tr>` : ''}
 											${(d.table === 'offer_inquiries' || tbl === 'offer_inquiries') ? `<tr><th>Seguimiento (+X días)</th><td><strong>${d.followupStatus || 'none'}</strong> (Vencimiento: ${d.followupDueAt || '—'} | Enviado: ${d.followupSentAt || '—'}${d.followupLastError ? ' | Nota: ' + d.followupLastError : ''})${d.followupStatus !== 'sent' ? '<div style="margin-top:8px;"><button type="button" class="button button-secondary flacso-js-trigger-followup" data-id="' + d.id + '">🚀 Enviar Seguimiento Ahora</button><span class="flacso-followup-msg" style="margin-left:10px;font-size:12px;font-weight:600;display:inline-block;vertical-align:middle;"></span></div>' : ''}</td></tr>` : ''}
 											<tr><th>UTM / Campaña</th><td>Source: ${d.campaignSource || '—'} | Medium: ${d.campaignMedium || '—'} | Campaign: ${d.campaignName || '—'}</td></tr>
@@ -1228,13 +1244,21 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 							.then(res => {
 								this.disabled = false;
 								if (res.success) {
-									this.textContent = '✅ Enviado';
+									this.textContent = '✅ Aceptado';
 									const cell = document.querySelector(`.flacso-status-cell[data-id="${id}"]`);
-									if (cell) cell.innerHTML = '<span class="flacso-badge sent">sent</span>';
+									if (cell) {
+										cell.innerHTML = '<span class="flacso-badge sent mautic" title="Mautic aceptó la solicitud de envío">accepted (Mautic)</span>';
+									}
+									this.style.display = 'none';
 								} else {
 									this.textContent = origText;
-									alert('Error al enviar: ' + (res.data?.message || 'Fallo Mailjet'));
+									alert('Error al reenviar: ' + (res.data?.message || 'Mautic no aceptó el correo transaccional.'));
 								}
+							})
+							.catch(err => {
+								this.disabled = false;
+								this.textContent = origText;
+								alert('Error al reenviar: ' + err.message);
 							});
 					});
 				});

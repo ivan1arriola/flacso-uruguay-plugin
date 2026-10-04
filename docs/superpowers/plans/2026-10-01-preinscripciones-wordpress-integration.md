@@ -170,7 +170,6 @@
 
 **Files:**
 - Create: `tests/preinscriptions-module-contract-test.php`
-- Modify: `tests/academic-api-routes-test.php` only if the repository’s deployment smoke suite is the appropriate shared location
 - Modify: `API.md` with the public v1 route and compatibility rules
 - Modify: `CHANGELOG.md` with the release-facing integration entry
 

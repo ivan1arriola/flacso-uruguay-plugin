@@ -220,7 +220,7 @@ final class FLACSO_Admin_Panel {
                             <?php self::resource_card('dashicons-money-alt', __('Tablas de precios', 'flacso-uruguay'), __('Aranceles reutilizados por cohortes y ediciones.', 'flacso-uruguay'), admin_url('edit.php?post_type=tabla-precio')); ?>
                             <?php self::resource_card('dashicons-admin-home', __('Portada', 'flacso-uruguay'), __('Contenido y orden de la página principal.', 'flacso-uruguay'), admin_url('admin.php?page=flacso-main-page')); ?>
                             <?php self::resource_card('dashicons-chart-bar', __('Consultas', 'flacso-uruguay'), __('Bandeja PostgreSQL, analítica por oferta/país, campañas y exportación CSV.', 'flacso-uruguay'), admin_url('admin.php?page=flacso-consultas')); ?>
-                            <?php self::resource_card('dashicons-email-alt', __('Correos', 'flacso-uruguay'), __('Consola Mailjet, listas por oferta/seminario, plantillas y pruebas.', 'flacso-uruguay'), admin_url('admin.php?page=flacso-correos')); ?>
+                            <?php self::resource_card('dashicons-email-alt', __('Correos', 'flacso-uruguay'), __('Comunicaciones Mautic y campaña de consultas.', 'flacso-uruguay'), admin_url('admin.php?page=flacso-correos')); ?>
                             <?php self::resource_card('dashicons-chart-area', __('Analítica', 'flacso-uruguay'), __('Meta Pixel, Conversion API y captación.', 'flacso-uruguay'), admin_url('admin.php?page=flacso-integracion-meta')); ?>
                             <?php self::resource_card('dashicons-admin-tools', __('Sistema', 'flacso-uruguay'), __('Diagnóstico y dependencias externas todavía activas.', 'flacso-uruguay'), admin_url('admin.php?page=flacso-sistema')); ?>
                         </div>

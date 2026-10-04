@@ -82,7 +82,7 @@ final class FLACSO_Inquiry_Delivery_Repository {
             $payload_json = self::json([
                 'tokens' => FLACSO_Inquiry_Snapshot::delivery_tokens($snapshot),
             ]);
-            $template = $this->template_identity();
+            $template = $this->template_identity($snapshot);
             $report_month = gmdate('Y-m-01', strtotime((string) ($snapshot['inquiryAt'] ?? $now)) ?: time());
 
             $stmt = $this->pdo->prepare(
@@ -246,6 +246,109 @@ final class FLACSO_Inquiry_Delivery_Repository {
                     $claimed[] = $row;
                 }
             }
+        }
+
+        return $claimed;
+    }
+
+    /**
+     * Recalcula la plantilla de una entrega fallida/bloqueada a partir de su
+     * snapshot. Esto permite corregir entregas históricas creadas cuando sólo
+     * existía una plantilla F1 fija.
+     */
+    public function refresh_template_identity(string $delivery_id): ?array {
+        $delivery_id = trim($delivery_id);
+        if ($delivery_id === '') {
+            return null;
+        }
+
+        $delivery = $this->find_by_delivery_id($delivery_id);
+        if ($delivery === null) {
+            return null;
+        }
+
+        $state = strtolower(trim((string) ($delivery['state'] ?? '')));
+        if (!in_array($state, ['failed', 'blocked'], true)) {
+            return $delivery;
+        }
+
+        $snapshot = json_decode((string) ($delivery['snapshotJson'] ?? ''), true);
+        if (!is_array($snapshot)) {
+            return $delivery;
+        }
+
+        $template = $this->template_identity($snapshot);
+        $template_id = isset($template['template_id']) ? (int) $template['template_id'] : 0;
+        if ($template_id <= 0) {
+            return $delivery;
+        }
+
+        $stmt = $this->pdo->prepare(
+            'UPDATE inquiry_deliveries
+             SET "templateId" = :template_id,
+                 "templateVersion" = :template_version,
+                 "templateSha256" = :template_sha,
+                 "updatedAt" = :now
+             WHERE id = :id
+               AND (state = :failed OR state = :blocked)'
+        );
+        $stmt->execute([
+            ':template_id' => $template_id,
+            ':template_version' => (string) ($template['functional_version'] ?? ''),
+            ':template_sha' => (string) ($template['content_sha256'] ?? ''),
+            ':now' => gmdate('c'),
+            ':id' => $delivery_id,
+            ':failed' => 'failed',
+            ':blocked' => 'blocked',
+        ]);
+
+        return $this->find_by_delivery_id($delivery_id);
+    }
+
+    /**
+     * Reserva manualmente una entrega terminal cuyo resultado fue comprobado
+     * como no enviado. Nunca permite reintentar acceptance_unknown ni accepted.
+     */
+    public function claim_manual_retry(string $delivery_id, int $lease_seconds = 120): bool {
+        $delivery_id = trim($delivery_id);
+        if ($delivery_id === '') {
+            return false;
+        }
+
+        $lease_seconds = max(30, min(900, $lease_seconds));
+        $now = gmdate('c');
+        $until = gmdate('c', time() + $lease_seconds);
+        $token = bin2hex(random_bytes(16));
+
+        $stmt = $this->pdo->prepare(
+            'UPDATE inquiry_deliveries
+             SET state = :processing,
+                 "terminalAt" = NULL,
+                 "acceptedAt" = NULL,
+                 "nextAttemptAt" = NULL,
+                 "claimedAt" = :now,
+                 "claimedUntil" = :until,
+                 "claimToken" = :claim_token,
+                 "lastHttpCode" = NULL,
+                 "lastErrorClass" = NULL,
+                 "lastError" = NULL,
+                 "updatedAt" = :now
+             WHERE id = :id
+               AND (state = :failed OR state = :blocked)'
+        );
+        $stmt->execute([
+            ':processing'  => 'processing',
+            ':failed'      => 'failed',
+            ':blocked'     => 'blocked',
+            ':now'         => $now,
+            ':until'       => $until,
+            ':claim_token' => $token,
+            ':id'          => $delivery_id,
+        ]);
+
+        $claimed = $stmt->rowCount() === 1;
+        if ($claimed) {
+            $this->sync_source_email_status($delivery_id, 'processing');
         }
 
         return $claimed;
@@ -507,7 +610,7 @@ final class FLACSO_Inquiry_Delivery_Repository {
         ]);
     }
 
-    private function template_identity(): array {
+    private function template_identity(array $snapshot): array {
         if (!class_exists('FLACSO_Mautic_Contract_Manifest')) {
             $manifest_file = dirname(__DIR__, 3) . '/modules/consultas/services/class-flacso-mautic-contract-manifest.php';
             if (is_file($manifest_file)) {
@@ -516,11 +619,14 @@ final class FLACSO_Inquiry_Delivery_Repository {
         }
 
         if (class_exists('FLACSO_Mautic_Contract_Manifest')) {
-            $definition = FLACSO_Mautic_Contract_Manifest::definition();
+            $template = method_exists('FLACSO_Mautic_Contract_Manifest', 'initial_template_for_snapshot')
+                ? FLACSO_Mautic_Contract_Manifest::initial_template_for_snapshot($snapshot)
+                : (FLACSO_Mautic_Contract_Manifest::definition()['template'] ?? []);
+
             return [
-                'template_id'       => isset($definition['template']['id']) ? (int) $definition['template']['id'] : null,
-                'functional_version'=> (string) ($definition['template']['functional_version'] ?? ''),
-                'content_sha256'    => (string) ($definition['template']['content_sha256'] ?? ''),
+                'template_id'        => isset($template['id']) ? (int) $template['id'] : null,
+                'functional_version' => (string) ($template['functional_version'] ?? ''),
+                'content_sha256'     => (string) ($template['content_sha256'] ?? ''),
             ];
         }
 
