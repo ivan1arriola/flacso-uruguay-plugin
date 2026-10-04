@@ -18,6 +18,7 @@ if (!class_exists('FLACSO_Inquiry_Delivery_Service')) {
 
 final class FLACSO_Inquiry_Delivery_Worker {
     public const OPTION_ENABLED = 'flacso_inquiry_delivery_queue_enabled';
+    public const CRON_HOOK = 'flacso_inquiry_delivery_cron';
     public const MAX_BATCH_SIZE = 1;
     private const LOCK_OPTION = 'flacso_inquiry_delivery_worker_lock';
     private const LOCK_SECONDS = 180;
@@ -27,6 +28,33 @@ final class FLACSO_Inquiry_Delivery_Worker {
 
     public static function set_repository(?FLACSO_Inquiry_Delivery_Repository $repository): void {
         self::$repository = $repository;
+    }
+
+    public static function init(): void {
+        if (function_exists('add_action')) {
+            add_action(self::CRON_HOOK, [self::class, 'run_cron']);
+        }
+
+        if (function_exists('add_filter')) {
+            add_filter('cron_schedules', [self::class, 'cron_schedules']);
+        }
+
+        if (function_exists('wp_next_scheduled') && !wp_next_scheduled(self::CRON_HOOK)
+            && function_exists('wp_schedule_event')) {
+            wp_schedule_event(time() + 60, 'flacso_delivery_minutely', self::CRON_HOOK);
+        }
+    }
+
+    public static function cron_schedules(array $schedules): array {
+        $schedules['flacso_delivery_minutely'] = [
+            'interval' => 60,
+            'display'  => 'FLACSO delivery queue every minute',
+        ];
+        return $schedules;
+    }
+
+    public static function run_cron(): void {
+        self::run(10);
     }
 
     public static function run(int $limit = self::MAX_BATCH_SIZE): array {
