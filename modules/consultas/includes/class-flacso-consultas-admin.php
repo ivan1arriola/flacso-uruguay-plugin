@@ -240,7 +240,10 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			}
 
 			try {
-				$contract = FLACSO_Mautic_Contract_Validator::validate();
+				$contract = FLACSO_Mautic_Contract_Validator::validate(
+					null,
+					(int) ( $delivery['templateId'] ?? 0 )
+				);
 			} catch ( Throwable $e ) {
 				wp_send_json_error( array( 'message' => 'No fue posible validar Mautic: ' . $e->getMessage() ), 500 );
 			}
