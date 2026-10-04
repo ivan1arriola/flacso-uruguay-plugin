@@ -201,38 +201,6 @@ class FLACSO_Mautic_Client {
     }
 
     /**
-     * Comprueba que la campaña configurada exista y sea accesible.
-     *
-     * @return array{ok: bool, code: int, message: string}
-     */
-    public static function test_campaign(int $campaign_id): array {
-        if ($campaign_id <= 0) {
-            return ['ok' => false, 'code' => 0, 'message' => 'Configura un ID de campaña válido.'];
-        }
-
-        $response = self::request_contact_endpoint('/api/campaigns/' . $campaign_id, 'GET');
-        if (empty($response['ok'])) {
-            return [
-                'ok' => false,
-                'code' => (int) ($response['http_code'] ?? 0),
-                'message' => (string) ($response['error'] ?? 'No se pudo consultar la campaña.'),
-            ];
-        }
-
-        $campaign = is_array($response['data']['campaign'] ?? null)
-            ? $response['data']['campaign']
-            : [];
-        $name = trim((string) ($campaign['name'] ?? $campaign['title'] ?? ''));
-        $suffix = $name !== '' ? ' (' . $name . ')' : '';
-
-        return [
-            'ok' => true,
-            'code' => (int) ($response['http_code'] ?? 200),
-            'message' => 'Campaña #' . $campaign_id . ' accesible' . $suffix . '.',
-        ];
-    }
-
-    /**
      * Prueba de solo lectura sobre el endpoint de contactos.
      *
      * @return array{ok: bool, code: int, message: string}

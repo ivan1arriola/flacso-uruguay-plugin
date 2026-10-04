@@ -18,8 +18,6 @@ final class FLACSO_Mail_Settings {
     public const OPTION_MAUTIC_CLIENT_ID = 'flacso_mautic_client_id';
     public const OPTION_MAUTIC_CLIENT_SECRET = 'flacso_mautic_client_secret';
 
-    public const OPTION_MAUTIC_CAMPAIGN_ENABLED = 'flacso_mautic_campaign_enabled';
-    public const OPTION_MAUTIC_CAMPAIGN_CONSULTAS_ID = 'flacso_mautic_campaign_consultas_id';
     public const OPTION_MAUTIC_ERROR_ALERTS_ENABLED = 'flacso_mautic_error_alerts_enabled';
 
     public const OPTION_FOLLOWUP_ENABLED = 'flacso_inquiry_followup_enabled';
@@ -35,7 +33,7 @@ final class FLACSO_Mail_Settings {
         add_action('admin_menu', [self::class, 'register_menu'], 20);
         add_action('admin_init', [self::class, 'register_settings']);
         add_action('wp_ajax_flacso_mautic_test_connection', [self::class, 'ajax_test_mautic_connection']);
-        add_action('wp_ajax_flacso_mautic_test_campaign', [self::class, 'ajax_test_mautic_campaign']);
+        add_action('wp_ajax_flacso_mautic_validate_transactional', [self::class, 'ajax_validate_transactional']);
         add_action('wp_ajax_flacso_mautic_test_contact', [self::class, 'ajax_test_mautic_contact']);
         add_action('wp_ajax_flacso_mautic_test_alert', [self::class, 'ajax_test_mautic_alert']);
     }
@@ -98,16 +96,6 @@ final class FLACSO_Mail_Settings {
                     return self::sanitize_secret($value, self::OPTION_MAUTIC_CLIENT_SECRET);
                 },
                 'default' => '',
-            ],
-            self::OPTION_MAUTIC_CAMPAIGN_ENABLED => [
-                'type' => 'string',
-                'sanitize_callback' => [self::class, 'sanitize_toggle'],
-                'default' => '0',
-            ],
-            self::OPTION_MAUTIC_CAMPAIGN_CONSULTAS_ID => [
-                'type' => 'integer',
-                'sanitize_callback' => static fn($v): int => max(0, (int) $v),
-                'default' => 0,
             ],
             self::OPTION_MAUTIC_ERROR_ALERTS_ENABLED => [
                 'type' => 'string',
@@ -177,11 +165,13 @@ final class FLACSO_Mail_Settings {
         return sanitize_text_field($value);
     }
 
-    public static function get_mautic_campaign_settings(): array {
-        return [
-            'enabled' => (string) get_option(self::OPTION_MAUTIC_CAMPAIGN_ENABLED, '0') === '1',
-            'consultas_id' => max(0, (int) get_option(self::OPTION_MAUTIC_CAMPAIGN_CONSULTAS_ID, 0)),
-        ];
+    public static function get_transactional_manifest(): array {
+        if (!class_exists('FLACSO_Mautic_Contract_Manifest')) {
+            return [];
+        }
+
+        $manifest = FLACSO_Mautic_Contract_Manifest::definition();
+        return is_array($manifest) ? $manifest : [];
     }
 
     public static function get_followup_settings(): array {
@@ -198,7 +188,7 @@ final class FLACSO_Mail_Settings {
     public static function get_settings(): array {
         return [
             'mautic' => class_exists('FLACSO_Mautic_Client') ? FLACSO_Mautic_Client::get_settings() : [],
-            'mautic_campaign' => self::get_mautic_campaign_settings(),
+            'transactional' => self::get_transactional_manifest(),
             'followup' => self::get_followup_settings(),
             'error_alerts_enabled' => self::error_alerts_enabled(),
         ];
@@ -245,15 +235,64 @@ final class FLACSO_Mail_Settings {
         self::send_test_result($result);
     }
 
-    public static function ajax_test_mautic_campaign(): void {
+    public static function ajax_validate_transactional(): void {
         self::ajax_guard();
 
-        $campaign = self::get_mautic_campaign_settings();
-        $result = class_exists('FLACSO_Mautic_Client')
-            ? FLACSO_Mautic_Client::test_campaign((int) $campaign['consultas_id'])
-            : ['ok' => false, 'message' => 'Mautic no disponible.'];
+        if (!class_exists('FLACSO_Mautic_Contract_Validator')) {
+            self::send_test_result([
+                'ok' => false,
+                'message' => 'El validador del correo transaccional no está disponible.',
+            ]);
+        }
 
-        self::send_test_result($result);
+        try {
+            $validation = FLACSO_Mautic_Contract_Validator::validate();
+        } catch (Throwable $e) {
+            self::send_test_result([
+                'ok' => false,
+                'message' => 'No se pudo validar el correo transaccional: ' . $e->getMessage(),
+            ]);
+        }
+
+        $manifest = self::get_transactional_manifest();
+        $template = is_array($manifest['template'] ?? null) ? $manifest['template'] : [];
+        $template_id = (int) ($template['id'] ?? 0);
+        $version = trim((string) ($template['functional_version'] ?? ''));
+        $requirements = is_array($validation['requirements'] ?? null) ? $validation['requirements'] : [];
+
+        if (!empty($validation['ok'])) {
+            self::send_test_result([
+                'ok' => true,
+                'message' => sprintf(
+                    'Correo transaccional listo: plantilla #%d%s validada, publicada y con contenido aprobado.',
+                    $template_id,
+                    $version !== '' ? ' (' . $version . ')' : ''
+                ),
+            ]);
+        }
+
+        $failures = [];
+        foreach ($requirements as $requirement) {
+            if (!is_array($requirement) || !empty($requirement['ok'])) {
+                continue;
+            }
+            $message = trim((string) ($requirement['message'] ?? ''));
+            if ($message !== '') {
+                $failures[] = $message;
+            }
+            if (count($failures) >= 3) {
+                break;
+            }
+        }
+
+        self::send_test_result([
+            'ok' => false,
+            'message' => 'El correo transaccional no está listo. ' . (
+                !empty($failures)
+                    ? implode(' ', $failures)
+                    : 'Revisa la conexión, los campos de contacto y la plantilla configurada.'
+            ),
+        ]);
     }
 
     public static function ajax_test_mautic_contact(): void {
@@ -303,7 +342,10 @@ final class FLACSO_Mail_Settings {
         }
 
         $mautic = class_exists('FLACSO_Mautic_Client') ? FLACSO_Mautic_Client::get_settings() : [];
-        $campaign = self::get_mautic_campaign_settings();
+        $transactional = self::get_transactional_manifest();
+        $transactional_template = is_array($transactional['template'] ?? null) ? $transactional['template'] : [];
+        $transactional_template_id = (int) ($transactional_template['id'] ?? 0);
+        $transactional_version = trim((string) ($transactional_template['functional_version'] ?? ''));
         $auth_type = (string) ($mautic['auth_type'] ?? 'oauth2');
         $ready = class_exists('FLACSO_Mautic_Client') && FLACSO_Mautic_Client::is_configured();
         $nonce = wp_create_nonce(self::AJAX_NONCE_ACTION);
@@ -319,7 +361,7 @@ final class FLACSO_Mail_Settings {
             <div class="flacso-mautic-heading">
                 <div>
                     <h1><?php esc_html_e('Comunicaciones Mautic', 'flacso-uruguay'); ?></h1>
-                    <p><?php esc_html_e('WordPress captura la consulta y sincroniza con Mautic. La automatización, campañas y envíos quedan del lado de Mautic.', 'flacso-uruguay'); ?></p>
+                    <p><?php esc_html_e('WordPress captura la consulta y Mautic realiza el envío de los correos transaccionales. Esta integración no depende de campañas.', 'flacso-uruguay'); ?></p>
                 </div>
                 <span class="flacso-status <?php echo $ready ? 'is-ok' : 'is-warning'; ?>">
                     <?php echo esc_html($ready ? __('Configurado', 'flacso-uruguay') : __('Requiere configuración', 'flacso-uruguay')); ?>
@@ -404,24 +446,27 @@ final class FLACSO_Mail_Settings {
                     <section class="flacso-settings-card">
                         <div class="flacso-card-head">
                             <div>
-                                <h2><?php esc_html_e('Campaña de consultas', 'flacso-uruguay'); ?></h2>
-                                <p><?php esc_html_e('Controla la incorporación automática de contactos con consentimiento.', 'flacso-uruguay'); ?></p>
+                                <h2><?php esc_html_e('Correo transaccional', 'flacso-uruguay'); ?></h2>
+                                <p><?php esc_html_e('Las consultas se responden mediante una plantilla transaccional versionada. No se incorpora al contacto a una campaña para enviar este correo.', 'flacso-uruguay'); ?></p>
                             </div>
                         </div>
 
-                        <label class="flacso-toggle">
-                            <input type="hidden" name="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_ENABLED); ?>" value="0">
-                            <input type="checkbox" name="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_ENABLED); ?>" value="1" <?php checked($campaign['enabled']); ?>>
-                            <span>
-                                <strong><?php esc_html_e('Incorporar contactos automáticamente', 'flacso-uruguay'); ?></strong>
-                                <small><?php esc_html_e('Sólo cuando el flujo tiene consentimiento de marketing válido.', 'flacso-uruguay'); ?></small>
-                            </span>
-                        </label>
-
-                        <div class="flacso-field flacso-small-field">
-                            <label for="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_CONSULTAS_ID); ?>"><?php esc_html_e('ID de campaña', 'flacso-uruguay'); ?></label>
-                            <input type="number" min="0" id="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_CONSULTAS_ID); ?>" name="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_CONSULTAS_ID); ?>" value="<?php echo esc_attr((string) $campaign['consultas_id']); ?>">
+                        <div class="flacso-transactional-summary">
+                            <div>
+                                <span><?php esc_html_e('Plantilla Mautic', 'flacso-uruguay'); ?></span>
+                                <strong><?php echo esc_html($transactional_template_id > 0 ? '#' . $transactional_template_id : __('Sin configurar', 'flacso-uruguay')); ?></strong>
+                            </div>
+                            <div>
+                                <span><?php esc_html_e('Versión funcional', 'flacso-uruguay'); ?></span>
+                                <strong><?php echo esc_html($transactional_version !== '' ? $transactional_version : __('Sin configurar', 'flacso-uruguay')); ?></strong>
+                            </div>
+                            <div>
+                                <span><?php esc_html_e('Modo', 'flacso-uruguay'); ?></span>
+                                <strong><?php esc_html_e('Transaccional', 'flacso-uruguay'); ?></strong>
+                            </div>
                         </div>
+
+                        <p class="description"><?php esc_html_e('El ID y la huella de la plantilla forman parte del contrato versionado del plugin para evitar enviar una plantilla distinta por error.', 'flacso-uruguay'); ?></p>
                     </section>
 
                     <section class="flacso-settings-card">
@@ -470,7 +515,7 @@ final class FLACSO_Mail_Settings {
 
                         <div class="flacso-test-actions">
                             <button type="button" class="button button-secondary flacso-mautic-test" data-test="connection"><?php esc_html_e('Probar conexión', 'flacso-uruguay'); ?></button>
-                            <button type="button" class="button button-secondary flacso-mautic-test" data-test="campaign"><?php esc_html_e('Probar campaña', 'flacso-uruguay'); ?></button>
+                            <button type="button" class="button button-secondary flacso-mautic-test" data-test="transactional"><?php esc_html_e('Validar correo transaccional', 'flacso-uruguay'); ?></button>
                             <button type="button" class="button button-secondary flacso-mautic-test" data-test="alert"><?php esc_html_e('Probar alerta Telegram', 'flacso-uruguay'); ?></button>
                         </div>
 
@@ -508,6 +553,10 @@ final class FLACSO_Mail_Settings {
             .flacso-field>label{display:block;font-weight:600;margin-bottom:6px}
             .flacso-field input[type=text],.flacso-field input[type=password],.flacso-field input[type=url],.flacso-field input[type=email],.flacso-field select{width:100%;max-width:none}
             .flacso-small-field input{max-width:140px!important}
+            .flacso-transactional-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}
+            .flacso-transactional-summary>div{padding:12px;border:1px solid #dcdcde;border-radius:6px;background:#f9f9f9}
+            .flacso-transactional-summary span{display:block;color:#646970;font-size:12px;margin-bottom:4px}
+            .flacso-transactional-summary strong{display:block;font-size:15px}
             .flacso-credentials-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
             .flacso-toggle{display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid #dcdcde;border-radius:6px;margin-bottom:16px;background:#f9f9f9}
             .flacso-toggle input[type=checkbox]{margin-top:3px}
@@ -525,6 +574,7 @@ final class FLACSO_Mail_Settings {
             @media (max-width:900px){
                 .flacso-settings-grid{grid-template-columns:1fr}
                 .flacso-credentials-grid{grid-template-columns:1fr}
+                .flacso-transactional-summary{grid-template-columns:1fr}
                 .flacso-mautic-heading{flex-direction:column}
                 .flacso-save-bar{align-items:flex-start;flex-direction:column}
             }
@@ -554,7 +604,7 @@ final class FLACSO_Mail_Settings {
                 const kind = button.getAttribute('data-test');
                 const actions = {
                     connection: 'flacso_mautic_test_connection',
-                    campaign: 'flacso_mautic_test_campaign',
+                    transactional: 'flacso_mautic_validate_transactional',
                     contact: 'flacso_mautic_test_contact',
                     alert: 'flacso_mautic_test_alert'
                 };
