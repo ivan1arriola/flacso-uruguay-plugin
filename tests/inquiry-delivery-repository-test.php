@@ -115,6 +115,17 @@ $closed_result = $deliveries->persist_inquiry_with_delivery($source, $closed_rec
 $closed_row = $deliveries->find_by_delivery_id($closed_result['delivery_id']);
 delivery_repo_assert((int) ($closed_row['templateId'] ?? 0) === 5, 'oferta cerrada usa F1 #5');
 
+// Simular una entrega histórica creada cuando todas las consultas usaban #4.
+$pdo->prepare('UPDATE inquiry_deliveries SET templateId = 4 WHERE id = :id')
+    ->execute([':id' => $closed_result['delivery_id']]);
+$pdo->prepare('UPDATE inquiry_deliveries SET state = :state WHERE id = :id')
+    ->execute([':state' => 'blocked', ':id' => $closed_result['delivery_id']]);
+$refreshed_closed = $deliveries->refresh_template_identity($closed_result['delivery_id']);
+delivery_repo_assert((int) ($refreshed_closed['templateId'] ?? 0) === 5, 'reintento corrige una entrega histórica cerrada de #4 a #5');
+delivery_repo_assert($deliveries->claim_manual_retry($closed_result['delivery_id'], 60) === true, 'blocked histórico admite reserva manual');
+$pdo->prepare('UPDATE inquiry_deliveries SET state = :state, claimedAt = NULL, claimedUntil = NULL, claimToken = NULL WHERE id = :id')
+    ->execute([':state' => 'pending', ':id' => $closed_result['delivery_id']]);
+
 $closed_claimed = $deliveries->claim_pending_batch(10, 60);
 delivery_repo_assert(count($closed_claimed) === 1, 'worker reclama entrega cerrada');
 delivery_repo_assert($deliveries->mark_blocked($closed_result['delivery_id'], 'mautic_contract', 'prueba') === true, 'entrega puede quedar blocked');
