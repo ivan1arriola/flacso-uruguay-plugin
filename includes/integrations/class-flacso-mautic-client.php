@@ -1021,7 +1021,7 @@ class FLACSO_Mautic_Client {
             return '';
         }
 
-        $cache_key = sha1($base_url . '|' . $client_id);
+        $cache_key = sha1($base_url . '|' . $client_id . '|' . $client_secret);
         $now = time();
         if (!empty(self::$oauth2_token_cache[$cache_key]['token'])
             && (int) self::$oauth2_token_cache[$cache_key]['expires_at'] > $now + 30) {
