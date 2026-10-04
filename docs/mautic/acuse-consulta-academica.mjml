@@ -34,8 +34,8 @@
       <mj-column width="50%" padding="0 6px 12px 6px"><mj-text container-background-color="#edf3fb" color="#16396f" font-size="14px" line-height="1.5" padding="14px 16px"><strong style="font-size:13px;color:#7a8696;">Inicio</strong><br /><strong style="font-size:16px;color:#16396f;">{oferta_academica_fecha_inicio}</strong></mj-text></mj-column>
     </mj-section>
     <mj-section background-color="#ffffff" padding="4px 28px 26px 28px"><mj-column>
-      <mj-button background-color="#248138" color="#ffffff" href="{oferta_academica_url_preinscripcion}" padding="0 0 12px 0" width="100%">Iniciar preinscripción</mj-button>
-      <mj-button background-color="#16396f" color="#ffffff" href="{oferta_academica_url}" padding="0" width="100%">Ver costos, programa y requisitos</mj-button>
+      <mj-button background-color="#248138" color="#ffffff" href="{url_preinscripcion}" padding="0 0 12px 0" width="100%">Iniciar preinscripción</mj-button>
+      <mj-button background-color="#16396f" color="#ffffff" href="{url_carta}" padding="0" width="100%">Ver costos, programa y requisitos</mj-button>
     </mj-column></mj-section>
     <mj-section background-color="#fff7d6" padding="24px 28px"><mj-column>
       <mj-text color="#0f1a2d" font-size="18px" font-weight="700" line-height="1.4" padding="0 0 12px 0">Formación de posgrado con respaldo institucional</mj-text>
