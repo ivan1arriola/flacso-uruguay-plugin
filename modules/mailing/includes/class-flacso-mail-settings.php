@@ -420,7 +420,7 @@ final class FLACSO_Mail_Settings {
 
                         <div class="flacso-field flacso-small-field">
                             <label for="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_CONSULTAS_ID); ?>"><?php esc_html_e('ID de campaña', 'flacso-uruguay'); ?></label>
-                            <input type="number" min="1" id="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_CONSULTAS_ID); ?>" name="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_CONSULTAS_ID); ?>" value="<?php echo esc_attr((string) $campaign['consultas_id']); ?>">
+                            <input type="number" min="0" id="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_CONSULTAS_ID); ?>" name="<?php echo esc_attr(self::OPTION_MAUTIC_CAMPAIGN_CONSULTAS_ID); ?>" value="<?php echo esc_attr((string) $campaign['consultas_id']); ?>">
                         </div>
                     </section>
 
