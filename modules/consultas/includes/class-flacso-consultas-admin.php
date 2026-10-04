@@ -239,6 +239,13 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 				);
 			}
 
+			if ( method_exists( $delivery_repository, 'refresh_template_identity' ) ) {
+				$refreshed = $delivery_repository->refresh_template_identity( $delivery_id );
+				if ( is_array( $refreshed ) ) {
+					$delivery = $refreshed;
+				}
+			}
+
 			try {
 				$contract = FLACSO_Mautic_Contract_Validator::validate(
 					null,
