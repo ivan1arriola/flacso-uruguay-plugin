@@ -21,7 +21,7 @@ Antes de ejecutar `scripts/migrations/2026-09-30-inquiry-transactional-deliverie
 Después de la autorización operativa y con la cola habilitada, ejecutar cada minuto:
 
 ```sh
-* * * * * cd /var/www/clients/client2/web5/web && wp flacso consultas deliveries run --limit=10 --quiet
+* * * * * cd /var/www/clients/client2/web5/web && wp flacso consultas deliveries run --limit=1 --quiet
 ```
 
 La retención puede ejecutarse diariamente:

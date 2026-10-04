@@ -18,6 +18,7 @@ if (!class_exists('FLACSO_Inquiry_Delivery_Service')) {
 
 final class FLACSO_Inquiry_Delivery_Worker {
     public const OPTION_ENABLED = 'flacso_inquiry_delivery_queue_enabled';
+    public const MAX_BATCH_SIZE = 1;
     private const LOCK_OPTION = 'flacso_inquiry_delivery_worker_lock';
     private const LOCK_SECONDS = 180;
 
@@ -28,7 +29,7 @@ final class FLACSO_Inquiry_Delivery_Worker {
         self::$repository = $repository;
     }
 
-    public static function run(int $limit = 10): array {
+    public static function run(int $limit = self::MAX_BATCH_SIZE): array {
         $enabled = function_exists('get_option')
             ? (string) get_option(self::OPTION_ENABLED, '0') === '1'
             : false;
@@ -45,7 +46,10 @@ final class FLACSO_Inquiry_Delivery_Worker {
             $repository = self::$repository ?? new FLACSO_Inquiry_Delivery_Repository();
             FLACSO_Inquiry_Delivery_Service::set_repository($repository);
 
-            $claimed = $repository->claim_pending_batch(max(1, min(100, $limit)), 120);
+            $claimed = $repository->claim_pending_batch(
+                min(self::MAX_BATCH_SIZE, max(1, $limit)),
+                120
+            );
             $results = [];
             foreach ($claimed as $delivery) {
                 $id = (string) ($delivery['id'] ?? '');

@@ -10,6 +10,15 @@ if (!defined('ABSPATH') && !defined('STDIN')) {
 class FLACSO_DB {
     private static ?PDO $connection = null;
 
+    /** @return list<string> */
+    public static function session_statements(): array {
+        return [
+            "SET statement_timeout = '5000ms'",
+            "SET lock_timeout = '2000ms'",
+            "SET idle_in_transaction_session_timeout = '10000ms'",
+        ];
+    }
+
     public static function connection(): PDO {
         if (self::$connection instanceof PDO) {
             return self::$connection;
@@ -40,6 +49,10 @@ class FLACSO_DB {
                 PDO::ATTR_TIMEOUT            => 5,
             ]
         );
+
+        foreach (self::session_statements() as $statement) {
+            self::$connection->exec($statement);
+        }
 
         return self::$connection;
     }

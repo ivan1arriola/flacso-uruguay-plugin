@@ -31,6 +31,14 @@ $test_pdo = new PDO('sqlite::memory:', null, null, [
 FLACSO_DB::set_connection($test_pdo);
 db_assert(FLACSO_DB::connection() === $test_pdo, 'connection() debe retornar la instancia inyectada');
 db_assert(FLACSO_DB::is_configured() === true, 'Con conexión inyectada is_configured debe retornar true');
+db_assert(
+    FLACSO_DB::session_statements() === [
+        "SET statement_timeout = '5000ms'",
+        "SET lock_timeout = '2000ms'",
+        "SET idle_in_transaction_session_timeout = '10000ms'",
+    ],
+    'La conexión PostgreSQL debe imponer límites de consulta, bloqueo y transacción inactiva'
+);
 
 // 3. Reset
 FLACSO_DB::reset();
