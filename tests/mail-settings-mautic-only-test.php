@@ -12,9 +12,12 @@ function mautic_only_assert(bool $condition, string $message): void {
 }
 
 mautic_only_assert(strpos($source, 'public static function render_page') !== false, 'La consola debe tener una vista solo Mautic');
-mautic_only_assert(stripos($mautic_view, 'Correo transaccional') !== false, 'La vista debe describir el flujo transaccional');
+mautic_only_assert(stripos($mautic_view, 'Correos transaccionales') !== false, 'La vista debe describir el flujo transaccional');
 mautic_only_assert(stripos($mautic_view, 'Campaña de consultas') === false, 'La vista no debe presentar campañas como mecanismo de envío');
 mautic_only_assert(strpos($mautic_view, 'flacso_mautic_validate_transactional') !== false, 'La consola debe poder validar el correo transaccional');
+mautic_only_assert(strpos($mautic_view, 'F1 · Inscripciones abiertas') !== false, 'La consola debe mostrar F1 abiertas');
+mautic_only_assert(strpos($mautic_view, 'F1 · Inscripciones cerradas') !== false, 'La consola debe mostrar F1 cerradas');
+mautic_only_assert(strpos($mautic_view, 'F2 · Seguimiento') !== false, 'La consola debe mostrar F2 seguimiento');
 mautic_only_assert(strpos($mautic_view, 'Mailjet') === false, 'La consola no debe mostrar Mailjet');
 
 echo "OK mail-settings-mautic-only-test\n";

@@ -23,4 +23,10 @@ inbox_view_assert(strpos($admin, '<th>Al consultar</th>') === false, 'no debe ex
 inbox_view_assert(strpos($admin, 'flacso-cp-inbox-offer') !== false, 'la oferta debe tener una presentación compacta');
 inbox_view_assert(strpos($admin, 'flacso-cp-inbox-actions') !== false, 'las acciones deben tener una columna identificable');
 
+inbox_view_assert(strpos($admin, "wp_ajax_flacso_consultas_retry_email") !== false, 'el botón Reenviar debe tener endpoint AJAX registrado');
+inbox_view_assert(strpos($admin, "wp_ajax_flacso_consultas_trigger_followup") !== false, 'el seguimiento manual debe tener endpoint AJAX registrado');
+inbox_view_assert(strpos($admin, "array( 'failed', 'blocked' )") !== false, 'Reenviar debe limitarse a estados failed o blocked');
+inbox_view_assert(strpos($admin, "claim_manual_retry") !== false, 'Reenviar debe reservar la entrega transaccional antes de procesarla');
+inbox_view_assert(strpos($admin, "Mautic aceptó el correo transaccional") !== false, 'Reenviar debe informar aceptación transaccional de Mautic');
+
 echo "OK consultas-inbox-view-contract-test\n";

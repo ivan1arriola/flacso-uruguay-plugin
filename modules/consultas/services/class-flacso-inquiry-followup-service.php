@@ -25,6 +25,9 @@ if (!class_exists('FLACSO_Mautic_Client')) {
 if (!class_exists('FLACSO_Inquiry_Marketing_Service')) {
     require_once __DIR__ . '/class-flacso-inquiry-marketing-service.php';
 }
+if (!class_exists('FLACSO_Mautic_Contract_Manifest')) {
+    require_once __DIR__ . '/class-flacso-mautic-contract-manifest.php';
+}
 if (!class_exists('FLACSO_Academic_Catalog') && file_exists(dirname(__DIR__, 3) . '/modules/oferta-academica/includes/class-academic-catalog.php')) {
     require_once dirname(__DIR__, 3) . '/modules/oferta-academica/includes/class-academic-catalog.php';
 }
@@ -239,12 +242,12 @@ class FLACSO_Inquiry_Followup_Service {
             $inquiry_payload['cartaUrl'] = $carta_url;
         }
 
-        // Regla 4 (Plantilla Mautic)
-        if ($is_open) {
-            $template_id = function_exists('get_option') ? (int) get_option('flacso_mautic_template_seguimiento_abierta', 0) : 0;
-        } else {
-            $template_id = function_exists('get_option') ? (int) get_option('flacso_mautic_template_seguimiento_cerrada', 0) : 0;
-        }
+        // Regla 4 (F2 transaccional de seguimiento).
+        // Existe una única plantilla estándar para seguimiento: email #6.
+        $manifest = class_exists('FLACSO_Mautic_Contract_Manifest')
+            ? FLACSO_Mautic_Contract_Manifest::definition()
+            : [];
+        $template_id = (int) ($manifest['templates']['followup']['id'] ?? 0);
 
         // Regla 5 (Compilación de Tokens y Despacho)
         $tokens = [];
@@ -272,7 +275,7 @@ class FLACSO_Inquiry_Followup_Service {
             }
         } else {
             if ($template_id <= 0) {
-                $mautic_error = 'Plantilla de Mautic no configurada para seguimiento (' . ($is_open ? 'abierta' : 'cerrada') . ')';
+                $mautic_error = 'Plantilla F2 de Mautic no configurada para seguimiento.';
             } elseif ($contact_id <= 0) {
                 $mautic_error = 'Contacto no disponible en Mautic';
             }
