@@ -273,7 +273,7 @@ final class FLACSO_Mail_Settings {
 
         $failures = [];
         foreach ($requirements as $requirement) {
-            if (!is_array($requirement) || !empty($requirement['ok'])) {
+            if (!is_array($requirement) || !empty($requirement['ok']) || ($requirement['blocking'] ?? true) === false) {
                 continue;
             }
             $message = trim((string) ($requirement['message'] ?? ''));
