@@ -82,7 +82,7 @@ final class FLACSO_Inquiry_Delivery_Repository {
             $payload_json = self::json([
                 'tokens' => FLACSO_Inquiry_Snapshot::delivery_tokens($snapshot),
             ]);
-            $template = $this->template_identity();
+            $template = $this->template_identity($snapshot);
             $report_month = gmdate('Y-m-01', strtotime((string) ($snapshot['inquiryAt'] ?? $now)) ?: time());
 
             $stmt = $this->pdo->prepare(
@@ -556,7 +556,7 @@ final class FLACSO_Inquiry_Delivery_Repository {
         ]);
     }
 
-    private function template_identity(): array {
+    private function template_identity(array $snapshot): array {
         if (!class_exists('FLACSO_Mautic_Contract_Manifest')) {
             $manifest_file = dirname(__DIR__, 3) . '/modules/consultas/services/class-flacso-mautic-contract-manifest.php';
             if (is_file($manifest_file)) {
@@ -565,11 +565,14 @@ final class FLACSO_Inquiry_Delivery_Repository {
         }
 
         if (class_exists('FLACSO_Mautic_Contract_Manifest')) {
-            $definition = FLACSO_Mautic_Contract_Manifest::definition();
+            $template = method_exists('FLACSO_Mautic_Contract_Manifest', 'initial_template_for_snapshot')
+                ? FLACSO_Mautic_Contract_Manifest::initial_template_for_snapshot($snapshot)
+                : (FLACSO_Mautic_Contract_Manifest::definition()['template'] ?? []);
+
             return [
-                'template_id'       => isset($definition['template']['id']) ? (int) $definition['template']['id'] : null,
-                'functional_version'=> (string) ($definition['template']['functional_version'] ?? ''),
-                'content_sha256'    => (string) ($definition['template']['content_sha256'] ?? ''),
+                'template_id'        => isset($template['id']) ? (int) $template['id'] : null,
+                'functional_version' => (string) ($template['functional_version'] ?? ''),
+                'content_sha256'     => (string) ($template['content_sha256'] ?? ''),
             ];
         }
 
