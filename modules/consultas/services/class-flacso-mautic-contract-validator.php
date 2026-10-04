@@ -37,11 +37,11 @@ final class FLACSO_Mautic_Contract_Validator {
 
         $fields_response = FLACSO_Mautic_Client::get_contact_fields();
         if (empty($fields_response['ok'])) {
-            $ok = false;
             $requirements[] = [
                 'key' => 'contact_fields',
                 'ok' => false,
-                'message' => 'No fue posible leer los campos de contacto.',
+                'blocking' => false,
+                'message' => 'No fue posible leer los campos de contacto; esto no bloquea el correo transaccional.',
             ];
         } else {
             $available = self::index_fields($fields_response['fields'] ?? []);
@@ -54,9 +54,11 @@ final class FLACSO_Mautic_Contract_Validator {
                 $requirements[] = [
                     'key' => 'field:' . $alias,
                     'ok' => $field_ok,
-                    'message' => $field_ok ? 'Campo compatible.' : 'Campo ausente o incompatible.',
+                    'blocking' => false,
+                    'message' => $field_ok
+                        ? 'Campo compatible.'
+                        : 'Campo ausente o incompatible; no es requisito del correo transaccional.',
                 ];
-                $ok = $ok && $field_ok;
             }
         }
 
@@ -70,6 +72,7 @@ final class FLACSO_Mautic_Contract_Validator {
         $requirements[] = [
             'key' => 'template_identity',
             'ok' => $identity_ok,
+            'blocking' => true,
             'message' => $identity_ok ? 'Identidad de plantilla versionada.' : 'Falta ID, versión funcional o SHA-256 aprobado.',
         ];
         $ok = $ok && $identity_ok;
@@ -81,6 +84,7 @@ final class FLACSO_Mautic_Contract_Validator {
                 $requirements[] = [
                     'key' => 'template_read',
                     'ok' => false,
+                    'blocking' => true,
                     'message' => 'No fue posible leer la plantilla transaccional.',
                 ];
             } else {
@@ -89,6 +93,7 @@ final class FLACSO_Mautic_Contract_Validator {
                 $requirements[] = [
                     'key' => 'template_published',
                     'ok' => $published,
+                    'blocking' => true,
                     'message' => $published ? 'Plantilla publicada.' : 'La plantilla no está publicada.',
                 ];
                 $ok = $ok && $published;
@@ -98,6 +103,7 @@ final class FLACSO_Mautic_Contract_Validator {
                 $requirements[] = [
                     'key' => 'template_sha256',
                     'ok' => $hash_ok,
+                    'blocking' => true,
                     'message' => $hash_ok ? 'Contenido aprobado.' : 'La huella de plantilla no coincide o no está aprobada.',
                 ];
                 $ok = $ok && $hash_ok;
