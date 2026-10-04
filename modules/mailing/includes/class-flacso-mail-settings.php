@@ -255,18 +255,18 @@ final class FLACSO_Mail_Settings {
         }
 
         $manifest = self::get_transactional_manifest();
-        $template = is_array($manifest['template'] ?? null) ? $manifest['template'] : [];
-        $template_id = (int) ($template['id'] ?? 0);
-        $version = trim((string) ($template['functional_version'] ?? ''));
+        $templates = is_array($manifest['templates'] ?? null) ? $manifest['templates'] : [];
         $requirements = is_array($validation['requirements'] ?? null) ? $validation['requirements'] : [];
 
         if (!empty($validation['ok'])) {
+            $open_id = (int) ($templates['initial_open']['id'] ?? 0);
+            $closed_id = (int) ($templates['initial_closed']['id'] ?? 0);
             self::send_test_result([
                 'ok' => true,
                 'message' => sprintf(
-                    'Correo transaccional listo: plantilla #%d%s validada, publicada y con contenido aprobado.',
-                    $template_id,
-                    $version !== '' ? ' (' . $version . ')' : ''
+                    'Correos F1 listos: abiertas #%d y cerradas #%d. Las huellas se muestran sólo como auditoría y no bloquean el envío.',
+                    $open_id,
+                    $closed_id
                 ),
             ]);
         }
@@ -343,9 +343,10 @@ final class FLACSO_Mail_Settings {
 
         $mautic = class_exists('FLACSO_Mautic_Client') ? FLACSO_Mautic_Client::get_settings() : [];
         $transactional = self::get_transactional_manifest();
-        $transactional_template = is_array($transactional['template'] ?? null) ? $transactional['template'] : [];
-        $transactional_template_id = (int) ($transactional_template['id'] ?? 0);
-        $transactional_version = trim((string) ($transactional_template['functional_version'] ?? ''));
+        $transactional_templates = is_array($transactional['templates'] ?? null) ? $transactional['templates'] : [];
+        $open_template = is_array($transactional_templates['initial_open'] ?? null) ? $transactional_templates['initial_open'] : [];
+        $closed_template = is_array($transactional_templates['initial_closed'] ?? null) ? $transactional_templates['initial_closed'] : [];
+        $followup_template = is_array($transactional_templates['followup'] ?? null) ? $transactional_templates['followup'] : [];
         $auth_type = (string) ($mautic['auth_type'] ?? 'oauth2');
         $ready = class_exists('FLACSO_Mautic_Client') && FLACSO_Mautic_Client::is_configured();
         $nonce = wp_create_nonce(self::AJAX_NONCE_ACTION);
@@ -446,27 +447,30 @@ final class FLACSO_Mail_Settings {
                     <section class="flacso-settings-card">
                         <div class="flacso-card-head">
                             <div>
-                                <h2><?php esc_html_e('Correo transaccional', 'flacso-uruguay'); ?></h2>
-                                <p><?php esc_html_e('Las consultas se responden mediante una plantilla transaccional versionada. No se incorpora al contacto a una campaña para enviar este correo.', 'flacso-uruguay'); ?></p>
+                                <h2><?php esc_html_e('Correos transaccionales', 'flacso-uruguay'); ?></h2>
+                                <p><?php esc_html_e('El F1 se elige según el estado de inscripciones. El F2 queda registrado como seguimiento y no interviene en el reenvío inicial.', 'flacso-uruguay'); ?></p>
                             </div>
                         </div>
 
                         <div class="flacso-transactional-summary">
                             <div>
-                                <span><?php esc_html_e('Plantilla Mautic', 'flacso-uruguay'); ?></span>
-                                <strong><?php echo esc_html($transactional_template_id > 0 ? '#' . $transactional_template_id : __('Sin configurar', 'flacso-uruguay')); ?></strong>
+                                <span><?php esc_html_e('F1 · Inscripciones abiertas', 'flacso-uruguay'); ?></span>
+                                <strong>#<?php echo esc_html((string) ($open_template['id'] ?? '—')); ?></strong>
+                                <small><?php echo esc_html((string) ($open_template['name'] ?? '')); ?></small>
                             </div>
                             <div>
-                                <span><?php esc_html_e('Versión funcional', 'flacso-uruguay'); ?></span>
-                                <strong><?php echo esc_html($transactional_version !== '' ? $transactional_version : __('Sin configurar', 'flacso-uruguay')); ?></strong>
+                                <span><?php esc_html_e('F1 · Inscripciones cerradas', 'flacso-uruguay'); ?></span>
+                                <strong>#<?php echo esc_html((string) ($closed_template['id'] ?? '—')); ?></strong>
+                                <small><?php echo esc_html((string) ($closed_template['name'] ?? '')); ?></small>
                             </div>
                             <div>
-                                <span><?php esc_html_e('Modo', 'flacso-uruguay'); ?></span>
-                                <strong><?php esc_html_e('Transaccional', 'flacso-uruguay'); ?></strong>
+                                <span><?php esc_html_e('F2 · Seguimiento', 'flacso-uruguay'); ?></span>
+                                <strong>#<?php echo esc_html((string) ($followup_template['id'] ?? '—')); ?></strong>
+                                <small><?php echo esc_html((string) ($followup_template['name'] ?? '')); ?></small>
                             </div>
                         </div>
 
-                        <p class="description"><?php esc_html_e('El ID y la huella de la plantilla forman parte del contrato versionado del plugin para evitar enviar una plantilla distinta por error.', 'flacso-uruguay'); ?></p>
+                        <p class="description"><?php esc_html_e('Las plantillas se validan directamente contra Mautic. Los campos flacso_* y la huella SHA son diagnósticos de auditoría: no bloquean el correo transaccional.', 'flacso-uruguay'); ?></p>
                     </section>
 
                     <section class="flacso-settings-card">
@@ -557,6 +561,7 @@ final class FLACSO_Mail_Settings {
             .flacso-transactional-summary>div{padding:12px;border:1px solid #dcdcde;border-radius:6px;background:#f9f9f9}
             .flacso-transactional-summary span{display:block;color:#646970;font-size:12px;margin-bottom:4px}
             .flacso-transactional-summary strong{display:block;font-size:15px}
+            .flacso-transactional-summary small{display:block;color:#646970;margin-top:4px;line-height:1.35}
             .flacso-credentials-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
             .flacso-toggle{display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid #dcdcde;border-radius:6px;margin-bottom:16px;background:#f9f9f9}
             .flacso-toggle input[type=checkbox]{margin-top:3px}
