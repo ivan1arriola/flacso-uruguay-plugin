@@ -876,4 +876,39 @@ mautic_assert($unknown['ok'] === false && $unknown['acceptance_unknown'] === tru
 mautic_assert($unknown_posts === 1, 'resultado incierto no dispara un segundo POST');
 FLACSO_Mautic_Client::set_http_transport(null);
 
+// Test group 11: diagnósticos de campaña y búsqueda de contacto.
+$GLOBALS['mautic_mock_options'] = [
+    'flacso_mautic_enabled' => '1',
+    'flacso_mautic_base_url' => 'https://mautic.example.org',
+    'flacso_mautic_auth_type' => 'basic',
+    'flacso_mautic_username' => 'admin',
+    'flacso_mautic_password' => 'secret',
+];
+$GLOBALS['mautic_http_calls'] = [];
+$GLOBALS['mautic_http_handler'] = function($url, $args) {
+    if (str_ends_with($url, '/api/campaigns/4')) {
+        return [
+            'response' => ['code' => 200],
+            'body' => json_encode(['campaign' => ['id' => 4, 'name' => 'Consultas web']]),
+        ];
+    }
+    if (str_contains($url, '/api/contacts?search=email:prueba%40flacso.edu.uy')) {
+        return [
+            'response' => ['code' => 200],
+            'body' => json_encode(['contacts' => [['id' => 10]]]),
+        ];
+    }
+    return ['response' => ['code' => 404], 'body' => json_encode(['errors' => [['message' => 'Not found']]])];
+};
+
+$campaign_test = FLACSO_Mautic_Client::test_campaign(4);
+mautic_assert($campaign_test['ok'] === true, 'test_campaign valida una campaña accesible');
+mautic_assert(str_contains($campaign_test['message'], 'Consultas web'), 'test_campaign devuelve el nombre visible');
+
+$contact_test = FLACSO_Mautic_Client::test_contact_search('prueba@flacso.edu.uy');
+mautic_assert($contact_test['ok'] === true, 'test_contact_search ejecuta una consulta de solo lectura');
+mautic_assert(str_contains($contact_test['message'], '1 contacto'), 'test_contact_search informa coincidencias');
+mautic_assert(FLACSO_Mautic_Client::test_campaign(0)['ok'] === false, 'test_campaign rechaza un ID vacío');
+mautic_assert(FLACSO_Mautic_Client::test_contact_search('correo-invalido')['ok'] === false, 'test_contact_search valida el correo');
+
 echo "\nALL TESTS PASSED (100%)\n";
