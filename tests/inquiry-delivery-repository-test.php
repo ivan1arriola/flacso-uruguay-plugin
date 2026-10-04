@@ -61,6 +61,7 @@ delivery_repo_assert((int) $pdo->query('SELECT COUNT(*) FROM inquiry_deliveries'
 
 $row = $deliveries->find_by_delivery_id($result['delivery_id']);
 delivery_repo_assert($row !== null && $row['state'] === 'pending', 'entrega pending');
+delivery_repo_assert((int) $row['templateId'] === 4, 'oferta abierta usa F1 #4');
 delivery_repo_assert(strpos((string) $row['payloadJson'], 'permanece sólo') === false, 'payload de entrega no contiene texto libre');
 delivery_repo_assert(strpos((string) $row['snapshotJson'], 'permanece sólo') === false, 'snapshot no contiene texto libre');
 
@@ -101,6 +102,27 @@ delivery_repo_assert($attempt_row_id !== '', 'registra intento de entrega');
 delivery_repo_assert((int) $pdo->query('SELECT attempts FROM inquiry_deliveries LIMIT 1')->fetchColumn() === 1, 'incrementa intentos de entrega');
 
 $deliveries->mark_accepted($result['delivery_id'], 200);
+
+// Una oferta cerrada debe persistir F1 #5 y un blocked comprobado se puede
+// reservar manualmente sin habilitar reenvíos de accepted/acceptance_unknown.
+$closed_context = $context;
+$closed_context['offerStatus'] = 'cerrada';
+$closed_snapshot = FLACSO_Inquiry_Snapshot::from_offer($form, $closed_context, 'manual-retry-closed');
+$closed_record = $record;
+$closed_record['consultaId'] = 'manual-retry-closed';
+$closed_record['offerStatus'] = 'cerrada';
+$closed_result = $deliveries->persist_inquiry_with_delivery($source, $closed_record, $closed_snapshot, 'offer');
+$closed_row = $deliveries->find_by_delivery_id($closed_result['delivery_id']);
+delivery_repo_assert((int) ($closed_row['templateId'] ?? 0) === 5, 'oferta cerrada usa F1 #5');
+
+$closed_claimed = $deliveries->claim_pending_batch(10, 60);
+delivery_repo_assert(count($closed_claimed) === 1, 'worker reclama entrega cerrada');
+delivery_repo_assert($deliveries->mark_blocked($closed_result['delivery_id'], 'mautic_contract', 'prueba') === true, 'entrega puede quedar blocked');
+delivery_repo_assert($deliveries->claim_manual_retry($closed_result['delivery_id'], 60) === true, 'blocked comprobado admite reintento manual');
+$manual_retry_row = $deliveries->find_by_delivery_id($closed_result['delivery_id']);
+delivery_repo_assert(($manual_retry_row['state'] ?? '') === 'processing', 'reintento manual reserva la entrega');
+delivery_repo_assert($deliveries->claim_manual_retry($result['delivery_id'], 60) === false, 'accepted nunca admite reintento manual');
+
 $expired_terminal = gmdate('c', time() - (91 * 86400));
 $stmt = $pdo->prepare('UPDATE inquiry_deliveries SET terminalAt = :terminal_at');
 $stmt->execute([':terminal_at' => $expired_terminal]);
