@@ -289,6 +289,7 @@ final class FLACSO_Inquiry_Marketing_Service {
             'mauticSyncStatus' => 'failed',
             'mauticLastError' => $error,
         ]);
+        self::notify_failure('contact_sync', $error);
         return ['ok' => false, 'status' => 'failed', 'error' => $error];
     }
 
@@ -314,6 +315,13 @@ final class FLACSO_Inquiry_Marketing_Service {
         }
 
         $status = !empty($result['ok']) ? 'joined' : 'failed';
+        if (empty($result['ok'])) {
+            self::notify_failure(
+                'campaign_membership',
+                (string) ($result['error'] ?? 'No fue posible incorporar el contacto a la campaña.')
+            );
+        }
+
         if ($repository !== null && $inquiry_id !== '' && method_exists($repository, 'update_mautic_campaign_status')) {
             $repository->update_mautic_campaign_status($inquiry_id, [
                 'mauticCampaignId' => $campaign_id,
@@ -341,6 +349,29 @@ final class FLACSO_Inquiry_Marketing_Service {
             && strtotime($accepted_at) !== false
             && $source !== ''
             && $version !== '';
+    }
+
+    private static function notify_failure(string $operation, string $error): void {
+        if (!class_exists('FLACSO_Error_Notifier')) {
+            return;
+        }
+
+        if (function_exists('get_option')
+            && (string) get_option('flacso_mautic_error_alerts_enabled', '1') !== '1') {
+            return;
+        }
+
+        $message = sprintf(
+            'Mautic: operación=%s error=%s',
+            $operation,
+            trim($error) !== '' ? trim($error) : 'sin detalle'
+        );
+
+        try {
+            FLACSO_Error_Notifier::report($message, __FILE__, __LINE__, 'mautic_sync');
+        } catch (Throwable $e) {
+            // Una alerta nunca debe invalidar la consulta persistida.
+        }
     }
 
     private static function update_repository(
