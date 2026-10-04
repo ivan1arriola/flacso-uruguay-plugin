@@ -241,6 +241,7 @@ final class FLACSO_Inquiry_Delivery_Repository {
                 ':id'         => (string) $id,
             ]);
             if ($update->rowCount() === 1) {
+                $this->sync_source_email_status((string) $id, 'processing');
                 $row = $this->find_by_delivery_id((string) $id);
                 if ($row !== null) {
                     $claimed[] = $row;
@@ -460,7 +461,11 @@ final class FLACSO_Inquiry_Delivery_Repository {
             ':now'         => gmdate('c'),
             ':id'          => $delivery_id,
         ]);
-        return $stmt->rowCount() === 1;
+        $changed = $stmt->rowCount() === 1;
+        if ($changed) {
+            $this->sync_source_email_status($delivery_id, 'retryable_failed');
+        }
+        return $changed;
     }
 
     public function find_for_reconciliation(int $limit = 50): array {
