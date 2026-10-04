@@ -182,6 +182,12 @@ class FLACSO_Offer_Inquiry_Service {
                 ? (string)$data['url_carta']
                 : null);
 
+        // La carta de una oferta siempre vive en <url-oferta>/carta.
+        // No dependemos de que el formulario la envíe explícitamente.
+        if (($carta_url === null || trim($carta_url) === '') && !empty($program_url)) {
+            $carta_url = rtrim((string)$program_url, '/') . '/carta';
+        }
+
         $preinscripcion_url = !empty($data['preinscripcionUrl'])
             ? (string)$data['preinscripcionUrl']
             : (!empty($data['url_preinscripcion'])

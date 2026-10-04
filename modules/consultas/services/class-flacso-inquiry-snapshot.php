@@ -39,6 +39,9 @@ final class FLACSO_Inquiry_Snapshot {
         ];
 
         $snapshot['links'] = self::links($form, $context);
+        if ($snapshot['links']['cartaUrl'] === '' && $snapshot['links']['programUrl'] !== '') {
+            $snapshot['links']['cartaUrl'] = rtrim($snapshot['links']['programUrl'], '/') . '/carta';
+        }
         $snapshot['replyToEmail'] = self::nullable_string($form['replyToEmail'] ?? $form['reply_to'] ?? $context['replyToEmail'] ?? null);
         $snapshot['tags'] = FLACSO_Inquiry_Tag_Factory::from_snapshot($snapshot);
 
