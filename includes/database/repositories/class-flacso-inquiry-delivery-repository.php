@@ -252,6 +252,60 @@ final class FLACSO_Inquiry_Delivery_Repository {
     }
 
     /**
+     * Recalcula la plantilla de una entrega fallida/bloqueada a partir de su
+     * snapshot. Esto permite corregir entregas históricas creadas cuando sólo
+     * existía una plantilla F1 fija.
+     */
+    public function refresh_template_identity(string $delivery_id): ?array {
+        $delivery_id = trim($delivery_id);
+        if ($delivery_id === '') {
+            return null;
+        }
+
+        $delivery = $this->find_by_delivery_id($delivery_id);
+        if ($delivery === null) {
+            return null;
+        }
+
+        $state = strtolower(trim((string) ($delivery['state'] ?? '')));
+        if (!in_array($state, ['failed', 'blocked'], true)) {
+            return $delivery;
+        }
+
+        $snapshot = json_decode((string) ($delivery['snapshotJson'] ?? ''), true);
+        if (!is_array($snapshot)) {
+            return $delivery;
+        }
+
+        $template = $this->template_identity($snapshot);
+        $template_id = isset($template['template_id']) ? (int) $template['template_id'] : 0;
+        if ($template_id <= 0) {
+            return $delivery;
+        }
+
+        $stmt = $this->pdo->prepare(
+            'UPDATE inquiry_deliveries
+             SET "templateId" = :template_id,
+                 "templateVersion" = :template_version,
+                 "templateSha256" = :template_sha,
+                 "updatedAt" = :now
+             WHERE id = :id
+               AND (state = :failed OR state = :blocked)'
+        );
+        $stmt->execute([
+            ':template_id' => $template_id,
+            ':template_version' => (string) ($template['functional_version'] ?? ''),
+            ':template_sha' => (string) ($template['content_sha256'] ?? ''),
+            ':now' => gmdate('c'),
+            ':id' => $delivery_id,
+            ':failed' => 'failed',
+            ':blocked' => 'blocked',
+        ]);
+
+        return $this->find_by_delivery_id($delivery_id);
+    }
+
+    /**
      * Reserva manualmente una entrega terminal cuyo resultado fue comprobado
      * como no enviado. Nunca permite reintentar acceptance_unknown ni accepted.
      */
