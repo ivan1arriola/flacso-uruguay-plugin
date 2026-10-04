@@ -274,12 +274,14 @@ final class FLACSO_Mail_Settings {
             self::send_test_result(['ok' => false, 'message' => 'El notificador de errores no está disponible.']);
         }
 
-        $sent = FLACSO_Error_Notifier::report(
-            'Prueba manual de alertas Mautic desde FLACSO > Correos.',
-            __FILE__,
-            __LINE__,
-            'mautic_test'
-        );
+        $sent = method_exists('FLACSO_Error_Notifier', 'test_notification')
+            ? FLACSO_Error_Notifier::test_notification('Mautic · FLACSO > Correos')
+            : FLACSO_Error_Notifier::report(
+                'Prueba manual de alertas Mautic desde FLACSO > Correos.',
+                __FILE__,
+                __LINE__,
+                'mautic_test'
+            );
 
         self::send_test_result([
             'ok' => $sent,
