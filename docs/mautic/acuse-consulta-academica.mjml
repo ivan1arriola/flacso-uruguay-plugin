@@ -24,7 +24,7 @@
     <mj-section background-color="#fed222" padding="18px 28px"><mj-column><mj-text color="#0f1a2d" font-size="18px" font-weight="700" line-height="1.4" padding="0">{oferta_academica_nombre}</mj-text></mj-column></mj-section>
     <mj-section background-color="#ffffff" padding="30px 28px 10px 28px">
       <mj-column>
-        <mj-text padding="0 0 16px 0">Estimada/o <strong>{contactfield=firstname} {contactfield=lastname}</strong>,</mj-text>
+        <mj-text padding="0 0 16px 0">Estimada/o <strong>{nombre} {apellido}</strong>,</mj-text>
         <mj-text padding="0 0 16px 0">Gracias por completar el formulario de solicitud de información. Te hacemos llegar los datos principales sobre {oferta_academica_articulo} <strong>{oferta_academica_nombre}</strong>.</mj-text>
         <mj-text padding="0 0 16px 0">Esta propuesta forma parte de FLACSO Uruguay. En la página correspondiente podés consultar costos, programa, requisitos y detalles para iniciar tu postulación.</mj-text>
       </mj-column>
@@ -53,7 +53,7 @@
     </mj-column></mj-section>
     <mj-section background-color="#edf3fb" padding="24px 28px"><mj-column>
       <mj-text color="#16396f" font-size="18px" font-weight="700" padding="0 0 12px 0">Datos ingresados en el formulario</mj-text>
-      <mj-text font-size="15px" line-height="1.7" padding="0"><strong>Nombre:</strong> {contactfield=firstname}<br /><strong>Apellido:</strong> {contactfield=lastname}<br /><strong>País de residencia:</strong> {contactfield=flacso_pais}<br /><strong>Nivel académico:</strong> {contactfield=flacso_nivel_academico}<br /><strong>Correo electrónico:</strong> {contactfield=email}<br /><strong>Profesión:</strong> {contactfield=flacso_profesion}</mj-text>
+      <mj-text font-size="15px" line-height="1.7" padding="0"><strong>Nombre:</strong> {nombre}<br /><strong>Apellido:</strong> {apellido}<br /><strong>País de residencia:</strong> {pais}<br /><strong>Nivel académico:</strong> {nivel_academico}<br /><strong>Correo electrónico:</strong> {correo}<br /><strong>Profesión:</strong> {profesion}</mj-text>
     </mj-column></mj-section>
     <mj-section background-color="#16396f" padding="22px 24px"><mj-column>
       <mj-text align="center" color="#ffffff" font-size="14px" line-height="1.6" padding="0 0 8px 0">Saludos cordiales,<br /><strong>Equipo FLACSO Uruguay</strong></mj-text>
