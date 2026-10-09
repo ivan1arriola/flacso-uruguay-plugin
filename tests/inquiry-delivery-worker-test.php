@@ -114,15 +114,14 @@ FLACSO_Mautic_Client::set_http_transport(function($url, $args) use (&$sends) {
 });
 
 $run = FLACSO_Inquiry_Delivery_Worker::run(10);
-worker_assert($run['status'] === 'completed' && $run['processed'] === 1, 'worker procesa lote');
-worker_assert($sends === 1, 'worker envía una sola vez');
+worker_assert($run['status'] === 'completed' && $run['processed'] === 2, 'worker procesa lote');
+worker_assert($sends === 2, 'worker envía las entregas reclamadas una sola vez');
 worker_assert($repo->find_by_delivery_id($result['delivery_id'])['state'] === 'accepted', 'worker deja accepted');
-worker_assert($repo->find_by_delivery_id($second['delivery_id'])['state'] === 'pending', 'worker no reclama más de una entrega por ejecución');
-
-$claimed_second = $repo->claim_pending_batch(1, 120);
-worker_assert(count($claimed_second) === 1, 'la segunda entrega puede reclamarse después');
+worker_assert($repo->find_by_delivery_id($second['delivery_id'])['state'] === 'accepted', 'worker deja accepted la segunda entrega');
 $second_source = $pdo->query("SELECT \"emailStatus\" FROM offer_inquiries WHERE \"consultaId\" = 'worker-2'")->fetchColumn();
-worker_assert($second_source === 'processing', 'el panel debe reflejar processing al reclamar la entrega');
+worker_assert($second_source === 'accepted', 'el panel debe reflejar accepted al completar la entrega');
+$pdo->prepare('UPDATE inquiry_deliveries SET state = "processing" WHERE id = :id')
+    ->execute([':id' => $second['delivery_id']]);
 $repo->mark_retryable_failure($second['delivery_id'], 503, 'mautic_http', 'temporary failure', 60);
 $second_source = $pdo->query("SELECT \"emailStatus\" FROM offer_inquiries WHERE \"consultaId\" = 'worker-2'")->fetchColumn();
 worker_assert($second_source === 'retryable_failed', 'el panel debe reflejar retryable_failed al reprogramar la entrega');

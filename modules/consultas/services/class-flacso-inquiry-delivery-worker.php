@@ -19,7 +19,7 @@ if (!class_exists('FLACSO_Inquiry_Delivery_Service')) {
 final class FLACSO_Inquiry_Delivery_Worker {
     public const OPTION_ENABLED = 'flacso_inquiry_delivery_queue_enabled';
     public const CRON_HOOK = 'flacso_inquiry_delivery_cron';
-    public const MAX_BATCH_SIZE = 1;
+    public const MAX_BATCH_SIZE = 10;
     private const LOCK_OPTION = 'flacso_inquiry_delivery_worker_lock';
     private const LOCK_SECONDS = 180;
 
