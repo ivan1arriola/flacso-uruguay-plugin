@@ -6,6 +6,13 @@ Dar a las asistentes académicas una interfaz útil para su trabajo diario sin
 darles capacidades de publicación ni acceso a la administración técnica de
 WordPress.
 
+## Versión de entrega
+
+Esta es una actualización mayor. La entrega terminada se publica como
+`8.0.0`, actualizando en el mismo commit la cabecera `Version:` y la constante
+`FLACSO_URUGUAY_VERSION` de `flacso-uruguay.php`. La planificación no cambia
+la versión `7.0.0` actualmente desplegada.
+
 ## Decisiones funcionales
 
 - Las asistentes pueden editar cualquier perfil de `Personas / Equipo`.

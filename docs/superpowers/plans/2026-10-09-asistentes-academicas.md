@@ -18,6 +18,7 @@
 - La autorización debe funcionar aunque una persona conozca o modifique una URL del administrador.
 - Administradores y editores mantienen el acceso actual.
 - Ninguna asistente publica, elimina, clona o administra usuarios, ajustes o integraciones.
+- La entrega terminada incrementa la versión del plugin de `7.0.0` a `8.0.0` en su cabecera y constante global.
 - Los cambios se validan localmente antes de publicarse en `main`.
 
 ## Review Focus
@@ -211,6 +212,7 @@ git commit -m "feat: enfocar panel de asistentes en su catálogo"
 ### Task 6: Verificación integrada y publicación
 
 **Files:**
+- Modify: `flacso-uruguay.php:6,24`
 - Modify: `AGENTS.md` (sólo si hace falta documentar un nuevo contrato operativo)
 
 - [ ] **Step 1: Ejecutar la suite PHP completa**
@@ -218,15 +220,21 @@ git commit -m "feat: enfocar panel de asistentes en su catálogo"
 Run: `for test in tests/*-test.php; do php "$test" || exit 1; done`
 Expected: todos los contratos existentes y nuevos finalizan con código 0.
 
-- [ ] **Step 2: Verificar manualmente con tres usuarios**
+- [ ] **Step 2: Incrementar la versión de la entrega a 8.0.0**
+
+Actualizar en el mismo cambio la cabecera `Version:` y
+`FLACSO_URUGUAY_VERSION` de `flacso-uruguay.php`. No modificar las constantes
+derivadas, porque ya toman ese valor global.
+
+- [ ] **Step 3: Verificar manualmente con tres usuarios**
 
 Comprobar una asistente sin asignaciones, una asistente con una oferta y un seminario, y un administrador. Validar listados, URL directa, creación de cohorte/edición, perfil docente, Consultas y ausencia de exportación/acciones operativas para asistentes.
 
-- [ ] **Step 3: Publicar el resultado terminado**
+- [ ] **Step 4: Publicar el resultado terminado**
 
 Run: `git push origin main`
 Expected: la rama `main` remota contiene todos los commits validados.
 
-- [ ] **Step 4: Verificar CI, despliegue y navegador**
+- [ ] **Step 5: Verificar CI, despliegue y navegador**
 
 Confirmar el SHA desplegado, salud de WordPress y las tres sesiones de usuario antes de declarar el cambio disponible en producción.
