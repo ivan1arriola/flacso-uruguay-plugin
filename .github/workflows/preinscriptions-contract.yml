@@ -5,11 +5,13 @@ on:
     branches: [main]
     paths:
       - 'modules/preinscripciones/**'
+      - 'tests/preinscription*-test.php'
       - '.github/workflows/preinscriptions-contract.yml'
   pull_request:
     branches: [main]
     paths:
       - 'modules/preinscripciones/**'
+      - 'tests/preinscription*-test.php'
       - '.github/workflows/preinscriptions-contract.yml'
 
 jobs:
@@ -29,4 +31,7 @@ jobs:
 
       - name: Run Preinscriptions Test Suite
         run: |
-          php modules/preinscripciones/tests/run-tests.php
+          set -e
+          for test in tests/preinscription*-test.php; do
+            php "$test"
+          done
