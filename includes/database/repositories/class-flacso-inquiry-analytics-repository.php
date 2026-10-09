@@ -83,12 +83,14 @@ class FLACSO_Inquiry_Analytics_Repository {
     }
 
     protected static array $columns_cache = [];
+    protected static array $summary_cache = [];
 
     /**
      * Limpia la caché de columnas en memoria (útil para pruebas).
      */
     public static function clear_cache(): void {
         self::$columns_cache = [];
+        self::$summary_cache = [];
     }
 
     /**
@@ -308,6 +310,11 @@ class FLACSO_Inquiry_Analytics_Repository {
         $hasta_clean = preg_match('/^\d{4}-\d{2}-\d{2}$/', $hasta) ? $hasta : gmdate('Y-m-d');
         if ($hasta_clean < $desde_clean) {
             [$desde_clean, $hasta_clean] = [$hasta_clean, $desde_clean];
+        }
+
+        $summary_cache_key = implode('|', [$table, $offer_filter, $desde_clean, $hasta_clean]);
+        if (isset(self::$summary_cache[$summary_cache_key])) {
+            return self::$summary_cache[$summary_cache_key];
         }
 
         $start_ts = $desde_clean . ' 00:00:00';
@@ -598,7 +605,7 @@ class FLACSO_Inquiry_Analytics_Repository {
             return ($b['consultas'] <=> $a['consultas']) ?: strcasecmp($a['campana'], $b['campana']);
         });
 
-        return [
+        $result = [
             'rango'   => ['desde' => $desde_clean, 'hasta' => $hasta_clean],
             'filtro'  => ['oferta' => $offer_filter, 'table' => $table],
             'resumen' => [
@@ -620,6 +627,9 @@ class FLACSO_Inquiry_Analytics_Repository {
                 'ocultas'         => array_values($hidden_campaigns_map),
             ],
         ];
+
+        self::$summary_cache[$summary_cache_key] = $result;
+        return $result;
     }
 
     /**
@@ -894,26 +904,50 @@ class FLACSO_Inquiry_Analytics_Repository {
             $stmt_grp->execute($params);
             $groups = $stmt_grp->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
+            $group_conditions = [];
+            $child_params = $params;
+            foreach ($groups as $index => $grp) {
+                $item_param = ':group_item_' . $index;
+                $email_param = ':group_email_' . $index;
+                $group_conditions[] = '("' . $item_col . '" = ' . $item_param . ' AND "emailNormalized" = ' . $email_param . ')';
+                $child_params[$item_param] = (string) $grp['item_name'];
+                $child_params[$email_param] = (string) $grp['emailNormalized'];
+            }
+
+            $children_by_group = [];
+            if (!empty($group_conditions)) {
+                $children_where = $where_sql !== '' ? " AND ({$where_sql})" : '';
+                $stmt_children = $pdo->prepare(
+                    "SELECT * FROM (
+                        SELECT
+                            \"id\", \"consultaId\", {$select_wp} \"{$item_col}\" AS item_name,
+                            {$select_context}
+                            \"firstName\", \"lastName\", \"fullName\", \"email\", \"emailNormalized\",
+                            \"country\", \"source\", \"campaignName\", \"campaignSource\", \"campaignMedium\",
+                            {$select_email}
+                            \"inquiryAt\",
+                            ROW_NUMBER() OVER (
+                                PARTITION BY \"{$item_col}\", \"emailNormalized\"
+                                ORDER BY \"inquiryAt\" DESC
+                            ) AS flacso_child_rank
+                        FROM \"{$table}\"
+                        WHERE (" . implode(' OR ', $group_conditions) . ")
+                          {$children_where}
+                    ) AS flacso_grouped_children
+                    WHERE flacso_child_rank <= 25
+                    ORDER BY \"inquiryAt\" DESC"
+                );
+                $stmt_children->execute($child_params);
+                foreach ($stmt_children->fetchAll(PDO::FETCH_ASSOC) ?: [] as $child) {
+                    $key = (string) ($child['item_name'] ?? '') . "\0" . (string) ($child['emailNormalized'] ?? '');
+                    $children_by_group[$key][] = $child;
+                }
+            }
+
             $items = [];
             foreach ($groups as $grp) {
-                $stmt_children = $pdo->prepare(
-                    "SELECT
-                        \"id\", \"consultaId\", {$select_wp} \"{$item_col}\" AS item_name,
-                        {$select_context}
-                        \"firstName\", \"lastName\", \"fullName\", \"email\", \"emailNormalized\",
-                        \"country\", \"source\", \"campaignName\", \"campaignSource\", \"campaignMedium\",
-                        {$select_email}
-                        \"inquiryAt\"
-                     FROM \"{$table}\"
-                     WHERE \"{$item_col}\" = :iname AND \"emailNormalized\" = :enorm
-                     ORDER BY \"inquiryAt\" DESC
-                     LIMIT 25"
-                );
-                $stmt_children->execute([
-                    ':iname' => (string) $grp['item_name'],
-                    ':enorm' => (string) $grp['emailNormalized'],
-                ]);
-                $children = $stmt_children->fetchAll(PDO::FETCH_ASSOC) ?: [];
+                $key = (string) $grp['item_name'] . "\0" . (string) $grp['emailNormalized'];
+                $children = $children_by_group[$key] ?? [];
                 $head = $children[0] ?? [];
                 $head['count']    = (int) $grp['group_count'];
                 $head['latestAt'] = $grp['latest_at'];
