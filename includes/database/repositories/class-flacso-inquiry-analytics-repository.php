@@ -932,7 +932,10 @@ class FLACSO_Inquiry_Analytics_Repository {
 
             $children_by_group = [];
             if (!empty($group_conditions)) {
-                $children_where = $where_sql !== '' ? " AND ({$where_sql})" : '';
+                // $where_sql ya contiene el prefijo WHERE; aquí sólo se agrega
+                // el cuerpo porque la consulta hija ya tiene su propio WHERE.
+                $where_body = preg_replace('/^WHERE\s+/i', '', $where_sql);
+                $children_where = $where_body !== '' ? " AND ({$where_body})" : '';
                 $stmt_children = $pdo->prepare(
                     "SELECT * FROM (
                         SELECT

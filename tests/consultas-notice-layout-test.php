@@ -17,5 +17,6 @@ notice_layout_assert($wrapper !== false, 'la plataforma debe tener un contenedor
 notice_layout_assert($diagnostics !== false && $diagnostics > $wrapper, 'el aviso operativo debe renderizarse dentro del contenedor de la plataforma');
 notice_layout_assert(strpos($admin, '#wpbody-content > .notice') !== false, 'los avisos globales deben conservar contraste dentro de esta pantalla');
 notice_layout_assert(strpos($admin, '.flacso-consultas-notices') !== false, 'los avisos de consultas deben tener una región visual propia');
+notice_layout_assert(strpos($admin, 'flacso-consultas-diagnostic') !== false, 'el diagnóstico propio no debe usar la clase notice que Rank Math reubica');
 
 echo "OK consultas-notice-layout-test\n";

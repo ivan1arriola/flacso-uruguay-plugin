@@ -613,7 +613,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			}
 			$summary = empty( $parts ) ? 'sin datos de cola' : implode( ' · ', $parts );
 
-			echo '<div class="notice notice-info flacso-transactional-diagnostics"><p>';
+			echo '<div class="flacso-consultas-diagnostic flacso-transactional-diagnostics" role="status"><p>';
 			echo '<strong>' . esc_html__( 'Acuses transaccionales', 'flacso-uruguay' ) . ':</strong> ';
 			echo esc_html( $queue_enabled ? 'cola habilitada' : 'cola deshabilitada' );
 			echo ' · ' . esc_html( 'contrato Mautic: ' . $contract_status );
@@ -652,6 +652,9 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					.flacso-consultas-notices { margin: 0 0 18px; }
 					.flacso-consultas-notices .notice { margin: 0 0 10px; color: #1d2327; background: #fff; }
 					.flacso-consultas-notices .notice p { margin: .8em 1em; padding: 0; color: inherit; background: transparent; line-height: 1.5; }
+					.flacso-consultas-diagnostic { margin: 0 0 10px; padding: 9px 12px; border-left: 4px solid #3858e9; color: #1d2327; background: #fff; border-radius: 3px; box-shadow: 0 1px 2px rgba(15,23,42,.06); }
+					.flacso-consultas-diagnostic p { margin: .5em 0; padding: 0; color: inherit; background: transparent; line-height: 1.5; }
+					.flacso-cp-hero .notice p { color: #1d2327; background: transparent; }
 					.flacso-consultas-platform { max-width: 1360px; margin-top: 18px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 					.flacso-cp-hero {
 						background: linear-gradient(135deg, #0f172a 0%, #1d3a72 60%, #1e40af 100%);

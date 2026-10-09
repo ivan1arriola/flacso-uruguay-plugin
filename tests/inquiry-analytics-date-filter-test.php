@@ -69,4 +69,13 @@ $result = FLACSO_Inquiry_Analytics_Repository::get_paginated_inquiries([
 
 analytics_date_assert($result['pageInfo']['totalItems'] === 2, 'el rango incluye timestamps ISO y usa createdAt cuando inquiryAt es nulo');
 
+$grouped = FLACSO_Inquiry_Analytics_Repository::get_paginated_inquiries([
+    'table' => 'offer_inquiries',
+    'mode' => 'grouped',
+    'desde' => '2026-10-08',
+    'hasta' => '2026-10-09',
+    'page_size' => 25,
+]);
+analytics_date_assert($grouped['pageInfo']['totalItems'] === 2, 'la vista agrupada conserva los resultados cuando aplica rango de fechas');
+
 echo "OK inquiry-analytics-date-filter-test\n";
