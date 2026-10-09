@@ -7,6 +7,8 @@ if (!defined('ABSPATH')) {
 /** Panel de entrada a la gestión institucional y académica. */
 final class FLACSO_Admin_Panel {
     public const PAGE_SLUG = 'flacso-panel';
+    private static array $admin_posts_cache = [];
+
     public static function init(): void {
         add_action('admin_bar_menu', [self::class, 'register_admin_bar_item'], 35);
         if (!is_admin()) {
@@ -378,24 +380,29 @@ final class FLACSO_Admin_Panel {
 
     private static function integrity_alerts(): array {
         $alerts = [];
+        $offer_posts = self::admin_posts_by_type('oferta-academica');
+        $seminar_posts = self::admin_posts_by_type('seminario');
+        $cohort_posts = self::admin_posts_by_type('cohorte');
+        $edition_posts = self::admin_posts_by_type('edicion');
+
         $checks = [
-            ['oferta-academica', 'programa_academico_id', __('Ofertas sin programa', 'flacso-uruguay')],
-            ['seminario', 'programa_academico_id', __('Seminarios sin programa', 'flacso-uruguay')],
-            ['cohorte', 'numero', __('Cohortes sin número', 'flacso-uruguay')],
-            ['cohorte', 'link_preinscripcion', __('Cohortes sin enlace', 'flacso-uruguay')],
-            ['edicion', 'link_preinscripcion', __('Ediciones sin enlace', 'flacso-uruguay')],
+            ['oferta-academica', 'programa_academico_id', __('Ofertas sin programa', 'flacso-uruguay'), $offer_posts],
+            ['seminario', 'programa_academico_id', __('Seminarios sin programa', 'flacso-uruguay'), $seminar_posts],
+            ['cohorte', 'numero', __('Cohortes sin número', 'flacso-uruguay'), $cohort_posts],
+            ['cohorte', 'link_preinscripcion', __('Cohortes sin enlace', 'flacso-uruguay'), $cohort_posts],
+            ['edicion', 'link_preinscripcion', __('Ediciones sin enlace', 'flacso-uruguay'), $edition_posts],
         ];
-        foreach ($checks as $check) {
-            $count = self::count_missing_meta($check[0], $check[1]);
+        foreach ($checks as [$post_type, $meta_key, $label, $posts]) {
+            $count = self::count_missing_meta_in_posts($posts, $meta_key);
             if ($count > 0) {
                 $alerts[] = [
-                    'label' => $check[2],
+                    'label' => $label,
                     'count' => $count,
-                    'url' => admin_url('edit.php?post_type=' . $check[0]),
+                    'url' => admin_url('edit.php?post_type=' . $post_type),
                 ];
             }
         }
-        $without_type = self::count_offers_without_type();
+        $without_type = self::count_offers_without_type($offer_posts);
         if ($without_type > 0) {
             $alerts[] = [
                 'label' => __('Ofertas sin tipo académico', 'flacso-uruguay'),
@@ -406,14 +413,23 @@ final class FLACSO_Admin_Panel {
         return $alerts;
     }
 
-    private static function count_offers_without_type(): int {
-        $count = 0;
-        $ids = get_posts([
-            'post_type' => 'oferta-academica',
+    private static function admin_posts_by_type(string $post_type): array {
+        if (isset(self::$admin_posts_cache[$post_type])) {
+            return self::$admin_posts_cache[$post_type];
+        }
+
+        self::$admin_posts_cache[$post_type] = get_posts([
+            'post_type' => $post_type,
             'post_status' => ['publish', 'draft', 'pending', 'private'],
             'posts_per_page' => -1,
             'fields' => 'ids',
         ]);
+
+        return self::$admin_posts_cache[$post_type];
+    }
+
+    private static function count_offers_without_type(array $ids): int {
+        $count = 0;
         foreach ($ids as $id) {
             if (FLACSO_Oferta_Academica::get_tipo((int) $id) === '') {
                 $count++;
@@ -422,19 +438,15 @@ final class FLACSO_Admin_Panel {
         return $count;
     }
 
-    private static function count_missing_meta(string $post_type, string $meta_key): int {
-        return count(get_posts([
-            'post_type' => $post_type,
-            'post_status' => ['publish', 'draft', 'pending', 'private'],
-            'posts_per_page' => -1,
-            'fields' => 'ids',
-            'meta_query' => [
-                'relation' => 'OR',
-                ['key' => $meta_key, 'compare' => 'NOT EXISTS'],
-                ['key' => $meta_key, 'value' => '', 'compare' => '='],
-                ['key' => $meta_key, 'value' => '0', 'compare' => '='],
-            ],
-        ]));
+    private static function count_missing_meta_in_posts(array $ids, string $meta_key): int {
+        $count = 0;
+        foreach ($ids as $id) {
+            $value = get_post_meta((int) $id, $meta_key, true);
+            if ($value === '' || $value === '0' || $value === 0 || $value === null || $value === false) {
+                $count++;
+            }
+        }
+        return $count;
     }
 
     private static function upcoming_items(): array {
