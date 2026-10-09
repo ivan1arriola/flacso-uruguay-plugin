@@ -86,6 +86,19 @@ class FLACSO_Inquiry_Analytics_Repository {
     protected static array $summary_cache = [];
 
     /**
+     * Devuelve una expresión comparable aunque la fecha llegue como DateTime de
+     * PostgreSQL, como ISO-8601 o quede sólo en createdAt en datos históricos.
+     */
+    private static function timestamp_expression(PDO $pdo): string {
+        $fallback = 'COALESCE("inquiryAt", "createdAt")';
+        if ((string) $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
+            return "datetime(REPLACE(SUBSTR({$fallback}, 1, 19), 'T', ' '))";
+        }
+
+        return $fallback;
+    }
+
+    /**
      * Limpia la caché de columnas en memoria (útil para pruebas).
      */
     public static function clear_cache(): void {
@@ -348,9 +361,10 @@ class FLACSO_Inquiry_Analytics_Repository {
             return $empty;
         }
 
+        $timestamp_sql = self::timestamp_expression($pdo);
         $item_col = self::ALLOWED_TABLES[$table]['item_col'];
 
-        $where = ["\"inquiryAt\" >= :start_ts", "\"inquiryAt\" <= :end_ts"];
+        $where = ["{$timestamp_sql} >= :start_ts", "{$timestamp_sql} <= :end_ts"];
         $params = [':start_ts' => $start_ts, ':end_ts' => $end_ts];
 
         if ($offer_filter !== '') {
@@ -719,6 +733,8 @@ class FLACSO_Inquiry_Analytics_Repository {
             return $result;
         }
 
+        $timestamp_sql = self::timestamp_expression($pdo);
+
         $meta = self::ALLOWED_TABLES[$table];
         $item_col = $meta['item_col'];
         $wp_id_col = $meta['wp_id_col'];
@@ -777,12 +793,12 @@ class FLACSO_Inquiry_Analytics_Repository {
         }
 
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $desde)) {
-            $where[] = "\"inquiryAt\" >= :desde";
+            $where[] = "{$timestamp_sql} >= :desde";
             $params[':desde'] = $desde . ' 00:00:00';
         }
 
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $hasta)) {
-            $where[] = "\"inquiryAt\" <= :hasta";
+            $where[] = "{$timestamp_sql} <= :hasta";
             $params[':hasta'] = $hasta . ' 23:59:59';
         }
 
@@ -1012,17 +1028,18 @@ class FLACSO_Inquiry_Analytics_Repository {
         }
 
         $meta = self::ALLOWED_TABLES[$table];
+        $timestamp_sql = self::timestamp_expression($pdo);
         $item_col = $meta['item_col'];
 
         $where = [];
         $params = [];
 
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $desde)) {
-            $where[] = "\"inquiryAt\" >= :desde";
+            $where[] = "{$timestamp_sql} >= :desde";
             $params[':desde'] = $desde . ' 00:00:00';
         }
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $hasta)) {
-            $where[] = "\"inquiryAt\" <= :hasta";
+            $where[] = "{$timestamp_sql} <= :hasta";
             $params[':hasta'] = $hasta . ' 23:59:59';
         }
 

@@ -630,8 +630,6 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 				return;
 			}
 
-			self::render_transactional_diagnostics();
-
 			$active_tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'historico';
 			$valid_tabs = array( 'historico', 'oferta', 'oferta-pais', 'comparacion', 'campanas', 'exportar' );
 			if ( ! in_array( $active_tab, $valid_tabs, true ) ) {
@@ -649,6 +647,11 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			?>
 			<div class="wrap flacso-consultas-platform">
 				<style>
+					#wpbody-content > .notice { margin: 0 0 16px; color: #1d2327; background: #fff; border-radius: 6px; box-shadow: 0 1px 2px rgba(15,23,42,.06); }
+					#wpbody-content > .notice p { margin: .8em 1em; padding: 0; color: inherit; background: transparent; line-height: 1.5; }
+					.flacso-consultas-notices { margin: 0 0 18px; }
+					.flacso-consultas-notices .notice { margin: 0 0 10px; color: #1d2327; background: #fff; }
+					.flacso-consultas-notices .notice p { margin: .8em 1em; padding: 0; color: inherit; background: transparent; line-height: 1.5; }
 					.flacso-consultas-platform { max-width: 1360px; margin-top: 18px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 					.flacso-cp-hero {
 						background: linear-gradient(135deg, #0f172a 0%, #1d3a72 60%, #1e40af 100%);
@@ -760,6 +763,10 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 						overflow-y: auto; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.25);
 					}
 				</style>
+
+				<div class="flacso-consultas-notices">
+					<?php self::render_transactional_diagnostics(); ?>
+				</div>
 
 				<div class="flacso-cp-hero">
 					<div>
