@@ -93,6 +93,18 @@ final class FLACSO_Inquiry_Delivery_Worker {
                 'processed' => count($results),
                 'results' => $results,
             ];
+        } catch (PDOException $error) {
+            error_log(sprintf(
+                'FLACSO inquiry delivery worker: PostgreSQL unavailable (%s). The queue will retry on the next run.',
+                $error->getCode() !== '' ? $error->getCode() : 'unknown'
+            ));
+
+            return [
+                'ok' => false,
+                'status' => 'database_unavailable',
+                'processed' => 0,
+                'results' => [],
+            ];
         } finally {
             self::release_lock($token);
         }
