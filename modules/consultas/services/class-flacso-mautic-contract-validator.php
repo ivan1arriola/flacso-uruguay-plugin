@@ -17,6 +17,95 @@ if (!class_exists('FLACSO_Mautic_Contract_Manifest')) {
 }
 
 final class FLACSO_Mautic_Contract_Validator {
+    public static function validate_delivery_template(int $template_id, bool $force = false): array {
+        $manifest = FLACSO_Mautic_Contract_Manifest::definition();
+        $templates = self::templates_to_validate($manifest, $template_id);
+        if ($template_id <= 0 || empty($templates)) {
+            return [
+                'ok' => false,
+                'status' => 'blocked',
+                'manifest_version' => (string) ($manifest['version'] ?? ''),
+                'requirements' => [[
+                    'key' => 'template_manifest',
+                    'ok' => false,
+                    'blocking' => true,
+                    'message' => 'La plantilla no está registrada en el contrato transaccional.',
+                ]],
+            ];
+        }
+
+        if (!FLACSO_Mautic_Client::is_configured()) {
+            return [
+                'ok' => false,
+                'status' => 'blocked',
+                'manifest_version' => (string) ($manifest['version'] ?? ''),
+                'requirements' => [[
+                    'key' => 'mautic_configuration',
+                    'ok' => false,
+                    'blocking' => true,
+                    'message' => 'Mautic no está configurado o está deshabilitado.',
+                ]],
+            ];
+        }
+
+        $template = array_values($templates)[0];
+        $template_id = (int) ($template['id'] ?? 0);
+        $name = trim((string) ($template['name'] ?? ''));
+        $version = trim((string) ($template['functional_version'] ?? ''));
+        $label = $name !== '' ? $name : ('plantilla #' . $template_id);
+        $requirements = [[
+            'key' => 'template_identity',
+            'ok' => $template_id > 0 && $version !== '',
+            'blocking' => true,
+            'message' => $template_id > 0 && $version !== ''
+                ? sprintf('%s: identidad configurada.', $label)
+                : sprintf('%s: falta ID o versión funcional.', $label),
+        ]];
+
+        if (!$requirements[0]['ok']) {
+            return [
+                'ok' => false,
+                'status' => 'blocked',
+                'manifest_version' => (string) ($manifest['version'] ?? ''),
+                'requirements' => $requirements,
+            ];
+        }
+
+        $email_response = FLACSO_Mautic_Client::get_email_template($template_id);
+        if (empty($email_response['ok'])) {
+            $requirements[] = [
+                'key' => 'template_read',
+                'ok' => false,
+                'blocking' => true,
+                'message' => sprintf('%s (#%d): no fue posible leer el correo en Mautic.', $label, $template_id),
+            ];
+            return [
+                'ok' => false,
+                'status' => 'blocked',
+                'manifest_version' => (string) ($manifest['version'] ?? ''),
+                'requirements' => $requirements,
+            ];
+        }
+
+        $email = is_array($email_response['email'] ?? null) ? $email_response['email'] : [];
+        $published = self::is_published($email);
+        $requirements[] = [
+            'key' => 'template_published',
+            'ok' => $published,
+            'blocking' => true,
+            'message' => $published
+                ? sprintf('%s (#%d): publicado.', $label, $template_id)
+                : sprintf('%s (#%d): no está publicado.', $label, $template_id),
+        ];
+
+        return [
+            'ok' => $published,
+            'status' => $published ? 'valid' : 'blocked',
+            'manifest_version' => (string) ($manifest['version'] ?? ''),
+            'requirements' => $requirements,
+        ];
+    }
+
     public static function validate(?array $manifest = null, ?int $only_template_id = null): array {
         $manifest = $manifest ?? FLACSO_Mautic_Contract_Manifest::definition();
         $requirements = [];

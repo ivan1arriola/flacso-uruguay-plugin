@@ -71,20 +71,6 @@ final class FLACSO_Inquiry_Delivery_Service {
             return ['ok' => false, 'status' => 'not_claimed'];
         }
 
-        $contract = is_callable(self::$contract_validator)
-            ? call_user_func(self::$contract_validator)
-            : FLACSO_Mautic_Contract_Validator::validate(
-                null,
-                (int) ($delivery['templateId'] ?? 0)
-            );
-
-        if (empty($contract['ok'])) {
-            $detail = self::contract_failure_message($contract);
-            $repository->mark_blocked($delivery_id, 'mautic_contract', $detail);
-            self::notify_failure($delivery_id, 'blocked', 'mautic_contract', $detail);
-            return ['ok' => false, 'status' => 'blocked', 'contract' => $contract, 'error' => $detail];
-        }
-
         $snapshot = json_decode((string) ($delivery['snapshotJson'] ?? ''), true);
         $payload = json_decode((string) ($delivery['payloadJson'] ?? ''), true);
         if (!is_array($snapshot) || !is_array($payload) || !is_array($payload['tokens'] ?? null)) {
@@ -94,6 +80,24 @@ final class FLACSO_Inquiry_Delivery_Service {
         }
 
         $recipient = is_array($snapshot['recipient'] ?? null) ? $snapshot['recipient'] : [];
+        $template_id = (int) ($delivery['templateId'] ?? 0);
+        if (trim((string) ($recipient['email'] ?? '')) === '' || $template_id <= 0) {
+            $repository->mark_blocked($delivery_id, 'delivery_identity', 'Falta destinatario o plantilla versionada.');
+            self::notify_failure($delivery_id, 'blocked', 'delivery_identity');
+            return ['ok' => false, 'status' => 'blocked'];
+        }
+
+        $contract = is_callable(self::$contract_validator)
+            ? call_user_func(self::$contract_validator)
+            : FLACSO_Mautic_Delivery_Contract_Cache::get($template_id);
+
+        if (empty($contract['ok'])) {
+            $detail = self::contract_failure_message($contract);
+            $repository->mark_blocked($delivery_id, 'mautic_contract', $detail);
+            self::notify_failure($delivery_id, 'blocked', 'mautic_contract', $detail);
+            return ['ok' => false, 'status' => 'blocked', 'contract' => $contract, 'error' => $detail];
+        }
+
         $recipient_result = FLACSO_Mautic_Client::ensure_delivery_recipient(
             (string) ($recipient['email'] ?? ''),
             (string) ($recipient['firstName'] ?? ''),
@@ -123,7 +127,6 @@ final class FLACSO_Inquiry_Delivery_Service {
         }
 
         $contact_id = (int) ($recipient_result['contact_id'] ?? 0);
-        $template_id = (int) ($delivery['templateId'] ?? 0);
         if ($contact_id <= 0 || $template_id <= 0) {
             $repository->mark_blocked($delivery_id, 'delivery_identity', 'Falta destinatario o plantilla versionada.');
             self::notify_failure($delivery_id, 'blocked', 'delivery_identity');

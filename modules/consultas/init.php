@@ -35,6 +35,7 @@ $flacso_consultas_files = [
     'modules/consultas/services/class-flacso-inquiry-context-service.php',
     'modules/consultas/services/class-flacso-mautic-contract-manifest.php',
     'modules/consultas/services/class-flacso-mautic-contract-validator.php',
+    'modules/consultas/services/class-flacso-mautic-delivery-contract-cache.php',
     'modules/consultas/services/class-flacso-mautic-payload-builder.php',
     'modules/consultas/services/class-flacso-inquiry-marketing-service.php',
     'modules/consultas/services/class-flacso-inquiry-delivery-service.php',
