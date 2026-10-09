@@ -29,12 +29,7 @@ final class FLACSO_Preinscriptions_REST {
     }
 
     public static function index($request): WP_REST_Response {
-        $targets = FLACSO_Preinscriptions_Serializer::all_targets();
-
-        $payload = [
-            'version' => 1,
-            'targets' => $targets,
-        ];
+        $payload = FLACSO_Preinscriptions_Cache::get_catalog();
 
         $response = new WP_REST_Response($payload, 200);
         $response->header('Cache-Control', 'public, max-age=60');

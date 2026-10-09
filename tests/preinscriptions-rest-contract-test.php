@@ -116,6 +116,7 @@ if (!class_exists('FLACSO_Edicion')) {
 
 $GLOBALS['flacso_test_posts'] = [];
 $GLOBALS['flacso_test_post_meta'] = [];
+$GLOBALS['flacso_serializer_get_posts_calls'] = 0;
 
 function get_post($post = null, string $output = 'OBJECT', string $filter = 'raw') {
     $id = is_object($post) ? (int) $post->ID : (int) $post;
@@ -129,7 +130,13 @@ function get_post_meta(int $post_id, string $key = '', bool $single = false) {
     return $GLOBALS['flacso_test_post_meta'][$post_id][$key];
 }
 
+function get_post_type($post_id): string {
+    $post = get_post($post_id);
+    return $post ? (string) $post->post_type : '';
+}
+
 function get_posts(array $args = []): array {
+    $GLOBALS['flacso_serializer_get_posts_calls']++;
     $post_type = $args['post_type'] ?? '';
     $result = [];
     foreach ($GLOBALS['flacso_test_posts'] as $post) {
@@ -165,6 +172,7 @@ if (!is_file($serializer_file)) {
     exit(1);
 }
 require_once $serializer_file;
+require_once __DIR__ . '/../modules/preinscripciones/includes/class-preinscriptions-cache.php';
 
 $rest_file = __DIR__ . '/../modules/preinscripciones/includes/class-preinscriptions-rest.php';
 if (!is_file($rest_file)) {
@@ -363,6 +371,7 @@ flacso_rest_assert_same(true, call_user_func($route_config['permission_callback'
 
 // Test REST index handler response
 $request = new WP_REST_Request('GET', '/flacso/v1/preinscripciones');
+$GLOBALS['flacso_serializer_get_posts_calls'] = 0;
 $response = FLACSO_Preinscriptions_REST::index($request);
 
 flacso_rest_assert_true($response instanceof WP_REST_Response, 'response is WP_REST_Response');
@@ -372,6 +381,15 @@ $response_data = $response->get_data();
 flacso_rest_assert_same(1, $response_data['version'], 'top level version is 1');
 flacso_rest_assert_true(is_array($response_data['targets']), 'targets is array');
 flacso_rest_assert_same(4, count($response_data['targets']), 'contains all 4 targets');
+$first_catalog_build_calls = $GLOBALS['flacso_serializer_get_posts_calls'];
+
+$response_cached = FLACSO_Preinscriptions_REST::index($request);
+flacso_rest_assert_same($response_data, $response_cached->get_data(), 'cached catalog preserves payload');
+flacso_rest_assert_same($first_catalog_build_calls, $GLOBALS['flacso_serializer_get_posts_calls'], 'second REST request reuses server-side catalog cache');
+
+FLACSO_Preinscriptions_Cache::invalidate_for_post(101);
+FLACSO_Preinscriptions_REST::index($request);
+flacso_rest_assert_true($GLOBALS['flacso_serializer_get_posts_calls'] > $first_catalog_build_calls, 'cohort changes invalidate catalog cache');
 
 // Check Cache-Control header
 $headers = $response->get_headers();
