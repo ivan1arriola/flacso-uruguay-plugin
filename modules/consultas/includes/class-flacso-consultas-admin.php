@@ -15,6 +15,14 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 		const PAGE_SLUG    = 'flacso-consultas';
 		const NONCE_ACTION = 'flacso_consultas_admin_nonce';
 
+		private static function can_view(): bool {
+			return current_user_can( 'manage_options' ) || current_user_can( FLACSO_Academic_Assistant::VIEW_INQUIRIES );
+		}
+
+		private static function can_manage(): bool {
+			return current_user_can( 'manage_options' ) || current_user_can( FLACSO_Academic_Assistant::MANAGE_INQUIRIES );
+		}
+
 		public static function init(): void {
 			add_action( 'admin_menu', array( __CLASS__, 'register_menu' ), 12 );
 			add_action( 'wp_ajax_flacso_consultas_detail', array( __CLASS__, 'ajax_get_detail' ) );
@@ -41,7 +49,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 				$parent_slug,
 				__( 'Consultas y Analítica', 'flacso-uruguay' ),
 				__( 'Consultas', 'flacso-uruguay' ),
-				'manage_options',
+				FLACSO_Academic_Assistant::VIEW_INQUIRIES,
 				self::PAGE_SLUG,
 				array( __CLASS__, 'render_page' )
 			);
@@ -64,7 +72,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 		 * Descarga directa de archivo CSV con BOM UTF-8 compatible con Excel y Google Sheets.
 		 */
 		public static function handle_export_csv(): void {
-			if ( ! current_user_can( 'manage_options' ) ) {
+			if ( ! self::can_manage() ) {
 				wp_die( esc_html__( 'No tienes permisos para exportar consultas.', 'flacso-uruguay' ) );
 			}
 
@@ -146,7 +154,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 		 */
 		public static function ajax_get_detail(): void {
 			check_ajax_referer( self::NONCE_ACTION, 'nonce' );
-			if ( ! current_user_can( 'manage_options' ) ) {
+			if ( ! self::can_view() ) {
 				wp_send_json_error( array( 'message' => 'No autorizado' ), 403 );
 			}
 
@@ -176,7 +184,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 		 */
 		public static function ajax_retry_email(): void {
 			check_ajax_referer( self::NONCE_ACTION, 'nonce' );
-			if ( ! current_user_can( 'manage_options' ) ) {
+			if ( ! self::can_manage() ) {
 				wp_send_json_error( array( 'message' => 'No autorizado' ), 403 );
 			}
 
@@ -327,7 +335,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 		 */
 		public static function ajax_retry_mautic(): void {
 			check_ajax_referer( self::NONCE_ACTION, 'nonce' );
-			if ( ! current_user_can( 'manage_options' ) ) {
+			if ( ! self::can_manage() ) {
 				wp_send_json_error( array( 'message' => 'No autorizado' ), 403 );
 			}
 
@@ -499,7 +507,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 		 */
 		public static function ajax_trigger_followup(): void {
 			check_ajax_referer( self::NONCE_ACTION, 'nonce' );
-			if ( ! current_user_can( 'manage_options' ) ) {
+			if ( ! self::can_manage() ) {
 				wp_send_json_error( array( 'message' => 'No autorizado' ), 403 );
 			}
 
@@ -557,7 +565,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 		 */
 		public static function ajax_toggle_campaign(): void {
 			check_ajax_referer( self::NONCE_ACTION, 'nonce' );
-			if ( ! current_user_can( 'manage_options' ) ) {
+			if ( ! self::can_manage() ) {
 				wp_send_json_error( array( 'message' => 'No autorizado' ), 403 );
 			}
 
@@ -626,15 +634,17 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 		 * Renderiza la plataforma principal de Consultas con 6 pestañas.
 		 */
 		public static function render_page(): void {
-			if ( ! current_user_can( 'manage_options' ) ) {
+			if ( ! self::can_view() ) {
 				return;
 			}
 
 			$active_tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'historico';
 			$valid_tabs = array( 'historico', 'oferta', 'oferta-pais', 'comparacion', 'campanas', 'exportar' );
+			$can_manage = self::can_manage();
 			if ( ! in_array( $active_tab, $valid_tabs, true ) ) {
 				$active_tab = 'historico';
 			}
+			if ( ! $can_manage && 'exportar' === $active_tab ) { $active_tab = 'historico'; }
 
 			$table      = isset( $_GET['table'] ) ? self::resolve_table( sanitize_key( wp_unslash( $_GET['table'] ) ) ) : 'offer_inquiries';
 			$pg_ready   = class_exists( 'FLACSO_DB' ) && FLACSO_DB::is_configured();
@@ -776,10 +786,10 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 						<h1>📊 Plataforma de Consultas e Inteligencia Analítica</h1>
 						<p>Gestión operativa de consultas en PostgreSQL, sincronización con Mautic, atribución de campañas y exportación unificada.</p>
 					</div>
-					<div>
+					<?php if ( $can_manage ) : ?><div>
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=flacso-correos' ) ); ?>" class="button button-secondary" style="margin-right:8px;">✉️ Comunicaciones Mautic</a>
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=' . self::PAGE_SLUG . '&tab=exportar&table=' . $table ) ); ?>" class="button button-primary">📥 Exportar CSV</a>
-					</div>
+					</div><?php endif; ?>
 				</div>
 
 				<?php if ( ! $pg_ready ) : ?>
@@ -798,6 +808,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 						'campanas'    => '📣 5. Atribución de Campañas',
 						'exportar'    => '📥 6. Exportar CSV',
 					);
+					if ( ! $can_manage ) { unset( $tabs['exportar'] ); }
 					foreach ( $tabs as $slug => $label ) :
 						$url = add_query_arg(
 							array(

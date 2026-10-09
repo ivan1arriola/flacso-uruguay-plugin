@@ -284,6 +284,11 @@ final class FLACSO_Cohorte {
             'orderby' => 'title',
             'order' => 'ASC',
         ]);
+        if (FLACSO_Academic_Assistant::is_assistant()) {
+            $ofertas = array_values(array_filter($ofertas, static function ($oferta): bool {
+                return FLACSO_Academic_Assistant::can_manage_academic_post((int) $oferta->ID);
+            }));
+        }
         $tablas = get_posts([
             'post_type' => 'tabla-precio',
             'post_status' => ['publish', 'draft', 'pending', 'private'],
@@ -668,7 +673,10 @@ final class FLACSO_Cohorte {
         }
 
         if (isset($_POST['oferta_academica_id'])) {
-            update_post_meta($post_id, self::META_PARENT_ID, absint($_POST['oferta_academica_id']));
+            $parent_id = absint($_POST['oferta_academica_id']);
+            if (!FLACSO_Academic_Assistant::is_assistant() || FLACSO_Academic_Assistant::can_manage_academic_post($parent_id)) {
+                update_post_meta($post_id, self::META_PARENT_ID, $parent_id);
+            }
         }
         if (isset($_POST['numero_cohorte'])) {
             update_post_meta($post_id, 'numero', absint($_POST['numero_cohorte']));

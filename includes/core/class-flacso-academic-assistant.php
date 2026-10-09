@@ -11,7 +11,8 @@ if (!defined('ABSPATH')) {
  * a las tareas académicas cotidianas sin dar acceso a áreas técnicas.
  */
 final class FLACSO_Academic_Assistant {
-    public const ROLE = 'asistente_academica';
+    public const ROLE = 'gestion_web';
+    public const LEGACY_ROLE = 'asistente_academica';
 
     public const ACCESS = 'flacso_access_academic_management';
     public const EDIT_OFFERS = 'flacso_edit_offers';
@@ -32,8 +33,13 @@ final class FLACSO_Academic_Assistant {
 
     public const VIEW_EXTERNAL_SERVICES = 'flacso_view_external_services';
     public const MANAGE_PREINSCRIPTIONS = 'flacso_manage_preinscriptions';
+    public const VIEW_INQUIRIES = 'flacso_view_inquiries';
+    public const MANAGE_INQUIRIES = 'flacso_manage_inquiries';
 
-    private const ROLE_VERSION = '1';
+    private const META_OFFERS = '_flacso_assigned_offer_ids';
+    private const META_SEMINARS = '_flacso_assigned_seminar_ids';
+
+    private const ROLE_VERSION = '3';
     private const ROLE_VERSION_OPTION = 'flacso_academic_assistant_role_version';
 
     public static function init(): void {
@@ -52,6 +58,12 @@ final class FLACSO_Academic_Assistant {
         add_filter('page_row_actions', [self::class, 'filter_row_actions'], 100, 2);
         add_filter('admin_body_class', [self::class, 'admin_body_class']);
         add_action('admin_enqueue_scripts', [self::class, 'enqueue_assets']);
+        add_filter('map_meta_cap', [self::class, 'map_meta_cap'], 20, 4);
+        add_action('pre_get_posts', [self::class, 'restrict_catalog_queries']);
+        add_action('show_user_profile', [self::class, 'render_scope_fields']);
+        add_action('edit_user_profile', [self::class, 'render_scope_fields']);
+        add_action('personal_options_update', [self::class, 'save_scope_fields']);
+        add_action('edit_user_profile_update', [self::class, 'save_scope_fields']);
     }
 
     public static function is_assistant($user = null): bool {
@@ -145,22 +157,28 @@ final class FLACSO_Academic_Assistant {
             self::EDIT_TEACHERS => true,
             self::ASSIGN_TEACHERS => true,
             self::VIEW_EXTERNAL_SERVICES => true,
+            self::VIEW_INQUIRIES => true,
         ];
 
         $role = get_role(self::ROLE);
         if (!$role) {
             $role = add_role(
                 self::ROLE,
-                __('Asistente Académica', 'flacso-uruguay'),
+                __('Gestión web', 'flacso-uruguay'),
                 $assistant_caps
             );
         }
 
         if ($role instanceof WP_Role) {
+            foreach (self::all_academic_capabilities() as $capability) {
+                $role->remove_cap($capability);
+            }
             foreach ($assistant_caps as $capability => $grant) {
                 $role->add_cap($capability, $grant);
             }
         }
+
+        self::migrate_legacy_role();
 
         // Administradores conservan todo el wp-admin y todas las acciones académicas.
         self::grant_full_academic_caps_to_role('administrator');
@@ -169,6 +187,16 @@ final class FLACSO_Academic_Assistant {
         self::grant_full_academic_caps_to_role('editor');
 
         update_option(self::ROLE_VERSION_OPTION, self::ROLE_VERSION, false);
+    }
+
+    private static function migrate_legacy_role(): void {
+        foreach (get_users(['role' => self::LEGACY_ROLE, 'fields' => 'all']) as $user) {
+            if ($user instanceof WP_User) {
+                $user->add_role(self::ROLE);
+                $user->remove_role(self::LEGACY_ROLE);
+            }
+        }
+        remove_role(self::LEGACY_ROLE);
     }
 
     private static function grant_full_academic_caps_to_role(string $role_name): void {
@@ -201,6 +229,8 @@ final class FLACSO_Academic_Assistant {
             self::ASSIGN_TEACHERS,
             self::VIEW_EXTERNAL_SERVICES,
             self::MANAGE_PREINSCRIPTIONS,
+            self::VIEW_INQUIRIES,
+            self::MANAGE_INQUIRIES,
         ];
 
         foreach (['offer', 'cohort', 'seminar', 'edition', 'teacher'] as $entity) {
@@ -210,6 +240,107 @@ final class FLACSO_Academic_Assistant {
         }
 
         return array_values(array_unique($caps));
+    }
+
+    /** @return int[] */
+    public static function assigned_offer_ids(int $user_id = 0): array {
+        return self::assigned_ids($user_id, self::META_OFFERS, 'oferta-academica');
+    }
+
+    /** @return int[] */
+    public static function assigned_seminar_ids(int $user_id = 0): array {
+        return self::assigned_ids($user_id, self::META_SEMINARS, 'seminario');
+    }
+
+    /** @return int[] */
+    private static function assigned_ids(int $user_id, string $key, string $post_type): array {
+        $user_id = $user_id ?: get_current_user_id();
+        $ids = array_values(array_unique(array_filter(array_map('absint', (array) get_user_meta($user_id, $key, true)))));
+        return array_values(array_filter($ids, static function (int $id) use ($post_type): bool {
+            return get_post_type($id) === $post_type;
+        }));
+    }
+
+    public static function can_manage_academic_post(int $post_id, ?int $user_id = null): bool {
+        $user = $user_id ? get_user_by('id', $user_id) : wp_get_current_user();
+        if (!$user instanceof WP_User || !self::is_assistant($user)) {
+            return true;
+        }
+        $post_type = get_post_type($post_id);
+        if ($post_type === 'oferta-academica') {
+            return in_array($post_id, self::assigned_offer_ids((int) $user->ID), true);
+        }
+        if ($post_type === 'seminario') {
+            return in_array($post_id, self::assigned_seminar_ids((int) $user->ID), true);
+        }
+        if ($post_type === 'cohorte') {
+            $parent_id = absint(get_post_meta($post_id, 'oferta_academica_id', true));
+            if ($parent_id === 0 && isset($_REQUEST['oferta_academica_id'])) {
+                $parent_id = absint($_REQUEST['oferta_academica_id']);
+            }
+            return in_array($parent_id, self::assigned_offer_ids((int) $user->ID), true);
+        }
+        if ($post_type === 'edicion') {
+            $parent_id = absint(get_post_meta($post_id, 'seminario_id', true));
+            if ($parent_id === 0 && isset($_REQUEST['seminario_id'])) {
+                $parent_id = absint($_REQUEST['seminario_id']);
+            }
+            return in_array($parent_id, self::assigned_seminar_ids((int) $user->ID), true);
+        }
+        return true;
+    }
+
+    public static function map_meta_cap(array $caps, string $cap, int $user_id, array $args): array {
+        if ($cap !== 'edit_post' || empty($args[0]) || !self::is_assistant(get_user_by('id', $user_id))) {
+            return $caps;
+        }
+        return self::can_manage_academic_post((int) $args[0], $user_id) ? $caps : ['do_not_allow'];
+    }
+
+    public static function restrict_catalog_queries(WP_Query $query): void {
+        if (!is_admin() || !$query->is_main_query() || !self::is_assistant()) {
+            return;
+        }
+        $type = $query->get('post_type');
+        if ($type === 'oferta-academica') {
+            $query->set('post__in', self::assigned_offer_ids());
+        } elseif ($type === 'seminario') {
+            $query->set('post__in', self::assigned_seminar_ids());
+        } elseif ($type === 'cohorte') {
+            $query->set('meta_query', [['key' => 'oferta_academica_id', 'value' => self::assigned_offer_ids(), 'compare' => 'IN']]);
+        } elseif ($type === 'edicion') {
+            $query->set('meta_query', [['key' => 'seminario_id', 'value' => self::assigned_seminar_ids(), 'compare' => 'IN']]);
+        }
+    }
+
+    public static function render_scope_fields(WP_User $user): void {
+        if (!current_user_can('manage_options') || !self::is_assistant($user)) {
+            return;
+        }
+        wp_nonce_field('flacso_save_management_scope', 'flacso_management_scope_nonce');
+        self::render_scope_select(__('Ofertas autorizadas', 'flacso-uruguay'), 'flacso_assigned_offers', self::assigned_offer_ids((int) $user->ID), 'oferta-academica');
+        self::render_scope_select(__('Seminarios autorizados', 'flacso-uruguay'), 'flacso_assigned_seminars', self::assigned_seminar_ids((int) $user->ID), 'seminario');
+    }
+
+    private static function render_scope_select(string $label, string $field, array $selected, string $post_type): void {
+        echo '<h2>' . esc_html__('Alcance de Gestión web', 'flacso-uruguay') . '</h2><table class="form-table"><tr><th><label for="' . esc_attr($field) . '">' . esc_html($label) . '</label></th><td><select id="' . esc_attr($field) . '" name="' . esc_attr($field) . '[]" multiple size="8" style="min-width:360px">';
+        foreach (get_posts(['post_type' => $post_type, 'post_status' => ['publish', 'draft', 'pending', 'private'], 'posts_per_page' => -1]) as $post) {
+            echo '<option value="' . esc_attr((string) $post->ID) . '" ' . selected(in_array((int) $post->ID, $selected, true), true, false) . '>' . esc_html($post->post_title) . '</option>';
+        }
+        echo '</select></td></tr></table>';
+    }
+
+    public static function save_scope_fields(int $user_id): void {
+        if (!current_user_can('manage_options') || !current_user_can('edit_user', $user_id) || !self::is_assistant(get_user_by('id', $user_id)) || !isset($_POST['flacso_management_scope_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['flacso_management_scope_nonce'])), 'flacso_save_management_scope')) {
+            return;
+        }
+        self::save_assigned_ids($user_id, self::META_OFFERS, $_POST['flacso_assigned_offers'] ?? [], 'oferta-academica');
+        self::save_assigned_ids($user_id, self::META_SEMINARS, $_POST['flacso_assigned_seminars'] ?? [], 'seminario');
+    }
+
+    private static function save_assigned_ids(int $user_id, string $key, $raw, string $post_type): void {
+        $ids = array_values(array_unique(array_filter(array_map('absint', (array) $raw), static function (int $id) use ($post_type): bool { return get_post_type($id) === $post_type; })));
+        if ($ids) { update_user_meta($user_id, $key, $ids); } else { delete_user_meta($user_id, $key); }
     }
 
     public static function simplify_menu(): void {
@@ -260,6 +391,11 @@ final class FLACSO_Academic_Assistant {
             __('Sala Virtual ↗', 'flacso-uruguay'),
             self::VIEW_EXTERNAL_SERVICES,
             self::sala_virtual_url(),
+        ];
+        $submenu[FLACSO_Admin_Panel::PAGE_SLUG][] = [
+            __('Consultas', 'flacso-uruguay'),
+            self::VIEW_INQUIRIES,
+            'admin.php?page=flacso-consultas',
         ];
     }
 

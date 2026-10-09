@@ -149,6 +149,7 @@ final class FLACSO_Admin_Panel {
         $counts = self::counts();
         $open_registrations = self::open_registration_count();
         if (FLACSO_Academic_Assistant::is_assistant()) {
+            $counts = self::assistant_counts();
             self::render_assistant_view($counts, $open_registrations);
             return;
         }
@@ -264,6 +265,25 @@ final class FLACSO_Admin_Panel {
         return $result;
     }
 
+    private static function assistant_counts(): array {
+        $offers = FLACSO_Academic_Assistant::assigned_offer_ids();
+        $seminars = FLACSO_Academic_Assistant::assigned_seminar_ids();
+        $count = static function (string $type, string $parent_key = '', array $parents = []): int {
+            $args = ['post_type' => $type, 'post_status' => ['publish', 'draft', 'pending', 'private', 'future'], 'posts_per_page' => 1, 'fields' => 'ids'];
+            if ($parent_key !== '') { $args['meta_query'] = [['key' => $parent_key, 'value' => $parents, 'compare' => 'IN']]; }
+            elseif ($parents !== []) { $args['post__in'] = $parents; }
+            $query = new WP_Query($args);
+            return (int) $query->found_posts;
+        };
+        return [
+            'oferta-academica' => $count('oferta-academica', '', $offers),
+            'cohorte' => $count('cohorte', 'oferta_academica_id', $offers),
+            'seminario' => $count('seminario', '', $seminars),
+            'edicion' => $count('edicion', 'seminario_id', $seminars),
+            'docente' => $count('docente'),
+        ];
+    }
+
     private static function capability(): string {
         return class_exists('FLACSO_Academic_Assistant')
             ? FLACSO_Academic_Assistant::ACCESS
@@ -318,8 +338,8 @@ final class FLACSO_Admin_Panel {
                         </div>
                         <div class="flacso-panel__workflows">
                             <?php self::workflow_card(
-                                __('Ofertas académicas', 'flacso-uruguay'),
-                                __('Actualizá la información de una oferta y sus cohortes.', 'flacso-uruguay'),
+                                __('Mis ofertas académicas', 'flacso-uruguay'),
+                                __('Actualizá la información de las ofertas y cohortes que tenés asignadas.', 'flacso-uruguay'),
                                 [
                                     ['Oferta', 'oferta-academica', $counts['oferta-academica']],
                                     ['Cohorte', 'cohorte', $counts['cohorte']],
@@ -327,8 +347,8 @@ final class FLACSO_Admin_Panel {
                                 'flacso-panel__workflow--offer'
                             ); ?>
                             <?php self::workflow_card(
-                                __('Seminarios', 'flacso-uruguay'),
-                                __('Mantené los seminarios y sus ediciones disponibles.', 'flacso-uruguay'),
+                                __('Mis seminarios', 'flacso-uruguay'),
+                                __('Mantené los seminarios y ediciones que tenés asignados.', 'flacso-uruguay'),
                                 [
                                     ['Seminario', 'seminario', $counts['seminario']],
                                     ['Edición', 'edicion', $counts['edicion']],

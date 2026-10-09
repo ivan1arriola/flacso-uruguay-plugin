@@ -307,6 +307,11 @@ final class FLACSO_Edicion {
             || $link_preinscripcion !== '';
 
         $seminarios = get_posts(['post_type' => 'seminario', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC']);
+        if (FLACSO_Academic_Assistant::is_assistant()) {
+            $seminarios = array_values(array_filter($seminarios, static function ($seminario): bool {
+                return FLACSO_Academic_Assistant::can_manage_academic_post((int) $seminario->ID);
+            }));
+        }
         $tablas = get_posts(['post_type' => 'tabla-precio', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC']);
         $all_docentes = get_posts(['post_type' => 'docente', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC']);
 
@@ -511,7 +516,10 @@ final class FLACSO_Edicion {
         }
 
         if (isset($_POST['seminario_id'])) {
-            update_post_meta($post_id, self::META_PARENT_ID, absint($_POST['seminario_id']));
+            $parent_id = absint($_POST['seminario_id']);
+            if (!FLACSO_Academic_Assistant::is_assistant() || FLACSO_Academic_Assistant::can_manage_academic_post($parent_id)) {
+                update_post_meta($post_id, self::META_PARENT_ID, $parent_id);
+            }
         }
         if (isset($_POST['anio'])) {
             update_post_meta($post_id, 'anio', self::sanitize_year($_POST['anio']));
