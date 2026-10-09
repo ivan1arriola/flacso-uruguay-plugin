@@ -1,10 +1,10 @@
-# Alcance académico para asistentes Implementation Plan
+# Rol Gestión web Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Permitir que cada asistente gestione perfiles de equipo, consulte toda la bandeja de consultas y trabaje sólo sobre las ofertas y seminarios que tenga asignados.
+**Goal:** Permitir que cada persona con rol Gestión web gestione perfiles de equipo, consulte toda la bandeja de consultas y trabaje sólo sobre las ofertas y seminarios que tenga asignados.
 
-**Architecture:** Centralizar las asignaciones y la autorización por objeto en `FLACSO_Academic_Assistant`, usando metadatos de usuario y el filtro `map_meta_cap`. Filtrar los listados administrativos y las relaciones de cohortes y ediciones con esa misma fuente de verdad. Separar la lectura de Consultas de sus acciones que alteran datos o disparan comunicaciones.
+**Architecture:** Migrar el rol `asistente_academica` a `gestion_web` y centralizar sus asignaciones y autorización por objeto en una clase de acceso, usando metadatos de usuario y el filtro `map_meta_cap`. Filtrar los listados administrativos y las relaciones de cohortes y ediciones con esa misma fuente de verdad. Separar la lectura de Consultas de sus acciones que alteran datos o disparan comunicaciones.
 
 **Tech Stack:** PHP 7.4+, WordPress roles/capabilities, user meta, CPTs existentes, pruebas PHP autónomas.
 
@@ -12,36 +12,37 @@
 
 ## Global Constraints
 
-- Las asistentes editan todos los perfiles `docente` y no pueden crear ni eliminar perfiles.
+- Gestión web edita todos los perfiles `docente` y no puede crear ni eliminar perfiles.
 - Consultas es de lectura global: incluye bandeja, detalle y gráficas; no incluye exportación ni acciones sobre comunicaciones.
 - El alcance de una cohorte deriva de `oferta_academica_id`; el de una edición deriva de `seminario_id`.
 - La autorización debe funcionar aunque una persona conozca o modifique una URL del administrador.
 - Administradores y editores mantienen el acceso actual.
-- Ninguna asistente publica, elimina, clona o administra usuarios, ajustes o integraciones.
+- Gestión web no publica, elimina, clona ni administra usuarios, ajustes o integraciones.
+- La migración traslada todos los usuarios existentes con `asistente_academica` a `gestion_web` antes de retirar el rol anterior.
 - La entrega terminada incrementa la versión del plugin de `7.0.0` a `8.0.0` en su cabecera y constante global.
 - Los cambios se validan localmente antes de publicarse en `main`.
 
 ## Review Focus
 
-- Una asistente sin asignaciones no puede listar ni abrir una oferta, cohorte, seminario o edición.
+- Gestión web sin asignaciones no puede listar ni abrir una oferta, cohorte, seminario o edición.
 - Una cohorte o edición no puede reasignarse mediante una petición manipulada a una entidad madre no autorizada.
 - Los filtros del listado conservan las condiciones existentes al añadir la restricción de alcance.
 - Las acciones AJAX de Consultas verifican la capacidad adecuada y no exponen mutaciones a perfiles de sólo lectura.
-- Administradores y editores no quedan limitados por las asignaciones de asistentes.
+- Administradores y editores no quedan limitados por las asignaciones de Gestión web.
 
-### Task 1: Modelo de asignaciones y autorización por objeto
+### Task 1: Migración del rol y autorización por objeto
 
 **Files:**
 - Modify: `includes/core/class-flacso-academic-assistant.php`
 - Create: `tests/academic-assistant-scope-contract-test.php`
 
 **Interfaces:**
-- Produces: `assigned_offer_ids(int $user_id): array`, `assigned_seminar_ids(int $user_id): array`, `can_manage_academic_post(int $post_id, ?int $user_id = null): bool`, y el filtro de capabilities para objetos académicos.
+- Produces: el rol `gestion_web`, la migración idempotente desde `asistente_academica`, `assigned_offer_ids(int $user_id): array`, `assigned_seminar_ids(int $user_id): array`, `can_manage_academic_post(int $post_id, ?int $user_id = null): bool`, y el filtro de capabilities para objetos académicos.
 - Consumes: `FLACSO_Cohorte::META_PARENT_ID` y `FLACSO_Edicion::META_PARENT_ID` cuando las clases estén disponibles; las claves literales equivalentes durante el bootstrap temprano.
 
 - [ ] **Step 1: Escribir la prueba fallida de asignaciones y alcance**
 
-Comprobar que el código define dos claves de user meta, sanea identificadores únicos, permite perfiles `docente` a toda asistente y deriva el permiso de cohortes y ediciones de su entidad madre.
+Comprobar que el código define el rol `gestion_web`, migra idempotentemente los usuarios del rol anterior, define dos claves de user meta, sanea identificadores únicos, permite perfiles `docente` a todo el rol y deriva el permiso de cohortes y ediciones de su entidad madre.
 
 - [ ] **Step 2: Ejecutar la prueba para confirmar que falla**
 
@@ -50,7 +51,7 @@ Expected: FAIL porque las asignaciones y la autorización por objeto no existen.
 
 - [ ] **Step 3: Implementar la fuente de verdad de alcance**
 
-Agregar las claves de user meta, lectores saneados y el filtro `map_meta_cap`. Para asistentes, devolver `do_not_allow` al editar una oferta o seminario fuera de sus listas y al editar una cohorte o edición cuya madre no esté autorizada. No alterar la resolución para administradores, editores ni `docente`.
+Agregar la migración de rol, las claves de user meta, lectores saneados y el filtro `map_meta_cap`. Para Gestión web, devolver `do_not_allow` al editar una oferta o seminario fuera de sus listas y al editar una cohorte o edición cuya madre no esté autorizada. No alterar la resolución para administradores, editores ni `docente`.
 
 - [ ] **Step 4: Ejecutar la prueba de alcance**
 
@@ -61,7 +62,7 @@ Expected: PASS.
 
 ```bash
 git add includes/core/class-flacso-academic-assistant.php tests/academic-assistant-scope-contract-test.php
-git commit -m "feat: limitar catálogo por asistente académica"
+git commit -m "feat: migrar rol de gestión web"
 ```
 
 ### Task 2: Administración segura de asignaciones
@@ -76,7 +77,7 @@ git commit -m "feat: limitar catálogo por asistente académica"
 
 - [ ] **Step 1: Extender la prueba con los controles de perfil**
 
-Exigir campos para ofertas y seminarios sólo al editar una usuaria asistente, nonce, verificación `manage_options` y saneamiento a IDs de CPT existentes.
+Exigir campos para ofertas y seminarios sólo al editar una persona con Gestión web, nonce, verificación `manage_options` y saneamiento a IDs de CPT existentes.
 
 - [ ] **Step 2: Ejecutar la prueba para confirmar que falla**
 
@@ -85,7 +86,7 @@ Expected: FAIL porque no existe una interfaz de asignación administrativa.
 
 - [ ] **Step 3: Implementar los campos y el guardado**
 
-Registrar los hooks de perfil. Mostrar multiselección de ofertas y seminarios a administradores; persistir sólo los IDs válidos y borrar el metadato si queda vacío. No exponer el control a la asistente que edita su propio perfil.
+Registrar los hooks de perfil. Mostrar multiselección de ofertas y seminarios a administradores; persistir sólo los IDs válidos y borrar el metadato si queda vacío. No exponer el control a una persona de Gestión web que edita su propio perfil.
 
 - [ ] **Step 4: Ejecutar la prueba de alcance**
 
@@ -96,7 +97,7 @@ Expected: PASS.
 
 ```bash
 git add includes/core/class-flacso-academic-assistant.php tests/academic-assistant-scope-contract-test.php
-git commit -m "feat: asignar catálogo a asistentes académicas"
+git commit -m "feat: asignar catálogo a gestión web"
 ```
 
 ### Task 3: Restringir listados y entidades dependientes
@@ -158,7 +159,7 @@ Expected: FAIL porque toda la pantalla depende de `manage_options`.
 
 - [ ] **Step 3: Implementar capacidades separadas y adaptar la interfaz**
 
-Conceder sólo lectura de Consultas a asistentes. Reemplazar las verificaciones de la página y detalle por esa capability; conservar las verificaciones estrictas para exportar y toda mutación. Ocultar para asistentes los botones y pestañas de exportación, reintentos, seguimiento y gestión de campañas.
+Conceder sólo lectura de Consultas a Gestión web. Reemplazar las verificaciones de la página y detalle por esa capability; conservar las verificaciones estrictas para exportar y toda mutación. Ocultar para Gestión web los botones y pestañas de exportación, reintentos, seguimiento y gestión de campañas.
 
 - [ ] **Step 4: Ejecutar las pruebas de Consultas**
 
@@ -169,10 +170,10 @@ Expected: PASS.
 
 ```bash
 git add includes/core/class-flacso-academic-assistant.php modules/consultas/includes/class-flacso-consultas-admin.php tests/academic-assistant-inquiries-contract-test.php
-git commit -m "feat: habilitar consultas de solo lectura a asistentes"
+git commit -m "feat: habilitar consultas de solo lectura a gestión web"
 ```
 
-### Task 5: Convertir el inicio de asistentes en su tablero de trabajo
+### Task 5: Convertir el inicio de Gestión web en su tablero de trabajo
 
 **Files:**
 - Modify: `includes/core/class-flacso-admin-panel.php`
@@ -186,7 +187,7 @@ git commit -m "feat: habilitar consultas de solo lectura a asistentes"
 
 - [ ] **Step 1: Escribir la prueba fallida de la portada acotada**
 
-Exigir métodos de conteo y próximos comienzos que reciban las asignaciones de la asistente, un acceso a Consultas y los controles de accesibilidad y responsive existentes.
+Exigir métodos de conteo y próximos comienzos que reciban las asignaciones de Gestión web, un acceso a Consultas y los controles de accesibilidad y responsive existentes.
 
 - [ ] **Step 2: Ejecutar la prueba para confirmar que falla**
 
@@ -206,7 +207,7 @@ Expected: PASS.
 
 ```bash
 git add includes/core/class-flacso-admin-panel.php includes/assets/flacso-academic-assistant.css tests/academic-assistant-interface-contract-test.php tests/admin-panel-query-plan-test.php
-git commit -m "feat: enfocar panel de asistentes en su catálogo"
+git commit -m "feat: enfocar panel de gestión web en su catálogo"
 ```
 
 ### Task 6: Verificación integrada y publicación
@@ -228,7 +229,7 @@ derivadas, porque ya toman ese valor global.
 
 - [ ] **Step 3: Verificar manualmente con tres usuarios**
 
-Comprobar una asistente sin asignaciones, una asistente con una oferta y un seminario, y un administrador. Validar listados, URL directa, creación de cohorte/edición, perfil docente, Consultas y ausencia de exportación/acciones operativas para asistentes.
+Comprobar Gestión web sin asignaciones, Gestión web con una oferta y un seminario, y un administrador. Validar listados, URL directa, creación de cohorte/edición, perfil docente, Consultas y ausencia de exportación/acciones operativas para Gestión web.
 
 - [ ] **Step 4: Publicar el resultado terminado**
 

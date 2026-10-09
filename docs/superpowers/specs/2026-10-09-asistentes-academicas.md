@@ -1,66 +1,65 @@
-# Alcance académico para asistentes
+# Rol Gestión web
 
-## Objetivo
+## Propósito
 
-Dar a las asistentes académicas una interfaz útil para su trabajo diario sin
-darles capacidades de publicación ni acceso a la administración técnica de
-WordPress.
+`Gestión web` es un rol operativo para mantener información institucional y
+académica. No es un rol de publicación, configuración técnica ni administración
+de WordPress.
 
-## Versión de entrega
+## Versión y migración
 
-Esta es una actualización mayor. La entrega terminada se publica como
-`8.0.0`, actualizando en el mismo commit la cabecera `Version:` y la constante
-`FLACSO_URUGUAY_VERSION` de `flacso-uruguay.php`. La planificación no cambia
-la versión `7.0.0` actualmente desplegada.
+La entrega se publica como `8.0.0`, actualizando en el mismo commit la
+cabecera `Version:` y `FLACSO_URUGUAY_VERSION` de `flacso-uruguay.php`.
 
-## Decisiones funcionales
+El rol visible se llama **Gestión web** y su identificador técnico nuevo es
+`gestion_web`. Durante la actualización, las personas que hoy tienen el rol
+`asistente_academica` pasan a `gestion_web`, conservan sus capacidades vigentes
+que correspondan al nuevo alcance y reciben asignaciones vacías de catálogo.
+El rol antiguo se retira únicamente después de completar esa migración.
 
-- Las asistentes pueden editar cualquier perfil de `Personas / Equipo`.
-- Las asistentes pueden consultar toda la bandeja y las gráficas de
-  `Consultas`, incluidos los detalles necesarios para atenderlas.
-- Las asistentes no pueden exportar datos de consultas ni ejecutar acciones
-  operativas sobre comunicaciones: reintentar correos, reintentar Mautic,
-  disparar seguimientos ni ocultar campañas.
-- Cada asistente sólo puede ver y editar las ofertas académicas y los
-  seminarios que un administrador le haya asignado.
-- Una cohorte hereda el alcance de su oferta. Una edición hereda el alcance de
-  su seminario.
-- Las asistentes no pueden crear, publicar, eliminar, clonar ni enviar a la
-  papelera ofertas o seminarios.
-- Pueden crear y editar cohortes o ediciones únicamente desde una oferta o un
-  seminario que tengan asignado. El selector de entidad madre sólo muestra
-  elementos asignados y el servidor rechaza cualquier otro identificador.
-- Administradores y editores conservan el acceso académico completo actual.
-- El usuario administrador es el único que publica y administra usuarios,
-  ajustes e integraciones.
+## Acceso permitido
 
-## Administración del alcance
+| Área | Alcance |
+|---|---|
+| Personas / Equipo | Ver y editar todos los perfiles existentes, incluidos CV, datos, imágenes y revisiones. No crear ni eliminar perfiles. |
+| Consultas | Ver toda la bandeja, el detalle y las gráficas. No exportar datos ni ejecutar acciones que envíen, reintenten, sincronicen u oculten información. |
+| Ofertas académicas | Ver y editar sólo las asignadas a la persona. No crear, publicar, eliminar, clonar ni enviar ofertas a la papelera. |
+| Cohortes | Ver y editar las cohortes de ofertas asignadas. Crear una cohorte sólo desde una oferta asignada. |
+| Seminarios | Ver y editar sólo los asignados a la persona. No crear, publicar, eliminar, clonar ni enviar seminarios a la papelera. |
+| Ediciones | Ver y editar las ediciones de seminarios asignados. Crear una edición sólo desde un seminario asignado. |
 
-Un administrador gestiona, desde el perfil de cada usuario con el rol
-`asistente_academica`, dos listas de asignación:
+## Acceso reservado
+
+Sólo administradores pueden publicar, eliminar, restaurar, administrar usuarios
+o roles, cambiar ajustes, gestionar integraciones, operar Mautic, exportar
+Consultas y modificar campañas. Los editores existentes conservan su acceso
+académico completo actual.
+
+## Asignación de catálogo
+
+Un administrador asigna, desde el perfil de cada persona con rol Gestión web,
+dos listas independientes:
 
 - Ofertas académicas autorizadas.
 - Seminarios autorizados.
 
-Las asignaciones se guardan como metadatos del usuario con identificadores
-enteros saneados, sin duplicados. Un usuario sin asignaciones no visualiza ni
-puede editar ofertas, cohortes, seminarios o ediciones.
+Las listas se guardan como metadatos de usuario con identificadores enteros,
+existentes y sin duplicados. Una cohorte hereda el alcance de
+`oferta_academica_id`; una edición hereda el de `seminario_id`. Sin asignaciones,
+la persona no puede listar ni abrir ningún elemento del catálogo restringido.
 
-## Pantalla inicial
+Las comprobaciones se realizan en el servidor para el listado, la edición por
+URL, las acciones masivas, la creación de entidades dependientes y el cambio de
+su entidad madre. Ocultar un botón nunca es el único control.
 
-El resumen de una asistente muestra únicamente el catálogo que tiene asignado:
+## Inicio de Gestión web
+
+El inicio muestra trabajo relevante para la persona conectada:
 
 - métricas de sus ofertas, cohortes, seminarios y ediciones;
-- accesos a `Personas / Equipo` y `Consultas` como áreas compartidas;
 - próximos comienzos de cohortes y ediciones asignadas;
-- recorridos para gestionar sus ofertas y sus seminarios.
+- recorridos hacia sus ofertas y sus seminarios;
+- accesos globales a Personas / Equipo y Consultas.
 
-No se altera la pantalla ni los permisos de administradores y editores.
-
-## Seguridad y privacidad
-
-La interfaz no es el control de seguridad. El alcance se comprueba en el
-servidor para listados, edición por URL, acciones masivas, creación de
-entidades dependientes y modificación de su relación madre. Consultas conserva
-la capacidad de lectura separada de las acciones que cambian datos o disparan
-comunicaciones.
+El aviso administrativo dentro del encabezado debe mantener contraste legible.
+No se alteran la pantalla ni los permisos de administradores y editores.
