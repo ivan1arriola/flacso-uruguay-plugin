@@ -114,6 +114,9 @@ $contract_second = FLACSO_Mautic_Delivery_Contract_Cache::get(4);
 delivery_order_assert($contract_second['ok'] === true, 'segunda validación debe conservar resultado válido');
 delivery_order_assert($contract_calls === 1, 'la segunda validación cacheada no debe volver a llamar a Mautic');
 delivery_order_assert(count($GLOBALS['delivery_order_transients']) === 1, 'resultado válido debe quedar cacheado');
+$contract_forced = FLACSO_Mautic_Delivery_Contract_Cache::get(4, true);
+delivery_order_assert($contract_forced['ok'] === true, 'la validación forzada debe conservar el contrato válido');
+delivery_order_assert($contract_calls === 2, 'la validación forzada debe ignorar la caché anterior');
 
 FLACSO_Mautic_Client::set_http_transport(null);
 FLACSO_Inquiry_Delivery_Service::set_contract_validator(null);
