@@ -9,19 +9,27 @@ function posgrados_bootstrap_assert(bool $condition, string $message): void {
     }
 }
 
-$plugin_position = strpos($module, 'class-flacso-posgrados-plugin.php');
-$dependencies = [
+$retired_admin_files = [
+    'class-flacso-posgrados-plugin.php',
     'class-flacso-posgrados-admin-page.php',
     'class-flacso-posgrados-seeder.php',
-    'class-flacso-posgrados-block.php',
 ];
 
-posgrados_bootstrap_assert($plugin_position !== false, 'el inicializador de Posgrados debe cargarse');
+foreach ($retired_admin_files as $file) {
+    posgrados_bootstrap_assert(
+        strpos($module, $file) === false,
+        "el panel administrativo legado no debe cargar {$file}"
+    );
+}
 
-foreach ($dependencies as $dependency) {
-    $position = strpos($module, $dependency);
-    posgrados_bootstrap_assert($position !== false, "debe cargar {$dependency}");
-    posgrados_bootstrap_assert($position < $plugin_position, "debe cargar {$dependency} antes de inicializar Posgrados");
+foreach ([
+    'class-flacso-posgrados-consultas-form.php',
+    'class-flacso-posgrados-block.php',
+] as $compatibility_file) {
+    posgrados_bootstrap_assert(
+        strpos($module, $compatibility_file) !== false,
+        "debe preservar {$compatibility_file} para páginas públicas existentes"
+    );
 }
 
 echo "OK posgrados legacy bootstrap contract\n";

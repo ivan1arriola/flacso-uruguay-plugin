@@ -29,15 +29,16 @@ flacso_safe_require('modules/posgrados/includes/class-flacso-posgrados-fields.ph
 flacso_safe_require('modules/posgrados/includes/class-flacso-posgrados-consultas-form.php');
 flacso_safe_require('modules/posgrados/includes/class-flacso-posgrados-docentes-sync.php');
 flacso_safe_require('modules/posgrados/includes/rest-api-posgrados.php');
-flacso_safe_require('modules/posgrados/includes/admin/class-flacso-posgrados-admin-page.php');
-flacso_safe_require('modules/posgrados/includes/admin/class-flacso-posgrados-seeder.php');
 flacso_safe_require('modules/posgrados/includes/blocks/class-flacso-posgrados-block.php');
-flacso_safe_require('modules/posgrados/includes/class-flacso-posgrados-plugin.php');
 
-// El registry ya ejecuta este archivo dentro de plugins_loaded. Inicializar de
-// inmediato evita registrar otro callback en el mismo hook/prioridad.
-if (class_exists('FLACSO_Posgrados_Plugin')) {
-    FLACSO_Posgrados_Plugin::init();
+// El panel de administración legado se retiró: el catálogo se gestiona desde
+// Oferta Académica. Se preservan metadatos y bloques para páginas públicas que
+// todavía los consumen.
+if (class_exists('FLACSO_Posgrados_Fields')) {
+    add_action('init', [FLACSO_Posgrados_Fields::class, 'register_meta_and_support']);
+}
+if (class_exists('FLACSO_Posgrados_Block')) {
+    FLACSO_Posgrados_Block::init();
 }
 
 do_action('flacso_legacy_posgrados_loaded');
