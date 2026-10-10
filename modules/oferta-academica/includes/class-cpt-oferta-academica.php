@@ -20,6 +20,8 @@ class CPT_Oferta_Academica {
             add_action('add_meta_boxes', [self::class, 'add_meta_boxes']);
             add_filter('manage_' . self::POST_TYPE . '_posts_columns', [self::class, 'register_columns']);
             add_action('manage_' . self::POST_TYPE . '_posts_custom_column', [self::class, 'render_column'], 10, 2);
+            add_action('restrict_manage_posts', [self::class, 'render_operational_filters']);
+            add_filter('posts_clauses', [self::class, 'filter_by_operational_status'], 20, 2);
             add_action('admin_head-edit.php', [self::class, 'render_admin_list_styles']);
             add_action('admin_footer-edit.php', [self::class, 'render_admin_list_script']);
         }
@@ -145,112 +147,117 @@ class CPT_Oferta_Academica {
         foreach ($columns as $key => $val) {
             $new_columns[$key] = $val;
             if ($key === 'title') {
-                $new_columns['cohortes'] = __('Cohortes y preinscripción', 'flacso-uruguay');
+                $new_columns['cohorte_actual'] = __('Cohorte actual', 'flacso-uruguay');
+                $new_columns['preinscripcion'] = __('Preinscripción', 'flacso-uruguay');
             }
         }
         return $new_columns;
     }
 
     public static function render_column(string $column, int $post_id): void {
-        if ($column === 'cohortes') {
-            $cohortes = get_posts([
-                'post_type'      => 'cohorte',
-                'posts_per_page' => -1,
-                'meta_query'     => [[
-                    'key'     => 'oferta_academica_id',
-                    'value'   => $post_id,
-                    'compare' => '=',
-                    'type'    => 'NUMERIC',
-                ]],
-            ]);
+        if (!in_array($column, ['cohorte_actual', 'preinscripcion'], true)) {
+            return;
+        }
 
-            usort($cohortes, static function ($left, $right): int {
-                $left_number = (int) get_post_meta($left->ID, 'numero', true);
-                $right_number = (int) get_post_meta($right->ID, 'numero', true);
-                return $right_number <=> $left_number;
-            });
+        $cohortes = get_posts([
+            'post_type'      => 'cohorte',
+            'post_status'    => ['publish', 'draft', 'pending', 'private'],
+            'posts_per_page' => -1,
+            'meta_query'     => [[
+                'key'     => 'oferta_academica_id',
+                'value'   => $post_id,
+                'compare' => '=',
+                'type'    => 'NUMERIC',
+            ]],
+        ]);
+        $cohorte = self::get_current_cohort($cohortes);
 
-            if (!empty($cohortes)) {
-                echo '<div class="flacso-cohort-list">';
-                foreach ($cohortes as $c) {
-                    $num = (int) get_post_meta($c->ID, 'numero', true);
-                    $roman = $num > 0 ? FLACSO_Cohorte::to_roman($num) : '';
-                    $cohort_label = $roman !== ''
-                        ? sprintf(__('Cohorte %s', 'flacso-uruguay'), $roman)
-                        : (get_the_title($c->ID) ?: __('Cohorte sin número', 'flacso-uruguay'));
-                    $estado = FLACSO_Cohorte::sanitize_state(get_post_meta($c->ID, 'estado', true));
-                    $edit_c_url = get_edit_post_link($c->ID);
-                    $configured = metadata_exists('post', $c->ID, 'preinscripcion_habilitada');
-                    $explicitly_open = $configured
-                        && rest_sanitize_boolean(get_post_meta($c->ID, 'preinscripcion_habilitada', true));
-                    $legacy_open = !$configured && FLACSO_Cohorte::accepts_registration($c->ID);
-                    $url = (string) get_post_meta($c->ID, 'link_preinscripcion', true);
-                    if ($url === '') {
-                        $url = FLACSO_Preinscription_Ajax_Handlers::offer_url($post_id);
-                    }
-
-                    $is_open = $explicitly_open || $legacy_open;
-                    echo '<div class="flacso-cohort-row' . ($is_open ? ' flacso-cohort-row--open' : '') . '">';
-                    echo '<a class="flacso-cohort-row__title" href="' . esc_url($edit_c_url) . '">' . esc_html($cohort_label) . '</a>';
-                    echo '<div class="flacso-cohort-row__meta">';
-                    echo '<span class="flacso-cohort-state flacso-cohort-state--' . esc_attr($estado) . '">' . esc_html(self::academic_state_label($estado)) . '</span>';
-
-                    if ($explicitly_open) {
-                        echo '<span class="flacso-pre-status flacso-pre-status--open"><span aria-hidden="true">●</span> ' . esc_html__('Preinscripción abierta', 'flacso-uruguay') . '</span>';
-                    } elseif ($legacy_open) {
-                        echo '<span class="flacso-pre-status flacso-pre-status--legacy"><span aria-hidden="true">●</span> ' . esc_html__('Apertura heredada', 'flacso-uruguay') . '</span>';
-                    } elseif ($configured) {
-                        echo '<span class="flacso-pre-status flacso-pre-status--closed"><span aria-hidden="true">○</span> ' . esc_html__('Preinscripción cerrada', 'flacso-uruguay') . '</span>';
-                    } else {
-                        echo '<span class="flacso-pre-status flacso-pre-status--unset"><span aria-hidden="true">○</span> ' . esc_html__('No configurada', 'flacso-uruguay') . '</span>';
-                    }
-                    echo '</div>';
-
-                    if (current_user_can('edit_post', $c->ID)) {
-                        $nonce = wp_create_nonce('flacso_preinscripcion_nonce');
-                        echo '<div class="flacso-cohort-row__actions">';
-                        if ($explicitly_open || $legacy_open) {
-                            if ($url !== '') {
-                                echo '<a class="button button-small" href="' . esc_url($url) . '" target="_blank" rel="noopener noreferrer">' . esc_html__('Ver', 'flacso-uruguay') . '</a>';
-                            }
-                            if ($legacy_open) {
-                                echo self::preinscription_action_button(
-                                    $c->ID,
-                                    $nonce,
-                                    'flacso_abrir_preinscripcion_cohorte',
-                                    __('Confirmar apertura', 'flacso-uruguay'),
-                                    'button-primary'
-                                );
-                            }
-                            echo self::preinscription_action_button(
-                                $c->ID,
-                                $nonce,
-                                'flacso_cerrar_preinscripcion_cohorte',
-                                __('Cerrar', 'flacso-uruguay'),
-                                'flacso-button-danger'
-                            );
-                        } else {
-                            echo self::preinscription_action_button(
-                                $c->ID,
-                                $nonce,
-                                'flacso_abrir_preinscripcion_cohorte',
-                                __('Abrir preinscripción', 'flacso-uruguay'),
-                                'button-primary'
-                            );
-                        }
-                        echo '</div>';
-                    }
-                    echo '<div class="flacso-cohort-row__notice" role="status" aria-live="polite"></div>';
-                    echo '</div>';
-                }
+        if ($column === 'cohorte_actual') {
+            if (!$cohorte) {
+                $add_url = admin_url('post-new.php?post_type=cohorte&oferta_academica_id=' . $post_id);
+                echo '<div class="flacso-current-instance flacso-current-instance--empty">';
+                echo '<span class="flacso-table-muted">' . esc_html__('Sin cohorte vigente', 'flacso-uruguay') . '</span>';
+                echo '<a href="' . esc_url($add_url) . '">' . esc_html__('Crear cohorte', 'flacso-uruguay') . '</a>';
                 echo '</div>';
-            } else {
-                echo '<span class="flacso-cohort-empty">' . esc_html__('Sin cohortes', 'flacso-uruguay') . '</span>';
+                return;
             }
 
-            $add_url = admin_url('post-new.php?post_type=cohorte&oferta_academica_id=' . $post_id);
-            echo '<div class="flacso-cohort-add"><a href="' . esc_url($add_url) . '"><span class="dashicons dashicons-plus-alt2" aria-hidden="true"></span> ' . esc_html__('Nueva cohorte', 'flacso-uruguay') . '</a></div>';
+            $num = (int) get_post_meta($cohorte->ID, 'numero', true);
+            $roman = $num > 0 ? FLACSO_Cohorte::to_roman($num) : '';
+            $label = $roman !== '' ? sprintf(__('Cohorte %s', 'flacso-uruguay'), $roman) : (get_the_title($cohorte->ID) ?: __('Cohorte', 'flacso-uruguay'));
+            $estado = FLACSO_Cohorte::sanitize_state(get_post_meta($cohorte->ID, 'estado', true));
+            $date = FLACSO_Cohorte::format_dates($cohorte->ID);
+            echo '<div class="flacso-current-instance">';
+            echo '<a class="flacso-current-instance__title" href="' . esc_url(get_edit_post_link($cohorte->ID)) . '">' . esc_html($label) . '</a>';
+            echo '<div class="flacso-current-instance__meta">';
+            echo '<span class="flacso-state flacso-state--' . esc_attr($estado) . '">' . esc_html(self::academic_state_label($estado)) . '</span>';
+            if ($date !== '') {
+                echo '<span class="flacso-current-instance__date">' . esc_html($date) . '</span>';
+            }
+            echo '</div></div>';
+            return;
         }
+
+        if (!$cohorte) {
+            echo '<span class="flacso-status flacso-status--neutral">—</span>';
+            return;
+        }
+
+        $configured = metadata_exists('post', $cohorte->ID, 'preinscripcion_habilitada');
+        $open = FLACSO_Cohorte::accepts_registration($cohorte->ID);
+        $url = (string) get_post_meta($cohorte->ID, 'link_preinscripcion', true) ?: FLACSO_Preinscription_Ajax_Handlers::offer_url($post_id);
+        echo '<div class="flacso-current-instance flacso-current-instance--registration' . ($open ? ' flacso-current-instance--open' : '') . '">';
+        echo '<span class="flacso-status flacso-status--' . ($open ? 'open' : ($configured ? 'closed' : 'neutral')) . '">';
+        echo esc_html($open ? __('Abierta', 'flacso-uruguay') : ($configured ? __('Cerrada', 'flacso-uruguay') : __('Sin configurar', 'flacso-uruguay')));
+        echo '</span>';
+        if (current_user_can('edit_post', $cohorte->ID)) {
+            $nonce = wp_create_nonce('flacso_preinscripcion_nonce');
+            echo '<div class="flacso-current-instance__actions">';
+            if ($open && $url !== '') {
+                echo '<a href="' . esc_url($url) . '" target="_blank" rel="noopener noreferrer">' . esc_html__('Ver portal ↗', 'flacso-uruguay') . '</a>';
+            }
+            echo self::preinscription_action_button($cohorte->ID, $nonce, $open ? 'flacso_cerrar_preinscripcion_cohorte' : 'flacso_abrir_preinscripcion_cohorte', $open ? __('Cerrar', 'flacso-uruguay') : __('Abrir preinscripción', 'flacso-uruguay'), $open ? 'flacso-button-danger' : 'button-primary');
+            echo '</div>';
+        }
+        echo '<div class="flacso-current-instance__notice" role="status" aria-live="polite"></div></div>';
+    }
+
+    private static function get_current_cohort(array $cohortes): ?WP_Post {
+        $active = array_filter($cohortes, static function ($cohort): bool {
+            return in_array(FLACSO_Cohorte::sanitize_state(get_post_meta($cohort->ID, 'estado', true)), ['en_curso', 'planificada'], true);
+        });
+        if (empty($active)) {
+            return null;
+        }
+        usort($active, static function ($left, $right): int {
+            $left_state = FLACSO_Cohorte::sanitize_state(get_post_meta($left->ID, 'estado', true));
+            $right_state = FLACSO_Cohorte::sanitize_state(get_post_meta($right->ID, 'estado', true));
+            $priority = ['en_curso' => 0, 'planificada' => 1];
+            $comparison = ($priority[$left_state] ?? 2) <=> ($priority[$right_state] ?? 2);
+            return $comparison !== 0 ? $comparison : strcmp((string) get_post_meta($left->ID, 'fecha_inicio', true), (string) get_post_meta($right->ID, 'fecha_inicio', true));
+        });
+        return reset($active) ?: null;
+    }
+
+    public static function render_operational_filters(string $post_type): void {
+        if ($post_type !== self::POST_TYPE) { return; }
+        $selected = sanitize_key((string) ($_GET['flacso_operational_status'] ?? ''));
+        $options = ['', 'preinscripcion_abierta', 'en_curso', 'planificada', 'sin_vigente'];
+        $labels = ['', __('Preinscripción abierta', 'flacso-uruguay'), __('En curso', 'flacso-uruguay'), __('Planificada', 'flacso-uruguay'), __('Sin cohorte vigente', 'flacso-uruguay')];
+        echo '<select name="flacso_operational_status"><option value="">' . esc_html__('Estado operativo', 'flacso-uruguay') . '</option>';
+        foreach ($options as $index => $value) { if ($value !== '') { echo '<option value="' . esc_attr($value) . '" ' . selected($selected, $value, false) . '>' . esc_html($labels[$index]) . '</option>'; } }
+        echo '</select>';
+    }
+
+    public static function filter_by_operational_status(array $clauses, WP_Query $query): array {
+        $status = sanitize_key((string) ($query->get('flacso_operational_status') ?: ($_GET['flacso_operational_status'] ?? '')));
+        if (!$query->is_main_query() || $query->get('post_type') !== self::POST_TYPE || !in_array($status, ['preinscripcion_abierta', 'en_curso', 'planificada', 'sin_vigente'], true)) { return $clauses; }
+        global $wpdb;
+        $base = "SELECT 1 FROM {$wpdb->posts} child INNER JOIN {$wpdb->postmeta} parent ON parent.post_id = child.ID AND parent.meta_key = 'oferta_academica_id' AND parent.meta_value = CAST({$wpdb->posts}.ID AS CHAR) LEFT JOIN {$wpdb->postmeta} state ON state.post_id = child.ID AND state.meta_key = 'estado' LEFT JOIN {$wpdb->postmeta} registration ON registration.post_id = child.ID AND registration.meta_key = 'preinscripcion_habilitada' WHERE child.post_type = 'cohorte' AND child.post_status IN ('publish','draft','pending','private') AND COALESCE(NULLIF(state.meta_value, ''), 'planificada') IN ('en_curso','planificada')";
+        if ($status === 'sin_vigente') { $clauses['where'] .= " AND NOT EXISTS ({$base})"; return $clauses; }
+        $condition = $status === 'preinscripcion_abierta' ? " AND registration.meta_value IN ('1','true')" : " AND state.meta_value = '" . esc_sql($status) . "'";
+        $clauses['where'] .= " AND EXISTS ({$base}{$condition})";
+        return $clauses;
     }
 
     private static function academic_state_label(string $state): string {
@@ -287,43 +294,37 @@ class CPT_Oferta_Academica {
         }
         ?>
         <style>
-            .post-type-oferta-academica .column-cohortes { width: 380px; }
-            .flacso-cohort-list { display: grid; gap: 5px; min-width: 320px; }
-            .flacso-cohort-row {
-                display: grid; grid-template-columns: minmax(92px, 1fr) minmax(150px, auto) auto; align-items: center; gap: 8px;
-                padding: 7px 8px; border: 1px solid #e2e8f0; border-radius: 7px; background: #fff;
-            }
-            .flacso-cohort-row--open { border-color: #bbf7d0; background: linear-gradient(90deg, #f0fdf4 0%, #fff 72%); }
-            .flacso-cohort-row__title { font-weight: 700; color: #1d4ed8; text-decoration: none; }
-            .flacso-cohort-row__title:hover { color: #1e3a8a; text-decoration: underline; }
-            .flacso-cohort-row__meta { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
-            .flacso-cohort-state,
-            .flacso-pre-status { display: inline-flex; align-items: center; gap: 4px; width: fit-content; border-radius: 999px; padding: 2px 7px; font-size: 11px; font-weight: 650; line-height: 1.55; }
-            .flacso-cohort-state { color: #3c434a; background: #f0f0f1; }
-            .flacso-cohort-state--en_curso { color: #0f5132; background: #d1e7dd; }
-            .flacso-cohort-state--finalizada { color: #50575e; background: #e2e3e5; }
-            .flacso-cohort-state--cancelada { color: #842029; background: #f8d7da; }
-            .flacso-pre-status--open { color: #116329; background: #edfaef; }
-            .flacso-pre-status--legacy { color: #7a4b00; background: #fff6d6; }
-            .flacso-pre-status--closed,
-            .flacso-pre-status--unset { color: #646970; background: #f6f7f7; }
-            .flacso-cohort-row__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
-            .flacso-cohort-row__actions .button { min-height: 26px; line-height: 24px; margin: 0; }
+            .post-type-oferta-academica .wp-list-table { table-layout: fixed; border: 1px solid #dbe5f1; border-radius: 8px; overflow: hidden; }
+            .post-type-oferta-academica .column-title { width: 34%; }
+            .post-type-oferta-academica .column-cohorte_actual { width: 30%; }
+            .post-type-oferta-academica .column-preinscripcion { width: 18%; }
+            .post-type-oferta-academica .wp-list-table td { vertical-align: middle; padding-top: 11px; padding-bottom: 11px; border-bottom-color: #e9eef5; }
+            .post-type-oferta-academica .wp-list-table thead th,
+            .post-type-oferta-academica .wp-list-table tfoot th { background: #f6f8fc; color: #42526e; }
+            .post-type-oferta-academica .column-title strong a { color: #1d4ed8; font-size: 14px; line-height: 1.35; }
+            .flacso-current-instance { display: grid; gap: 4px; }
+            .flacso-current-instance__title { width: fit-content; color: #1d4ed8; font-weight: 700; text-decoration: none; }
+            .flacso-current-instance__title:hover { color: #1e3a8a; text-decoration: underline; }
+            .flacso-current-instance__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+            .flacso-current-instance__date { color: #50575e; font-size: 12px; }
+            .flacso-state,
+            .flacso-status { display: inline-flex; align-items: center; gap: 3px; border-radius: 999px; padding: 2px 8px; font-size: 11px; line-height: 1.6; font-weight: 600; white-space: nowrap; }
+            .flacso-state { background: #f0f0f1; color: #3c434a; }
+            .flacso-state--en_curso { background: #e7f7ed; color: #116329; }
+            .flacso-state--planificada { background: #e8f1fb; color: #135e96; }
+            .flacso-state--finalizada { background: #f0f0f1; color: #50575e; }
+            .flacso-state--cancelada { background: #fcf0f1; color: #8a2424; }
+            .flacso-status--open { background: #e7f7ed; color: #116329; }
+            .flacso-status--closed { background: #f0f0f1; color: #50575e; }
+            .flacso-status--neutral { background: #f6f7f7; color: #646970; }
+            .flacso-current-instance--empty a,
+            .flacso-current-instance__actions a { font-size: 12px; font-weight: 600; text-decoration: none; }
+            .flacso-current-instance__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+            .flacso-current-instance__actions .button { min-height: 26px; line-height: 24px; margin: 0; }
             .flacso-button-danger { color: #b32d2e !important; border-color: #d63638 !important; }
-            .flacso-cohort-row__notice { display: none; grid-column: 1 / -1; font-size: 12px; line-height: 1.35; }
-            .flacso-cohort-row__notice.is-success { display: block; color: #116329; }
-            .flacso-cohort-row__notice.is-error { display: block; color: #b32d2e; }
-            .flacso-cohort-add { margin: 5px 0 0; }
-            .flacso-cohort-add a { display: inline-flex; align-items: center; gap: 3px; color: #1d4ed8; font-size: 12px; font-weight: 650; text-decoration: none; }
-            .flacso-cohort-add a:hover { color: #1e3a8a; text-decoration: underline; }
-            .flacso-cohort-add .dashicons { width: 15px; height: 15px; margin-top: 4px; font-size: 15px; }
-            .flacso-cohort-empty { color: #646970; }
             @media (max-width: 1100px) {
-                .post-type-oferta-academica .column-cohortes { width: 320px; }
-                .flacso-cohort-list { min-width: 285px; }
-                .flacso-cohort-row { grid-template-columns: 1fr auto; }
-                .flacso-cohort-row__meta { grid-column: 1 / -1; grid-row: 2; }
-                .flacso-cohort-row__actions { grid-column: 2; grid-row: 1; }
+                .post-type-oferta-academica .column-title { width: 38%; }
+                .post-type-oferta-academica .column-cohorte_actual { width: 34%; }
             }
         </style>
         <?php
@@ -340,8 +341,8 @@ class CPT_Oferta_Academica {
             $(document).on('click', '.flacso-pre-action', function() {
                 var button = $(this);
                 var action = String(button.data('action') || '');
-                var card = button.closest('.flacso-cohort-row');
-                var notice = card.find('.flacso-cohort-row__notice');
+                var card = button.closest('.flacso-current-instance');
+                var notice = card.find('.flacso-current-instance__notice');
                 var originalText = button.text();
 
                 if (action === 'flacso_cerrar_preinscripcion_cohorte'

@@ -49,8 +49,9 @@ class Seminario_CPT
             add_filter('manage_' . self::POST_TYPE . '_posts_columns', [self::class, 'register_columns'], 100);
             add_filter('manage_edit-' . self::POST_TYPE . '_sortable_columns', [self::class, 'register_sortable_columns']);
             add_filter('posts_clauses', [self::class, 'sort_by_edition_date'], 10, 2);
+            add_filter('posts_clauses', [self::class, 'filter_by_operational_status'], 20, 2);
             add_action('manage_' . self::POST_TYPE . '_posts_custom_column', [self::class, 'render_column'], 10, 2);
-            add_filter('post_class', [self::class, 'add_list_row_classes'], 10, 3);
+            add_action('restrict_manage_posts', [self::class, 'render_operational_filters']);
             add_action('admin_head-edit.php', [self::class, 'admin_list_styles']);
         }
     }
@@ -172,7 +173,7 @@ class Seminario_CPT
             }
         }
 
-        return $ediciones[0];
+        return null;
     }
 
     private static function state_label(string $state): string
@@ -202,26 +203,6 @@ class Seminario_CPT
         return $parsed->format('d/m/Y');
     }
 
-    /**
-     * Destaca la fila completa cuando su edición operativa recibe preinscripciones.
-     * El dato se calcula desde la Edición para no duplicar estado en el Seminario.
-     */
-    public static function add_list_row_classes(array $classes, $class, int $post_id): array
-    {
-        if (get_post_type($post_id) !== self::POST_TYPE) {
-            return $classes;
-        }
-
-        $edicion = self::get_primary_edicion(self::get_ediciones($post_id));
-        $classes[] = 'flacso-seminario-row';
-
-        if ($edicion && FLACSO_Edicion::accepts_registration($edicion->ID)) {
-            $classes[] = 'flacso-seminario-row--open';
-        }
-
-        return $classes;
-    }
-
     public static function render_column(string $column, int $post_id): void
     {
         if (!in_array($column, array('edicion_actual', 'preinscripcion'), true)) {
@@ -234,8 +215,7 @@ class Seminario_CPT
 
         if ($column === 'edicion_actual') {
             if (!$edicion) {
-                echo '<span class="flacso-table-muted">Sin edición</span>';
-                echo '<div class="flacso-table-actions"><a href="' . esc_url($add_url) . '">' . esc_html__('Crear edición', 'flacso-uruguay') . '</a></div>';
+                echo '<div class="flacso-current-instance flacso-current-instance--empty"><span class="flacso-table-muted">' . esc_html__('Sin edición vigente', 'flacso-uruguay') . '</span><a href="' . esc_url($add_url) . '">' . esc_html__('Crear edición', 'flacso-uruguay') . '</a></div>';
                 return;
             }
 
@@ -246,20 +226,17 @@ class Seminario_CPT
             $edit_url = get_edit_post_link($edicion->ID);
             $title = $anio > 0 ? sprintf(__('Edición %d', 'flacso-uruguay'), $anio) : get_the_title($edicion->ID);
 
-            echo '<div class="flacso-edicion-summary">';
-            echo '<a class="flacso-edicion-summary__title" href="' . esc_url($edit_url) . '">' . esc_html($title) . '</a>';
-            echo '<div class="flacso-edicion-summary__meta">';
+            echo '<div class="flacso-current-instance">';
+            echo '<a class="flacso-current-instance__title" href="' . esc_url($edit_url) . '">' . esc_html($title) . '</a>';
+            echo '<div class="flacso-current-instance__meta">';
             echo '<span class="flacso-state flacso-state--' . esc_attr($estado) . '">' . esc_html(self::state_label($estado)) . '</span>';
             if ($inicio !== '') {
                 $inicio_label = self::format_uy_date($inicio);
                 $fin_label = self::format_uy_date($fin);
                 $date_label = $inicio_label . ($fin_label !== '' && $fin !== $inicio ? ' → ' . $fin_label : '');
-                echo '<span class="flacso-edicion-summary__date">' . esc_html($date_label) . '</span>';
+                echo '<span class="flacso-current-instance__date">' . esc_html($date_label) . '</span>';
             }
             echo '</div>';
-            if (count($ediciones) > 1) {
-                echo '<span class="flacso-table-muted">' . esc_html(sprintf(__('+ %d edición(es) anteriores', 'flacso-uruguay'), count($ediciones) - 1)) . '</span>';
-            }
             echo '</div>';
             return;
         }
@@ -272,14 +249,37 @@ class Seminario_CPT
         $link = (string) get_post_meta($edicion->ID, 'link_preinscripcion', true);
         $abierta = FLACSO_Edicion::accepts_registration($edicion->ID);
 
-        if ($abierta && $link !== '') {
-            echo '<span class="flacso-status flacso-status--open"><span class="dashicons dashicons-yes-alt"></span>' . esc_html__('Abierta', 'flacso-uruguay') . '</span>';
-            echo '<div class="flacso-table-actions"><a href="' . esc_url($link) . '" target="_blank" rel="noopener noreferrer">' . esc_html__('Ver portal', 'flacso-uruguay') . ' ↗</a></div>';
-        } elseif ($link !== '') {
-            echo '<span class="flacso-status flacso-status--closed">' . esc_html__('Cerrada', 'flacso-uruguay') . '</span>';
-        } else {
-            echo '<span class="flacso-status flacso-status--neutral">' . esc_html__('Sin enlace', 'flacso-uruguay') . '</span>';
-        }
+        echo '<div class="flacso-current-instance flacso-current-instance--registration' . ($abierta ? ' flacso-current-instance--open' : '') . '">';
+        echo '<span class="flacso-status flacso-status--' . ($abierta ? 'open' : ($link !== '' ? 'closed' : 'neutral')) . '">' . esc_html($abierta ? __('Abierta', 'flacso-uruguay') : ($link !== '' ? __('Cerrada', 'flacso-uruguay') : __('Sin configurar', 'flacso-uruguay'))) . '</span>';
+        if ($abierta && $link !== '') { echo '<div class="flacso-current-instance__actions"><a href="' . esc_url($link) . '" target="_blank" rel="noopener noreferrer">' . esc_html__('Ver portal ↗', 'flacso-uruguay') . '</a></div>'; }
+        echo '</div>';
+    }
+
+    public static function render_operational_filters(string $post_type): void
+    {
+        if ($post_type !== self::POST_TYPE) { return; }
+        $selected = sanitize_key((string) ($_GET['flacso_operational_status'] ?? ''));
+        $options = [
+            'preinscripcion_abierta' => __('Preinscripción abierta', 'flacso-uruguay'),
+            'en_curso' => __('En curso', 'flacso-uruguay'),
+            'planificada' => __('Planificada', 'flacso-uruguay'),
+            'sin_vigente' => __('Sin edición vigente', 'flacso-uruguay'),
+        ];
+        echo '<select name="flacso_operational_status"><option value="">' . esc_html__('Estado operativo', 'flacso-uruguay') . '</option>';
+        foreach ($options as $value => $label) { echo '<option value="' . esc_attr($value) . '" ' . selected($selected, $value, false) . '>' . esc_html($label) . '</option>'; }
+        echo '</select>';
+    }
+
+    public static function filter_by_operational_status(array $clauses, WP_Query $query): array
+    {
+        $status = sanitize_key((string) ($query->get('flacso_operational_status') ?: ($_GET['flacso_operational_status'] ?? '')));
+        if (!$query->is_main_query() || $query->get('post_type') !== self::POST_TYPE || !in_array($status, ['preinscripcion_abierta', 'en_curso', 'planificada', 'sin_vigente'], true)) { return $clauses; }
+        global $wpdb;
+        $base = "SELECT 1 FROM {$wpdb->posts} child INNER JOIN {$wpdb->postmeta} parent ON parent.post_id = child.ID AND parent.meta_key = 'seminario_id' AND parent.meta_value = CAST({$wpdb->posts}.ID AS CHAR) LEFT JOIN {$wpdb->postmeta} state ON state.post_id = child.ID AND state.meta_key = 'estado' LEFT JOIN {$wpdb->postmeta} registration ON registration.post_id = child.ID AND registration.meta_key = 'preinscripcion_habilitada' WHERE child.post_type = 'edicion' AND child.post_status IN ('publish','draft','pending','private') AND COALESCE(NULLIF(state.meta_value, ''), 'planificada') IN ('en_curso','planificada')";
+        if ($status === 'sin_vigente') { $clauses['where'] .= " AND NOT EXISTS ({$base})"; return $clauses; }
+        $condition = $status === 'preinscripcion_abierta' ? " AND registration.meta_value IN ('1','true')" : " AND state.meta_value = '" . esc_sql($status) . "'";
+        $clauses['where'] .= " AND EXISTS ({$base}{$condition})";
+        return $clauses;
     }
 
     public static function admin_list_styles(): void
@@ -302,13 +302,13 @@ class Seminario_CPT
             .post-type-seminario .wp-list-table tfoot th { background: #f6f8fc; color: #42526e; }
             .post-type-seminario .wp-list-table .column-title strong a { color: #1d4ed8; font-size: 14px; line-height: 1.35; }
             .post-type-seminario .wp-list-table .column-title strong a:hover { color: #1e3a8a; }
-            .post-type-seminario .wp-list-table .flacso-seminario-row--open > th,
-            .post-type-seminario .wp-list-table .flacso-seminario-row--open > td { background: linear-gradient(90deg, #f0fdf4 0%, #fff 72%); }
-            .flacso-edicion-summary { display: grid; gap: 4px; }
-            .flacso-edicion-summary__title { width: fit-content; font-weight: 700; color: #1d4ed8; text-decoration: none; }
-            .flacso-edicion-summary__title:hover { color: #1e3a8a; text-decoration: underline; }
-            .flacso-edicion-summary__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
-            .flacso-edicion-summary__date { color: #50575e; font-size: 12px; }
+            .flacso-current-instance { display: grid; gap: 4px; }
+            .flacso-current-instance__title { width: fit-content; font-weight: 700; color: #1d4ed8; text-decoration: none; }
+            .flacso-current-instance__title:hover { color: #1e3a8a; text-decoration: underline; }
+            .flacso-current-instance__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+            .flacso-current-instance__date { color: #50575e; font-size: 12px; }
+            .flacso-current-instance--empty a,
+            .flacso-current-instance__actions a { font-size: 12px; font-weight: 600; text-decoration: none; }
             .flacso-state,
             .flacso-status { display: inline-flex; align-items: center; gap: 3px; border-radius: 999px; padding: 2px 8px; font-size: 11px; line-height: 1.6; font-weight: 600; white-space: nowrap; }
             .flacso-state { background: #f0f0f1; color: #3c434a; }

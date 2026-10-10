@@ -10,9 +10,9 @@ function seminario_list_assert(bool $condition, string $message): void {
     }
 }
 
-seminario_list_assert(strpos($cpt, 'flacso-seminario-row') !== false, 'el listado debe identificar filas operativas de seminarios');
-seminario_list_assert(strpos($cpt, 'flacso-seminario-row--open') !== false, 'las preinscripciones abiertas deben destacarse en la fila');
-seminario_list_assert(strpos($cpt, 'flacso-edicion-summary__meta') !== false, 'la edición debe agrupar estado y fechas como metadatos');
+seminario_list_assert(strpos($cpt, 'flacso-current-instance') !== false, 'el listado debe usar el bloque compartido de instancia vigente');
+seminario_list_assert(strpos($cpt, 'Sin edición vigente') !== false, 'debe informar cuando no existe edición vigente');
+seminario_list_assert(strpos($cpt, 'sin_vigente') !== false, 'debe filtrar seminarios sin edición vigente');
 seminario_list_assert(strpos($cpt, 'flacso-status--open') !== false, 'se conserva el estado semántico de preinscripción abierta');
 seminario_list_assert(strpos($cpt, '@media screen and (max-width: 1100px)') !== false, 'el listado debe conservar una presentación adaptable');
 
