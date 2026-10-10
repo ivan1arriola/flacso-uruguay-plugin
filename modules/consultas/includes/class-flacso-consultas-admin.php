@@ -704,6 +704,32 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					}
 					.flacso-cp-filters .fg { display: flex; flex-direction: column; gap: 4px; }
 					.flacso-cp-filters label { font-size: 12px; font-weight: 600; color: #334155; }
+					.flacso-comparison-filters { align-items: stretch; }
+					.flacso-comparison-period { display: flex; flex-wrap: wrap; gap: 10px; padding: 11px 12px; border: 1px solid; border-radius: 9px; }
+					.flacso-comparison-period__title { width: 100%; margin: 0; font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+					.flacso-comparison-period--current { background: #eff6ff; border-color: #bfdbfe; }
+					.flacso-comparison-period--current .flacso-comparison-period__title { color: #1d4ed8; }
+					.flacso-comparison-period--base { background: #f5f3ff; border-color: #ddd6fe; }
+					.flacso-comparison-period--base .flacso-comparison-period__title { color: #6d28d9; }
+					.flacso-comparison-actions { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
+					.flacso-comparison-actions .button { min-height: 36px; }
+					.flacso-cp-kpi--comparison { position: relative; overflow: hidden; }
+					.flacso-cp-kpi--comparison::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px; background: #2563eb; }
+					.flacso-cp-kpi--uruguay::before { background: #059669; }
+					.flacso-cp-kpi--exterior::before { background: #7c3aed; }
+					.flacso-comparison-values { display: flex; align-items: baseline; gap: 7px; }
+					.flacso-comparison-current { color: #1d4ed8; }
+					.flacso-comparison-base { color: #6b7280; font-size: 14px; font-weight: 700; }
+					.flacso-comparison-delta { display: inline-flex; align-items: center; gap: 4px; margin-top: 7px; padding: 4px 8px; border-radius: 999px; font-size: 12px; font-weight: 750; }
+					.flacso-comparison-delta.is-positive { background: #dcfce7; color: #166534; }
+					.flacso-comparison-delta.is-negative { background: #fee2e2; color: #b91c1c; }
+					.flacso-comparison-delta.is-neutral { background: #e2e8f0; color: #475569; }
+					.flacso-comparison-table .flacso-comparison-value--current { color: #1d4ed8; font-weight: 750; }
+					.flacso-comparison-table .flacso-comparison-value--base { color: #6b7280; }
+					.flacso-comparison-table .flacso-comparison-split { color: #475569; font-variant-numeric: tabular-nums; }
+					.flacso-comparison-table .flacso-comparison-delta { margin-top: 0; white-space: nowrap; }
+					.flacso-comparison-table tr.is-positive td:first-child { box-shadow: inset 3px 0 0 #22c55e; }
+					.flacso-comparison-table tr.is-negative td:first-child { box-shadow: inset 3px 0 0 #ef4444; }
 					.flacso-cp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 						.flacso-cp-inbox-table { table-layout: fixed; }
 						.flacso-cp-inbox-table th,
@@ -1511,65 +1537,68 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			$r1 = $s1['resumen'];
 			$r2 = $s2['resumen'];
 
-			$delta_fn = static function ( $curr, $prev ): string {
+			$delta_fn = static function ( $curr, $prev ): array {
 				$diff = $curr - $prev;
-				$sign = $diff >= 0 ? '+' : '';
+				$tone = $diff > 0 ? 'positive' : ( $diff < 0 ? 'negative' : 'neutral' );
+				$icon = $diff > 0 ? '↑' : ( $diff < 0 ? '↓' : '→' );
+				$sign = $diff > 0 ? '+' : '';
 				if ( $prev <= 0 ) {
-					return sprintf( '%s%d (N/A %%)', $sign, $diff );
+					return array( 'tone' => $tone, 'icon' => $icon, 'label' => sprintf( '%s%d (N/A %%)', $sign, $diff ) );
 				}
 				$pct = round( ( $diff / $prev ) * 100, 1 );
-				return sprintf( '%s%d (%s%s%%)', $sign, $diff, $sign, $pct );
+				return array( 'tone' => $tone, 'icon' => $icon, 'label' => sprintf( '%s%d (%s%s%%)', $sign, $diff, $sign, $pct ) );
+			};
+			$render_delta = static function ( $curr, $prev ) use ( $delta_fn ): string {
+				$delta = $delta_fn( $curr, $prev );
+				return sprintf(
+					'<span class="flacso-comparison-delta is-%1$s"><span aria-hidden="true">%2$s</span>%3$s</span>',
+					esc_attr( $delta['tone'] ),
+					esc_html( $delta['icon'] ),
+					esc_html( $delta['label'] )
+				);
 			};
 			?>
 			<div class="flacso-cp-card">
-				<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" class="flacso-cp-filters">
+				<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" class="flacso-cp-filters flacso-comparison-filters">
 					<input type="hidden" name="page" value="<?php echo esc_attr( self::PAGE_SLUG ); ?>">
 					<input type="hidden" name="tab" value="comparacion">
 					<input type="hidden" name="table" value="<?php echo esc_attr( $table ); ?>">
-					<div class="fg">
-						<label>Período 1 (Actual) Desde</label>
-						<input type="date" name="from" id="flacso-p1-from" value="<?php echo esc_attr( $from ); ?>">
+					<div class="flacso-comparison-period flacso-comparison-period--current">
+						<p class="flacso-comparison-period__title">Período actual</p>
+						<div class="fg"><label>Desde</label><input type="date" name="from" id="flacso-p1-from" value="<?php echo esc_attr( $from ); ?>"></div>
+						<div class="fg"><label>Hasta</label><input type="date" name="to" id="flacso-p1-to" value="<?php echo esc_attr( $to ); ?>"></div>
 					</div>
-					<div class="fg">
-						<label>Período 1 Hasta</label>
-						<input type="date" name="to" id="flacso-p1-to" value="<?php echo esc_attr( $to ); ?>">
+					<div class="flacso-comparison-period flacso-comparison-period--base">
+						<p class="flacso-comparison-period__title">Período base</p>
+						<div class="fg"><label>Desde</label><input type="date" name="p2_from" id="flacso-p2-from" value="<?php echo esc_attr( $p2_from ); ?>"></div>
+						<div class="fg"><label>Hasta</label><input type="date" name="p2_to" id="flacso-p2-to" value="<?php echo esc_attr( $p2_to ); ?>"></div>
 					</div>
-					<div class="fg">
-						<label>Período 2 (Base) Desde</label>
-						<input type="date" name="p2_from" id="flacso-p2-from" value="<?php echo esc_attr( $p2_from ); ?>">
-					</div>
-					<div class="fg">
-						<label>Período 2 Hasta</label>
-						<input type="date" name="p2_to" id="flacso-p2-to" value="<?php echo esc_attr( $p2_to ); ?>">
-					</div>
-					<div class="fg">
+					<div class="flacso-comparison-actions">
 						<button type="button" class="button" id="flacso-auto-prev-period">⏮ Usar los <?php echo (int) $days_diff; ?> días anteriores</button>
-					</div>
-					<div class="fg">
 						<button type="submit" class="button button-primary">Comparar Períodos</button>
 					</div>
 				</form>
 
 				<div class="flacso-cp-kpi-grid">
-					<div class="flacso-cp-kpi">
+					<div class="flacso-cp-kpi flacso-cp-kpi--comparison">
 						<div class="kpi-label">Total Deduplicado (P1 vs P2)</div>
-						<div class="kpi-val"><?php echo (int) $r1['total']['totalConsultas']; ?> <span style="font-size:15px; color:#64748b;">vs <?php echo (int) $r2['total']['totalConsultas']; ?></span></div>
-						<div class="kpi-sub">Variación: <strong><?php echo esc_html( $delta_fn( $r1['total']['totalConsultas'], $r2['total']['totalConsultas'] ) ); ?></strong></div>
+						<div class="kpi-val flacso-comparison-values"><span class="flacso-comparison-current"><?php echo (int) $r1['total']['totalConsultas']; ?></span><span class="flacso-comparison-base">vs <?php echo (int) $r2['total']['totalConsultas']; ?></span></div>
+						<?php echo $render_delta( $r1['total']['totalConsultas'], $r2['total']['totalConsultas'] ); ?>
 					</div>
-					<div class="flacso-cp-kpi">
+					<div class="flacso-cp-kpi flacso-cp-kpi--comparison flacso-cp-kpi--uruguay">
 						<div class="kpi-label">🇺🇾 Uruguay (P1 vs P2)</div>
-						<div class="kpi-val"><?php echo (int) $r1['uruguay']['totalConsultas']; ?> <span style="font-size:15px; color:#64748b;">vs <?php echo (int) $r2['uruguay']['totalConsultas']; ?></span></div>
-						<div class="kpi-sub">Variación: <strong><?php echo esc_html( $delta_fn( $r1['uruguay']['totalConsultas'], $r2['uruguay']['totalConsultas'] ) ); ?></strong></div>
+						<div class="kpi-val flacso-comparison-values"><span class="flacso-comparison-current"><?php echo (int) $r1['uruguay']['totalConsultas']; ?></span><span class="flacso-comparison-base">vs <?php echo (int) $r2['uruguay']['totalConsultas']; ?></span></div>
+						<?php echo $render_delta( $r1['uruguay']['totalConsultas'], $r2['uruguay']['totalConsultas'] ); ?>
 					</div>
-					<div class="flacso-cp-kpi">
+					<div class="flacso-cp-kpi flacso-cp-kpi--comparison flacso-cp-kpi--exterior">
 						<div class="kpi-label">🌎 Exterior (P1 vs P2)</div>
-						<div class="kpi-val"><?php echo (int) $r1['exterior']['totalConsultas']; ?> <span style="font-size:15px; color:#64748b;">vs <?php echo (int) $r2['exterior']['totalConsultas']; ?></span></div>
-						<div class="kpi-sub">Variación: <strong><?php echo esc_html( $delta_fn( $r1['exterior']['totalConsultas'], $r2['exterior']['totalConsultas'] ) ); ?></strong></div>
+						<div class="kpi-val flacso-comparison-values"><span class="flacso-comparison-current"><?php echo (int) $r1['exterior']['totalConsultas']; ?></span><span class="flacso-comparison-base">vs <?php echo (int) $r2['exterior']['totalConsultas']; ?></span></div>
+						<?php echo $render_delta( $r1['exterior']['totalConsultas'], $r2['exterior']['totalConsultas'] ); ?>
 					</div>
 				</div>
 
 				<h3>Comparación 1 a 1 por Oferta Académica</h3>
-				<table class="flacso-cp-table">
+				<table class="flacso-cp-table flacso-comparison-table">
 					<thead>
 						<tr>
 							<th>Oferta Académica</th>
@@ -1589,13 +1618,14 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 						foreach ( $s1['consolidado'] as $o1 ) :
 							$o2 = $map2[ $o1['oferta'] ] ?? array( 'total' => 0, 'uy' => 0, 'ext' => 0 );
 							?>
-							<tr>
+							<?php $delta = $delta_fn( $o1['total'], $o2['total'] ); ?>
+							<tr class="is-<?php echo esc_attr( $delta['tone'] ); ?>">
 								<td><strong><?php echo esc_html( $o1['oferta'] ); ?></strong></td>
-								<td><strong><?php echo (int) $o1['total']; ?></strong></td>
-								<td><?php echo (int) $o2['total']; ?></td>
-								<td><strong><?php echo esc_html( $delta_fn( $o1['total'], $o2['total'] ) ); ?></strong></td>
-								<td><?php echo (int) $o1['uy']; ?> / <?php echo (int) $o1['ext']; ?></td>
-								<td><?php echo (int) $o2['uy']; ?> / <?php echo (int) $o2['ext']; ?></td>
+								<td class="flacso-comparison-value--current"><?php echo (int) $o1['total']; ?></td>
+								<td class="flacso-comparison-value--base"><?php echo (int) $o2['total']; ?></td>
+								<td><?php echo $render_delta( $o1['total'], $o2['total'] ); ?></td>
+								<td class="flacso-comparison-split"><?php echo (int) $o1['uy']; ?> / <?php echo (int) $o1['ext']; ?></td>
+								<td class="flacso-comparison-split"><?php echo (int) $o2['uy']; ?> / <?php echo (int) $o2['ext']; ?></td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>
