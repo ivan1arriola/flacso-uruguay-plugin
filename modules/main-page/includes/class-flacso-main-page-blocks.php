@@ -274,7 +274,7 @@ class Flacso_Main_Page_Blocks {
         return array_keys(self::get_blocks_map());
     }
 
-    public static function restrict_blocks_for_oferta($allowed, $context): array|bool {
+    public static function restrict_blocks_for_oferta($allowed, $context) {
         $post_type = null;
         if (is_array($context)) {
             $post_type = $context['post_type'] ?? null;
