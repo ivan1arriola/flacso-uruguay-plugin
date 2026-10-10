@@ -62,6 +62,7 @@ require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-preinscription-li
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-legacy-redirects.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-meta-tracking.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-meta-leads-webhook.php';
+require_once FLACSO_URUGUAY_PATH . 'includes/core/requires.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/loader.php';
 
 // ============================================
