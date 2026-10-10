@@ -416,6 +416,7 @@ if ( ! class_exists( 'Flacso_Custom_404' ) ) {
 						</div>
 
 						<div class="flacso-404-hero__visual" aria-hidden="true">
+							<div class="flacso-404-number">404</div>
 							<div class="flacso-404-compass">
 								<i class="bi bi-compass"></i>
 							</div>

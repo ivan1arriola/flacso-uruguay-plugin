@@ -15,7 +15,11 @@ class CPT_Docente {
         self::register_post_type();
         add_filter('use_block_editor_for_post_type', [self::class, 'disable_block_editor'], 10, 2);
         add_action('init', [self::class, 'register_rewrite_rules'], 10);
+        add_action('init', [self::class, 'check_and_flush_rules'], 30);
         add_filter('query_vars', [self::class, 'register_query_vars']);
+        add_filter('request', [self::class, 'fix_equipo_request'], 5);
+        add_filter('redirect_canonical', [self::class, 'prevent_canonical_redirect_for_equipo'], 10, 2);
+        add_action('template_redirect', [self::class, 'handle_template_redirect'], 10);
         add_filter('template_include', [self::class, 'handle_template_routing'], 20);
         add_filter('pre_get_document_title', [self::class, 'filter_document_title'], 20);
     }
@@ -61,11 +65,49 @@ class CPT_Docente {
 
     public static function register_rewrite_rules(): void {
         add_rewrite_tag('%flacso_equipo_view%', '([^&]+)');
-        add_rewrite_rule('^equipo/docentes/?$', 'index.php?flacso_equipo_view=docentes', 'top');
-        add_rewrite_rule('^equipo/administrativo/?$', 'index.php?flacso_equipo_view=administrativo', 'top');
-        add_rewrite_rule('^equipo/?$', 'index.php?flacso_equipo_view=all', 'top');
-        add_rewrite_rule('^docentes/?$', 'index.php?flacso_equipo_view=docentes', 'top');
+        add_rewrite_rule('^equipo/docentes/?$', 'index.php?post_type=' . self::POST_TYPE . '&flacso_equipo_view=docentes', 'top');
+        add_rewrite_rule('^equipo/administrativo/?$', 'index.php?post_type=' . self::POST_TYPE . '&flacso_equipo_view=administrativo', 'top');
+        add_rewrite_rule('^equipo/?$', 'index.php?post_type=' . self::POST_TYPE . '&flacso_equipo_view=all', 'top');
+        add_rewrite_rule('^docentes/?$', 'index.php?post_type=' . self::POST_TYPE . '&flacso_equipo_view=docentes', 'top');
         add_rewrite_rule('^docente/([^/]+)/?$', 'index.php?docente=$matches[1]', 'top');
+    }
+
+    public static function check_and_flush_rules(): void {
+        $rules = get_option('rewrite_rules');
+        if (!is_array($rules) || !isset($rules['^equipo/docentes/?$'])) {
+            flush_rewrite_rules(false);
+        }
+    }
+
+    public static function fix_equipo_request(array $query_vars): array {
+        if (isset($_SERVER['REQUEST_URI'])) {
+            $path = trim((string) wp_parse_url((string) $_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+            if ($path === 'equipo/docentes' || $path === 'docentes') {
+                unset($query_vars['docente'], $query_vars['name']);
+                $query_vars['post_type'] = self::POST_TYPE;
+                $query_vars['flacso_equipo_view'] = 'docentes';
+            } elseif ($path === 'equipo/administrativo') {
+                unset($query_vars['docente'], $query_vars['name']);
+                $query_vars['post_type'] = self::POST_TYPE;
+                $query_vars['flacso_equipo_view'] = 'administrativo';
+            } elseif ($path === 'equipo') {
+                unset($query_vars['docente'], $query_vars['name']);
+                $query_vars['post_type'] = self::POST_TYPE;
+                $query_vars['flacso_equipo_view'] = 'all';
+            }
+        }
+        return $query_vars;
+    }
+
+    public static function prevent_canonical_redirect_for_equipo($redirect_url, $requested_url) {
+        if (get_query_var('flacso_equipo_view')) {
+            return false;
+        }
+        $path = trim((string) wp_parse_url((string) $requested_url, PHP_URL_PATH), '/');
+        if ($path === 'equipo' || $path === 'equipo/docentes' || $path === 'equipo/administrativo' || $path === 'docentes') {
+            return false;
+        }
+        return $redirect_url;
     }
 
     public static function register_query_vars(array $vars): array {
@@ -73,8 +115,47 @@ class CPT_Docente {
         return $vars;
     }
 
+    public static function handle_template_redirect(): void {
+        $view = get_query_var('flacso_equipo_view');
+        if (!$view && isset($_SERVER['REQUEST_URI'])) {
+            $path = trim((string) wp_parse_url((string) $_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+            if ($path === 'equipo/docentes' || $path === 'docentes') {
+                $view = 'docentes';
+                set_query_var('flacso_equipo_view', 'docentes');
+            } elseif ($path === 'equipo/administrativo') {
+                $view = 'administrativo';
+                set_query_var('flacso_equipo_view', 'administrativo');
+            } elseif ($path === 'equipo') {
+                $view = 'all';
+                set_query_var('flacso_equipo_view', 'all');
+            }
+        }
+
+        if ($view) {
+            global $wp_query;
+            if ($wp_query) {
+                $wp_query->is_404 = false;
+                $wp_query->is_archive = true;
+                $wp_query->is_post_type_archive = true;
+                $wp_query->set('post_type', self::POST_TYPE);
+            }
+            status_header(200);
+        }
+    }
+
     public static function handle_template_routing($template) {
         $view = get_query_var('flacso_equipo_view');
+        if (!$view && isset($_SERVER['REQUEST_URI'])) {
+            $path = trim((string) wp_parse_url((string) $_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+            if ($path === 'equipo/docentes' || $path === 'docentes') {
+                $view = 'docentes';
+            } elseif ($path === 'equipo/administrativo') {
+                $view = 'administrativo';
+            } elseif ($path === 'equipo') {
+                $view = 'all';
+            }
+        }
+
         if ($view) {
             global $wp_query;
             if ($wp_query) {
@@ -94,6 +175,17 @@ class CPT_Docente {
 
     public static function filter_document_title(string $title): string {
         $view = get_query_var('flacso_equipo_view');
+        if (!$view && isset($_SERVER['REQUEST_URI'])) {
+            $path = trim((string) wp_parse_url((string) $_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+            if ($path === 'equipo/docentes' || $path === 'docentes') {
+                $view = 'docentes';
+            } elseif ($path === 'equipo/administrativo') {
+                $view = 'administrativo';
+            } elseif ($path === 'equipo') {
+                $view = 'all';
+            }
+        }
+
         if (!$view) {
             return $title;
         }
