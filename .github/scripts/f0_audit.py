@@ -289,6 +289,9 @@ def main():
     (out / "README.md").write_text("\n".join(lines), encoding="utf-8")
     print(f"F0 generated: {len(files)} PHP files; {len(entries)} entrypoint candidates; {len(deps)} dependency references")
     print(f"Potential cycles: {len(cycles)}; duplicate type names: {len(duplicates)}")
+    print("MODULES:", ", ".join(modules))
+    print("POTENTIAL_SCC:", json.dumps(cycles, ensure_ascii=False))
+    print("DUPLICATE_TYPES:", json.dumps(duplicates, ensure_ascii=False))
     print((out / "README.md").read_text(encoding="utf-8")[:5000])
 
 
