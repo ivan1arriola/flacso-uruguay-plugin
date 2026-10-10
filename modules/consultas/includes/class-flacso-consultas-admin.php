@@ -32,6 +32,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 		public static function init(): void {
 			add_action( 'admin_menu', array( __CLASS__, 'register_menu' ), 12 );
 			add_action( 'admin_init', array( __CLASS__, 'redirect_legacy_tab' ) );
+			add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_admin_assets' ) );
 			add_action( 'wp_ajax_flacso_consultas_detail', array( __CLASS__, 'ajax_get_detail' ) );
 			add_action( 'wp_ajax_flacso_consultas_retry_email', array( __CLASS__, 'ajax_retry_email' ) );
 			add_action( 'wp_ajax_flacso_consultas_retry_mautic', array( __CLASS__, 'ajax_retry_mautic' ) );
@@ -64,6 +65,20 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 				add_submenu_page( $parent_slug, $page[0], $page[0], FLACSO_Academic_Assistant::VIEW_INQUIRIES, $slug, array( __CLASS__, $page[1] ) );
 			}
 		}
+
+		public static function enqueue_admin_assets( string $hook ): void {
+			if ( false === strpos( $hook, 'flacso-consultas' ) ) { return; }
+			$path = FLACSO_CONSULTAS_MODULE_PATH . 'assets/css/consultas-admin.css';
+			wp_enqueue_style( 'flacso-consultas-admin', plugins_url( 'assets/css/consultas-admin.css', dirname( __FILE__ ) ), array(), file_exists( $path ) ? (string) filemtime( $path ) : false );
+		}
+
+		private static function render_page_header( string $title, string $description, array $actions = array() ): void {
+			echo '<header class="flacso-consultas-page__header"><div><h1>' . esc_html( $title ) . '</h1><p>' . esc_html( $description ) . '</p></div>';
+			if ( ! empty( $actions ) ) { echo '<div>' . implode( '', $actions ) . '</div>'; }
+			echo '</header>';
+		}
+
+		private static function render_operational_notice(): void { call_user_func( array( __CLASS__, 'render_transactional_diagnostics' ) ); }
 
 		public static function redirect_legacy_tab(): void {
 			if ( ! is_admin() || ! isset( $_GET['page'], $_GET['tab'] ) || self::PAGE_BANDEJA !== sanitize_key( wp_unslash( $_GET['page'] ) ) ) { return; }
@@ -685,6 +700,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			$nonce = wp_create_nonce( self::NONCE_ACTION );
 			?>
 			<div class="wrap flacso-consultas-platform">
+				<div class="flacso-consultas-page">
 				<style>
 					#wpbody-content > .notice { margin: 0 0 16px; color: #1d2327; background: #fff; border-radius: 6px; box-shadow: 0 1px 2px rgba(15,23,42,.06); }
 					#wpbody-content > .notice p { margin: .8em 1em; padding: 0; color: inherit; background: transparent; line-height: 1.5; }
@@ -843,6 +859,8 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					<?php self::render_transactional_diagnostics(); ?>
 				</div>
 
+				<?php self::render_page_header( __( 'Consultas', 'flacso-uruguay' ), __( 'Bandeja y análisis de consultas académicas.', 'flacso-uruguay' ) ); ?>
+
 				<div class="flacso-cp-hero">
 					<div>
 						<h1>📊 Plataforma de Consultas e Inteligencia Analítica</h1>
@@ -912,6 +930,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 						break;
 				}
 				?>
+				</div>
 			</div>
 			<?php
 		}
