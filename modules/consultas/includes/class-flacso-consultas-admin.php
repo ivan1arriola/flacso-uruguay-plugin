@@ -13,6 +13,12 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 	class FLACSO_Consultas_Admin {
 
 		const PAGE_SLUG    = 'flacso-consultas';
+		const PAGE_BANDEJA = 'flacso-consultas';
+		const PAGE_RESUMEN = 'flacso-consultas-resumen';
+		const PAGE_OFERTA_PAIS = 'flacso-consultas-oferta-pais';
+		const PAGE_COMPARACION = 'flacso-consultas-comparacion';
+		const PAGE_CAMPANAS = 'flacso-consultas-campanas';
+		const PAGE_EXPORTAR = 'flacso-consultas-exportar';
 		const NONCE_ACTION = 'flacso_consultas_admin_nonce';
 
 		private static function can_view(): bool {
@@ -25,6 +31,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 
 		public static function init(): void {
 			add_action( 'admin_menu', array( __CLASS__, 'register_menu' ), 12 );
+			add_action( 'admin_init', array( __CLASS__, 'redirect_legacy_tab' ) );
 			add_action( 'wp_ajax_flacso_consultas_detail', array( __CLASS__, 'ajax_get_detail' ) );
 			add_action( 'wp_ajax_flacso_consultas_retry_email', array( __CLASS__, 'ajax_retry_email' ) );
 			add_action( 'wp_ajax_flacso_consultas_retry_mautic', array( __CLASS__, 'ajax_retry_mautic' ) );
@@ -45,14 +52,28 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 		public static function register_menu(): void {
 			$parent_slug = class_exists( 'FLACSO_Admin_Panel' ) ? FLACSO_Admin_Panel::PAGE_SLUG : 'flacso-panel';
 
-			add_submenu_page(
-				$parent_slug,
-				__( 'Consultas y Analítica', 'flacso-uruguay' ),
-				__( 'Consultas', 'flacso-uruguay' ),
-				FLACSO_Academic_Assistant::VIEW_INQUIRIES,
-				self::PAGE_SLUG,
-				array( __CLASS__, 'render_page' )
+			$pages = array(
+				self::PAGE_BANDEJA => array( __( 'Consultas', 'flacso-uruguay' ), 'render_page' ),
+				self::PAGE_RESUMEN => array( __( 'Resumen por oferta', 'flacso-uruguay' ), 'render_resumen_page' ),
+				self::PAGE_OFERTA_PAIS => array( __( 'Oferta y país', 'flacso-uruguay' ), 'render_oferta_pais_page' ),
+				self::PAGE_COMPARACION => array( __( 'Comparación de períodos', 'flacso-uruguay' ), 'render_comparacion_page' ),
+				self::PAGE_CAMPANAS => array( __( 'Campañas', 'flacso-uruguay' ), 'render_campanas_page' ),
+				self::PAGE_EXPORTAR => array( __( 'Exportar CSV', 'flacso-uruguay' ), 'render_exportar_page' ),
 			);
+			foreach ( $pages as $slug => $page ) {
+				add_submenu_page( $parent_slug, $page[0], $page[0], FLACSO_Academic_Assistant::VIEW_INQUIRIES, $slug, array( __CLASS__, $page[1] ) );
+			}
+		}
+
+		public static function redirect_legacy_tab(): void {
+			if ( ! is_admin() || ! isset( $_GET['page'], $_GET['tab'] ) || self::PAGE_BANDEJA !== sanitize_key( wp_unslash( $_GET['page'] ) ) ) { return; }
+			$map = array( 'historico' => self::PAGE_BANDEJA, 'oferta' => self::PAGE_RESUMEN, 'oferta-pais' => self::PAGE_OFERTA_PAIS, 'comparacion' => self::PAGE_COMPARACION, 'campanas' => self::PAGE_CAMPANAS, 'exportar' => self::PAGE_EXPORTAR );
+			$tab = sanitize_key( wp_unslash( $_GET['tab'] ) );
+			$target = $map[ $tab ] ?? self::PAGE_BANDEJA;
+			if ( self::PAGE_EXPORTAR === $target && ! self::can_manage() ) { $target = self::PAGE_BANDEJA; }
+			$args = array( 'page' => $target );
+			foreach ( array( 'table', 'from', 'to', 'country', 'item_name', 'email_status', 'offer_status', 'q', 'mode', 'paged' ) as $key ) { if ( isset( $_GET[ $key ] ) ) { $args[ $key ] = sanitize_text_field( wp_unslash( $_GET[ $key ] ) ); } }
+			wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) ); exit;
 		}
 
 		/**
@@ -633,12 +654,20 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 		/**
 		 * Renderiza la plataforma principal de Consultas con 6 pestañas.
 		 */
-		public static function render_page(): void {
+		public static function render_page(): void { self::render_page_for_route( self::PAGE_BANDEJA ); }
+		public static function render_resumen_page(): void { self::render_page_for_route( self::PAGE_RESUMEN ); }
+		public static function render_oferta_pais_page(): void { self::render_page_for_route( self::PAGE_OFERTA_PAIS ); }
+		public static function render_comparacion_page(): void { self::render_page_for_route( self::PAGE_COMPARACION ); }
+		public static function render_campanas_page(): void { self::render_page_for_route( self::PAGE_CAMPANAS ); }
+		public static function render_exportar_page(): void { self::render_page_for_route( self::PAGE_EXPORTAR ); }
+
+		public static function render_page_for_route( string $route ): void {
 			if ( ! self::can_view() ) {
 				return;
 			}
 
-			$active_tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'historico';
+			$route_tabs = array( self::PAGE_BANDEJA => 'historico', self::PAGE_RESUMEN => 'oferta', self::PAGE_OFERTA_PAIS => 'oferta-pais', self::PAGE_COMPARACION => 'comparacion', self::PAGE_CAMPANAS => 'campanas', self::PAGE_EXPORTAR => 'exportar' );
+			$active_tab = $route_tabs[ $route ] ?? 'historico';
 			$valid_tabs = array( 'historico', 'oferta', 'oferta-pais', 'comparacion', 'campanas', 'exportar' );
 			$can_manage = self::can_manage();
 			if ( ! in_array( $active_tab, $valid_tabs, true ) ) {
