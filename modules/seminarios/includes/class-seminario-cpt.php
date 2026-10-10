@@ -50,6 +50,7 @@ class Seminario_CPT
             add_filter('manage_edit-' . self::POST_TYPE . '_sortable_columns', [self::class, 'register_sortable_columns']);
             add_filter('posts_clauses', [self::class, 'sort_by_edition_date'], 10, 2);
             add_action('manage_' . self::POST_TYPE . '_posts_custom_column', [self::class, 'render_column'], 10, 2);
+            add_filter('post_class', [self::class, 'add_list_row_classes'], 10, 3);
             add_action('admin_head-edit.php', [self::class, 'admin_list_styles']);
         }
     }
@@ -201,6 +202,26 @@ class Seminario_CPT
         return $parsed->format('d/m/Y');
     }
 
+    /**
+     * Destaca la fila completa cuando su edición operativa recibe preinscripciones.
+     * El dato se calcula desde la Edición para no duplicar estado en el Seminario.
+     */
+    public static function add_list_row_classes(array $classes, $class, int $post_id): array
+    {
+        if (get_post_type($post_id) !== self::POST_TYPE) {
+            return $classes;
+        }
+
+        $edicion = self::get_primary_edicion(self::get_ediciones($post_id));
+        $classes[] = 'flacso-seminario-row';
+
+        if ($edicion && FLACSO_Edicion::accepts_registration($edicion->ID)) {
+            $classes[] = 'flacso-seminario-row--open';
+        }
+
+        return $classes;
+    }
+
     public static function render_column(string $column, int $post_id): void
     {
         if (!in_array($column, array('edicion_actual', 'preinscripcion'), true)) {
@@ -227,6 +248,7 @@ class Seminario_CPT
 
             echo '<div class="flacso-edicion-summary">';
             echo '<a class="flacso-edicion-summary__title" href="' . esc_url($edit_url) . '">' . esc_html($title) . '</a>';
+            echo '<div class="flacso-edicion-summary__meta">';
             echo '<span class="flacso-state flacso-state--' . esc_attr($estado) . '">' . esc_html(self::state_label($estado)) . '</span>';
             if ($inicio !== '') {
                 $inicio_label = self::format_uy_date($inicio);
@@ -234,6 +256,7 @@ class Seminario_CPT
                 $date_label = $inicio_label . ($fin_label !== '' && $fin !== $inicio ? ' → ' . $fin_label : '');
                 echo '<span class="flacso-edicion-summary__date">' . esc_html($date_label) . '</span>';
             }
+            echo '</div>';
             if (count($ediciones) > 1) {
                 echo '<span class="flacso-table-muted">' . esc_html(sprintf(__('+ %d edición(es) anteriores', 'flacso-uruguay'), count($ediciones) - 1)) . '</span>';
             }
@@ -267,18 +290,25 @@ class Seminario_CPT
         }
         ?>
         <style>
-            .post-type-seminario .wp-list-table { table-layout: fixed; }
+            .post-type-seminario .wp-list-table { table-layout: fixed; border: 1px solid #dbe5f1; border-radius: 8px; overflow: hidden; }
             .post-type-seminario .wp-list-table .column-cb { width: 34px; }
-            .post-type-seminario .wp-list-table .column-title { width: 36%; }
-            .post-type-seminario .wp-list-table .column-edicion_actual { width: 28%; }
+            .post-type-seminario .wp-list-table .column-title { width: 39%; }
+            .post-type-seminario .wp-list-table .column-edicion_actual { width: 30%; }
             .post-type-seminario .wp-list-table .column-preinscripcion { width: 15%; }
             .post-type-seminario .wp-list-table .column-date { width: 145px; }
             .post-type-seminario .wp-list-table th,
-            .post-type-seminario .wp-list-table td { vertical-align: top; }
-            .post-type-seminario .wp-list-table .column-title strong a { font-size: 14px; line-height: 1.35; }
-            .flacso-edicion-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 7px; }
-            .flacso-edicion-summary__title { font-weight: 600; }
-            .flacso-edicion-summary__date { flex-basis: 100%; color: #50575e; font-size: 12px; }
+            .post-type-seminario .wp-list-table td { vertical-align: middle; padding-top: 11px; padding-bottom: 11px; border-bottom-color: #e9eef5; }
+            .post-type-seminario .wp-list-table thead th,
+            .post-type-seminario .wp-list-table tfoot th { background: #f6f8fc; color: #42526e; }
+            .post-type-seminario .wp-list-table .column-title strong a { color: #1d4ed8; font-size: 14px; line-height: 1.35; }
+            .post-type-seminario .wp-list-table .column-title strong a:hover { color: #1e3a8a; }
+            .post-type-seminario .wp-list-table .flacso-seminario-row--open > th,
+            .post-type-seminario .wp-list-table .flacso-seminario-row--open > td { background: linear-gradient(90deg, #f0fdf4 0%, #fff 72%); }
+            .flacso-edicion-summary { display: grid; gap: 4px; }
+            .flacso-edicion-summary__title { width: fit-content; font-weight: 700; color: #1d4ed8; text-decoration: none; }
+            .flacso-edicion-summary__title:hover { color: #1e3a8a; text-decoration: underline; }
+            .flacso-edicion-summary__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+            .flacso-edicion-summary__date { color: #50575e; font-size: 12px; }
             .flacso-state,
             .flacso-status { display: inline-flex; align-items: center; gap: 3px; border-radius: 999px; padding: 2px 8px; font-size: 11px; line-height: 1.6; font-weight: 600; white-space: nowrap; }
             .flacso-state { background: #f0f0f1; color: #3c434a; }
@@ -290,7 +320,9 @@ class Seminario_CPT
             .flacso-status--closed { background: #f0f0f1; color: #50575e; }
             .flacso-status--neutral { background: #f6f7f7; color: #646970; }
             .flacso-status .dashicons { width: 14px; height: 14px; font-size: 14px; }
-            .flacso-table-actions { margin-top: 5px; font-size: 12px; }
+            .flacso-table-actions { margin-top: 5px; font-size: 12px; font-weight: 600; }
+            .flacso-table-actions a { text-decoration: none; }
+            .flacso-table-actions a:hover { text-decoration: underline; }
             .flacso-table-muted { color: #646970; font-size: 12px; }
             @media screen and (max-width: 1100px) {
                 .post-type-seminario .wp-list-table .column-date { display: none; }
