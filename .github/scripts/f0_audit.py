@@ -179,28 +179,42 @@ def detect(root: Path):
 
 
 def dependency_cycles(deps):
+    """Componentes fuertemente conexas, no prueba de dependencia runtime."""
     edges = defaultdict(set)
     for dep in deps:
         a, b = dep["source_module"], dep["target_module"]
-        if a != b and a not in ("tests",):
+        if a != b and a != "tests":
             edges[a].add(b)
-    paths, cycles = set(), []
-    def visit(n, chain):
-        if n in chain:
-            loop = chain[chain.index(n):] + [n]
-            key = tuple(sorted(set(loop)))
-            if key not in paths:
-                paths.add(key)
-                cycles.append(loop)
-            return
-        if len(chain) > 20:
-            return
-        for nxt in sorted(edges.get(n, ())):
-            visit(nxt, chain + [n])
-    for node in sorted(edges):
-        visit(node, [])
-    return cycles
+    index = 0
+    stack, active, indices, low = [], set(), {}, {}
+    cycles = []
 
+    def visit(node):
+        nonlocal index
+        indices[node] = low[node] = index
+        index += 1
+        stack.append(node)
+        active.add(node)
+        for target in sorted(edges.get(node, ())):
+            if target not in indices:
+                visit(target)
+                low[node] = min(low[node], low[target])
+            elif target in active:
+                low[node] = min(low[node], indices[target])
+        if low[node] == indices[node]:
+            component = []
+            while True:
+                item = stack.pop()
+                active.remove(item)
+                component.append(item)
+                if item == node:
+                    break
+            if len(component) > 1:
+                cycles.append(sorted(component))
+    for node in sorted(set(edges) | {n for adjacent in edges.values() for n in adjacent}):
+        if node not in indices:
+            visit(node)
+    return sorted(cycles)
 
 def csv_out(path, columns, records):
     with path.open("w", encoding="utf-8", newline="") as output:
