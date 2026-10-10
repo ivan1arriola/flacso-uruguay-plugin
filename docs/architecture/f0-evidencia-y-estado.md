@@ -1,7 +1,7 @@
 # F0 — Evidencia, hallazgos y puertas de salida
 
-**Fecha:** 2026-10-10  
-**Rama:** audit/f0-baseline-20261010 (PR #62, borrador)  
+**Fecha:** 2026-10-10
+**Rama:** audit/f0-baseline-20261010 (PR #62, borrador)
 **Objetivo:** cartografiar el estado actual sin realizar operaciones en producción.
 
 ## Verificación automática ejecutada
