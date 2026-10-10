@@ -11,17 +11,16 @@ if (!defined('ABSPATH')) {
 if (!defined('FLACSO_MAILING_MODULE_PATH')) {
     define('FLACSO_MAILING_MODULE_PATH', __DIR__ . '/');
 }
-
 if (!defined('FLACSO_MAILING_MODULE_URL')) {
     define('FLACSO_MAILING_MODULE_URL', plugin_dir_url(__FILE__));
 }
-
 if (!defined('FLACSO_MAILING_MODULE_VERSION')) {
     define('FLACSO_MAILING_MODULE_VERSION', FLACSO_URUGUAY_VERSION);
 }
 
 flacso_safe_require('modules/mailing/includes/class-flacso-mail-settings.php');
 flacso_safe_require('modules/mailing/includes/class-flacso-mailing-subscription.php');
+flacso_safe_require('modules/mailing/includes/homepage.php');
 
 if (class_exists('FLACSO_Mail_Settings')) {
     FLACSO_Mail_Settings::init();

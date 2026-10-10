@@ -1,55 +1,49 @@
 <?php
+/**
+ * Menú administrativo mínimo de la portada.
+ *
+ * La edición real vive en editor.flacso.edu.uy/main-page. Esta clase conserva
+ * las rutas históricas de WordPress para no romper marcadores ni permisos.
+ */
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-class Flacso_Main_Page_Admin {
-    private const SECTION_PAGES = [
-        'hero' => [
-            'slug' => 'flacso-main-page',
-            'menu_title' => 'Encabezado',
-            'page_title' => 'Encabezado',
-        ],
-        'eventos' => [
-            'slug' => 'flacso-main-page-eventos',
-            'menu_title' => 'Eventos',
-            'page_title' => 'Eventos',
-        ],
-        'secciones' => [
-            'slug' => 'flacso-main-page-secciones',
-            'menu_title' => 'Secciones',
-            'page_title' => 'Secciones',
-        ],
-        'novedades' => [
-            'slug' => 'flacso-main-page-novedades',
-            'menu_title' => 'Novedades',
-            'page_title' => 'Novedades',
-        ],
-        'posgrados' => [
-            'slug' => 'flacso-main-page-posgrados',
-            'menu_title' => 'Oferta Educativa',
-            'page_title' => 'Oferta Educativa',
-        ],
-        'congreso' => [
-            'slug' => 'flacso-main-page-congreso',
-            'menu_title' => 'Congreso',
-            'page_title' => 'Congreso',
-        ],
-        'quienes' => [
-            'slug' => 'flacso-main-page-quienes',
-            'menu_title' => 'Quiénes somos',
-            'page_title' => 'Quiénes somos',
-        ],
-        'contacto' => [
-            'slug' => 'flacso-main-page-contacto',
-            'menu_title' => 'Contacto',
-            'page_title' => 'Contacto',
-        ],
+final class Flacso_Main_Page_Admin {
+    private const PAGE_SLUGS = [
+        'flacso-main-page',
+        'flacso-main-page-oferta-academica',
     ];
 
+    public static function init(): void {
+        add_action('admin_menu', [self::class, 'register_menu']);
+        add_action('admin_bar_menu', [self::class, 'register_admin_bar_menu'], 1);
+    }
+
     public static function get_admin_page_slugs(): array {
-        return array_column(self::SECTION_PAGES, 'slug');
+        return self::PAGE_SLUGS;
+    }
+
+    public static function register_menu(): void {
+        add_menu_page(
+            __('Portada FLACSO', 'flacso-main-page'),
+            __('Portada FLACSO', 'flacso-main-page'),
+            'manage_options',
+            'flacso-main-page',
+            [self::class, 'render_section_page'],
+            'dashicons-admin-site-alt3',
+            1
+        );
+
+        add_submenu_page(
+            'flacso-main-page',
+            __('Oferta Académica', 'flacso-main-page'),
+            __('Oferta Académica', 'flacso-main-page'),
+            'manage_options',
+            'flacso-main-page-oferta-academica',
+            [self::class, 'render_oferta_academica_page']
+        );
     }
 
     public static function init(): void {
@@ -68,7 +62,6 @@ class Flacso_Main_Page_Admin {
     }
 
     public static function render_section_page(): void {
-        // Usar la nueva interfaz unificada
         Flacso_Main_Page_Unified_Settings::render_unified_page();
     }
 

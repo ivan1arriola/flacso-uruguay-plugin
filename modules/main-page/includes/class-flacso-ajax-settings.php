@@ -277,10 +277,9 @@ class Flacso_AJAX_Settings {
         $defaults = Flacso_Main_Page_Settings::get_defaults();
         $default_legacy = self::sanitize_bounded_absint($defaults['novedades']['per_page'] ?? 12, 12, 3, 48);
 
-        $legacy_source = $data['per_page'] ?? ($data['per_page_desktop'] ?? $default_legacy);
-        $legacy = self::sanitize_bounded_absint($legacy_source, $default_legacy, 3, 48);
-        $desktop = self::sanitize_bounded_absint($data['per_page_desktop'] ?? $legacy, $legacy, 3, 48);
-        $mobile = self::sanitize_bounded_absint($data['per_page_mobile'] ?? $legacy, $legacy, 3, 48);
+if (!defined('ABSPATH')) {
+    exit;
+}
 
         return [
             // Compatibilidad con configuraciones anteriores.
@@ -310,45 +309,60 @@ class Flacso_AJAX_Settings {
         return $data;
     }
 
-    private static function sanitize_mailing(array $data): array {
-        $sanitized = [];
+    public static function save_settings_section(): void {
+        check_ajax_referer('flacso-settings-nonce', 'nonce');
 
-        if (isset($data['title'])) {
-            $sanitized['title'] = sanitize_text_field($data['title']);
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => __('No tienes permisos para hacer esto.', 'flacso-main-page')]);
         }
 
-        if (isset($data['subtitle'])) {
-            $sanitized['subtitle'] = sanitize_textarea_field($data['subtitle']);
+        $section = isset($_POST['section']) ? sanitize_key((string) wp_unslash($_POST['section'])) : '';
+        $data = isset($_POST['data']) && is_array($_POST['data'])
+            ? wp_unslash($_POST['data'])
+            : [];
+
+        if ($section === '') {
+            wp_send_json_error(['message' => __('Sección no especificada.', 'flacso-main-page')]);
         }
 
-        if (isset($data['button_label'])) {
-            $sanitized['button_label'] = sanitize_text_field($data['button_label']);
+        $current = Flacso_Main_Page_Settings::get_settings();
+
+        if ($section === 'secciones') {
+            foreach (['sections_visibility', 'sections_order', 'section_heading_color', 'section_heading_colors'] as $root_key) {
+                if (array_key_exists($root_key, $data)) {
+                    $current[$root_key] = $data[$root_key];
+                }
+            }
+        } else {
+            if (class_exists('Flacso_Main_Page_Section_Keys')) {
+                $section = Flacso_Main_Page_Section_Keys::canonicalize($section);
+                if (Flacso_Main_Page_Section_Keys::is_retired($section)) {
+                    wp_send_json_error(['message' => __('La sección fue retirada de la portada.', 'flacso-main-page')]);
+                }
+            }
+
+            $existing = isset($current[$section]) && is_array($current[$section])
+                ? $current[$section]
+                : [];
+            $current[$section] = array_replace_recursive($existing, $data);
         }
 
-        if (isset($data['consent_text'])) {
-            $sanitized['consent_text'] = sanitize_textarea_field($data['consent_text']);
+        $sanitized = Flacso_Main_Page_Settings::sanitize($current);
+        $saved = update_option(Flacso_Main_Page_Settings::OPTION_KEY, $sanitized, false);
+
+        if ($saved || $sanitized === get_option(Flacso_Main_Page_Settings::OPTION_KEY)) {
+            wp_cache_delete(Flacso_Main_Page_Settings::OPTION_KEY, 'options');
+            Flacso_Main_Page_Settings::invalidate_cache();
+            wp_send_json_success([
+                'message' => sprintf(
+                    __('%s guardado exitosamente.', 'flacso-main-page'),
+                    Flacso_Main_Page_Settings::get_section_label($section)
+                ),
+                'section' => $section,
+                'timestamp' => current_time('mysql'),
+            ]);
         }
 
-        return $sanitized;
-    }
-
-    private static function sanitize_contacto(array $data): array {
-        // Placeholder para futuras sanitizaciones de contacto
-        return $data;
-    }
-
-    private static function sanitize_bounded_absint($value, int $fallback, int $min, int $max): int {
-        $parsed = absint($value);
-        if ($parsed <= 0) {
-            $parsed = $fallback;
-        }
-        if ($parsed < $min) {
-            $parsed = $min;
-        }
-        if ($parsed > $max) {
-            $parsed = $max;
-        }
-
-        return $parsed;
+        wp_send_json_error(['message' => __('Error al guardar los datos.', 'flacso-main-page')]);
     }
 }

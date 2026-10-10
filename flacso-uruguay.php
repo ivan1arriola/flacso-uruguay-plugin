@@ -63,78 +63,63 @@ require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-legacy-redirects.
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-meta-tracking.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-meta-leads-webhook.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/loader.php';
+require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-module-registry.php';
 
-// ============================================
-// Inicializacion del Plugin
-// ============================================
-class FLACSO_Uruguay_Plugin {
-    
+final class FLACSO_Uruguay_Plugin {
     private static $instance = null;
-    
+
+    /** @var bool */
+    private $modules_loaded = false;
+
     public static function instance() {
         if (is_null(self::$instance)) {
             self::$instance = new self();
         }
         return self::$instance;
     }
-    
-    public function __construct() {
-        // Cargar modulos
-        add_action('plugins_loaded', [$this, 'load_modules'], 10);
-        
-        // Cargar idiomas
-        add_action('plugins_loaded', [$this, 'load_textdomain'], 5);
-        
-        // Registrar categorias de bloques
-        add_filter('block_categories_all', [$this, 'register_block_categories'], 10, 2);
 
-        // Ayuda a precalentar dominios externos usados frecuentemente por el sitio.
+    private function __construct() {
+        add_action('plugins_loaded', [$this, 'load_textdomain'], 5);
+        add_action('plugins_loaded', [$this, 'load_modules'], 10);
+        add_filter('block_categories_all', [$this, 'register_block_categories'], 10, 2);
         add_filter('wp_resource_hints', [$this, 'add_resource_hints'], 10, 2);
 
         // Baseline móvil acotado a los componentes públicos del plugin.
         add_action('wp_enqueue_scripts', [$this, 'enqueue_public_mobile_ux'], 70);
         
     }
-    
-    public function load_textdomain() {
-        load_plugin_textdomain(
-            'flacso-uruguay',
-            false,
-            dirname(plugin_basename(__FILE__)) . '/languages'
-        );
+
+    public function load_textdomain(): void {
+        load_plugin_textdomain('flacso-uruguay', false, dirname(plugin_basename(__FILE__)) . '/languages');
     }
-    
-    public function register_block_categories($categories, $context) {
-        // Obtener slugs existentes para evitar duplicados
+
+    public function load_modules(): void {
+        if ($this->modules_loaded) {
+            return;
+        }
+        $this->modules_loaded = true;
+        FLACSO_Uruguay_Module_Registry::boot(FLACSO_Uruguay_Loader::instance());
+    }
+
+    public function register_block_categories(array $categories, $context): array {
         $existing_slugs = wp_list_pluck($categories, 'slug');
-        
-        // Registrar categoria principal de FLACSO Uruguay
         if (!in_array('flacso-uruguay', $existing_slugs, true)) {
             array_unshift($categories, [
-                'slug'  => 'flacso-uruguay',
+                'slug' => 'flacso-uruguay',
                 'title' => __('FLACSO Uruguay', 'flacso-uruguay'),
-                'icon'  => null
+                'icon' => null,
             ]);
         }
-        
         return $categories;
     }
 
-    public function add_resource_hints($hints, $relation_type) {
+    public function add_resource_hints(array $hints, string $relation_type): array {
         if ('preconnect' !== $relation_type) {
             return $hints;
         }
-
         $hints[] = 'https://fonts.googleapis.com';
-        $hints[] = [
-            'href' => 'https://fonts.gstatic.com',
-            'crossorigin' => 'anonymous',
-        ];
-        $hints[] = [
-            'href' => 'https://cdn.jsdelivr.net',
-            'crossorigin' => 'anonymous',
-        ];
-
+        $hints[] = ['href' => 'https://fonts.gstatic.com', 'crossorigin' => 'anonymous'];
+        $hints[] = ['href' => 'https://cdn.jsdelivr.net', 'crossorigin' => 'anonymous'];
         return $hints;
     }
 
@@ -189,16 +174,13 @@ class FLACSO_Uruguay_Plugin {
         // Logica de activacion
         flush_rewrite_rules();
     }
-    
-    public static function deactivate() {
-        // Logica de desactivacion
+
+    public static function deactivate(): void {
+        do_action('flacso_uruguay_deactivate');
         flush_rewrite_rules();
     }
 }
 
-// Inicializar el plugin
 FLACSO_Uruguay_Plugin::instance();
-
-// Hooks de activacion/desactivacion
 register_activation_hook(__FILE__, ['FLACSO_Uruguay_Plugin', 'activate']);
 register_deactivation_hook(__FILE__, ['FLACSO_Uruguay_Plugin', 'deactivate']);

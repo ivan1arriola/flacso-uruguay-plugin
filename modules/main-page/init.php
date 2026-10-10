@@ -65,22 +65,17 @@ require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-blo
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-loader.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-migrations.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-rest-api.php';
-require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-instagram-api.php';
-require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-telegram-manager.php';
-require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/flacso-consultas.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/flacso-raw-content-api.php';
 
-// Cargar clases de gestión/admin solo en contexto administrativo.
 $is_admin_context = is_admin()
     || (function_exists('wp_doing_ajax') && wp_doing_ajax())
     || (defined('REST_REQUEST') && REST_REQUEST);
+
 if ($is_admin_context) {
+    require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-editor-bridge.php';
     require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-admin.php';
-    require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-unified-settings.php';
     require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-ajax-settings.php';
     require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-ajax-handler.php';
-    require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-seminarios.php';
-    require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-instagram-post-importer.php';
 }
 
 // Cargar bloques
@@ -96,26 +91,16 @@ add_action('init', function() {
     FLACSO_Home_Campaign::register();
     Flacso_Main_Page_Blocks::init();
 
-    if (class_exists('Flacso_Main_Page_Admin')) {
-        Flacso_Main_Page_Admin::init();
-    }
-    if (class_exists('Flacso_Main_Page_Unified_Settings')) {
-        Flacso_Main_Page_Unified_Settings::init();
-    }
-    if (class_exists('Flacso_AJAX_Settings')) {
-        Flacso_AJAX_Settings::init();
-    }
-    if (class_exists('Flacso_AJAX_Handler')) {
-        Flacso_AJAX_Handler::init();
-    }
-    if (class_exists('Flacso_Main_Page_Seminarios')) {
-        Flacso_Main_Page_Seminarios::init();
-    }
-    if (class_exists('Flacso_Instagram_Post_Importer')) {
-        Flacso_Instagram_Post_Importer::init();
-    }
-    if (class_exists('Flacso_Main_Page_Migrations')) {
-        Flacso_Main_Page_Migrations::init();
+    foreach ([
+        'Flacso_Main_Page_Admin',
+        'Flacso_Main_Page_Unified_Settings',
+        'Flacso_AJAX_Settings',
+        'Flacso_AJAX_Handler',
+        'Flacso_Main_Page_Migrations',
+    ] as $class_name) {
+        if (class_exists($class_name) && method_exists($class_name, 'init')) {
+            $class_name::init();
+        }
     }
 });
 

@@ -4,41 +4,20 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class Flacso_Main_Page_Settings {
-    const OPTION_KEY = 'flacso-main-page_settings';
-    private const SECTION_KEYS = [
-        'hero',
-        'festejos',
-        'eventos',
-        'novedades_busqueda',
-        'novedades',
-        'seminarios',
-        'quienes',
-        'instagram',
-        'posgrados',
-        'mailing',
-        // REMOVED: 'oferta_academica' - Movido a plugin separado flacso-formacion
-        'congreso',
-        'contacto',
-    ];
-    private const HOMEPAGE_SECTION_KEYS = [
-        'hero',
-        'festejos',
-        'eventos',
-        'novedades',
-        'novedades_busqueda',
-        'seminarios',
-        'quienes',
-        'instagram',
-        'posgrados',
-        'mailing',
-        'congreso',
-        'contacto',
-    ];
-    private static $section_visibility_cache;
-    private static $settings_cache;
-    private static $defaults_cache;
+/**
+ * Configuración canónica de la portada.
+ *
+ * La clase conserva compatibilidad de lectura con claves históricas, pero todo
+ * valor devuelto o guardado utiliza el modelo actual (`oferta_academica`).
+ */
+final class Flacso_Main_Page_Settings {
+    public const OPTION_KEY = 'flacso-main-page_settings';
+
     private const SECTION_HEADING_COLOR_CHOICES = ['primary', 'palette7'];
+
+    private static $section_visibility_cache = null;
+    private static $settings_cache = null;
+    private static $defaults_cache = null;
 
     public static function invalidate_cache(): void {
         self::$section_visibility_cache = null;
@@ -90,20 +69,10 @@ class Flacso_Main_Page_Settings {
         }
 
         self::$defaults_cache = [
-            'festejos' => [
-                'title' => 'Festejos de los 20 años de FLACSO',
-                'description' => 'Acompañanos en este recorrido por nuestras dos décadas de historia.',
-                'items' => array_fill(0, 8, [
-                    'title' => '',
-                    'image' => '',
-                    'url' => '',
-                    'type' => 'link', // link, video, instagram
-                ]),
-            ],
             'hero' => [
                 'kicker' => '',
                 'title' => 'Inscripciones Abiertas: Maestrías, Especializaciones, Diplomados y Diplomas',
-                'subtitle' => 'Sumate a los posgrados de FLACSO Uruguay.',
+                'subtitle' => 'Sumate a la oferta académica de FLACSO Uruguay.',
                 'background_image' => 'https://flacso.edu.uy/wp-content/uploads/2025/11/primer-plano-de-ejecutivos-de-negocios-en-la-oficina-scaled.jpg',
                 'primary_label' => 'Ver Oferta Académica',
                 'primary_url' => '/formacion/',
@@ -120,10 +89,10 @@ class Flacso_Main_Page_Settings {
                 'show_buttons' => true,
                 'buttons' => self::get_hero_button_defaults(),
             ],
-            'posgrados' => [
+            'oferta_academica' => [
                 'show_title' => true,
-                'title' => 'Nuestra Oferta Educativa',
-                'intro' => '<strong>FLACSO Uruguay</strong> brinda formaciones en diversos niveles: <strong>Seminarios, Diplomas, Diplomados, Especializaciones y Maestrías</strong>. Todas las propuestas están pensadas desde el <strong>abordaje teórico y práctico de los problemas de las ciencias sociales</strong>. Todas las propuestas académicas poseen flexibilidad en la modalidad de enseñanza y <strong>seguimiento de profesionales especializados</strong> en los temas abordados.',
+                'title' => 'Nuestra Oferta Académica',
+                'intro' => '<strong>FLACSO Uruguay</strong> brinda formación mediante <strong>Seminarios, Diplomas, Diplomados, Especializaciones y Maestrías</strong>, con abordajes teóricos y prácticos de problemas de las ciencias sociales.',
                 'cards' => [
                     [
                         'key' => 'maestrias',
@@ -131,7 +100,7 @@ class Flacso_Main_Page_Settings {
                         'type' => 'Maestría',
                         'url' => '/formacion/maestrias/',
                         'image' => 'https://flacso.edu.uy/wp-content/uploads/2023/08/IMAGE-SITIO-WEB-9.png',
-                        'desc' => 'Una maestría es una oportunidad de crecimiento profesional y académico. Todas las maestrías tienen mínimo 18 meses de cursada y terminan en un trabajo de investigación. Una maestría es un paso necesario para cursar un doctorado.',
+                        'desc' => 'Formación académica avanzada que culmina en un trabajo de investigación y permite continuar hacia estudios doctorales.',
                     ],
                     [
                         'key' => 'especializaciones',
@@ -139,7 +108,7 @@ class Flacso_Main_Page_Settings {
                         'type' => 'Especialización',
                         'url' => '/formacion/especializaciones/',
                         'image' => 'https://flacso.edu.uy/wp-content/uploads/2023/08/IMAGE-SITIO-WEB-1.png',
-                        'desc' => 'La Especialización es el grado académico previo a la Maestría. Es una oportunidad de formación que permite la profundización y actualización de los marcos teóricos, la incorporación de metodologías y herramientas en un tiempo más corto que una Maestría.',
+                        'desc' => 'Profundización y actualización de marcos teóricos, metodologías y herramientas profesionales.',
                     ],
                     [
                         'key' => 'diplomas',
@@ -147,7 +116,7 @@ class Flacso_Main_Page_Settings {
                         'type' => 'Diploma',
                         'url' => '/formacion/diplomas/',
                         'image' => 'https://flacso.edu.uy/wp-content/uploads/2023/08/IMAGE-SITIO-WEB-5-1024x1024.png',
-                        'desc' => 'Los diplomas representan propuestas de formación que sirven como salidas intermedias hacia programas académicos de mayor grado. Combinan el análisis de temáticas relevantes y la adquisición de habilidades prácticas.',
+                        'desc' => 'Propuestas que combinan análisis temático, herramientas prácticas y trayectos de formación articulados.',
                     ],
                     [
                         'key' => 'diplomados',
@@ -155,7 +124,7 @@ class Flacso_Main_Page_Settings {
                         'type' => 'Diplomado',
                         'url' => '/formacion/diplomados/',
                         'image' => 'https://flacso.edu.uy/wp-content/uploads/2023/08/IMAGE-SITIO-WEB-3.png',
-                        'desc' => 'Grado académico similar al de la Especialización, expedido por la unidad académica. A través de seminarios temáticos, metodológicos y talleres prácticos, prepara a cursantes para continuar hacia Maestrías.',
+                        'desc' => 'Trayectos académicos orientados a la actualización y continuidad hacia estudios de maestría.',
                     ],
                     [
                         'key' => 'seminarios',
@@ -163,9 +132,19 @@ class Flacso_Main_Page_Settings {
                         'type' => 'Seminario',
                         'url' => '/formacion/seminarios/',
                         'image' => 'https://flacso.edu.uy/wp-content/uploads/2023/08/IMAGE-SITIO-WEB-2.png',
-                        'desc' => 'Espacios de formación intensiva y enfoque práctico, con actualización temática y acompañamiento docente especializado.',
+                        'desc' => 'Unidad académica mínima y reutilizable de las distintas propuestas de formación, también disponible de forma independiente.',
                     ],
                 ],
+                // Controles del catálogo. Conviven con las tarjetas de portada
+                // dentro del mismo dominio, evitando dos secciones homónimas.
+                'show_filters' => true,
+                'show_maestrias' => true,
+                'show_especializaciones' => true,
+                'show_diplomados' => true,
+                'show_diplomas' => true,
+                'show_seminarios' => true,
+                'show_inactivos' => false,
+                'seminarios_limit' => 12,
             ],
             'congreso' => [
                 'title' => '',
@@ -184,7 +163,7 @@ class Flacso_Main_Page_Settings {
                 'description' => 'En Instagram compartimos seminarios, convocatorias, actividades académicas y momentos de la comunidad FLACSO Uruguay.',
                 'cta_label' => 'Ver más en @flacsouruguay',
                 'access_token' => '',
-                'api_type' => 'basic', // 'basic' or 'graph'
+                'api_type' => 'basic',
             ],
             'contacto' => [
                 'title' => 'Contáctanos',
@@ -212,7 +191,7 @@ class Flacso_Main_Page_Settings {
             ],
             'quienes' => [
                 'title' => '¿Qué es FLACSO Uruguay?',
-                'content' => '<strong>FLACSO Uruguay</strong> es la sede uruguaya de la <strong>Facultad Latinoamericana de Ciencias Sociales</strong>, una de las principales <strong>redes académicas</strong> de <strong>América Latina y el Caribe</strong>, con presencia en más de <strong>20 países</strong> de la región. Su objetivo principal es <strong>contribuir al desarrollo de la región</strong> mediante la <strong>formación de profesionales</strong>, la <strong>investigación crítica</strong> y la <strong>transferencia de conocimiento</strong>.<br><br><strong>FLACSO Uruguay</strong> ofrece <strong>programas de posgrado</strong> en diversas áreas de las <strong>ciencias sociales</strong> y desarrolla <strong>proyectos de investigación</strong> en temas como <strong>género</strong>, <strong>política pública</strong>, <strong>medio ambiente</strong>, <strong>desarrollo humano</strong> y <strong>cultura</strong>, con un enfoque <strong>interdisciplinario</strong> y un compromiso con la <strong>transformación social</strong>.',
+                'content' => '<strong>FLACSO Uruguay</strong> es la sede uruguaya de la <strong>Facultad Latinoamericana de Ciencias Sociales</strong>, una de las principales redes académicas de América Latina y el Caribe. Contribuye al desarrollo de la región mediante formación, investigación crítica y transferencia de conocimiento.',
                 'cta_label' => 'Conocer más',
                 'cta_url' => '/sobre-nosotros/',
                 'background_image' => 'https://www.flacso.org/assets/img/banner/banner-01.jpg',
@@ -223,7 +202,6 @@ class Flacso_Main_Page_Settings {
                 'per_page_desktop' => 12,
                 'per_page_mobile' => 12,
             ],
-            // REMOVED: 'oferta_academica' - Movido a plugin separado flacso-formacion
             'sections_order' => self::get_homepage_section_order_defaults(),
             'sections_visibility' => self::get_section_visibility_defaults(),
             'section_heading_color' => 'primary',
@@ -239,48 +217,59 @@ class Flacso_Main_Page_Settings {
         }
 
         $saved = get_option(self::OPTION_KEY, []);
+        $saved = is_array($saved) ? $saved : [];
+        $saved = self::normalize_settings($saved);
         $defaults = self::get_defaults();
+
         $merged = wp_parse_args($saved, $defaults);
-        foreach ($defaults as $key => $val) {
-            if (is_array($val) && isset($saved[$key]) && is_array($saved[$key])) {
-                $merged[$key] = wp_parse_args($saved[$key], $val);
+        foreach ($defaults as $key => $default_value) {
+            if (is_array($default_value) && isset($saved[$key]) && is_array($saved[$key])) {
+                $merged[$key] = wp_parse_args($saved[$key], $default_value);
             }
         }
+
         self::$settings_cache = self::normalize_settings($merged);
         return self::$settings_cache;
     }
 
     private static function normalize_settings(array $settings): array {
+        if (class_exists('Flacso_Main_Page_Section_Keys')) {
+            $settings = Flacso_Main_Page_Section_Keys::normalize_settings($settings);
+        }
+
         if (isset($settings['mailing']) && is_array($settings['mailing'])) {
             $mailing_title = trim((string) ($settings['mailing']['title'] ?? ''));
-            if (
-                $mailing_title === 'Suscribite al mailing de FLACSO Uruguay'
-                || $mailing_title === 'Suscribite al boletín de FLACSO Uruguay'
-                || $mailing_title === 'Suscribite a la lista de difusión de FLACSO Uruguay'
-            ) {
+            if (in_array($mailing_title, [
+                'Suscribite al mailing de FLACSO Uruguay',
+                'Suscribite al boletín de FLACSO Uruguay',
+                'Suscribite a la lista de difusión de FLACSO Uruguay',
+            ], true)) {
                 $settings['mailing']['title'] = 'Suscribite a la lista de difusión de FLACSO Uruguay';
             }
         }
 
-        if (!isset($settings['posgrados']) || !is_array($settings['posgrados'])) {
-            return $settings;
-        }
-
-        if (!isset($settings['posgrados']['cards']) || !is_array($settings['posgrados']['cards'])) {
-            return $settings;
-        }
-
-        foreach ($settings['posgrados']['cards'] as $index => $card) {
-            if (!is_array($card)) {
-                continue;
+        if (isset($settings['oferta_academica']['cards']) && is_array($settings['oferta_academica']['cards'])) {
+            foreach ($settings['oferta_academica']['cards'] as $index => $card) {
+                if (is_array($card)) {
+                    $settings['oferta_academica']['cards'][$index] = self::normalize_offer_card($card);
+                }
             }
-            $settings['posgrados']['cards'][$index] = self::normalize_posgrados_card($card);
+        }
+
+        if (isset($settings['sections_order']) && is_array($settings['sections_order'])) {
+            $settings['sections_order'] = self::sanitize_homepage_section_order($settings['sections_order']);
         }
 
         return $settings;
     }
 
-    private static function normalize_posgrados_card(array $card): array {
+    private static function canonical_section_key(string $section): string {
+        return class_exists('Flacso_Main_Page_Section_Keys')
+            ? Flacso_Main_Page_Section_Keys::canonicalize($section)
+            : sanitize_key($section);
+    }
+
+    private static function normalize_offer_card(array $card): array {
         $key = sanitize_key((string) ($card['key'] ?? ''));
         $title = strtolower(remove_accents(trim((string) ($card['title'] ?? $card['titulo'] ?? ''))));
         $type = strtolower(remove_accents(trim((string) ($card['type'] ?? $card['tipo'] ?? ''))));
@@ -291,42 +280,27 @@ class Flacso_Main_Page_Settings {
             || $type === 'curso'
             || strpos($url, '/cursos/') !== false;
 
-        if (!$is_course_card) {
-            return $card;
+        if ($is_course_card) {
+            $card['key'] = 'seminarios';
+            $card['title'] = 'Seminarios';
+            $card['type'] = 'Seminario';
+            $card['url'] = '/formacion/seminarios/';
+            $card['desc'] = 'Unidad académica mínima de la oferta y espacio de formación disponible también de forma independiente.';
         }
-
-        $card['key'] = 'seminarios';
-        $card['title'] = 'Seminarios';
-        $card['type'] = 'Seminario';
-        $card['url'] = '/formacion/seminarios/';
-        $card['desc'] = 'Espacios de formación intensiva y enfoque práctico, con actualización temática y acompañamiento docente especializado.';
 
         return $card;
     }
 
     public static function get_section(string $section): array {
+        $section = self::canonical_section_key($section);
         $settings = self::get_settings();
         $defaults = self::get_defaults();
-        
+
         if (isset($settings[$section]) && is_array($settings[$section])) {
-            $section_settings = wp_parse_args($settings[$section], $defaults[$section] ?? []);
-
-            if (
-                $section === 'mailing'
-                && isset($section_settings['title'])
-                && (
-                    trim((string) $section_settings['title']) === 'Suscribite al mailing de FLACSO Uruguay'
-                    || trim((string) $section_settings['title']) === 'Suscribite al boletín de FLACSO Uruguay'
-                    || trim((string) $section_settings['title']) === 'Suscribite a la lista de difusión de FLACSO Uruguay'
-                )
-            ) {
-                $section_settings['title'] = 'Suscribite a la lista de difusión de FLACSO Uruguay';
-            }
-
-            return $section_settings;
+            return wp_parse_args($settings[$section], $defaults[$section] ?? []);
         }
-        
-        return $defaults[$section] ?? [];
+
+        return isset($defaults[$section]) && is_array($defaults[$section]) ? $defaults[$section] : [];
     }
 
     public static function get_value(string $section, string $key, $fallback = '') {
@@ -337,34 +311,35 @@ class Flacso_Main_Page_Settings {
     public static function get_novedades_per_page(?bool $is_mobile = null): int {
         $defaults = self::get_defaults();
         $default_legacy = self::sanitize_novedades_per_page_value($defaults['novedades']['per_page'] ?? 12, 12);
-
         $section = self::get_section('novedades');
-        $legacy_per_page = self::sanitize_novedades_per_page_value($section['per_page'] ?? $default_legacy, $default_legacy);
+        $legacy = self::sanitize_novedades_per_page_value($section['per_page'] ?? $default_legacy, $default_legacy);
 
         $saved = get_option(self::OPTION_KEY, []);
-        $saved_novedades = (is_array($saved) && isset($saved['novedades']) && is_array($saved['novedades']))
+        $saved_novedades = is_array($saved) && isset($saved['novedades']) && is_array($saved['novedades'])
             ? $saved['novedades']
             : [];
 
         $desktop_source = array_key_exists('per_page_desktop', $saved_novedades)
-            ? ($section['per_page_desktop'] ?? $legacy_per_page)
-            : $legacy_per_page;
+            ? ($section['per_page_desktop'] ?? $legacy)
+            : $legacy;
         $mobile_source = array_key_exists('per_page_mobile', $saved_novedades)
-            ? ($section['per_page_mobile'] ?? $legacy_per_page)
-            : $legacy_per_page;
-
-        $desktop = self::sanitize_novedades_per_page_value($desktop_source, $legacy_per_page);
-        $mobile = self::sanitize_novedades_per_page_value($mobile_source, $legacy_per_page);
+            ? ($section['per_page_mobile'] ?? $legacy)
+            : $legacy;
 
         if ($is_mobile === null) {
             $is_mobile = wp_is_mobile();
         }
 
-        return $is_mobile ? $mobile : $desktop;
+        return $is_mobile
+            ? self::sanitize_novedades_per_page_value($mobile_source, $legacy)
+            : self::sanitize_novedades_per_page_value($desktop_source, $legacy);
     }
 
     public static function get_section_visibility_defaults(): array {
-        return array_fill_keys(self::SECTION_KEYS, true);
+        $keys = class_exists('Flacso_Main_Page_Section_Keys')
+            ? Flacso_Main_Page_Section_Keys::all()
+            : self::get_homepage_section_order_defaults();
+        return array_fill_keys($keys, true);
     }
 
     public static function get_section_visibility(): array {
@@ -374,54 +349,57 @@ class Flacso_Main_Page_Settings {
 
         $settings = self::get_settings();
         $defaults = self::get_section_visibility_defaults();
+        $visibility = isset($settings['sections_visibility']) && is_array($settings['sections_visibility'])
+            ? $settings['sections_visibility']
+            : [];
 
-        if (isset($settings['sections_visibility']) && is_array($settings['sections_visibility'])) {
-            self::$section_visibility_cache = wp_parse_args($settings['sections_visibility'], $defaults);
-        } else {
-            self::$section_visibility_cache = $defaults;
+        if (class_exists('Flacso_Main_Page_Section_Keys')) {
+            $visibility = Flacso_Main_Page_Section_Keys::normalize_keyed_map($visibility);
         }
 
+        self::$section_visibility_cache = wp_parse_args($visibility, $defaults);
         return self::$section_visibility_cache;
     }
 
     public static function is_section_visible(string $key): bool {
+        $key = self::canonical_section_key($key);
         $visibility = self::get_section_visibility();
-        if (!array_key_exists($key, $visibility)) {
-            return true;
-        }
-        return (bool) $visibility[$key];
+        return !array_key_exists($key, $visibility) || (bool) $visibility[$key];
     }
 
     public static function get_section_heading_color_choice(string $section = ''): string {
         $settings = self::get_settings();
         $defaults = self::get_defaults();
         $base = $settings['section_heading_color'] ?? $defaults['section_heading_color'];
-        $base = in_array($base, self::SECTION_HEADING_COLOR_CHOICES, true) ? $base : $defaults['section_heading_color'];
+        if (!in_array($base, self::SECTION_HEADING_COLOR_CHOICES, true)) {
+            $base = $defaults['section_heading_color'];
+        }
         if ($section === '') {
             return $base;
         }
+        $section = self::canonical_section_key($section);
         $colors = self::get_section_heading_colors();
-        return isset($colors[$section]) ? $colors[$section] : $base;
+        return $colors[$section] ?? $base;
     }
 
     public static function get_section_heading_colors(): array {
         $settings = self::get_settings();
         $defaults = self::get_defaults();
-        $base_choice = $settings['section_heading_color'] ?? $defaults['section_heading_color'];
-        if (!in_array($base_choice, self::SECTION_HEADING_COLOR_CHOICES, true)) {
-            $base_choice = $defaults['section_heading_color'];
+        $base = $settings['section_heading_color'] ?? $defaults['section_heading_color'];
+        if (!in_array($base, self::SECTION_HEADING_COLOR_CHOICES, true)) {
+            $base = $defaults['section_heading_color'];
         }
-        $result = array_fill_keys(self::HOMEPAGE_SECTION_KEYS, $base_choice);
-        if (isset($settings['section_heading_colors']) && is_array($settings['section_heading_colors'])) {
-            foreach ($settings['section_heading_colors'] as $section_key => $choice) {
-                $section_key = sanitize_key((string) $section_key);
-                $choice = sanitize_key((string) $choice);
-                if (!in_array($section_key, self::HOMEPAGE_SECTION_KEYS, true)) {
-                    continue;
-                }
-                if (!in_array($choice, self::SECTION_HEADING_COLOR_CHOICES, true)) {
-                    continue;
-                }
+
+        $result = array_fill_keys(self::get_homepage_section_order_defaults(), $base);
+        $configured = isset($settings['section_heading_colors']) && is_array($settings['section_heading_colors'])
+            ? $settings['section_heading_colors']
+            : [];
+        if (class_exists('Flacso_Main_Page_Section_Keys')) {
+            $configured = Flacso_Main_Page_Section_Keys::normalize_keyed_map($configured);
+        }
+
+        foreach ($configured as $section_key => $choice) {
+            if (isset($result[$section_key]) && in_array($choice, self::SECTION_HEADING_COLOR_CHOICES, true)) {
                 $result[$section_key] = $choice;
             }
         }
@@ -429,6 +407,7 @@ class Flacso_Main_Page_Settings {
     }
 
     public static function get_section_label(string $key): string {
+        $key = self::canonical_section_key($key);
         $labels = [
             'hero' => __('Hero principal', 'flacso-main-page'),
             'eventos' => __('Eventos', 'flacso-main-page'),
@@ -437,26 +416,24 @@ class Flacso_Main_Page_Settings {
             'seminarios' => __('Seminarios', 'flacso-main-page'),
             'quienes' => __('Quiénes somos', 'flacso-main-page'),
             'instagram' => __('Instagram', 'flacso-main-page'),
-            'posgrados' => __('Nuestra Oferta Educativa', 'flacso-main-page'),
+            'oferta_academica' => __('Oferta Académica', 'flacso-main-page'),
             'mailing' => __('Lista de difusión', 'flacso-main-page'),
             'congreso' => __('Congreso', 'flacso-main-page'),
             'contacto' => __('Contacto', 'flacso-main-page'),
         ];
-
         return $labels[$key] ?? ucfirst(str_replace('_', ' ', $key));
     }
 
     public static function get_homepage_section_order_defaults(): array {
         return [
             'hero',
-        'festejos',
             'eventos',
             'novedades',
             'novedades_busqueda',
             'seminarios',
             'quienes',
             'instagram',
-            'posgrados',
+            'oferta_academica',
             'mailing',
             'contacto',
             'congreso',
@@ -464,8 +441,37 @@ class Flacso_Main_Page_Settings {
     }
 
     public static function get_homepage_section_order(): array {
-        // Order is hardcoded and not configurable
-        return self::get_homepage_section_order_defaults();
+        $settings = self::get_settings();
+        $saved_order = isset($settings['sections_order']) && is_array($settings['sections_order'])
+            ? $settings['sections_order']
+            : [];
+        return self::sanitize_homepage_section_order($saved_order);
+    }
+
+    public static function sanitize_homepage_section_order(array $input): array {
+        $defaults = self::get_homepage_section_order_defaults();
+        if (class_exists('Flacso_Main_Page_Section_Keys')) {
+            $input = Flacso_Main_Page_Section_Keys::normalize_order($input);
+        } else {
+            $input = array_values(array_filter(array_map('sanitize_key', $input)));
+        }
+
+        $order = [];
+        foreach ($input as $key) {
+            if (in_array($key, $defaults, true) && !in_array($key, $order, true)) {
+                $order[] = $key;
+            }
+        }
+
+        $order = array_values(array_diff($order, ['hero']));
+        array_unshift($order, 'hero');
+
+        foreach ($defaults as $key) {
+            if (!in_array($key, $order, true)) {
+                $order[] = $key;
+            }
+        }
+        return $order;
     }
 
     public static function normalize_url_output(string $url): string {
@@ -473,121 +479,186 @@ class Flacso_Main_Page_Settings {
         if ($url === '') {
             return '';
         }
-
         if (preg_match('#^(https?:)?//#i', $url)) {
             return esc_url($url);
         }
-
         if ($url[0] !== '/') {
             $url = '/' . ltrim($url, '/');
         }
-
         return esc_url(home_url($url));
     }
 
-    public static function sanitize_homepage_section_order(array $input): array {
-        $defaults = self::get_homepage_section_order_defaults();
-        $order = [];
-        // Asegurar que hero siempre está presente y al inicio
-        $input = array_values(array_filter($input, static function ($value) {
-            return is_scalar($value);
-        }));
-        // Primero recolectar sin hero, luego se agrega al inicio
-        $input = array_map('sanitize_key', $input);
-
-        foreach ($input as $value) {
-            $key = (string) $value;
-            if (!in_array($key, $defaults, true)) {
-                continue;
-            }
-            if (in_array($key, $order, true)) {
-                continue;
-            }
-            $order[] = $key;
-        }
-
-        // Remover hero de donde está y ponerlo primero
-        $order = array_values(array_diff($order, ['hero']));
-        array_unshift($order, 'hero');
-
-        foreach ($defaults as $default_key) {
-            if (!in_array($default_key, $order, true)) {
-                $order[] = $default_key;
-            }
-        }
-
-        return $order;
-    }
-
     public static function sanitize(array $input): array {
-        self::$section_visibility_cache = null;
-        self::$settings_cache = null;
+        self::invalidate_cache();
+        if (class_exists('Flacso_Main_Page_Section_Keys')) {
+            $input = Flacso_Main_Page_Section_Keys::normalize_settings($input);
+        }
+
         $defaults = self::get_defaults();
         $output = $defaults;
 
         if (isset($input['hero']) && is_array($input['hero'])) {
             $hero = $input['hero'];
-            $output['hero']['kicker'] = wp_kses_post($hero['kicker'] ?? $defaults['hero']['kicker']);
-            $output['hero']['title'] = wp_kses_post($hero['title'] ?? $defaults['hero']['title']);
-            $output['hero']['subtitle'] = wp_kses_post($hero['subtitle'] ?? $defaults['hero']['subtitle']);
+            foreach (['kicker', 'title', 'subtitle', 'primary_label', 'secondary_label', 'bubble_primary_label', 'bubble_secondary_label'] as $field) {
+                $output['hero'][$field] = wp_kses_post($hero[$field] ?? $defaults['hero'][$field]);
+            }
             $output['hero']['background_image'] = esc_url_raw($hero['background_image'] ?? $defaults['hero']['background_image']);
-            $output['hero']['primary_label'] = wp_kses_post($hero['primary_label'] ?? $defaults['hero']['primary_label']);
-            $output['hero']['primary_url'] = self::sanitize_relative_url($hero['primary_url'] ?? $defaults['hero']['primary_url']);
-            $output['hero']['secondary_label'] = wp_kses_post($hero['secondary_label'] ?? $defaults['hero']['secondary_label']);
-            $output['hero']['secondary_url'] = self::sanitize_relative_url($hero['secondary_url'] ?? $defaults['hero']['secondary_url']);
-            $output['hero']['bubble_primary_label'] = wp_kses_post($hero['bubble_primary_label'] ?? $defaults['hero']['bubble_primary_label']);
-            $output['hero']['bubble_primary_url'] = self::sanitize_relative_url($hero['bubble_primary_url'] ?? $defaults['hero']['bubble_primary_url']);
-            $output['hero']['bubble_secondary_label'] = wp_kses_post($hero['bubble_secondary_label'] ?? $defaults['hero']['bubble_secondary_label']);
-            $output['hero']['bubble_secondary_url'] = self::sanitize_relative_url($hero['bubble_secondary_url'] ?? $defaults['hero']['bubble_secondary_url']);
+            foreach (['primary_url', 'secondary_url', 'bubble_primary_url', 'bubble_secondary_url'] as $field) {
+                $output['hero'][$field] = self::sanitize_relative_url((string) ($hero[$field] ?? $defaults['hero'][$field]));
+            }
             $output['hero']['bubble_primary_enabled'] = !empty($hero['bubble_primary_enabled']);
             $output['hero']['bubble_secondary_enabled'] = !empty($hero['bubble_secondary_enabled']);
-            $output['hero']['show_buttons'] = array_key_exists('show_buttons', $hero) ? !empty($hero['show_buttons']) : $defaults['hero']['show_buttons'];
-            $style_keys = array_keys(self::get_button_style_options());
-            $primary_style = $hero['bubble_primary_style'] ?? $defaults['hero']['bubble_primary_style'];
-            $secondary_style = $hero['bubble_secondary_style'] ?? $defaults['hero']['bubble_secondary_style'];
-            $output['hero']['bubble_primary_style'] = in_array($primary_style, $style_keys, true) ? $primary_style : $defaults['hero']['bubble_primary_style'];
-            $output['hero']['bubble_secondary_style'] = in_array($secondary_style, $style_keys, true) ? $secondary_style : $defaults['hero']['bubble_secondary_style'];
+            $output['hero']['show_buttons'] = array_key_exists('show_buttons', $hero)
+                ? !empty($hero['show_buttons'])
+                : $defaults['hero']['show_buttons'];
+
+            $styles = array_keys(self::get_button_style_options());
+            foreach (['bubble_primary_style', 'bubble_secondary_style'] as $field) {
+                $candidate = sanitize_key((string) ($hero[$field] ?? $defaults['hero'][$field]));
+                $output['hero'][$field] = in_array($candidate, $styles, true) ? $candidate : $defaults['hero'][$field];
+            }
 
             $button_defaults = self::get_hero_button_defaults();
-            $buttons_input = $hero['buttons'] ?? [];
-            if (empty($buttons_input)) {
-                $buttons_input = $button_defaults;
-                $buttons_input[0]['label'] = $hero['primary_label'] ?? $button_defaults[0]['label'];
-                $buttons_input[0]['url'] = $hero['primary_url'] ?? $button_defaults[0]['url'];
-                $buttons_input[1]['label'] = $hero['secondary_label'] ?? $button_defaults[1]['label'];
-                $buttons_input[1]['url'] = $hero['secondary_url'] ?? $button_defaults[1]['url'];
-                $buttons_input[0]['enabled'] = true;
-                $buttons_input[1]['enabled'] = !empty($hero['secondary_label']) || !empty($hero['secondary_url']);
-            }
-
-            $allowed_styles = ['primary', 'outline', 'light', 'ghost'];
+            $buttons_input = isset($hero['buttons']) && is_array($hero['buttons']) ? $hero['buttons'] : [];
             $output['hero']['buttons'] = [];
             foreach ($button_defaults as $index => $button_default) {
-                $button_input = $buttons_input[$index] ?? $button_default;
-                $style = sanitize_key($button_input['style'] ?? $button_default['style']);
-                if (!in_array($style, $allowed_styles, true)) {
-                    $style = $button_default['style'];
-                }
+                $button = isset($buttons_input[$index]) && is_array($buttons_input[$index]) ? $buttons_input[$index] : $button_default;
+                $style = sanitize_key((string) ($button['style'] ?? $button_default['style']));
                 $output['hero']['buttons'][$index] = [
-                    'label' => wp_kses_post($button_input['label'] ?? $button_default['label']),
-                    'url' => self::sanitize_relative_url($button_input['url'] ?? $button_default['url']),
-                    'style' => $style,
-                    'enabled' => !empty($button_input['enabled']),
+                    'label' => wp_kses_post($button['label'] ?? $button_default['label']),
+                    'url' => self::sanitize_relative_url((string) ($button['url'] ?? $button_default['url'])),
+                    'style' => in_array($style, $styles, true) ? $style : $button_default['style'],
+                    'enabled' => !empty($button['enabled']),
                 ];
             }
+            $output['hero']['primary_label'] = $output['hero']['buttons'][0]['label'];
+            $output['hero']['primary_url'] = $output['hero']['buttons'][0]['url'];
+            $output['hero']['secondary_label'] = $output['hero']['buttons'][1]['label'];
+            $output['hero']['secondary_url'] = $output['hero']['buttons'][1]['url'];
+        }
 
-            $first_btn = $output['hero']['buttons'][0] ?? $button_defaults[0];
-            $second_btn = $output['hero']['buttons'][1] ?? $button_defaults[1];
-            $output['hero']['primary_label'] = $first_btn['label'];
-            $output['hero']['primary_url'] = $first_btn['url'];
-            $output['hero']['secondary_label'] = $second_btn['label'];
-            $output['hero']['secondary_url'] = $second_btn['url'];
+        if (isset($input['oferta_academica']) && is_array($input['oferta_academica'])) {
+            $offer = $input['oferta_academica'];
+            $output['oferta_academica']['show_title'] = array_key_exists('show_title', $offer)
+                ? !empty($offer['show_title'])
+                : $defaults['oferta_academica']['show_title'];
+            $output['oferta_academica']['title'] = sanitize_text_field($offer['title'] ?? $defaults['oferta_academica']['title']);
+            $output['oferta_academica']['intro'] = wp_kses_post($offer['intro'] ?? $defaults['oferta_academica']['intro']);
+
+            $cards_input = isset($offer['cards']) && is_array($offer['cards']) ? $offer['cards'] : [];
+            foreach ($defaults['oferta_academica']['cards'] as $index => $card_default) {
+                $card = isset($cards_input[$index]) && is_array($cards_input[$index]) ? $cards_input[$index] : [];
+                $output['oferta_academica']['cards'][$index] = self::normalize_offer_card([
+                    'key' => $card_default['key'],
+                    'title' => sanitize_text_field($card['title'] ?? $card_default['title']),
+                    'type' => sanitize_text_field($card['type'] ?? $card_default['type']),
+                    'url' => self::sanitize_relative_url((string) ($card['url'] ?? $card_default['url'])),
+                    'image' => esc_url_raw($card['image'] ?? $card_default['image']),
+                    'desc' => wp_kses_post($card['desc'] ?? $card_default['desc']),
+                ]);
+            }
+
+            foreach (['show_filters', 'show_maestrias', 'show_especializaciones', 'show_diplomados', 'show_diplomas', 'show_seminarios', 'show_inactivos'] as $field) {
+                if (array_key_exists($field, $offer)) {
+                    $output['oferta_academica'][$field] = !empty($offer[$field]);
+                }
+            }
+            $limit = absint($offer['seminarios_limit'] ?? $defaults['oferta_academica']['seminarios_limit']);
+            $output['oferta_academica']['seminarios_limit'] = max(1, min(50, $limit ?: 12));
+        }
+
+        if (isset($input['novedades']) && is_array($input['novedades'])) {
+            $news = $input['novedades'];
+            $legacy = self::sanitize_novedades_per_page_value($news['per_page'] ?? 12, 12);
+            $desktop = self::sanitize_novedades_per_page_value($news['per_page_desktop'] ?? $legacy, $legacy);
+            $mobile = self::sanitize_novedades_per_page_value($news['per_page_mobile'] ?? $legacy, $legacy);
+            $output['novedades'] = [
+                'per_page' => $desktop,
+                'per_page_desktop' => $desktop,
+                'per_page_mobile' => $mobile,
+            ];
+        }
+
+        if (isset($input['congreso']) && is_array($input['congreso'])) {
+            $section = $input['congreso'];
+            foreach (['title', 'content', 'cta_label', 'bubble_primary_label', 'bubble_secondary_label'] as $field) {
+                $output['congreso'][$field] = wp_kses_post($section[$field] ?? $defaults['congreso'][$field]);
+            }
+            foreach (['cta_url', 'bubble_primary_url', 'bubble_secondary_url'] as $field) {
+                $output['congreso'][$field] = self::sanitize_relative_url((string) ($section[$field] ?? $defaults['congreso'][$field]));
+            }
+            $output['congreso']['background_image'] = esc_url_raw($section['background_image'] ?? $defaults['congreso']['background_image']);
+        }
+
+        if (isset($input['contacto']) && is_array($input['contacto'])) {
+            $section = $input['contacto'];
+            foreach (['title', 'subtitle', 'cta_label'] as $field) {
+                $output['contacto'][$field] = wp_kses_post($section[$field] ?? $defaults['contacto'][$field]);
+            }
+            $output['contacto']['cta_url'] = self::sanitize_relative_url((string) ($section['cta_url'] ?? $defaults['contacto']['cta_url']));
+            $output['contacto']['background_image'] = esc_url_raw($section['background_image'] ?? $defaults['contacto']['background_image']);
+            $mode = sanitize_key((string) ($section['background_mode'] ?? $defaults['contacto']['background_mode']));
+            $output['contacto']['background_mode'] = in_array($mode, ['color', 'gradient', 'image', 'image_overlay'], true)
+                ? $mode
+                : $defaults['contacto']['background_mode'];
+            foreach (['background_color', 'background_gradient_start', 'background_gradient_end', 'background_overlay_color', 'background_overlay_color_secondary'] as $field) {
+                $color = sanitize_hex_color($section[$field] ?? $defaults['contacto'][$field]);
+                $output['contacto'][$field] = $color ?: $defaults['contacto'][$field];
+            }
+            $overlay_style = sanitize_key((string) ($section['background_overlay_style'] ?? $defaults['contacto']['background_overlay_style']));
+            $output['contacto']['background_overlay_style'] = in_array($overlay_style, ['solid', 'gradient'], true)
+                ? $overlay_style
+                : $defaults['contacto']['background_overlay_style'];
+            $output['contacto']['background_gradient_angle'] = self::sanitize_angle_value($section['background_gradient_angle'] ?? 135, 135);
+            $output['contacto']['background_overlay_angle'] = self::sanitize_angle_value($section['background_overlay_angle'] ?? 180, 180);
+            $output['contacto']['background_overlay_opacity'] = self::sanitize_opacity_value($section['background_overlay_opacity'] ?? 0.78, 0.78);
+            $output['contacto']['background_overlay_opacity_secondary'] = self::sanitize_opacity_value($section['background_overlay_opacity_secondary'] ?? 0.45, 0.45);
+        }
+
+        if (isset($input['mailing']) && is_array($input['mailing'])) {
+            foreach (['title', 'subtitle', 'button_label', 'consent_text'] as $field) {
+                $output['mailing'][$field] = wp_kses_post($input['mailing'][$field] ?? $defaults['mailing'][$field]);
+            }
+        }
+
+        if (isset($input['quienes']) && is_array($input['quienes'])) {
+            $section = $input['quienes'];
+            foreach (['title', 'content', 'cta_label'] as $field) {
+                $output['quienes'][$field] = wp_kses_post($section[$field] ?? $defaults['quienes'][$field]);
+            }
+            $output['quienes']['cta_url'] = self::sanitize_relative_url((string) ($section['cta_url'] ?? $defaults['quienes']['cta_url']));
+            $output['quienes']['background_image'] = esc_url_raw($section['background_image'] ?? $defaults['quienes']['background_image']);
+            $color = sanitize_hex_color($section['highlight_color'] ?? $defaults['quienes']['highlight_color']);
+            $output['quienes']['highlight_color'] = $color ?: $defaults['quienes']['highlight_color'];
+        }
+
+        if (isset($input['instagram']) && is_array($input['instagram'])) {
+            $section = $input['instagram'];
+            $output['instagram']['profile_url'] = esc_url_raw($section['profile_url'] ?? $defaults['instagram']['profile_url']);
+            foreach (['title', 'description', 'cta_label'] as $field) {
+                $output['instagram'][$field] = wp_kses_post($section[$field] ?? $defaults['instagram'][$field]);
+            }
+            $output['instagram']['access_token'] = sanitize_text_field($section['access_token'] ?? $defaults['instagram']['access_token']);
+            $api_type = sanitize_key((string) ($section['api_type'] ?? 'basic'));
+            $output['instagram']['api_type'] = in_array($api_type, ['basic', 'graph'], true) ? $api_type : 'basic';
+        }
+
+        // Secciones cuyo esquema pertenece a otro dominio se preservan con un
+        // saneamiento genérico. main-page no necesita conocer sus campos.
+        foreach (['eventos', 'seminarios', 'novedades_busqueda'] as $section_key) {
+            if (isset($input[$section_key]) && is_array($input[$section_key])) {
+                $output[$section_key] = self::sanitize_generic_section($input[$section_key]);
+            }
         }
 
         if (isset($input['sections_visibility']) && is_array($input['sections_visibility'])) {
-            $visibility = $input['sections_visibility'];
+            $visibility = class_exists('Flacso_Main_Page_Section_Keys')
+                ? Flacso_Main_Page_Section_Keys::normalize_keyed_map($input['sections_visibility'])
+                : $input['sections_visibility'];
             foreach (self::get_section_visibility_defaults() as $section_key => $default_state) {
-                $output['sections_visibility'][$section_key] = !empty($visibility[$section_key]);
+                $output['sections_visibility'][$section_key] = array_key_exists($section_key, $visibility)
+                    ? !empty($visibility[$section_key])
+                    : $default_state;
             }
         }
 
@@ -596,168 +667,43 @@ class Flacso_Main_Page_Settings {
         }
 
         if (isset($input['section_heading_color'])) {
-            $color_choice = sanitize_key($input['section_heading_color']);
-            $output['section_heading_color'] = in_array($color_choice, self::SECTION_HEADING_COLOR_CHOICES, true)
-                ? $color_choice
+            $choice = sanitize_key((string) $input['section_heading_color']);
+            $output['section_heading_color'] = in_array($choice, self::SECTION_HEADING_COLOR_CHOICES, true)
+                ? $choice
                 : $defaults['section_heading_color'];
         }
 
         if (isset($input['section_heading_colors']) && is_array($input['section_heading_colors'])) {
-            $colors_input = $input['section_heading_colors'];
+            $colors = class_exists('Flacso_Main_Page_Section_Keys')
+                ? Flacso_Main_Page_Section_Keys::normalize_keyed_map($input['section_heading_colors'])
+                : $input['section_heading_colors'];
             $output['section_heading_colors'] = [];
-            foreach (self::HOMEPAGE_SECTION_KEYS as $section_key) {
-                if (!isset($colors_input[$section_key])) {
-                    continue;
-                }
-                $choice = sanitize_key($colors_input[$section_key]);
-                if (!in_array($choice, self::SECTION_HEADING_COLOR_CHOICES, true)) {
-                    continue;
-                }
-                $output['section_heading_colors'][$section_key] = $choice;
-            }
-        }
-
-        if (isset($input['posgrados']) && is_array($input['posgrados'])) {
-            $pos = $input['posgrados'];
-            $output['posgrados']['show_title'] = !empty($pos['show_title']);
-            $output['posgrados']['title'] = sanitize_text_field($pos['title'] ?? $defaults['posgrados']['title']);
-            $output['posgrados']['intro'] = wp_kses_post($pos['intro'] ?? $defaults['posgrados']['intro']);
-
-            if (!empty($pos['cards']) && is_array($pos['cards'])) {
-                foreach ($defaults['posgrados']['cards'] as $index => $card_defaults) {
-                    $card_input = $pos['cards'][$index] ?? [];
-                    $output['posgrados']['cards'][$index] = [
-                        'key' => $card_defaults['key'],
-                        'title' => sanitize_text_field($card_input['title'] ?? $card_defaults['title']),
-                        'type' => sanitize_text_field($card_input['type'] ?? $card_defaults['type']),
-                        'url' => self::sanitize_relative_url($card_input['url'] ?? $card_defaults['url']),
-                        'image' => esc_url_raw($card_input['image'] ?? $card_defaults['image']),
-                        'desc' => wp_kses_post($card_input['desc'] ?? $card_defaults['desc']),
-                    ];
+            foreach ($colors as $section_key => $choice) {
+                $choice = sanitize_key((string) $choice);
+                if (in_array($section_key, self::get_homepage_section_order_defaults(), true)
+                    && in_array($choice, self::SECTION_HEADING_COLOR_CHOICES, true)) {
+                    $output['section_heading_colors'][$section_key] = $choice;
                 }
             }
         }
 
-        // Oferta Académica
-        if (isset($input['oferta_academica']) && is_array($input['oferta_academica'])) {
-            $oa = $input['oferta_academica'];
-            $output['oferta_academica']['show_filters'] = !empty($oa['show_filters']);
-            $output['oferta_academica']['show_maestrias'] = !empty($oa['show_maestrias']);
-            $output['oferta_academica']['show_especializaciones'] = !empty($oa['show_especializaciones']);
-            $output['oferta_academica']['show_diplomados'] = !empty($oa['show_diplomados']);
-            $output['oferta_academica']['show_diplomas'] = !empty($oa['show_diplomas']);
-            $output['oferta_academica']['show_seminarios'] = !empty($oa['show_seminarios']);
-            $output['oferta_academica']['show_inactivos'] = !empty($oa['show_inactivos']);
-            $limit = isset($oa['seminarios_limit']) ? intval($oa['seminarios_limit']) : $defaults['oferta_academica']['seminarios_limit'];
-            if ($limit < 1) { $limit = 1; }
-            if ($limit > 50) { $limit = 50; }
-            $output['oferta_academica']['seminarios_limit'] = $limit;
-        }
+        return self::normalize_settings($output);
+    }
 
-        if (isset($input['novedades']) && is_array($input['novedades'])) {
-            $novedades = $input['novedades'];
-            $default_legacy = self::sanitize_novedades_per_page_value($defaults['novedades']['per_page'] ?? 12, 12);
-            $legacy_per_page = self::sanitize_novedades_per_page_value($novedades['per_page'] ?? $default_legacy, $default_legacy);
-
-            $default_desktop = self::sanitize_novedades_per_page_value($defaults['novedades']['per_page_desktop'] ?? $legacy_per_page, $legacy_per_page);
-            $default_mobile = self::sanitize_novedades_per_page_value($defaults['novedades']['per_page_mobile'] ?? $legacy_per_page, $legacy_per_page);
-
-            $per_page_desktop = self::sanitize_novedades_per_page_value($novedades['per_page_desktop'] ?? $legacy_per_page, $default_desktop);
-            $per_page_mobile = self::sanitize_novedades_per_page_value($novedades['per_page_mobile'] ?? $legacy_per_page, $default_mobile);
-
-            // Compatibilidad: per_page se mantiene como referencia de escritorio.
-            $output['novedades']['per_page'] = $per_page_desktop;
-            $output['novedades']['per_page_desktop'] = $per_page_desktop;
-            $output['novedades']['per_page_mobile'] = $per_page_mobile;
-        }
-
-        if (isset($input['congreso']) && is_array($input['congreso'])) {
-            $congreso = $input['congreso'];
-            $output['congreso']['title'] = wp_kses_post($congreso['title'] ?? $defaults['congreso']['title']);
-            $output['congreso']['content'] = wp_kses_post($congreso['content'] ?? $defaults['congreso']['content']);
-            $output['congreso']['cta_label'] = wp_kses_post($congreso['cta_label'] ?? $defaults['congreso']['cta_label']);
-            $output['congreso']['cta_url'] = self::sanitize_relative_url($congreso['cta_url'] ?? $defaults['congreso']['cta_url']);
-            $output['congreso']['background_image'] = esc_url_raw($congreso['background_image'] ?? $defaults['congreso']['background_image']);
-        }
-
-        if (isset($input['contacto']) && is_array($input['contacto'])) {
-            $contacto = $input['contacto'];
-            $output['contacto']['title'] = wp_kses_post($contacto['title'] ?? $defaults['contacto']['title']);
-            $output['contacto']['subtitle'] = wp_kses_post($contacto['subtitle'] ?? $defaults['contacto']['subtitle']);
-            $output['contacto']['cta_label'] = wp_kses_post($contacto['cta_label'] ?? $defaults['contacto']['cta_label']);
-            $output['contacto']['cta_url'] = self::sanitize_relative_url($contacto['cta_url'] ?? $defaults['contacto']['cta_url']);
-            $output['contacto']['background_image'] = esc_url_raw($contacto['background_image'] ?? $defaults['contacto']['background_image']);
-            $background_color = sanitize_hex_color($contacto['background_color'] ?? $defaults['contacto']['background_color']);
-            $output['contacto']['background_color'] = $background_color ?: $defaults['contacto']['background_color'];
-
-            $mode_choices = ['color', 'gradient', 'image', 'image_overlay'];
-            $mode_value = sanitize_key($contacto['background_mode'] ?? $defaults['contacto']['background_mode']);
-            $output['contacto']['background_mode'] = in_array($mode_value, $mode_choices, true)
-                ? $mode_value
-                : $defaults['contacto']['background_mode'];
-
-            $gradient_start = sanitize_hex_color($contacto['background_gradient_start'] ?? $defaults['contacto']['background_gradient_start']);
-            $gradient_end = sanitize_hex_color($contacto['background_gradient_end'] ?? $defaults['contacto']['background_gradient_end']);
-            $output['contacto']['background_gradient_start'] = $gradient_start ?: $defaults['contacto']['background_gradient_start'];
-            $output['contacto']['background_gradient_end'] = $gradient_end ?: $defaults['contacto']['background_gradient_end'];
-            $gradient_angle_input = $contacto['background_gradient_angle'] ?? $defaults['contacto']['background_gradient_angle'];
-            $output['contacto']['background_gradient_angle'] = self::sanitize_angle_value($gradient_angle_input, (int) $defaults['contacto']['background_gradient_angle']);
-
-            $overlay_styles = ['solid', 'gradient'];
-            $overlay_style = sanitize_key($contacto['background_overlay_style'] ?? $defaults['contacto']['background_overlay_style']);
-            $output['contacto']['background_overlay_style'] = in_array($overlay_style, $overlay_styles, true)
-                ? $overlay_style
-                : $defaults['contacto']['background_overlay_style'];
-
-            $overlay_color = sanitize_hex_color($contacto['background_overlay_color'] ?? $defaults['contacto']['background_overlay_color']);
-            $overlay_color = $overlay_color ?: $defaults['contacto']['background_overlay_color'];
-            $output['contacto']['background_overlay_color'] = $overlay_color;
-
-            $overlay_color_secondary = sanitize_hex_color($contacto['background_overlay_color_secondary'] ?? $defaults['contacto']['background_overlay_color_secondary']);
-            if (!$overlay_color_secondary) {
-                $overlay_color_secondary = $overlay_color;
+    private static function sanitize_generic_section(array $input): array {
+        $output = [];
+        foreach ($input as $key => $value) {
+            $safe_key = is_int($key) ? $key : sanitize_key((string) $key);
+            if (is_array($value)) {
+                $output[$safe_key] = self::sanitize_generic_section($value);
+            } elseif (is_bool($value)) {
+                $output[$safe_key] = $value;
+            } elseif (is_int($value) || is_float($value)) {
+                $output[$safe_key] = $value;
+            } elseif (is_scalar($value)) {
+                $output[$safe_key] = wp_kses_post((string) $value);
             }
-            $output['contacto']['background_overlay_color_secondary'] = $overlay_color_secondary;
-
-            $overlay_opacity_input = $contacto['background_overlay_opacity'] ?? $defaults['contacto']['background_overlay_opacity'];
-            $output['contacto']['background_overlay_opacity'] = self::sanitize_opacity_value($overlay_opacity_input, (float) $defaults['contacto']['background_overlay_opacity']);
-
-            $overlay_opacity_secondary_input = $contacto['background_overlay_opacity_secondary'] ?? $defaults['contacto']['background_overlay_opacity_secondary'];
-            $output['contacto']['background_overlay_opacity_secondary'] = self::sanitize_opacity_value($overlay_opacity_secondary_input, (float) $defaults['contacto']['background_overlay_opacity_secondary']);
-
-            $overlay_angle_input = $contacto['background_overlay_angle'] ?? $defaults['contacto']['background_overlay_angle'];
-            $output['contacto']['background_overlay_angle'] = self::sanitize_angle_value($overlay_angle_input, (int) $defaults['contacto']['background_overlay_angle']);
         }
-
-        if (isset($input['mailing']) && is_array($input['mailing'])) {
-            $mailing = $input['mailing'];
-            $output['mailing']['title'] = wp_kses_post($mailing['title'] ?? $defaults['mailing']['title']);
-            $output['mailing']['subtitle'] = wp_kses_post($mailing['subtitle'] ?? $defaults['mailing']['subtitle']);
-            $output['mailing']['button_label'] = wp_kses_post($mailing['button_label'] ?? $defaults['mailing']['button_label']);
-            $output['mailing']['consent_text'] = wp_kses_post($mailing['consent_text'] ?? $defaults['mailing']['consent_text']);
-        }
-
-        if (isset($input['quienes']) && is_array($input['quienes'])) {
-            $quienes = $input['quienes'];
-            $output['quienes']['title'] = wp_kses_post($quienes['title'] ?? $defaults['quienes']['title']);
-            $output['quienes']['content'] = wp_kses_post($quienes['content'] ?? $defaults['quienes']['content']);
-            $output['quienes']['cta_label'] = wp_kses_post($quienes['cta_label'] ?? $defaults['quienes']['cta_label']);
-            $output['quienes']['cta_url'] = self::sanitize_relative_url($quienes['cta_url'] ?? $defaults['quienes']['cta_url']);
-            $output['quienes']['background_image'] = esc_url_raw($quienes['background_image'] ?? $defaults['quienes']['background_image']);
-            $output['quienes']['highlight_color'] = sanitize_hex_color($quienes['highlight_color'] ?? $defaults['quienes']['highlight_color']);
-        }
-
-        if (isset($input['instagram']) && is_array($input['instagram'])) {
-            $instagram = $input['instagram'];
-            $output['instagram']['profile_url'] = esc_url_raw($instagram['profile_url'] ?? $defaults['instagram']['profile_url']);
-            $output['instagram']['title'] = wp_kses_post($instagram['title'] ?? $defaults['instagram']['title']);
-            $output['instagram']['description'] = wp_kses_post($instagram['description'] ?? $defaults['instagram']['description']);
-            $output['instagram']['cta_label'] = wp_kses_post($instagram['cta_label'] ?? $defaults['instagram']['cta_label']);
-            $output['instagram']['access_token'] = sanitize_text_field($instagram['access_token'] ?? $defaults['instagram']['access_token']);
-            $api_type = sanitize_key($instagram['api_type'] ?? $defaults['instagram']['api_type']);
-            $output['instagram']['api_type'] = in_array($api_type, ['basic', 'graph'], true) ? $api_type : 'basic';
-        }
-
         return $output;
     }
 
@@ -766,7 +712,6 @@ class Flacso_Main_Page_Settings {
         if ($parsed <= 0) {
             $parsed = $fallback;
         }
-
         return max(3, min(48, $parsed));
     }
 
@@ -774,28 +719,14 @@ class Flacso_Main_Page_Settings {
         if (!is_numeric($value)) {
             return $default;
         }
-        $value = (float) $value;
-        if ($value < 0) {
-            $value = 0.0;
-        }
-        if ($value > 1) {
-            $value = 1.0;
-        }
-        return round($value, 3);
+        return round(max(0.0, min(1.0, (float) $value)), 3);
     }
 
     private static function sanitize_angle_value($value, int $default): int {
         if (!is_numeric($value)) {
             return $default;
         }
-        $value = (int) $value;
-        if ($value < 0) {
-            $value = 0;
-        }
-        if ($value > 360) {
-            $value = 360;
-        }
-        return $value;
+        return max(0, min(360, (int) $value));
     }
 
     private static function sanitize_relative_url(string $value): string {
@@ -803,15 +734,12 @@ class Flacso_Main_Page_Settings {
         if ($value === '') {
             return '';
         }
-
         if (preg_match('#^(https?:)?//#i', $value)) {
             return esc_url_raw($value);
         }
-
         if ($value[0] !== '/') {
             $value = '/' . ltrim($value, '/');
         }
-
         return esc_url_raw($value);
     }
 }
