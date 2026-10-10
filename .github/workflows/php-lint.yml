@@ -23,10 +23,47 @@ jobs:
       - name: Validate PHP syntax
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
+          checked=0
+          failed=0
+          report="$(mktemp)"
+          trap 'rm -f "$report"' EXIT
+
           while IFS= read -r -d '' file; do
-            php -l "$file"
+            checked=$((checked + 1))
+            if output="$(php -l "$file" 2>&1)"; then
+              continue
+            fi
+
+            failed=$((failed + 1))
+            printf '\n::group::PHP syntax error: %s\n' "$file"
+            printf '%s\n' "$output"
+            echo "::endgroup::"
+            {
+              printf '### %s\n' "$file"
+              printf '\x60\x60\x60text\n%s\n\x60\x60\x60\n\n' "$output"
+            } >> "$report"
           done < <(find . -type f -name '*.php' \
             -not -path './vendor/*' \
             -not -path './node_modules/*' \
-            -print0)
+            -print0 | sort -z)
+
+          echo "PHP files checked: $checked"
+          echo "Files with syntax errors: $failed"
+          {
+            echo "## PHP 7.4 syntax check"
+            echo ""
+            echo "- Files checked: $checked"
+            echo "- Files with syntax errors: $failed"
+            echo ""
+            if (( failed > 0 )); then
+              cat "$report"
+            else
+              echo "All PHP files passed syntax validation."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if (( failed > 0 )); then
+            echo "::error::$failed PHP file(s) failed syntax validation (out of $checked). See the job summary."
+            exit 1
+          fi
