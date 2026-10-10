@@ -17,3 +17,4 @@ custom_404_assert(strpos($file, 'flacso-404-compass') !== false, 'Hero visual in
 custom_404_assert(strpos($file, 'No encontramos esta página') !== false, '404 title is present');
 
 fwrite(STDOUT, "OK custom 404 layout contract\n");
+
