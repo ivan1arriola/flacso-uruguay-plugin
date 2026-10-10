@@ -700,7 +700,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					.flacso-cp-kpi .kpi-val { font-size: 26px; font-weight: 800; color: #0f172a; margin: 6px 0 4px; }
 					.flacso-cp-kpi .kpi-sub { font-size: 12px; color: #64748b; }
 					.flacso-cp-filters {
-						display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 18px;
+						display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 12px; padding: 16px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px;
 					}
 					.flacso-cp-filters .fg { display: flex; flex-direction: column; gap: 4px; }
 					.flacso-cp-filters label { font-size: 12px; font-weight: 600; color: #334155; }
@@ -710,13 +710,12 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 						.flacso-cp-inbox-table td { overflow-wrap: anywhere; }
 						.flacso-cp-inbox-table th:nth-child(1) { width: 9%; }
 						.flacso-cp-inbox-table th:nth-child(2) { width: 13%; }
-						.flacso-cp-inbox-table th:nth-child(3) { width: 17%; }
-						.flacso-cp-inbox-table th:nth-child(4) { width: 24%; }
-						.flacso-cp-inbox-table th:nth-child(5) { width: 8%; }
-						.flacso-cp-inbox-table th:nth-child(6) { width: 10%; }
-						.flacso-cp-inbox-table th:nth-child(7) { width: 8%; }
-						.flacso-cp-inbox-table th:nth-child(8) { width: 11%; }
-						.flacso-cp-inbox-table th:nth-child(9) { width: 13%; }
+						.flacso-cp-inbox-table th:nth-child(3) { width: 27%; }
+						.flacso-cp-inbox-table th:nth-child(4) { width: 9%; }
+						.flacso-cp-inbox-table th:nth-child(5) { width: 10%; }
+						.flacso-cp-inbox-table th:nth-child(6) { width: 8%; }
+						.flacso-cp-inbox-table th:nth-child(7) { width: 14%; }
+						.flacso-cp-inbox-table th:nth-child(8) { width: 10%; }
 						.flacso-cp-inbox-table td:nth-child(1),
 						.flacso-cp-inbox-table td:nth-child(5),
 						.flacso-cp-inbox-table td:nth-child(7),
@@ -735,6 +734,14 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 						color: #334155; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .03em;
 					}
 					.flacso-cp-table td { padding: 11px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+					.flacso-cp-inbox-toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin:0 0 12px; color:#475569; font-size:13px; }
+					.flacso-cp-filter-reset { color:#475569; text-decoration:none; font-weight:600; }
+					.flacso-cp-filter-reset:hover { color:#1d3a72; }
+					.flacso-cp-person strong { display:block; color:#0f172a; line-height:1.35; }
+					.flacso-cp-person a { display:block; margin-top:4px; font-size:12px; overflow-wrap:anywhere; }
+					.flacso-cp-delivery { min-width:120px; }
+					.flacso-cp-delivery .flacso-badge { margin:2px 0; }
+					.flacso-cp-pagination { margin-top:16px; display:flex; gap:6px; justify-content:flex-end; align-items:center; }
 					.flacso-cp-table tr:hover td { background: #f8fafc; }
 					.flacso-badge {
 						display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px;
@@ -970,11 +977,12 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					</div>
 				</form>
 
-				<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-					<span style="font-size:13px; color:#475569;">
+				<div class="flacso-cp-inbox-toolbar">
+					<span>
 						Mostrando <strong><?php echo count( $result['items'] ); ?></strong> de <strong><?php echo (int) $result['pageInfo']['totalItems']; ?></strong> registros
 						(Página <?php echo (int) $result['pageInfo']['page']; ?> de <?php echo (int) $result['pageInfo']['totalPages']; ?>)
 					</span>
+					<a class="flacso-cp-filter-reset" href="<?php echo esc_url( admin_url( 'admin.php?page=' . self::PAGE_SLUG . '&tab=historico&table=' . $table ) ); ?>">Limpiar filtros</a>
 				</div>
 
 				<div class="flacso-cp-table-scroll">
@@ -983,7 +991,6 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 						<tr>
 							<th>Fecha</th>
 							<th>Persona</th>
-							<th>Correo</th>
 							<?php if ( 'offer_inquiries' === $table ) : ?>
 								<th>Oferta / Cohorte</th>
 								<th>Estado de la consulta</th>
@@ -998,7 +1005,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					</thead>
 					<tbody>
 						<?php if ( empty( $result['items'] ) ) : ?>
-							<tr><td colspan="<?php echo 'offer_inquiries' === $table ? 9 : 7; ?>" style="text-align:center; padding:26px; color:#64748b;">No se encontraron consultas con los filtros seleccionados.</td></tr>
+							<tr><td colspan="<?php echo 'offer_inquiries' === $table ? 8 : 6; ?>" style="text-align:center; padding:26px; color:#64748b;">No se encontraron consultas con los filtros seleccionados.</td></tr>
 						<?php else : ?>
 							<?php foreach ( $result['items'] as $row ) :
 								$count_val  = (int) ( $row['count'] ?? 1 );
@@ -1008,13 +1015,13 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 									<td style="white-space:nowrap; font-size:12px; color:#475569;">
 										<?php echo esc_html( substr( $date_val, 0, 16 ) ); ?>
 									</td>
-									<td>
+									<td class="flacso-cp-person">
 										<strong><?php echo esc_html( (string) ( $row['fullName'] ?: ( ( $row['firstName'] ?? '' ) . ' ' . ( $row['lastName'] ?? '' ) ) ) ); ?></strong>
+										<a href="mailto:<?php echo esc_attr( (string) $row['email'] ); ?>"><?php echo esc_html( (string) $row['email'] ); ?></a>
 										<?php if ( $count_val > 1 ) : ?>
 											<span class="flacso-badge offer_inquiries" title="Consultas acumuladas por esta persona para esta oferta"><?php echo (int) $count_val; ?>x</span>
 										<?php endif; ?>
 									</td>
-									<td><a href="mailto:<?php echo esc_attr( (string) $row['email'] ); ?>"><?php echo esc_html( (string) $row['email'] ); ?></a></td>
 									<?php if ( 'offer_inquiries' === $table ) : ?>
 										<td>
 											<div class="flacso-cp-inbox-offer">
@@ -1055,7 +1062,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 									<td style="font-size:12px;">
 										<?php echo esc_html( (string) ( $row['country'] ?: '—' ) ); ?>
 									</td>
-									<td class="flacso-status-cell" data-id="<?php echo esc_attr( (string) $row['id'] ); ?>">
+									<td class="flacso-status-cell flacso-cp-delivery" data-id="<?php echo esc_attr( (string) $row['id'] ); ?>">
 										<?php echo self::render_email_status_badge( $row ); ?>
 										<?php
 										if ( 'offer_inquiries' === $table ) {
@@ -1102,7 +1109,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 				</div>
 
 				<?php if ( $result['pageInfo']['totalPages'] > 1 ) : ?>
-					<div style="margin-top:16px; display:flex; gap:6px; justify-content:flex-end;">
+					<div class="flacso-cp-pagination" aria-label="Paginación de consultas">
 						<?php for ( $p = 1; $p <= min( 12, $result['pageInfo']['totalPages'] ); $p++ ) :
 							$page_url = add_query_arg( 'paged', $p );
 							?>
