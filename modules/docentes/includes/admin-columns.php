@@ -15,11 +15,6 @@ add_filter('manage_docente_posts_columns', function ($columns) {
     ];
 });
 
-add_filter('the_title', function ($title, $post_id) {
-    // No alterar títulos globalmente: la miniatura se añade en la columna.
-    return $title;
-}, 10, 2);
-
 add_action('manage_docente_posts_custom_column', function ($column, $post_id) {
     switch ($column) {
         case 'roles':
@@ -84,17 +79,50 @@ add_action('admin_head-edit.php', function () {
     </style>
     <?php
 });
-add_filter('post_row_actions', function ($actions, $post) {
-    if ($post->post_type !== 'docente') return $actions;
-    return $actions;
-}, 10, 2);
-add_filter('the_title', function ($title, $post_id) {
-    if (!is_admin() || !function_exists('get_current_screen')) return $title;
+
+add_action('admin_footer-edit.php', function () {
     $screen = get_current_screen();
-    if (!$screen || $screen->id !== 'edit-docente' || !in_the_loop() || get_post_type($post_id) !== 'docente') return $title;
-    // Esta salida se usa exclusivamente en la celda de título de la tabla.
-    return $title;
-}, 20, 2);
-add_action('manage_posts_custom_column', function ($column, $post_id) {
-    // Los datos del directorio se imprimen en manage_docente_posts_custom_column.
-}, 1, 2);
+    if (!$screen || $screen->post_type !== 'docente') return;
+    global $wp_query;
+    $people = [];
+    foreach ((array) ($wp_query->posts ?? []) as $person) {
+        if (!($person instanceof WP_Post)) continue;
+        $name = trim(wp_strip_all_tags(get_the_title($person)));
+        $initial = function_exists('mb_substr') ? mb_strtoupper(mb_substr($name, 0, 1)) : strtoupper(substr($name, 0, 1));
+        $people[$person->ID] = [
+            'image' => get_the_post_thumbnail_url($person->ID, 'thumbnail') ?: '',
+            'initial' => $initial ?: '?',
+        ];
+    }
+    ?>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const people = <?php echo wp_json_encode($people, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+        document.querySelectorAll('#the-list tr[id^="post-"]').forEach(function (row) {
+            const id = row.id.replace('post-', '');
+            const person = people[id];
+            const link = row.querySelector('.column-title .row-title');
+            if (!person || !link || link.closest('.flacso-team-identity')) return;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flacso-team-identity';
+            const avatar = document.createElement(person.image ? 'img' : 'span');
+            avatar.className = 'flacso-team-avatar';
+            if (person.image) {
+                avatar.src = person.image;
+                avatar.alt = '';
+                avatar.loading = 'lazy';
+            } else {
+                avatar.textContent = person.initial;
+                avatar.setAttribute('aria-hidden', 'true');
+            }
+            const name = document.createElement('span');
+            name.className = 'flacso-team-person-name';
+            link.parentNode.insertBefore(wrapper, link);
+            wrapper.appendChild(avatar);
+            wrapper.appendChild(name);
+            name.appendChild(link);
+        });
+    });
+    </script>
+    <?php
+});
