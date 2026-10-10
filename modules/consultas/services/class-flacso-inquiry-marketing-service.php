@@ -149,7 +149,7 @@ final class FLACSO_Inquiry_Marketing_Service {
      * tags; nunca incorpora automáticamente a una campaña.
      */
     public static function sync_inquiry(
-        string|int $inquiry_id,
+        $inquiry_id,
         array $inquiry_data = [],
         ?FLACSO_Offer_Inquiry_Repository $repository = null
     ): array {

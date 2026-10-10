@@ -83,7 +83,9 @@ if (!function_exists('get_post')) {
 
 if (!class_exists('WP_Error')) {
     class WP_Error {
-        public function __construct(private string $message, private string $code = '') {}
+        private $message;
+        private $code;
+        public function __construct(string $message, string $code = '') { $this->message = $message; $this->code = $code; }
         public function get_error_message(): string { return $this->message; }
         public function get_error_code(): string { return $this->code; }
     }

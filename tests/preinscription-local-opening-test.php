@@ -5,11 +5,17 @@ declare(strict_types=1);
 define('ABSPATH', __DIR__ . '/../');
 
 final class PreinscriptionJsonResponse extends RuntimeException {
+    public $success;
+    public $data;
+    public $status;
     public function __construct(
-        public readonly bool $success,
-        public readonly array $data,
-        public readonly int $status = 200
+        bool $success,
+        array $data,
+        int $status = 200
     ) {
+        $this->success = $success;
+        $this->data = $data;
+        $this->status = $status;
         parent::__construct('JSON response');
     }
 }

@@ -14,12 +14,12 @@ class FLACSO_Counting_PDO extends PDO {
         $this->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     }
 
-    public function prepare(string $query, array $options = []): PDOStatement|false {
+    public function prepare(string $query, array $options = []) {
         $this->statement_count++;
         return parent::prepare($query, $options);
     }
 
-    public function query(string $query, ?int $fetch_mode = null, mixed ...$fetch_mode_args): PDOStatement|false {
+    public function query(string $query, ?int $fetch_mode = null, ...$fetch_mode_args) {
         $this->statement_count++;
         if ($fetch_mode === null) {
             return parent::query($query);

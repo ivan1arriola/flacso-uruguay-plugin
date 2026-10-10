@@ -4,7 +4,8 @@ require_once __DIR__ . '/support/inquiry-delivery-bootstrap.php';
 
 if (!class_exists('WP_Error')) {
     class WP_Error {
-        public function __construct(private string $message) {}
+        private $message;
+        public function __construct(string $message) { $this->message = $message; }
         public function get_error_message(): string { return $this->message; }
     }
 }
