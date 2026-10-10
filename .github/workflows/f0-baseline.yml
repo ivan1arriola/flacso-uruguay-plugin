@@ -1,0 +1,94 @@
+name: F0 Architecture Baseline
+
+on:
+  pull_request:
+    paths:
+      - '.github/scripts/f0_audit.py'
+      - '.github/workflows/f0-baseline.yml'
+      - 'tests/test_f0_contracts.py'
+      - 'docs/architecture/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-baseline:
+    name: Static inventory and public-contract baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Generate read-only F0 inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          python .github/scripts/f0_audit.py --output build/f0-baseline
+          test -s build/f0-baseline/summary.json
+      - name: Run inventory and public-contract checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests -p 'test_f0_*.py' -v
+      - name: Publish F0 summary
+        if: always()
+        shell: bash
+        run: |
+          if [ -s build/f0-baseline/README.md ]; then
+            cat build/f0-baseline/README.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload audit artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flacso-f0-static-inventory
+          path: build/f0-baseline/
+          if-no-files-found: warn
+
+  php-baseline:
+    name: PHP 7.4 syntax baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PHP 7.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          coverage: none
+      - name: Record runtime for CI only
+        shell: bash
+        run: |
+          php -v | head -n 2
+          echo "This reports the GitHub Actions runner, NOT production PHP-FPM."
+      - name: Lint all PHP files without fail-fast
+        shell: bash
+        run: |
+          set -uo pipefail
+          count=0
+          errors=0
+          while IFS= read -r -d '' file; do
+            count=$((count + 1))
+            if output="$(php -l "$file" 2>&1)"; then
+              continue
+            fi
+            errors=$((errors + 1))
+            echo "::group::Syntax error: $file"
+            printf '%s\n' "$output"
+            echo "::endgroup::"
+          done < <(find . -type f -name '*.php' \
+            -not -path './vendor/*' \
+            -not -path './node_modules/*' \
+            -print0 | sort -z)
+          {
+            echo "## PHP 7.4 baseline"
+            echo "- Files checked: $count"
+            echo "- Files with syntax errors: $errors"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "PHP files: $count; syntax errors: $errors"
+          ((errors == 0))
