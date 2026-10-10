@@ -24,12 +24,15 @@ if (!defined('FLACSO_POSGRADOS_SLUG')) {
     define('FLACSO_POSGRADOS_SLUG', 'flacso-posgrados-docentes');
 }
 
-flacso_safe_require('modules/posgrados/includes/class-flacso-posgrados-plugin.php');
 flacso_safe_require('modules/posgrados/includes/class-flacso-posgrados-pages.php');
 flacso_safe_require('modules/posgrados/includes/class-flacso-posgrados-fields.php');
 flacso_safe_require('modules/posgrados/includes/class-flacso-posgrados-consultas-form.php');
 flacso_safe_require('modules/posgrados/includes/class-flacso-posgrados-docentes-sync.php');
 flacso_safe_require('modules/posgrados/includes/rest-api-posgrados.php');
+flacso_safe_require('modules/posgrados/includes/admin/class-flacso-posgrados-admin-page.php');
+flacso_safe_require('modules/posgrados/includes/admin/class-flacso-posgrados-seeder.php');
+flacso_safe_require('modules/posgrados/includes/blocks/class-flacso-posgrados-block.php');
+flacso_safe_require('modules/posgrados/includes/class-flacso-posgrados-plugin.php');
 
 // El registry ya ejecuta este archivo dentro de plugins_loaded. Inicializar de
 // inmediato evita registrar otro callback en el mismo hook/prioridad.
