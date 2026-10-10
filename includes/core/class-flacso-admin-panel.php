@@ -385,12 +385,20 @@ final class FLACSO_Admin_Panel {
 
     private static function open_registration_count(): int {
         $total = 0;
+        $offer_ids = FLACSO_Academic_Assistant::is_assistant() ? FLACSO_Academic_Assistant::assigned_offer_ids() : [];
+        $seminar_ids = FLACSO_Academic_Assistant::is_assistant() ? FLACSO_Academic_Assistant::assigned_seminar_ids() : [];
         foreach (get_posts(['post_type' => 'cohorte', 'post_status' => 'any', 'posts_per_page' => -1, 'fields' => 'ids']) as $id) {
+            if (FLACSO_Academic_Assistant::is_assistant() && !in_array(absint(get_post_meta($id, 'oferta_academica_id', true)), $offer_ids, true)) {
+                continue;
+            }
             if (get_post_meta($id, 'link_preinscripcion', true) && FLACSO_Cohorte::accepts_registration((int) $id)) {
                 $total++;
             }
         }
         foreach (get_posts(['post_type' => 'edicion', 'post_status' => 'any', 'posts_per_page' => -1, 'fields' => 'ids']) as $id) {
+            if (FLACSO_Academic_Assistant::is_assistant() && !in_array(absint(get_post_meta($id, 'seminario_id', true)), $seminar_ids, true)) {
+                continue;
+            }
             if (get_post_meta($id, 'link_preinscripcion', true) && FLACSO_Edicion::accepts_registration((int) $id)) {
                 $total++;
             }
@@ -486,6 +494,15 @@ final class FLACSO_Admin_Panel {
                 'orderby' => 'meta_value',
                 'order' => 'ASC',
             ]);
+            if (FLACSO_Academic_Assistant::is_assistant()) {
+                $allowed = $definition[0] === 'cohorte'
+                    ? FLACSO_Academic_Assistant::assigned_offer_ids()
+                    : FLACSO_Academic_Assistant::assigned_seminar_ids();
+                $parent_key = $definition[0] === 'cohorte' ? 'oferta_academica_id' : 'seminario_id';
+                $posts = array_values(array_filter($posts, static function ($post) use ($allowed, $parent_key): bool {
+                    return in_array(absint(get_post_meta($post->ID, $parent_key, true)), $allowed, true);
+                }));
+            }
             foreach ($posts as $post) {
                 $parent_id = $definition[0] === 'cohorte'
                     ? absint(get_post_meta($post->ID, 'oferta_academica_id', true))
