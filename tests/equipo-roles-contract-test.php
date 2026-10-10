@@ -19,6 +19,10 @@ equipo_assert(strpos($cpt, "Personas / Equipo") !== false, "CPT_Docente tiene et
 equipo_assert(strpos($cpt, "^equipo/docentes") !== false, "CPT_Docente tiene regla para /equipo/docentes");
 equipo_assert(strpos($cpt, "^equipo/administrativo") !== false, "CPT_Docente tiene regla para /equipo/administrativo");
 equipo_assert(strpos($cpt, "flacso_equipo_view") !== false, "CPT_Docente registra flacso_equipo_view");
+equipo_assert(strpos($cpt, "post_type=' . self::POST_TYPE") !== false, "CPT_Docente asigna post_type en reglas de reescritura");
+equipo_assert(strpos($cpt, "check_and_flush_rules") !== false, "CPT_Docente implementa check_and_flush_rules");
+equipo_assert(strpos($cpt, "fix_equipo_request") !== false, "CPT_Docente implementa fix_equipo_request");
+equipo_assert(strpos($cpt, "handle_template_redirect") !== false, "CPT_Docente implementa handle_template_redirect");
 
 equipo_assert(strpos($meta, "ROLE_DOCENTE = 'docente'") !== false, "Docente_Meta define rol docente");
 equipo_assert(strpos($meta, "ROLE_ADMINISTRATIVO = 'administrativo'") !== false, "Docente_Meta define rol administrativo");
