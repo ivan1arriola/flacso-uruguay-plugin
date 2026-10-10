@@ -189,11 +189,11 @@ class CPT_Oferta_Academica {
                         $url = FLACSO_Preinscription_Ajax_Handlers::offer_url($post_id);
                     }
 
-                    echo '<div class="flacso-cohort-card">';
-                    echo '<div class="flacso-cohort-card__heading">';
-                    echo '<a class="flacso-cohort-card__title" href="' . esc_url($edit_c_url) . '">' . esc_html($cohort_label) . '</a>';
+                    $is_open = $explicitly_open || $legacy_open;
+                    echo '<div class="flacso-cohort-row' . ($is_open ? ' flacso-cohort-row--open' : '') . '">';
+                    echo '<a class="flacso-cohort-row__title" href="' . esc_url($edit_c_url) . '">' . esc_html($cohort_label) . '</a>';
+                    echo '<div class="flacso-cohort-row__meta">';
                     echo '<span class="flacso-cohort-state flacso-cohort-state--' . esc_attr($estado) . '">' . esc_html(self::academic_state_label($estado)) . '</span>';
-                    echo '</div>';
 
                     if ($explicitly_open) {
                         echo '<span class="flacso-pre-status flacso-pre-status--open"><span aria-hidden="true">●</span> ' . esc_html__('Preinscripción abierta', 'flacso-uruguay') . '</span>';
@@ -204,10 +204,11 @@ class CPT_Oferta_Academica {
                     } else {
                         echo '<span class="flacso-pre-status flacso-pre-status--unset"><span aria-hidden="true">○</span> ' . esc_html__('No configurada', 'flacso-uruguay') . '</span>';
                     }
+                    echo '</div>';
 
                     if (current_user_can('edit_post', $c->ID)) {
                         $nonce = wp_create_nonce('flacso_preinscripcion_nonce');
-                        echo '<div class="flacso-cohort-card__actions">';
+                        echo '<div class="flacso-cohort-row__actions">';
                         if ($explicitly_open || $legacy_open) {
                             if ($url !== '') {
                                 echo '<a class="button button-small" href="' . esc_url($url) . '" target="_blank" rel="noopener noreferrer">' . esc_html__('Ver', 'flacso-uruguay') . '</a>';
@@ -238,8 +239,8 @@ class CPT_Oferta_Academica {
                             );
                         }
                         echo '</div>';
-                        echo '<div class="flacso-cohort-card__notice" role="status" aria-live="polite"></div>';
                     }
+                    echo '<div class="flacso-cohort-row__notice" role="status" aria-live="polite"></div>';
                     echo '</div>';
                 }
                 echo '</div>';
@@ -248,7 +249,7 @@ class CPT_Oferta_Academica {
             }
 
             $add_url = admin_url('post-new.php?post_type=cohorte&oferta_academica_id=' . $post_id);
-            echo '<div class="flacso-cohort-add"><a class="button button-small" href="' . esc_url($add_url) . '"><span class="dashicons dashicons-plus-alt2" aria-hidden="true"></span> ' . esc_html__('Nueva cohorte', 'flacso-uruguay') . '</a></div>';
+            echo '<div class="flacso-cohort-add"><a href="' . esc_url($add_url) . '"><span class="dashicons dashicons-plus-alt2" aria-hidden="true"></span> ' . esc_html__('Nueva cohorte', 'flacso-uruguay') . '</a></div>';
         }
     }
 
@@ -286,11 +287,16 @@ class CPT_Oferta_Academica {
         }
         ?>
         <style>
-            .post-type-oferta-academica .column-cohortes { width: 330px; }
-            .flacso-cohort-list { display: grid; gap: 8px; min-width: 275px; }
-            .flacso-cohort-card { padding: 10px; border: 1px solid #dcdcde; border-radius: 6px; background: #fff; }
-            .flacso-cohort-card__heading { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 7px; }
-            .flacso-cohort-card__title { font-weight: 650; }
+            .post-type-oferta-academica .column-cohortes { width: 380px; }
+            .flacso-cohort-list { display: grid; gap: 5px; min-width: 320px; }
+            .flacso-cohort-row {
+                display: grid; grid-template-columns: minmax(92px, 1fr) minmax(150px, auto) auto; align-items: center; gap: 8px;
+                padding: 7px 8px; border: 1px solid #e2e8f0; border-radius: 7px; background: #fff;
+            }
+            .flacso-cohort-row--open { border-color: #bbf7d0; background: linear-gradient(90deg, #f0fdf4 0%, #fff 72%); }
+            .flacso-cohort-row__title { font-weight: 700; color: #1d4ed8; text-decoration: none; }
+            .flacso-cohort-row__title:hover { color: #1e3a8a; text-decoration: underline; }
+            .flacso-cohort-row__meta { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
             .flacso-cohort-state,
             .flacso-pre-status { display: inline-flex; align-items: center; gap: 4px; width: fit-content; border-radius: 999px; padding: 2px 7px; font-size: 11px; font-weight: 650; line-height: 1.55; }
             .flacso-cohort-state { color: #3c434a; background: #f0f0f1; }
@@ -301,18 +307,23 @@ class CPT_Oferta_Academica {
             .flacso-pre-status--legacy { color: #7a4b00; background: #fff6d6; }
             .flacso-pre-status--closed,
             .flacso-pre-status--unset { color: #646970; background: #f6f7f7; }
-            .flacso-cohort-card__actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
-            .flacso-cohort-card__actions .button { min-height: 26px; line-height: 24px; }
+            .flacso-cohort-row__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
+            .flacso-cohort-row__actions .button { min-height: 26px; line-height: 24px; margin: 0; }
             .flacso-button-danger { color: #b32d2e !important; border-color: #d63638 !important; }
-            .flacso-cohort-card__notice { display: none; margin-top: 7px; font-size: 12px; line-height: 1.35; }
-            .flacso-cohort-card__notice.is-success { display: block; color: #116329; }
-            .flacso-cohort-card__notice.is-error { display: block; color: #b32d2e; }
-            .flacso-cohort-add { margin-top: 8px; }
+            .flacso-cohort-row__notice { display: none; grid-column: 1 / -1; font-size: 12px; line-height: 1.35; }
+            .flacso-cohort-row__notice.is-success { display: block; color: #116329; }
+            .flacso-cohort-row__notice.is-error { display: block; color: #b32d2e; }
+            .flacso-cohort-add { margin: 5px 0 0; }
+            .flacso-cohort-add a { display: inline-flex; align-items: center; gap: 3px; color: #1d4ed8; font-size: 12px; font-weight: 650; text-decoration: none; }
+            .flacso-cohort-add a:hover { color: #1e3a8a; text-decoration: underline; }
             .flacso-cohort-add .dashicons { width: 15px; height: 15px; margin-top: 4px; font-size: 15px; }
             .flacso-cohort-empty { color: #646970; }
             @media (max-width: 1100px) {
-                .post-type-oferta-academica .column-cohortes { width: 285px; }
-                .flacso-cohort-list { min-width: 235px; }
+                .post-type-oferta-academica .column-cohortes { width: 320px; }
+                .flacso-cohort-list { min-width: 285px; }
+                .flacso-cohort-row { grid-template-columns: 1fr auto; }
+                .flacso-cohort-row__meta { grid-column: 1 / -1; grid-row: 2; }
+                .flacso-cohort-row__actions { grid-column: 2; grid-row: 1; }
             }
         </style>
         <?php
@@ -329,8 +340,8 @@ class CPT_Oferta_Academica {
             $(document).on('click', '.flacso-pre-action', function() {
                 var button = $(this);
                 var action = String(button.data('action') || '');
-                var card = button.closest('.flacso-cohort-card');
-                var notice = card.find('.flacso-cohort-card__notice');
+                var card = button.closest('.flacso-cohort-row');
+                var notice = card.find('.flacso-cohort-row__notice');
                 var originalText = button.text();
 
                 if (action === 'flacso_cerrar_preinscripcion_cohorte'

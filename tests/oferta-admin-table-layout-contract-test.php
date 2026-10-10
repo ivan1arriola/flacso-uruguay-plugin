@@ -20,4 +20,10 @@ oferta_layout_assert(strpos($layout, '.column-title') !== false, 'debe reservar 
 oferta_layout_assert(strpos($layout, '.column-cohortes') !== false, 'debe reservar ancho a cohortes');
 oferta_layout_assert(strpos($layout, 'word-break: normal') !== false, 'no debe cortar títulos letra por letra');
 
+$offers = file_get_contents($root . '/modules/oferta-academica/includes/class-cpt-oferta-academica.php');
+oferta_layout_assert(strpos($offers, 'flacso-cohort-row') !== false, 'debe presentar cohortes como filas compactas');
+oferta_layout_assert(strpos($offers, 'flacso-cohort-row__meta') !== false, 'debe agrupar estados de cohorte y preinscripción');
+oferta_layout_assert(strpos($offers, 'flacso-cohort-row__actions') !== false, 'debe mantener acciones operativas en la fila');
+oferta_layout_assert(strpos($offers, 'flacso-cohort-row--open') !== false, 'debe resaltar cohortes con preinscripción abierta');
+
 echo "OK oferta admin table layout contract\n";
