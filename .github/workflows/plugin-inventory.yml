@@ -1,0 +1,33 @@
+name: Plugin Architecture Inventory
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/scripts/inventory_plugin.py'
+      - '.github/workflows/plugin-inventory.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Generate code inventory
+        run: python .github/scripts/inventory_plugin.py --output build/code-inventory
+      - name: Publish inventory summary
+        shell: bash
+        run: cat build/code-inventory/README.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload inventory files
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-code-inventory
+          path: build/code-inventory/
+          if-no-files-found: error
