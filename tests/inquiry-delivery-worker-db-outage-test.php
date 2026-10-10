@@ -51,7 +51,7 @@ function outage_assert(bool $condition, string $message): void {
 final class FLACSO_Failing_PDO extends PDO {
     public function __construct() {}
 
-    public function prepare(string $query, array $options = []): PDOStatement|false {
+    public function prepare(string $query, array $options = []) {
         throw new PDOException('SQLSTATE[08006] [7] connection timeout', 7);
     }
 }
