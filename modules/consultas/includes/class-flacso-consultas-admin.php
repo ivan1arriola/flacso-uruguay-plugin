@@ -87,7 +87,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			$target = $map[ $tab ] ?? self::PAGE_BANDEJA;
 			if ( self::PAGE_EXPORTAR === $target && ! self::can_manage() ) { $target = self::PAGE_BANDEJA; }
 			$args = array( 'page' => $target );
-			foreach ( array( 'table', 'from', 'to', 'country', 'item_name', 'email_status', 'offer_status', 'q', 'mode', 'paged' ) as $key ) { if ( isset( $_GET[ $key ] ) ) { $args[ $key ] = sanitize_text_field( wp_unslash( $_GET[ $key ] ) ); } }
+			foreach ( array( 'table', 'from', 'to', 'country', 'item_name', 'email_status', 'offer_status', 'source', 'q', 'mode', 'paged' ) as $key ) { if ( isset( $_GET[ $key ] ) ) { $args[ $key ] = sanitize_text_field( wp_unslash( $_GET[ $key ] ) ); } }
 			wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) ); exit;
 		}
 
@@ -942,6 +942,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			$view_mode    = isset( $_GET['mode'] ) && 'raw' === $_GET['mode'] ? 'raw' : 'grouped';
 			$item_name    = isset( $_GET['item_name'] ) ? sanitize_text_field( wp_unslash( $_GET['item_name'] ) ) : '';
 			$country      = isset( $_GET['country'] ) ? sanitize_text_field( wp_unslash( $_GET['country'] ) ) : '';
+			$source       = isset( $_GET['source'] ) ? sanitize_key( wp_unslash( $_GET['source'] ) ) : '';
 			$email_status = isset( $_GET['email_status'] ) ? sanitize_key( wp_unslash( $_GET['email_status'] ) ) : '';
 			$offer_status = isset( $_GET['offer_status'] ) ? sanitize_key( wp_unslash( $_GET['offer_status'] ) ) : '';
 			$search       = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '';
@@ -955,6 +956,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					'mode'         => $view_mode,
 					'item_name'    => $item_name,
 					'country'      => $country,
+					'source'       => $source,
 					'email_status' => $email_status,
 					'offer_status' => $offer_status,
 					'search'       => $search,
@@ -1006,6 +1008,16 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 							<?php foreach ( $countries as $c ) : ?>
 								<option value="<?php echo esc_attr( $c['pais'] ); ?>" <?php selected( $country, $c['pais'] ); ?>><?php echo esc_html( $c['pais'] . ' (' . $c['total'] . ')' ); ?></option>
 							<?php endforeach; ?>
+						</select>
+					</div>
+
+					<div class="fg">
+						<label>Origen de consulta</label>
+						<select name="source">
+							<option value="" <?php selected( $source, '' ); ?>>— Todos —</option>
+							<option value="web" <?php selected( $source, 'web' ); ?>>Web</option>
+							<option value="instagram" <?php selected( $source, 'instagram' ); ?>>Instagram</option>
+							<option value="messenger" <?php selected( $source, 'messenger' ); ?>>Facebook Messenger</option>
 						</select>
 					</div>
 
@@ -1092,6 +1104,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 									<td class="flacso-cp-person">
 										<strong><?php echo esc_html( (string) ( $row['fullName'] ?: ( ( $row['firstName'] ?? '' ) . ' ' . ( $row['lastName'] ?? '' ) ) ) ); ?></strong>
 										<a href="mailto:<?php echo esc_attr( (string) $row['email'] ); ?>"><?php echo esc_html( (string) $row['email'] ); ?></a>
+						<span class="flacso-badge offer_inquiries" title="Origen del último registro de este grupo"><?php echo esc_html( (string) ( $row['source'] ?? 'Web' ) ); ?></span>
 										<?php if ( $count_val > 1 ) : ?>
 											<span class="flacso-badge offer_inquiries" title="Consultas acumuladas por esta persona para esta oferta"><?php echo (int) $count_val; ?>x</span>
 										<?php endif; ?>
