@@ -60,7 +60,7 @@ function programa_hero_shortcode_mobile($atts) {
                     <?php if (!empty($atts['mensaje_bienvenida'])): ?>
                     <p class="gc-bienvenida"><span><?php echo esc_html($atts['mensaje_bienvenida']); ?></span></p>
                     <?php endif; ?>
-                    <p class="gc-tagline"><em>Formación de excelencia, estés donde estés.</em></p>
+                    <p class="gc-tagline"><em>Formación que conecta, conocimiento que transforma.</em></p>
                 </div>
             </div>
 

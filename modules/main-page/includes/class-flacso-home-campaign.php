@@ -45,7 +45,7 @@ final class FLACSO_Home_Campaign {
         return [
             'id' => 0,
             'source' => 'fallback',
-            'kicker' => 'EXCELENCIA ACADÉMICA. SIN FRONTERAS.',
+            'kicker' => '',
             'title' => 'Posgrados y especializaciones de FLACSO Uruguay.',
             'description' => '100% online, estés donde estés.',
             'desktop_image_id' => 0,
