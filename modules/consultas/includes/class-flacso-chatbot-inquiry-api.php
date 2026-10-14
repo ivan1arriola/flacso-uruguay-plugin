@@ -24,6 +24,11 @@ final class FLACSO_Chatbot_Inquiry_API {
             'callback' => [self::class, 'catalog'],
             'permission_callback' => '__return_true',
         ]);
+        register_rest_route(self::NAMESPACE, '/chatbot/consultas/status', [
+            'methods' => WP_REST_Server::READABLE,
+            'callback' => [self::class, 'status'],
+            'permission_callback' => [self::class, 'authorize'],
+        ]);
         register_rest_route(self::NAMESPACE, '/chatbot/consultas', [
             'methods' => WP_REST_Server::CREATABLE,
             'callback' => [self::class, 'submit'],
@@ -48,6 +53,21 @@ final class FLACSO_Chatbot_Inquiry_API {
             return new WP_Error('chatbot_unauthorized', 'Credenciales inválidas.', ['status' => 401]);
         }
         return true;
+    }
+
+    /** Sólo sirve respuestas saludables cuando los servicios y PostgreSQL responden. */
+    public static function status(): WP_REST_Response {
+        if (!class_exists('FLACSO_DB')
+            || !class_exists('FLACSO_Offer_Inquiry_Service')
+            || !class_exists('FLACSO_Seminar_Inquiry_Service')) {
+            return self::error('service_unavailable', 'Servicio de consultas no disponible.', 503);
+        }
+        try {
+            FLACSO_DB::connection()->query('SELECT 1');
+        } catch (Throwable $error) {
+            return self::error('database_unavailable', 'Servicio de consultas no disponible.', 503);
+        }
+        return new WP_REST_Response(['ok' => true], 200);
     }
 
     /** Catálogo público unificado; sólo se exponen posts publicados. */
