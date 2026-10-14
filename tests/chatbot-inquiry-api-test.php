@@ -81,6 +81,7 @@ require_once dirname(__DIR__) . '/modules/consultas/includes/class-flacso-chatbo
 FLACSO_Chatbot_Inquiry_API::register_routes();
 chatbot_assert(isset($GLOBALS['routes']['flacso/v1/chatbot/consultas']), 'Ruta de consultas');
 chatbot_assert(isset($GLOBALS['routes']['flacso/v1/chatbot/catalogo']), 'Ruta de catálogo');
+chatbot_assert(isset($GLOBALS['routes']['flacso/v1/chatbot/consultas/status']), 'Ruta privada de salud');
 
 $bad = FLACSO_Chatbot_Inquiry_API::authorize(new WP_REST_Request([], 'Bearer ' . str_repeat('n', 40)));
 chatbot_assert($bad instanceof WP_Error && $bad->data['status'] === 401, 'Rechaza token inválido');
