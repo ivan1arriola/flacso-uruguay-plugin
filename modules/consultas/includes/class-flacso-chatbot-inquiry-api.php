@@ -13,7 +13,9 @@ final class FLACSO_Chatbot_Inquiry_API {
     private const NAMESPACE = 'flacso/v1';
 
     public static function init(): void {
-        add_action('rest_api_init', [self::class, 'register_routes']);
+        if (function_exists('add_action')) {
+            add_action('rest_api_init', [self::class, 'register_routes']);
+        }
     }
 
     public static function register_routes(): void {
