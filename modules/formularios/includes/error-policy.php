@@ -18,6 +18,7 @@ function fc_form_public_error_message( $code, $reference = '' ) {
         'rate_limit'   => __( 'Recibimos varios intentos seguidos. Esperá unos minutos antes de volver a enviar.', 'flacso-flacso-formulario-consultas' ),
         'unavailable'  => __( 'No pudimos enviar el formulario en este momento. Tus datos no fueron confirmados; intentá nuevamente en unos minutos.', 'flacso-flacso-formulario-consultas' ),
         'partial'      => __( 'Recibimos tus datos, pero una parte del proceso quedó pendiente. No vuelvas a enviar el formulario: nos pondremos en contacto contigo.', 'flacso-flacso-formulario-consultas' ),
+        'unconfirmed'  => __( 'No pudimos confirmar el envío de tu consulta. No vuelvas a enviarla por ahora; contactanos e indicá el código de seguimiento para que podamos verificarla.', 'flacso-flacso-formulario-consultas' ),
     ];
 
     $message = $messages[ $code ] ?? $messages['unavailable'];

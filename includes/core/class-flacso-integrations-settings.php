@@ -1362,20 +1362,14 @@ class FLACSO_Integrations_Settings {
             <div class="flacso-card-header">
                 <div class="flacso-card-icon-title">
                     <span class="flacso-card-icon">💬</span>
-                    <h2><?php esc_html_e('Consultas en la app', 'flacso-uruguay'); ?></h2>
+                    <h2><?php esc_html_e('Consultas', 'flacso-uruguay'); ?></h2>
                 </div>
-                <p class="flacso-integrations-lead"><?php esc_html_e('Agrupa el formulario general y el bloque de solicitud de información. Ambos usan el token unificado global.', 'flacso-uruguay'); ?></p>
+                <p class="flacso-integrations-lead"><?php esc_html_e('El formulario de Contacto guarda las consultas en WordPress y envía la notificación mediante Mautic.', 'flacso-uruguay'); ?></p>
             </div>
 
             <div class="flacso-card-body">
                 <?php
-                self::render_input_field(
-                    self::OPTION_CONSULTAS_WEBHOOK_URL,
-                    __('Formulario de consulta general', 'flacso-uruguay'),
-                    'url',
-                    'https://tu-dominio.com/api/consultas/general',
-                    __('Sugerido para el formulario de consulta general del módulo Formularios.', 'flacso-uruguay')
-                );
+                echo '<p>' . esc_html__('Contacto: para inscripciones@flacso.edu.uy, copia oculta a web@flacso.edu.uy y respuesta al correo del contacto. Usa la configuración de Mautic.', 'flacso-uruguay') . '</p>';
                 self::render_input_field(
                     self::OPTION_INFO_REQUEST_WEBHOOK_URL,
                     __('Solicitud de información', 'flacso-uruguay'),

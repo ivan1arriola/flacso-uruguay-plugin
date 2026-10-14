@@ -49,7 +49,7 @@ function fc_render_form( $atts = [] ) {
                     <span style="font-size: 1.25rem; flex-shrink: 0;">✅</span>
                     <div>
                         <strong style="color: #155724;"><?php esc_html_e( '¡Consulta enviada!', 'flacso-flacso-formulario-consultas' ); ?></strong>
-                        <p style="color: #155724; margin: 0.25rem 0 0 0; font-size: 0.9rem;"><?php echo esc_html__( 'Recibimos tu consulta y te enviamos un correo de confirmación.', 'flacso-flacso-formulario-consultas' ); ?></p>
+                        <p style="color: #155724; margin: 0.25rem 0 0 0; font-size: 0.9rem;"><?php echo esc_html__( 'Recibimos tu consulta. El equipo responderá al correo que indicaste.', 'flacso-flacso-formulario-consultas' ); ?></p>
                     </div>
                 </div>
             <?php endif; ?>

@@ -58,4 +58,4 @@ function fc_ensure_info_request_editor_routes(): void {
     }
 }
 
-add_action('init', 'fc_ensure_info_request_editor_routes', 1);
+// Retained for legacy callers; no automatic Editor route is created anymore.

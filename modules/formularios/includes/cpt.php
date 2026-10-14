@@ -39,7 +39,7 @@ function fc_register_cpt() {
     register_post_type( 'fc_consulta', $args );
 }
 
-// add_action( 'init', 'fc_register_cpt' );
+add_action( 'init', 'fc_register_cpt' );
 
 /**
  * CPT para Solicitudes de Información (oferta académica).

@@ -85,13 +85,12 @@ function fc_handle_form_submit() {
         strtolower( $email ) . '|' . strtolower( trim( $asunto ) ) . '|' . strtolower( trim( wp_strip_all_tags( $mensaje ) ) )
     );
     $duplicate_key = 'fc_form_duplicate_' . $submission_fingerprint;
-    if ( get_transient( $duplicate_key ) ) {
+    $previous_delivery = get_transient( $duplicate_key );
+    if ( $previous_delivery ) {
         wp_safe_redirect( add_query_arg( 'fc_exito', 1, fc_get_gracias_url_from_referer() ) );
         exit;
     }
-    set_transient( $duplicate_key, 1, 10 * MINUTE_IN_SECONDS );
-
-    // Webhook de consultas (se envía directamente a la app).
+    // Consulta general: registro en WordPress y entrega mediante Mautic.
     $event_id = wp_generate_uuid4();
     $webhook_payload = [
             'event_id'    => $event_id,
@@ -112,15 +111,34 @@ function fc_handle_form_submit() {
         $webhook_payload['campaign_id'] = $posted_attribution['campaign_external_id'];
     }
 
-    $webhook_result = fc_send_consulta_webhook( $webhook_payload );
+    // Reserve before sending so concurrent submissions cannot send twice.
+    $reference = fc_form_error_reference( 'consulta' );
+    if ( !add_option( $duplicate_key . '_lock', $reference, '', false ) ) {
+        wp_safe_redirect( add_query_arg([
+            'fc_error' => 'unconfirmed',
+            'fc_reference' => get_option( $duplicate_key . '_lock', $reference ),
+        ], wp_get_referer() ?: home_url()) );
+        exit;
+    }
+    // A request may have finished between our first read and lock acquisition.
+    if ( get_transient( $duplicate_key ) ) {
+        delete_option( $duplicate_key . '_lock' );
+        wp_safe_redirect( add_query_arg( 'fc_exito', 1, fc_get_gracias_url_from_referer() ) );
+        exit;
+    }
+    $webhook_payload['reference'] = $reference;
+    $webhook_payload['delivery_lock'] = $duplicate_key . '_lock';
+    $webhook_result = fc_send_general_inquiry( $webhook_payload );
     if ( empty( $webhook_result['ok'] ) ) {
-        delete_transient( $duplicate_key );
-        $reference = fc_form_error_reference( 'consulta' );
+        $unknown = !empty( $webhook_result['acceptance_unknown'] );
+        if ( !$unknown ) {
+            delete_option( $duplicate_key . '_lock' );
+        }
         fc_notify_form_admin_error(
             [
                 'reference'  => $reference,
                 'form'       => 'Consulta general',
-                'stage'      => 'entrega al sistema de consultas',
+                'stage'      => 'notificación de consulta por Mautic',
                 'detail'     => trim( (string) ( $webhook_result['error'] ?? '' ) . ' ' . (string) ( $webhook_result['message'] ?? '' ) ),
                 'url'        => $url_referer,
                 'user_email' => $email,
@@ -128,7 +146,7 @@ function fc_handle_form_submit() {
         );
         $error_redirect = add_query_arg(
             [
-                'fc_error'      => 'unavailable',
+                'fc_error'      => $unknown ? 'unconfirmed' : 'unavailable',
                 'fc_reference'  => rawurlencode( $reference ),
                 'fc_nombre'     => rawurlencode( $nombre ),
                 'fc_apellido'   => rawurlencode( $apellido ),
@@ -140,6 +158,9 @@ function fc_handle_form_submit() {
         wp_safe_redirect( $error_redirect );
         exit;
     }
+
+    set_transient( $duplicate_key, 1, 10 * MINUTE_IN_SECONDS );
+    delete_option( $duplicate_key . '_lock' );
 
     $redirect_base = fc_get_gracias_url_from_referer();
     $redirect = add_query_arg(

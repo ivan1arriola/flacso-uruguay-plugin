@@ -886,6 +886,59 @@ class FLACSO_Mautic_Client {
      * @param array|null $payload Cuerpo JSON, o null si la operación no lo requiere.
      * @return array{ok: bool, status: string, http_code: int, error: ?string, data: array}
      */
+    public static function send_general_inquiry_notification(array $inquiry): array {
+        $reply_to = trim((string) ($inquiry['email'] ?? ''));
+        if (preg_match('/[\r\n]/', $reply_to) || filter_var($reply_to, FILTER_VALIDATE_EMAIL) === false) {
+            return self::contact_operation_failure('Correo de contacto inválido.');
+        }
+
+        // Resolve the institutional recipient, never the visitor. Do not put
+        // the inquiry in mutable contact fields or enroll anyone in campaigns.
+        $recipient = self::ensure_delivery_recipient('inscripciones@flacso.edu.uy', 'Inscripciones', 'FLACSO Uruguay');
+        if (empty($recipient['ok'])) {
+            return self::contact_operation_failure('No fue posible preparar el destinatario en Mautic.');
+        }
+        $name = trim((string) ($inquiry['nombre'] ?? '') . ' ' . (string) ($inquiry['apellido'] ?? ''));
+        $subject = preg_replace('/[\r\n]+/', ' ', (string) ($inquiry['asunto'] ?? 'Consulta general'));
+        $text = 'Nombre: ' . $name . "\nCorreo: " . $reply_to
+            . "\nTeléfono: " . (string) ($inquiry['telefono'] ?? '')
+            . "\nAsunto: " . $subject . "\n\nConsulta:\n" . (string) ($inquiry['mensaje'] ?? '');
+        $html = '<!doctype html><html><body><h2>Consulta de contacto — FLACSO Uruguay</h2><div style="white-space:pre-wrap">'
+            . nl2br(htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')) . '</div></body></html>';
+
+        // A separate template per inquiry keeps dynamic Reply-To and message
+        // immutable: concurrent submissions cannot overwrite a shared email.
+        $created = self::request_contact_endpoint('/api/emails/new', 'POST', [
+            'name' => 'Consulta general ' . (string) ($inquiry['event_id'] ?? ''),
+            'subject' => 'Consulta web FLACSO: ' . $subject,
+            'emailType' => 'template',
+            'isPublished' => true,
+            'publicPreview' => false,
+            'useOwnerAsMailer' => false,
+            'replyToAddress' => $reply_to,
+            'bccAddress' => 'web@flacso.edu.uy',
+            'customHtml' => $html,
+            'plainText' => $text,
+        ]);
+        $email_id = (int) ($created['data']['email']['id'] ?? 0);
+        if (empty($created['ok']) || $email_id <= 0) {
+            return self::contact_operation_failure('No fue posible preparar el correo en Mautic.', (int) ($created['http_code'] ?? 0));
+        }
+        $sent = self::send_transactional_email_to_contact($email_id, (int) $recipient['contact_id'], []);
+        if ((int) ($sent['http_code'] ?? 0) >= 500) {
+            $sent['status'] = 'acceptance_unknown';
+            $sent['acceptance_unknown'] = true;
+        }
+        if (!empty($sent['ok']) && ($sent['data']['success'] ?? null) !== true) {
+            $unknown = ($sent['data']['success'] ?? null) !== false;
+            $sent['ok'] = false;
+            $sent['status'] = $unknown ? 'acceptance_unknown' : 'failed';
+            $sent['acceptance_unknown'] = $unknown;
+            $sent['error'] = 'Mautic no confirmó el envío del correo.';
+        }
+        return $sent;
+    }
+
     private static function request_contact_endpoint(string $endpoint, string $method, ?array $payload = null): array {
         if (!self::is_configured()) {
             return self::contact_operation_failure('Mautic no está configurado o está deshabilitado.');

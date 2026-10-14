@@ -27,12 +27,14 @@ flacso_safe_require('modules/formularios/includes/assets.php');
 // Cargar configuración y handlers de formularios
 flacso_safe_require('modules/formularios/includes/cpt.php');
 flacso_safe_require('modules/formularios/includes/helpers.php');
+// Compatibility helpers only; the Contacto form no longer uses the Editor.
 flacso_safe_require('modules/formularios/includes/editor-routing.php');
 flacso_safe_require('modules/formularios/includes/settings.php');
 flacso_safe_require('modules/formularios/includes/validation.php');
 flacso_safe_require('modules/formularios/includes/telegram.php');
 flacso_safe_require('modules/formularios/includes/gmail.php');
 flacso_safe_require('modules/formularios/includes/error-policy.php');
+flacso_safe_require('modules/formularios/includes/general-inquiry.php');
 flacso_safe_require('modules/formularios/includes/form-handlers.php');
 flacso_safe_require('modules/formularios/includes/confirmacion-consulta.php');
 flacso_safe_require('modules/formularios/includes/form-render.php');
