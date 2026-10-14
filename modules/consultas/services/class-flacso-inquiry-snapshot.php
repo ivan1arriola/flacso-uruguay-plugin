@@ -160,7 +160,9 @@ final class FLACSO_Inquiry_Snapshot {
             'consultaId'    => trim($consulta_id),
             'inquiryType'   => $type,
             'inquiryAt'     => self::utc((string) ($form['inquiryAt'] ?? $form['fecha_envio'] ?? gmdate('c'))),
-            'source'        => 'web-consultas',
+            'source'        => in_array(($form['source'] ?? ''), ['Instagram', 'Facebook Messenger'], true)
+                ? (($form['source'] === 'Instagram') ? 'instagram' : 'facebook-messenger')
+                : 'web-consultas',
             'recipient'     => [
                 'email'     => strtolower(trim((string) ($form['email'] ?? $form['correo'] ?? ''))),
                 'firstName' => $first,

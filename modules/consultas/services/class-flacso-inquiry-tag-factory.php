@@ -24,7 +24,9 @@ final class FLACSO_Inquiry_Tag_Factory {
                 $tags[] = $code . '-c' . $cohort;
             }
         }
-        $tags[] = 'origen-web-consultas';
+        $source = (string) ($snapshot['source'] ?? 'web-consultas');
+        $tags[] = in_array($source, ['instagram', 'facebook-messenger'], true)
+            ? 'origen-' . $source : 'origen-web-consultas';
 
         return array_values(array_unique($tags));
     }

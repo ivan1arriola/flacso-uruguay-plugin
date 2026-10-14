@@ -702,6 +702,7 @@ class FLACSO_Inquiry_Analytics_Repository {
         $search       = trim((string) ($filters['search'] ?? ''));
         $item_name    = trim((string) ($filters['item_name'] ?? ''));
         $country      = trim((string) ($filters['country'] ?? ''));
+        $source       = strtolower(trim((string) ($filters['source'] ?? '')));
         $email_status = trim((string) ($filters['email_status'] ?? ''));
         $desde        = trim((string) ($filters['desde'] ?? ''));
         $hasta        = trim((string) ($filters['hasta'] ?? ''));
@@ -786,6 +787,16 @@ class FLACSO_Inquiry_Analytics_Repository {
         }
 
         $columns = self::get_table_columns($pdo, $table);
+        if (in_array('source', $columns, true)) {
+            if ($source === 'instagram' || $source === 'messenger') {
+                $where[] = '"source" = :source_value';
+                $params[':source_value'] = $source === 'instagram' ? 'Instagram' : 'Facebook Messenger';
+            } elseif ($source === 'web') {
+                $where[] = '("source" IS NULL OR "source" NOT IN (:source_instagram, :source_messenger))';
+                $params[':source_instagram'] = 'Instagram';
+                $params[':source_messenger'] = 'Facebook Messenger';
+            }
+        }
         $offer_status = trim((string) ($filters['offer_status'] ?? $filters['status'] ?? ''));
         if ($offer_status !== '' && in_array('offerStatus', $columns, true)) {
             $where[] = "\"offerStatus\" = :offer_status";
