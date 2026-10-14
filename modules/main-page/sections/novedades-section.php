@@ -2427,7 +2427,7 @@ if (!function_exists('flacso_section_novedades_get_sticky_posts')) {
 
         $query = new WP_Query([
             'post__in' => $stickies,
-            'posts_per_page' => max(1, (int) $limit),
+            'posts_per_page' => (int) $limit === -1 ? -1 : max(1, (int) $limit),
             'post_type' => 'post',
             'post_status' => 'publish',
             'category_name' => 'novedades',
