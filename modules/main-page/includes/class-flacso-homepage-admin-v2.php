@@ -62,7 +62,7 @@ final class Flacso_Homepage_Admin_V2 {
 
                 <section class="flacso-homepage-admin-v2__section" aria-labelledby="flacso-home-admin-offer">
                     <h2 id="flacso-home-admin-offer"><?php esc_html_e('Tarjetas de oferta académica', 'flacso-main-page'); ?></h2>
-                    <p><?php esc_html_e('La portada muestra estas categorías cuando tienen un enlace válido. Los títulos y el orden siguen el diseño aprobado.', 'flacso-main-page'); ?></p>
+                    <p><?php esc_html_e('Editá el destino de cada categoría. Si dejás un enlace vacío, la portada usa la página predeterminada de esa categoría. Los títulos y el orden siguen el diseño aprobado.', 'flacso-main-page'); ?></p>
                     <div class="flacso-homepage-admin-v2__cards">
                         <?php foreach ($cards as $index => $card) :
                             if (!is_array($card)) { continue; }
