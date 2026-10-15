@@ -68,7 +68,11 @@ class Flacso_Main_Page_Admin {
     }
 
     public static function render_section_page(): void {
-        // Usar la nueva interfaz unificada
+        if (FLACSO_Home_Campaign::is_enabled()) {
+            Flacso_Homepage_Admin_V2::render();
+            return;
+        }
+
         Flacso_Main_Page_Unified_Settings::render_unified_page();
     }
 

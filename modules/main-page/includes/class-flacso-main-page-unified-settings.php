@@ -88,6 +88,17 @@ class Flacso_Main_Page_Unified_Settings {
             ],
         ]);
 
+        $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+        if ($page === 'flacso-main-page' && FLACSO_Home_Campaign::is_enabled()) {
+            wp_enqueue_style(
+                'flacso-homepage-admin-v2',
+                FLACSO_MAIN_PAGE_MODULE_URL . 'assets/css/flacso-homepage-admin-v2.css',
+                [],
+                self::asset_version('assets/css/flacso-homepage-admin-v2.css')
+            );
+            return;
+        }
+
         wp_enqueue_script(
             'flacso-unified-settings',
             FLACSO_MAIN_PAGE_MODULE_URL . 'assets/js/flacso-unified-settings.js',

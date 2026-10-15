@@ -76,6 +76,7 @@ $is_admin_context = is_admin()
     || (defined('REST_REQUEST') && REST_REQUEST);
 if ($is_admin_context) {
     require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-admin.php';
+    require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-homepage-admin-v2.php';
     require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-unified-settings.php';
     require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-ajax-settings.php';
     require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-ajax-handler.php';
@@ -98,6 +99,9 @@ add_action('init', function() {
 
     if (class_exists('Flacso_Main_Page_Admin')) {
         Flacso_Main_Page_Admin::init();
+    }
+    if (class_exists('Flacso_Homepage_Admin_V2')) {
+        Flacso_Homepage_Admin_V2::init();
     }
     if (class_exists('Flacso_Main_Page_Unified_Settings')) {
         Flacso_Main_Page_Unified_Settings::init();

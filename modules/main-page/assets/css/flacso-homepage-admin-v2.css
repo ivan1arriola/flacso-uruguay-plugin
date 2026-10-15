@@ -1,0 +1,156 @@
+.flacso-homepage-admin-v2 {
+    max-width: 1100px;
+}
+
+.flacso-homepage-admin-v2 > .description {
+    margin-bottom: 22px;
+}
+
+.flacso-homepage-admin-v2__quicklinks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.flacso-homepage-admin-v2__section {
+    margin: 0 0 20px;
+    padding: 20px 24px;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+}
+
+.flacso-homepage-admin-v2__section h2 {
+    margin-top: 0;
+}
+
+.flacso-homepage-admin-v2__section > p {
+    color: #50575e;
+}
+
+.flacso-homepage-admin-v2__cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.flacso-homepage-admin-v2__card {
+    display: grid;
+    gap: 8px;
+    padding: 16px;
+    background: #f6f7f7;
+    border: 1px solid #dcdcde;
+    border-radius: 6px;
+}
+
+.flacso-homepage-admin-v2__card span {
+    color: #50575e;
+}
+
+.flacso-homepage-admin-v2__card input {
+    width: 100%;
+    max-width: none;
+}
+
+.flacso-homepage-admin-v2 .flacso-novedades-admin {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+}
+
+.flacso-homepage-admin-v2 .flacso-novedades-admin h3 {
+    margin-top: 0;
+}
+
+.flacso-homepage-admin-v2 .flacso-novedades-admin-list {
+    display: grid;
+    gap: 8px;
+}
+
+.flacso-homepage-admin-v2 .flacso-novedades-admin-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid #dcdcde;
+    border-radius: 6px;
+}
+
+.flacso-homepage-admin-v2 .flacso-novedades-admin-item__label,
+.flacso-homepage-admin-v2 .flacso-novedades-admin-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.flacso-homepage-admin-v2 .flacso-novedades-admin-item__label {
+    min-width: 0;
+}
+
+.flacso-homepage-admin-v2 .flacso-novedades-admin-title {
+    overflow-wrap: anywhere;
+}
+
+.flacso-homepage-admin-v2 .flacso-novedades-admin-order {
+    flex: none;
+    font-weight: 700;
+}
+
+.flacso-homepage-admin-v2 .flacso-novedades-admin-actions {
+    flex: none;
+}
+
+.flacso-homepage-admin-v2 .flacso-novedades-admin-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 32px;
+    padding: 4px 8px;
+    background: #fff;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    color: #1d2327;
+    cursor: pointer;
+}
+
+.flacso-homepage-admin-v2 .flacso-novedades-admin-actions button:hover,
+.flacso-homepage-admin-v2 .flacso-novedades-admin-actions button:focus-visible {
+    border-color: #2271b1;
+    color: #2271b1;
+}
+
+.flacso-homepage-admin-v2 .flacso-novedades-search-field input {
+    width: 100%;
+    max-width: none;
+}
+
+.flacso-homepage-admin-v2 .flacso-novedades-search-hint {
+    display: block;
+    margin: 5px 0 12px;
+    color: #646970;
+}
+
+.flacso-homepage-admin-v2 .flacso-novedades-search-results {
+    max-height: 400px;
+    overflow: auto;
+}
+
+@media (max-width: 900px) {
+    .flacso-homepage-admin-v2 .flacso-novedades-admin {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .flacso-homepage-admin-v2__section {
+        padding: 16px;
+    }
+
+    .flacso-homepage-admin-v2 .flacso-novedades-admin-item {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
