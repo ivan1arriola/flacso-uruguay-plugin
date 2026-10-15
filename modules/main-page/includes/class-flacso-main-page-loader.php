@@ -230,14 +230,18 @@ final class Flacso_Main_Page_Loader {
         $files = apply_filters('flacso_main_page_component_files', $files);
         $seen = [];
         foreach ((array) $files as $file) {
-            $file = ltrim((string) $file, '/');
-            if ($file === '' || isset($seen[$file])) {
+            $raw_file = (string) $file;
+            if ($raw_file === '' || isset($seen[$raw_file])) {
                 continue;
             }
-            $seen[$file] = true;
-            $absolute = strpos($file, FLACSO_URUGUAY_PATH) === 0
-                ? $file
-                : FLACSO_MAIN_PAGE_MODULE_PATH . $file;
+            $seen[$raw_file] = true;
+            if (file_exists($raw_file)) {
+                $absolute = $raw_file;
+            } elseif (strpos($raw_file, FLACSO_URUGUAY_PATH) === 0) {
+                $absolute = $raw_file;
+            } else {
+                $absolute = FLACSO_MAIN_PAGE_MODULE_PATH . ltrim($raw_file, '/\\');
+            }
             if (file_exists($absolute)) {
                 require_once $absolute;
             } else {
