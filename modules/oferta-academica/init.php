@@ -34,6 +34,7 @@ flacso_safe_require('modules/oferta-academica/includes/class-academic-api.php');
 flacso_safe_require('modules/oferta-academica/includes/class-academic-settings-api.php');
 flacso_safe_require('modules/oferta-academica/includes/class-preinscription-ajax-handlers.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-consulta-form.php');
+flacso_safe_require('modules/oferta-academica/includes/homepage.php');
 
 if (defined('WP_CLI') && WP_CLI) {
     flacso_safe_require('modules/oferta-academica/includes/class-academic-cli.php');
