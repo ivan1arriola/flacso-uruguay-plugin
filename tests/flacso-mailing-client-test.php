@@ -1,8 +1,8 @@
 <?php
 if (!defined('ABSPATH')) define('ABSPATH', __DIR__ . '/');
-if (!defined('FLACSO_MAILING_BASE_URL')) define('FLACSO_MAILING_BASE_URL', 'https://mailing.example.test');
 if (!defined('WP_WEBHOOK_HMAC_SECRET')) define('WP_WEBHOOK_HMAC_SECRET', str_repeat('x', 40));
 function esc_url_raw($value) { return $value; }
+function get_option($key, $default = false) { return $key === 'flacso_mailing_base_url' ? 'https://mailing.example.test' : $default; }
 require_once dirname(__DIR__) . '/includes/integrations/class-flacso-mailing-client.php';
 function mailing_assert(bool $ok, string $message): void {
     if (!$ok) { fwrite(STDERR, "FAIL: {$message}\n"); exit(1); }

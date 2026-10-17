@@ -1,5 +1,5 @@
 <?php
-/** Consulta general: registro privado en WordPress y notificación por Mautic. */
+/** Consulta general: registro privado en WordPress y notificación por proveedor asignado. */
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -25,6 +25,22 @@ function fc_send_general_inquiry(array $payload): array {
         return ['ok' => false, 'error' => 'No fue posible guardar la consulta.', 'acceptance_unknown' => false];
     }
 
+    if (!class_exists('FLACSO_Mailing_Client')) {
+        require_once dirname(__DIR__, 3) . '/includes/integrations/class-flacso-mailing-client.php';
+    }
+    $provider = FLACSO_Mailing_Client::delivery_provider();
+    if ($provider === 'flacso_mail') {
+        try {
+            $result = FLACSO_Mailing_Client::send_general_inquiry((int) $post_id, $payload);
+        } catch (Throwable $error) {
+            $result = ['ok' => false, 'status' => 'acceptance_unknown', 'acceptance_unknown' => true, 'error' => 'No fue posible confirmar la recepción en Mailing.'];
+        }
+        update_post_meta($post_id, '_fc_delivery_provider', 'flacso_mail');
+        update_post_meta($post_id, '_fc_delivery_status', (string) ($result['status'] ?? 'failed'));
+        $result['consulta_id'] = (int) $post_id;
+        return $result;
+    }
+
     try {
         $result = FLACSO_Mautic_Client::send_general_inquiry_notification($payload);
     } catch (Throwable $error) {
@@ -33,6 +49,7 @@ function fc_send_general_inquiry(array $payload): array {
         $result = ['ok' => false, 'status' => 'acceptance_unknown', 'acceptance_unknown' => true, 'error' => 'No fue posible confirmar la entrega en Mautic.'];
     }
     update_post_meta($post_id, '_fc_delivery_status', (string) ($result['status'] ?? 'failed'));
+    update_post_meta($post_id, '_fc_delivery_provider', 'mautic');
     update_post_meta($post_id, '_fc_mautic_email_id', (int) ($result['email_id'] ?? 0));
     $result['consulta_id'] = (int) $post_id;
     return $result;

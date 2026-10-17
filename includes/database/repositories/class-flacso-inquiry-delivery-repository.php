@@ -45,8 +45,9 @@ final class FLACSO_Inquiry_Delivery_Repository {
         }
 
         if ($provider === '') {
-            $provider = defined('FLACSO_INQUIRY_DELIVERY_PROVIDER')
-                ? (string) FLACSO_INQUIRY_DELIVERY_PROVIDER : 'mautic';
+            $provider = class_exists('FLACSO_Mailing_Client')
+                ? FLACSO_Mailing_Client::delivery_provider()
+                : (function_exists('get_option') ? (string) get_option('flacso_inquiry_delivery_provider', 'mautic') : 'mautic');
         }
         $provider = strtolower(trim($provider));
         if (!in_array($provider, ['mautic', 'flacso_mail'], true)) {

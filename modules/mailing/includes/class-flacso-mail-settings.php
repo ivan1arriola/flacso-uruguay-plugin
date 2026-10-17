@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-/** Administración de comunicaciones: Mautic es el único canal operativo. */
+/** Administración de comunicaciones FLACSO. */
 final class FLACSO_Mail_Settings {
     public const PAGE_SLUG = 'flacso-correos';
     private const SETTINGS_GROUP = 'flacso_correos_group';
@@ -22,6 +22,8 @@ final class FLACSO_Mail_Settings {
 
     public const OPTION_FOLLOWUP_ENABLED = 'flacso_inquiry_followup_enabled';
     public const OPTION_FOLLOWUP_DAYS = 'flacso_inquiry_followup_days';
+    public const OPTION_DELIVERY_PROVIDER = 'flacso_inquiry_delivery_provider';
+    public const OPTION_MAILING_BASE_URL = 'flacso_mailing_base_url';
 
     private const AJAX_NONCE_ACTION = 'flacso_mail_console_nonce';
 
@@ -112,6 +114,16 @@ final class FLACSO_Mail_Settings {
                 'sanitize_callback' => [self::class, 'sanitize_followup_days'],
                 'default' => 5,
             ],
+            self::OPTION_DELIVERY_PROVIDER => [
+                'type' => 'string',
+                'sanitize_callback' => [self::class, 'sanitize_delivery_provider'],
+                'default' => 'mautic',
+            ],
+            self::OPTION_MAILING_BASE_URL => [
+                'type' => 'string',
+                'sanitize_callback' => [self::class, 'sanitize_mailing_base_url'],
+                'default' => '',
+            ],
         ];
 
         if (class_exists('FLACSO_Error_Notifier')) {
@@ -152,6 +164,19 @@ final class FLACSO_Mail_Settings {
         return rtrim(esc_url_raw(trim((string) $value)), '/');
     }
 
+    public static function sanitize_delivery_provider($value): string {
+        $provider = strtolower(trim((string) $value));
+        return in_array($provider, ['mautic', 'flacso_mail'], true) ? $provider : 'mautic';
+    }
+
+    public static function sanitize_mailing_base_url($value): string {
+        $url = rtrim(esc_url_raw(trim((string) $value)), '/');
+        $parts = parse_url($url);
+        if (!is_array($parts) || strtolower((string) ($parts['scheme'] ?? '')) !== 'https'
+            || empty($parts['host']) || isset($parts['user']) || isset($parts['pass'])) return '';
+        return $url;
+    }
+
     public static function sanitize_followup_days($value): int {
         return max(1, min(60, (int) $value));
     }
@@ -190,18 +215,24 @@ final class FLACSO_Mail_Settings {
             'mautic' => class_exists('FLACSO_Mautic_Client') ? FLACSO_Mautic_Client::get_settings() : [],
             'transactional' => self::get_transactional_manifest(),
             'followup' => self::get_followup_settings(),
+            'delivery_provider' => self::sanitize_delivery_provider(get_option(self::OPTION_DELIVERY_PROVIDER, 'mautic')),
+            'mailing_base_url' => self::sanitize_mailing_base_url(get_option(self::OPTION_MAILING_BASE_URL, '')),
             'error_alerts_enabled' => self::error_alerts_enabled(),
         ];
     }
 
     public static function get_offer_inquiry_engine_status(): array {
-        $ready = class_exists('FLACSO_Mautic_Client') && FLACSO_Mautic_Client::is_configured();
+        $provider = self::sanitize_delivery_provider(get_option(self::OPTION_DELIVERY_PROVIDER, 'mautic'));
+        $mautic_ready = class_exists('FLACSO_Mautic_Client') && FLACSO_Mautic_Client::is_configured();
+        $mailing_ready = class_exists('FLACSO_Mailing_Client') && FLACSO_Mailing_Client::is_configured();
+        $ready = $provider === 'flacso_mail' ? $mailing_ready : $mautic_ready;
 
         return [
-            'engine' => 'mautic',
-            'is_mautic_primary' => true,
-            'mautic_ready' => $ready,
-            'status_label' => $ready ? 'Mautic activo' : 'Configuración requerida',
+            'engine' => $provider,
+            'is_mautic_primary' => $provider === 'mautic',
+            'mautic_ready' => $mautic_ready,
+            'mailing_ready' => $mailing_ready,
+            'status_label' => $ready ? ($provider === 'mautic' ? 'Mautic activo' : 'FLACSO Mailing activo') : 'Configuración requerida',
         ];
     }
 
@@ -349,6 +380,8 @@ final class FLACSO_Mail_Settings {
         $followup_template = is_array($transactional_templates['followup'] ?? null) ? $transactional_templates['followup'] : [];
         $auth_type = (string) ($mautic['auth_type'] ?? 'oauth2');
         $ready = class_exists('FLACSO_Mautic_Client') && FLACSO_Mautic_Client::is_configured();
+        $delivery_provider = self::sanitize_delivery_provider(get_option(self::OPTION_DELIVERY_PROVIDER, 'mautic'));
+        $mailing_base_url = self::sanitize_mailing_base_url(get_option(self::OPTION_MAILING_BASE_URL, ''));
         $nonce = wp_create_nonce(self::AJAX_NONCE_ACTION);
 
         $telegram_token_option = class_exists('FLACSO_Error_Notifier') ? FLACSO_Error_Notifier::OPTION_TELEGRAM_BOT_TOKEN : '';
@@ -362,7 +395,7 @@ final class FLACSO_Mail_Settings {
             <div class="flacso-mautic-heading">
                 <div>
                     <h1><?php esc_html_e('Comunicaciones Mautic', 'flacso-uruguay'); ?></h1>
-                    <p><?php esc_html_e('WordPress captura la consulta y Mautic realiza el envío de los correos transaccionales. Esta integración no depende de campañas.', 'flacso-uruguay'); ?></p>
+                    <p><?php esc_html_e('Configurá el proveedor que recibirá las nuevas comunicaciones. Mautic sigue siendo la opción predeterminada.', 'flacso-uruguay'); ?></p>
                 </div>
                 <span class="flacso-status <?php echo $ready ? 'is-ok' : 'is-warning'; ?>">
                     <?php echo esc_html($ready ? __('Configurado', 'flacso-uruguay') : __('Requiere configuración', 'flacso-uruguay')); ?>
@@ -442,6 +475,29 @@ final class FLACSO_Mail_Settings {
                                 <p class="description"><?php echo esc_html(self::secret_hint(self::OPTION_MAUTIC_TOKEN)); ?></p>
                             </div>
                         </div>
+                    </section>
+
+                    <section class="flacso-settings-card">
+                        <div class="flacso-card-head">
+                            <div>
+                                <h2><?php esc_html_e('Proveedor de comunicaciones', 'flacso-uruguay'); ?></h2>
+                                <p><?php esc_html_e('La selección se fija al crear cada entrega; cambiarla no mueve trabajos ya encolados.', 'flacso-uruguay'); ?></p>
+                            </div>
+                        </div>
+                        <div class="flacso-field">
+                            <label for="<?php echo esc_attr(self::OPTION_DELIVERY_PROVIDER); ?>"><?php esc_html_e('Proveedor para nuevas entregas', 'flacso-uruguay'); ?></label>
+                            <select id="<?php echo esc_attr(self::OPTION_DELIVERY_PROVIDER); ?>" name="<?php echo esc_attr(self::OPTION_DELIVERY_PROVIDER); ?>">
+                                <option value="mautic" <?php selected($delivery_provider, 'mautic'); ?>>Mautic</option>
+                                <option value="flacso_mail" <?php selected($delivery_provider, 'flacso_mail'); ?>>FLACSO Mailing (SES)</option>
+                            </select>
+                        </div>
+                        <div class="flacso-field">
+                            <label for="<?php echo esc_attr(self::OPTION_MAILING_BASE_URL); ?>"><?php esc_html_e('URL de FLACSO Mailing', 'flacso-uruguay'); ?></label>
+                            <input class="large-text code" type="url" id="<?php echo esc_attr(self::OPTION_MAILING_BASE_URL); ?>" name="<?php echo esc_attr(self::OPTION_MAILING_BASE_URL); ?>" value="<?php echo esc_attr($mailing_base_url); ?>" placeholder="https://envios.flacso.edu.uy">
+                            <p class="description"><?php esc_html_e('Se guarda en la configuración de WordPress. Sólo se acepta HTTPS. El secreto HMAC permanece en configuración protegida del servidor y nunca se muestra aquí.', 'flacso-uruguay'); ?></p>
+                        </div>
+                        <?php $mailing_ready = class_exists('FLACSO_Mailing_Client') && FLACSO_Mailing_Client::is_configured(); ?>
+                        <p class="description"><?php echo esc_html($mailing_ready ? 'FLACSO Mailing: configurado.' : 'FLACSO Mailing: requiere URL HTTPS y WP_WEBHOOK_HMAC_SECRET en el servidor.'); ?></p>
                     </section>
 
                     <section class="flacso-settings-card">
@@ -533,7 +589,7 @@ final class FLACSO_Mail_Settings {
                 </div>
 
                 <div class="flacso-save-bar">
-                    <?php submit_button(__('Guardar configuración Mautic', 'flacso-uruguay'), 'primary', 'submit', false); ?>
+                    <?php submit_button(__('Guardar configuración', 'flacso-uruguay'), 'primary', 'submit', false); ?>
                     <span><?php esc_html_e('Los secretos vacíos se conservan; no se muestran nuevamente en pantalla.', 'flacso-uruguay'); ?></span>
                 </div>
             </form>

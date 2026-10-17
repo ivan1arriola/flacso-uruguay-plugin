@@ -1,7 +1,6 @@
 <?php
 $root = dirname(__DIR__);
 require_once __DIR__ . '/support/inquiry-delivery-bootstrap.php';
-if (!defined('FLACSO_MAILING_BASE_URL')) define('FLACSO_MAILING_BASE_URL', 'https://mailing.example.test');
 if (!defined('WP_WEBHOOK_HMAC_SECRET')) define('WP_WEBHOOK_HMAC_SECRET', str_repeat('s', 40));
 
 if (!class_exists('WP_Error')) {
@@ -20,6 +19,8 @@ $GLOBALS['delivery_options'] = [
     'flacso_mautic_auth_type' => 'basic',
     'flacso_mautic_username' => 'test',
     'flacso_mautic_password' => 'secret',
+    'flacso_mailing_base_url' => 'https://mailing.example.test',
+    'flacso_inquiry_delivery_provider' => 'mautic',
 ];
 if (!function_exists('get_option')) {
     function get_option($key, $default = false) {
