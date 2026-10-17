@@ -349,7 +349,10 @@ class FLACSO_Offer_Inquiry_Service {
                 $repo,
                 $record,
                 $snapshot,
-                'offer'
+                'offer',
+                '',
+                class_exists('FLACSO_Inquiry_Marketing_Service')
+                    ? FLACSO_Inquiry_Marketing_Service::extract_consent($data) : []
             );
         } catch (\Throwable $e) {
             error_log('[FLACSO] Error al persistir consulta/snapshot/entrega de oferta: ' . $e->getMessage());

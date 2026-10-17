@@ -27,6 +27,7 @@ function flacso_test_install_delivery_tables(PDO $pdo): void {
         inquiryId TEXT NULL,
         consultaId TEXT NULL,
         deliveryType TEXT NOT NULL DEFAULT "acknowledgement",
+        assignedProvider TEXT NOT NULL DEFAULT "mautic",
         state TEXT NOT NULL DEFAULT "pending",
         email TEXT NULL,
         templateId INTEGER NULL,

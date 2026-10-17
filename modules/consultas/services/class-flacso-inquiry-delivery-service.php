@@ -73,6 +73,50 @@ final class FLACSO_Inquiry_Delivery_Service {
 
         $snapshot = json_decode((string) ($delivery['snapshotJson'] ?? ''), true);
         $payload = json_decode((string) ($delivery['payloadJson'] ?? ''), true);
+        if (($delivery['assignedProvider'] ?? 'mautic') === 'flacso_mail') {
+            if (!is_array($snapshot)) {
+                $repository->mark_failed($delivery_id, null, 'invalid_snapshot', 'Snapshot transaccional inválido.');
+                return ['ok' => false, 'status' => 'failed'];
+            }
+            if (!class_exists('FLACSO_Mailing_Client')) {
+                require_once dirname(__DIR__, 3) . '/includes/integrations/class-flacso-mailing-client.php';
+            }
+            $attempt_id = bin2hex(random_bytes(16));
+            $repository->record_attempt_start($delivery_id, $attempt_id);
+            try {
+                $send = FLACSO_Mailing_Client::send_academic_inquiry(
+                    $delivery,
+                    $snapshot,
+                    is_array($payload['marketingConsent'] ?? null) ? $payload['marketingConsent'] : []
+                );
+            } catch (Throwable $error) {
+                $send = ['ok' => false, 'status' => 'acceptance_unknown', 'error' => 'No se pudo confirmar la recepción en Mailing.'];
+            }
+            $http_code = isset($send['http_code']) ? (int) $send['http_code'] : null;
+            if (!empty($send['ok'])) {
+                $repository->finish_attempt($attempt_id, 'accepted', $http_code);
+                $repository->mark_accepted($delivery_id, $http_code);
+                return ['ok' => true, 'status' => 'accepted', 'http_code' => $http_code, 'attempt_id' => $attempt_id];
+            }
+            $status = (string) ($send['status'] ?? 'failed');
+            $detail = (string) ($send['error'] ?? 'Fallo de entrega en Mailing.');
+            if ($status === 'acceptance_unknown') {
+                $repository->finish_attempt($attempt_id, $status, $http_code, 'mailing_response_unknown', $detail);
+                $repository->mark_acceptance_unknown($delivery_id, 'mailing_response_unknown', $detail);
+            } elseif ($status === 'retryable_failed' && ((int) ($delivery['attempts'] ?? 0) + 1) < 3) {
+                $repository->finish_attempt($attempt_id, $status, $http_code, 'mailing_http', $detail);
+                $repository->mark_retryable_failure($delivery_id, $http_code, 'mailing_http', $detail, 300);
+            } elseif ($status === 'blocked') {
+                $repository->finish_attempt($attempt_id, 'failed', $http_code, 'mailing_configuration', $detail);
+                $repository->mark_blocked($delivery_id, 'mailing_configuration', $detail);
+            } else {
+                $repository->finish_attempt($attempt_id, 'failed', $http_code, 'mailing_http', $detail);
+                $repository->mark_failed($delivery_id, $http_code, 'mailing_http', $detail);
+                $status = 'failed';
+            }
+            self::notify_failure($delivery_id, $status, 'mailing_delivery');
+            return ['ok' => false, 'status' => $status, 'attempt_id' => $attempt_id];
+        }
         if (!is_array($snapshot) || !is_array($payload) || !is_array($payload['tokens'] ?? null)) {
             $repository->mark_failed($delivery_id, null, 'invalid_snapshot', 'Snapshot o payload transaccional inválido.');
             self::notify_failure($delivery_id, 'failed', 'invalid_snapshot');

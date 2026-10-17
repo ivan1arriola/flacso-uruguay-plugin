@@ -29,6 +29,7 @@ $flacso_consultas_files = [
     'includes/database/repositories/class-flacso-inquiry-delivery-repository.php',
 
     'includes/integrations/class-flacso-mautic-client.php',
+    'includes/integrations/class-flacso-mailing-client.php',
 
     'modules/consultas/services/class-flacso-inquiry-tag-factory.php',
     'modules/consultas/services/class-flacso-inquiry-snapshot.php',

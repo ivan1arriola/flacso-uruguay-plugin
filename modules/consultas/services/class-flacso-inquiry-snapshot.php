@@ -20,6 +20,7 @@ final class FLACSO_Inquiry_Snapshot {
         $snapshot = self::base('offer', $form, $consulta_id);
 
         $snapshot['academic'] = [
+            'targetId'           => self::nullable_string($context['targetId'] ?? self::target_id('cohorte', $context['cohortWpId'] ?? null)),
             'wpId'               => self::nullable_int($context['offerWpId'] ?? $form['offerWpId'] ?? $form['id_pagina'] ?? null),
             'code'               => self::slug((string) ($context['offerAbbreviation'] ?? $form['offerAbbreviation'] ?? '')),
             'name'               => trim((string) ($context['offerName'] ?? $form['offerName'] ?? $form['titulo_posgrado'] ?? '')),
@@ -55,6 +56,7 @@ final class FLACSO_Inquiry_Snapshot {
         $raw_code = (string) ($context['seminarAbbreviation'] ?? $form['seminarAbbreviation'] ?? $form['offerAbbreviation'] ?? $name);
 
         $snapshot['academic'] = [
+            'targetId'           => self::nullable_string($context['targetId'] ?? null),
             'wpId'               => self::nullable_int($context['seminarWpId'] ?? $form['seminarWpId'] ?? $form['seminario_id'] ?? $form['id_pagina'] ?? null),
             'code'               => self::slug($raw_code),
             'name'               => $name,
@@ -214,6 +216,12 @@ final class FLACSO_Inquiry_Snapshot {
         }
         $value = trim((string) $value);
         return $value === '' ? null : $value;
+    }
+
+    private static function target_id(string $kind, $wordpress_id): ?string {
+        $id = (int) $wordpress_id;
+        if ($id <= 0 || !in_array($kind, ['cohorte', 'edicion'], true)) return null;
+        return 'target_' . substr(hash('sha256', $kind . ':' . $id), 0, 12);
     }
 
     private static function status(string $value): string {

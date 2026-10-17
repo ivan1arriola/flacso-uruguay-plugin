@@ -324,7 +324,10 @@ class FLACSO_Seminar_Inquiry_Service {
                 $repo,
                 $record,
                 $snapshot,
-                'seminar'
+                'seminar',
+                '',
+                class_exists('FLACSO_Inquiry_Marketing_Service')
+                    ? FLACSO_Inquiry_Marketing_Service::extract_consent($data) : []
             );
         } catch (\Throwable $e) {
             error_log('[FLACSO] Error al persistir consulta/snapshot/entrega de seminario: ' . $e->getMessage());

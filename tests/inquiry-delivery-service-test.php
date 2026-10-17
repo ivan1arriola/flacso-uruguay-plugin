@@ -1,6 +1,8 @@
 <?php
 $root = dirname(__DIR__);
 require_once __DIR__ . '/support/inquiry-delivery-bootstrap.php';
+if (!defined('FLACSO_MAILING_BASE_URL')) define('FLACSO_MAILING_BASE_URL', 'https://mailing.example.test');
+if (!defined('WP_WEBHOOK_HMAC_SECRET')) define('WP_WEBHOOK_HMAC_SECRET', str_repeat('s', 40));
 
 if (!class_exists('WP_Error')) {
     class WP_Error {
@@ -33,6 +35,7 @@ require_once $root . '/modules/consultas/services/class-flacso-inquiry-snapshot.
 require_once $root . '/modules/consultas/services/class-flacso-mautic-contract-manifest.php';
 require_once $root . '/includes/database/repositories/class-flacso-inquiry-delivery-repository.php';
 require_once $root . '/includes/integrations/class-flacso-mautic-client.php';
+require_once $root . '/includes/integrations/class-flacso-mailing-client.php';
 require_once $root . '/modules/consultas/services/class-flacso-mautic-contract-validator.php';
 require_once $root . '/modules/consultas/services/class-flacso-inquiry-delivery-service.php';
 
@@ -57,7 +60,8 @@ function make_delivery(
     string $program,
     string $code,
     string $date,
-    string $modality
+    string $modality,
+    string $provider = 'mautic'
 ): array {
     $form = [
         'nombre' => 'Ana',
@@ -90,7 +94,9 @@ function make_delivery(
         'emailStatus' => 'pending',
         'emailSender' => 'mautic_transactional_queue',
     ];
-    $result = $repository->persist_inquiry_with_delivery($source, $record, $snapshot, 'offer');
+    $result = $repository->persist_inquiry_with_delivery($source, $record, $snapshot, 'offer', $provider, [
+        'granted' => true, 'acceptedAt' => '2026-09-30T12:00:00Z', 'source' => 'web', 'textVersion' => 'v1',
+    ]);
 
     // La prueba inyecta un contrato válido; asignamos la plantilla de prueba
     // porque el manifiesto productivo sigue bloqueado sin SHA aprobado.
@@ -169,7 +175,23 @@ $rb = FLACSO_Inquiry_Delivery_Service::process($blocked['delivery_id']);
 delivery_service_assert($rb['status'] === 'blocked', 'contrato inválido bloquea entrega');
 delivery_service_assert($network_calls === 0, 'contrato inválido no toca Mautic');
 
+// The provider is pinned at outbox creation and dispatched through signed Mailing events.
+$mailing_delivery = make_delivery($repository, $source, 'delivery-mailing', 'Oferta Mailing', 'FM', '2027-11-01', 'virtual', 'flacso_mail');
+$mailing_row = $repository->find_by_delivery_id($mailing_delivery['delivery_id']);
+delivery_service_assert(($mailing_row['assignedProvider'] ?? '') === 'flacso_mail', 'provider is persisted per delivery');
+$repository->claim_pending_batch(10, 60);
+$mailing_request = null;
+FLACSO_Mailing_Client::set_http_transport(function ($url, $args) use (&$mailing_request) {
+    $mailing_request = [$url, $args];
+    return ['response' => ['code' => 202]];
+});
+$rm = FLACSO_Inquiry_Delivery_Service::process($mailing_delivery['delivery_id']);
+delivery_service_assert($rm['status'] === 'accepted', 'Mailing 202 is accepted');
+delivery_service_assert(str_contains($mailing_request[0], '/api/v1/events/academic-inquiries'), 'dispatch targets Mailing event endpoint');
+delivery_service_assert(str_contains($mailing_request[1]['headers']['Idempotency-Key'], $mailing_delivery['delivery_id']), 'idempotency key contains outbox ID');
+
 FLACSO_Mautic_Client::set_http_transport(null);
+FLACSO_Mailing_Client::set_http_transport(null);
 FLACSO_Inquiry_Delivery_Service::set_contract_validator(null);
 FLACSO_Inquiry_Delivery_Service::set_repository(null);
 

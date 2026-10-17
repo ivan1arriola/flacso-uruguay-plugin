@@ -33,13 +33,24 @@ final class FLACSO_Inquiry_Delivery_Repository {
         FLACSO_Base_Inquiry_Repository $repository,
         array $record,
         array $snapshot,
-        string $type
+        string $type,
+        string $provider = '',
+        array $consent = []
     ): array {
         FLACSO_Inquiry_Snapshot::assert_snapshot($snapshot);
 
         $type = strtolower(trim($type));
         if (!in_array($type, ['offer', 'seminar'], true)) {
             throw new InvalidArgumentException('Tipo de consulta no soportado.');
+        }
+
+        if ($provider === '') {
+            $provider = defined('FLACSO_INQUIRY_DELIVERY_PROVIDER')
+                ? (string) FLACSO_INQUIRY_DELIVERY_PROVIDER : 'mautic';
+        }
+        $provider = strtolower(trim($provider));
+        if (!in_array($provider, ['mautic', 'flacso_mail'], true)) {
+            throw new InvalidArgumentException('Proveedor de entrega no soportado.');
         }
 
         $consulta_id = trim((string) ($snapshot['consultaId'] ?? ''));
@@ -81,6 +92,12 @@ final class FLACSO_Inquiry_Delivery_Repository {
             $snapshot_json = self::json($snapshot);
             $payload_json = self::json([
                 'tokens' => FLACSO_Inquiry_Snapshot::delivery_tokens($snapshot),
+                'marketingConsent' => [
+                    'granted' => !empty($consent['granted']),
+                    'acceptedAt' => trim((string) ($consent['acceptedAt'] ?? '')),
+                    'source' => trim((string) ($consent['source'] ?? '')),
+                    'textVersion' => trim((string) ($consent['textVersion'] ?? '')),
+                ],
             ]);
             $template = $this->template_identity($snapshot);
             $report_month = gmdate('Y-m-01', strtotime((string) ($snapshot['inquiryAt'] ?? $now)) ?: time());
@@ -103,11 +120,11 @@ final class FLACSO_Inquiry_Delivery_Repository {
 
             $stmt = $this->pdo->prepare(
                 'INSERT INTO inquiry_deliveries
-                    (id, "snapshotId", "inquiryType", "inquiryId", "consultaId", "deliveryType",
+                    (id, "snapshotId", "inquiryType", "inquiryId", "consultaId", "deliveryType", "assignedProvider",
                      state, email, "templateId", "templateVersion", "templateSha256", "payloadJson",
                      attempts, "reportMonth", "createdAt", "updatedAt")
                  VALUES
-                    (:id, :snapshot_id, :type, :inquiry_id, :consulta_id, :delivery_type,
+                    (:id, :snapshot_id, :type, :inquiry_id, :consulta_id, :delivery_type, :assigned_provider,
                      :state, :email, :template_id, :template_version, :template_sha, :payload_json,
                      0, :report_month, :created_at, :updated_at)'
             );
@@ -118,6 +135,7 @@ final class FLACSO_Inquiry_Delivery_Repository {
                 ':inquiry_id'       => $inquiry_id,
                 ':consulta_id'      => $consulta_id,
                 ':delivery_type'    => 'acknowledgement',
+                ':assigned_provider' => $provider,
                 ':state'            => 'pending',
                 ':email'            => strtolower(trim((string) ($snapshot['recipient']['email'] ?? ''))),
                 ':template_id'      => $template['template_id'],

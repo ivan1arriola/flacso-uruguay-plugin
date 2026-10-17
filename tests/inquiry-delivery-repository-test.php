@@ -61,6 +61,8 @@ delivery_repo_assert((int) $pdo->query('SELECT COUNT(*) FROM inquiry_deliveries'
 
 $row = $deliveries->find_by_delivery_id($result['delivery_id']);
 delivery_repo_assert($row !== null && $row['state'] === 'pending', 'entrega pending');
+delivery_repo_assert(($row['assignedProvider'] ?? '') === 'mautic', 'Mautic permanece como proveedor predeterminado');
+delivery_repo_assert(isset(json_decode((string) $row['payloadJson'], true)['marketingConsent']), 'evidencia de consentimiento queda persistida en el outbox');
 delivery_repo_assert((int) $row['templateId'] === 4, 'oferta abierta usa F1 #4');
 delivery_repo_assert(strpos((string) $row['payloadJson'], 'permanece sólo') === false, 'payload de entrega no contiene texto libre');
 delivery_repo_assert(strpos((string) $row['snapshotJson'], 'permanece sólo') === false, 'snapshot no contiene texto libre');
