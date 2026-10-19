@@ -18,7 +18,7 @@ final class FLACSO_Academic_Repository {
                 'fields' => [
                     'programa_academico_id', 'abreviacion', 'correo', 'presentacion',
                     'composicion_academica',
-                    'duracion_meses', 'duracion_html', 'carga_horaria', 'creditos',
+                    'duracion_meses', 'carga_horaria', 'creditos',
                     'perfil_ingreso_html', 'requisitos_ingreso_html', 'perfil_egreso_html', 'requisitos_egreso_html',
                     'titulos_certificaciones_html', 'menciones', 'orientaciones', 'titulos_intermedios',
                     'malla_curricular', 'documentos', 'equipos', 'reconocido_mec',

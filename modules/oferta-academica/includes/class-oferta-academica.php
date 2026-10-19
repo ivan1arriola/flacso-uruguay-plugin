@@ -94,7 +94,6 @@ final class FLACSO_Oferta_Academica {
             'presentacion' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'composicion_academica' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_sections']],
             'duracion_meses' => ['type' => 'number', 'sanitize_callback' => [self::class, 'sanitize_number']],
-            'duracion_html' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'carga_horaria' => ['type' => 'number', 'sanitize_callback' => [self::class, 'sanitize_number']],
             'creditos' => ['type' => 'number', 'sanitize_callback' => [self::class, 'sanitize_number']],
             'perfil_ingreso_html' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],

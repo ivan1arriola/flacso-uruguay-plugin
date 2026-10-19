@@ -129,7 +129,7 @@ final class FLACSO_Oferta_Admin_Fields {
         $sections = [
             'general' => [FLACSO_Oferta_Academica::META_PROGRAM_ID, 'abreviacion', 'correo', FLACSO_Oferta_Academica::META_PRESENTATION_COLORS],
             'presentation' => ['presentacion'],
-            'course' => ['duracion_meses', 'duracion_html', 'carga_horaria', 'creditos'],
+            'course' => ['duracion_meses', 'carga_horaria', 'creditos'],
             'profiles' => ['perfil_ingreso_html', 'requisitos_ingreso_html', 'perfil_egreso_html', 'requisitos_egreso_html'],
             'certification' => ['titulos_certificaciones_html'],
             'curriculum' => ['malla_curricular', 'menciones', 'orientaciones', 'titulos_intermedios'],
@@ -218,9 +218,7 @@ final class FLACSO_Oferta_Admin_Fields {
                 <?php self::text_field($post->ID, 'duracion_meses', __('Duración (meses)', 'flacso-uruguay'), 'number'); ?>
                 <?php self::text_field($post->ID, 'carga_horaria', __('Carga horaria', 'flacso-uruguay'), 'number'); ?>
                 <?php self::text_field($post->ID, 'creditos', __('Créditos', 'flacso-uruguay'), 'number'); ?>
-                <?php self::text_field($post->ID, __('Descripción breve de carga horaria', 'flacso-uruguay'), 'text', true); ?>
             </div>
-            <?php self::rich_editor($post->ID, 'duracion_html', __('Descripción de duración', 'flacso-uruguay'), __('Usala cuando meses, semanas, encuentros u horas necesiten una explicación más detallada.', 'flacso-uruguay')); ?>
             <?php self::section_end(); ?>
 
             <?php self::section_start($post->ID, 'perfiles-requisitos', __('Perfiles y requisitos', 'flacso-uruguay'), __('Diferencia claramente a quién está dirigida la propuesta y qué debe cumplir para ingresar y egresar.', 'flacso-uruguay'), $sections['profiles'], 'dashicons-id-alt'); ?>
@@ -419,7 +417,6 @@ final class FLACSO_Oferta_Admin_Fields {
             'correo' => 'sanitize_email',
             'presentacion' => 'wp_kses_post',
             'duracion_meses' => [FLACSO_Oferta_Academica::class, 'sanitize_number'],
-            'duracion_html' => 'wp_kses_post',
             'carga_horaria' => [FLACSO_Oferta_Academica::class, 'sanitize_number'],
             'creditos' => [FLACSO_Oferta_Academica::class, 'sanitize_number'],
             'perfil_ingreso_html' => 'wp_kses_post',
