@@ -257,10 +257,11 @@ final class FLACSO_Oferta_Admin_Fields {
                 </summary>
                 <div class="flacso-oferta-section__body">
                     <div class="flacso-oferta-checks">
-                        <?php $flag_descriptions = ['reconocido_mec' => 'Muestra el reconocimiento del MEC en la página de la oferta y en la carta.','reconocimiento_internacional' => 'Muestra la información de reconocimiento internacional en la página y en la carta.','convenio_iin_oea' => 'Muestra el distintivo del convenio IIN/OEA en la página y en la carta.','mostrar_costos_envio' => 'Incluye en la carta la información sobre los costos de envío del título.','mostrar_expedicion_titulo' => 'Incluye en la carta la información sobre la expedición del título.']; ?>
+                        <?php $flag_descriptions = ['reconocido_mec' => 'Muestra el reconocimiento oficial del MEC en la página de la oferta y en la carta.','reconocimiento_internacional' => 'Muestra el distintivo de titulación apostillada de La Haya en la página y en la carta.','reconocimiento_red_flacso' => 'Muestra el reconocimiento del título en la red del Sistema Internacional FLACSO en la página y en la carta.','convenio_iin_oea' => 'Muestra el distintivo del convenio IIN/OEA en la página y en la carta.','mostrar_costos_envio' => 'Incluye en la carta la información sobre los costos de envío del título.','mostrar_expedicion_titulo' => 'Incluye en la carta la información sobre la expedición del título.']; ?>
                         <?php foreach ([
-                            'reconocido_mec' => __('Reconocido por MEC', 'flacso-uruguay'),
-                            'reconocimiento_internacional' => __('Reconocimiento internacional', 'flacso-uruguay'),
+                            'reconocido_mec' => __('Programa con Reconocimiento Oficial del Ministerio de Educación y Cultura (MEC)', 'flacso-uruguay'),
+                            'reconocimiento_internacional' => __('Apostillado de La Haya', 'flacso-uruguay'),
+                            'reconocimiento_red_flacso' => __('Título con validez y reconocimiento en la red del Sistema Internacional FLACSO', 'flacso-uruguay'),
                             'convenio_iin_oea' => __('Convenio IIN/OEA', 'flacso-uruguay'),
                             'mostrar_costos_envio' => __('Mostrar costos de envío', 'flacso-uruguay'),
                             'mostrar_expedicion_titulo' => __('Mostrar expedición de título', 'flacso-uruguay'),
@@ -481,7 +482,7 @@ final class FLACSO_Oferta_Admin_Fields {
             }
         }
 
-        foreach (['reconocido_mec', 'reconocimiento_internacional', 'convenio_iin_oea', 'mostrar_costos_envio', 'mostrar_expedicion_titulo'] as $key) {
+        foreach (['reconocido_mec', 'reconocimiento_internacional', 'reconocimiento_red_flacso', 'convenio_iin_oea', 'mostrar_costos_envio', 'mostrar_expedicion_titulo'] as $key) {
             update_post_meta($post_id, $key, !empty($data[$key]));
         }
     }

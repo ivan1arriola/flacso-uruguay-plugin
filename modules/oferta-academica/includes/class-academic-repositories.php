@@ -22,7 +22,7 @@ final class FLACSO_Academic_Repository {
                     'perfil_ingreso_html', 'requisitos_ingreso_html', 'perfil_egreso_html', 'requisitos_egreso_html',
                     'titulos_certificaciones_html', 'menciones', 'orientaciones', 'titulos_intermedios',
                     'malla_curricular', 'documentos', 'equipos', 'reconocido_mec',
-                    'reconocimiento_internacional', 'convenio_iin_oea', 'mostrar_costos_envio',
+                    'reconocimiento_internacional', 'reconocimiento_red_flacso', 'convenio_iin_oea', 'mostrar_costos_envio',
                     'mostrar_expedicion_titulo', 'seminarios',
                 ],
             ],

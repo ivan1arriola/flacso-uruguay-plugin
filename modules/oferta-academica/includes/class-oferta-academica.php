@@ -110,6 +110,7 @@ final class FLACSO_Oferta_Academica {
             'equipos' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_teams']],
             'reconocido_mec' => ['type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean'],
             'reconocimiento_internacional' => ['type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean'],
+            'reconocimiento_red_flacso' => ['type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean'],
             'convenio_iin_oea' => ['type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean'],
             'mostrar_costos_envio' => ['type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean'],
             'mostrar_expedicion_titulo' => ['type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean'],

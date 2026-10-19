@@ -2,6 +2,8 @@
 
 $root = dirname(__DIR__);
 $admin = file_get_contents($root . '/modules/oferta-academica/includes/class-oferta-admin-fields.php');
+$academic = file_get_contents($root . '/modules/oferta-academica/includes/class-oferta-academica.php');
+$repository = file_get_contents($root . '/modules/oferta-academica/includes/class-academic-repositories.php');
 $init = file_get_contents($root . '/modules/oferta-academica/init.php');
 
 function oferta_admin_assert($condition, string $message): void {
@@ -25,6 +27,12 @@ oferta_admin_assert(strpos($admin, "'carga_horaria'") !== false, 'debe editar ca
 oferta_admin_assert(strpos($admin, "'creditos'") !== false, 'debe editar créditos');
 oferta_admin_assert(strpos($admin, "'perfil_ingreso_html'") !== false, 'debe editar perfil de ingreso');
 oferta_admin_assert(strpos($admin, '<details class="flacso-oferta-section"') !== false, 'debe organizar el editor en secciones plegables');
+oferta_admin_assert(strpos($admin, "'reconocimiento_red_flacso'") !== false, 'debe ofrecer reconocimiento de la red FLACSO como opción independiente');
+oferta_admin_assert(strpos($admin, 'Título con validez y reconocimiento en la red del Sistema Internacional FLACSO') !== false, 'debe mostrar el texto del reconocimiento de la red FLACSO');
+oferta_admin_assert(strpos($admin, "'reconocimiento_red_flacso' =>") !== false, 'debe explicar qué muestra el reconocimiento de la red FLACSO');
+oferta_admin_assert(strpos($admin, "'reconocimiento_internacional', 'reconocimiento_red_flacso', 'convenio_iin_oea'") !== false, 'debe persistir el nuevo reconocimiento al guardar');
+oferta_admin_assert(strpos($academic, "'reconocimiento_red_flacso' => ['type' => 'boolean'") !== false, 'debe registrar el nuevo reconocimiento como metadato booleano');
+oferta_admin_assert(strpos($repository, "'reconocimiento_red_flacso'") !== false, 'el repositorio académico debe incluir el nuevo reconocimiento');
 oferta_admin_assert(strpos($admin, '<summary class="flacso-oferta-section__summary">') !== false, 'las secciones deben usar controles nativos accesibles');
 oferta_admin_assert(strpos($admin, 'data-flacso-sections="open"') !== false, 'debe permitir abrir todas las secciones');
 oferta_admin_assert(strpos($admin, 'data-flacso-sections="close"') !== false, 'debe permitir cerrar todas las secciones');
