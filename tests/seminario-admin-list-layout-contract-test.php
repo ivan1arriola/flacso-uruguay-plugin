@@ -14,6 +14,7 @@ seminario_list_assert(strpos($cpt, 'flacso-current-instance') !== false, 'el lis
 seminario_list_assert(strpos($cpt, 'Sin edición vigente') !== false, 'debe informar cuando no existe edición vigente');
 seminario_list_assert(strpos($cpt, 'sin_vigente') !== false, 'debe filtrar seminarios sin edición vigente');
 seminario_list_assert(strpos($cpt, 'flacso-status--open') !== false, 'se conserva el estado semántico de preinscripción abierta');
-seminario_list_assert(strpos($cpt, '@media screen and (max-width: 1100px)') !== false, 'el listado debe conservar una presentación adaptable');
+seminario_list_assert(strpos($cpt, '@media screen and (min-width: 783px) and (max-width: 1100px)') !== false, 'el listado debe adaptar las columnas de escritorio estrecho');
+seminario_list_assert(strpos($cpt, '@media screen and (max-width: 782px)') !== false, 'el listado debe conservar una presentación móvil específica');
 
 fwrite(STDOUT, "OK seminario admin list layout contract\n");
