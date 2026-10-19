@@ -19,6 +19,7 @@ class CPT_Oferta_Academica {
         if (is_admin()) {
             add_action('add_meta_boxes', [self::class, 'add_meta_boxes']);
             add_filter('manage_' . self::POST_TYPE . '_posts_columns', [self::class, 'register_columns']);
+            add_filter('display_post_states', [self::class, 'append_abbreviation_post_state'], 10, 2);
             add_action('manage_' . self::POST_TYPE . '_posts_custom_column', [self::class, 'render_column'], 10, 2);
             add_action('restrict_manage_posts', [self::class, 'render_operational_filters']);
             add_filter('posts_clauses', [self::class, 'filter_by_operational_status'], 20, 2);
@@ -152,6 +153,21 @@ class CPT_Oferta_Academica {
             }
         }
         return $new_columns;
+    }
+
+    /**
+     * La abreviación acompaña el título en la columna principal, incluso en móvil.
+     * Reutiliza el metadato institucional existente sin modificar el contenido.
+     */
+    public static function append_abbreviation_post_state(array $states, WP_Post $post): array {
+        if ($post->post_type !== self::POST_TYPE) {
+            return $states;
+        }
+        $abbreviation = trim((string) get_post_meta($post->ID, 'abreviacion', true));
+        if ($abbreviation !== '') {
+            $states['flacso_abbreviation'] = esc_html($abbreviation);
+        }
+        return $states;
     }
 
     public static function render_column(string $column, int $post_id): void {
@@ -325,6 +341,90 @@ class CPT_Oferta_Academica {
             @media (max-width: 1100px) {
                 .post-type-oferta-academica .column-title { width: 38%; }
                 .post-type-oferta-academica .column-cohorte_actual { width: 34%; }
+            }
+
+            /* Refinamiento visual del listado, aislado de otros tipos de contenido. */
+            .post-type-oferta-academica .wp-list-table { border-color: #d6e0ec; box-shadow: 0 1px 3px rgba(17,35,62,.04); }
+            .post-type-oferta-academica .wp-list-table thead th,
+            .post-type-oferta-academica .wp-list-table tfoot th { background: #f3f6fa; color: #3d536e; font-weight: 650; }
+            .post-type-oferta-academica .wp-list-table tbody tr:hover > td { background: #f8fbfe; }
+            .post-type-oferta-academica .column-title strong a { color: #1b4168; font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; }
+            .post-type-oferta-academica .column-title .post-state {
+                display: inline-flex; align-items: center; margin: 2px 0 0 4px; padding: 2px 8px;
+                border-radius: 6px; border: 1px solid #d7e3f0; background: #ecf2fa;
+                color: #294b6a; font-size: 11px; font-weight: 700; line-height: 1.55;
+                vertical-align: middle;
+            }
+            .post-type-oferta-academica .column-title .row-actions { margin-top: 6px; }
+            .post-type-oferta-academica .flacso-current-instance { gap: 7px; }
+            .post-type-oferta-academica .flacso-current-instance__title { color: #1b4168; }
+            .post-type-oferta-academica .flacso-current-instance__meta { gap: 6px; }
+            .post-type-oferta-academica .flacso-state,
+            .post-type-oferta-academica .flacso-status { padding: 3px 9px; font-weight: 700; }
+            .post-type-oferta-academica .flacso-current-instance__actions { gap: 8px; }
+            .post-type-oferta-academica .flacso-current-instance__actions .button { min-height: 30px; line-height: 28px; border-radius: 5px; }
+            .post-type-oferta-academica .flacso-current-instance__notice:not(:empty) { padding: 7px 9px; border-radius: 5px; }
+            .post-type-oferta-academica .flacso-current-instance__notice.is-success { background: #e7f7ed; color: #116329; }
+            .post-type-oferta-academica .flacso-current-instance__notice.is-error { background: #fcf0f1; color: #8a2424; }
+            .post-type-oferta-academica .wp-list-table a:focus-visible,
+            .post-type-oferta-academica .wp-list-table button:focus-visible { outline: 2px solid #2271b1; outline-offset: 2px; }
+            @media (max-width: 782px) {
+                .post-type-oferta-academica .wrap .page-title-action {
+                    display: inline-flex; align-items: center; min-height: 36px; margin: 0 0 12px;
+                    padding: 0 12px; border-radius: 6px;
+                }
+                .post-type-oferta-academica .subsubsub {
+                    display: flex; float: none; flex-wrap: wrap; align-items: center; gap: 5px 13px;
+                    margin: 10px 0 16px; padding: 0; text-align: left;
+                }
+                .post-type-oferta-academica .subsubsub li { padding: 0; font-size: 0; }
+                .post-type-oferta-academica .subsubsub li a { font-size: 12px; line-height: 1.65; }
+                .post-type-oferta-academica #posts-filter .search-box {
+                    display: flex; float: none; width: 100%; align-items: stretch; gap: 8px;
+                    margin: 0 0 14px;
+                }
+                .post-type-oferta-academica #posts-filter .search-box input[type="search"] {
+                    flex: 1 1 auto; width: 0; min-width: 0; min-height: 40px;
+                    margin: 0; border-radius: 6px;
+                }
+                .post-type-oferta-academica #posts-filter .search-box .button {
+                    flex: 0 0 auto; min-height: 40px; margin: 0; border-radius: 6px;
+                }
+                .post-type-oferta-academica .tablenav.top { height: auto; min-height: 36px; }
+                .post-type-oferta-academica .tablenav.top .actions {
+                    display: flex; float: none; flex-wrap: wrap; align-items: center; gap: 8px;
+                    padding: 0 0 10px;
+                }
+                .post-type-oferta-academica .tablenav.top .actions select {
+                    max-width: 100%; min-height: 36px; margin: 0;
+                }
+                .post-type-oferta-academica .wp-list-table { table-layout: auto; }
+                .post-type-oferta-academica .wp-list-table tr:not(.inline-edit-row):not(.no-items) td.column-primary {
+                    padding: 13px 50px 13px 12px;
+                }
+                .post-type-oferta-academica .wp-list-table .toggle-row {
+                    top: 10px; right: 6px; width: 40px; height: 40px;
+                }
+                .post-type-oferta-academica .wp-list-table .row-actions {
+                    display: flex; flex-wrap: wrap; gap: 5px 13px;
+                    padding: 9px 0 0; font-size: 0; line-height: 1.55;
+                }
+                .post-type-oferta-academica .wp-list-table .row-actions span { font-size: 0; white-space: nowrap; }
+                .post-type-oferta-academica .wp-list-table .row-actions a { font-size: 12px; }
+                .post-type-oferta-academica .wp-list-table tr:not(.inline-edit-row):not(.no-items) td:not(.check-column):not(.column-primary) {
+                    padding: 8px 12px 8px 109px; min-height: 36px;
+                    border-top: 0; border-bottom: 0; box-sizing: border-box;
+                }
+                .post-type-oferta-academica .wp-list-table tr:not(.inline-edit-row):not(.no-items) td:not(.check-column):not(.column-primary)::before {
+                    left: 12px; top: 11px; width: 85px;
+                    color: #647387; font-size: 11px; font-weight: 700; line-height: 1.5;
+                }
+                .post-type-oferta-academica .wp-list-table tr.is-expanded td:not(.column-primary):not(.check-column) {
+                    background: #f8fafd;
+                }
+                .post-type-oferta-academica .flacso-current-instance__actions .button {
+                    min-height: 38px; line-height: 36px; padding: 0 12px;
+                }
             }
         </style>
         <?php
