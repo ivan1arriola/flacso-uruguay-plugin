@@ -51,11 +51,9 @@ class PublicContractBaseline(unittest.TestCase):
         self.assertIn("register_rest_route", source)
         self.assertIn("permission_callback", source)
 
-    def test_meta_webhook_has_signature_check_in_handler(self):
-        source = php("includes/core/class-flacso-meta-leads-webhook.php")
-        self.assertIn("register_rest_route", source)
-        self.assertIn("is_valid_signature(", source)
-        self.assertIn("invalid_signature", source)
+    def test_retired_meta_lead_ads_webhook_stays_absent(self):
+        # The inbound Meta Lead Ads receiver was intentionally retired in main.
+        self.assertFalse((ROOT / "includes/core/class-flacso-meta-leads-webhook.php").exists())
 
     def test_inquiry_delivery_and_marketing_exist_separately(self):
         base = ROOT / "modules/consultas/services"
