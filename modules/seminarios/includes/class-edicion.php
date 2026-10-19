@@ -171,6 +171,17 @@ final class FLACSO_Edicion {
         return false;
     }
 
+    public static function get_days_after_start_limit(int $edition_id = 0): int {
+        if ($edition_id > 0) {
+            $custom = get_post_meta($edition_id, 'dias_cierre_post_inicio', true);
+            if ($custom !== '' && $custom !== false && is_numeric($custom)) {
+                return (int) $custom;
+            }
+        }
+        $global = get_option('flacso_seminarios_dias_cierre_post_inicio', 10);
+        return is_numeric($global) ? (int) $global : 10;
+    }
+
     public static function accepts_registration(int $edition_id, ?int $timestamp = null): bool {
         $availability = self::registration_availability($edition_id, $timestamp);
         return $availability['status'] === 'open';
@@ -178,17 +189,50 @@ final class FLACSO_Edicion {
 
     /** @return array{status:string,from:?string,until:?string} */
     public static function registration_availability(int $edition_id, ?int $timestamp = null): array {
-        if (self::sanitize_state(get_post_meta($edition_id, 'estado', true)) === 'cancelada') {
-            return ['status' => 'closed', 'from' => null, 'until' => null];
+        $timestamp = $timestamp ?? (function_exists('current_time') ? current_time('timestamp', true) : time());
+        $fecha_inicio = (string) get_post_meta($edition_id, 'fecha_inicio', true);
+        $timezone = function_exists('wp_timezone') ? wp_timezone() : new DateTimeZone('UTC');
+        $start = DateTimeImmutable::createFromFormat('!Y-m-d', $fecha_inicio, $timezone);
+
+        if (!$start || $start->format('Y-m-d') !== $fecha_inicio) {
+            return [
+                'status' => 'closed',
+                'from' => null,
+                'until' => null,
+            ];
         }
+
+        $days = self::get_days_after_start_limit($edition_id);
+        $closing = $start->modify('+' . $days . ' days')->setTime(23, 59, 59);
+        $until = $closing->format(DATE_ATOM);
 
         if (metadata_exists('post', $edition_id, 'preinscripcion_habilitada')) {
             $enabled = rest_sanitize_boolean(get_post_meta($edition_id, 'preinscripcion_habilitada', true));
-            return ['status' => $enabled ? 'open' : 'closed', 'from' => null, 'until' => null];
+            return [
+                'status' => $enabled && $timestamp <= $closing->getTimestamp() ? 'open' : 'closed',
+                'from' => null,
+                'until' => $until,
+            ];
         }
 
-        return ['status' => 'closed', 'from' => null, 'until' => null];
+        // Compatibilidad de rollout para ediciones todavía no confirmadas con
+        // los nuevos botones. Un booleano explícito siempre prevalece.
+        $state = self::sanitize_state(get_post_meta($edition_id, 'estado', true));
+        if ($state === 'cancelada') {
+            return [
+                'status' => 'closed',
+                'from' => null,
+                'until' => $until,
+            ];
+        }
+
+        return [
+            'status' => $timestamp <= $closing->getTimestamp() ? 'open' : 'closed',
+            'from' => null,
+            'until' => $until,
+        ];
     }
+
 
     public static function sync_title(int $post_id): void {
         if (get_post_type($post_id) !== self::POST_TYPE) {

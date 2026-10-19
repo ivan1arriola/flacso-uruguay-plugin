@@ -58,13 +58,14 @@ $legacy = FLACSO_Academic_Team_Editor::sanitize_academic_team([[
     ],
 ]]);
 
-team_contact_assert(count($legacy) === 1, 'el grupo histórico debe conservarse');
-team_contact_assert(($legacy[0]['tipo'] ?? '') === FLACSO_Academic_Team_Editor::TYPE_CUSTOM, 'el histórico debe ser personalizado');
-team_contact_assert(($legacy[0]['nombre'] ?? '') === 'Equipo académico', 'el histórico debe mostrarse como Equipo académico');
-team_contact_assert(($legacy[0]['docentes'][0]['id'] ?? 0) === 7, 'el histórico debe conservar integrantes');
-team_contact_assert(($legacy[0]['docentes'][0]['rol'] ?? '') === 'Dirección', 'el histórico debe conservar roles');
-team_contact_assert(($legacy[0]['docentes'][0]['correo'] ?? '') === 'persona7@example.org', 'el histórico debe conservar correos');
-team_contact_assert(($legacy[0]['descripcion'] ?? '') === '<p>Descripción histórica</p>', 'el histórico debe conservar descripción');
+team_contact_assert(count($legacy) === 2, 'la oferta incluye Coordinación académica y conserva el grupo histórico');
+team_contact_assert(($legacy[0]['tipo'] ?? '') === FLACSO_Academic_Team_Editor::TYPE_COORDINATION, 'la coordinación obligatoria debe aparecer primero');
+team_contact_assert(($legacy[1]['tipo'] ?? '') === FLACSO_Academic_Team_Editor::TYPE_CUSTOM, 'el histórico debe ser personalizado');
+team_contact_assert(($legacy[1]['nombre'] ?? '') === 'Equipo académico', 'el histórico debe mostrarse como Equipo académico');
+team_contact_assert(($legacy[1]['docentes'][0]['id'] ?? 0) === 7, 'el histórico debe conservar integrantes');
+team_contact_assert(($legacy[1]['docentes'][0]['rol'] ?? '') === 'Dirección', 'el histórico debe conservar roles');
+team_contact_assert(($legacy[1]['docentes'][0]['correo'] ?? '') === 'persona7@example.org', 'el histórico debe conservar correos');
+team_contact_assert(($legacy[1]['descripcion'] ?? '') === '<p>Descripción histórica</p>', 'el histórico debe conservar descripción');
 
 $submitted_groups = [
     [

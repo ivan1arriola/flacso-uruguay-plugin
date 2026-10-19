@@ -83,8 +83,8 @@ $GLOBALS['flacso_test_post_meta'][998] = [
     'estado' => 'planificada',
 ];
 final_assert(
-    FLACSO_Cohorte::accepts_registration(998, strtotime('2026-03-01 12:00:00')),
-    'una cohorte sin booleano conserva la apertura legacy durante el rollout'
+    !FLACSO_Cohorte::accepts_registration(998, strtotime('2026-03-01 12:00:00')),
+    'una cohorte sin apertura manual queda cerrada'
 );
 $GLOBALS['flacso_test_post_meta'][998]['preinscripcion_habilitada'] = false;
 final_assert(
@@ -96,8 +96,8 @@ $GLOBALS['flacso_test_post_meta'][998] = [
     'preinscripcion_habilitada' => true,
 ];
 final_assert(
-    FLACSO_Cohorte::accepts_registration(998, strtotime('2026-03-01 12:00:00')),
-    'el booleano explícito queda separado del estado académico de cohorte'
+    !FLACSO_Cohorte::accepts_registration(998, strtotime('2026-03-01 12:00:00')),
+    'una cohorte finalizada permanece cerrada aunque tenga apertura marcada'
 );
 
 $GLOBALS['flacso_test_post_meta'][999] = [

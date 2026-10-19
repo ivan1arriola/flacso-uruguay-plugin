@@ -147,14 +147,14 @@ function test_assert(bool $cond, string $msg): void {
 }
 
 // 1. Normalización
-test_assert(FLACSO_Oferta_Academica::normalize_abbreviation('DAVIA') === 'davia', 'DAVIA -> davia');
-test_assert(FLACSO_Oferta_Academica::normalize_abbreviation('  Mg. Ed  ') === 'mg-ed', 'Mg. Ed -> mg-ed');
+test_assert(FLACSO_Oferta_Academica::normalize_abbreviation('DAVIA') === 'DAVIA', 'DAVIA conserva mayúsculas');
+test_assert(FLACSO_Oferta_Academica::normalize_abbreviation('  Mg. Ed  ') === 'Mg. Ed', 'la abreviación conserva mayúsculas y puntuación');
 test_assert(FLACSO_Oferta_Academica::normalize_abbreviation('') === '', 'vacio -> vacio');
 
 // 2. Unicidad
-$GLOBALS['mock_post_meta'][100] = ['abreviacion' => 'davia'];
+$GLOBALS['mock_post_meta'][100] = ['abreviacion' => 'DAVIA'];
 test_assert(FLACSO_Oferta_Academica::is_abbreviation_available('davia', 100) === true, 'davia disponible para su propio post');
-test_assert(FLACSO_Oferta_Academica::is_abbreviation_available('davia', 101) === false, 'davia ocupada para post 101');
+test_assert(FLACSO_Oferta_Academica::is_abbreviation_available('DAVIA', 101) === false, 'DAVIA ocupada para post 101');
 test_assert(FLACSO_Oferta_Academica::is_abbreviation_available('mesyp', 101) === true, 'mesyp libre');
 
 // 3. Admin Fields Save - Guardado con abreviación disponible normalizada
@@ -165,7 +165,7 @@ $_POST = [
     ],
 ];
 FLACSO_Oferta_Admin_Fields::save(101, new WP_Post(101));
-test_assert(($GLOBALS['mock_post_meta'][101]['abreviacion'] ?? '') === 'mesyp', 'save() normaliza y guarda abreviación única');
+test_assert(($GLOBALS['mock_post_meta'][101]['abreviacion'] ?? '') === 'MESYP', 'save() conserva mayúsculas en abreviación única');
 
 // 4. Admin Fields Save - Colisión de abreviación no sobrescribe y setea transient
 $_POST = [
@@ -175,7 +175,7 @@ $_POST = [
     ],
 ];
 FLACSO_Oferta_Admin_Fields::save(101, new WP_Post(101));
-test_assert(($GLOBALS['mock_post_meta'][101]['abreviacion'] ?? '') === 'mesyp', 'save() no sobrescribe abreviación en colisión');
+test_assert(($GLOBALS['mock_post_meta'][101]['abreviacion'] ?? '') === 'MESYP', 'save() no sobrescribe abreviación en colisión');
 test_assert(isset($GLOBALS['mock_transients']['flacso_oferta_abbr_error_101']), 'save() genera transient de error en colisión');
 
 // 5. Admin Fields Save - Abreviación vacía elimina meta

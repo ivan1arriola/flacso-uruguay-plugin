@@ -17,6 +17,12 @@ if (!function_exists('absint')) {
     }
 }
 
+if (!function_exists('sanitize_text_field')) {
+    function sanitize_text_field($value) {
+        return trim(strip_tags((string) $value));
+    }
+}
+
 if (!function_exists('sanitize_title')) {
     function sanitize_title($str) {
         $str = strtolower(trim((string) $str));
@@ -112,7 +118,7 @@ $ctx1 = FLACSO_Inquiry_Context_Service::resolve(1);
 test_assert($ctx1['offerWpId'] === 1, 'Test 1: offerWpId debe ser 1');
 test_assert($ctx1['offerName'] === 'Maestría en Educación y Tecnología', 'Test 1: offerName correcto');
 test_assert($ctx1['offerType'] === 'maestria', 'Test 1: offerType correcto');
-test_assert($ctx1['offerAbbreviation'] === 'met-2026', 'Test 1: offerAbbreviation normalizado canónico');
+test_assert($ctx1['offerAbbreviation'] === 'MET-2026', 'Test 1: offerAbbreviation conserva mayúsculas');
 test_assert($ctx1['cohortWpId'] === 101, 'Test 1: cohortWpId debe ser 101');
 test_assert($ctx1['cohortNumber'] === 3, 'Test 1: cohortNumber debe ser 3');
 test_assert($ctx1['cohortName'] === '3ª Cohorte (2026)', 'Test 1: cohortName correcto');
@@ -237,7 +243,7 @@ $ctx6 = FLACSO_Inquiry_Context_Service::resolve(1, [
 ]);
 test_assert($ctx6['offerName'] === 'Nombre Personalizado', 'Test 6: offerName sobrescrito');
 test_assert($ctx6['offerType'] === 'tipo_custom', 'Test 6: offerType sobrescrito');
-test_assert($ctx6['offerAbbreviation'] === 'custom-abbr', 'Test 6: offerAbbreviation normalizado desde inquiry_data');
+test_assert($ctx6['offerAbbreviation'] === 'CUSTOM-ABBR', 'Test 6: offerAbbreviation conserva mayúsculas desde inquiry_data');
 
 // -------------------------------------------------------------
 // Test 7: Manejo resiliente si el catálogo lanza excepción
