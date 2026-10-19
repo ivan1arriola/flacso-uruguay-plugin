@@ -16,12 +16,12 @@ final class FLACSO_Academic_Repository {
             'ofertas' => [
                 'post_type' => FLACSO_Oferta_Academica::POST_TYPE,
                 'fields' => [
-                    'programa_academico_id', 'abreviacion', 'correo', 'presentacion', 'objetivo_general',
-                    'objetivos_especificos', 'composicion_academica', 'forma_aprobacion',
-                    'duracion_meses', 'duracion_html', 'carga_horaria', 'carga_horaria_descripcion', 'creditos', 'acreditacion',
+                    'programa_academico_id', 'abreviacion', 'correo', 'presentacion',
+                    'composicion_academica',
+                    'duracion_meses', 'duracion_html', 'carga_horaria', 'creditos',
                     'perfil_ingreso_html', 'requisitos_ingreso_html', 'perfil_egreso_html', 'requisitos_egreso_html',
-                    'titulos_certificaciones_html', 'financiacion_html', 'menciones', 'orientaciones', 'titulos_intermedios',
-                    'malla_curricular', 'malla_curricular_html', 'documentos', 'equipos', 'reconocido_mec',
+                    'titulos_certificaciones_html', 'menciones', 'orientaciones', 'titulos_intermedios',
+                    'malla_curricular', 'documentos', 'equipos', 'reconocido_mec',
                     'reconocimiento_internacional', 'convenio_iin_oea', 'mostrar_costos_envio',
                     'mostrar_expedicion_titulo', 'seminarios',
                 ],
@@ -30,11 +30,9 @@ final class FLACSO_Academic_Repository {
                 'post_type' => FLACSO_Cohorte::POST_TYPE,
                 'fields' => [
                     'oferta_academica_id', 'numero', 'fecha_inicio', 'fecha_fin', 'anio_inicio', 'anio_fin',
-                    'precision_fecha_inicio', 'estado', 'calendario_academico', 'calendario_descripcion',
+                    'precision_fecha_inicio', 'estado', 'calendario_academico',
                     'modalidad', 'modalidad_descripcion', 'tabla_precio_id', 'link_preinscripcion',
-                    'preinscripcion_desde', 'preinscripcion_hasta', 'preinscripcion_habilitada',
-                    'mensaje_preinscripcion_abierta', 'mensaje_preinscripcion_cerrada',
-                    'presentacion_preinscripcion', 'etiqueta_preinscripcion', 'cta_preinscripcion',
+                    'preinscripcion_habilitada',
                     'instancias_presenciales',
                 ],
             ],
@@ -52,8 +50,7 @@ final class FLACSO_Academic_Repository {
                 'fields' => [
                     'seminario_id', 'anio', 'semestre', 'fecha_inicio', 'fecha_fin', 'estado', 'modalidad',
                     'encuentros_sincronicos', 'docentes', 'tabla_precio_id',
-                    'link_preinscripcion', 'dias_cierre_post_inicio',
-                    'mensaje_preinscripcion_abierta', 'mensaje_preinscripcion_cerrada',
+                    'link_preinscripcion', 'preinscripcion_habilitada',
                     'mostrar_en_formulario', 'ediciones_componentes',
                 ],
             ],
@@ -184,10 +181,6 @@ final class FLACSO_Academic_Repository {
                 }
             }
         }
-        if ($entity === 'ediciones' || $entity === 'ediciones-seminario') {
-            delete_post_meta($post_id, 'preinscripcion_desde');
-            delete_post_meta($post_id, 'preinscripcion_hasta');
-        }
         if ($entity === 'ofertas' && array_key_exists('tipo', $payload)) {
             $type = sanitize_key((string) $payload['tipo']);
             wp_set_object_terms($post_id, [$type], FLACSO_Oferta_Academica::TYPE_TAXONOMY, false);
@@ -268,9 +261,6 @@ final class FLACSO_Academic_Repository {
             }
         }
         $date_pairs = [['fecha_inicio', 'fecha_fin']];
-        if ($entity === 'cohortes') {
-            $date_pairs[] = ['preinscripcion_desde', 'preinscripcion_hasta'];
-        }
         foreach ($date_pairs as $pair) {
             $from = array_key_exists($pair[0], $payload) ? $payload[$pair[0]] : ($id ? get_post_meta($id, $pair[0], true) : '');
             $until = array_key_exists($pair[1], $payload) ? $payload[$pair[1]] : ($id ? get_post_meta($id, $pair[1], true) : '');
@@ -316,29 +306,13 @@ final class FLACSO_Preinscripcion {
         return [
             'abierta' => FLACSO_Cohorte::accepts_registration($cohort_id),
             'url' => get_post_meta($cohort_id, 'link_preinscripcion', true) ?: null,
-            'desde' => get_post_meta($cohort_id, 'preinscripcion_desde', true) ?: null,
-            'hasta' => get_post_meta($cohort_id, 'preinscripcion_hasta', true) ?: null,
         ];
     }
 
     public static function for_edition(int $edition_id): array {
-        $fecha_inicio = (string) get_post_meta($edition_id, 'fecha_inicio', true);
-        $days = class_exists('FLACSO_Edicion') ? FLACSO_Edicion::get_days_after_start_limit($edition_id) : 10;
-        $hasta = null;
-        if ($fecha_inicio !== '') {
-            $closing = strtotime($fecha_inicio . ' +' . $days . ' days 23:59:59');
-            if ($closing) {
-                $hasta = date('Y-m-d H:i:s', $closing);
-            }
-        }
-        $post_date = get_post_field('post_date', $edition_id);
-        $desde = $post_date ? date('Y-m-d H:i:s', strtotime($post_date)) : null;
         return [
             'abierta' => class_exists('FLACSO_Edicion') ? FLACSO_Edicion::accepts_registration($edition_id) : true,
             'url' => get_post_meta($edition_id, 'link_preinscripcion', true) ?: null,
-            'desde' => $desde,
-            'hasta' => $hasta,
-            'dias_cierre_post_inicio' => $days,
         ];
     }
 }

@@ -344,8 +344,6 @@ class FLACSO_Academic_CLI_Command {
                     update_post_meta($cohorte_id, 'calendario_academico', $d['calendario_academico'] ?? '');
                     update_post_meta($cohorte_id, 'tabla_precio_id', $tp_id ?: '');
                     update_post_meta($cohorte_id, 'link_preinscripcion', $link_pre);
-                    update_post_meta($cohorte_id, 'preinscripcion_desde', $d['preinscripcion_desde'] ?? '');
-                    update_post_meta($cohorte_id, 'preinscripcion_hasta', $d['preinscripcion_hasta'] ?? '');
                 }
             }
 
@@ -402,11 +400,7 @@ class FLACSO_Academic_CLI_Command {
                     update_post_meta($ed_id, 'encuentros_sincronicos', $d['encuentros_sincronicos'] ?? []);
                     update_post_meta($ed_id, 'docentes', $d['docentes'] ?? []);
                     update_post_meta($ed_id, 'tabla_precio_id', $d['tabla_precio_id'] ?? '');
-                    update_post_meta($ed_id, 'preinscripcion_desde', $d['preinscripcion_desde'] ?? '');
-                    update_post_meta($ed_id, 'preinscripcion_hasta', $d['preinscripcion_hasta'] ?? '');
                     update_post_meta($ed_id, 'link_preinscripcion', $d['link_preinscripcion'] ?? '');
-                    update_post_meta($ed_id, 'mensaje_preinscripcion_abierta', $d['mensaje_preinscripcion_abierta'] ?? '');
-                    update_post_meta($ed_id, 'mensaje_preinscripcion_cerrada', $d['mensaje_preinscripcion_cerrada'] ?? '');
                     update_post_meta($ed_id, 'mostrar_en_formulario', (bool)($d['mostrar_en_formulario'] ?? false));
                     update_post_meta($ed_id, 'ediciones_componentes', $d['ediciones_componentes'] ?? []);
                 }

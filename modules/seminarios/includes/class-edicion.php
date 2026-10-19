@@ -43,9 +43,6 @@ final class FLACSO_Edicion {
             'tabla_precio_id'                => ['type' => 'integer', 'sanitize_callback' => 'absint'],
             'link_preinscripcion'            => ['type' => 'string', 'sanitize_callback' => [self::class, 'sanitize_registration_url']],
             'preinscripcion_habilitada'      => ['type' => 'boolean', 'sanitize_callback' => [FLACSO_Seminario::class, 'sanitize_boolean']],
-            'dias_cierre_post_inicio'        => ['type' => 'integer', 'sanitize_callback' => 'absint'],
-            'mensaje_preinscripcion_abierta' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
-            'mensaje_preinscripcion_cerrada' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'mostrar_en_formulario'          => ['type' => 'boolean', 'sanitize_callback' => [FLACSO_Seminario::class, 'sanitize_boolean']],
             'ediciones_componentes'          => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_components']],
         ];
@@ -142,21 +139,6 @@ final class FLACSO_Edicion {
         return $result;
     }
 
-    public static function get_days_after_start_limit(int $edition_id = 0): int {
-        if ($edition_id > 0) {
-            $custom = get_post_meta($edition_id, 'dias_cierre_post_inicio', true);
-            if ($custom !== '' && $custom !== false && is_numeric($custom)) {
-                return (int) $custom;
-            }
-        }
-        $global = get_option('flacso_seminarios_dias_cierre_post_inicio', 10);
-        return is_numeric($global) ? (int) $global : 10;
-    }
-
-    /**
-     * Verifica si ya existe otra edición para el mismo seminario con el mismo año y semestre
-     * (o con el mismo año si ninguna de las dos tiene semestre).
-     */
     public static function exists_for_seminar(int $seminar_id, int $anio, ?int $semestre = null, int $exclude_id = 0): bool {
         if ($seminar_id <= 0 || $anio <= 0) {
             return false;
@@ -194,57 +176,18 @@ final class FLACSO_Edicion {
         return $availability['status'] === 'open';
     }
 
-    /**
-     * Calcula la disponibilidad temporal de una edición.
-     *
-     * La fecha de cierre es inclusiva: la edición permanece abierta hasta las
-     * 23:59:59 del día fecha_inicio + días configurados.
-     *
-     * @return array{status:string,from:?string,until:?string}
-     */
+    /** @return array{status:string,from:?string,until:?string} */
     public static function registration_availability(int $edition_id, ?int $timestamp = null): array {
-        $timestamp = $timestamp ?? (function_exists('current_time') ? current_time('timestamp', true) : time());
-        $fecha_inicio = (string) get_post_meta($edition_id, 'fecha_inicio', true);
-        $timezone = function_exists('wp_timezone') ? wp_timezone() : new DateTimeZone('UTC');
-        $start = DateTimeImmutable::createFromFormat('!Y-m-d', $fecha_inicio, $timezone);
-
-        if (!$start || $start->format('Y-m-d') !== $fecha_inicio) {
-            return [
-                'status' => 'closed',
-                'from' => null,
-                'until' => null,
-            ];
+        if (self::sanitize_state(get_post_meta($edition_id, 'estado', true)) === 'cancelada') {
+            return ['status' => 'closed', 'from' => null, 'until' => null];
         }
-
-        $days = self::get_days_after_start_limit($edition_id);
-        $closing = $start->modify('+' . $days . ' days')->setTime(23, 59, 59);
-        $until = $closing->format(DATE_ATOM);
 
         if (metadata_exists('post', $edition_id, 'preinscripcion_habilitada')) {
             $enabled = rest_sanitize_boolean(get_post_meta($edition_id, 'preinscripcion_habilitada', true));
-            return [
-                'status' => $enabled && $timestamp <= $closing->getTimestamp() ? 'open' : 'closed',
-                'from' => null,
-                'until' => $until,
-            ];
+            return ['status' => $enabled ? 'open' : 'closed', 'from' => null, 'until' => null];
         }
 
-        // Compatibilidad de rollout para ediciones todavía no confirmadas con
-        // los nuevos botones. Un booleano explícito siempre prevalece.
-        $state = self::sanitize_state(get_post_meta($edition_id, 'estado', true));
-        if ($state === 'cancelada') {
-            return [
-                'status' => 'closed',
-                'from' => null,
-                'until' => $until,
-            ];
-        }
-
-        return [
-            'status' => $timestamp <= $closing->getTimestamp() ? 'open' : 'closed',
-            'from' => null,
-            'until' => $until,
-        ];
+        return ['status' => 'closed', 'from' => null, 'until' => null];
     }
 
     public static function sync_title(int $post_id): void {
@@ -556,14 +499,6 @@ final class FLACSO_Edicion {
             update_post_meta($post_id, 'link_preinscripcion', self::sanitize_registration_url($_POST['link_preinscripcion']));
         }
 
-        // Metadatos legacy: la apertura/cierre ya no se configura con fechas manuales.
-        delete_post_meta($post_id, 'preinscripcion_desde');
-        delete_post_meta($post_id, 'preinscripcion_hasta');
-
-        if (isset($_POST['dias_cierre_post_inicio'])) {
-            update_post_meta($post_id, 'dias_cierre_post_inicio', absint($_POST['dias_cierre_post_inicio']));
-        }
-
         self::sync_title($post_id);
     }
 
@@ -620,14 +555,12 @@ final class FLACSO_Edicion {
             case 'preinscripcion':
                 $url = (string) get_post_meta($post_id, 'link_preinscripcion', true);
                 $abierta = self::accepts_registration($post_id);
-                $days = self::get_days_after_start_limit($post_id);
                 if ($url) {
                     if ($abierta) {
                         echo '<span style="color:#16a34a;font-weight:700;">🟢 Abierta</span><br>';
                     } else {
                         echo '<span style="color:#94a3b8;">⚪ Cerrada</span><br>';
                     }
-                    echo '<small>' . esc_html(sprintf(__('Cierre: %d días después del inicio', 'flacso-uruguay'), $days)) . '</small><br>';
                     echo '<small><a href="' . esc_url($url) . '" target="_blank">Portal externo ↗</a></small>';
                 } else {
                     echo '<span style="color:#94a3b8;">Sin enlace</span>';

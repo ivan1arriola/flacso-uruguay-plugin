@@ -105,14 +105,13 @@ CPT interno: `cohorte`. No tiene URL pública propia.
 | `fecha_inicio`, `fecha_fin` | date | `YYYY-MM-DD` |
 | `precision_fecha_inicio` | enum | `dia`, `mes`, `anio` |
 | `estado` | enum | `planificada`, `en_curso`, `finalizada`, `cancelada` |
-| `calendario_academico` | HTML | detalle temporal |
+| `calendario_academico` | URL | enlace al calendario |
 | `tabla_precio_id` | integer/null | referencia a TablaPrecio |
 | `link_preinscripcion` | URL | debe usar `https://preinscripciones.flacso.edu.uy` |
-| `preinscripcion_desde` | datetime/null | inicio inclusivo |
-| `preinscripcion_hasta` | datetime/null | cierre exclusivo |
+| `preinscripcion_habilitada` | boolean | apertura/cierre manual; sin programacion por fechas |
 
-La apertura no se persiste como booleano: se deriva de estado y fechas. Una
-cohorte cancelada nunca admite preinscripción.
+La apertura se controla manualmente con `preinscripcion_habilitada`. Una
+cohorte cancelada o finalizada nunca admite preinscripcion.
 
 El número romano se obtiene recorriendo, de mayor a menor, la tabla
 `M, CM, D, CD, C, XC, L, XL, X, IX, V, IV, I`; mientras el número restante es
@@ -156,10 +155,7 @@ CPT interno: `edicion`. No tiene URL pública propia.
 | `encuentros_sincronicos` | object[] | `{fecha, hora_inicio, hora_fin, zona_horaria}` |
 | `docentes` | integer[] | docentes efectivos de la edición |
 | `tabla_precio_id` | integer/null | referencia a TablaPrecio |
-| `preinscripcion_desde`, `preinscripcion_hasta` | datetime/null | ventana de apertura |
 | `link_preinscripcion` | URL | debe usar `https://preinscripciones.flacso.edu.uy` |
-| `mensaje_preinscripcion_abierta` | HTML | mensaje opcional |
-| `mensaje_preinscripcion_cerrada` | HTML | mensaje opcional |
 | `mostrar_en_formulario` | boolean | inclusión en catálogo externo |
 | `ediciones_componentes` | object[] | `{edicion_id, orden}` |
 | `es_asincronica` | boolean derivado | verdadero si no hay encuentros sincrónicos |

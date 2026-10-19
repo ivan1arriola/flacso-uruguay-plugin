@@ -6,15 +6,21 @@ if (!defined('ABSPATH') || !defined('WP_CLI') || !WP_CLI) {
 
 /** Normaliza metadatos académicos sin recrear ni cambiar IDs. */
 final class FLACSO_Academic_Meta_Normalizer {
+    /** Retired metadata is kept for recovery, without participating in the public model. */
+    private const ARCHIVED_KEYS = [
+        'objetivo_general', 'objetivos_especificos', 'carga_horaria_descripcion',
+        'forma_aprobacion', 'acreditacion', 'financiacion_html', 'malla_curricular_html',
+        'inscripciones_mensaje', 'inscripciones_mensaje_cerrado', 'calendario_html',
+        'carta_presentacion_html', 'carta_hero_etiqueta', 'carta_cta_titulo',
+    ];
     /** @var string[] */
     private const OFFER_LEGACY_KEYS = [
         'descripcion_html', 'acreditaciones_html', 'coordinacion_academica',
         'asistente_academica_docente_id', 'asistente_academica_rol', 'asistente_academica_correo',
         'cohorte', 'proximo_inicio', 'proximo_inicio_precision', 'inscripciones_abiertas',
-        'inscripciones_mensaje', 'inscripciones_mensaje_cerrado', 'modalidad_html', 'modalidad_resumen',
-        'calendario', 'calendario_html', 'calendario_modo', 'malla_curricular_modo',
+        'modalidad_html', 'modalidad_resumen',
+        'calendario', 'calendario_modo', 'malla_curricular_modo',
         'precios_nota', 'tabla_precios_tipo', 'tabla_precio_id', 'precios_filas', 'precio', 'costo',
-        'carta_presentacion_html', 'carta_hero_etiqueta', 'carta_cta_titulo',
         'carta_instancias_presenciales', 'visibilidad_carta', 'objetivos_html',
     ];
 
@@ -219,10 +225,6 @@ final class FLACSO_Academic_Meta_Normalizer {
         } elseif ($current_calendar !== '' && $calendar !== '' && $current_calendar !== $calendar) {
             $plan['conflicts'][] = sprintf('Oferta %d: el calendario de oferta difiere del de cohorte %d.', $offer_id, $cohort_id);
         }
-        $calendar_description = (string) get_post_meta($offer_id, 'calendario_html', true);
-        if ($calendar_description !== '' && get_post_meta($cohort_id, 'calendario_descripcion', true) === '') {
-            self::set($plan, $cohort_id, 'calendario_descripcion', $calendar_description);
-        }
 
         $canonical_documents = [];
         if (!empty($documents['cartamalla'])) {
@@ -238,11 +240,6 @@ final class FLACSO_Academic_Meta_Normalizer {
     private static function move_operational_fields(array &$plan, int $offer_id, int $cohort_id): void {
         $moves = [
             'modalidad_html' => 'modalidad_descripcion',
-            'inscripciones_mensaje' => 'mensaje_preinscripcion_abierta',
-            'inscripciones_mensaje_cerrado' => 'mensaje_preinscripcion_cerrada',
-            'carta_presentacion_html' => 'presentacion_preinscripcion',
-            'carta_hero_etiqueta' => 'etiqueta_preinscripcion',
-            'carta_cta_titulo' => 'cta_preinscripcion',
         ];
         foreach ($moves as $source => $target) {
             $value = get_post_meta($offer_id, $source, true);
@@ -297,6 +294,9 @@ final class FLACSO_Academic_Meta_Normalizer {
         $registered = array_keys(get_registered_meta_keys('post', FLACSO_Oferta_Academica::POST_TYPE));
         foreach ($offer_ids as $offer_id) {
             foreach (get_post_meta((int) $offer_id) as $key => $values) {
+                if (in_array($key, self::ARCHIVED_KEYS, true)) {
+                    continue;
+                }
                 if ($key === '' || $key[0] === '_' || in_array($key, $registered, true) || in_array($key, self::OFFER_LEGACY_KEYS, true)) {
                     continue;
                 }

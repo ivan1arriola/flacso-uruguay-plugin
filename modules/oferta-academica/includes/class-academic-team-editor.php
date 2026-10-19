@@ -67,7 +67,7 @@ final class FLACSO_Academic_Team_Editor {
      */
     public static function sanitize_academic_team($value): array {
         if (!is_array($value)) {
-            return [];
+            $value = [];
         }
 
         $coordination = [];
@@ -110,6 +110,15 @@ final class FLACSO_Academic_Team_Editor {
             $custom[] = $group;
         }
 
+        if (!$coordination) {
+            $coordination[] = [
+                'tipo' => self::TYPE_COORDINATION,
+                'nombre' => 'Coordinación académica',
+                'descripcion' => '',
+                'importancia' => '1',
+                'docentes' => [],
+            ];
+        }
         return array_merge($coordination, $custom);
     }
 
@@ -341,7 +350,11 @@ final class FLACSO_Academic_Team_Editor {
             <input type="hidden" name="<?php echo esc_attr($prefix . '[tipo]'); ?>" value="<?php echo esc_attr($type); ?>">
             <div class="flacso-team-group__heading">
                 <strong><?php echo esc_html($name !== '' ? $name : __('Grupo estable', 'flacso-uruguay')); ?></strong>
+                <?php if ($type !== self::TYPE_COORDINATION) : ?>
                 <button type="button" class="button-link-delete" data-remove-team><?php esc_html_e('Eliminar grupo', 'flacso-uruguay'); ?></button>
+                <?php else : ?>
+                    <span><?php esc_html_e('Grupo obligatorio', 'flacso-uruguay'); ?></span>
+                <?php endif; ?>
             </div>
 
             <div class="flacso-team-grid">

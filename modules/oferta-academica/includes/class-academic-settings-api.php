@@ -77,10 +77,7 @@ final class FLACSO_Academic_Settings_API {
         return rest_ensure_response([
             "ok" => true,
             "data" => [
-                "financiacion_html" => get_option("flacso_financiacion_html", ""),
-                "inscripciones_mensaje_abierto_default" => get_option("flacso_inscripciones_mensaje_abierto_default", "Descuentos especiales disponibles. Solicitá información e inscribite hoy."),
-                "inscripciones_mensaje_cerrado_default" => get_option("flacso_inscripciones_mensaje_cerrado_default", "Mantente atento a nuestras próximas aperturas."),
-                "carta_cta_titulo_default" => get_option("flacso_carta_cta_titulo_default", "Comenzá tu postulación"),
+                "financiacion_html" => get_option("flacso_financiacion_html", get_option("flacso_carta_mas_info_financiacion_html", "")),
                 "mensaje_bienvenida" => get_option("flacso_mensaje_bienvenida", ""),
                 "flacso_webhook_token" => $masked_token,
                 "flacso_google_drive_folder_id" => get_option("flacso_google_drive_folder_id", ""),
@@ -96,7 +93,7 @@ final class FLACSO_Academic_Settings_API {
                 "carta_mas_info_gestion_title" => get_option("flacso_carta_mas_info_gestion_title", self::DEFAULT_CARTA_MAS_INFO_GESTION_TITLE),
                 "carta_mas_info_gestion_html" => get_option("flacso_carta_mas_info_gestion_html", self::DEFAULT_CARTA_MAS_INFO_GESTION_HTML),
                 "carta_mas_info_financiacion_title" => get_option("flacso_carta_mas_info_financiacion_title", self::DEFAULT_CARTA_MAS_INFO_FINANCIACION_TITLE),
-                "carta_mas_info_financiacion_html" => get_option("flacso_carta_mas_info_financiacion_html", self::DEFAULT_CARTA_MAS_INFO_FINANCIACION_HTML),
+                "carta_mas_info_financiacion_html" => get_option("flacso_financiacion_html", get_option("flacso_carta_mas_info_financiacion_html", "")),
 
                 // Variables de integraciones
                 "fc_consultas_webhook_url" => get_option("fc_consultas_webhook_url", ""),
@@ -132,15 +129,6 @@ final class FLACSO_Academic_Settings_API {
 
         if (isset($payload["financiacion_html"])) {
             update_option("flacso_financiacion_html", wp_kses_post($payload["financiacion_html"]));
-        }
-        if (isset($payload["inscripciones_mensaje_abierto_default"])) {
-            update_option("flacso_inscripciones_mensaje_abierto_default", sanitize_text_field($payload["inscripciones_mensaje_abierto_default"]));
-        }
-        if (isset($payload["inscripciones_mensaje_cerrado_default"])) {
-            update_option("flacso_inscripciones_mensaje_cerrado_default", sanitize_text_field($payload["inscripciones_mensaje_cerrado_default"]));
-        }
-        if (isset($payload["carta_cta_titulo_default"])) {
-            update_option("flacso_carta_cta_titulo_default", sanitize_text_field($payload["carta_cta_titulo_default"]));
         }
         if (isset($payload["mensaje_bienvenida"])) {
             update_option("flacso_mensaje_bienvenida", wp_kses_post($payload["mensaje_bienvenida"]));
@@ -187,8 +175,8 @@ final class FLACSO_Academic_Settings_API {
         if (isset($payload["carta_mas_info_financiacion_title"])) {
             update_option("flacso_carta_mas_info_financiacion_title", sanitize_text_field($payload["carta_mas_info_financiacion_title"]));
         }
-        if (isset($payload["carta_mas_info_financiacion_html"])) {
-            update_option("flacso_carta_mas_info_financiacion_html", wp_kses_post($payload["carta_mas_info_financiacion_html"]));
+        if (isset($payload["carta_mas_info_financiacion_html"]) && !isset($payload["financiacion_html"])) {
+            update_option("flacso_financiacion_html", wp_kses_post($payload["carta_mas_info_financiacion_html"]));
         }
 
         // Variables de integraciones

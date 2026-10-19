@@ -23,6 +23,48 @@ final class FLACSO_Oferta_Admin_Fields {
         add_action('admin_head-post-new.php', [self::class, 'render_styles']);
         add_action('admin_footer-post.php', [self::class, 'render_scripts']);
         add_action('admin_footer-post-new.php', [self::class, 'render_scripts']);
+        add_action('admin_menu', [self::class, 'add_shared_settings']);
+        add_action('admin_init', [self::class, 'register_shared_settings']);
+        add_action('add_meta_boxes', [self::class, 'remove_theme_settings'], 100);
+        add_filter('views_edit-' . FLACSO_Oferta_Academica::POST_TYPE, [self::class, 'funding_link']);
+    }
+
+    public static function remove_theme_settings(): void {
+        foreach (['normal', 'side', 'advanced'] as $context) {
+            remove_meta_box('_kad_classic_meta_control', FLACSO_Oferta_Academica::POST_TYPE, $context);
+        }
+    }
+
+    public static function add_shared_settings(): void {
+        add_submenu_page(FLACSO_Admin_Panel::PAGE_SLUG, 'Financiación - Texto', 'Financiación - Texto', 'manage_options', 'flacso-financiacion', [self::class, 'render_shared_settings']);
+    }
+
+    public static function funding_link(array $views): array {
+        if (current_user_can('manage_options')) {
+            $views['financiacion'] = '<a href="' . esc_url(admin_url('admin.php?page=flacso-financiacion')) . '">Financiación - Texto</a>';
+        }
+        return $views;
+    }
+
+    public static function register_shared_settings(): void {
+        register_setting('flacso_financiacion', 'flacso_financiacion_html', ['type' => 'string', 'sanitize_callback' => 'wp_kses_post']);
+    }
+
+    public static function render_shared_settings(): void {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+        ?>
+        <div class="wrap">
+            <h1>Financiación - Texto</h1>
+            <p>Este contenido se muestra en todas las ofertas académicas y sus cartas.</p>
+            <form method="post" action="options.php">
+                <?php settings_fields('flacso_financiacion'); ?>
+                <?php wp_editor((string) get_option('flacso_financiacion_html', get_option('flacso_carta_mas_info_financiacion_html', '')), 'flacso_financiacion_html', ['textarea_name' => 'flacso_financiacion_html', 'media_buttons' => false, 'editor_height' => 360]); ?>
+                <?php submit_button(); ?>
+            </form>
+        </div>
+        <?php
     }
 
     public static function render_admin_notices(): void {
@@ -86,11 +128,11 @@ final class FLACSO_Oferta_Admin_Fields {
         ]);
         $sections = [
             'general' => [FLACSO_Oferta_Academica::META_PROGRAM_ID, 'abreviacion', 'correo', FLACSO_Oferta_Academica::META_PRESENTATION_COLORS],
-            'presentation' => ['presentacion', 'objetivo_general', 'objetivos_especificos'],
-            'course' => ['duracion_meses', 'duracion_html', 'carga_horaria', 'carga_horaria_descripcion', 'creditos', 'forma_aprobacion'],
+            'presentation' => ['presentacion'],
+            'course' => ['duracion_meses', 'duracion_html', 'carga_horaria', 'creditos'],
             'profiles' => ['perfil_ingreso_html', 'requisitos_ingreso_html', 'perfil_egreso_html', 'requisitos_egreso_html'],
-            'certification' => ['titulos_certificaciones_html', 'acreditacion', 'financiacion_html'],
-            'curriculum' => ['malla_curricular', 'malla_curricular_html', 'menciones', 'orientaciones', 'titulos_intermedios'],
+            'certification' => ['titulos_certificaciones_html'],
+            'curriculum' => ['malla_curricular', 'menciones', 'orientaciones', 'titulos_intermedios'],
         ];
         [$completed, $total] = self::completion($post->ID, array_merge(...array_values($sections)));
 
@@ -167,21 +209,18 @@ final class FLACSO_Oferta_Admin_Fields {
             </div>
             <?php self::section_end(); ?>
 
-            <?php self::section_start($post->ID, 'presentacion-objetivos', __('Presentación y objetivos', 'flacso-uruguay'), __('Explica de qué trata la propuesta, por qué es relevante y qué busca lograr.', 'flacso-uruguay'), $sections['presentation'], 'dashicons-text-page'); ?>
+            <?php self::section_start($post->ID, 'presentacion-objetivos', __('Presentación', 'flacso-uruguay'), __('Explica de qué trata la propuesta, por qué es relevante y qué busca lograr.', 'flacso-uruguay'), $sections['presentation'], 'dashicons-text-page'); ?>
             <?php self::rich_editor($post->ID, 'presentacion', __('Presentación', 'flacso-uruguay'), __('Texto introductorio que se muestra al comienzo de la página pública.', 'flacso-uruguay'), 8); ?>
-            <?php self::rich_editor($post->ID, 'objetivo_general', __('Objetivo general', 'flacso-uruguay')); ?>
-            <?php self::list_field($post->ID, 'objetivos_especificos', __('Objetivos específicos', 'flacso-uruguay'), __('Escribí un objetivo por línea.', 'flacso-uruguay'), true); ?>
             <?php self::section_end(); ?>
 
-            <?php self::section_start($post->ID, 'cursado-aprobacion', __('Cursado y aprobación', 'flacso-uruguay'), __('Duración, dedicación, créditos y condiciones académicas de aprobación.', 'flacso-uruguay'), $sections['course'], 'dashicons-clock'); ?>
+            <?php self::section_start($post->ID, 'cursado-aprobacion', __('Cursado', 'flacso-uruguay'), __('Duración, dedicación y créditos de la oferta.', 'flacso-uruguay'), $sections['course'], 'dashicons-clock'); ?>
             <div class="flacso-oferta-grid flacso-oferta-grid--three">
                 <?php self::text_field($post->ID, 'duracion_meses', __('Duración (meses)', 'flacso-uruguay'), 'number'); ?>
                 <?php self::text_field($post->ID, 'carga_horaria', __('Carga horaria', 'flacso-uruguay'), 'number'); ?>
                 <?php self::text_field($post->ID, 'creditos', __('Créditos', 'flacso-uruguay'), 'number'); ?>
-                <?php self::text_field($post->ID, 'carga_horaria_descripcion', __('Descripción breve de carga horaria', 'flacso-uruguay'), 'text', true); ?>
+                <?php self::text_field($post->ID, __('Descripción breve de carga horaria', 'flacso-uruguay'), 'text', true); ?>
             </div>
             <?php self::rich_editor($post->ID, 'duracion_html', __('Descripción de duración', 'flacso-uruguay'), __('Usala cuando meses, semanas, encuentros u horas necesiten una explicación más detallada.', 'flacso-uruguay')); ?>
-            <?php self::rich_editor($post->ID, 'forma_aprobacion', __('Forma de aprobación', 'flacso-uruguay')); ?>
             <?php self::section_end(); ?>
 
             <?php self::section_start($post->ID, 'perfiles-requisitos', __('Perfiles y requisitos', 'flacso-uruguay'), __('Diferencia claramente a quién está dirigida la propuesta y qué debe cumplir para ingresar y egresar.', 'flacso-uruguay'), $sections['profiles'], 'dashicons-id-alt'); ?>
@@ -193,17 +232,14 @@ final class FLACSO_Oferta_Admin_Fields {
             </div>
             <?php self::section_end(); ?>
 
-            <?php self::section_start($post->ID, 'titulacion-financiacion', __('Titulación, acreditación y financiación', 'flacso-uruguay'), __('Resultados formales de la formación y condiciones institucionales asociadas.', 'flacso-uruguay'), $sections['certification'], 'dashicons-awards'); ?>
+            <?php self::section_start($post->ID, 'titulacion-financiacion', __('Titulación', 'flacso-uruguay'), __('Resultados formales de la formación y condiciones institucionales asociadas.', 'flacso-uruguay'), $sections['certification'], 'dashicons-awards'); ?>
             <?php self::rich_editor($post->ID, 'titulos_certificaciones_html', __('Títulos y certificaciones', 'flacso-uruguay')); ?>
-            <?php self::rich_editor($post->ID, 'acreditacion', __('Acreditación', 'flacso-uruguay')); ?>
-            <?php self::rich_editor($post->ID, 'financiacion_html', __('Financiación', 'flacso-uruguay')); ?>
             <?php self::section_end(); ?>
 
             <?php self::section_start($post->ID, 'plan-estudios', __('Plan de estudios', 'flacso-uruguay'), __('Malla curricular y variantes académicas de la propuesta.', 'flacso-uruguay'), $sections['curriculum'], 'dashicons-welcome-learn-more'); ?>
             <div class="flacso-oferta-grid">
                 <?php self::text_field($post->ID, 'malla_curricular', __('URL de malla curricular', 'flacso-uruguay'), 'url', true, __('Admite un PDF o un documento público accesible por enlace.', 'flacso-uruguay')); ?>
             </div>
-            <?php self::rich_editor($post->ID, 'malla_curricular_html', __('Descripción de malla curricular', 'flacso-uruguay'), __('Se utiliza como contenido complementario o alternativa al documento enlazado.', 'flacso-uruguay'), 8); ?>
             <div class="flacso-oferta-grid">
                 <?php self::list_field($post->ID, 'menciones', __('Menciones', 'flacso-uruguay')); ?>
                 <?php self::list_field($post->ID, 'orientaciones', __('Orientaciones', 'flacso-uruguay')); ?>
@@ -221,6 +257,7 @@ final class FLACSO_Oferta_Admin_Fields {
                 </summary>
                 <div class="flacso-oferta-section__body">
                     <div class="flacso-oferta-checks">
+                        <?php $flag_descriptions = ['reconocido_mec' => 'Muestra el reconocimiento del MEC en la página de la oferta y en la carta.','reconocimiento_internacional' => 'Muestra la información de reconocimiento internacional en la página y en la carta.','convenio_iin_oea' => 'Muestra el distintivo del convenio IIN/OEA en la página y en la carta.','mostrar_costos_envio' => 'Incluye en la carta la información sobre los costos de envío del título.','mostrar_expedicion_titulo' => 'Incluye en la carta la información sobre la expedición del título.']; ?>
                         <?php foreach ([
                             'reconocido_mec' => __('Reconocido por MEC', 'flacso-uruguay'),
                             'reconocimiento_internacional' => __('Reconocimiento internacional', 'flacso-uruguay'),
@@ -228,7 +265,7 @@ final class FLACSO_Oferta_Admin_Fields {
                             'mostrar_costos_envio' => __('Mostrar costos de envío', 'flacso-uruguay'),
                             'mostrar_expedicion_titulo' => __('Mostrar expedición de título', 'flacso-uruguay'),
                         ] as $key => $label) : ?>
-                            <label><input type="checkbox" name="flacso_oferta[<?php echo esc_attr($key); ?>]" value="1" <?php checked(rest_sanitize_boolean(self::meta($post->ID, $key, false))); ?>><span><?php echo esc_html($label); ?></span></label>
+                            <label><input type="checkbox" name="flacso_oferta[<?php echo esc_attr($key); ?>]" value="1" <?php checked(rest_sanitize_boolean(self::meta($post->ID, $key, false))); ?>><span><?php echo esc_html($label); ?><small><?php echo esc_html($flag_descriptions[$key]); ?></small></span></label>
                         <?php endforeach; ?>
                     </div>
                 </div>
@@ -329,7 +366,14 @@ final class FLACSO_Oferta_Admin_Fields {
                 'textarea_name' => 'flacso_oferta[' . $key . ']',
                 'textarea_rows' => $rows,
                 'media_buttons' => false,
-                'teeny' => true,
+                'teeny' => false,
+                'editor_height' => 240,
+                'tinymce' => [
+                    'toolbar1' => 'formatselect,bold,italic,bullist,numlist,blockquote,link,unlink,undo,redo,wp_fullscreen',
+                    'toolbar2' => 'pastetext,removeformat,charmap,outdent,indent,wp_help',
+                    'block_formats' => 'Párrafo=p;Subtítulo=h3;Subtítulo menor=h4',
+                    'content_style' => 'body { font: 16px/1.65 system-ui, sans-serif; padding: 16px; max-width: 760px; margin: auto; }',
+                ],
             ]); ?>
         </div>
         <?php
@@ -342,12 +386,16 @@ final class FLACSO_Oferta_Admin_Fields {
             return is_array($item) ? wp_strip_all_tags((string) ($item['contenido'] ?? $item['titulo'] ?? '')) : wp_strip_all_tags((string) $item);
         }, $value);
         ?>
-        <label class="flacso-oferta-field <?php echo $full ? 'flacso-oferta-field--full' : ''; ?>">
-            <span><?php echo esc_html($label); ?></span>
-            <?php if ($help !== '') : ?><small><?php echo esc_html($help); ?></small><?php endif; ?>
-            <textarea rows="5" name="flacso_oferta_lists[<?php echo esc_attr($key); ?>]"><?php echo esc_textarea(implode("\n", array_filter($lines))); ?></textarea>
-            <?php if ($help === '') : ?><small><?php esc_html_e('Un elemento por línea.', 'flacso-uruguay'); ?></small><?php endif; ?>
-        </label>
+        <div class="flacso-oferta-field <?php echo $full ? 'flacso-oferta-field--full' : ''; ?>" data-offer-list>
+            <strong><?php echo esc_html($label); ?></strong>
+            <div data-list-items>
+                <?php foreach (array_filter($lines) as $line) : ?>
+                    <div class="flacso-list-row"><input type="text" aria-label="<?php echo esc_attr($label); ?>" name="flacso_oferta_lists[<?php echo esc_attr($key); ?>][]" value="<?php echo esc_attr($line); ?>"><button type="button" class="button" data-list-remove aria-label="Eliminar elemento">−</button></div>
+                <?php endforeach; ?>
+            </div>
+            <template><div class="flacso-list-row"><input type="text" aria-label="<?php echo esc_attr($label); ?>" name="flacso_oferta_lists[<?php echo esc_attr($key); ?>][]" value=""><button type="button" class="button" data-list-remove aria-label="Eliminar elemento">−</button></div></template>
+            <button type="button" class="button" data-list-add>+ Agregar elemento</button>
+        </div>
         <?php
     }
 
@@ -369,22 +417,16 @@ final class FLACSO_Oferta_Admin_Fields {
             FLACSO_Oferta_Academica::META_PROGRAM_ID => 'absint',
             'correo' => 'sanitize_email',
             'presentacion' => 'wp_kses_post',
-            'objetivo_general' => 'wp_kses_post',
-            'forma_aprobacion' => 'wp_kses_post',
             'duracion_meses' => [FLACSO_Oferta_Academica::class, 'sanitize_number'],
             'duracion_html' => 'wp_kses_post',
             'carga_horaria' => [FLACSO_Oferta_Academica::class, 'sanitize_number'],
-            'carga_horaria_descripcion' => 'sanitize_text_field',
             'creditos' => [FLACSO_Oferta_Academica::class, 'sanitize_number'],
-            'acreditacion' => 'wp_kses_post',
             'perfil_ingreso_html' => 'wp_kses_post',
             'requisitos_ingreso_html' => 'wp_kses_post',
             'perfil_egreso_html' => 'wp_kses_post',
             'requisitos_egreso_html' => 'wp_kses_post',
             'titulos_certificaciones_html' => 'wp_kses_post',
-            'financiacion_html' => 'wp_kses_post',
             'malla_curricular' => 'esc_url_raw',
-            'malla_curricular_html' => 'wp_kses_post',
         ];
 
         foreach ($sanitizers as $key => $sanitizer) {
@@ -410,15 +452,11 @@ final class FLACSO_Oferta_Admin_Fields {
             delete_post_meta($post_id, 'abreviacion');
         }
 
-        foreach (['objetivos_especificos', 'menciones', 'orientaciones', 'titulos_intermedios'] as $key) {
-            $raw = (string) ($lists[$key] ?? '');
-            $items = preg_split('/\R/u', $raw) ?: [];
+        foreach (['menciones', 'orientaciones', 'titulos_intermedios'] as $key) {
+            $raw = $lists[$key] ?? [];
+            $items = is_array($raw) ? $raw : (preg_split('/\R/u', (string) $raw) ?: []);
             $items = array_values(array_filter(array_map('sanitize_text_field', $items), static fn(string $item): bool => $item !== ''));
-            if ($key === 'objetivos_especificos') {
-                $items = FLACSO_Oferta_Academica::sanitize_html_list($items);
-            } else {
-                $items = FLACSO_Oferta_Academica::sanitize_text_list($items);
-            }
+            $items = FLACSO_Oferta_Academica::sanitize_text_list($items);
             $items ? update_post_meta($post_id, $key, $items) : delete_post_meta($post_id, $key);
         }
 
@@ -492,6 +530,8 @@ final class FLACSO_Oferta_Admin_Fields {
             .flacso-oferta-field input,.flacso-oferta-field select,.flacso-oferta-field textarea { width:100%; max-width:none; }
             .flacso-oferta-field input,.flacso-oferta-field select { min-height:38px; }
             .flacso-oferta-field--full { grid-column:1/-1; }
+            .flacso-list-row { display:flex; gap:8px; margin:8px 0; }
+            .flacso-oferta-checks small { display:block; margin-top:5px; color:#646970; }
             .flacso-oferta-editor-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
             .flacso-oferta-editor { min-width:0; margin-top:18px; }
             .flacso-oferta-editor-grid .flacso-oferta-editor { margin-top:16px; }
@@ -529,6 +569,21 @@ final class FLACSO_Oferta_Admin_Fields {
         (function () {
             var root = document.querySelector('.flacso-oferta-fields');
             if (!root) return;
+            root.addEventListener('click', function (event) {
+                var add = event.target.closest('[data-list-add]');
+                var remove = event.target.closest('[data-list-remove]');
+                if (add) {
+                    var list = add.closest('[data-offer-list]');
+                    var items = list.querySelector('[data-list-items]');
+                    items.appendChild(list.querySelector('template').content.cloneNode(true));
+                    items.lastElementChild.querySelector('input').focus();
+                }
+                if (remove) {
+                    var list = remove.closest('[data-offer-list]');
+                    remove.closest('.flacso-list-row').remove();
+                    list.querySelector('[data-list-add]').focus();
+                }
+            });
 
             root.querySelectorAll('[data-flacso-sections]').forEach(function (button) {
                 button.addEventListener('click', function () {

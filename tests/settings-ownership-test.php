@@ -89,7 +89,7 @@ ownership_assert(strpos($portada, "flacso_nav_announcement_enabled") !== false, 
 ownership_assert(strpos($portada_ajax, "flacso_nav_announcement_enabled") !== false, 'Portada debe guardar opciones del anuncio');
 
 // Seminarios es dueño de su comportamiento global.
-ownership_assert(strpos($seminars, "flacso_seminarios_dias_cierre_post_inicio") !== false, 'Seminarios debe ser dueño de días de cierre');
+ownership_assert(strpos($seminars, "flacso_seminarios_dias_cierre_post_inicio") === false, 'Seminarios no programa cierres automaticos');
 
 // Oferta ya no conoce un endpoint externo.
 ownership_assert(strpos($offer_form, "FLACSO_Offer_Inquiry_Service::submit") !== false, 'Formulario de Oferta debe usar el servicio interno');

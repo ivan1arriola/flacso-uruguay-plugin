@@ -58,12 +58,6 @@ final class FLACSO_Edicion_Admin_Fields {
         $docentes = self::get_selected_ids($post->ID, 'docentes');
         $encuentros = get_post_meta($post->ID, 'encuentros_sincronicos', true);
         $encuentros = is_array($encuentros) ? $encuentros : [];
-        $dias_cierre = get_post_meta($post->ID, 'dias_cierre_post_inicio', true);
-        $dias_cierre = ($dias_cierre === '' || $dias_cierre === false)
-            ? FLACSO_Edicion::get_days_after_start_limit($post->ID)
-            : absint($dias_cierre);
-        $mensaje_abierta = (string) get_post_meta($post->ID, 'mensaje_preinscripcion_abierta', true);
-        $mensaje_cerrada = (string) get_post_meta($post->ID, 'mensaje_preinscripcion_cerrada', true);
         $mostrar = metadata_exists('post', $post->ID, 'mostrar_en_formulario')
             ? rest_sanitize_boolean(get_post_meta($post->ID, 'mostrar_en_formulario', true))
             : true;
@@ -158,25 +152,10 @@ final class FLACSO_Edicion_Admin_Fields {
                 <h3><?php esc_html_e('Publicación y preinscripción', 'flacso-uruguay'); ?></h3>
                 <div class="flacso-edicion-grid">
                     <div class="flacso-edicion-field">
-                        <label for="flacso-dias-cierre"><?php esc_html_e('Cerrar preinscripción después del inicio', 'flacso-uruguay'); ?></label>
-                        <input id="flacso-dias-cierre" type="number" min="0" max="365" name="dias_cierre_post_inicio" value="<?php echo esc_attr((string) $dias_cierre); ?>">
-                        <p class="description"><?php esc_html_e('Cantidad de días después de la fecha de inicio.', 'flacso-uruguay'); ?></p>
-                    </div>
-                    <div class="flacso-edicion-field">
                         <label class="flacso-edicion-switch">
                             <input type="checkbox" name="mostrar_en_formulario" value="1" <?php checked($mostrar); ?>>
                             <?php esc_html_e('Mostrar esta edición en formularios y selectores públicos', 'flacso-uruguay'); ?>
                         </label>
-                    </div>
-                </div>
-                <div class="flacso-edicion-grid" style="margin-top:12px;">
-                    <div class="flacso-edicion-field">
-                        <label for="flacso-mensaje-abierta"><?php esc_html_e('Mensaje con preinscripción abierta', 'flacso-uruguay'); ?></label>
-                        <textarea id="flacso-mensaje-abierta" rows="4" name="mensaje_preinscripcion_abierta"><?php echo esc_textarea($mensaje_abierta); ?></textarea>
-                    </div>
-                    <div class="flacso-edicion-field">
-                        <label for="flacso-mensaje-cerrada"><?php esc_html_e('Mensaje con preinscripción cerrada', 'flacso-uruguay'); ?></label>
-                        <textarea id="flacso-mensaje-cerrada" rows="4" name="mensaje_preinscripcion_cerrada"><?php echo esc_textarea($mensaje_cerrada); ?></textarea>
                     </div>
                 </div>
             </section>
@@ -333,10 +312,7 @@ final class FLACSO_Edicion_Admin_Fields {
             : [];
         update_post_meta($post_id, 'encuentros_sincronicos', $encuentros);
 
-        update_post_meta($post_id, 'dias_cierre_post_inicio', absint($_POST['dias_cierre_post_inicio'] ?? 0));
         update_post_meta($post_id, 'mostrar_en_formulario', isset($_POST['mostrar_en_formulario']));
-        update_post_meta($post_id, 'mensaje_preinscripcion_abierta', wp_kses_post(wp_unslash($_POST['mensaje_preinscripcion_abierta'] ?? '')));
-        update_post_meta($post_id, 'mensaje_preinscripcion_cerrada', wp_kses_post(wp_unslash($_POST['mensaje_preinscripcion_cerrada'] ?? '')));
 
         $componentes = isset($_POST['ediciones_componentes']) && is_array($_POST['ediciones_componentes'])
             ? FLACSO_Edicion::sanitize_components(wp_unslash($_POST['ediciones_componentes']))

@@ -55,8 +55,7 @@ final class FLACSO_Oferta_Academica {
     }
 
     public static function normalize_abbreviation(string $raw): string {
-        $clean = function_exists('sanitize_title') ? sanitize_title(strtolower(trim($raw))) : strtolower(trim(preg_replace('/[^a-zA-Z0-9_\-]+/', '-', $raw), '-'));
-        return $clean;
+        return sanitize_text_field(trim($raw));
     }
 
     public static function is_abbreviation_available(string $abbr, int $exclude_post_id = 0): bool {
@@ -93,27 +92,20 @@ final class FLACSO_Oferta_Academica {
             'abreviacion' => ['type' => 'string', 'sanitize_callback' => [self::class, 'normalize_abbreviation']],
             'correo' => ['type' => 'string', 'sanitize_callback' => 'sanitize_email'],
             'presentacion' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
-            'objetivo_general' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
-            'objetivos_especificos' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_html_list']],
             'composicion_academica' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_sections']],
-            'forma_aprobacion' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'duracion_meses' => ['type' => 'number', 'sanitize_callback' => [self::class, 'sanitize_number']],
             'duracion_html' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'carga_horaria' => ['type' => 'number', 'sanitize_callback' => [self::class, 'sanitize_number']],
-            'carga_horaria_descripcion' => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
             'creditos' => ['type' => 'number', 'sanitize_callback' => [self::class, 'sanitize_number']],
-            'acreditacion' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'perfil_ingreso_html' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'requisitos_ingreso_html' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'perfil_egreso_html' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'requisitos_egreso_html' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'titulos_certificaciones_html' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
-            'financiacion_html' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'menciones' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_text_list']],
             'orientaciones' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_text_list']],
             'titulos_intermedios' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_text_list']],
             'malla_curricular' => ['type' => 'string', 'sanitize_callback' => 'esc_url_raw'],
-            'malla_curricular_html' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'documentos' => ['type' => 'object', 'sanitize_callback' => [self::class, 'sanitize_documents']],
             'equipos' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_teams']],
             'reconocido_mec' => ['type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean'],

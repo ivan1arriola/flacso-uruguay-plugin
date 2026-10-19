@@ -422,8 +422,6 @@ try {
             ensure_meta($pdo, $cohorte_id, 'calendario_academico', $d['calendario_academico'] ?? '');
             ensure_meta($pdo, $cohorte_id, 'tabla_precio_id', $tp_id ?: '');
             ensure_meta($pdo, $cohorte_id, 'link_preinscripcion', $link_pre);
-            ensure_meta($pdo, $cohorte_id, 'preinscripcion_desde', $d['preinscripcion_desde'] ?? '');
-            ensure_meta($pdo, $cohorte_id, 'preinscripcion_hasta', $d['preinscripcion_hasta'] ?? '');
             
             $cohorte_map[$source_key] = $cohorte_id;
         }
@@ -476,11 +474,7 @@ try {
             ensure_meta($pdo, $ed_id, 'encuentros_sincronicos', $d['encuentros_sincronicos'] ?? []);
             ensure_meta($pdo, $ed_id, 'docentes', $d['docentes'] ?? []);
             ensure_meta($pdo, $ed_id, 'tabla_precio_id', $d['tabla_precio_id'] ?? '');
-            ensure_meta($pdo, $ed_id, 'preinscripcion_desde', $d['preinscripcion_desde'] ?? '');
-            ensure_meta($pdo, $ed_id, 'preinscripcion_hasta', $d['preinscripcion_hasta'] ?? '');
             ensure_meta($pdo, $ed_id, 'link_preinscripcion', $d['link_preinscripcion'] ?? '');
-            ensure_meta($pdo, $ed_id, 'mensaje_preinscripcion_abierta', $d['mensaje_preinscripcion_abierta'] ?? '');
-            ensure_meta($pdo, $ed_id, 'mensaje_preinscripcion_cerrada', $d['mensaje_preinscripcion_cerrada'] ?? '');
             ensure_meta($pdo, $ed_id, 'mostrar_en_formulario', (bool)($d['mostrar_en_formulario'] ?? false));
             ensure_meta($pdo, $ed_id, 'ediciones_componentes', $d['ediciones_componentes'] ?? []);
 

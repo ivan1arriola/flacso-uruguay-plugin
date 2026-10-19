@@ -17,10 +17,10 @@ edicion_admin_assert(strpos($admin, "name=\"flacso_docentes[]\"") !== false, 'lo
 edicion_admin_assert(strpos($admin, 'flacso-docente-search') !== false, 'el selector de docentes permite buscar');
 edicion_admin_assert(strpos($admin, "sortable({handle:'.dashicons-menu'") !== false, 'los docentes seleccionados se pueden ordenar');
 edicion_admin_assert(strpos($admin, 'encuentros_sincronicos') !== false, 'se editan los encuentros sincrónicos');
-edicion_admin_assert(strpos($admin, 'mensaje_preinscripcion_abierta') !== false, 'se edita el mensaje de preinscripción abierta');
-edicion_admin_assert(strpos($admin, 'mensaje_preinscripcion_cerrada') !== false, 'se edita el mensaje de preinscripción cerrada');
+edicion_admin_assert(strpos($admin, 'mensaje_preinscripcion_abierta') === false, 'no se configura mensaje de apertura');
+edicion_admin_assert(strpos($admin, 'mensaje_preinscripcion_cerrada') === false, 'no se configura mensaje de cierre');
 edicion_admin_assert(strpos($admin, 'mostrar_en_formulario') !== false, 'se edita la visibilidad en formularios');
-edicion_admin_assert(strpos($admin, 'dias_cierre_post_inicio') !== false, 'se edita el cierre automático de preinscripción');
+edicion_admin_assert(strpos($admin, 'dias_cierre_post_inicio') === false, 'no se configura cierre automatico');
 edicion_admin_assert(strpos($admin, 'ediciones_componentes') !== false, 'se editan las ediciones componentes');
 
 echo "OK: contrato del editor de Edición\n";

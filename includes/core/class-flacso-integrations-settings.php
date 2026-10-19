@@ -32,7 +32,6 @@ class FLACSO_Integrations_Settings {
     private const OPTION_MAILJET_LIST_ID = 'flacso_mailjet_list_id';
     private const OPTION_MAILJET_SENDER_EMAIL = 'flacso_mailjet_sender_email';
     private const OPTION_MAILJET_SENDER_NAME = 'flacso_mailjet_sender_name';
-    private const OPTION_CARTA_CTA_TITULO_DEFAULT = 'flacso_carta_cta_titulo_default';
     private const OPTION_META_ENABLED = 'flacso_meta_enabled';
     private const OPTION_META_PIXEL_ID = 'flacso_meta_pixel_id';
     private const OPTION_META_ACCESS_TOKEN = 'flacso_meta_access_token';
