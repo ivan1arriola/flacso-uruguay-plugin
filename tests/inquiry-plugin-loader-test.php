@@ -84,9 +84,11 @@ if ($main_page_pos !== false) {
 // =========================================================================
 // 3. Simular carga de modules/consultas/init.php en proceso aislado con helpers (flacso_safe_require)
 // =========================================================================
+$root_escaped = str_replace('\\', '/', $root);
+$d = DIRECTORY_SEPARATOR === '\\' ? '$' : '\$';
 $isolated_script_with_helpers = sprintf(
-    'php -r "%s if (!function_exists(\'add_action\')) { function add_action(\$t, \$c = null, \$p = 10, \$a = 1) { return true; } } define(\'ABSPATH\', \'%s/\'); define(\'FLACSO_URUGUAY_VERSION\', \'7.0.0\'); define(\'FLACSO_URUGUAY_PATH\', \'%s/\'); require_once \'%s/includes/core/helpers.php\'; require_once \'%s/modules/consultas/init.php\'; ' .
-    '\$ok = class_exists(\'FLACSO_DB\') && ' .
+    'php -r "%s if (!function_exists(\'add_action\')) { function add_action(%st, %sc = null, %sp = 10, %sa = 1) { return true; } } define(\'ABSPATH\', \'%s/\'); define(\'FLACSO_URUGUAY_VERSION\', \'7.0.0\'); define(\'FLACSO_URUGUAY_PATH\', \'%s/\'); require_once \'%s/includes/core/helpers.php\'; require_once \'%s/modules/consultas/init.php\'; ' .
+    '%sok = class_exists(\'FLACSO_DB\') && ' .
     'class_exists(\'FLACSO_Base_Inquiry_Repository\') && ' .
     'class_exists(\'FLACSO_Offer_Inquiry_Repository\') && ' .
     'class_exists(\'FLACSO_Seminar_Inquiry_Repository\') && ' .
@@ -94,15 +96,18 @@ $isolated_script_with_helpers = sprintf(
     'class_exists(\'FLACSO_Seminar_Inquiry_Service\') && ' .
     'defined(\'FLACSO_CONSULTAS_MODULE_PATH\') && ' .
     'defined(\'FLACSO_CONSULTAS_MODULE_VERSION\'); ' .
-    'exit(\$ok ? 0 : 3);"',
+    'exit(%sok ? 0 : 3);"',
     '',
-    addslashes($root),
-    addslashes($root),
-    addslashes($root),
-    addslashes($root)
+    $d, $d, $d, $d,
+    $root_escaped,
+    $root_escaped,
+    $root_escaped,
+    $root_escaped,
+    $d,
+    $d
 );
 
-exec($isolated_script_with_helpers, $out_helpers, $code_helpers);
+exec($isolated_script_with_helpers . ' 2>&1', $out_helpers, $code_helpers);
 loader_assert($code_helpers === 0, "Carga aislada con flacso_safe_require debe retornar 0 y definir todas las clases y constantes (código recibido: {$code_helpers})");
 
 // =========================================================================
@@ -110,7 +115,7 @@ loader_assert($code_helpers === 0, "Carga aislada con flacso_safe_require debe r
 // =========================================================================
 $isolated_script_without_helpers = sprintf(
     'php -r "%s define(\'ABSPATH\', \'%s/\'); define(\'FLACSO_URUGUAY_VERSION\', \'7.0.0\'); define(\'FLACSO_URUGUAY_PATH\', \'%s/\'); require_once \'%s/modules/consultas/init.php\'; ' .
-    '\$ok = class_exists(\'FLACSO_DB\') && ' .
+    '%sok = class_exists(\'FLACSO_DB\') && ' .
     'class_exists(\'FLACSO_Base_Inquiry_Repository\') && ' .
     'class_exists(\'FLACSO_Offer_Inquiry_Repository\') && ' .
     'class_exists(\'FLACSO_Seminar_Inquiry_Repository\') && ' .
@@ -118,14 +123,16 @@ $isolated_script_without_helpers = sprintf(
     'class_exists(\'FLACSO_Seminar_Inquiry_Service\') && ' .
     'defined(\'FLACSO_CONSULTAS_MODULE_PATH\') && ' .
     'defined(\'FLACSO_CONSULTAS_MODULE_VERSION\'); ' .
-    'exit(\$ok ? 0 : 4);"',
+    'exit(%sok ? 0 : 4);"',
     '',
-    addslashes($root),
-    addslashes($root),
-    addslashes($root)
+    $root_escaped,
+    $root_escaped,
+    $root_escaped,
+    $d,
+    $d
 );
 
-exec($isolated_script_without_helpers, $out_no_helpers, $code_no_helpers);
+exec($isolated_script_without_helpers . ' 2>&1', $out_no_helpers, $code_no_helpers);
 loader_assert($code_no_helpers === 0, "Carga aislada sin flacso_safe_require debe retornar 0 y definir todas las clases y constantes vía fallback require_once (código recibido: {$code_no_helpers})");
 
 // =========================================================================

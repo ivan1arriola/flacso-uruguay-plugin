@@ -1,0 +1,22 @@
+## How to make changes to the live website when requested:
+- **Code, Design, Template or Block changes**: Edit files in `modules/<domain>/` -> Validate with `python scripts/agent_check.py --diff` -> Commit and push to `origin main`. GitHub Actions will automatically deploy to production via SSH in ~60s.
+- **Content, Post, Page or Setting changes**: Use `python scripts/flacso_api.py` with WP REST API. For example:
+  - `python scripts/flacso_api.py get /ofertas`
+  - `python scripts/flacso_api.py patch /cohortes/123 --json '{"fecha_inicio":"2027-03-15"}'`
+  - `python scripts/flacso_api.py post /update-content --json '{"id": 123, "content": "..."}'`
+
+## Core Directives for Cursor AI
+1. **Architecture by Domain**: All code belongs to its business domain in `modules/<domain>/`. Do not organize by technical mechanism (no top-level shortcode or block folders). NEVER add new code to legacy modules (`modules/posgrados/`, `modules/shortcodes/`).
+2. **Module Registry**: Every module is declared in `includes/core/class-flacso-module-registry.php`. Use `flacso_require()` for critical dependencies.
+3. **Encoding & PHP Compatibility**: All files must be UTF-8 without BOM. Zero mojibake characters. Code must be compatible with PHP 7.4+ and WordPress 6.0+.
+4. **Database Safety**: Never interpolate variables directly into SQL queries; always use `$wpdb->prepare()`. When building WHERE clauses, do not nest `WHERE` inside `WHERE`.
+5. **Academic Entities**:
+   - `Cohorte` belongs to `OfertaAcademica` (internal CPT, Roman numeral label derived automatically).
+   - `Edicion` belongs to `Seminario` (internal CPT).
+   - Preinscriptions always point to `https://preinscripciones.flacso.edu.uy`.
+   - Communications run exclusively through Mautic.
+6. **Mandatory Verification**: Before concluding any task, run:
+   ```bash
+   python scripts/agent_check.py --diff
+   ```
+   Do not commit if any check fails.

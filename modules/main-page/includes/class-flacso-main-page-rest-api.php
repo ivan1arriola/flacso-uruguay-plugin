@@ -5,6 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Flacso_Main_Page_REST_API {
+    public const SCHEMA_VERSION = 2;
     private const REST_NAMESPACE = 'flacso/v1';
     private const REST_ROUTE = '/main-page';
     private const LEGACY_REST_ROUTE = '/main-page/settings';

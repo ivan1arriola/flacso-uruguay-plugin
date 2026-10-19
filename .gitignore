@@ -8,6 +8,10 @@ __pycache__/
 *.orig
 *.rej
 
+# Local environment & secrets
+.env
+.env.local
+
 # One-off debug scripts
 /debug-*.php
 /test-schema.php
