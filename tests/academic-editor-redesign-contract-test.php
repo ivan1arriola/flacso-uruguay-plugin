@@ -46,10 +46,10 @@ academic_editor_redesign_assert(
 
 foreach ([
     'Datos generales',
-    'Presentación y objetivos',
-    'Cursado y aprobación',
+    'Presentación',
+    'Cursado',
     'Perfiles y requisitos',
-    'Titulación, acreditación y financiación',
+    'Titulación',
     'Plan de estudios',
     'Reconocimientos y visualización',
     'Cohortes',
