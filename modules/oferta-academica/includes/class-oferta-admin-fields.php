@@ -228,7 +228,7 @@ final class FLACSO_Oferta_Admin_Fields {
                 <?php self::rich_editor($post->ID, 'perfil_ingreso_html', __('Perfil de ingreso', 'flacso-uruguay')); ?>
                 <?php self::rich_editor($post->ID, 'requisitos_ingreso_html', __('Requisitos de ingreso', 'flacso-uruguay')); ?>
                 <?php self::rich_editor($post->ID, 'perfil_egreso_html', __('Perfil de egreso', 'flacso-uruguay')); ?>
-                <?php self::rich_editor($post->ID, 'requisitos_egreso_html', __('Requisitos de egreso', 'flacso-uruguay')); ?>
+                <?php self::rich_editor($post->ID, 'requisitos_egreso_html', __('Requisitos de egreso y titulación.', 'flacso-uruguay')); ?>
             </div>
             <?php self::section_end(); ?>
 
