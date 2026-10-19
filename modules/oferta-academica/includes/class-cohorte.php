@@ -103,15 +103,15 @@ final class FLACSO_Cohorte {
     }
 
     public static function accepts_registration(int $cohort_id, ?int $timestamp = null): bool {
-        $state = self::sanitize_state(get_post_meta($cohort_id, 'estado', true));
-        if (in_array($state, ['cancelada', 'finalizada'], true)) {
-            return false;
-        }
-
         if (metadata_exists('post', $cohort_id, 'preinscripcion_habilitada')) {
             return rest_sanitize_boolean(
                 get_post_meta($cohort_id, 'preinscripcion_habilitada', true)
             );
+        }
+
+        $state = self::sanitize_state(get_post_meta($cohort_id, 'estado', true));
+        if (in_array($state, ['cancelada', 'finalizada'], true)) {
+            return false;
         }
 
         // Compatibilidad de rollout: hasta que un administrador confirme Abrir
@@ -120,7 +120,7 @@ final class FLACSO_Cohorte {
         if ($offer_id && metadata_exists('post', $offer_id, 'inscripciones_abiertas')) {
             return rest_sanitize_boolean(get_post_meta($offer_id, 'inscripciones_abiertas', true));
         }
-        return false;
+        return true;
     }
 
     public static function to_roman(int $number): string {

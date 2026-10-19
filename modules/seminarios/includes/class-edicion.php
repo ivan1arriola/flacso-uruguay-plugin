@@ -176,18 +176,71 @@ final class FLACSO_Edicion {
         return $availability['status'] === 'open';
     }
 
+    public static function get_days_after_start_limit($value): int {
+        $days = abs((int) $value);
+        return $days > 0 ? $days : 10;
+    }
+
     /** @return array{status:string,from:?string,until:?string} */
     public static function registration_availability(int $edition_id, ?int $timestamp = null): array {
+        if (metadata_exists('post', $edition_id, 'preinscripcion_habilitada')) {
+            $enabled = rest_sanitize_boolean(get_post_meta($edition_id, 'preinscripcion_habilitada', true));
+            if (!$enabled) {
+                return ['status' => 'closed', 'from' => null, 'until' => null];
+            }
+            return self::registration_availability_with_legacy_window($edition_id, $timestamp);
+        }
+
         if (self::sanitize_state(get_post_meta($edition_id, 'estado', true)) === 'cancelada') {
             return ['status' => 'closed', 'from' => null, 'until' => null];
         }
 
-        if (metadata_exists('post', $edition_id, 'preinscripcion_habilitada')) {
-            $enabled = rest_sanitize_boolean(get_post_meta($edition_id, 'preinscripcion_habilitada', true));
-            return ['status' => $enabled ? 'open' : 'closed', 'from' => null, 'until' => null];
+        return self::registration_availability_with_legacy_window($edition_id, $timestamp);
+    }
+
+    /** @return array{status:string,from:?string,until:?string} */
+    private static function registration_availability_with_legacy_window(int $edition_id, ?int $timestamp = null): array {
+        $window = self::registration_window($edition_id);
+        if ($window === null) {
+            return ['status' => 'closed', 'from' => null, 'until' => null];
         }
 
-        return ['status' => 'closed', 'from' => null, 'until' => null];
+        $now = self::resolve_timestamp($timestamp);
+        return [
+            'status' => $now <= $window['until_ts'] ? 'open' : 'closed',
+            'from' => null,
+            'until' => $window['until'],
+        ];
+    }
+
+    /** @return array{until:string,until_ts:int}|null */
+    private static function registration_window(int $edition_id): ?array {
+        $timezone = function_exists('wp_timezone') ? wp_timezone() : new DateTimeZone('UTC');
+        $start_date = (string) get_post_meta($edition_id, 'fecha_inicio', true);
+        $start = DateTimeImmutable::createFromFormat('!Y-m-d', $start_date, $timezone);
+        if (!$start || $start->format('Y-m-d') !== $start_date) {
+            return null;
+        }
+
+        $limit = self::get_days_after_start_limit(function_exists('get_option')
+            ? get_option('flacso_preinscripcion_edicion_days_after_start_limit', 10)
+            : 10);
+        $until = $start->setTime(23, 59, 59)->modify('+' . max(0, $limit) . ' days');
+
+        return [
+            'until' => $until->format('c'),
+            'until_ts' => $until->getTimestamp(),
+        ];
+    }
+
+    private static function resolve_timestamp(?int $timestamp = null): int {
+        if (is_int($timestamp) && $timestamp > 0) {
+            return $timestamp;
+        }
+        if (function_exists('current_time')) {
+            return (int) current_time('timestamp', true);
+        }
+        return time();
     }
 
     public static function sync_title(int $post_id): void {
