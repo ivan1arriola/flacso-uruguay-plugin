@@ -545,6 +545,79 @@ final class FLACSO_Cohorte {
         </div>
 
         <style>
+            /*
+             * La columna implícita "auto" de un grid toma el mínimo intrínseco
+             * de títulos, pills y selects extensos. minmax(0,1fr) evita que
+             * el formulario completo desborde el metabox en pantallas móviles.
+             */
+            #flacso_cohorte_meta .inside{min-width:0;max-width:100%;box-sizing:border-box}
+            #flacso_cohorte_meta .flacso-cohort-editor{
+                display:grid;grid-template-columns:minmax(0,1fr);
+                min-width:0;max-width:100%;width:100%;box-sizing:border-box
+            }
+            #flacso_cohorte_meta .flacso-cohort-editor > *,
+            #flacso_cohorte_meta .flacso-academic-workspace,
+            #flacso_cohorte_meta .flacso-academic-workspace__copy,
+            #flacso_cohorte_meta .flacso-academic-workspace__aside,
+            #flacso_cohorte_meta .flacso-academic-section,
+            #flacso_cohorte_meta .flacso-academic-section__body,
+            #flacso_cohorte_meta .flacso-academic-grid,
+            #flacso_cohorte_meta .flacso-academic-field{
+                min-width:0;max-width:100%;box-sizing:border-box
+            }
+            #flacso_cohorte_meta .flacso-academic-workspace h3,
+            #flacso_cohorte_meta .flacso-academic-workspace p,
+            #flacso_cohorte_meta .flacso-academic-section__copy,
+            #flacso_cohorte_meta .flacso-academic-section__status,
+            #flacso_cohorte_meta .flacso-academic-list__copy,
+            #flacso_cohorte_meta .flacso-academic-list__copy small{
+                overflow-wrap:anywhere;word-break:normal
+            }
+            #flacso_cohorte_meta .flacso-academic-pills{
+                display:flex;flex-wrap:wrap;min-width:0;max-width:100%
+            }
+            #flacso_cohorte_meta .flacso-academic-pill{
+                min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;
+                box-sizing:border-box
+            }
+            #flacso_cohorte_meta .flacso-academic-field input,
+            #flacso_cohorte_meta .flacso-academic-field select,
+            #flacso_cohorte_meta .flacso-academic-field textarea{
+                min-width:0;max-width:100%;width:100%;box-sizing:border-box
+            }
+            #flacso_cohorte_meta .flacso-academic-actions .button{
+                min-width:0;max-width:100%;height:auto;min-height:36px;
+                white-space:normal;line-height:1.4;padding:8px 12px;
+                text-align:center;box-sizing:border-box
+            }
+            @media(max-width:782px){
+                #flacso_cohorte_meta .inside{padding:12px}
+                #flacso_cohorte_meta .flacso-academic-workspace{gap:12px;padding:14px}
+                #flacso_cohorte_meta .flacso-academic-workspace__aside{
+                    min-width:0;width:100%;align-items:stretch
+                }
+                #flacso_cohorte_meta .flacso-academic-pills{justify-content:flex-start}
+                #flacso_cohorte_meta .flacso-academic-section__summary{
+                    display:grid;grid-template-columns:36px minmax(0,1fr);
+                    align-items:center;gap:9px;padding:12px
+                }
+                #flacso_cohorte_meta .flacso-academic-section__icon{grid-column:1;grid-row:1}
+                #flacso_cohorte_meta .flacso-academic-section__copy{grid-column:2;grid-row:1}
+                #flacso_cohorte_meta .flacso-academic-section__status{
+                    grid-column:2;grid-row:2;justify-self:start;margin:0;
+                    max-width:100%;white-space:normal;text-overflow:clip
+                }
+                #flacso_cohorte_meta .flacso-academic-section__body{padding:12px}
+                #flacso_cohorte_meta .flacso-academic-grid{
+                    grid-template-columns:minmax(0,1fr)
+                }
+                #flacso_cohorte_meta .flacso-academic-actions{
+                    width:100%;min-width:0;align-items:stretch
+                }
+                #flacso_cohorte_meta .flacso-academic-actions .button{
+                    flex:1 1 100%;width:100%
+                }
+            }
             .flacso-cohort-checkbox{display:flex;align-items:flex-start;gap:9px;padding:12px;border:1px solid #dcdcde;border-radius:6px;background:#fafafa}
             .flacso-cohort-checkbox>span{display:grid;gap:3px}
             .flacso-cohort-checkbox small{color:#646970}
