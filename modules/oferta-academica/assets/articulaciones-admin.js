@@ -58,12 +58,13 @@
         updateMentions(row.querySelector('[data-art-edge-mention]'), mentions(matched && matched.offer), 'Cualquier mención');
     }
 
-    function updateEdgeOptions() {
+    function updateEdgeOptions(rename) {
         var nodes = nodeData();
         root.querySelectorAll('[data-art-row="edge"]').forEach(function (row) {
             ['origen', 'destino'].forEach(function (type) {
                 var select = row.querySelector('[data-art-edge="' + type + '"]');
                 var current = select.value;
+                if (rename && current === rename.before) current = rename.after;
                 select.replaceChildren();
                 var placeholder = document.createElement('option');
                 placeholder.value = '';
@@ -95,6 +96,7 @@
             });
             if (type === 'node') {
                 node.querySelector('[data-art-key]').value = 'etapa-' + (Number(index) + 1);
+                node.querySelector('[data-art-key]').dataset.artPreviousKey = node.querySelector('[data-art-key]').value;
             }
             list.appendChild(node);
             if (type === 'edge') updateEdgeOptions();
@@ -123,9 +125,17 @@
         }
     });
     root.addEventListener('input', function (event) {
-        if (event.target.matches('[data-art-key], [name$="[nombre]"], [name$="[ciclo]"]')) {
+        if (event.target.matches('[data-art-key]')) {
+            var before = event.target.dataset.artPreviousKey || '';
+            var after = event.target.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+            event.target.dataset.artPreviousKey = after;
+            updateEdgeOptions({before: before, after: after});
+        } else if (event.target.matches('[name$="[nombre]"], [name$="[ciclo]"]')) {
             updateEdgeOptions();
         }
+    });
+    root.querySelectorAll('[data-art-key]').forEach(function (input) {
+        input.dataset.artPreviousKey = input.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '-');
     });
     updateEdgeOptions();
 }());
