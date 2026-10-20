@@ -13,9 +13,42 @@ final class FLACSO_Academic_Catalog {
         }
         $cohorts = FLACSO_Academic_Repository::list('cohortes', ['parent_id' => $offer_id, 'per_page' => 200]);
         $offer['cohortes'] = $cohorts;
+        // La presentación pública requiere la cohorte de mayor numeración,
+        // no la abierta/en curso (que podría corresponder a una anterior).
+        $offer['cohorte_mas_reciente'] = self::latest_published_cohort($cohorts);
+        // Compatibilidad: no alterar criterios históricos de consultas ni
+        // otras integraciones que consumen cohorte_vigente.
         $offer['cohorte_vigente'] = self::current_item($cohorts);
         $offer['cohorte_consulta'] = self::get_inquiry_cohort($offer_id, $cohorts);
         return $offer;
+    }
+
+    /**
+     * Cohorte que se debe exhibir en páginas y cartas públicas.
+     *
+     * El número de cohorte es la secuencia institucional. La edición de la
+     * fecha de inicio o del estado operativo no debe retroceder la web a una
+     * cohorte anterior; los borradores y las privadas no se publican.
+     *
+     * @param array<int,array<string,mixed>> $cohorts
+     * @return array<string,mixed>|null
+     */
+    public static function latest_published_cohort(array $cohorts): ?array {
+        $published = array_values(array_filter($cohorts, static function ($cohort): bool {
+            return is_array($cohort) && ($cohort['estado_publicacion'] ?? '') === 'publish';
+        }));
+        if (!$published) {
+            return null;
+        }
+        usort($published, static function (array $a, array $b): int {
+            $by_number = absint($b['numero'] ?? 0) <=> absint($a['numero'] ?? 0);
+            if ($by_number !== 0) {
+                return $by_number;
+            }
+            $by_start = strcmp((string) ($b['fecha_inicio'] ?? ''), (string) ($a['fecha_inicio'] ?? ''));
+            return $by_start !== 0 ? $by_start : (absint($b['id'] ?? 0) <=> absint($a['id'] ?? 0));
+        });
+        return $published[0];
     }
 
     public static function get_inquiry_cohort(int $offer_id, ?array $cohorts = null): ?array {
