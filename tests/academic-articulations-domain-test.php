@@ -137,5 +137,5 @@ acheck(strpos($init, 'FLACSO_Academic_Articulations::register();') !== false, 'C
 acheck(strpos($admin, 'wp_verify_nonce') !== false && strpos($admin, "current_user_can('edit_post',") !== false, 'protege guardado');
 acheck(strpos($admin, 'save_post_') !== false, 'guarda desde WordPress');
 acheck(strpos($init, 'FLACSO_Academic_Articulations_Admin::init();') !== false, 'editor cargado');
-acheck(strpos($init, 'preinscripcion') !== false, 'preinscripción existente intacta');
+acheck(strpos($init, 'FLACSO_Cohorte::register();') !== false, 'registro de Cohortes existente intacto');
 echo "OK: academic articulation DAG, mentions, publishing and per-offer notes\n";
