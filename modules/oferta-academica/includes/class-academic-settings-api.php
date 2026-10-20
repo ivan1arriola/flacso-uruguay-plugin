@@ -14,8 +14,6 @@ final class FLACSO_Academic_Settings_API {
     private const DEFAULT_CARTA_MAS_INFO_TRAYECTORIA_HTML = "<p>Nuestra <strong>Facultad de Posgrados</strong> busca formar a sus estudiantes a nivel <strong>académico, profesional y laboral</strong>. Nos distinguen <strong>19 años de trayectoria</strong> a nivel nacional y más de <strong>65 años a nivel internacional</strong>. Además, más de <strong>7000 personas egresadas</strong> de FLACSO Uruguay trabajan en el ámbito público y privado.</p>";
     private const DEFAULT_CARTA_MAS_INFO_GESTION_TITLE = "Gestión Académica";
     private const DEFAULT_CARTA_MAS_INFO_GESTION_HTML = "<p>Nos distingue un sistema de <strong>gestión académica eficiente y cercano</strong>, que acompaña de forma <strong>personalizada</strong> a cada estudiante y garantiza <strong>altos niveles de egreso, superiores al 90%</strong>.</p>";
-    private const DEFAULT_CARTA_MAS_INFO_FINANCIACION_TITLE = "Financiamiento Flexible";
-    private const DEFAULT_CARTA_MAS_INFO_FINANCIACION_HTML = "<p>Puedes abonar el posgrado en <strong>cuotas sin recargo</strong> a lo largo de la cursada. Contamos con <strong>múltiples convenios, descuentos de hasta el 25%</strong> y la posibilidad de acceder a <strong>becas</strong>.</p>";
 
     public static function init(): void {
         add_action("rest_api_init", [self::class, "register_routes"]);
@@ -77,7 +75,6 @@ final class FLACSO_Academic_Settings_API {
         return rest_ensure_response([
             "ok" => true,
             "data" => [
-                "financiacion_html" => get_option("flacso_financiacion_html", get_option("flacso_carta_mas_info_financiacion_html", "")),
                 "mensaje_bienvenida" => get_option("flacso_mensaje_bienvenida", ""),
                 "flacso_webhook_token" => $masked_token,
                 "flacso_google_drive_folder_id" => get_option("flacso_google_drive_folder_id", ""),
@@ -92,8 +89,6 @@ final class FLACSO_Academic_Settings_API {
                 "carta_mas_info_trayectoria_html" => get_option("flacso_carta_mas_info_trayectoria_html", self::DEFAULT_CARTA_MAS_INFO_TRAYECTORIA_HTML),
                 "carta_mas_info_gestion_title" => get_option("flacso_carta_mas_info_gestion_title", self::DEFAULT_CARTA_MAS_INFO_GESTION_TITLE),
                 "carta_mas_info_gestion_html" => get_option("flacso_carta_mas_info_gestion_html", self::DEFAULT_CARTA_MAS_INFO_GESTION_HTML),
-                "carta_mas_info_financiacion_title" => get_option("flacso_carta_mas_info_financiacion_title", self::DEFAULT_CARTA_MAS_INFO_FINANCIACION_TITLE),
-                "carta_mas_info_financiacion_html" => get_option("flacso_financiacion_html", get_option("flacso_carta_mas_info_financiacion_html", "")),
 
                 // Variables de integraciones
                 "fc_consultas_webhook_url" => get_option("fc_consultas_webhook_url", ""),
@@ -127,9 +122,6 @@ final class FLACSO_Academic_Settings_API {
             $payload = [];
         }
 
-        if (isset($payload["financiacion_html"])) {
-            update_option("flacso_financiacion_html", wp_kses_post($payload["financiacion_html"]));
-        }
         if (isset($payload["mensaje_bienvenida"])) {
             update_option("flacso_mensaje_bienvenida", wp_kses_post($payload["mensaje_bienvenida"]));
         }
@@ -171,12 +163,6 @@ final class FLACSO_Academic_Settings_API {
         }
         if (isset($payload["carta_mas_info_gestion_html"])) {
             update_option("flacso_carta_mas_info_gestion_html", wp_kses_post($payload["carta_mas_info_gestion_html"]));
-        }
-        if (isset($payload["carta_mas_info_financiacion_title"])) {
-            update_option("flacso_carta_mas_info_financiacion_title", sanitize_text_field($payload["carta_mas_info_financiacion_title"]));
-        }
-        if (isset($payload["carta_mas_info_financiacion_html"]) && !isset($payload["financiacion_html"])) {
-            update_option("flacso_financiacion_html", wp_kses_post($payload["carta_mas_info_financiacion_html"]));
         }
 
         // Variables de integraciones
