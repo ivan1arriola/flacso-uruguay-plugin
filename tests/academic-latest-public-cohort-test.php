@@ -14,7 +14,10 @@ final class FLACSO_Academic_Repository {
         return $entity === 'ofertas' ? ['id' => $id, 'nombre' => 'Oferta de prueba'] : [];
     }
     public static function list($entity, $filters = []) {
-        return $GLOBALS['cohort_fixtures'][(int) ($filters['parent_id'] ?? 0)] ?? [];
+        if ($entity === 'ofertas') {
+            return $GLOBALS['offer_fixtures'] ?? [];
+        }
+        return $entity === 'cohortes' ? ($GLOBALS['cohort_fixtures'][(int) ($filters['parent_id'] ?? 0)] ?? []) : [];
     }
 }
 require_once dirname(__DIR__) . '/modules/oferta-academica/includes/class-academic-catalog.php';
@@ -75,4 +78,22 @@ $winner = FLACSO_Academic_Catalog::latest_published_cohort([
 latest_assert($winner['id'] === 402, 'desempate determinístico por ID');
 latest_assert(FLACSO_Academic_Catalog::latest_published_cohort([$draft, $private]) === null, 'nunca publica cohorte borrador o privada');
 latest_assert(FLACSO_Academic_Catalog::latest_published_cohort([]) === null, 'sin cohortes da null');
-echo "OK latest published cohort for web, operational selection unchanged\n";
+// El catálogo que consume el gestor de preinscripciones tampoco debe
+// ofrecer una cohorte antigua si la nueva está cerrada.
+$GLOBALS['offer_fixtures'] = [[
+    'id' => 10, 'nombre' => 'Maestría de prueba', 'slug' => 'maestria-prueba',
+    'tipo' => 'maestria', 'correo' => 'informes@example.org',
+]];
+$registration = FLACSO_Academic_Catalog::registration_catalog();
+latest_assert(count($registration['items']) === 0, 'no se muestra la cohorte V abierta cuando VI está cerrada');
+
+$latest_open = $latest;
+$latest_open['preinscripcion']['abierta'] = true;
+$GLOBALS['cohort_fixtures'][10] = [$old, $latest_open, $draft];
+$registration = FLACSO_Academic_Catalog::registration_catalog();
+latest_assert(count($registration['items']) === 1, 'el catálogo devuelve una sola cohorte por oferta');
+latest_assert(($registration['items'][0]['cohorte']['id'] ?? 0) === 105, 'la preinscripción selecciona VI');
+latest_assert(($registration['items'][0]['cohorte']['numero'] ?? 0) === 6, 'el catálogo informa el número VI');
+latest_assert(($registration['items'][0]['cohorte']['link_preinscripcion'] ?? '') === 'https://example.org/105', 'el enlace es el de VI y no el de V');
+
+echo "OK latest published cohort for web, inquiries and preinscriptions\n";
