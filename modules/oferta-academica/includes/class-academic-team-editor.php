@@ -707,6 +707,109 @@ final class FLACSO_Academic_Team_Editor {
                 button.hidden=Boolean(editor.querySelector('[data-team-group][data-team-type="coordinacion_academica"]'));
             }
 
+            /**
+             * Autocompletado con jQuery UI (incluido en WordPress).
+             * El select oculto mantiene la estructura exacta que guardan los
+             * formularios y lee el selector del contacto de la carta.
+             */
+            function initPersonSearch(input){
+                var $=window.jQuery;
+                if(!$||!$.fn.autocomplete||input.dataset.personReady){ return; }
+                var row=input.closest('[data-member-row]');
+                var select=row&&row.querySelector('[data-person-select]');
+                var feedback=row&&row.querySelector('[data-person-feedback]');
+                if(!select){ return; }
+                input.dataset.personReady='1';
+                var selectedName=input.value;
+
+                $(input).on('input',function(){
+                    if(input.value!==selectedName && select.value){
+                        select.value='';
+                        selectedName='';
+                        select.dispatchEvent(new Event('change',{bubbles:true}));
+                    }
+                });
+
+                $(input).autocomplete({
+                    minLength:2,
+                    delay:250,
+                    classes:{'ui-autocomplete':'flacso-team-autocomplete'},
+                    source:function(request,respond){
+                        var editor=editorOf(input);
+                        if(!editor||!window.ajaxurl){ respond([]); return; }
+                        if(feedback){ feedback.textContent='Buscando personas…'; }
+                        $.ajax({
+                            url:window.ajaxurl,
+                            dataType:'json',
+                            timeout:10000,
+                            data:{
+                                action:'flacso_search_team_people',
+                                nonce:editor.dataset.personNonce,
+                                post_id:editor.dataset.postId,
+                                term:request.term,
+                                page:1
+                            }
+                        }).done(function(payload){
+                            if(!payload||!payload.success){
+                                if(feedback){ feedback.textContent=(payload&&payload.data&&payload.data.message)||'No se pudo realizar la búsqueda.'; }
+                                respond([]);
+                                return;
+                            }
+                            var group=input.closest('[data-team-group]');
+                            var otherIds=Array.from(group.querySelectorAll('[data-person-select]'))
+                                .filter(function(other){ return other!==select && other.value; })
+                                .map(function(other){ return String(other.value); });
+                            var results=(payload.data.results||[]).filter(function(person){
+                                return otherIds.indexOf(String(person.id))===-1;
+                            }).map(function(person){
+                                return {
+                                    label:person.name+(person.email?' — '+person.email:''),
+                                    value:person.name,
+                                    id:person.id,
+                                    name:person.name,
+                                    email:person.email||'',
+                                    avatar:person.avatar||''
+                                };
+                            });
+                            if(feedback){
+                                feedback.textContent=payload.data.more
+                                    ?'Mostrando las primeras coincidencias. Escribí más para afinar la búsqueda.'
+                                    :(results.length?'Elegí una persona de la lista.':'No hay personas disponibles con ese criterio.');
+                            }
+                            respond(results);
+                        }).fail(function(){
+                            if(feedback){ feedback.textContent='No se pudo conectar. Intentá nuevamente.'; }
+                            respond([]);
+                        });
+                    },
+                    select:function(event,ui){
+                        event.preventDefault();
+                        var person=ui.item;
+                        select.replaceChildren();
+                        select.add(new Option('— Seleccionar persona —',''));
+                        var option=new Option(person.name,String(person.id),true,true);
+                        option.dataset.name=person.name;
+                        option.dataset.email=person.email;
+                        option.dataset.avatar=person.avatar;
+                        select.add(option);
+                        input.value=person.name;
+                        selectedName=person.name;
+                        if(feedback){ feedback.textContent='Persona seleccionada: '+person.name; }
+                        select.dispatchEvent(new Event('change',{bubbles:true}));
+                        document.dispatchEvent(new CustomEvent('flacso:academic-team-changed'));
+                    }
+                });
+                var autocomplete=$(input).autocomplete('instance');
+                if(autocomplete){
+                    autocomplete._renderItem=function(ul,item){
+                        var node=$('<li>');
+                        var wrapper=$('<div>').text(item.name);
+                        if(item.email){ $('<small>').addClass('flacso-team-person-email').text(item.email).appendTo(wrapper); }
+                        return node.append(wrapper).appendTo(ul);
+                    };
+                }
+            }
+
             document.addEventListener('click',function(event){
                 var addMember=event.target.closest('[data-add-member]');
                 if(addMember){
@@ -719,8 +822,8 @@ final class FLACSO_Academic_Team_Editor {
                     var prefix=members.getAttribute('data-members-prefix')||'';
                     var html=template.innerHTML.split('__MEMBER_NAME__').join(prefix+'['+index+']');
                     members.querySelector('[data-member-list]').insertAdjacentHTML('beforeend',html);
-                    var added=members.querySelector('[data-member-list] [data-member-row]:last-child select');
-                    if(added){ added.focus(); }
+                    var added=members.querySelector('[data-member-list] [data-member-row]:last-child [data-person-search]');
+                    if(added){ initPersonSearch(added); added.focus(); }
                     document.dispatchEvent(new CustomEvent('flacso:academic-team-changed'));
                     return;
                 }
@@ -779,6 +882,7 @@ final class FLACSO_Academic_Team_Editor {
             });
 
             document.querySelectorAll('[data-flacso-team-editor="offer"]').forEach(syncCoordinationButton);
+            document.querySelectorAll('[data-flacso-team-editor] [data-person-search]').forEach(initPersonSearch);
         })();
         </script>
         <?php
