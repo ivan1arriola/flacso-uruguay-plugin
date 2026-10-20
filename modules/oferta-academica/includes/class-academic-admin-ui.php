@@ -11,6 +11,14 @@ if (!defined('ABSPATH')) {
  * estados vacíos y controles de apertura/cierre.
  */
 final class FLACSO_Academic_Admin_UI {
+    /** Editores con secciones permanentemente abiertas. */
+    private const STATIC_POST_TYPES = [
+        'oferta-academica',
+        'cohorte',
+        'seminario',
+        'edicion',
+    ];
+
     private const POST_TYPES = [
         'programa-academico',
         'oferta-academica',
@@ -27,6 +35,13 @@ final class FLACSO_Academic_Admin_UI {
         add_action('admin_head-post-new.php', [self::class, 'render_styles']);
         add_action('admin_footer-post.php', [self::class, 'render_scripts']);
         add_action('admin_footer-post-new.php', [self::class, 'render_scripts']);
+        add_action('admin_head-post.php', [self::class, 'render_static_postboxes']);
+        add_action('admin_head-post-new.php', [self::class, 'render_static_postboxes']);
+    }
+
+    private static function is_static_editor(): bool {
+        $screen = get_current_screen();
+        return $screen && in_array($screen->post_type, self::STATIC_POST_TYPES, true);
     }
 
     public static function render_header(
@@ -72,10 +87,12 @@ final class FLACSO_Academic_Admin_UI {
                         <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
+                <?php if (!self::is_static_editor()) : ?>
                 <div class="flacso-academic-toolbar" role="group" aria-label="<?php esc_attr_e('Controles de secciones', 'flacso-uruguay'); ?>">
                     <button type="button" class="button button-small" data-flacso-academic-sections="open"><?php esc_html_e('Abrir todas', 'flacso-uruguay'); ?></button>
                     <button type="button" class="button button-small" data-flacso-academic-sections="close"><?php esc_html_e('Cerrar todas', 'flacso-uruguay'); ?></button>
                 </div>
+                <?php endif; ?>
             </div>
         </header>
         <?php
@@ -90,21 +107,30 @@ final class FLACSO_Academic_Admin_UI {
         bool $open = false
     ): void {
         ?>
+        <?php if (self::is_static_editor()) : ?>
+        <section class="flacso-academic-section" id="<?php echo esc_attr($id); ?>">
+            <header class="flacso-academic-section__summary">
+        <?php else : ?>
         <details class="flacso-academic-section" id="<?php echo esc_attr($id); ?>" <?php echo $open ? 'open' : ''; ?>>
             <summary class="flacso-academic-section__summary">
+        <?php endif; ?>
                 <span class="flacso-academic-section__icon dashicons <?php echo esc_attr(sanitize_html_class($icon)); ?>" aria-hidden="true"></span>
                 <span class="flacso-academic-section__copy">
                     <strong><?php echo esc_html($title); ?></strong>
                     <small><?php echo esc_html($description); ?></small>
                 </span>
                 <span class="flacso-academic-section__status"><?php echo esc_html($summary !== '' ? $summary : __('Sin completar', 'flacso-uruguay')); ?></span>
+            <?php if (self::is_static_editor()) : ?>
+            </header>
+            <?php else : ?>
             </summary>
+            <?php endif; ?>
             <div class="flacso-academic-section__body">
         <?php
     }
 
     public static function section_end(): void {
-        echo '</div></details>';
+        echo self::is_static_editor() ? '</div></section>' : '</div></details>';
     }
 
     public static function display_value($value, string $empty = ''): string {
@@ -157,6 +183,9 @@ final class FLACSO_Academic_Admin_UI {
             .flacso-academic-section__summary::after{content:"\f347";width:20px;height:20px;margin-left:2px;font:normal 20px/1 dashicons;color:#646970;transition:transform .16s ease}
             .flacso-academic-section[open]>.flacso-academic-section__summary::after{transform:rotate(180deg)}
             .flacso-academic-section__summary:hover{background:#f8fafc}
+            section.flacso-academic-section .flacso-academic-section__summary{cursor:default;user-select:auto}
+            section.flacso-academic-section .flacso-academic-section__summary::after{display:none}
+            section.flacso-academic-section .flacso-academic-section__summary:hover{background:transparent}
             .flacso-academic-section__summary:focus-visible{outline:2px solid #2271b1;outline-offset:-2px}
             .flacso-academic-section__icon{display:grid;width:36px;height:36px;flex:0 0 36px;place-items:center;border-radius:8px;color:#2c4777;background:#eef2f8;font-size:20px;line-height:36px}
             .flacso-academic-section__copy{display:grid;flex:1;gap:3px;min-width:0}
@@ -197,6 +226,56 @@ final class FLACSO_Academic_Admin_UI {
                 .flacso-academic-list>li{align-items:flex-start;flex-direction:column}
             }
         </style>
+        <?php
+    }
+
+
+    /**
+     * Bloquea solamente el plegado de los metaboxes FLACSO en los cuatro CPT
+     * pedidos. Los controles de orden, guardado y otros plugins no se alteran.
+     */
+    public static function render_static_postboxes(): void {
+        if (!self::is_static_editor()) {
+            return;
+        }
+        ?>
+        <style>
+            #poststuff .postbox[id^="flacso_"] > .inside { display:block !important; }
+            #poststuff .postbox[id^="flacso_"] > .postbox-header .handlediv { display:none !important; }
+            #poststuff .postbox[id^="flacso_"] > .postbox-header .hndle { cursor:default; }
+        </style>
+        <script>
+        (function () {
+            var boxes = '#poststuff .postbox[id^="flacso_"]';
+            function expandBoxes() {
+                document.querySelectorAll(boxes + '.closed').forEach(function (box) {
+                    box.classList.remove('closed');
+                });
+            }
+            function isToggleTarget(target) {
+                if (!target || !target.closest) return false;
+                return !!target.closest(boxes + ' > .postbox-header .hndle, ' +
+                    boxes + ' > .postbox-header .handlediv');
+            }
+            document.addEventListener('click', function (event) {
+                if (!isToggleTarget(event.target)) return;
+                event.preventDefault();
+                event.stopImmediatePropagation();
+            }, true);
+            document.addEventListener('keydown', function (event) {
+                if (event.key !== 'Enter' && event.key !== ' ') return;
+                if (!isToggleTarget(event.target)) return;
+                event.preventDefault();
+                event.stopImmediatePropagation();
+            }, true);
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', expandBoxes, {once:true});
+            } else {
+                expandBoxes();
+            }
+            window.addEventListener('load', expandBoxes, {once:true});
+        }());
+        </script>
         <?php
     }
 

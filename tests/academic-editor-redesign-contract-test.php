@@ -26,7 +26,12 @@ academic_editor_redesign_assert(
 );
 
 foreach ([
-    '<details class="flacso-academic-section"',
+    '<section class="flacso-academic-section"',
+    'render_static_postboxes',
+    "'oferta-academica'",
+    "'cohorte'",
+    "'seminario'",
+    "'edicion'",
     'data-flacso-academic-sections="open"',
     'data-flacso-academic-sections="close"',
     ':focus-visible',
