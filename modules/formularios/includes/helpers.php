@@ -308,7 +308,7 @@ function fc_enrich_info_request_program_context( array $data ) {
                         $offer_email = (string) $offer['correo'];
                     }
 
-                    $active_cohort = $offer['cohorte_vigente'] ?? null;
+                    $active_cohort = $offer['cohorte_mas_reciente'] ?? null;
                     if ( is_array( $active_cohort ) && ! empty( $active_cohort ) ) {
                         $cohort_id     = absint( $active_cohort['id'] ?? 0 );
                         $cohort_name   = (string) ( $active_cohort['nombre'] ?? '' );
@@ -321,7 +321,7 @@ function fc_enrich_info_request_program_context( array $data ) {
                             $preinscripcion_url = (string) $active_cohort['preinscripcion']['url'];
                         }
 
-                        $is_open = ! empty( $active_cohort['preinscripcion']['abierta'] ) || ! empty( $active_cohort['preinscripcion_habilitada'] );
+                        $is_open = ! empty( $active_cohort['preinscripcion']['abierta'] );
 
                         if ( ! empty( $active_cohort['fecha_inicio'] ) ) {
                             $start_value     = (string) $active_cohort['fecha_inicio'];
