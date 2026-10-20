@@ -292,19 +292,46 @@ final class FLACSO_Academic_Team_Editor {
                 </p>
             <?php endif; ?>
 
-            <div data-team-list>
-                <?php foreach ($teams as $group_index => $team) : ?>
-                    <?php self::render_offer_group((string) $group_index, (array) $team, $people); ?>
-                <?php endforeach; ?>
-            </div>
-
-            <div class="flacso-team-actions">
-                <button type="button" class="button button-secondary" data-add-team="offer-coordination" <?php echo $has_coordination ? 'hidden' : ''; ?>>
-                    <?php esc_html_e('Agregar Coordinación académica', 'flacso-uruguay'); ?>
-                </button>
-                <button type="button" class="button button-secondary" data-add-team="offer-custom">
-                    <?php esc_html_e('Agregar grupo estable', 'flacso-uruguay'); ?>
-                </button>
+            <div class="flacso-team-zones" data-team-list>
+                <section class="flacso-team-zone flacso-team-zone--coordination" data-team-zone="coordination">
+                    <header class="flacso-team-zone__header">
+                        <div>
+                            <h3><?php esc_html_e('Coordinación académica', 'flacso-uruguay'); ?></h3>
+                            <p><?php esc_html_e('Grupo institucional único. Sus integrantes pueden ser contactos de la carta.', 'flacso-uruguay'); ?></p>
+                        </div>
+                        <span class="flacso-team-zone__badge"><?php esc_html_e('Grupo obligatorio', 'flacso-uruguay'); ?></span>
+                    </header>
+                    <div data-team-zone-list>
+                        <?php foreach ($teams as $group_index => $team) : ?>
+                            <?php if (($team['tipo'] ?? '') === self::TYPE_COORDINATION) : ?>
+                                <?php self::render_offer_group((string) $group_index, (array) $team, $people); ?>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </div>
+                    <button type="button" class="button button-secondary" data-add-team="offer-coordination" <?php echo $has_coordination ? 'hidden' : ''; ?>>
+                        <?php esc_html_e('Agregar Coordinación académica', 'flacso-uruguay'); ?>
+                    </button>
+                </section>
+                <section class="flacso-team-zone flacso-team-zone--custom" data-team-zone="custom">
+                    <header class="flacso-team-zone__header">
+                        <div>
+                            <h3><?php esc_html_e('Otros grupos docentes', 'flacso-uruguay'); ?></h3>
+                            <p><?php esc_html_e('Equipos, comités y otros grupos de la Oferta, separados de la Coordinación académica.', 'flacso-uruguay'); ?></p>
+                        </div>
+                    </header>
+                    <div data-team-zone-list>
+                        <?php foreach ($teams as $group_index => $team) : ?>
+                            <?php if (($team['tipo'] ?? '') !== self::TYPE_COORDINATION) : ?>
+                                <?php self::render_offer_group((string) $group_index, (array) $team, $people); ?>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="flacso-team-actions">
+                        <button type="button" class="button button-secondary" data-add-team="offer-custom">
+                            <?php esc_html_e('Agregar grupo docente', 'flacso-uruguay'); ?>
+                        </button>
+                    </div>
+                </section>
             </div>
 
             <?php self::render_member_template($people); ?>
@@ -600,7 +627,29 @@ final class FLACSO_Academic_Team_Editor {
         }
         ?>
         <style>
-            .flacso-team-editor{display:grid;gap:14px}
+            .flacso-team-editor{display:grid;gap:14px;min-width:0}
+            .flacso-team-zones{display:grid;gap:24px}
+            .flacso-team-zone{min-width:0;display:grid;gap:14px}
+            .flacso-team-zone--coordination{padding:16px;border:1px solid #b8cbea;border-left:5px solid #2c4777;border-radius:10px;background:#f7faff}
+            .flacso-team-zone--custom{padding-top:22px;border-top:2px solid #e2e8f0}
+            .flacso-team-zone__header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px}
+            .flacso-team-zone__header h3{margin:0 0 5px;font-size:16px;color:#172c49}
+            .flacso-team-zone__header p{margin:0;color:#526074;font-size:12px;line-height:1.5}
+            .flacso-team-zone__badge{display:inline-flex;padding:4px 10px;border-radius:99px;background:#e1ebf9;color:#29456d;font-size:11px;font-weight:700}
+            .flacso-team-zone--coordination .flacso-team-group{background:#fff;border-color:#d3ddeb}
+            .flacso-team-person-field{display:grid;gap:5px;min-width:0}
+            .flacso-team-person-field label{display:grid;gap:5px;min-width:0}
+            .flacso-team-person-field input[type=search]{width:100%;max-width:none;min-height:40px}
+            .flacso-team-person-field small{color:#64748b;line-height:1.4;font-size:11px}
+            .flacso-team-person-select{display:none!important}
+            .flacso-team-members__actions{display:flex;justify-content:flex-start;padding-top:4px}
+            .flacso-team-members__actions .button{min-height:38px}
+            .ui-autocomplete.flacso-team-autocomplete{z-index:100100!important;max-height:260px;max-width:min(520px,calc(100vw - 40px));overflow-y:auto;overflow-x:hidden;background:#fff;border:1px solid #cbd5e1;box-shadow:0 8px 20px rgba(15,23,42,.16)}
+            .ui-autocomplete.flacso-team-autocomplete .ui-menu-item-wrapper{padding:9px 11px;cursor:pointer;white-space:normal;line-height:1.4}
+            .ui-autocomplete.flacso-team-autocomplete .ui-state-active{background:#edf4fc;border-color:#cbd5e1;color:#1c456b}
+            .ui-autocomplete.flacso-team-autocomplete .flacso-team-person-email{display:block;color:#64748b;font-size:11px}
+            @media(max-width:782px){.flacso-team-zone--coordination{padding:12px}.flacso-team-members__actions .button{width:100%;min-height:42px}.flacso-team-zone__header{flex-direction:column}}
+
             .flacso-team-editor__intro{margin:0;padding:11px 13px;border-left:4px solid #2c4777;background:#f0f4f9;color:#3c434a}
             .flacso-team-editor__legacy{margin:0;padding:10px 12px;border-left:4px solid #dba617;background:#fcf9e8}
             .flacso-team-actions{display:flex;flex-wrap:wrap;gap:8px}
@@ -693,10 +742,15 @@ final class FLACSO_Academic_Team_Editor {
                     var kind=addTeam.getAttribute('data-add-team');
                     var template=editor&&editor.querySelector('template[data-team-template="'+kind+'"]');
                     if(!list||!template){ return; }
+                    var zone=kind==='offer-coordination'?'coordination':'custom';
+                    var target=editor.getAttribute('data-flacso-team-editor')==='offer'
+                        ?list.querySelector('[data-team-zone="'+zone+'"] [data-team-zone-list]')
+                        :list;
+                    if(!target){ return; }
                     var index=nextGroupIndex(list);
-                    list.insertAdjacentHTML('beforeend',template.innerHTML.split('__GROUP__').join(String(index)));
+                    target.insertAdjacentHTML('beforeend',template.innerHTML.split('__GROUP__').join(String(index)));
                     syncCoordinationButton(editor);
-                    var group=list.querySelector('[data-team-group]:last-child');
+                    var group=target.querySelector('[data-team-group]:last-child');
                     if(group){
                         var first=group.querySelector('input:not([type="hidden"]),select,textarea,button');
                         if(first){ first.focus(); }
