@@ -124,8 +124,7 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
                         $preinsc_url = $active_cohort['preinscripcion']['url'];
                     }
                 } else {
-                    $abiertas = get_post_meta($page_id, 'inscripciones_abiertas', true);
-                    $show_pre = $show_pre && ($abiertas === '1' || $abiertas === 'true' || $abiertas === true || $abiertas === 1);
+                    $show_pre = false;
                 }
             } elseif ($page_id > 0 && get_post_type($page_id) === 'oferta-academica') {
                 $abiertas = get_post_meta($page_id, 'inscripciones_abiertas', true);
