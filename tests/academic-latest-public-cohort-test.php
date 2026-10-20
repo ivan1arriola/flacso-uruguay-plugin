@@ -44,9 +44,12 @@ $private = [
 $GLOBALS['cohort_fixtures'][10] = [$old, $draft, $latest, $private];
 $offer = FLACSO_Academic_Catalog::get_offer(10);
 latest_assert($offer['cohorte_mas_reciente']['id'] === 105, 'página pública presenta cohorte VI, no V abierta ni futuras en borrador');
-latest_assert($offer['cohorte_vigente']['id'] === 101, 'cohorte_vigente operativa conserva compatibilidad');
-latest_assert($offer['cohorte_consulta']['id'] === 101, 'consultas mantienen su resolvedor independiente');
+latest_assert($offer['cohorte_vigente']['id'] === 105, 'cohorte_vigente coincide con la nueva cohorte');
+latest_assert($offer['cohorte_consulta']['id'] === 105, 'consulta apunta a la misma cohorte que la web');
 latest_assert(count($offer['cohortes']) === 4, 'catálogo conserva el listado completo');
+
+latest_assert(FLACSO_Academic_Catalog::get_inquiry_cohort(10)['id'] === 105, 'llamadas directas de consulta resuelven VI');
+latest_assert(($offer['cohorte_consulta']['preinscripcion']['abierta'] ?? null) === false, 'no se hereda inscripción abierta de V');
 
 $all_closed = $old;
 $all_closed['preinscripcion']['abierta'] = false;
