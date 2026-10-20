@@ -237,7 +237,7 @@ final class FLACSO_Oferta_Admin_Fields {
             <div class="flacso-oferta-grid">
                 <?php self::list_field($post->ID, 'menciones', __('Menciones', 'flacso-uruguay')); ?>
                 <?php self::list_field($post->ID, 'orientaciones', __('Orientaciones', 'flacso-uruguay')); ?>
-                <?php self::list_field($post->ID, 'titulos_intermedios', __('Títulos intermedios', 'flacso-uruguay'), '', true); ?>
+                <?php self::intermediate_titles_field($post->ID); ?>
             </div>
             <?php self::section_end(); ?>
 
@@ -396,6 +396,89 @@ final class FLACSO_Oferta_Admin_Fields {
         <?php
     }
 
+    /**
+     * Un título intermedio es siempre otra Oferta de un nivel inferior.
+     * Sus menciones son opcionales y pertenecen a la Oferta vinculada.
+     */
+    private static function intermediate_titles_field(int $post_id): void {
+        $raw = self::meta($post_id, 'titulos_intermedios', []);
+        $items = FLACSO_Oferta_Academica::sanitize_intermediate_titles($raw, $post_id);
+        $offers = get_posts([
+            'post_type' => FLACSO_Oferta_Academica::POST_TYPE,
+            'post_status' => ['publish', 'draft', 'pending', 'private'],
+            'posts_per_page' => -1,
+            'orderby' => 'title',
+            'order' => 'ASC',
+        ]);
+        ?>
+        <div class="flacso-oferta-intermediate flacso-oferta-field--full" data-intermediate-titles>
+            <strong><?php esc_html_e('Títulos intermedios', 'flacso-uruguay'); ?></strong>
+            <p class="description"><?php esc_html_e('Vinculá otra Oferta Académica de menor denominación. Jerarquía: Maestría → Especialización → Diplomado → Diploma. Las menciones son opcionales.', 'flacso-uruguay'); ?></p>
+            <input type="hidden" name="flacso_oferta_titulos_intermedios_present" value="1">
+            <div data-intermediate-list>
+                <?php foreach ($items as $index => $item) : ?>
+                    <?php self::intermediate_title_row((string) $index, $item, $offers, $post_id); ?>
+                <?php endforeach; ?>
+            </div>
+            <template data-intermediate-template>
+                <?php self::intermediate_title_row('__INDEX__', [], $offers, $post_id); ?>
+            </template>
+            <p class="flacso-oferta-intermediate__notice" data-intermediate-notice aria-live="polite"></p>
+            <button type="button" class="button button-secondary" data-intermediate-add><?php esc_html_e('Agregar título intermedio', 'flacso-uruguay'); ?></button>
+        </div>
+        <?php
+    }
+
+    private static function intermediate_title_row(string $index, array $item, array $offers, int $parent_id): void {
+        $selected = absint($item['oferta_id'] ?? 0);
+        $selected_mentions = FLACSO_Oferta_Academica::sanitize_text_list($item['menciones'] ?? []);
+        $available_mentions = $selected ? FLACSO_Oferta_Academica::sanitize_text_list(get_post_meta($selected, 'menciones', true)) : [];
+        ?>
+        <div class="flacso-oferta-intermediate__row" data-intermediate-row data-index="<?php echo esc_attr($index); ?>">
+            <label class="flacso-oferta-field">
+                <span><?php esc_html_e('Oferta Académica que otorga el título', 'flacso-uruguay'); ?></span>
+                <select data-intermediate-select name="flacso_oferta_titulos_intermedios[<?php echo esc_attr($index); ?>][oferta_id]">
+                    <option value=""><?php esc_html_e('— Seleccionar Oferta —', 'flacso-uruguay'); ?></option>
+                    <?php foreach ($offers as $offer) :
+                        $id = (int) $offer->ID;
+                        if ($id === $parent_id) {
+                            continue;
+                        }
+                        $type = FLACSO_Oferta_Academica::get_tipo($id);
+                        $rank = FLACSO_Oferta_Academica::intermediate_level($type);
+                        $mentions = FLACSO_Oferta_Academica::sanitize_text_list(get_post_meta($id, 'menciones', true));
+                        ?>
+                        <option value="<?php echo esc_attr((string) $id); ?>"
+                            data-level="<?php echo esc_attr((string) $rank); ?>"
+                            data-mentions="<?php echo esc_attr(wp_json_encode($mentions)); ?>"
+                            <?php selected($selected, $id); ?>>
+                            <?php echo esc_html($offer->post_title); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+            <div class="flacso-oferta-intermediate__mentions">
+                <strong><?php esc_html_e('Menciones específicas (opcional)', 'flacso-uruguay'); ?></strong>
+                <div data-intermediate-mentions>
+                    <?php foreach ($available_mentions as $mention) : ?>
+                        <label>
+                            <input type="checkbox"
+                                name="flacso_oferta_titulos_intermedios[<?php echo esc_attr($index); ?>][menciones][]"
+                                value="<?php echo esc_attr($mention); ?>"
+                                <?php checked(in_array($mention, $selected_mentions, true)); ?>>
+                            <?php echo esc_html($mention); ?>
+                        </label>
+                    <?php endforeach; ?>
+                    <?php if (!$available_mentions) : ?>
+                        <small><?php esc_html_e('Sin menciones específicas.', 'flacso-uruguay'); ?></small>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <button type="button" class="button button-secondary" data-intermediate-remove><?php esc_html_e('Quitar título intermedio', 'flacso-uruguay'); ?></button>
+        </div>
+        <?php
+    }
+
     public static function save(int $post_id, WP_Post $post): void {
         if (
             !isset($_POST[self::NONCE_NAME])
@@ -448,7 +531,7 @@ final class FLACSO_Oferta_Admin_Fields {
             delete_post_meta($post_id, 'abreviacion');
         }
 
-        foreach (['menciones', 'orientaciones', 'titulos_intermedios'] as $key) {
+        foreach (['menciones', 'orientaciones'] as $key) {
             $raw = $lists[$key] ?? [];
             $items = is_array($raw) ? $raw : (preg_split('/\R/u', (string) $raw) ?: []);
             $items = array_values(array_filter(array_map('sanitize_text_field', $items), static fn(string $item): bool => $item !== ''));
@@ -463,6 +546,18 @@ final class FLACSO_Oferta_Admin_Fields {
             } elseif (FLACSO_Oferta_Academica::tipo_valido($type)) {
                 wp_set_object_terms($post_id, $type, FLACSO_Oferta_Academica::TYPE_TAXONOMY);
             }
+        }
+
+        // El nuevo tipo ya quedó actualizado: validar destinos contra su nivel real.
+        // Sin campo enviado (p. ej. integraciones previas), no borrar la relación.
+        if (isset($_POST['flacso_oferta_titulos_intermedios']) || isset($_POST['flacso_oferta_titulos_intermedios_present'])) {
+            $raw_titles = isset($_POST['flacso_oferta_titulos_intermedios']) && is_array($_POST['flacso_oferta_titulos_intermedios'])
+                ? wp_unslash($_POST['flacso_oferta_titulos_intermedios'])
+                : [];
+            $intermediate = FLACSO_Oferta_Academica::sanitize_intermediate_titles($raw_titles, $post_id);
+            $intermediate
+                ? update_post_meta($post_id, 'titulos_intermedios', $intermediate)
+                : delete_post_meta($post_id, 'titulos_intermedios');
         }
 
         if (isset($_POST['flacso_oferta_color_principal'])) {
@@ -529,6 +624,19 @@ final class FLACSO_Oferta_Admin_Fields {
             .flacso-oferta-field--full { grid-column:1/-1; }
             .flacso-list-row { display:flex; gap:8px; margin:8px 0; }
             .flacso-oferta-checks small { display:block; margin-top:5px; color:#646970; }
+            .flacso-oferta-intermediate{display:grid;gap:10px;min-width:0;margin-top:16px}
+            .flacso-oferta-intermediate>strong{font-size:14px}
+            .flacso-oferta-intermediate>.description{margin:0;color:#526174}
+            .flacso-oferta-intermediate [data-intermediate-list]{display:grid;gap:12px;min-width:0}
+            .flacso-oferta-intermediate__row{display:grid;gap:12px;min-width:0;padding:14px;border:1px solid #d6e0ec;border-radius:9px;background:#f8fafd}
+            .flacso-oferta-intermediate__row .flacso-oferta-field{min-width:0}
+            .flacso-oferta-intermediate__row select{width:100%;min-width:0;max-width:100%}
+            .flacso-oferta-intermediate__mentions{display:grid;gap:8px}
+            .flacso-oferta-intermediate__mentions>div{display:flex;flex-wrap:wrap;gap:8px}
+            .flacso-oferta-intermediate__mentions label{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border:1px solid #d6e0ec;border-radius:6px;background:#fff}
+            .flacso-oferta-intermediate__mentions small,.flacso-oferta-intermediate__notice{color:#64748b}
+            .flacso-oferta-intermediate button{max-width:100%;height:auto;min-height:38px;white-space:normal}
+            @media(max-width:782px){.flacso-oferta-intermediate__row{padding:12px}.flacso-oferta-intermediate button{width:100%}}
             .flacso-oferta-editor-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
             .flacso-oferta-editor { min-width:0; margin-top:18px; }
             .flacso-oferta-editor-grid .flacso-oferta-editor { margin-top:16px; }
@@ -581,6 +689,94 @@ final class FLACSO_Oferta_Admin_Fields {
                     list.querySelector('[data-list-add]').focus();
                 }
             });
+
+            var intermediate = root.querySelector('[data-intermediate-titles]');
+            if (intermediate) {
+                var titleList = intermediate.querySelector('[data-intermediate-list]');
+                var titleTemplate = intermediate.querySelector('[data-intermediate-template]');
+                var titleAdd = intermediate.querySelector('[data-intermediate-add]');
+                var titleNotice = intermediate.querySelector('[data-intermediate-notice]');
+                var typeSelector = root.querySelector('select[name="flacso_oferta_tipo"]');
+                var levels = {maestria:4, especializacion:3, diplomado:2, diploma:1};
+                var nextTitleIndex = titleList.querySelectorAll('[data-intermediate-row]').length;
+
+                function fillMentions(row) {
+                    var target = row.querySelector('[data-intermediate-mentions]');
+                    var select = row.querySelector('[data-intermediate-select]');
+                    var option = select.options[select.selectedIndex];
+                    var values = [];
+                    if (option && option.dataset.mentions) {
+                        try { values = JSON.parse(option.dataset.mentions); } catch (_) { values = []; }
+                    }
+                    target.replaceChildren();
+                    if (!Array.isArray(values) || !values.length) {
+                        var empty = document.createElement('small');
+                        empty.textContent = 'Sin menciones específicas.';
+                        target.appendChild(empty);
+                        return;
+                    }
+                    values.forEach(function (value) {
+                        var label = document.createElement('label');
+                        var input = document.createElement('input');
+                        input.type = 'checkbox';
+                        input.name = 'flacso_oferta_titulos_intermedios[' + row.dataset.index + '][menciones][]';
+                        input.value = String(value);
+                        label.appendChild(input);
+                        label.appendChild(document.createTextNode(String(value)));
+                        target.appendChild(label);
+                    });
+                }
+
+                function refreshTitleOptions() {
+                    var current = levels[typeSelector && typeSelector.value] || 0;
+                    var rows = Array.from(titleList.querySelectorAll('[data-intermediate-row]'));
+                    var selected = rows.map(function(row){return row.querySelector('[data-intermediate-select]').value;}).filter(Boolean);
+                    rows.forEach(function (row) {
+                        var select = row.querySelector('[data-intermediate-select]');
+                        var changed = false;
+                        Array.from(select.options).forEach(function (option) {
+                            if (!option.value) return;
+                            var level = Number(option.dataset.level) || 0;
+                            var available = level > 0 && level < current &&
+                                (!selected.includes(option.value) || select.value === option.value);
+                            option.disabled = !available;
+                            option.hidden = !available;
+                            if (!available && select.value === option.value) changed = true;
+                        });
+                        if (changed) {
+                            select.value = '';
+                            fillMentions(row);
+                        }
+                    });
+                    var possible = Array.from((rows[0] || titleTemplate.content).querySelectorAll('option[data-level]'))
+                        .some(function(opt){return Number(opt.dataset.level) > 0 && Number(opt.dataset.level) < current && !selected.includes(opt.value);});
+                    titleAdd.disabled = !possible;
+                    titleNotice.textContent = current <= 1
+                        ? 'Solo Maestría, Especialización y Diplomado pueden otorgar títulos intermedios dentro de esta jerarquía.'
+                        : (!possible ? 'No quedan ofertas de menor nivel disponibles.' : '');
+                }
+
+                intermediate.addEventListener('click', function(event){
+                    if (event.target.closest('[data-intermediate-add]')) {
+                        titleList.insertAdjacentHTML('beforeend',titleTemplate.innerHTML.split('__INDEX__').join(String(nextTitleIndex++)));
+                        var newRow = titleList.lastElementChild;
+                        refreshTitleOptions();
+                        newRow.querySelector('select').focus();
+                    }
+                    if (event.target.closest('[data-intermediate-remove]')) {
+                        event.target.closest('[data-intermediate-row]').remove();
+                        refreshTitleOptions();
+                    }
+                });
+                intermediate.addEventListener('change', function(event){
+                    if (event.target.matches('[data-intermediate-select]')) {
+                        fillMentions(event.target.closest('[data-intermediate-row]'));
+                        refreshTitleOptions();
+                    }
+                });
+                if (typeSelector) typeSelector.addEventListener('change',refreshTitleOptions);
+                refreshTitleOptions();
+            }
 
             var colorPicker = document.getElementById('flacso_oferta_color_picker');
             var colorText = document.getElementById('flacso_oferta_color_principal');
