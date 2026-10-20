@@ -4,6 +4,11 @@
  * opcionales del catalogo de menciones de esa misma Oferta.
  */
 if (!defined('ABSPATH')) define('ABSPATH', dirname(__DIR__) . '/');
+$GLOBALS['registered_meta_callbacks'] = [];
+function register_post_meta($post_type, $key, $args) {
+    $GLOBALS['registered_meta_callbacks'][$key] = $args['sanitize_callback'] ?? null;
+    return true;
+}
 function absint($v) { return abs((int) $v); }
 function sanitize_key($v) { return strtolower((string) $v); }
 function sanitize_text_field($v) { return trim(strip_tags((string) $v)); }
@@ -62,6 +67,17 @@ verify_intermediate(FLACSO_Oferta_Academica::sanitize_intermediate_titles($raw, 
 verify_intermediate(FLACSO_Oferta_Academica::sanitize_intermediate_titles($raw, 14) === [], 'doctorado no se incluye en jerarquia especificada');
 verify_intermediate(FLACSO_Oferta_Academica::sanitize_intermediate_titles(['titulo' => 'cadena'], 10) === [], 'no persiste texto libre');
 verify_intermediate(FLACSO_Oferta_Academica::sanitize_intermediate_titles([], 10) === [], 'sin titulos es valido');
+
+// Reproduce WordPress sanitize_meta(): callback($value, $meta_key, $object_type, $object_subtype).
+// Antes este llamado provocaba TypeError porque el segundo argumento se tipaba como int.
+FLACSO_Oferta_Academica::register_meta();
+$meta_callback = $GLOBALS['registered_meta_callbacks']['titulos_intermedios'] ?? null;
+verify_intermediate(is_callable($meta_callback), 'WordPress registra callback de títulos intermedios');
+verify_intermediate($meta_callback === [FLACSO_Oferta_Academica::class, 'sanitize_intermediate_titles_meta'], 'usa adaptador dedicado para metadatos');
+$meta_result = call_user_func($meta_callback, $raw, 'titulos_intermedios', 'post', 'oferta-academica');
+verify_intermediate($meta_result === FLACSO_Oferta_Academica::sanitize_intermediate_titles($raw), 'WordPress procesa cuatro argumentos sin TypeError');
+verify_intermediate(FLACSO_Oferta_Academica::sanitize_intermediate_titles($raw, 10) === $result, 'el guardado explícito mantiene la validación por nivel');
+verify_intermediate(call_user_func($meta_callback, 'texto libre', 'titulos_intermedios', 'post', 'oferta-academica') === [], 'WordPress descarta contenido inválido');
 
 $admin = file_get_contents(dirname(__DIR__) . '/modules/oferta-academica/includes/class-oferta-admin-fields.php');
 verify_intermediate(strpos($admin, 'self::intermediate_titles_field($post->ID)') !== false, 'editor usa relaciones');

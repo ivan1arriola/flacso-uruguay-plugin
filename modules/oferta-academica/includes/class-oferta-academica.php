@@ -103,7 +103,7 @@ final class FLACSO_Oferta_Academica {
             'titulos_certificaciones_html' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'menciones' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_text_list']],
             'orientaciones' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_text_list']],
-            'titulos_intermedios' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_intermediate_titles']],
+            'titulos_intermedios' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_intermediate_titles_meta']],
             'malla_curricular' => ['type' => 'string', 'sanitize_callback' => 'esc_url_raw'],
             'documentos' => ['type' => 'object', 'sanitize_callback' => [self::class, 'sanitize_documents']],
             'equipos' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_teams']],
@@ -167,6 +167,26 @@ final class FLACSO_Oferta_Academica {
             self::TIPO_DIPLOMA => 1,
         ];
         return $levels[$type] ?? 0;
+    }
+
+    /**
+     * Callback exclusivo de register_post_meta(). WordPress entrega
+     * (value, meta_key, object_type, object_subtype), no un post_id.
+     * La validación con el ID real de la Oferta ocurre al guardar su editor.
+     *
+     * @param mixed  $value
+     * @param string $meta_key
+     * @param string $object_type
+     * @param string $object_subtype
+     * @return array<int,array{oferta_id:int,menciones:array<int,string>}>
+     */
+    public static function sanitize_intermediate_titles_meta(
+        $value,
+        $meta_key = '',
+        $object_type = '',
+        $object_subtype = ''
+    ): array {
+        return self::sanitize_intermediate_titles($value);
     }
 
     /**
