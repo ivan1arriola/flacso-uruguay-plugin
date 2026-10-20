@@ -96,7 +96,7 @@ final class FLACSO_Academic_Catalog {
             // No ofrecer una cohorte anterior solo porque sigue abierta.
             // Únicamente la más nueva publicada puede figurar en el catálogo.
             $chosen_cohort = self::latest_published_cohort($cohorts);
-            if (!$chosen_cohort || empty($chosen_cohort['preinscripcion']['abierta'])) {
+            if (!$chosen_cohort || empty($chosen_cohort['preinscripcion']['abierta']) || empty($chosen_cohort['preinscripcion']['url'])) {
                 continue;
             }
             $cohort_id = absint($chosen_cohort['id']);
