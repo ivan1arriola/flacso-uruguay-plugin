@@ -103,7 +103,7 @@ final class FLACSO_Oferta_Academica {
             'titulos_certificaciones_html' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'menciones' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_text_list']],
             'orientaciones' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_text_list']],
-            'titulos_intermedios' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_text_list']],
+            'titulos_intermedios' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_intermediate_titles']],
             'malla_curricular' => ['type' => 'string', 'sanitize_callback' => 'esc_url_raw'],
             'documentos' => ['type' => 'object', 'sanitize_callback' => [self::class, 'sanitize_documents']],
             'equipos' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_teams']],
@@ -153,6 +153,68 @@ final class FLACSO_Oferta_Academica {
         return array_values(array_filter(array_map('wp_kses_post', $value), static function ($item): bool {
             return trim(wp_strip_all_tags((string) $item)) !== '';
         }));
+    }
+
+    /**
+     * Niveles de titulación habilitados para títulos intermedios.
+     * Doctorados no forman parte de esta secuencia de procedencia.
+     */
+    public static function intermediate_level(string $type): int {
+        $levels = [
+            self::TIPO_MAESTRIA => 4,
+            self::TIPO_ESPECIALIZACION => 3,
+            self::TIPO_DIPLOMADO => 2,
+            self::TIPO_DIPLOMA => 1,
+        ];
+        return $levels[$type] ?? 0;
+    }
+
+    /**
+     * Relación estructurada con otras ofertas: su título proviene de la Oferta
+     * vinculada y las menciones son un subconjunto opcional de las que declara.
+     *
+     * Cuando se recibe el ID de la oferta padre valida estrictamente la
+     * jerarquía. La sanitización de metadatos sin contexto preserva solo
+     * la estructura y el guardado del editor aplica la validación completa.
+     *
+     * @return array<int,array{oferta_id:int,menciones:array<int,string>}>
+     */
+    public static function sanitize_intermediate_titles($value, int $parent_id = 0): array {
+        if (!is_array($value)) {
+            return [];
+        }
+        $parent_level = $parent_id > 0 ? self::intermediate_level(self::get_tipo($parent_id)) : 0;
+        if ($parent_id > 0 && !$parent_level) {
+            return [];
+        }
+
+        $result = [];
+        $seen = [];
+        foreach ($value as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $target_id = absint($item['oferta_id'] ?? 0);
+            if (!$target_id || $target_id === $parent_id || isset($seen[$target_id])) {
+                continue;
+            }
+            if (get_post_type($target_id) !== self::POST_TYPE) {
+                continue;
+            }
+            if ($parent_id > 0) {
+                $target_level = self::intermediate_level(self::get_tipo($target_id));
+                if (!$target_level || $target_level >= $parent_level) {
+                    continue;
+                }
+            }
+
+            $available = self::sanitize_text_list(get_post_meta($target_id, 'menciones', true));
+            $requested = self::sanitize_text_list($item['menciones'] ?? []);
+            $mentions = array_values(array_unique(array_intersect($requested, $available)));
+            $result[] = ['oferta_id' => $target_id, 'menciones' => $mentions];
+            $seen[$target_id] = true;
+        }
+        return $result;
     }
 
     public static function sanitize_text_list($value): array {
