@@ -251,18 +251,20 @@ final class FLACSO_Oferta_Admin_Fields {
                 </header>
                 <div class="flacso-oferta-section__body">
                     <div class="flacso-oferta-checks">
-                        <?php $flag_descriptions = ['reconocido_mec' => 'Muestra el reconocimiento oficial del MEC en la página de la oferta y en la carta.','reconocimiento_internacional' => 'Muestra el distintivo de titulación apostillada de La Haya en la página y en la carta.','reconocimiento_red_flacso' => 'Muestra el reconocimiento del título en la red del Sistema Internacional FLACSO en la página y en la carta.','convenio_iin_oea' => 'Muestra el distintivo del convenio IIN/OEA en la página y en la carta.','mostrar_costos_envio' => 'Incluye en la carta la información sobre los costos de envío del título.','mostrar_expedicion_titulo' => 'Incluye en la carta la información sobre la expedición del título.']; ?>
+                        <?php $flag_descriptions = ['reconocido_mec' => 'Muestra el reconocimiento oficial del MEC en la página de la oferta y en la carta.','reconocimiento_internacional' => 'Muestra el distintivo de titulación apostillada de La Haya en la página y en la carta.','reconocimiento_red_flacso' => 'Muestra el reconocimiento del título en la red del Sistema Internacional FLACSO en la página y en la carta.','convenio_iin_oea' => 'Muestra el distintivo del convenio IIN/OEA en la página y en la carta.']; ?>
                         <?php foreach ([
                             'reconocido_mec' => __('Programa con Reconocimiento Oficial del Ministerio de Educación y Cultura (MEC)', 'flacso-uruguay'),
                             'reconocimiento_internacional' => __('Apostillado de La Haya', 'flacso-uruguay'),
                             'reconocimiento_red_flacso' => __('Título con validez y reconocimiento en la red del Sistema Internacional FLACSO', 'flacso-uruguay'),
                             'convenio_iin_oea' => __('Convenio IIN/OEA', 'flacso-uruguay'),
-                            'mostrar_costos_envio' => __('Mostrar costos de envío', 'flacso-uruguay'),
-                            'mostrar_expedicion_titulo' => __('Mostrar expedición de título', 'flacso-uruguay'),
                         ] as $key => $label) : ?>
                             <label><input type="checkbox" name="flacso_oferta[<?php echo esc_attr($key); ?>]" value="1" <?php checked(rest_sanitize_boolean(self::meta($post->ID, $key, false))); ?>><span><?php echo esc_html($label); ?><small><?php echo esc_html($flag_descriptions[$key]); ?></small></span></label>
                         <?php endforeach; ?>
                     </div>
+                    <p class="flacso-oferta-required-carta-info">
+                        <strong><?php esc_html_e('Información incluida siempre en la carta:', 'flacso-uruguay'); ?></strong>
+                        <?php esc_html_e('expedición del título y costos de envío. No requieren activación individual.', 'flacso-uruguay'); ?>
+                    </p>
                 </div>
             </section>
 
@@ -475,9 +477,14 @@ final class FLACSO_Oferta_Admin_Fields {
             }
         }
 
-        foreach (['reconocido_mec', 'reconocimiento_internacional', 'reconocimiento_red_flacso', 'convenio_iin_oea', 'mostrar_costos_envio', 'mostrar_expedicion_titulo'] as $key) {
+        foreach (['reconocido_mec', 'reconocimiento_internacional', 'reconocimiento_red_flacso', 'convenio_iin_oea'] as $key) {
             update_post_meta($post_id, $key, !empty($data[$key]));
         }
+
+        // Compatibilidad con consumidores anteriores: ambos bloques son obligatorios.
+        // No depender de las antiguas casillas, ausentes desde este editor.
+        update_post_meta($post_id, 'mostrar_costos_envio', true);
+        update_post_meta($post_id, 'mostrar_expedicion_titulo', true);
     }
 
     public static function render_styles(): void {
@@ -510,6 +517,8 @@ final class FLACSO_Oferta_Admin_Fields {
             .flacso-oferta-section__status { padding:4px 8px; border-radius:999px; color:#8a4b00; background:#fcf0c9; font-size:11px; font-weight:700; white-space:nowrap; }
             .flacso-oferta-section__status.is-complete { color:#116329; background:#edfaef; }
             .flacso-oferta-section__body { padding:4px 18px 20px; border-top:1px solid #f0f0f1; }
+            .flacso-oferta-required-carta-info { margin:16px 0 0; padding:12px 14px; color:#31445d; background:#f2f6fc; border-left:3px solid #2c4777; border-radius:4px; line-height:1.5; }
+            .flacso-oferta-required-carta-info strong { display:block; margin-bottom:3px; }
             .flacso-oferta-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-top:16px; }
             .flacso-oferta-grid--three { grid-template-columns:repeat(3,minmax(0,1fr)); }
             .flacso-oferta-field { display:grid; gap:6px; }
