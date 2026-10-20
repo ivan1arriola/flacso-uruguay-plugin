@@ -20,8 +20,10 @@ oferta_admin_assert(strpos($admin, 'Información académica de la Oferta') !== f
 oferta_admin_assert(strpos($admin, "'presentacion'") !== false, 'debe editar presentación');
 oferta_admin_assert(strpos($admin, "'objetivo_general'") === false, 'no debe editar objetivo general');
 oferta_admin_assert(strpos($admin, "'objetivos_especificos'") === false, 'no debe editar objetivos específicos');
-oferta_admin_assert(strpos($admin, "'financiacion_html'") === false, 'la financiación se edita fuera de cada oferta');
-oferta_admin_assert(strpos($admin, 'Financiación - Texto') !== false, 'debe ofrecer el ajuste compartido de financiación');
+oferta_admin_assert(strpos($admin, "'financiacion_html'") === false, 'no se edita contenido financiero genérico por oferta');
+oferta_admin_assert(strpos($admin, 'Financiación - Texto') === false, 'no hay ajuste compartido retirado de financiación');
+oferta_admin_assert(strpos($admin, "add_shared_settings") === false, 'el menú compartido retirado ya no se registra');
+oferta_admin_assert(strpos($admin, "register_shared_settings") === false, 'no se registra el ajuste financiero eliminado');
 oferta_admin_assert(strpos($admin, "'duracion_meses'") !== false, 'debe editar duración');
 oferta_admin_assert(strpos($admin, "'carga_horaria'") !== false, 'debe editar carga horaria');
 oferta_admin_assert(strpos($admin, "'creditos'") !== false, 'debe editar créditos');

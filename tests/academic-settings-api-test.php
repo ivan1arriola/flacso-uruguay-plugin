@@ -148,6 +148,9 @@ settings_assert($data_public["flacso_webhook_token"] === "********", "Token debe
 settings_assert($data_public["flacso_mailjet_api_key"] === "********", "Mailjet key debe estar enmascarada");
 settings_assert($data_public["flacso_mailjet_sender_email"] === "posgrados@flacso.edu.uy", "Sender email debe coincidir");
 settings_assert($data_public["carta_mas_info_section_title"] === "Más información", "Título carta debe coincidir");
+settings_assert(!array_key_exists("financiacion_html", $data_public), "No se expone contenido de financiación genérica retirado");
+settings_assert(!array_key_exists("carta_mas_info_financiacion_html", $data_public), "No se expone tarjeta financiera retirada");
+settings_assert(!array_key_exists("carta_mas_info_financiacion_title", $data_public), "No se expone título retirado");
 
 // 3. Lectura con secretos (include_secrets = true)
 $req_secrets = new WP_REST_Request("GET", ["include_secrets" => 1]);
@@ -164,6 +167,9 @@ $update_payload = [
     "flacso_webhook_token" => "new-token-9999",
     "flacso_meta_enabled" => 1,
     "fc_consultas_webhook_url" => "https://editor.flacso.edu.uy/api/consultas",
+    "financiacion_html" => "<p>Texto financiero retirado</p>",
+    "carta_mas_info_financiacion_html" => "<p>Otro texto retirado</p>",
+    "carta_mas_info_financiacion_title" => "Financiación antigua",
 ];
 
 $req_update = new WP_REST_Request("PUT", [], $update_payload);
@@ -175,5 +181,7 @@ settings_assert(get_option("flacso_mailjet_sender_name") === "Facultad FLACSO", 
 settings_assert(get_option("flacso_webhook_token") === "new-token-9999", "Token actualizado");
 settings_assert(get_option("flacso_meta_enabled") === 1, "Meta enabled actualizado a 1");
 settings_assert(get_option("fc_consultas_webhook_url") === "https://editor.flacso.edu.uy/api/consultas", "Webhook url actualizada");
+settings_assert(get_option("flacso_financiacion_html", null) === null, "La API ignora escritura de financiación retirada");
+settings_assert(get_option("flacso_carta_mas_info_financiacion_title", null) === null, "La API ignora título de tarjeta retirado");
 
 echo "OK FLACSO_Academic_Settings_API contract & functional test\n";
