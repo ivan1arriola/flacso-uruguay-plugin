@@ -58,6 +58,11 @@ $legacy = FLACSO_Academic_Team_Editor::sanitize_academic_team([[
     ],
 ]]);
 
+$empty = FLACSO_Academic_Team_Editor::sanitize_academic_team([]);
+team_contact_assert(count($empty) === 1, 'Oferta sin datos crea exactamente una Coordinación académica');
+team_contact_assert(($empty[0]['tipo'] ?? '') === FLACSO_Academic_Team_Editor::TYPE_COORDINATION, 'el único grupo vacío es Coordinación académica');
+team_contact_assert(($empty[0]['docentes'] ?? null) === [], 'se puede comenzar sin integrantes sin eliminar la Coordinación');
+
 team_contact_assert(count($legacy) === 2, 'la oferta incluye Coordinación académica y conserva el grupo histórico');
 team_contact_assert(($legacy[0]['tipo'] ?? '') === FLACSO_Academic_Team_Editor::TYPE_COORDINATION, 'la coordinación obligatoria debe aparecer primero');
 team_contact_assert(($legacy[1]['tipo'] ?? '') === FLACSO_Academic_Team_Editor::TYPE_CUSTOM, 'el histórico debe ser personalizado');
@@ -103,6 +108,8 @@ $coordination_groups = array_values(array_filter($normalized, static function (a
     return ($group['tipo'] ?? '') === FLACSO_Academic_Team_Editor::TYPE_COORDINATION;
 }));
 team_contact_assert(count($coordination_groups) === 1, 'solo puede persistir una Coordinación académica');
+team_contact_assert(count($normalized) === 3, 'el segundo grupo duplicado se conserva como grupo personalizado');
+team_contact_assert(($normalized[2]['tipo'] ?? '') === FLACSO_Academic_Team_Editor::TYPE_CUSTOM, 'la segunda coordinación se transforma en un grupo no privilegiado');
 team_contact_assert(($normalized[0]['tipo'] ?? '') === FLACSO_Academic_Team_Editor::TYPE_COORDINATION, 'Coordinación académica debe mostrarse primero');
 
 team_contact_assert(
@@ -182,5 +189,10 @@ FLACSO_Offer_Carta_Contact_Bridge::consolidate_legacy_meta(101, $post);
 team_contact_assert(($GLOBALS['test_meta'][101]['asistente_academica_docente_id'] ?? 0) === 7, 'una selección inválida no debe borrar la persona legacy');
 team_contact_assert(($GLOBALS['test_meta'][101]['asistente_academica_rol'] ?? '') === 'Contacto histórico', 'una selección inválida no debe borrar el título legacy');
 team_contact_assert(($GLOBALS['test_meta'][101]['asistente_academica_correo'] ?? '') === 'historico@example.org', 'una selección inválida no debe borrar el correo legacy');
+
+$teamEditorSource = file_get_contents(__DIR__ . '/../modules/oferta-academica/includes/class-academic-team-editor.php');
+team_contact_assert(strpos($teamEditorSource, 'data-add-team="offer-coordination"') === false, 'no existe botón de alta de Coordinación académica');
+team_contact_assert(strpos($teamEditorSource, 'offer-coordination') === false, 'no existe plantilla ni acción para duplicar Coordinación');
+team_contact_assert(strpos($teamEditorSource, 'data-team-zone="coordination"') !== false, 'Coordinación permanente y separada');
 
 echo "OK academic team and carta contact model\n";
