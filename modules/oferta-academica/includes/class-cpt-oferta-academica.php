@@ -24,6 +24,8 @@ class CPT_Oferta_Academica {
             add_action('restrict_manage_posts', [self::class, 'render_operational_filters']);
             add_filter('posts_clauses', [self::class, 'filter_by_operational_status'], 20, 2);
             add_action('admin_head-edit.php', [self::class, 'render_admin_list_styles']);
+            add_action('admin_head-post.php', [self::class, 'render_cohortes_admin_styles']);
+            add_action('admin_head-post-new.php', [self::class, 'render_cohortes_admin_styles']);
             add_action('admin_footer-edit.php', [self::class, 'render_admin_list_script']);
         }
     }
@@ -498,6 +500,165 @@ class CPT_Oferta_Academica {
         );
     }
 
+    /**
+     * Tarjetas adaptables para cohortes dentro del editor de Oferta Académica.
+     * No afecta la tabla principal edit.php ni los demás metaboxes.
+     */
+    public static function render_cohortes_admin_styles(): void {
+        $screen = get_current_screen();
+        if (!$screen || $screen->post_type !== self::POST_TYPE) {
+            return;
+        }
+        ?>
+        <style>
+            #flacso_oferta_cohortes_box,
+            #flacso_oferta_cohortes_box .inside,
+            #flacso_oferta_cohortes_box .flacso-cohortes-panel {
+                min-width: 0;
+                max-width: 100%;
+                box-sizing: border-box;
+            }
+            #flacso_oferta_cohortes_box .flacso-cohortes-panel { padding: 4px 0; }
+            #flacso_oferta_cohortes_box .flacso-cohortes-description {
+                margin: 0 0 14px;
+                color: #475569;
+                line-height: 1.5;
+            }
+            #flacso_oferta_cohortes_box .flacso-cohortes-list {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+                gap: 12px;
+                padding: 0;
+                margin: 0 0 16px;
+                list-style: none;
+                max-width: 100%;
+            }
+            #flacso_oferta_cohortes_box .flacso-cohortes-card {
+                min-width: 0;
+                margin: 0;
+                padding: 14px;
+                background: #fff;
+                border: 1px solid #dbe2eb;
+                border-radius: 9px;
+                box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+                overflow-wrap: anywhere;
+                box-sizing: border-box;
+            }
+            #flacso_oferta_cohortes_box .flacso-cohortes-card__header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 8px;
+                padding-bottom: 10px;
+                border-bottom: 1px solid #e9edf3;
+            }
+            #flacso_oferta_cohortes_box .flacso-cohortes-card__title {
+                font-size: 14px;
+                line-height: 1.45;
+            }
+            #flacso_oferta_cohortes_box .flacso-cohortes-card__title a {
+                color: #185581;
+                text-decoration: none;
+            }
+            #flacso_oferta_cohortes_box .flacso-cohortes-card__title a:hover { text-decoration: underline; }
+            #flacso_oferta_cohortes_box .flacso-cohortes-card__state,
+            #flacso_oferta_cohortes_box .flacso-cohortes-card__registration {
+                display: inline-flex;
+                align-items: center;
+                width: fit-content;
+                padding: 3px 9px;
+                border-radius: 999px;
+                background: #edf2f7;
+                color: #475569;
+                font-size: 12px;
+                font-weight: 650;
+                line-height: 1.5;
+            }
+            #flacso_oferta_cohortes_box .flacso-cohortes-card__state--en_curso,
+            #flacso_oferta_cohortes_box .flacso-cohortes-card__registration--open {
+                color: #126532;
+                background: #e6f5ea;
+            }
+            #flacso_oferta_cohortes_box .flacso-cohortes-card__state--planificada {
+                color: #155b86;
+                background: #e7f1fa;
+            }
+            #flacso_oferta_cohortes_box .flacso-cohortes-card__state--cancelada {
+                color: #912b34;
+                background: #fbecef;
+            }
+            #flacso_oferta_cohortes_box .flacso-cohortes-card__details {
+                display: grid;
+                gap: 10px;
+                margin: 12px 0 14px;
+            }
+            #flacso_oferta_cohortes_box .flacso-cohortes-card__details > div {
+                display: grid;
+                grid-template-columns: minmax(90px, 34%) minmax(0, 1fr);
+                gap: 8px;
+                align-items: start;
+                min-width: 0;
+            }
+            #flacso_oferta_cohortes_box .flacso-cohortes-card__details dt {
+                color: #64748b;
+                font-size: 12px;
+                font-weight: 600;
+                line-height: 1.6;
+            }
+            #flacso_oferta_cohortes_box .flacso-cohortes-card__details dd {
+                min-width: 0;
+                margin: 0;
+                color: #334155;
+                line-height: 1.6;
+            }
+            #flacso_oferta_cohortes_box .flacso-cohortes-card__portal {
+                display: inline-block;
+                margin-top: 5px;
+                font-size: 12px;
+                font-weight: 600;
+            }
+            #flacso_oferta_cohortes_box .flacso-cohortes-card__actions { display: flex; }
+            #flacso_oferta_cohortes_box .flacso-cohortes-card__actions .button,
+            #flacso_oferta_cohortes_box .flacso-cohortes-add {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 40px;
+                max-width: 100%;
+                height: auto;
+                padding: 8px 12px;
+                white-space: normal;
+                line-height: 1.35;
+                text-align: center;
+                box-sizing: border-box;
+            }
+            #flacso_oferta_cohortes_box .flacso-cohortes-empty {
+                padding: 16px;
+                margin: 0 0 16px;
+                border: 1px dashed #cbd5e1;
+                border-radius: 7px;
+                color: #64748b;
+                background: #f8fafc;
+                text-align: center;
+            }
+            @media (max-width: 782px) {
+                #flacso_oferta_cohortes_box .inside { padding: 12px; }
+                #flacso_oferta_cohortes_box .flacso-cohortes-list {
+                    grid-template-columns: minmax(0, 1fr);
+                }
+                #flacso_oferta_cohortes_box .flacso-cohortes-card {
+                    padding: 12px;
+                }
+                #flacso_oferta_cohortes_box .flacso-cohortes-card__actions .button,
+                #flacso_oferta_cohortes_box .flacso-cohortes-add {
+                    width: 100%;
+                }
+            }
+        </style>
+        <?php
+    }
+
     public static function render_cohortes_meta_box($post): void {
         $cohortes = get_posts([
             'post_type'      => 'cohorte',
@@ -511,59 +672,70 @@ class CPT_Oferta_Academica {
 
         $add_url = admin_url('post-new.php?post_type=cohorte&oferta_academica_id=' . $post->ID);
         ?>
-        <div style="padding: 6px 0;">
-            <p style="margin-top:0; color:#475569;">
+        <div class="flacso-cohortes-panel">
+            <p class="flacso-cohortes-description">
                 <?php esc_html_e('Las cohortes son las aperturas temporales de esta oferta académica donde se configuran las fechas y la preinscripción.', 'flacso-uruguay'); ?>
             </p>
 
             <?php if (!empty($cohortes)) : ?>
-                <table class="widefat striped" style="margin-bottom: 15px; border-radius: 4px; overflow: hidden;">
-                    <thead>
-                        <tr>
-                            <th style="font-weight:700;"><?php esc_html_e('Cohorte', 'flacso-uruguay'); ?></th>
-                            <th style="font-weight:700;"><?php esc_html_e('Estado', 'flacso-uruguay'); ?></th>
-                            <th style="font-weight:700;"><?php esc_html_e('Fechas', 'flacso-uruguay'); ?></th>
-                            <th style="font-weight:700;"><?php esc_html_e('Preinscripción', 'flacso-uruguay'); ?></th>
-                            <th style="font-weight:700; text-align:right;"><?php esc_html_e('Acciones', 'flacso-uruguay'); ?></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($cohortes as $c) :
-                            $num = (int) get_post_meta($c->ID, 'numero', true);
-                            $roman = FLACSO_Cohorte::to_roman($num) ?: (string) $num;
-                            $estado = FLACSO_Cohorte::sanitize_state(get_post_meta($c->ID, 'estado', true));
-                            $fechas_txt = FLACSO_Cohorte::format_dates($c->ID);
-                            $link = (string) get_post_meta($c->ID, 'link_preinscripcion', true);
-                            $abierta = FLACSO_Cohorte::accepts_registration($c->ID);
-                            $edit_url = get_edit_post_link($c->ID);
-                        ?>
-                            <tr>
-                                <td><strong><a href="<?php echo esc_url($edit_url); ?>">Cohorte <?php echo esc_html($roman); ?></a></strong></td>
-                                <td><span style="font-weight:600;"><?php echo esc_html(ucfirst($estado)); ?></span></td>
-                                <td><?php echo $fechas_txt !== '' ? esc_html($fechas_txt) : '—'; ?></td>
-                                <td>
-                                    <?php if ($link) : ?>
-                                        <?php echo $abierta ? '<span style="color:#16a34a;font-weight:700;">🟢 Abierta</span>' : '<span style="color:#94a3b8;">⚪ Cerrada</span>'; ?>
-                                        <a href="<?php echo esc_url($link); ?>" target="_blank" style="margin-left:6px;font-size:12px;">Portal ↗</a>
-                                    <?php else : ?>
-                                        <span style="color:#94a3b8;">—</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td style="text-align:right;">
-                                    <a class="button button-small" href="<?php echo esc_url($edit_url); ?>"><?php esc_html_e('Editar cohorte', 'flacso-uruguay'); ?></a>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                <ul class="flacso-cohortes-list">
+                    <?php foreach ($cohortes as $c) :
+                        $num = (int) get_post_meta($c->ID, 'numero', true);
+                        $roman = FLACSO_Cohorte::to_roman($num) ?: (string) $num;
+                        $estado = FLACSO_Cohorte::sanitize_state(get_post_meta($c->ID, 'estado', true));
+                        $fechas_txt = FLACSO_Cohorte::format_dates($c->ID);
+                        $link = (string) get_post_meta($c->ID, 'link_preinscripcion', true);
+                        $abierta = FLACSO_Cohorte::accepts_registration($c->ID);
+                        $edit_url = get_edit_post_link($c->ID);
+                    ?>
+                        <li class="flacso-cohortes-card">
+                            <div class="flacso-cohortes-card__header">
+                                <strong class="flacso-cohortes-card__title">
+                                    <a href="<?php echo esc_url($edit_url); ?>">
+                                        <?php echo esc_html(sprintf(__('Cohorte %s', 'flacso-uruguay'), $roman)); ?>
+                                    </a>
+                                </strong>
+                                <span class="flacso-cohortes-card__state flacso-cohortes-card__state--<?php echo esc_attr($estado); ?>">
+                                    <?php echo esc_html(self::academic_state_label($estado)); ?>
+                                </span>
+                            </div>
+                            <dl class="flacso-cohortes-card__details">
+                                <div>
+                                    <dt><?php esc_html_e('Fechas', 'flacso-uruguay'); ?></dt>
+                                    <dd><?php echo $fechas_txt !== '' ? esc_html($fechas_txt) : '—'; ?></dd>
+                                </div>
+                                <div>
+                                    <dt><?php esc_html_e('Preinscripción', 'flacso-uruguay'); ?></dt>
+                                    <dd>
+                                        <?php if ($link !== '') : ?>
+                                            <span class="flacso-cohortes-card__registration <?php echo $abierta ? 'flacso-cohortes-card__registration--open' : 'flacso-cohortes-card__registration--closed'; ?>">
+                                                <?php echo esc_html($abierta ? __('Abierta', 'flacso-uruguay') : __('Cerrada', 'flacso-uruguay')); ?>
+                                            </span>
+                                            <a class="flacso-cohortes-card__portal" href="<?php echo esc_url($link); ?>" target="_blank" rel="noopener noreferrer">
+                                                <?php esc_html_e('Ver portal ↗', 'flacso-uruguay'); ?>
+                                            </a>
+                                        <?php else : ?>
+                                            <span aria-label="<?php esc_attr_e('Sin enlace de preinscripción', 'flacso-uruguay'); ?>">—</span>
+                                        <?php endif; ?>
+                                    </dd>
+                                </div>
+                            </dl>
+                            <div class="flacso-cohortes-card__actions">
+                                <a class="button button-secondary" href="<?php echo esc_url($edit_url); ?>">
+                                    <?php esc_html_e('Editar cohorte', 'flacso-uruguay'); ?>
+                                </a>
+                            </div>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
             <?php else : ?>
-                <div style="background:#f8fafc; border:1px dashed #cbd5e1; padding:15px; border-radius:6px; margin-bottom:15px; text-align:center; color:#64748b;">
+                <div class="flacso-cohortes-empty">
                     <?php esc_html_e('Esta oferta académica aún no tiene cohortes creadas.', 'flacso-uruguay'); ?>
                 </div>
             <?php endif; ?>
 
-            <a class="button button-primary" href="<?php echo esc_url($add_url); ?>">
-                ➕ <?php esc_html_e('Agregar nueva cohorte para esta oferta', 'flacso-uruguay'); ?>
+            <a class="button button-primary flacso-cohortes-add" href="<?php echo esc_url($add_url); ?>">
+                <?php esc_html_e('Agregar nueva cohorte para esta oferta', 'flacso-uruguay'); ?>
             </a>
         </div>
         <?php
