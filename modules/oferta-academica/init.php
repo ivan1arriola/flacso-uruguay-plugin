@@ -18,6 +18,8 @@ flacso_safe_require('modules/oferta-academica/includes/class-academic-admin-ui.p
 flacso_safe_require('modules/oferta-academica/includes/class-cpt-programa-academico.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-academica.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-admin-fields.php');
+flacso_safe_require('modules/oferta-academica/includes/class-academic-articulations.php');
+flacso_safe_require('modules/oferta-academica/includes/class-academic-articulations-admin.php');
 flacso_safe_require('modules/oferta-academica/includes/class-offer-carta-contact-admin.php');
 flacso_safe_require('modules/oferta-academica/includes/class-offer-carta-contact-bridge.php');
 flacso_safe_require('modules/oferta-academica/includes/class-cohorte.php');
@@ -46,6 +48,7 @@ add_action('init', static function (): void {
     FLACSO_Oferta_Admin_Table_Layout::init();
     FLACSO_Programa_Academico::init();
     FLACSO_Oferta_Academica::register_meta();
+    FLACSO_Academic_Articulations::register();
     FLACSO_Cohorte::register();
     CPT_Tabla_Precio::init();
     Oferta_Taxonomies::init();
@@ -54,6 +57,7 @@ add_action('init', static function (): void {
 
 FLACSO_Academic_Admin_UI::init();
 FLACSO_Oferta_Admin_Fields::init();
+FLACSO_Academic_Articulations_Admin::init();
 FLACSO_Offer_Carta_Contact_Admin::init();
 FLACSO_Offer_Carta_Contact_Bridge::init();
 FLACSO_Academic_Document_Source_Admin::init();
