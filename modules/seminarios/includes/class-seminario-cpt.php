@@ -290,7 +290,7 @@ class Seminario_CPT
         }
         ?>
         <style>
-            .post-type-seminario .wp-list-table { table-layout: fixed; border: 1px solid #dbe5f1; border-radius: 8px; overflow: hidden; }
+            .post-type-seminario .wp-list-table { table-layout: fixed; border: 1px solid #d6e0ec; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(17, 35, 62, .04); }
             .post-type-seminario .wp-list-table .column-cb { width: 34px; }
             .post-type-seminario .wp-list-table .column-title { width: 39%; }
             .post-type-seminario .wp-list-table .column-edicion_actual { width: 30%; }
@@ -298,37 +298,106 @@ class Seminario_CPT
             .post-type-seminario .wp-list-table .column-date { width: 145px; }
             .post-type-seminario .wp-list-table th,
             .post-type-seminario .wp-list-table td { vertical-align: middle; padding-top: 11px; padding-bottom: 11px; border-bottom-color: #e9eef5; }
-            .post-type-seminario .wp-list-table thead th,
-            .post-type-seminario .wp-list-table tfoot th { background: #f6f8fc; color: #42526e; }
-            .post-type-seminario .wp-list-table .column-title strong a { color: #1d4ed8; font-size: 14px; line-height: 1.35; }
-            .post-type-seminario .wp-list-table .column-title strong a:hover { color: #1e3a8a; }
-            .flacso-current-instance { display: grid; gap: 4px; }
-            .flacso-current-instance__title { width: fit-content; font-weight: 700; color: #1d4ed8; text-decoration: none; }
-            .flacso-current-instance__title:hover { color: #1e3a8a; text-decoration: underline; }
-            .flacso-current-instance__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
-            .flacso-current-instance__date { color: #50575e; font-size: 12px; }
-            .flacso-current-instance--empty a,
-            .flacso-current-instance__actions a { font-size: 12px; font-weight: 600; text-decoration: none; }
-            .flacso-state,
-            .flacso-status { display: inline-flex; align-items: center; gap: 3px; border-radius: 999px; padding: 2px 8px; font-size: 11px; line-height: 1.6; font-weight: 600; white-space: nowrap; }
-            .flacso-state { background: #f0f0f1; color: #3c434a; }
-            .flacso-state--en_curso { background: #e7f7ed; color: #116329; }
-            .flacso-state--planificada { background: #e8f1fb; color: #135e96; }
-            .flacso-state--finalizada { background: #f0f0f1; color: #50575e; }
-            .flacso-state--cancelada { background: #fcf0f1; color: #8a2424; }
-            .flacso-status--open { background: #e7f7ed; color: #116329; }
-            .flacso-status--closed { background: #f0f0f1; color: #50575e; }
-            .flacso-status--neutral { background: #f6f7f7; color: #646970; }
-            .flacso-status .dashicons { width: 14px; height: 14px; font-size: 14px; }
-            .flacso-table-actions { margin-top: 5px; font-size: 12px; font-weight: 600; }
-            .flacso-table-actions a { text-decoration: none; }
-            .flacso-table-actions a:hover { text-decoration: underline; }
-            .flacso-table-muted { color: #646970; font-size: 12px; }
-            @media screen and (max-width: 1100px) {
+             .post-type-seminario .wp-list-table thead th,
+            .post-type-seminario .wp-list-table tfoot th { background: #f3f6fa; color: #3d536e; font-weight: 650; }
+             .post-type-seminario .wp-list-table .column-title strong a { color: #1b4168; font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; }
+            .post-type-seminario .wp-list-table .column-title strong a:hover { color: #0c669d; }
+            .post-type-seminario .flacso-current-instance { display: grid; gap: 4px; }
+            .post-type-seminario .flacso-current-instance__title { width: fit-content; font-weight: 700; color: #1d4ed8; text-decoration: none; }
+            .post-type-seminario .flacso-current-instance__title:hover { color: #1e3a8a; text-decoration: underline; }
+            .post-type-seminario .flacso-current-instance__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+            .post-type-seminario .flacso-current-instance__date { color: #50575e; font-size: 12px; }
+            .post-type-seminario .flacso-current-instance--empty a,
+            .post-type-seminario .flacso-current-instance__actions a { font-size: 12px; font-weight: 600; text-decoration: none; }
+            .post-type-seminario .flacso-state,
+            .post-type-seminario .flacso-status { display: inline-flex; align-items: center; gap: 3px; border-radius: 999px; padding: 2px 8px; font-size: 11px; line-height: 1.6; font-weight: 600; white-space: nowrap; }
+            .post-type-seminario .flacso-state { background: #f0f0f1; color: #3c434a; }
+            .post-type-seminario .flacso-state--en_curso { background: #e7f7ed; color: #116329; }
+            .post-type-seminario .flacso-state--planificada { background: #e8f1fb; color: #135e96; }
+            .post-type-seminario .flacso-state--finalizada { background: #f0f0f1; color: #50575e; }
+            .post-type-seminario .flacso-state--cancelada { background: #fcf0f1; color: #8a2424; }
+            .post-type-seminario .flacso-status--open { background: #e7f7ed; color: #116329; }
+            .post-type-seminario .flacso-status--closed { background: #f0f0f1; color: #50575e; }
+            .post-type-seminario .flacso-status--neutral { background: #f6f7f7; color: #646970; }
+            .post-type-seminario .flacso-status .dashicons { width: 14px; height: 14px; font-size: 14px; }
+            .post-type-seminario .flacso-table-actions { margin-top: 5px; font-size: 12px; font-weight: 600; }
+            .post-type-seminario .flacso-table-actions a { text-decoration: none; }
+            .post-type-seminario .flacso-table-actions a:hover { text-decoration: underline; }
+            .post-type-seminario .flacso-table-muted { color: #646970; font-size: 12px; }
+            @media screen and (min-width: 783px) and (max-width: 1100px) {
                 .post-type-seminario .wp-list-table .column-date { display: none; }
                 .post-type-seminario .wp-list-table .column-title { width: 42%; }
                 .post-type-seminario .wp-list-table .column-edicion_actual { width: 34%; }
                 .post-type-seminario .wp-list-table .column-preinscripcion { width: 20%; }
+            }
+            /* Diseño consistente con Ofertas Académicas; sin abreviaciones. */
+            .post-type-seminario .wp-list-table tbody tr:hover > td { background: #f8fbfe; }
+            .post-type-seminario .wp-list-table .column-title .row-actions { margin-top: 6px; }
+            .post-type-seminario .flacso-current-instance { gap: 7px; }
+            .post-type-seminario .flacso-current-instance__title { color: #1b4168; }
+            .post-type-seminario .flacso-current-instance__meta { gap: 6px; }
+            .post-type-seminario .flacso-current-instance__date { line-height: 1.5; }
+            .post-type-seminario .flacso-state,
+            .post-type-seminario .flacso-status { padding: 3px 9px; font-weight: 700; }
+            .post-type-seminario .flacso-current-instance__actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+            .post-type-seminario .wp-list-table a:focus-visible,
+            .post-type-seminario .wp-list-table button:focus-visible { outline: 2px solid #2271b1; outline-offset: 2px; }
+            @media screen and (max-width: 782px) {
+                .post-type-seminario .wrap .page-title-action {
+                    display: inline-flex; align-items: center; min-height: 36px;
+                    margin: 0 0 12px; padding: 0 12px; border-radius: 6px;
+                }
+                .post-type-seminario .subsubsub {
+                    display: flex; float: none; flex-wrap: wrap; align-items: center;
+                    gap: 5px 13px; margin: 10px 0 16px; padding: 0; text-align: left;
+                }
+                .post-type-seminario .subsubsub li { padding: 0; font-size: 0; }
+                .post-type-seminario .subsubsub li a { font-size: 12px; line-height: 1.65; }
+                .post-type-seminario #posts-filter .search-box {
+                    display: flex; float: none; width: 100%; align-items: stretch;
+                    gap: 8px; margin: 0 0 14px;
+                }
+                .post-type-seminario #posts-filter .search-box input[type="search"] {
+                    flex: 1 1 auto; width: 0; min-width: 0;
+                    min-height: 40px; margin: 0; border-radius: 6px;
+                }
+                .post-type-seminario #posts-filter .search-box .button {
+                    flex: 0 0 auto; min-height: 40px; margin: 0; border-radius: 6px;
+                }
+                .post-type-seminario .tablenav.top { height: auto; min-height: 36px; }
+                .post-type-seminario .tablenav.top .actions {
+                    display: flex; float: none; flex-wrap: wrap;
+                    align-items: center; gap: 8px; padding: 0 0 10px;
+                }
+                .post-type-seminario .tablenav.top .actions select {
+                    max-width: 100%; min-height: 36px; margin: 0;
+                }
+                .post-type-seminario .wp-list-table { table-layout: auto; }
+                .post-type-seminario .wp-list-table tr:not(.inline-edit-row):not(.no-items) td.column-primary {
+                    padding: 13px 50px 13px 12px;
+                }
+                .post-type-seminario .wp-list-table .toggle-row {
+                    top: 10px; right: 6px; width: 40px; height: 40px;
+                }
+                .post-type-seminario .wp-list-table .row-actions {
+                    display: flex; flex-wrap: wrap; gap: 5px 13px;
+                    padding: 9px 0 0; font-size: 0; line-height: 1.55;
+                }
+                .post-type-seminario .wp-list-table .row-actions span { font-size: 0; white-space: nowrap; }
+                .post-type-seminario .wp-list-table .row-actions a { font-size: 12px; }
+                .post-type-seminario .wp-list-table tr:not(.inline-edit-row):not(.no-items) td:not(.check-column):not(.column-primary) {
+                    padding: 8px 12px 8px 109px; min-height: 36px;
+                    border-top: 0; border-bottom: 0; box-sizing: border-box;
+                }
+                .post-type-seminario .wp-list-table tr:not(.inline-edit-row):not(.no-items) td:not(.check-column):not(.column-primary)::before {
+                    left: 12px; top: 11px; width: 85px;
+                    color: #647387; font-size: 11px; font-weight: 700; line-height: 1.5;
+                }
+                .post-type-seminario .wp-list-table tr.is-expanded td:not(.column-primary):not(.check-column) {
+                    background: #f8fafd;
+                }
+                .post-type-seminario .wp-list-table tr.is-expanded td:last-child { padding-bottom: 14px; }
+                .post-type-seminario .flacso-current-instance__actions a { padding: 7px 0; display: inline-block; }
             }
         </style>
         <?php
