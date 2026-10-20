@@ -116,7 +116,8 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
                 $offer = FLACSO_Academic_Catalog::get_offer($page_id);
                 $active_cohort = $offer['cohorte_mas_reciente'] ?? null;
                 if (!empty($active_cohort)) {
-                    $is_open = !empty($active_cohort['preinscripcion']['abierta']);
+                    $is_open = !empty($active_cohort['preinscripcion']['abierta'])
+                        && (!empty($active_cohort['link_preinscripcion']) || !empty($active_cohort['preinscripcion']['url']));
                     $show_pre = $show_pre && $is_open;
                     if (!empty($active_cohort['link_preinscripcion'])) {
                         $preinsc_url = $active_cohort['link_preinscripcion'];
