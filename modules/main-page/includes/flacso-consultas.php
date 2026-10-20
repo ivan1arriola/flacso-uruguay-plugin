@@ -986,6 +986,9 @@ function flacso_consultas_render_preinscripcion_button() {
 		if ( empty( $active_cohort['preinscripcion']['abierta'] ) ) {
 			return '';
 		}
+		if ( empty( $active_cohort['link_preinscripcion'] ) && empty( $active_cohort['preinscripcion']['url'] ) ) {
+			return '';
+		}
 		if ( ! empty( $active_cohort['link_preinscripcion'] ) ) {
 			$href_preinscripcion = $active_cohort['link_preinscripcion'];
 		} elseif ( ! empty( $active_cohort['preinscripcion']['url'] ) ) {
