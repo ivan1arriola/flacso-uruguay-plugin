@@ -121,6 +121,7 @@ final class FLACSO_Academic_Team_Editor {
                 'docentes' => [],
             ];
         }
+        // Invariante: una coordinación académica exacta por Oferta, incluida la primera edición.
         return array_merge($coordination, $custom);
     }
 
@@ -259,14 +260,6 @@ final class FLACSO_Academic_Team_Editor {
 
         $teams = self::offer_groups((int) $post->ID);
         $people = self::people();
-        $has_coordination = false;
-        foreach ($teams as $team) {
-            if (($team['tipo'] ?? '') === self::TYPE_COORDINATION) {
-                $has_coordination = true;
-                break;
-            }
-        }
-
         $summary = $teams
             ? sprintf(_n('%d grupo estable', '%d grupos estables', count($teams), 'flacso-uruguay'), count($teams))
             : __('Sin completar', 'flacso-uruguay');
@@ -281,7 +274,7 @@ final class FLACSO_Academic_Team_Editor {
         ?>
         <div class="flacso-team-editor" data-flacso-team-editor="offer" data-post-id="<?php echo esc_attr((string) $post->ID); ?>" data-person-nonce="<?php echo esc_attr(wp_create_nonce('flacso_team_people_search')); ?>">
             <p class="flacso-team-editor__intro">
-                <?php esc_html_e('Estos grupos pertenecen a la Oferta. La Coordinación académica puede existir una sola vez; los demás grupos tienen nombre libre. Los equipos de Cohorte se gestionan por separado.', 'flacso-uruguay'); ?>
+                <?php esc_html_e('Cada Oferta tiene exactamente una Coordinación académica fija. Podés editar sus integrantes; los demás grupos tienen nombre libre y los equipos de Cohorte se gestionan por separado.', 'flacso-uruguay'); ?>
             </p>
 
             <?php if ($teams && !array_filter($teams, static function (array $team): bool {
@@ -308,9 +301,6 @@ final class FLACSO_Academic_Team_Editor {
                             <?php endif; ?>
                         <?php endforeach; ?>
                     </div>
-                    <button type="button" class="button button-secondary" data-add-team="offer-coordination" <?php echo $has_coordination ? 'hidden' : ''; ?>>
-                        <?php esc_html_e('Agregar Coordinación académica', 'flacso-uruguay'); ?>
-                    </button>
                 </section>
                 <section class="flacso-team-zone flacso-team-zone--custom" data-team-zone="custom">
                     <header class="flacso-team-zone__header">
@@ -335,8 +325,7 @@ final class FLACSO_Academic_Team_Editor {
             </div>
 
             <?php self::render_member_template($people); ?>
-            <?php self::render_offer_group_template(self::TYPE_COORDINATION); ?>
-            <?php self::render_offer_group_template(self::TYPE_CUSTOM); ?>
+            <?php self::render_offer_group_template(); ?>
         </div>
         <?php
         FLACSO_Academic_Admin_UI::section_end();
@@ -502,12 +491,12 @@ final class FLACSO_Academic_Team_Editor {
         <?php
     }
 
-    private static function render_offer_group_template(string $type): void {
+    private static function render_offer_group_template(): void {
         $group = [
-            'tipo' => $type,
-            'nombre' => $type === self::TYPE_COORDINATION ? 'Coordinación académica' : '',
+            'tipo' => self::TYPE_CUSTOM,
+            'nombre' => '',
             'descripcion' => '',
-            'importancia' => $type === self::TYPE_COORDINATION ? '1' : '3',
+            'importancia' => '3',
             'docentes' => [],
         ];
         $people = self::people();
@@ -515,7 +504,7 @@ final class FLACSO_Academic_Team_Editor {
         self::render_offer_group('__GROUP__', $group, $people);
         $html = (string) ob_get_clean();
         ?>
-        <template data-team-template="<?php echo esc_attr($type === self::TYPE_COORDINATION ? 'offer-coordination' : 'offer-custom'); ?>"><?php echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></template>
+        <template data-team-template="offer-custom"><?php echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></template>
         <?php
     }
 
@@ -700,13 +689,6 @@ final class FLACSO_Academic_Team_Editor {
                 return max+1;
             }
 
-            function syncCoordinationButton(editor){
-                if(!editor || editor.getAttribute('data-flacso-team-editor')!=='offer'){ return; }
-                var button=editor.querySelector('[data-add-team="offer-coordination"]');
-                if(!button){ return; }
-                button.hidden=Boolean(editor.querySelector('[data-team-group][data-team-type="coordinacion_academica"]'));
-            }
-
             /**
              * Autocompletado con jQuery UI (incluido en WordPress).
              * El select oculto mantiene la estructura exacta que guardan los
@@ -845,14 +827,13 @@ final class FLACSO_Academic_Team_Editor {
                     var kind=addTeam.getAttribute('data-add-team');
                     var template=editor&&editor.querySelector('template[data-team-template="'+kind+'"]');
                     if(!list||!template){ return; }
-                    var zone=kind==='offer-coordination'?'coordination':'custom';
+                    var zone='custom';
                     var target=editor.getAttribute('data-flacso-team-editor')==='offer'
                         ?list.querySelector('[data-team-zone="'+zone+'"] [data-team-zone-list]')
                         :list;
                     if(!target){ return; }
                     var index=nextGroupIndex(list);
                     target.insertAdjacentHTML('beforeend',template.innerHTML.split('__GROUP__').join(String(index)));
-                    syncCoordinationButton(editor);
                     var group=target.querySelector('[data-team-group]:last-child');
                     if(group){
                         var first=group.querySelector('input:not([type="hidden"]),select,textarea,button');
@@ -869,8 +850,7 @@ final class FLACSO_Academic_Team_Editor {
                     var editor=editorOf(removeTeam);
                     if(team&&window.confirm('<?php echo esc_js(__('¿Eliminar este grupo?', 'flacso-uruguay')); ?>')){
                         team.remove();
-                        syncCoordinationButton(editor);
-                        document.dispatchEvent(new CustomEvent('flacso:academic-team-changed'));
+                            document.dispatchEvent(new CustomEvent('flacso:academic-team-changed'));
                     }
                 }
             });
@@ -881,7 +861,6 @@ final class FLACSO_Academic_Team_Editor {
                 }
             });
 
-            document.querySelectorAll('[data-flacso-team-editor="offer"]').forEach(syncCoordinationButton);
             document.querySelectorAll('[data-flacso-team-editor] [data-person-search]').forEach(initPersonSearch);
         })();
         </script>

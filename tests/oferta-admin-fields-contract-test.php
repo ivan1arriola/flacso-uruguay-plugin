@@ -41,4 +41,10 @@ oferta_admin_assert(strpos($admin, 'pertenecen a cada cohorte') !== false, 'debe
 oferta_admin_assert(strpos($admin, 'wp_verify_nonce') !== false, 'debe validar nonce');
 oferta_admin_assert(strpos($admin, "current_user_can('edit_post', \$post_id)") !== false, 'debe validar permisos');
 
+oferta_admin_assert(strpos($admin, "'mostrar_costos_envio' => __('Mostrar") === false, 'el costo de envío no es un checkbox');
+oferta_admin_assert(strpos($admin, "'mostrar_expedicion_titulo' => __('Mostrar") === false, 'la expedición no es un checkbox');
+oferta_admin_assert(strpos($admin, "update_post_meta(\$post_id, 'mostrar_costos_envio', true);") !== false, 'se guarda el costo de envío como siempre habilitado');
+oferta_admin_assert(strpos($admin, "update_post_meta(\$post_id, 'mostrar_expedicion_titulo', true);") !== false, 'se guarda la expedición como siempre habilitada');
+oferta_admin_assert(strpos($admin, "Información incluida siempre en la carta:") !== false, 'el editor explica las condiciones obligatorias');
+
 echo "OK oferta admin fields contract\n";
