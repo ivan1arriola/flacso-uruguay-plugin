@@ -310,7 +310,9 @@ function fc_enrich_info_request_program_context( array $data ) {
                         $offer_email = (string) $offer['correo'];
                     }
 
-                    $active_cohort = $offer['cohorte_mas_reciente'] ?? null;
+                    $active_cohort = array_key_exists('cohorte_mas_reciente', $offer)
+                        ? $offer['cohorte_mas_reciente']
+                        : ($offer['cohorte_vigente'] ?? null);
                     if ( is_array( $active_cohort ) && ! empty( $active_cohort ) ) {
                         $cohort_id     = absint( $active_cohort['id'] ?? 0 );
                         $cohort_name   = (string) ( $active_cohort['nombre'] ?? '' );
