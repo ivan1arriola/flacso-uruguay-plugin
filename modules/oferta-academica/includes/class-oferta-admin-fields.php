@@ -50,6 +50,13 @@ final class FLACSO_Oferta_Admin_Fields {
             delete_transient($transient_key);
             echo '<div class="notice notice-error is-dismissible"><p>' . esc_html($message) . '</p></div>';
         }
+
+        $email_error_key = 'flacso_oferta_email_error_' . $post_id;
+        $email_error = get_transient($email_error_key);
+        if ($email_error) {
+            delete_transient($email_error_key);
+            echo '<div class="notice notice-error is-dismissible"><p>' . esc_html($email_error) . '</p></div>';
+        }
     }
 
     public static function add_meta_box(): void {
@@ -92,7 +99,7 @@ final class FLACSO_Oferta_Admin_Fields {
             'order' => 'ASC',
         ]);
         $sections = [
-            'general' => [FLACSO_Oferta_Academica::META_PROGRAM_ID, 'abreviacion', 'correo', FLACSO_Oferta_Academica::META_PRESENTATION_COLORS],
+            'general' => [FLACSO_Oferta_Academica::META_PROGRAM_ID, 'abreviacion', 'correo', 'correo_oferta', FLACSO_Oferta_Academica::META_PRESENTATION_COLORS],
             'presentation' => ['presentacion'],
             'course' => ['duracion_meses', 'carga_horaria', 'creditos'],
             'profiles' => ['perfil_ingreso_html', 'requisitos_ingreso_html', 'perfil_egreso_html', 'requisitos_egreso_html'],
@@ -155,6 +162,14 @@ final class FLACSO_Oferta_Admin_Fields {
                 </label>
                 <?php self::text_field($post->ID, 'abreviacion', __('Abreviación', 'flacso-uruguay')); ?>
                 <?php self::text_field($post->ID, 'correo', __('Correo de contacto', 'flacso-uruguay'), 'email'); ?>
+                <?php self::text_field(
+                    $post->ID,
+                    'correo_oferta',
+                    __('Correo de la Oferta Académica', 'flacso-uruguay'),
+                    'email',
+                    false,
+                    __('Opcional. Puede ser igual o diferente al correo de contacto. No reemplaza los destinatarios actuales de consultas ni el contacto de la carta.', 'flacso-uruguay')
+                ); ?>
                 <label class="flacso-oferta-field flacso-oferta-field--full">
                     <span><?php esc_html_e('Color principal', 'flacso-uruguay'); ?></span>
                     <span class="flacso-oferta-color-control">
@@ -480,6 +495,25 @@ final class FLACSO_Oferta_Admin_Fields {
                 delete_post_meta($post_id, $key);
             } else {
                 update_post_meta($post_id, $key, $value);
+            }
+        }
+
+        // Dato opcional y separado: no sobrescribe correo ni contacto de carta.
+        // Si el formulario no incluye este campo, conservar el valor existente.
+        if (array_key_exists('correo_oferta', $data)) {
+            $raw_email = $data['correo_oferta'];
+            $submitted_email = is_string($raw_email) ? trim($raw_email) : '';
+            $offer_email = sanitize_email($submitted_email);
+            if (!is_string($raw_email) || ($submitted_email !== '' && !is_email($offer_email))) {
+                set_transient(
+                    'flacso_oferta_email_error_' . $post_id,
+                    __('El Correo de la Oferta Académica no es válido; se conservó el valor anterior.', 'flacso-uruguay'),
+                    90
+                );
+            } elseif ($submitted_email === '') {
+                delete_post_meta($post_id, 'correo_oferta');
+            } else {
+                update_post_meta($post_id, 'correo_oferta', $offer_email);
             }
         }
 

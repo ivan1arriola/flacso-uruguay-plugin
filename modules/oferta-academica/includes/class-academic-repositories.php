@@ -16,7 +16,7 @@ final class FLACSO_Academic_Repository {
             'ofertas' => [
                 'post_type' => FLACSO_Oferta_Academica::POST_TYPE,
                 'fields' => [
-                    'programa_academico_id', 'abreviacion', 'correo', 'presentacion',
+                    'programa_academico_id', 'abreviacion', 'correo', 'correo_oferta', 'presentacion',
                     'composicion_academica',
                     'duracion_meses', 'carga_horaria', 'creditos',
                     'perfil_ingreso_html', 'requisitos_ingreso_html', 'perfil_egreso_html', 'requisitos_egreso_html',
@@ -218,6 +218,18 @@ final class FLACSO_Academic_Repository {
                 return new WP_Error('invalid_parent', sprintf(__('El campo %s debe referir a un registro válido.', 'flacso-uruguay'), $key), ['status' => 400]);
             }
         }
+        // Correo propio, opcional e independiente del correo de contacto.
+        if ($entity === 'ofertas' && array_key_exists('correo_oferta', $payload)) {
+            $raw_email = $payload['correo_oferta'];
+            if (!is_string($raw_email) || ($raw_email !== '' && !is_email(sanitize_email($raw_email)))) {
+                return new WP_Error(
+                    'invalid_offer_email',
+                    __('El Correo de la Oferta Académica debe ser una dirección válida o quedar vacío.', 'flacso-uruguay'),
+                    ['status' => 400]
+                );
+            }
+        }
+
         if ($entity === 'cohortes') {
             $number = array_key_exists('numero', $payload) ? absint($payload['numero']) : absint($id ? get_post_meta($id, 'numero', true) : 0);
             if ($number < 1) {

@@ -91,6 +91,7 @@ final class FLACSO_Oferta_Academica {
             self::META_PROGRAM_ID => ['type' => 'integer', 'sanitize_callback' => 'absint'],
             'abreviacion' => ['type' => 'string', 'sanitize_callback' => [self::class, 'normalize_abbreviation']],
             'correo' => ['type' => 'string', 'sanitize_callback' => 'sanitize_email'],
+            'correo_oferta' => ['type' => 'string', 'sanitize_callback' => 'sanitize_email'],
             'presentacion' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'composicion_academica' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_sections']],
             'duracion_meses' => ['type' => 'number', 'sanitize_callback' => [self::class, 'sanitize_number']],

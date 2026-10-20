@@ -434,7 +434,7 @@ final class FLACSO_Cohorte {
                         <span><strong><?php esc_html_e('Esta Oferta Académica incluye instancias solamente presenciales', 'flacso-uruguay'); ?></strong><small><?php esc_html_e('Marcá solo cuando existan actividades que deban cursarse exclusivamente de forma presencial, sin opción de participación virtual. No equivale a modalidad híbrida.', 'flacso-uruguay'); ?></small></span>
                     </label>
                     <label class="flacso-academic-field flacso-academic-field--full">
-                        <span><?php esc_html_e('Descripción de modalidad', 'flacso-uruguay'); ?></span>
+                        <span><?php esc_html_e('Descripción de la cursada', 'flacso-uruguay'); ?></span>
                         <textarea name="modalidad_descripcion" rows="3"><?php echo esc_textarea($modalidad_descripcion); ?></textarea>
                     </label>
                     <label class="flacso-academic-field">
