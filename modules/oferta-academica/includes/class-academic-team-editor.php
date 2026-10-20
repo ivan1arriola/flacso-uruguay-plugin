@@ -639,6 +639,21 @@ final class FLACSO_Academic_Team_Editor {
             .ui-autocomplete.flacso-team-autocomplete .flacso-team-person-email{display:block;color:#64748b;font-size:11px}
             @media(max-width:782px){.flacso-team-zone--coordination{padding:12px}.flacso-team-members__actions .button{width:100%;min-height:42px}.flacso-team-zone__header{flex-direction:column}}
 
+            /* Confirmación propia, accesible y adaptada al panel de WordPress. */
+            .flacso-team-delete-overlay[hidden]{display:none!important}
+            .flacso-team-delete-overlay{position:fixed;inset:0;z-index:100500;display:grid;place-items:center;padding:20px;background:rgba(15,23,42,.62);box-sizing:border-box}
+            .flacso-team-delete-dialog{width:min(100%,470px);max-height:calc(100dvh - 40px);overflow-y:auto;box-sizing:border-box;padding:24px;border:1px solid #d7dee9;border-radius:14px;background:#fff;color:#1d2327;box-shadow:0 22px 70px rgba(15,23,42,.3)}
+            .flacso-team-delete-dialog__icon{display:grid;place-items:center;width:44px;height:44px;margin-bottom:12px;border-radius:12px;background:#fef2f2;color:#b42318}
+            .flacso-team-delete-dialog__icon .dashicons{width:23px;height:23px;font-size:23px}
+            .flacso-team-delete-dialog h2{margin:0 0 10px;padding:0;font-size:21px;line-height:1.3;color:#172c49}
+            .flacso-team-delete-dialog p{margin:0 0 10px;font-size:14px;line-height:1.6;overflow-wrap:anywhere}
+            .flacso-team-delete-dialog__note{color:#526074}
+            .flacso-team-delete-dialog__actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:10px;margin-top:22px}
+            .flacso-team-delete-dialog__actions .button{min-height:40px;height:auto;padding:7px 16px;white-space:normal}
+            .flacso-team-delete-dialog__confirm.button{background:#b42318;border-color:#b42318;color:#fff}
+            .flacso-team-delete-dialog__confirm.button:hover,.flacso-team-delete-dialog__confirm.button:focus{background:#8f1d14;border-color:#8f1d14;color:#fff}
+            @media(max-width:600px){.flacso-team-delete-overlay{padding:12px}.flacso-team-delete-dialog{padding:20px 16px;max-height:calc(100dvh - 24px)}.flacso-team-delete-dialog__actions{flex-direction:column-reverse}.flacso-team-delete-dialog__actions .button{width:100%;min-height:44px}}
+
             .flacso-team-editor__intro{margin:0;padding:11px 13px;border-left:4px solid #2c4777;background:#f0f4f9;color:#3c434a}
             .flacso-team-editor__legacy{margin:0;padding:10px 12px;border-left:4px solid #dba617;background:#fcf9e8}
             .flacso-team-actions{display:flex;flex-wrap:wrap;gap:8px}
@@ -667,9 +682,84 @@ final class FLACSO_Academic_Team_Editor {
             return;
         }
         ?>
+        <div class="flacso-team-delete-overlay" data-flacso-team-delete-dialog hidden>
+            <div class="flacso-team-delete-dialog" role="alertdialog" aria-modal="true" aria-labelledby="flacso-team-delete-title" aria-describedby="flacso-team-delete-description flacso-team-delete-note">
+                <span class="flacso-team-delete-dialog__icon" aria-hidden="true"><span class="dashicons dashicons-trash"></span></span>
+                <h2 id="flacso-team-delete-title"><?php esc_html_e('¿Eliminar este grupo docente?', 'flacso-uruguay'); ?></h2>
+                <p id="flacso-team-delete-description"><?php esc_html_e('Vas a quitar el grupo', 'flacso-uruguay'); ?> <strong data-team-delete-name></strong> <?php esc_html_e('junto con sus integrantes.', 'flacso-uruguay'); ?></p>
+                <p id="flacso-team-delete-note" class="flacso-team-delete-dialog__note"><?php esc_html_e('El cambio se aplicará cuando guardes la Oferta Académica o Cohorte.', 'flacso-uruguay'); ?></p>
+                <div class="flacso-team-delete-dialog__actions">
+                    <button type="button" class="button button-secondary" data-team-delete-cancel><?php esc_html_e('Cancelar', 'flacso-uruguay'); ?></button>
+                    <button type="button" class="button flacso-team-delete-dialog__confirm" data-team-delete-confirm><?php esc_html_e('Eliminar grupo', 'flacso-uruguay'); ?></button>
+                </div>
+            </div>
+        </div>
         <script>
         (function(){
             function editorOf(el){ return el.closest('[data-flacso-team-editor]'); }
+            var deleteDialog=document.querySelector('[data-flacso-team-delete-dialog]');
+            var pendingDelete=null;
+            var returnFocus=null;
+
+            function closeTeamDeleteDialog(focusTarget){
+                if(!deleteDialog){ return; }
+                deleteDialog.hidden=true;
+                pendingDelete=null;
+                var target=focusTarget||returnFocus;
+                returnFocus=null;
+                if(target&&target.isConnected){ target.focus(); }
+            }
+
+            function openTeamDeleteDialog(team,trigger){
+                if(!deleteDialog||!team||!editorOf(trigger)||team.getAttribute('data-team-type')==='coordinacion_academica'){ return; }
+                pendingDelete=team;
+                returnFocus=trigger;
+                var nameInput=team.querySelector('input[name$="[nombre]"]');
+                var heading=team.querySelector('.flacso-team-group__heading strong');
+                var name=(nameInput&&nameInput.value.trim())||(heading&&heading.textContent.trim())||'<?php echo esc_js(__('Grupo docente', 'flacso-uruguay')); ?>';
+                deleteDialog.querySelector('[data-team-delete-name]').textContent='“'+name+'”';
+                deleteDialog.hidden=false;
+                deleteDialog.querySelector('[data-team-delete-cancel]').focus();
+            }
+
+            if(deleteDialog){
+                deleteDialog.addEventListener('click',function(event){
+                    if(event.target===deleteDialog||event.target.closest('[data-team-delete-cancel]')){
+                        event.preventDefault();
+                        closeTeamDeleteDialog();
+                        return;
+                    }
+                    if(event.target.closest('[data-team-delete-confirm]')){
+                        event.preventDefault();
+                        if(!pendingDelete||!pendingDelete.isConnected){ closeTeamDeleteDialog(); return; }
+                        var editor=editorOf(pendingDelete);
+                        var next=pendingDelete.nextElementSibling;
+                        var focusTarget=(next&&next.querySelector('[data-remove-team]'))||(editor&&editor.querySelector('[data-add-team]'))||null;
+                        pendingDelete.remove();
+                        closeTeamDeleteDialog(focusTarget);
+                        document.dispatchEvent(new CustomEvent('flacso:academic-team-changed'));
+                    }
+                });
+                document.addEventListener('keydown',function(event){
+                    if(deleteDialog.hidden){ return; }
+                    if(event.key==='Escape'){
+                        event.preventDefault();
+                        closeTeamDeleteDialog();
+                        return;
+                    }
+                    if(event.key!=='Tab'){ return; }
+                    var controls=Array.from(deleteDialog.querySelectorAll('button:not([disabled])'));
+                    if(!controls.length){ event.preventDefault(); return; }
+                    var first=controls[0],last=controls[controls.length-1];
+                    if(event.shiftKey&&(document.activeElement===first||!deleteDialog.contains(document.activeElement))){
+                        event.preventDefault();
+                        last.focus();
+                    } else if(!event.shiftKey&&(document.activeElement===last||!deleteDialog.contains(document.activeElement))){
+                        event.preventDefault();
+                        first.focus();
+                    }
+                });
+            }
 
             function nextMemberIndex(container){
                 var max=-1;
@@ -846,12 +936,8 @@ final class FLACSO_Academic_Team_Editor {
                 var removeTeam=event.target.closest('[data-remove-team]');
                 if(removeTeam){
                     event.preventDefault();
-                    var team=removeTeam.closest('[data-team-group]');
-                    var editor=editorOf(removeTeam);
-                    if(team&&window.confirm('<?php echo esc_js(__('¿Eliminar este grupo?', 'flacso-uruguay')); ?>')){
-                        team.remove();
-                            document.dispatchEvent(new CustomEvent('flacso:academic-team-changed'));
-                    }
+                    openTeamDeleteDialog(removeTeam.closest('[data-team-group]'),removeTeam);
+                    return;
                 }
             });
 
