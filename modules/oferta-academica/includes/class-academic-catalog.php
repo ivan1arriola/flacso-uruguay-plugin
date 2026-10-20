@@ -15,11 +15,13 @@ final class FLACSO_Academic_Catalog {
         $offer['cohortes'] = $cohorts;
         // La presentación pública requiere la cohorte de mayor numeración,
         // no la abierta/en curso (que podría corresponder a una anterior).
-        $offer['cohorte_mas_reciente'] = self::latest_published_cohort($cohorts);
-        // Compatibilidad: no alterar criterios históricos de consultas ni
-        // otras integraciones que consumen cohorte_vigente.
-        $offer['cohorte_vigente'] = self::current_item($cohorts);
-        $offer['cohorte_consulta'] = self::get_inquiry_cohort($offer_id, $cohorts);
+        $latest_cohort = self::latest_published_cohort($cohorts);
+        // Misma cohorte para web, carta, formulario y notificaciones.
+        // "Vigente" y "consulta" se mantienen como claves compatibles
+        // pero nunca deben apuntar a una cohorte anterior.
+        $offer['cohorte_mas_reciente'] = $latest_cohort;
+        $offer['cohorte_vigente'] = $latest_cohort;
+        $offer['cohorte_consulta'] = $latest_cohort;
         return $offer;
     }
 
@@ -51,75 +53,16 @@ final class FLACSO_Academic_Catalog {
         return $published[0];
     }
 
+    /**
+     * Compatibilidad del resolvedor de consultas: el visitante siempre debe
+     * consultar sobre la cohorte más nueva publicada, esté abierta o cerrada.
+     * La disponibilidad de preinscripción se evalúa por separado.
+     */
     public static function get_inquiry_cohort(int $offer_id, ?array $cohorts = null): ?array {
         if ($cohorts === null) {
             $cohorts = FLACSO_Academic_Repository::list('cohortes', ['parent_id' => $offer_id, 'per_page' => 200]);
         }
-        if (empty($cohorts)) {
-            return null;
-        }
-
-        $today = function_exists('current_time') ? current_time('Y-m-d') : date('Y-m-d');
-
-        // 1. Cohorte con preinscripción abierta
-        $open_cohorts = [];
-        foreach ($cohorts as $cohort) {
-            if (!empty($cohort['preinscripcion']['abierta'])) {
-                $open_cohorts[] = $cohort;
-            }
-        }
-
-        if (!empty($open_cohorts)) {
-            usort($open_cohorts, static function (array $a, array $b): int {
-                $date_a = (string) ($a['fecha_inicio'] ?? '');
-                $date_b = (string) ($b['fecha_inicio'] ?? '');
-                if ($date_a !== '' && $date_b !== '') {
-                    $cmp = strcmp($date_a, $date_b);
-                    if ($cmp !== 0) {
-                        return $cmp;
-                    }
-                } elseif ($date_a !== '') {
-                    return -1;
-                } elseif ($date_b !== '') {
-                    return 1;
-                }
-                return absint($b['numero'] ?? 0) <=> absint($a['numero'] ?? 0);
-            });
-            return $open_cohorts[0];
-        }
-
-        // 2. Cohorte planificada futura
-        $upcoming_planificadas = [];
-        foreach ($cohorts as $cohort) {
-            if (($cohort['estado'] ?? '') === 'planificada') {
-                $start = (string) ($cohort['fecha_inicio'] ?? '');
-                if ($start === '' || $start >= $today) {
-                    $upcoming_planificadas[] = $cohort;
-                }
-            }
-        }
-
-        if (!empty($upcoming_planificadas)) {
-            usort($upcoming_planificadas, static function (array $a, array $b): int {
-                $date_a = (string) ($a['fecha_inicio'] ?? '');
-                $date_b = (string) ($b['fecha_inicio'] ?? '');
-                if ($date_a !== '' && $date_b !== '') {
-                    $cmp = strcmp($date_a, $date_b);
-                    if ($cmp !== 0) {
-                        return $cmp;
-                    }
-                } elseif ($date_a !== '') {
-                    return -1;
-                } elseif ($date_b !== '') {
-                    return 1;
-                }
-                return absint($a['numero'] ?? 0) <=> absint($b['numero'] ?? 0);
-            });
-            return $upcoming_planificadas[0];
-        }
-
-        // 3. Ninguna cohorte abierta ni futura
-        return null;
+        return self::latest_published_cohort($cohorts);
     }
 
     public static function get_seminar(int $seminar_id): array {
@@ -150,13 +93,12 @@ final class FLACSO_Academic_Catalog {
                 continue;
             }
             $cohorts = FLACSO_Academic_Repository::list('cohortes', ['parent_id' => $offer_id, 'per_page' => 100]);
-            $open_cohorts = array_values(array_filter($cohorts, static function (array $c): bool {
-                return !empty($c['preinscripcion']['abierta']);
-            }));
-            if (empty($open_cohorts)) {
+            // No ofrecer una cohorte anterior solo porque sigue abierta.
+            // Únicamente la más nueva publicada puede figurar en el catálogo.
+            $chosen_cohort = self::latest_published_cohort($cohorts);
+            if (!$chosen_cohort || empty($chosen_cohort['preinscripcion']['abierta'])) {
                 continue;
             }
-            $chosen_cohort = self::current_item($open_cohorts) ?? $open_cohorts[0];
             $cohort_id = absint($chosen_cohort['id']);
             $modified = function_exists('get_post_modified_time') ? get_post_modified_time('c', true, $cohort_id) : date('c');
 
