@@ -32,6 +32,8 @@ final class FLACSO_Academic_Team_Editor {
         add_action('admin_head-post-new.php', [self::class, 'render_styles']);
         add_action('admin_footer-post.php', [self::class, 'render_script']);
         add_action('admin_footer-post-new.php', [self::class, 'render_script']);
+        add_action('admin_enqueue_scripts', [self::class, 'enqueue_person_search']);
+        add_action('wp_ajax_flacso_search_team_people', [self::class, 'search_people_ajax']);
     }
 
     public static function register_meta(): void {
@@ -166,16 +168,82 @@ final class FLACSO_Academic_Team_Editor {
         return [];
     }
 
-    /** @return WP_Post[] */
+    /**
+     * Mantiene el contrato de renderizado sin cargar todas las personas.
+     * Únicamente se renderiza la persona seleccionada en cada fila.
+     */
     private static function people(): array {
-        return get_posts([
-            'post_type' => 'docente',
-            'post_status' => ['publish', 'draft', 'pending', 'private'],
-            'posts_per_page' => -1,
-            'orderby' => 'title',
-            'order' => 'ASC',
-            'no_found_rows' => true,
-        ]);
+        return [];
+    }
+
+    public static function enqueue_person_search(string $hook): void {
+        if (!in_array($hook, ['post.php', 'post-new.php'], true)) {
+            return;
+        }
+        $screen = get_current_screen();
+        if ($screen && in_array($screen->post_type, [FLACSO_Oferta_Academica::POST_TYPE, FLACSO_Cohorte::POST_TYPE], true)) {
+            wp_enqueue_script('jquery-ui-autocomplete');
+        }
+    }
+
+    /** Búsqueda autenticada por nombre o correo, en páginas de 20 docentes. */
+    public static function search_people_ajax(): void {
+        if (!check_ajax_referer('flacso_team_people_search', 'nonce', false)) {
+            wp_send_json_error(['message' => __('Sesión vencida. Recargá el editor.', 'flacso-uruguay')], 403);
+            return;
+        }
+        $post_id = isset($_GET['post_id']) ? absint($_GET['post_id']) : 0;
+        $post_type = $post_id ? get_post_type($post_id) : '';
+        if (!in_array($post_type, [FLACSO_Oferta_Academica::POST_TYPE, FLACSO_Cohorte::POST_TYPE], true)
+            || !current_user_can('edit_post', $post_id)) {
+            wp_send_json_error(['message' => __('Sin permisos de edición.', 'flacso-uruguay')], 403);
+            return;
+        }
+
+        $raw_term = $_GET['term'] ?? '';
+        $term = is_string($raw_term) ? trim(sanitize_text_field(wp_unslash($raw_term))) : '';
+        if (strlen($term) < 2) {
+            wp_send_json_success(['results' => [], 'more' => false]);
+            return;
+        }
+        $term = substr($term, 0, 100);
+        $page = max(1, min(100, absint($_GET['page'] ?? 1)));
+        $per_page = 20;
+
+        global $wpdb;
+        $like = '%' . $wpdb->esc_like($term) . '%';
+        $query = $wpdb->prepare(
+            "SELECT p.ID, p.post_title
+             FROM {$wpdb->posts} p
+             WHERE p.post_type = %s
+               AND p.post_status IN ('publish','draft','pending','private')
+               AND (
+                 p.post_title LIKE %s
+                 OR EXISTS (
+                   SELECT 1 FROM {$wpdb->postmeta} pm
+                   WHERE pm.post_id = p.ID AND pm.meta_key = 'correo' AND pm.meta_value LIKE %s
+                 )
+               )
+             ORDER BY p.post_title ASC, p.ID ASC
+             LIMIT %d OFFSET %d",
+            'docente', $like, $like, $per_page + 1, ($page - 1) * $per_page
+        );
+        $rows = $wpdb->get_results($query);
+        if (!is_array($rows)) {
+            wp_send_json_error(['message' => __('Error al buscar docentes.', 'flacso-uruguay')], 500);
+            return;
+        }
+        $results = [];
+        foreach (array_slice($rows, 0, $per_page) as $person) {
+            $id = (int) $person->ID;
+            $results[] = [
+                'id' => $id,
+                'name' => (string) $person->post_title,
+                'email' => self::person_email($id),
+                'avatar' => self::person_avatar($id),
+            ];
+        }
+        wp_send_json_success(['results' => $results, 'more' => count($rows) > $per_page]);
     }
 
     private static function person_email(int $id): string {
@@ -211,7 +279,7 @@ final class FLACSO_Academic_Team_Editor {
             $summary
         );
         ?>
-        <div class="flacso-team-editor" data-flacso-team-editor="offer">
+        <div class="flacso-team-editor" data-flacso-team-editor="offer" data-post-id="<?php echo esc_attr((string) $post->ID); ?>" data-person-nonce="<?php echo esc_attr(wp_create_nonce('flacso_team_people_search')); ?>">
             <p class="flacso-team-editor__intro">
                 <?php esc_html_e('Estos grupos pertenecen a la Oferta. La Coordinación académica puede existir una sola vez; los demás grupos tienen nombre libre. Los equipos de Cohorte se gestionan por separado.', 'flacso-uruguay'); ?>
             </p>
@@ -264,7 +332,7 @@ final class FLACSO_Academic_Team_Editor {
             $summary
         );
         ?>
-        <div class="flacso-team-editor" data-flacso-team-editor="cohort">
+        <div class="flacso-team-editor" data-flacso-team-editor="cohort" data-post-id="<?php echo esc_attr((string) $post->ID); ?>" data-person-nonce="<?php echo esc_attr(wp_create_nonce('flacso_team_people_search')); ?>">
             <p class="flacso-team-editor__intro">
                 <?php esc_html_e('Estos grupos pertenecen únicamente a esta cohorte. No se copian ni se sincronizan con los equipos estables de la Oferta.', 'flacso-uruguay'); ?>
             </p>
@@ -290,15 +358,12 @@ final class FLACSO_Academic_Team_Editor {
     private static function render_person_options(array $people, int $selected = 0): void {
         ?>
         <option value=""><?php esc_html_e('— Seleccionar persona —', 'flacso-uruguay'); ?></option>
-        <?php foreach ($people as $person) : ?>
-            <option
-                value="<?php echo esc_attr((string) $person->ID); ?>"
-                data-name="<?php echo esc_attr(get_the_title($person)); ?>"
-                data-email="<?php echo esc_attr(self::person_email((int) $person->ID)); ?>"
-                data-avatar="<?php echo esc_attr(self::person_avatar((int) $person->ID)); ?>"
-                <?php selected($selected, $person->ID); ?>
-            ><?php echo esc_html(get_the_title($person)); ?></option>
-        <?php endforeach; ?>
+        <?php if ($selected > 0 && get_post_type($selected) === 'docente') : ?>
+            <option value="<?php echo esc_attr((string) $selected); ?>"
+                data-name="<?php echo esc_attr(get_the_title($selected)); ?>"
+                data-email="<?php echo esc_attr(self::person_email($selected)); ?>"
+                data-avatar="<?php echo esc_attr(self::person_avatar($selected)); ?>" selected><?php echo esc_html(get_the_title($selected)); ?></option>
+        <?php endif; ?>
         <?php
     }
 
@@ -309,12 +374,19 @@ final class FLACSO_Academic_Team_Editor {
         $email = (string) ($member['correo'] ?? '');
         ?>
         <div class="flacso-team-member" data-member-row>
-            <label>
-                <span><?php esc_html_e('Persona', 'flacso-uruguay'); ?></span>
-                <select name="<?php echo esc_attr($name_prefix . '[id]'); ?>">
+            <div class="flacso-team-person-field">
+                <label>
+                    <span><?php esc_html_e('Persona', 'flacso-uruguay'); ?></span>
+                    <input type="search" data-person-search
+                        value="<?php echo esc_attr($selected && get_post_type($selected) === 'docente' ? get_the_title($selected) : ''); ?>"
+                        autocomplete="off" aria-autocomplete="list"
+                        placeholder="<?php esc_attr_e('Buscar por nombre o correo', 'flacso-uruguay'); ?>">
+                </label>
+                <select data-person-select class="flacso-team-person-select" name="<?php echo esc_attr($name_prefix . '[id]'); ?>" tabindex="-1" aria-hidden="true">
                     <?php self::render_person_options($people, $selected); ?>
                 </select>
-            </label>
+                <small data-person-feedback aria-live="polite"><?php esc_html_e('Escribí al menos 2 caracteres y elegí un resultado.', 'flacso-uruguay'); ?></small>
+            </div>
             <label>
                 <span><?php esc_html_e('Rol en este grupo', 'flacso-uruguay'); ?></span>
                 <input type="text" name="<?php echo esc_attr($name_prefix . '[rol]'); ?>" value="<?php echo esc_attr($role); ?>" placeholder="<?php esc_attr_e('Ej.: Dirección, Coordinación, Docencia', 'flacso-uruguay'); ?>">
@@ -389,12 +461,14 @@ final class FLACSO_Academic_Team_Editor {
             <div class="flacso-team-members" data-members-prefix="<?php echo esc_attr($prefix . '[docentes]'); ?>">
                 <div class="flacso-team-members__header">
                     <strong><?php esc_html_e('Integrantes', 'flacso-uruguay'); ?></strong>
-                    <button type="button" class="button button-small" data-add-member><?php esc_html_e('Agregar integrante', 'flacso-uruguay'); ?></button>
                 </div>
                 <div data-member-list>
                     <?php foreach ((array) ($team['docentes'] ?? []) as $member_index => $member) : ?>
                         <?php self::render_member_row($prefix . '[docentes][' . (int) $member_index . ']', (array) $member, $people); ?>
                     <?php endforeach; ?>
+                </div>
+                <div class="flacso-team-members__actions">
+                    <button type="button" class="button button-secondary" data-add-member><?php esc_html_e('Agregar integrante', 'flacso-uruguay'); ?></button>
                 </div>
             </div>
         </section>
@@ -450,12 +524,14 @@ final class FLACSO_Academic_Team_Editor {
             <div class="flacso-team-members" data-members-prefix="<?php echo esc_attr($prefix . '[docentes]'); ?>">
                 <div class="flacso-team-members__header">
                     <strong><?php esc_html_e('Integrantes', 'flacso-uruguay'); ?></strong>
-                    <button type="button" class="button button-small" data-add-member><?php esc_html_e('Agregar integrante', 'flacso-uruguay'); ?></button>
                 </div>
                 <div data-member-list>
                     <?php foreach ((array) ($team['docentes'] ?? []) as $member_index => $member) : ?>
                         <?php self::render_member_row($prefix . '[docentes][' . (int) $member_index . ']', (array) $member, $people); ?>
                     <?php endforeach; ?>
+                </div>
+                <div class="flacso-team-members__actions">
+                    <button type="button" class="button button-secondary" data-add-member><?php esc_html_e('Agregar integrante', 'flacso-uruguay'); ?></button>
                 </div>
             </div>
         </section>
