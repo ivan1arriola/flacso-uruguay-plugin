@@ -303,17 +303,18 @@ function flacso_consultas_render_form( $attributes = array() ) {
 	if ( $mostrar_pre && get_post_type($id_pagina) === 'oferta-academica' ) {
 		if ( class_exists( 'FLACSO_Academic_Catalog' ) && $id_pagina > 0 ) {
 			$offer = FLACSO_Academic_Catalog::get_offer( $id_pagina );
-			$active_cohort = $offer['cohorte_vigente'] ?? null;
+			$active_cohort = array_key_exists('cohorte_mas_reciente', $offer)
+			? $offer['cohorte_mas_reciente']
+			: ($offer['cohorte_vigente'] ?? null);
 			if ( ! empty( $active_cohort ) ) {
-				$mostrar_pre = ! empty( $active_cohort['preinscripcion']['abierta'] ) || ! empty( $active_cohort['preinscripcion_habilitada'] );
+				$mostrar_pre = ! empty( $active_cohort['preinscripcion']['abierta'] );
 				if ( ! empty( $active_cohort['link_preinscripcion'] ) ) {
 					$preinsc_btn_url = $active_cohort['link_preinscripcion'];
 				} elseif ( ! empty( $active_cohort['preinscripcion']['url'] ) ) {
 					$preinsc_btn_url = $active_cohort['preinscripcion']['url'];
 				}
 			} else {
-				$abiertas = get_post_meta($id_pagina, 'inscripciones_abiertas', true);
-				$mostrar_pre = ($abiertas === '1' || $abiertas === 'true' || $abiertas === true || $abiertas === 1);
+				$mostrar_pre = false;
 			}
 		} else {
 			$abiertas = get_post_meta($id_pagina, 'inscripciones_abiertas', true);
@@ -982,7 +983,16 @@ function flacso_consultas_render_preinscripcion_button() {
 	$href_preinscripcion = trailingslashit( $url_actual ) . 'preinscripcion';
 	if ( class_exists( 'FLACSO_Academic_Catalog' ) && $id_pagina > 0 ) {
 		$offer = FLACSO_Academic_Catalog::get_offer( $id_pagina );
-		$active_cohort = $offer['cohorte_vigente'] ?? null;
+		$active_cohort = array_key_exists('cohorte_mas_reciente', $offer)
+			? $offer['cohorte_mas_reciente']
+			: ($offer['cohorte_vigente'] ?? null);
+		// Nunca ofrecer el enlace de una cohorte antigua ni un CTA cerrado.
+		if ( empty( $active_cohort['preinscripcion']['abierta'] ) ) {
+			return '';
+		}
+		if ( empty( $active_cohort['link_preinscripcion'] ) && empty( $active_cohort['preinscripcion']['url'] ) ) {
+			return '';
+		}
 		if ( ! empty( $active_cohort['link_preinscripcion'] ) ) {
 			$href_preinscripcion = $active_cohort['link_preinscripcion'];
 		} elseif ( ! empty( $active_cohort['preinscripcion']['url'] ) ) {

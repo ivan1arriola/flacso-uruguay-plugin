@@ -114,9 +114,12 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
 
             if ($page_id > 0 && class_exists('FLACSO_Academic_Catalog') && get_post_type($page_id) === 'oferta-academica') {
                 $offer = FLACSO_Academic_Catalog::get_offer($page_id);
-                $active_cohort = $offer['cohorte_vigente'] ?? null;
+                $active_cohort = array_key_exists('cohorte_mas_reciente', $offer)
+                    ? $offer['cohorte_mas_reciente']
+                    : ($offer['cohorte_vigente'] ?? null);
                 if (!empty($active_cohort)) {
-                    $is_open = !empty($active_cohort['preinscripcion']['abierta']) || !empty($active_cohort['preinscripcion_habilitada']);
+                    $is_open = !empty($active_cohort['preinscripcion']['abierta'])
+                        && (!empty($active_cohort['link_preinscripcion']) || !empty($active_cohort['preinscripcion']['url']));
                     $show_pre = $show_pre && $is_open;
                     if (!empty($active_cohort['link_preinscripcion'])) {
                         $preinsc_url = $active_cohort['link_preinscripcion'];
@@ -124,8 +127,7 @@ if (!class_exists('FLACSO_Posgrados_Consultas_Form')) {
                         $preinsc_url = $active_cohort['preinscripcion']['url'];
                     }
                 } else {
-                    $abiertas = get_post_meta($page_id, 'inscripciones_abiertas', true);
-                    $show_pre = $show_pre && ($abiertas === '1' || $abiertas === 'true' || $abiertas === true || $abiertas === 1);
+                    $show_pre = false;
                 }
             } elseif ($page_id > 0 && get_post_type($page_id) === 'oferta-academica') {
                 $abiertas = get_post_meta($page_id, 'inscripciones_abiertas', true);

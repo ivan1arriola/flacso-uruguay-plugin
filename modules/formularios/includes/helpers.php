@@ -295,9 +295,11 @@ function fc_enrich_info_request_program_context( array $data ) {
         }
 
         if ( 'oferta-academica' === $post_type || '' === $post_type ) {
+            $catalog_offer_resolved = false;
             if ( class_exists( 'FLACSO_Academic_Catalog' ) ) {
                 $offer = FLACSO_Academic_Catalog::get_offer( $offer_id );
                 if ( ! empty( $offer ) ) {
+                    $catalog_offer_resolved = true;
                     if ( ! empty( $offer['nombre'] ) ) {
                         $resolved_title = (string) $offer['nombre'];
                     }
@@ -308,7 +310,9 @@ function fc_enrich_info_request_program_context( array $data ) {
                         $offer_email = (string) $offer['correo'];
                     }
 
-                    $active_cohort = $offer['cohorte_vigente'] ?? null;
+                    $active_cohort = array_key_exists('cohorte_mas_reciente', $offer)
+                        ? $offer['cohorte_mas_reciente']
+                        : ($offer['cohorte_vigente'] ?? null);
                     if ( is_array( $active_cohort ) && ! empty( $active_cohort ) ) {
                         $cohort_id     = absint( $active_cohort['id'] ?? 0 );
                         $cohort_name   = (string) ( $active_cohort['nombre'] ?? '' );
@@ -321,7 +325,7 @@ function fc_enrich_info_request_program_context( array $data ) {
                             $preinscripcion_url = (string) $active_cohort['preinscripcion']['url'];
                         }
 
-                        $is_open = ! empty( $active_cohort['preinscripcion']['abierta'] ) || ! empty( $active_cohort['preinscripcion_habilitada'] );
+                        $is_open = ! empty( $active_cohort['preinscripcion']['abierta'] );
 
                         if ( ! empty( $active_cohort['fecha_inicio'] ) ) {
                             $start_value     = (string) $active_cohort['fecha_inicio'];
@@ -333,23 +337,23 @@ function fc_enrich_info_request_program_context( array $data ) {
 
             // Fallbacks desde post_meta de la oferta si no se resolvieron por catálogo
             if ( function_exists( 'get_post_meta' ) ) {
-                if ( '' === $preinscripcion_url ) {
+                if ( ! $catalog_offer_resolved && '' === $preinscripcion_url ) {
                     $meta_pre = (string) get_post_meta( $offer_id, 'link_preinscripcion', true );
                     if ( '' !== $meta_pre ) {
                         $preinscripcion_url = $meta_pre;
                     }
                 }
-                if ( ! $is_open ) {
+                if ( ! $catalog_offer_resolved && ! $is_open ) {
                     $meta_abierta = get_post_meta( $offer_id, 'inscripciones_abiertas', true );
                     if ( '1' === (string) $meta_abierta || true === $meta_abierta ) {
                         $is_open = true;
                     }
                 }
-                if ( '' === $start_value ) {
+                if ( ! $catalog_offer_resolved && '' === $start_value ) {
                     $start_value     = (string) get_post_meta( $offer_id, 'proximo_inicio', true );
                     $start_precision = (string) get_post_meta( $offer_id, 'proximo_inicio_precision', true );
                 }
-                if ( '' === $modality ) {
+                if ( ! $catalog_offer_resolved && '' === $modality ) {
                     $modality = (string) get_post_meta( $offer_id, 'modalidad', true );
                 }
                 if ( '' === $offer_email ) {

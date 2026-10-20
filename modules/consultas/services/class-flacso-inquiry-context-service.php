@@ -84,9 +84,9 @@ class FLACSO_Inquiry_Context_Service {
             'offerStatus'          => $offer_status,
             'preinscripcionUrl'    => $preinscripcion_url,
             'replyToEmail'         => $catalog_data['correo'] ?? null,
-            'startDate'            => $inquiry_cohort['fecha_inicio'] ?? ($catalog_data['cohorte_vigente']['fecha_inicio'] ?? ''),
-            'startDatePrecision'   => self::normalize_precision((string) ($inquiry_cohort['precision_fecha_inicio'] ?? ($catalog_data['cohorte_vigente']['precision_fecha_inicio'] ?? 'dia'))),
-            'modality'             => self::normalize_modality((string) ($inquiry_cohort['modalidad'] ?? ($catalog_data['cohorte_vigente']['modalidad'] ?? ''))),
+            'startDate'            => $inquiry_cohort['fecha_inicio'] ?? ($catalog_data['cohorte_mas_reciente']['fecha_inicio'] ?? ''),
+            'startDatePrecision'   => self::normalize_precision((string) ($inquiry_cohort['precision_fecha_inicio'] ?? ($catalog_data['cohorte_mas_reciente']['precision_fecha_inicio'] ?? 'dia'))),
+            'modality'             => self::normalize_modality((string) ($inquiry_cohort['modalidad'] ?? ($catalog_data['cohorte_mas_reciente']['modalidad'] ?? ''))),
         ];
     }
 
