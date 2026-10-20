@@ -412,7 +412,7 @@ final class FLACSO_Cohorte {
             FLACSO_Academic_Admin_UI::section_start(
                 'flacso-cohorte-cursado',
                 __('Cursado', 'flacso-uruguay'),
-                __('Modalidad, instancias presenciales y calendario propio de esta cohorte.', 'flacso-uruguay'),
+                __('Modalidad, encuentros exclusivamente presenciales y calendario propio de esta cohorte.', 'flacso-uruguay'),
                 'dashicons-clock',
                 $course_summary !== '' ? $course_summary : __('Sin completar', 'flacso-uruguay')
             );
@@ -431,7 +431,7 @@ final class FLACSO_Cohorte {
                     <label class="flacso-cohort-checkbox">
                         <input type="hidden" name="instancias_presenciales" value="0">
                         <input type="checkbox" name="instancias_presenciales" value="1" <?php checked($instancias_presenciales); ?>>
-                        <span><strong><?php esc_html_e('Tiene instancias presenciales', 'flacso-uruguay'); ?></strong><small><?php esc_html_e('Marcá esta opción cuando el cursado incluya encuentros presenciales.', 'flacso-uruguay'); ?></small></span>
+                        <span><strong><?php esc_html_e('Esta Oferta Académica incluye instancias solamente presenciales', 'flacso-uruguay'); ?></strong><small><?php esc_html_e('Marcá solo cuando existan actividades que deban cursarse exclusivamente de forma presencial, sin opción de participación virtual. No equivale a modalidad híbrida.', 'flacso-uruguay'); ?></small></span>
                     </label>
                     <label class="flacso-academic-field flacso-academic-field--full">
                         <span><?php esc_html_e('Descripción de modalidad', 'flacso-uruguay'); ?></span>
