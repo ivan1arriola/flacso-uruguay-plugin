@@ -23,48 +23,13 @@ final class FLACSO_Oferta_Admin_Fields {
         add_action('admin_head-post-new.php', [self::class, 'render_styles']);
         add_action('admin_footer-post.php', [self::class, 'render_scripts']);
         add_action('admin_footer-post-new.php', [self::class, 'render_scripts']);
-        add_action('admin_menu', [self::class, 'add_shared_settings']);
-        add_action('admin_init', [self::class, 'register_shared_settings']);
         add_action('add_meta_boxes', [self::class, 'remove_theme_settings'], 100);
-        add_filter('views_edit-' . FLACSO_Oferta_Academica::POST_TYPE, [self::class, 'funding_link']);
     }
 
     public static function remove_theme_settings(): void {
         foreach (['normal', 'side', 'advanced'] as $context) {
             remove_meta_box('_kad_classic_meta_control', FLACSO_Oferta_Academica::POST_TYPE, $context);
         }
-    }
-
-    public static function add_shared_settings(): void {
-        add_submenu_page(FLACSO_Admin_Panel::PAGE_SLUG, 'Financiación - Texto', 'Financiación - Texto', 'manage_options', 'flacso-financiacion', [self::class, 'render_shared_settings']);
-    }
-
-    public static function funding_link(array $views): array {
-        if (current_user_can('manage_options')) {
-            $views['financiacion'] = '<a href="' . esc_url(admin_url('admin.php?page=flacso-financiacion')) . '">Financiación - Texto</a>';
-        }
-        return $views;
-    }
-
-    public static function register_shared_settings(): void {
-        register_setting('flacso_financiacion', 'flacso_financiacion_html', ['type' => 'string', 'sanitize_callback' => 'wp_kses_post']);
-    }
-
-    public static function render_shared_settings(): void {
-        if (!current_user_can('manage_options')) {
-            return;
-        }
-        ?>
-        <div class="wrap">
-            <h1>Financiación - Texto</h1>
-            <p>Este contenido se muestra en todas las ofertas académicas y sus cartas.</p>
-            <form method="post" action="options.php">
-                <?php settings_fields('flacso_financiacion'); ?>
-                <?php wp_editor((string) get_option('flacso_financiacion_html', get_option('flacso_carta_mas_info_financiacion_html', '')), 'flacso_financiacion_html', ['textarea_name' => 'flacso_financiacion_html', 'media_buttons' => false, 'editor_height' => 360]); ?>
-                <?php submit_button(); ?>
-            </form>
-        </div>
-        <?php
     }
 
     public static function render_admin_notices(): void {
