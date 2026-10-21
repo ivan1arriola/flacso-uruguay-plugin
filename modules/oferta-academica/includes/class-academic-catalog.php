@@ -78,21 +78,26 @@ final class FLACSO_Academic_Catalog {
         // cada Seminario componente.
         $editions = FLACSO_Academic_Repository::list('ediciones', ['parent_id' => $seminar_id, 'per_page' => 200]);
         $seminar['ediciones'] = $editions;
-        // Solo una edición publicada, planificada a futuro o en curso, es vigente.
-        // No rescatar ediciones históricas/cerradas como fallback público.
-        $today = function_exists('current_time') ? current_time('Y-m-d') : date('Y-m-d');
-        $eligible = array_values(array_filter($editions, static function ($edition) use ($today): bool {
-            if (!is_array($edition) || ($edition['estado_publicacion'] ?? '') !== 'publish') {
-                return false;
-            }
-            $state = (string) ($edition['estado'] ?? '');
-            $start = (string) ($edition['fecha_inicio'] ?? '');
-            $end = (string) ($edition['fecha_fin'] ?? '');
-            return ($state === 'planificada' && $start !== '' && $start >= $today)
-                || ($state === 'en_curso' && $end !== '' && $end >= $today);
+        // Nunca rescatar ediciones canceladas, finalizadas o sin vigencia.
+        $eligible = array_values(array_filter($editions, static function ($edition): bool {
+            return is_array($edition) && self::is_public_current_edition($edition);
         }));
         $seminar['edicion_vigente'] = self::current_item($eligible);
         return $seminar;
+    }
+
+    /** Una edición cancelada jamás puede figurar en una oferta pública. */
+    public static function is_public_current_edition(array $edition, ?string $today = null): bool {
+        if (($edition['estado_publicacion'] ?? '') !== 'publish') {
+            return false;
+        }
+
+        $today = $today ?? (function_exists('current_time') ? current_time('Y-m-d') : date('Y-m-d'));
+        $state = (string) ($edition['estado'] ?? '');
+        $start = (string) ($edition['fecha_inicio'] ?? '');
+        $end = (string) ($edition['fecha_fin'] ?? '');
+        return ($state === 'planificada' && $start !== '' && $start >= $today)
+            || ($state === 'en_curso' && $end !== '' && $end >= $today);
     }
 
     public static function registration_catalog(): array {
@@ -150,6 +155,9 @@ final class FLACSO_Academic_Catalog {
             }
             $editions = FLACSO_Academic_Repository::list('ediciones', ['parent_id' => $seminar_id, 'per_page' => 100]);
             $open_editions = array_values(array_filter($editions, static function (array $e): bool {
+                if (!self::is_public_current_edition($e)) {
+                    return false;
+                }
                 if (isset($e['mostrar_en_formulario']) && $e['mostrar_en_formulario'] === false) {
                     return false;
                 }
