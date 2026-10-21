@@ -78,7 +78,20 @@ final class FLACSO_Academic_Catalog {
         // cada Seminario componente.
         $editions = FLACSO_Academic_Repository::list('ediciones', ['parent_id' => $seminar_id, 'per_page' => 200]);
         $seminar['ediciones'] = $editions;
-        $seminar['edicion_vigente'] = self::current_item($editions);
+        // Solo una edición publicada, planificada a futuro o en curso, es vigente.
+        // No rescatar ediciones históricas/cerradas como fallback público.
+        $today = function_exists('current_time') ? current_time('Y-m-d') : date('Y-m-d');
+        $eligible = array_values(array_filter($editions, static function ($edition) use ($today): bool {
+            if (!is_array($edition) || ($edition['estado_publicacion'] ?? '') !== 'publish') {
+                return false;
+            }
+            $state = (string) ($edition['estado'] ?? '');
+            $start = (string) ($edition['fecha_inicio'] ?? '');
+            $end = (string) ($edition['fecha_fin'] ?? '');
+            return ($state === 'planificada' && $start !== '' && $start >= $today)
+                || ($state === 'en_curso' && $end !== '' && $end >= $today);
+        }));
+        $seminar['edicion_vigente'] = self::current_item($eligible);
         return $seminar;
     }
 
