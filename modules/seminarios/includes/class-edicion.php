@@ -206,17 +206,8 @@ final class FLACSO_Edicion {
         $closing = $start->modify('+' . $days . ' days')->setTime(23, 59, 59);
         $until = $closing->format(DATE_ATOM);
 
-        if (metadata_exists('post', $edition_id, 'preinscripcion_habilitada')) {
-            $enabled = rest_sanitize_boolean(get_post_meta($edition_id, 'preinscripcion_habilitada', true));
-            return [
-                'status' => $enabled && $timestamp <= $closing->getTimestamp() ? 'open' : 'closed',
-                'from' => null,
-                'until' => $until,
-            ];
-        }
-
-        // Compatibilidad de rollout para ediciones todavía no confirmadas con
-        // los nuevos botones. Un booleano explícito siempre prevalece.
+        // La cancelación es definitiva y prevalece sobre cualquier bandera
+        // antigua de preinscripción, incluso si quedó habilitada por error.
         $state = self::sanitize_state(get_post_meta($edition_id, 'estado', true));
         if ($state === 'cancelada') {
             return [
@@ -226,6 +217,16 @@ final class FLACSO_Edicion {
             ];
         }
 
+        if (metadata_exists('post', $edition_id, 'preinscripcion_habilitada')) {
+            $enabled = rest_sanitize_boolean(get_post_meta($edition_id, 'preinscripcion_habilitada', true));
+            return [
+                'status' => $enabled && $timestamp <= $closing->getTimestamp() ? 'open' : 'closed',
+                'from' => null,
+                'until' => $until,
+            ];
+        }
+
+        // Compatibilidad legacy: sin bandera explícita, la apertura se rige por fecha.
         return [
             'status' => $timestamp <= $closing->getTimestamp() ? 'open' : 'closed',
             'from' => null,
