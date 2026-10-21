@@ -20,6 +20,10 @@ function rest_sanitize_boolean($value): bool {
     return filter_var($value, FILTER_VALIDATE_BOOLEAN);
 }
 
+function sanitize_key($value): string {
+    return preg_replace('/[^a-z0-9_-]/', '', strtolower((string) $value));
+}
+
 function wp_timezone(): DateTimeZone {
     return new DateTimeZone('UTC');
 }
@@ -65,5 +69,13 @@ availability_assert($closed['status'] === 'closed', 'la edición se cierra al co
 $missing_start = FLACSO_Edicion::registration_availability(503, test_timestamp('2026-10-01 12:00:00'));
 availability_assert($missing_start['status'] === 'closed', 'una edición sin fecha de inicio queda cerrada');
 availability_assert($missing_start['until'] === null, 'una edición sin fecha no inventa una ventana');
+
+$GLOBALS['flacso_test_post_meta'][504] = [
+    'estado' => 'cancelada',
+    'fecha_inicio' => '2026-11-04',
+    'preinscripcion_habilitada' => true,
+];
+$cancelled = FLACSO_Edicion::registration_availability(504, test_timestamp('2026-10-21 12:00:00'));
+availability_assert($cancelled['status'] === 'closed', 'la cancelación prevalece sobre el booleano habilitado');
 
 echo "OK: seminar registration availability\n";
