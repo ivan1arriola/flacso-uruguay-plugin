@@ -146,8 +146,8 @@ final_assert(
 
 $GLOBALS['flacso_test_post_meta'][1001]['preinscripcion_habilitada'] = true;
 final_assert(
-    FLACSO_Edicion::accepts_registration(1001),
-    'el booleano explícito prevalece sobre la regla legacy'
+    !FLACSO_Edicion::accepts_registration(1001),
+    'una edición cancelada no puede abrir preinscripciones con el booleano explícito'
 );
 
 fwrite(STDOUT, "OK academic final model\n");
