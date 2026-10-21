@@ -30,21 +30,35 @@ function flacso_generar_seminarios_combinados_html(int $offset = 0, array $atts 
     $show_button = rest_sanitize_boolean($atts['mostrar_boton'] ?? true);
     $button_text = sanitize_text_field((string) ($atts['texto_boton'] ?? __('Ver más información', 'flacso-main-page')));
 
-    $editions = array_slice(FLACSO_Academic_Repository::list('ediciones', ['per_page' => 200]), $offset, $limit);
-    $cards = [];
+    // Filtrar y deduplicar ANTES de paginar. El estado de cada Edición
+    // prevalece sobre su fecha futura y sobre la preinscripción habilitada.
+    $eligible = [];
     $seen = [];
-    foreach ($editions as $edition) {
-        if (in_array($edition['estado'] ?? '', ['finalizada', 'cancelada'], true)) {
+    $seminars = [];
+    foreach (FLACSO_Academic_Repository::list('ediciones', ['per_page' => 200]) as $edition) {
+        if (!FLACSO_Academic_Catalog::is_public_current_edition($edition)) {
             continue;
         }
         $seminar_id = absint($edition['seminario_id'] ?? 0);
         if ($seminar_id < 1 || isset($seen[$seminar_id])) {
             continue;
         }
-        $seminar = FLACSO_Academic_Repository::to_array('seminarios', $seminar_id);
-        if (!$seminar) {
+        if (!isset($seminars[$seminar_id])) {
+            $seminars[$seminar_id] = FLACSO_Academic_Catalog::get_seminar($seminar_id);
+        }
+        $seminar = $seminars[$seminar_id];
+        if (!$seminar || absint($seminar['edicion_vigente']['id'] ?? 0) !== absint($edition['id'] ?? 0)) {
             continue;
         }
+        $eligible[] = ['edition' => $edition, 'seminar' => $seminar];
+        $seen[$seminar_id] = true;
+    }
+
+    $cards = [];
+    foreach (array_slice($eligible, max(0, $offset), $limit) as $item) {
+        $edition = $item['edition'];
+        $seminar = $item['seminar'];
+        $seminar_id = absint($edition['seminario_id']);
         $date = '';
         if ($show_dates && !empty($edition['fecha_inicio'])) {
             $date = sprintf(
@@ -66,7 +80,6 @@ function flacso_generar_seminarios_combinados_html(int $offset = 0, array $atts 
             . '<p>' . esc_html(wp_trim_words($seminar['resumen'], 24)) . '</p>'
             . $button
             . '</div></article>';
-        $seen[$seminar_id] = true;
     }
     return $cards ? '<div class="seminarios-grid">' . implode('', $cards) . '</div>' : '';
 }
