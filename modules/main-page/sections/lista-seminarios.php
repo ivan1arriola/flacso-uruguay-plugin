@@ -22,7 +22,7 @@ function flacso_lista_seminarios_render($atts): string {
 }
 
 function flacso_generar_seminarios_combinados_html(int $offset = 0, array $atts = []): string {
-    if (!class_exists('FLACSO_Academic_Repository')) {
+    if (!class_exists('FLACSO_Academic_Repository') || !class_exists('FLACSO_Academic_Catalog')) {
         return '';
     }
     $limit = max(1, absint($atts['posts_per_page'] ?? 6));
