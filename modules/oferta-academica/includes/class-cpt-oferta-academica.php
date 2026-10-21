@@ -212,7 +212,18 @@ class CPT_Oferta_Academica {
             if ($date !== '') {
                 echo '<span class="flacso-current-instance__date">' . esc_html($date) . '</span>';
             }
-            echo '</div></div>';
+            echo '</div>';
+            // La etiqueta de cohorte ya enlaza a su ficha, pero esta acción
+            // explícita hace visible la edición sin confundirla con preinscripción.
+            if (current_user_can('edit_post', $cohorte->ID)) {
+                $edit_url = get_edit_post_link($cohorte->ID);
+                if ($edit_url) {
+                    echo '<div class="flacso-current-instance__actions">';
+                    echo '<a class="button button-small flacso-edit-cohort" href="' . esc_url($edit_url) . '">' . esc_html__('Editar cohorte', 'flacso-uruguay') . '</a>';
+                    echo '</div>';
+                }
+            }
+            echo '</div>';
             return;
         }
 
