@@ -30,6 +30,9 @@ final class Flacso_Homepage_Admin_V2 {
 
         $active_campaign = FLACSO_Home_Campaign::active();
         $active_id = (int) ($active_campaign['id'] ?? 0);
+        $legacy_hero = Flacso_Main_Page_Settings::get_section('hero');
+        $legacy_url = is_array($legacy_hero) ? (string) ($legacy_hero['background_image'] ?? '') : '';
+        $fallback_image_id = $legacy_url ? attachment_url_to_postid($legacy_url) : 0;
         $offer = Flacso_Main_Page_Settings::get_section('oferta_academica');
         $institution = Flacso_Main_Page_Settings::get_section('quienes');
         $cards = is_array($offer['cards'] ?? null) ? $offer['cards'] : [];
@@ -63,15 +66,15 @@ final class Flacso_Homepage_Admin_V2 {
             <section class="flacso-homepage-admin-v2__section" aria-labelledby="flacso-home-hero-images">
                 <h2 id="flacso-home-hero-images">Imagen principal de la portada</h2>
                 <p>Esta es la fotografía que aparece junto al título de la página de inicio. El texto y el botón se agregan automáticamente: no los incluyas dentro de la imagen.</p>
-                <?php if ($active_id > 0) : ?>
+                <?php if (!$active_id) : ?><p><strong>Estás editando la imagen institucional predeterminada.</strong> Esta se utiliza cuando no hay una campaña vigente.</p><?php endif; ?>
                     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                         <input type="hidden" name="action" value="<?php echo esc_attr(self::SAVE_HERO_ACTION); ?>">
                         <input type="hidden" name="flacso_active_campaign_id" value="<?php echo esc_attr($active_id); ?>">
                         <?php wp_nonce_field(self::SAVE_HERO_ACTION); ?>
                         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px;max-width:900px">
                             <?php foreach ([
-                                ['key' => 'desktop', 'label' => 'Imagen para computadoras', 'description' => 'Foto horizontal. Se muestra a la derecha del texto.', 'id' => absint($active_campaign['desktop_image_id'] ?? 0)],
-                                ['key' => 'mobile', 'label' => 'Imagen para celulares (opcional)', 'description' => 'Si no elegís otra, se utiliza la misma imagen de escritorio.', 'id' => absint($active_campaign['mobile_image_id'] ?? 0)],
+                                ['key' => 'desktop', 'label' => 'Imagen principal', 'description' => 'Foto horizontal. Se muestra a la derecha del texto en computadoras.', 'id' => $active_id ? absint($active_campaign['desktop_image_id'] ?? 0) : $fallback_image_id],
+                                ...($active_id ? [['key' => 'mobile', 'label' => 'Imagen para celulares (opcional)', 'description' => 'Si no elegís otra, se utiliza la misma imagen de escritorio.', 'id' => absint($active_campaign['mobile_image_id'] ?? 0)]] : []),
                             ] as $field) :
                                 $url = $field['id'] ? wp_get_attachment_image_url($field['id'], 'medium_large') : '';
                             ?>
@@ -90,11 +93,7 @@ final class Flacso_Homepage_Admin_V2 {
                         </div>
                         <?php submit_button('Guardar imágenes de la portada'); ?>
                     </form>
-                    <p><a href="<?php echo esc_url(get_edit_post_link($active_id)); ?>">Editar título, botón y fechas de esta portada</a> · <a href="<?php echo esc_url(home_url('/')); ?>" target="_blank" rel="noopener noreferrer">Ver cómo quedó la portada ↗</a></p>
-                <?php else : ?>
-                    <p><strong>La portada está mostrando la configuración institucional predeterminada.</strong> Para cambiar la foto desde este panel, primero necesitás una campaña publicada y vigente.</p>
-                    <p><a class="button button-primary" href="<?php echo esc_url(admin_url('post-new.php?post_type=flacso_home_campaign')); ?>">Crear portada editable</a></p>
-                <?php endif; ?>
+                    <p><?php if ($active_id) : ?><a href="<?php echo esc_url(get_edit_post_link($active_id)); ?>">Editar título, botón y fechas</a> · <?php endif; ?><a href="<?php echo esc_url(home_url('/')); ?>" target="_blank" rel="noopener noreferrer">Ver cómo quedó la portada ↗</a></p>
             </section>
             <script>
             (function () {
@@ -184,7 +183,7 @@ final class Flacso_Homepage_Admin_V2 {
         check_admin_referer(self::SAVE_HERO_ACTION);
         $active = FLACSO_Home_Campaign::active();
         $posted_id = isset($_POST['flacso_active_campaign_id']) ? absint($_POST['flacso_active_campaign_id']) : 0;
-        if (!$posted_id || $posted_id !== (int) ($active['id'] ?? 0) || !current_user_can('edit_post', $posted_id)) {
+        if ($posted_id !== (int) ($active['id'] ?? 0) || ($posted_id && !current_user_can('edit_post', $posted_id))) {
             self::redirect('campaign_changed');
         }
         $values = [];
@@ -196,8 +195,19 @@ final class Flacso_Homepage_Admin_V2 {
             }
             $values[$meta_key] = $id;
         }
-        foreach ($values as $meta_key => $id) {
-            update_post_meta($posted_id, $meta_key, $id);
+        if (!$posted_id) {
+            $saved = get_option(Flacso_Main_Page_Settings::OPTION_KEY, []);
+            $saved = is_array($saved) ? $saved : [];
+            $hero = is_array($saved['hero'] ?? null) ? $saved['hero'] : [];
+            $id = $values[FLACSO_Home_Campaign::META_DESKTOP_IMAGE];
+            $hero['background_image'] = $id ? (string) wp_get_attachment_url($id) : '';
+            $saved['hero'] = $hero;
+            update_option(Flacso_Main_Page_Settings::OPTION_KEY, $saved);
+            Flacso_Main_Page_Settings::invalidate_cache();
+        } else {
+            foreach ($values as $meta_key => $id) {
+                update_post_meta($posted_id, $meta_key, $id);
+            }
         }
         self::redirect('images_saved');
     }
