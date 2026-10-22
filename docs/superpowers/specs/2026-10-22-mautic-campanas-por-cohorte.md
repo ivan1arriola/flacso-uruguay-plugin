@@ -1,4 +1,4 @@
-# Diseño: seguimiento Mautic por oferta y cohorte
+# Diseño: seguimiento Mautic por oferta con estado vigente
 
 - **Fecha:** 2026-10-22
 - **Estado:** Propuesto para revisión
@@ -6,59 +6,58 @@
 
 ## Objetivo
 
-Al completar una consulta de oferta con inscripciones abiertas, WordPress envía el email transaccional F1 (Mautic email 4). Cuando Mautic acepta ese envío, WordPress incorpora al contacto a la campaña correspondiente a la oferta y cohorte. Esa campaña espera siete días y envía el seguimiento F2 (basado en email 6). No se excluyen contactos que ya se hayan preinscripto.
+WordPress envía el acuse F1 a la consulta. Cuando Mautic acepta el envío de F1 abierto (email 4), y existe consentimiento comercial válido, incorpora al contacto a una campaña Mautic de esa oferta. La campaña espera siete días y decide con el estado vigente si envía el seguimiento F2 abierto (basado en email 6) o un mensaje de oferta cerrada (basado en email 5, con CTA a seminarios abiertos). No se consulta ni excluye a personas preinscriptas.
 
-El seguimiento respeta el consentimiento de comunicaciones que ya exige la integración. Si F1 falla o queda en estado incierto, el contacto no se agrega a la campaña; la consulta queda registrada según el comportamiento actual.
+## Campañas
 
-## Campañas iniciales
+Crear 18 campañas, una por oferta académica. La consulta de solo lectura al catálogo WordPress (2026-10-22) encontró 19 registros de oferta/cohorte y 18 ofertas distintas. Siete cohortes están abiertas y ninguna oferta tiene más de una cohorte abierta al momento de esta consulta. El estado de cada cohorte puede cambiar luego; WordPress lo verificará al momento del seguimiento.
 
-Se preparará una campaña por cada cohorte con inscripciones abiertas al momento del alta. La consulta al catálogo actual de WordPress encontró siete:
+El mapa operativo de WordPress será `offerWpId → mauticCampaignId`. Cohortes de una misma oferta convergen en su campaña de oferta. Si una oferta tuviera varias cohortes abiertas a la vez, se considerará abierta mientras haya una cohorte inscribible y el CTA llevará a la página canónica de la oferta para que la persona elija la cohorte vigente.
 
-- Maestría en Educación, Innovación y Tecnologías — Cohorte VII (cohorte 27466)
-- Maestría en Educación, Sociedad y Política — Cohorte X (27467)
-- Maestría en Género — Cohorte VI (27468)
-- Diploma en Género — Cohorte IX (27639)
-- Diploma en IA y Prácticas de Enseñanza — Cohorte IV (27645)
-- Diploma en Salud Mental, Subjetividad y Trabajo — Cohorte VI (27648)
-- Diploma en Conservación Preventiva y Primeras Intervenciones para Documentos Históricos — Cohorte II (27700)
+## Recorrido de cada campaña
 
-No se crearán campañas para cohortes cerradas o no disponibles para consulta. Cuando se abra una cohorte nueva, se creará su campaña en Mautic y se añadirá el mapeo a WordPress.
+1. WordPress persiste la consulta y su snapshot inmutable.
+2. Si la consulta corresponde a una oferta con inscripciones abiertas y consentimiento completo, WordPress envía F1 (email 4).
+3. Solo después de que Mautic acepte F1, WordPress incorpora el contacto a la campaña de esa oferta. El caso de F1 fallido o con aceptación incierta no se incorpora.
+4. Mautic espera siete días.
+5. La campaña marca su campo de estado específico como `verificando` y llama por webhook al endpoint autenticado de WordPress. El endpoint consulta el catálogo académico vigente para esa oferta y actualiza en Mautic el campo de estado exclusivo de esa oferta.
+6. La campaña evalúa ese campo: `abierta` lleva a F2 abierto; `cerrada` lleva al mensaje de cierre. Un estado pendiente o un fallo de consulta no envía ninguno de los correos y deja evidencia operativa para reintento/diagnóstico.
 
-## Estructura de una campaña
+Mautic admite acciones de espera y webhooks en el Campaign Builder; WordPress puede consultar el estado académico en tiempo de ejecución. El orden y actualización del campo antes de la rama se comprobarán en un piloto real antes de publicar las campañas.
 
-Cada campaña tendrá su propio email de seguimiento de tipo campaña, con contenido basado en F2 (email 6), personalizado para la oferta/cohorte de esa campaña. El email existente 6 es de tipo evento y depende de tokens de una entrega; por eso no se conectará directamente como acción de campaña sin adaptar su tipo y verificar que no queden variables sin resolver.
+## Correos y personalización
 
-Flujo Mautic por cohorte:
-
-1. Contacto agregado por WordPress tras aceptación del email 4 y con consentimiento válido.
-2. Espera de siete días.
-3. Envío del email F2 correspondiente a la cohorte.
-
-Las campañas y sus emails se preparan sin publicar mientras se construye la integración y se valida el piloto. El envío automático comienza solo al publicar/activar cada campaña después de comprobarla.
+- Preparar para cada oferta un F2 abierto de tipo compatible con el Campaign Builder, basado en el diseño y contenido de email 6. El CTA dirige a la página canónica de la oferta, que presenta la cohorte inscribible vigente.
+- Preparar para cada oferta un mensaje de cierre basado en el email 5, con el CTA acordado para ver seminarios abiertos.
+- Los datos propios de la oferta se fijan en sus correos; los datos personales se resuelven con tokens estándar de contacto Mautic. No se usan campos globales mutables para guardar la última oferta consultada.
+- Mantener remitente, reply-to, baja, seguimiento y contenido aprobado de FLACSO. Revisar tokens y enlaces antes de activar.
 
 ## Cambios de WordPress
 
-- Mantener una configuración explícita `cohortWpId → mauticCampaignId`, validada y administrable desde Comunicaciones.
-- Al aceptar Mautic el envío inicial F1, agregar el contacto a la campaña indicada por el `cohortWpId` persistido en el snapshot de esa consulta.
-- No usar datos académicos mutables del contacto para decidir la campaña.
-- Hacer idempotente la incorporación; guardar el ID y resultado de campaña en el registro de la consulta.
-- No incorporar consultas sin cohorte abierta, sin consentimiento completo, ni F1 aceptado.
-- No alterar emails transaccionales 4/5, registros históricos, tags existentes, fallback, ni volver a procesar consultas anteriores.
+- Reemplazar la configuración de una campaña global por el mapa validado `offerWpId → mauticCampaignId`.
+- Incorporar a campaña después de la aceptación de F1, no al guardar el formulario.
+- Añadir un endpoint de webhook autenticado y acotado a una oferta/contacto, que consulte el catálogo de WordPress y sincronice un campo de estado independiente por oferta (`flacso_estado_oferta_{offerWpId}`).
+- Limitar los valores al conjunto `verificando`, `abierta`, `cerrada` y `error`; fallos nunca deben dejar el estado previo como si fuera una lectura nueva.
+- La rama de campaña solo envía con estado reciente `abierta` o `cerrada`; ante error queda sin envío y genera registro sin PII.
+- Hacer idempotente la membresía y conservar trazabilidad por consulta. Mantener las reglas de consentimiento existentes.
+- No alterar emails F1 4/5, campañas ya existentes, contactos, etiquetas, fallback ni consultas históricas.
 
-## Preparación y puesta en marcha
+## Puesta en marcha
 
 1. Revisar esta especificación.
-2. Preparar en Mautic los siete pares campaña/email; probar que cada campaña espera siete días y usa su contenido correcto; mantenerlos sin publicar inicialmente.
-3. Implementar en WordPress el mapeo, alta posterior a F1 aceptado, registro de estado, controles administrativos y verificación automatizada.
-4. Desplegar WordPress con el mapeo apagado/vacío; validar la integración en un piloto controlado.
-5. Cargar los IDs definitivos y activar las campañas de forma coordinada; comprobar el primer alta real y que no haya incorporaciones duplicadas.
+2. Preparar las 18 campañas con ramas, espera y correos de cada oferta; dejarlas sin publicar durante la implementación.
+3. Implementar el mapeo, el webhook autenticado, la actualización de estado, la rama de error y su diagnóstico en WordPress.
+4. Verificar controles automatizados, desplegar con el mapa vacío/inactivo y probar con un contacto controlado; comprobar estado abierto, estado cerrado, fallo de endpoint, consentimiento y alta posterior a F1.
+5. Cargar los 18 IDs, activar en coordinación y comprobar una primera incorporación real sin duplicados.
 
 ## Criterios de aceptación
 
-- Cada una de las siete cohortes abiertas tiene una campaña inequívocamente asociada.
-- La entrada ocurre después de que Mautic acepte F1, no al guardar el formulario.
-- El F2 sale siete días después de la entrada, con nombre de oferta/cohorte y enlaces correctos.
-- Contactos sin consentimiento, F1 fallido/incierto o sin cohorte válida no se incorporan.
-- El mismo evento no crea membresías duplicadas y conserva trazabilidad por consulta.
-- No se consultan ni excluyen datos de preinscripción.
-- Campañas previas, contactos y correos transaccionales permanecen intactos.
+- Existen 18 campañas inequívocas, una por oferta.
+- El seguimiento ocurre siete días después de la aceptación de F1.
+- Cada campaña consulta el estado vigente de su propia oferta al vencerse la espera.
+- Estado abierto envía F2 basado en email 6; estado cerrado envía el correo acordado basado en email 5.
+- Error, estado sin verificar, falta de consentimiento o F1 fallido/incierto no producen seguimiento.
+- Enlaces llevan a páginas de oferta vigentes y los datos de otra oferta no interfieren.
+- El alta es idempotente y se conserva trazabilidad por consulta.
+- No se consulta ni excluye a personas preinscriptas.
+- La comprobación del estado y el enrutamiento se valida con los cron y la versión de Mautic instalados, antes de publicar.
