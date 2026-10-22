@@ -10,9 +10,11 @@ if (!defined('ABSPATH')) {
  */
 final class Flacso_Homepage_Admin_V2 {
     private const SAVE_ACTION = 'flacso_save_homepage_v2';
+    private const SAVE_HERO_ACTION = 'flacso_save_home_hero_images';
 
     public static function init(): void {
         add_action('admin_post_' . self::SAVE_ACTION, [__CLASS__, 'save']);
+        add_action('admin_post_' . self::SAVE_HERO_ACTION, [__CLASS__, 'save_hero_images']);
     }
 
     public static function render(): void {
@@ -20,10 +22,17 @@ final class Flacso_Homepage_Admin_V2 {
             return;
         }
 
+        wp_enqueue_media();
+
         if (function_exists('wp_enqueue_editor')) {
             wp_enqueue_editor();
         }
 
+        $active_campaign = FLACSO_Home_Campaign::active();
+        $active_id = (int) ($active_campaign['id'] ?? 0);
+        $legacy_hero = Flacso_Main_Page_Settings::get_section('hero');
+        $legacy_url = is_array($legacy_hero) ? (string) ($legacy_hero['background_image'] ?? '') : '';
+        $fallback_image_id = $legacy_url ? attachment_url_to_postid($legacy_url) : 0;
         $offer = Flacso_Main_Page_Settings::get_section('oferta_academica');
         $institution = Flacso_Main_Page_Settings::get_section('quienes');
         $cards = is_array($offer['cards'] ?? null) ? $offer['cards'] : [];
@@ -33,7 +42,13 @@ final class Flacso_Homepage_Admin_V2 {
             <h1><?php esc_html_e('Portada del sitio', 'flacso-main-page'); ?></h1>
             <p class="description"><?php esc_html_e('Editá el contenido que utiliza la portada actual. Su estructura, títulos y orden se definen en el tema.', 'flacso-main-page'); ?></p>
 
-            <?php if ($notice === 'saved') : ?>
+            <?php if ($notice === 'images_saved') : ?>
+                <div class="notice notice-success is-dismissible"><p>Imágenes de portada actualizadas correctamente.</p></div>
+            <?php elseif ($notice === 'invalid_image') : ?>
+                <div class="notice notice-error"><p>Seleccioná imágenes válidas de la biblioteca multimedia.</p></div>
+            <?php elseif ($notice === 'campaign_changed') : ?>
+                <div class="notice notice-warning"><p>La campaña activa cambió. Recargá la página para editar las imágenes correctas.</p></div>
+            <?php elseif ($notice === 'saved') : ?>
                 <div class="notice notice-success is-dismissible"><p><?php esc_html_e('Cambios de la portada guardados.', 'flacso-main-page'); ?></p></div>
             <?php elseif ($notice === 'invalid_url') : ?>
                 <div class="notice notice-error"><p><?php esc_html_e('Revisá los enlaces de la oferta: usá una ruta interna o una URL HTTP/HTTPS válida.', 'flacso-main-page'); ?></p></div>
@@ -43,10 +58,70 @@ final class Flacso_Homepage_Admin_V2 {
 
             <div class="flacso-homepage-admin-v2__quicklinks">
                 <a class="button button-primary" href="<?php echo esc_url(home_url('/')); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Ver portada', 'flacso-main-page'); ?></a>
-                <a class="button" href="<?php echo esc_url(admin_url('edit.php?post_type=flacso_home_campaign')); ?>"><?php esc_html_e('Editar campañas del hero', 'flacso-main-page'); ?></a>
+                <a class="button" href="<?php echo esc_url(admin_url('edit.php?post_type=flacso_home_campaign')); ?>"><?php esc_html_e('Gestionar campañas y fechas', 'flacso-main-page'); ?></a>
                 <a class="button" href="<?php echo esc_url(admin_url('edit.php?post_type=evento')); ?>"><?php esc_html_e('Gestionar actividades', 'flacso-main-page'); ?></a>
                 <a class="button" href="<?php echo esc_url(admin_url('edit.php')); ?>"><?php esc_html_e('Gestionar noticias', 'flacso-main-page'); ?></a>
             </div>
+
+            <section class="flacso-homepage-admin-v2__section" aria-labelledby="flacso-home-hero-images">
+                <h2 id="flacso-home-hero-images">Imagen principal de la portada</h2>
+                <p>Esta es la fotografía que aparece junto al título de la página de inicio. El texto y el botón se agregan automáticamente: no los incluyas dentro de la imagen.</p>
+                <?php if (!$active_id) : ?><p><strong>Estás editando la imagen institucional predeterminada.</strong> Esta se utiliza cuando no hay una campaña vigente.</p><?php endif; ?>
+                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                        <input type="hidden" name="action" value="<?php echo esc_attr(self::SAVE_HERO_ACTION); ?>">
+                        <input type="hidden" name="flacso_active_campaign_id" value="<?php echo esc_attr($active_id); ?>">
+                        <?php wp_nonce_field(self::SAVE_HERO_ACTION); ?>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px;max-width:900px">
+                            <?php foreach ([
+                                ['key' => 'desktop', 'label' => 'Imagen principal', 'description' => 'Foto horizontal. Se muestra a la derecha del texto en computadoras.', 'id' => $active_id ? absint($active_campaign['desktop_image_id'] ?? 0) : $fallback_image_id],
+                                ...($active_id ? [['key' => 'mobile', 'label' => 'Imagen para celulares (opcional)', 'description' => 'Si no elegís otra, se utiliza la misma imagen de escritorio.', 'id' => absint($active_campaign['mobile_image_id'] ?? 0)]] : []),
+                            ] as $field) :
+                                $url = $field['id'] ? wp_get_attachment_image_url($field['id'], 'medium_large') : '';
+                            ?>
+                                <div class="flacso-home-hero-image-field" style="background:#fff;border:1px solid #dcdcde;border-radius:10px;padding:18px">
+                                    <h3 style="margin-top:0"><?php echo esc_html($field['label']); ?></h3>
+                                    <p><?php echo esc_html($field['description']); ?></p>
+                                    <div class="flacso-home-hero-image-preview" style="aspect-ratio:16/10;display:grid;place-items:center;background:#f1f5f9;border-radius:8px;overflow:hidden;margin-bottom:12px">
+                                        <img src="<?php echo esc_url($url); ?>" alt="" style="width:100%;height:100%;object-fit:cover;<?php echo $url ? '' : 'display:none;'; ?>">
+                                        <span <?php echo $url ? 'hidden' : ''; ?>>Sin imagen seleccionada</span>
+                                    </div>
+                                    <input type="hidden" name="flacso_hero_image_<?php echo esc_attr($field['key']); ?>" value="<?php echo esc_attr($field['id']); ?>">
+                                    <button type="button" class="button button-secondary flacso-home-hero-pick">Elegir o cambiar imagen</button>
+                                    <button type="button" class="button-link-delete flacso-home-hero-remove" style="margin-left:12px">Quitar</button>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php submit_button('Guardar imágenes de la portada'); ?>
+                    </form>
+                    <p><?php if ($active_id) : ?><a href="<?php echo esc_url(get_edit_post_link($active_id)); ?>">Editar título, botón y fechas</a> · <?php endif; ?><a href="<?php echo esc_url(home_url('/')); ?>" target="_blank" rel="noopener noreferrer">Ver cómo quedó la portada ↗</a></p>
+            </section>
+            <script>
+            (function () {
+                document.querySelectorAll('.flacso-home-hero-image-field').forEach(function (field) {
+                    var input = field.querySelector('input[type="hidden"]');
+                    var img = field.querySelector('img');
+                    var empty = field.querySelector('span');
+                    var pick = field.querySelector('.flacso-home-hero-pick');
+                    var remove = field.querySelector('.flacso-home-hero-remove');
+                    if (!input || !pick || !window.wp || !wp.media) return;
+                    function preview(url) {
+                        img.src = url || '';
+                        img.style.display = url ? 'block' : 'none';
+                        empty.hidden = !!url;
+                    }
+                    pick.addEventListener('click', function () {
+                        var frame = wp.media({title:'Elegir fotografía para la portada',button:{text:'Usar esta imagen'},library:{type:'image'},multiple:false});
+                        frame.on('select', function () {
+                            var item = frame.state().get('selection').first().toJSON();
+                            input.value = item.id;
+                            preview(item.sizes && item.sizes.medium_large ? item.sizes.medium_large.url : item.url);
+                        });
+                        frame.open();
+                    });
+                    remove.addEventListener('click', function () { input.value = '0'; preview(''); });
+                });
+            }());
+            </script>
 
             <section class="flacso-homepage-admin-v2__section" aria-labelledby="flacso-home-admin-news">
                 <h2 id="flacso-home-admin-news"><?php esc_html_e('Noticias fijadas', 'flacso-main-page'); ?></h2>
@@ -99,6 +174,42 @@ final class Flacso_Homepage_Admin_V2 {
             </form>
         </div>
         <?php
+    }
+
+    public static function save_hero_images(): void {
+        if (!current_user_can('manage_options')) {
+            wp_die(esc_html__('No tenés permiso para editar la portada.', 'flacso-main-page'));
+        }
+        check_admin_referer(self::SAVE_HERO_ACTION);
+        $active = FLACSO_Home_Campaign::active();
+        $posted_id = isset($_POST['flacso_active_campaign_id']) ? absint($_POST['flacso_active_campaign_id']) : 0;
+        if ($posted_id !== (int) ($active['id'] ?? 0) || ($posted_id && !current_user_can('edit_post', $posted_id))) {
+            self::redirect('campaign_changed');
+        }
+        $values = [];
+        foreach (['desktop' => FLACSO_Home_Campaign::META_DESKTOP_IMAGE, 'mobile' => FLACSO_Home_Campaign::META_MOBILE_IMAGE] as $key => $meta_key) {
+            $input = 'flacso_hero_image_' . $key;
+            $id = isset($_POST[$input]) ? absint($_POST[$input]) : 0;
+            if ($id && !wp_attachment_is_image($id)) {
+                self::redirect('invalid_image');
+            }
+            $values[$meta_key] = $id;
+        }
+        if (!$posted_id) {
+            $saved = get_option(Flacso_Main_Page_Settings::OPTION_KEY, []);
+            $saved = is_array($saved) ? $saved : [];
+            $hero = is_array($saved['hero'] ?? null) ? $saved['hero'] : [];
+            $id = $values[FLACSO_Home_Campaign::META_DESKTOP_IMAGE];
+            $hero['background_image'] = $id ? (string) wp_get_attachment_url($id) : '';
+            $saved['hero'] = $hero;
+            update_option(Flacso_Main_Page_Settings::OPTION_KEY, $saved);
+            Flacso_Main_Page_Settings::invalidate_cache();
+        } else {
+            foreach ($values as $meta_key => $id) {
+                update_post_meta($posted_id, $meta_key, $id);
+            }
+        }
+        self::redirect('images_saved');
     }
 
     public static function save(): void {
