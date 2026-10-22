@@ -39,6 +39,7 @@ final class Flacso_Homepage_Admin_V2 {
         $legacy_hero = Flacso_Main_Page_Settings::get_section('hero');
         $legacy_url = is_array($legacy_hero) ? (string) ($legacy_hero['background_image'] ?? '') : '';
         $fallback_image_id = $legacy_url ? attachment_url_to_postid($legacy_url) : 0;
+        $hero_default_image = 'https://flacso.edu.uy/wp-content/uploads/2026/02/cropped-cropped-Logos-FLACSO-Claro.png';
         $offer = Flacso_Main_Page_Settings::get_section('oferta_academica');
         $institution = Flacso_Main_Page_Settings::get_section('quienes');
         $cards = is_array($offer['cards'] ?? null) ? $offer['cards'] : [];
@@ -64,7 +65,12 @@ final class Flacso_Homepage_Admin_V2 {
 
             <div class="flacso-homepage-admin-v2__quicklinks">
                 <a class="button button-primary" href="<?php echo esc_url(home_url('/')); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Ver portada', 'flacso-main-page'); ?></a>
-                <a class="button" href="<?php echo esc_url(admin_url('edit.php?post_type=flacso_home_campaign')); ?>"><?php esc_html_e('Gestionar campañas y fechas', 'flacso-main-page'); ?></a>
+                <a class="button" href="#flacso-home-hero-images">Cambiar fotografía del hero</a>
+                <?php if ($active_id) : ?>
+                    <a class="button" href="<?php echo esc_url(get_edit_post_link($active_id)); ?>">Editar texto y fotografías del hero</a>
+                <?php else : ?>
+                    <a class="button" href="<?php echo esc_url(admin_url('edit.php?post_type=flacso_home_campaign')); ?>">Gestionar campañas y fechas</a>
+                <?php endif; ?>
                 <a class="button" href="<?php echo esc_url(admin_url('edit.php?post_type=evento')); ?>"><?php esc_html_e('Gestionar actividades', 'flacso-main-page'); ?></a>
                 <a class="button" href="<?php echo esc_url(admin_url('edit.php')); ?>"><?php esc_html_e('Gestionar noticias', 'flacso-main-page'); ?></a>
             </div>
@@ -83,6 +89,9 @@ final class Flacso_Homepage_Admin_V2 {
                                 ...($active_id ? [['key' => 'mobile', 'label' => 'Imagen para celulares (opcional)', 'description' => 'Si no elegís otra, se utiliza la misma imagen de escritorio.', 'id' => absint($active_campaign['mobile_image_id'] ?? 0)]] : []),
                             ] as $field) :
                                 $url = $field['id'] ? wp_get_attachment_image_url($field['id'], 'medium_large') : '';
+                                if (!$url && $field['key'] === 'desktop') {
+                                    $url = $legacy_url ?: $hero_default_image;
+                                }
                             ?>
                                 <div class="flacso-home-hero-image-field" style="background:#fff;border:1px solid #dcdcde;border-radius:10px;padding:18px">
                                     <h3 style="margin-top:0"><?php echo esc_html($field['label']); ?></h3>
@@ -109,13 +118,17 @@ final class Flacso_Homepage_Admin_V2 {
                     var empty = field.querySelector('span');
                     var pick = field.querySelector('.flacso-home-hero-pick');
                     var remove = field.querySelector('.flacso-home-hero-remove');
-                    if (!input || !pick || !window.wp || !wp.media) return;
+                    if (!input || !pick) return;
                     function preview(url) {
                         img.src = url || '';
                         img.style.display = url ? 'block' : 'none';
                         empty.hidden = !!url;
                     }
                     pick.addEventListener('click', function () {
+                        if (!window.wp || !wp.media) {
+                            window.alert('No se pudo abrir la biblioteca multimedia. Recargá la pantalla e intentá de nuevo.');
+                            return;
+                        }
                         var frame = wp.media({title:'Elegir fotografía para la portada',button:{text:'Usar esta imagen'},library:{type:'image'},multiple:false});
                         frame.on('select', function () {
                             var item = frame.state().get('selection').first().toJSON();
@@ -213,6 +226,13 @@ final class Flacso_Homepage_Admin_V2 {
         } else {
             foreach ($values as $meta_key => $id) {
                 update_post_meta($posted_id, $meta_key, $id);
+                if ($meta_key === FLACSO_Home_Campaign::META_DESKTOP_IMAGE) {
+                    if ($id) {
+                        set_post_thumbnail($posted_id, $id);
+                    } else {
+                        delete_post_thumbnail($posted_id);
+                    }
+                }
             }
         }
         self::redirect('images_saved');
