@@ -13,16 +13,22 @@ final class Flacso_Homepage_Admin_V2 {
     private const SAVE_HERO_ACTION = 'flacso_save_home_hero_images';
 
     public static function init(): void {
+        add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_media']);
         add_action('admin_post_' . self::SAVE_ACTION, [__CLASS__, 'save']);
         add_action('admin_post_' . self::SAVE_HERO_ACTION, [__CLASS__, 'save_hero_images']);
+    }
+
+    public static function enqueue_media(): void {
+        $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+        if ($page === 'flacso-main-page' && FLACSO_Home_Campaign::is_enabled() && current_user_can('manage_options')) {
+            wp_enqueue_media();
+        }
     }
 
     public static function render(): void {
         if (!current_user_can('manage_options')) {
             return;
         }
-
-        wp_enqueue_media();
 
         if (function_exists('wp_enqueue_editor')) {
             wp_enqueue_editor();
