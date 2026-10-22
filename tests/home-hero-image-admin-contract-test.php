@@ -5,6 +5,8 @@ function verify_home_admin(bool $condition, string $message): void {
     if (!$condition) { fwrite(STDERR, "FAIL: $message\n"); exit(1); }
 }
 verify_home_admin(str_contains($source, 'Imagen principal de la portada'), 'direct photo editor shown');
+verify_home_admin(str_contains($source, "add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_media'])"), 'media loading runs during enqueue phase');
+verify_home_admin(str_contains($source, 'public static function enqueue_media(): void'), 'media loader available');
 verify_home_admin(str_contains($source, 'wp_enqueue_media()'), 'media library available');
 verify_home_admin(str_contains($source, "wp_nonce_field(self::SAVE_HERO_ACTION)"), 'nonce in photo form');
 verify_home_admin(str_contains($source, "check_admin_referer(self::SAVE_HERO_ACTION)"), 'nonce verified on save');
