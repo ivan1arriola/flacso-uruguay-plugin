@@ -231,6 +231,7 @@ flacso-uruguay-plugin/
 
 - `API.md`: endpoints REST.
 - `CHANGELOG.md`: historial funcional.
+- [**Guía visual del modelo académico**](docs/guia-visual-modelo-academico.md): diagramas, fichas de campos, relaciones y ejemplos para usuarios no técnicos.
 - `docs/modelo-academico-final.md`: modelo final, campos, relaciones e invariantes.
 - `docs/`: notas operativas específicas.
 - `modules/*/README.md`: documentación de módulos cuando exista.
