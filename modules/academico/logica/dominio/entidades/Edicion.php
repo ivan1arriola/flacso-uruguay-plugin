@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace FLACSO\Academico\Dominio\Entidades;
 
+use DateTimeImmutable;
 use FLACSO\Academico\Dominio\Valores\EstadoAcademico;
 use FLACSO\Academico\Dominio\Valores\Modalidad;
 use FLACSO\Academico\Dominio\Valores\PeriodoEdicion;
@@ -38,5 +39,17 @@ final class Edicion {
     public function setDocenteIds(array $ids): void { $this->docenteIds = self::ids($ids); }
     public function getComponentes(): array { return $this->componentes; }
     public function setComponentes(array $ids): void { $this->componentes = array_values(array_filter(self::ids($ids), function (int $id): bool { return $id !== $this->id; })); }
+    public function tienePreinscripcionesAbiertas(DateTimeImmutable $ahora, int $diasPosterioresAlInicio): bool {
+        if ($diasPosterioresAlInicio < 0 || $this->estado->es('cancelada')) {
+            return false;
+        }
+        $inicio = $this->fechas->getInicio();
+        if ($inicio === null) {
+            return false;
+        }
+        $cierre = new DateTimeImmutable($inicio . ' 23:59:59', $ahora->getTimezone());
+        $cierre = $cierre->modify('+' . $diasPosterioresAlInicio . ' days');
+        return $ahora <= $cierre;
+    }
     private static function ids(array $ids): array { return array_values(array_unique(array_filter(array_map('intval', $ids), static function (int $id): bool { return $id > 0; }))); }
 }

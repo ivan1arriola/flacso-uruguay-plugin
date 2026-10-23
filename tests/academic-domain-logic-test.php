@@ -55,6 +55,21 @@ $enCurso = new Cohorte(11, 1, new NumeroCohorte(1), new EstadoAcademico('en_curs
 $selector = new SelectorCohorteActual();
 academic_logic_assert($selector->seleccionar([$planificada, $enCurso], new DateTimeImmutable('2026-06-15'))->getId() === 11, 'SelectorCohorteActual prioriza una cohorte en curso.');
 
+$cohorteEstrategica = new Cohorte(12, 1, new NumeroCohorte(3), new EstadoAcademico('planificada'), new RangoFechas('2026-08-01', null), null, null, true);
+academic_logic_assert($cohorteEstrategica->getPreinscripcionesAbiertas() === true, 'Cohorte conserva la apertura estratégica elegida.');
+$cohorteEstrategica->setEstado(new EstadoAcademico('cancelada'));
+academic_logic_assert($cohorteEstrategica->getPreinscripcionesAbiertas() === false, 'Cohorte cancelada se cierra automáticamente.');
+academic_logic_throws(static function (): void {
+    $cohorte = new Cohorte(13, 1, new NumeroCohorte(4), new EstadoAcademico('finalizada'), new RangoFechas('2026-01-01', '2026-06-01'));
+    $cohorte->setPreinscripcionesAbiertas(true);
+}, 'Cohorte finalizada no admite una apertura estratégica.');
+
+$edicionAbierta = new Edicion(20, 101, new PeriodoEdicion(2026, 1), new EstadoAcademico('planificada'), new RangoFechas('2026-03-01', null));
+academic_logic_assert($edicionAbierta->tienePreinscripcionesAbiertas(new DateTimeImmutable('2026-03-11 23:59:59'), 10) === true, 'Edicion permanece abierta hasta el cierre configurado.');
+academic_logic_assert($edicionAbierta->tienePreinscripcionesAbiertas(new DateTimeImmutable('2026-03-12 00:00:00'), 10) === false, 'Edicion se cierra después del plazo configurado.');
+$edicionAbierta->setEstado(new EstadoAcademico('cancelada'));
+academic_logic_assert($edicionAbierta->tienePreinscripcionesAbiertas(new DateTimeImmutable('2026-03-02'), 10) === false, 'Edicion cancelada se cierra aunque esté dentro del plazo.');
+
 $componente = new Seminario(101, 'Componente', 12.0);
 $integrado = new Seminario(102, 'Integrado', 0.0, [101]);
 $resolutor = new ResolutorSeminarioIntegrado();
