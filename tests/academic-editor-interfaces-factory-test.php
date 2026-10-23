@@ -8,6 +8,8 @@ if (!defined('ABSPATH')) {
 $root = dirname(__DIR__);
 require_once $root . '/editor/contracts/interface-editor-repository.php';
 require_once $root . '/editor/contracts/interface-editor-controller.php';
+require_once $root . '/editor/contracts/interface-editor-editable-controller.php';
+require_once $root . '/editor/contracts/interface-editor-offer-form.php';
 require_once $root . '/editor/controllers/class-oferta-editor-controller.php';
 require_once $root . '/editor/controllers/class-cohorte-editor-controller.php';
 require_once $root . '/editor/includes/class-editor-controller-factory.php';
@@ -28,6 +30,7 @@ final class FLACSO_Fake_Editor_Repository implements FLACSO_Editor_Repository_In
     public function can_edit(int $id): bool {
         return $id === 9 || $id === 15;
     }
+    public function can_publish(int $id): bool { return $id === 9; }
     public function legacy_edit_url(int $id): string {
         return 'legacy:' . $id;
     }
@@ -38,12 +41,27 @@ final class FLACSO_Fake_Editor_Repository implements FLACSO_Editor_Repository_In
     }
 }
 
+final class FLACSO_Fake_Offer_Form implements FLACSO_Editor_Offer_Form_Interface {
+    public function render(int $id): void { echo 'Oferta:' . $id; }
+    public function save(int $id, array $data): array {
+        return ['success' => true, 'message' => 'Guardado simulado'];
+    }
+    public function enqueue_assets(): void {}
+    public function render_head(): void {}
+    public function render_footer(int $id): void {}
+}
+
 $repository = new FLACSO_Fake_Editor_Repository();
-$factory = new FLACSO_Editor_Controller_Factory($repository);
+$factory = new FLACSO_Editor_Controller_Factory($repository, new FLACSO_Fake_Offer_Form());
 $offer_controller = $factory->for_type('oferta-academica');
 $cohort_controller = $factory->for_type('cohorte');
 
-flacso_editor_contract_assert($offer_controller instanceof FLACSO_Editor_Controller_Interface, 'Oferta implementa interfaz');
+flacso_editor_contract_assert($offer_controller instanceof FLACSO_Editor_Editable_Controller_Interface, 'Oferta implementa interfaz de edición');
+ob_start();
+$offer_controller->render_form(9);
+$markup = ob_get_clean();
+flacso_editor_contract_assert($markup === 'Oferta:9', 'Oferta renderiza mediante puerto inyectado');
+flacso_editor_contract_assert($offer_controller->save(9, ['title' => 'Prueba'])['success'], 'Oferta guarda mediante puerto inyectado');
 flacso_editor_contract_assert($cohort_controller instanceof FLACSO_Editor_Controller_Interface, 'Cohorte implementa interfaz');
 
 $offer = $repository->find(9);

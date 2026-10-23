@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
         <div>
             <p class="flacso-new-editor__eyebrow"><?php echo esc_html($is_offer ? __('Oferta académica', 'flacso-uruguay') : __('Cohorte', 'flacso-uruguay')); ?> · <?php esc_html_e('Editor nuevo', 'flacso-uruguay'); ?></p>
             <h1><?php echo esc_html((string) $entity['title']); ?></h1>
-            <p class="flacso-new-editor__subtitle"><?php esc_html_e('Vista preliminar de la nueva experiencia de edición académica.', 'flacso-uruguay'); ?></p>
+            <p class="flacso-new-editor__subtitle"><?php echo esc_html($is_offer ? __('Editor completo de la Oferta Académica.', 'flacso-uruguay') : __('Vista preliminar de la edición de Cohortes.', 'flacso-uruguay')); ?></p>
         </div>
         <div class="flacso-new-editor__header-actions">
             <a class="button button-secondary" href="<?php echo esc_url($legacy_url); ?>">
@@ -30,6 +30,14 @@ if (!defined('ABSPATH')) {
         </div>
     </header>
 
+    <?php if ($is_offer) : ?>
+        <?php if (is_array($save_notice)) : ?>
+            <div class="notice <?php echo !empty($save_notice['success']) ? 'notice-success' : 'notice-error'; ?> flacso-new-editor__flash" role="status">
+                <p><?php echo esc_html((string) ($save_notice['message'] ?? '')); ?></p>
+            </div>
+        <?php endif; ?>
+        <?php require FLACSO_URUGUAY_PATH . 'editor/views/offer-form.php'; ?>
+    <?php else : ?>
     <div class="flacso-new-editor__notice" role="status">
         <span class="dashicons dashicons-info-outline" aria-hidden="true"></span>
         <p><strong><?php esc_html_e('Etapa inicial: navegación y consulta.', 'flacso-uruguay'); ?></strong>
@@ -137,4 +145,5 @@ if (!defined('ABSPATH')) {
             </section>
         </aside>
     </div>
+    <?php endif; ?>
 </div>

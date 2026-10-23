@@ -20,6 +20,9 @@ interface FLACSO_Editor_Repository_Interface {
     /** Respetar capacidades y alcance académico del usuario actual. */
     public function can_edit(int $id): bool;
 
+    /** Publicación permitida según capacidades del CPT para el usuario actual. */
+    public function can_publish(int $id): bool;
+
     /** URL del formulario clásico para el mismo registro. */
     public function legacy_edit_url(int $id): string;
 

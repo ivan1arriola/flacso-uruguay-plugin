@@ -280,9 +280,9 @@ final class FLACSO_Offer_Carta_Contact_Admin {
         }
     }
 
-    public static function render_styles(): void {
+    public static function render_styles(bool $force = false): void {
         $screen = get_current_screen();
-        if (!$screen || $screen->post_type !== FLACSO_Oferta_Academica::POST_TYPE) {
+        if (!$force && (!$screen || $screen->post_type !== FLACSO_Oferta_Academica::POST_TYPE)) {
             return;
         }
         ?>
@@ -308,9 +308,9 @@ final class FLACSO_Offer_Carta_Contact_Admin {
         <?php
     }
 
-    public static function render_script(): void {
+    public static function render_script(bool $force = false): void {
         $screen = get_current_screen();
-        if (!$screen || $screen->post_type !== FLACSO_Oferta_Academica::POST_TYPE) {
+        if (!$force && (!$screen || $screen->post_type !== FLACSO_Oferta_Academica::POST_TYPE)) {
             return;
         }
         ?>

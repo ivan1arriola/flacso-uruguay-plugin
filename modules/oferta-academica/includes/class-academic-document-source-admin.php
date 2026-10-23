@@ -78,18 +78,20 @@ final class FLACSO_Academic_Document_Source_Admin {
         wp_enqueue_media();
     }
 
-    public static function render_editor(): void {
+    public static function render_editor(?WP_Post $target_post = null): void {
         $screen = get_current_screen();
-        if (!$screen || !in_array($screen->post_type, [FLACSO_Oferta_Academica::POST_TYPE, FLACSO_Cohorte::POST_TYPE], true)) {
+        if ($target_post === null && (!$screen || !in_array($screen->post_type, [FLACSO_Oferta_Academica::POST_TYPE, FLACSO_Cohorte::POST_TYPE], true))) {
             return;
         }
 
-        global $post;
+        // /editor proporciona explícitamente el post; el editor clásico
+        // sigue utilizando la variable global como antes.
+        $post = $target_post instanceof WP_Post ? $target_post : ($GLOBALS['post'] ?? null);
         if (!($post instanceof WP_Post)) {
             return;
         }
 
-        if ($screen->post_type === FLACSO_Oferta_Academica::POST_TYPE) {
+        if ($post->post_type === FLACSO_Oferta_Academica::POST_TYPE) {
             $config = self::source_config(
                 $post->ID,
                 'malla',

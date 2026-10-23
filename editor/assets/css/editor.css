@@ -174,3 +174,74 @@
     .flacso-new-editor__cohorts li {align-items:stretch;flex-direction:column}
     .flacso-new-editor__cohorts .button {text-align:center}
 }
+
+
+/* Editor completo de Ofertas: capa visual sin alterar el formulario de dominio. */
+.flacso-new-editor__form {min-width:0}
+.flacso-new-editor__form .flacso-new-editor__main {min-width:0}
+.flacso-new-editor__form .flacso-new-editor__aside-sticky {
+    position:sticky;top:52px;display:grid;gap:16px
+}
+.flacso-new-editor__label {display:block;font-weight:650;color:#33465b;margin:0 0 8px;font-size:13px}
+.flacso-new-editor__title-field,
+.flacso-new-editor__select {width:100%;max-width:none;min-height:44px}
+.flacso-new-editor__title-field {padding:10px 13px;font-size:17px;line-height:1.5}
+.flacso-new-editor__publication {display:grid;gap:12px}
+.flacso-new-editor__publication h2 {margin:0}
+.flacso-new-editor__publication .flacso-new-editor__muted {margin:0}
+.flacso-new-editor__publication button[type=submit] {margin:4px 0}
+.flacso-new-editor__save-hint {margin:0;color:#7f4b18;font-size:12px;min-height:16px}
+.flacso-new-editor__legacy-link {display:block;text-align:center;text-decoration:none;padding:8px 0}
+.flacso-new-editor__image-preview {
+    aspect-ratio:4/3;display:grid;place-items:center;background:#f4f7fa;
+    border:1px dashed #d5dee8;border-radius:6px;overflow:hidden;color:#64748b
+}
+.flacso-new-editor__image-preview img {display:block;width:100%;height:100%;object-fit:contain}
+.flacso-new-editor__image-actions {display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.flacso-new-editor__image-actions .button {min-height:35px}
+.flacso-new-editor__flash {margin:0 0 18px;padding:1px 14px}
+.flacso-new-editor__fields {min-width:0}
+.flacso-new-editor__fields .flacso-oferta-fields {
+    display:grid;gap:18px;padding:0;background:transparent;min-width:0;color:#203348
+}
+.flacso-new-editor__fields .flacso-oferta-workspace {
+    background:#eaf0f6;color:#21364f;border:1px solid #cfdae7;box-shadow:none;
+    border-radius:8px;padding:20px
+}
+.flacso-new-editor__fields .flacso-oferta-workspace h3 {color:#21364f}
+.flacso-new-editor__fields .flacso-oferta-workspace p {color:#475e78}
+.flacso-new-editor__fields .flacso-oferta-eyebrow {color:#526d8c!important}
+.flacso-new-editor__fields .flacso-oferta-pill {
+    color:#29496d;border:1px solid #c3d1df;background:#f8fafc
+}
+.flacso-new-editor__fields .flacso-oferta-pill--progress {background:#e4f2ea;color:#246344}
+.flacso-new-editor__fields .flacso-oferta-public-link a {color:#234770}
+.flacso-new-editor__fields .flacso-oferta-section {
+    border:1px solid #d9e2eb;border-radius:8px;box-shadow:none;min-width:0
+}
+.flacso-new-editor__fields .flacso-oferta-section__icon {color:#2b5177;background:#eef3f7}
+.flacso-new-editor__fields .flacso-oferta-editor-grid {
+    grid-template-columns:minmax(0,1fr);gap:12px
+}
+.flacso-new-editor__fields .wp-editor-wrap {min-width:0}
+.flacso-new-editor__fields .wp-editor-container,
+.flacso-new-editor__fields .mce-tinymce {max-width:100%}
+.flacso-new-editor__fields .flacso-oferta-color-control {min-width:0}
+.flacso-new-editor__fields .flacso-oferta-field input,
+.flacso-new-editor__fields .flacso-oferta-field select,
+.flacso-new-editor__fields .flacso-carta-contact__field input,
+.flacso-new-editor__fields .flacso-carta-contact__field select {max-width:100%}
+.flacso-new-editor__form .flacso-new-editor__layout {grid-template-columns:minmax(0,1fr) 275px}
+@media(max-width:1160px) {
+    .flacso-new-editor__form .flacso-new-editor__layout {grid-template-columns:minmax(0,1fr)}
+    .flacso-new-editor__form .flacso-new-editor__aside-sticky {position:static;grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:782px) {
+    .flacso-new-editor__form .flacso-new-editor__aside-sticky {grid-template-columns:minmax(0,1fr)}
+    .flacso-new-editor__fields .flacso-oferta-workspace {padding:14px}
+    .flacso-new-editor__fields .flacso-oferta-grid,
+    .flacso-new-editor__fields .flacso-oferta-checks {grid-template-columns:minmax(0,1fr)}
+    .flacso-new-editor__fields .flacso-oferta-section__summary {gap:8px}
+    .flacso-new-editor__fields .flacso-oferta-section__copy small {display:block}
+    .flacso-new-editor__form .flacso-new-editor__publication button[type=submit] {min-height:44px}
+}

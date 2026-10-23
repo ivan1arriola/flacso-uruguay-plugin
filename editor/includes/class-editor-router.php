@@ -5,10 +5,8 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Primera etapa del nuevo editor académico: navegación bidireccional segura.
- *
- * No guarda datos ni sustituye metaboxes: las vistas preliminares son de
- * consulta hasta migrar los formularios a servicios PHP compartidos.
+ * La Oferta es editable a través de un contrato PHP y el formulario canónico.
+ * Cohorte conserva temporalmente la vista de consulta.
  */
 final class FLACSO_Editor_Router {
     public const PAGE_SLUG = 'flacso-editor';
@@ -17,13 +15,16 @@ final class FLACSO_Editor_Router {
     private static $page_hook = '';
     private static ?FLACSO_Editor_Repository_Interface $repository = null;
     private static ?FLACSO_Editor_Controller_Factory $factory = null;
+    private static ?FLACSO_Editor_Offer_Form_Interface $offer_form = null;
 
     public static function init(
         FLACSO_Editor_Repository_Interface $repository,
-        FLACSO_Editor_Controller_Factory $factory
+        FLACSO_Editor_Controller_Factory $factory,
+        FLACSO_Editor_Offer_Form_Interface $offer_form
     ): void {
         self::$repository = $repository;
         self::$factory = $factory;
+        self::$offer_form = $offer_form;
         if (!is_admin()) {
             return;
         }
@@ -31,6 +32,9 @@ final class FLACSO_Editor_Router {
         add_action('admin_menu', [self::class, 'register_page'], 30);
         add_action('edit_form_top', [self::class, 'render_legacy_switch'], 20);
         add_action('admin_enqueue_scripts', [self::class, 'enqueue_assets']);
+        add_action('admin_head', [self::class, 'render_offer_head']);
+        add_action('admin_footer', [self::class, 'render_offer_footer']);
+        add_action('admin_post_flacso_editor_save_offer', [self::class, 'save_offer']);
     }
 
     public static function register_page(): void {
@@ -107,6 +111,13 @@ final class FLACSO_Editor_Router {
             is_readable($absolute_css) ? (string) filemtime($absolute_css) : FLACSO_URUGUAY_VERSION
         );
 
+        if ($is_new_page && self::is_offer_page()) {
+            self::$offer_form->enqueue_assets();
+            $relative_js = 'editor/assets/js/offer-form.js';
+            $absolute_js = FLACSO_URUGUAY_PATH . $relative_js;
+            wp_enqueue_script('flacso-new-offer-form', FLACSO_URUGUAY_URL . $relative_js, [], is_readable($absolute_js) ? (string) filemtime($absolute_js) : FLACSO_URUGUAY_VERSION, true);
+        }
+
         if ($is_old_editor) {
             $relative_js = 'editor/assets/js/editor-switch.js';
             $absolute_js = FLACSO_URUGUAY_PATH . $relative_js;
@@ -118,6 +129,79 @@ final class FLACSO_Editor_Router {
                 true
             );
         }
+    }
+
+    private static function is_offer_page(): bool {
+        $screen = get_current_screen();
+        if (!$screen instanceof WP_Screen || self::$page_hook === '' || $screen->id !== self::$page_hook) {
+            return false;
+        }
+
+        $id = isset($_GET['post']) ? absint(wp_unslash($_GET['post'])) : 0;
+        if ($id === 0 || !self::$repository->can_edit($id)) {
+            return false;
+        }
+        $entity = self::$repository->find($id);
+        return is_array($entity) && $entity['type'] === 'oferta-academica';
+    }
+
+    public static function render_offer_head(): void {
+        if (self::is_offer_page()) {
+            self::$offer_form->render_head();
+        }
+    }
+
+    public static function render_offer_footer(): void {
+        if (self::is_offer_page()) {
+            $id = absint(wp_unslash($_GET['post']));
+            self::$offer_form->render_footer($id);
+        }
+    }
+
+    public static function save_offer(): void {
+        $id = isset($_POST['flacso_editor_post_id']) ? absint(wp_unslash($_POST['flacso_editor_post_id'])) : 0;
+
+        if (
+            $id === 0
+            || !current_user_can(FLACSO_Academic_Assistant::ACCESS)
+            || !self::$repository->can_edit($id)
+        ) {
+            wp_die(esc_html__('No tenés permisos para editar esta oferta.', 'flacso-uruguay'), '', ['response' => 403]);
+        }
+
+        check_admin_referer('flacso_editor_save_offer_' . $id, 'flacso_editor_nonce');
+
+        $entity = self::$repository->find($id);
+        if (!is_array($entity) || $entity['type'] !== 'oferta-academica' || $entity['status'] === 'auto-draft') {
+            wp_die(esc_html__('La oferta no está disponible para edición.', 'flacso-uruguay'), '', ['response' => 400]);
+        }
+
+        $data = [
+            'title' => isset($_POST['post_title']) && is_string($_POST['post_title'])
+                ? sanitize_text_field(wp_unslash($_POST['post_title'])) : '',
+            'status' => isset($_POST['post_status']) && is_string($_POST['post_status'])
+                ? sanitize_key(wp_unslash($_POST['post_status'])) : '',
+        ];
+        if (isset($_POST['flacso_thumbnail_id'])) {
+            $data['thumbnail_id'] = absint(wp_unslash($_POST['flacso_thumbnail_id']));
+        }
+
+        $controller = self::$factory->for_type('oferta-academica');
+        if (!$controller instanceof FLACSO_Editor_Editable_Controller_Interface) {
+            wp_die(esc_html__('El editor no está disponible.', 'flacso-uruguay'), '', ['response' => 500]);
+        }
+
+        $result = $controller->save($id, $data);
+        set_transient(
+            'flacso_editor_offer_result_' . get_current_user_id() . '_' . $id,
+            [
+                'success' => !empty($result['success']),
+                'message' => sanitize_text_field((string) ($result['message'] ?? '')),
+            ],
+            90
+        );
+        wp_safe_redirect(self::new_url($id));
+        exit;
     }
 
     public static function render_page(): void {
@@ -180,6 +264,12 @@ final class FLACSO_Editor_Router {
         $parent_url = is_array($parent) && !empty($parent['id'])
             ? self::new_url((int) $parent['id'])
             : '';
+        $notice_key = 'flacso_editor_offer_result_' . get_current_user_id() . '_' . $post_id;
+        $save_notice = $is_offer ? get_transient($notice_key) : false;
+        if ($save_notice !== false) {
+            delete_transient($notice_key);
+        }
+        $can_publish = $is_offer ? self::$repository->can_publish($post_id) : false;
 
         require FLACSO_URUGUAY_PATH . 'editor/views/academic.php';
     }
