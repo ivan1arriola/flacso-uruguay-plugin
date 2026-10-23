@@ -4,6 +4,7 @@
  * El editor no debe inyectar catálogos completos ni romper el contacto de carta.
  */
 define('ABSPATH', dirname(__DIR__) . '/');
+define('FLACSO_OFERTA_ACADEMICA_URL', 'https://example.test/plugins/flacso/oferta-academica/');
 class FLACSO_Oferta_Academica { public const POST_TYPE = 'oferta-academica'; }
 class FLACSO_Cohorte { public const POST_TYPE = 'cohorte'; }
 function absint($value) { return abs((int) $value); }
@@ -33,7 +34,9 @@ function team_search_assert($condition, string $message): void {
 }
 $class = new ReflectionClass('FLACSO_Academic_Team_Editor');
 $method = $class->getMethod('render_member_row');
-$method->setAccessible(true);
+if (PHP_VERSION_ID < 80100) {
+    $method->setAccessible(true);
+}
 ob_start();
 $method->invoke(null, 'flacso_oferta_equipos[0][docentes][0]', ['id' => 41, 'rol' => 'Coordinación', 'correo' => 'contacto@flacso.edu.uy'], []);
 $html = ob_get_clean();
@@ -46,6 +49,7 @@ team_search_assert(strpos($html, 'selected') !== false, 'conserva la opción sel
 team_search_assert(substr_count($html, '<option') === 2, 'renderiza únicamente vacío y persona ya vinculada');
 
 $source = file_get_contents(dirname(__DIR__) . '/modules/oferta-academica/includes/class-academic-team-editor.php');
+$script = file_get_contents(dirname(__DIR__) . '/modules/oferta-academica/assets/js/academic-team-editor.js');
 team_search_assert(strpos($source, 'posts_per_page' . "' => -1") === false, 'no carga todas las personas en el render');
 team_search_assert(strpos($source, 'wp_ajax_flacso_search_team_people') !== false, 'end-point AJAX solo autenticado');
 team_search_assert(strpos($source, 'check_ajax_referer') !== false, 'requiere nonce');
@@ -58,7 +62,8 @@ team_search_assert(strpos($source, 'data-team-zone="coordination"') !== false, '
 team_search_assert(strpos($source, 'data-team-zone="custom"') !== false, 'separa otros grupos');
 team_search_assert(strpos($source, 'data-team-zone-list') !== false, 'preserva grupos al agregar dinámicamente');
 team_search_assert(substr_count($source, 'class="flacso-team-members__actions"') === 2, 'agregar integrante está debajo de cada lista');
-team_search_assert(strpos($source, 'flacso:academic-team-changed') !== false, 'mantiene sincronización del contacto de carta');
+team_search_assert(strpos($script, "document.dispatchEvent(new CustomEvent('flacso:academic-team-changed'))") !== false, 'mantiene sincronización del contacto de carta');
 FLACSO_Academic_Team_Editor::enqueue_person_search('post.php');
 team_search_assert(in_array('jquery-ui-autocomplete', $GLOBALS['test_enqueued'], true), 'utiliza autocompletado de WordPress');
+team_search_assert(in_array('flacso-academic-team-editor', $GLOBALS['test_enqueued'], true), 'carga el controlador de equipos en el editor clásico');
 echo "OK academic team person search and layout\n";

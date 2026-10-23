@@ -30,8 +30,6 @@ final class FLACSO_Academic_Team_Editor {
         add_action('save_post_' . FLACSO_Cohorte::POST_TYPE, [self::class, 'save_cohort'], 20, 2);
         add_action('admin_head-post.php', [self::class, 'render_styles']);
         add_action('admin_head-post-new.php', [self::class, 'render_styles']);
-        add_action('admin_footer-post.php', [self::class, 'render_script']);
-        add_action('admin_footer-post-new.php', [self::class, 'render_script']);
         add_action('admin_enqueue_scripts', [self::class, 'enqueue_person_search']);
         add_action('wp_ajax_flacso_search_team_people', [self::class, 'search_people_ajax']);
     }
@@ -184,6 +182,14 @@ final class FLACSO_Academic_Team_Editor {
         $screen = get_current_screen();
         if ($screen && in_array($screen->post_type, [FLACSO_Oferta_Academica::POST_TYPE, FLACSO_Cohorte::POST_TYPE], true)) {
             wp_enqueue_script('jquery-ui-autocomplete');
+            $version = defined('FLACSO_URUGUAY_VERSION') ? (string) FLACSO_URUGUAY_VERSION : '1.0.0';
+            wp_enqueue_script(
+                'flacso-academic-team-editor',
+                FLACSO_OFERTA_ACADEMICA_URL . 'assets/js/academic-team-editor.js',
+                ['jquery-ui-autocomplete'],
+                $version,
+                true
+            );
         }
     }
 
@@ -677,279 +683,11 @@ final class FLACSO_Academic_Team_Editor {
     }
 
     public static function render_script(bool $force = false): void {
-        $screen = get_current_screen();
-        if (!$force && (!$screen || !in_array($screen->post_type, [FLACSO_Oferta_Academica::POST_TYPE, FLACSO_Cohorte::POST_TYPE], true))) {
+        if (!$force) {
             return;
         }
         ?>
-        <div class="flacso-team-delete-overlay" data-flacso-team-delete-dialog hidden>
-            <div class="flacso-team-delete-dialog" role="alertdialog" aria-modal="true" aria-labelledby="flacso-team-delete-title" aria-describedby="flacso-team-delete-description flacso-team-delete-note">
-                <span class="flacso-team-delete-dialog__icon" aria-hidden="true"><span class="dashicons dashicons-trash"></span></span>
-                <h2 id="flacso-team-delete-title"><?php esc_html_e('¿Eliminar este grupo docente?', 'flacso-uruguay'); ?></h2>
-                <p id="flacso-team-delete-description"><?php esc_html_e('Vas a quitar el grupo', 'flacso-uruguay'); ?> <strong data-team-delete-name></strong> <?php esc_html_e('junto con sus integrantes.', 'flacso-uruguay'); ?></p>
-                <p id="flacso-team-delete-note" class="flacso-team-delete-dialog__note"><?php esc_html_e('El cambio se aplicará cuando guardes la Oferta Académica o Cohorte.', 'flacso-uruguay'); ?></p>
-                <div class="flacso-team-delete-dialog__actions">
-                    <button type="button" class="button button-secondary" data-team-delete-cancel><?php esc_html_e('Cancelar', 'flacso-uruguay'); ?></button>
-                    <button type="button" class="button flacso-team-delete-dialog__confirm" data-team-delete-confirm><?php esc_html_e('Eliminar grupo', 'flacso-uruguay'); ?></button>
-                </div>
-            </div>
-        </div>
-        <script>
-        (function(){
-            function editorOf(el){ return el.closest('[data-flacso-team-editor]'); }
-            var deleteDialog=document.querySelector('[data-flacso-team-delete-dialog]');
-            var pendingDelete=null;
-            var returnFocus=null;
-
-            function closeTeamDeleteDialog(focusTarget){
-                if(!deleteDialog){ return; }
-                deleteDialog.hidden=true;
-                pendingDelete=null;
-                var target=focusTarget||returnFocus;
-                returnFocus=null;
-                if(target&&target.isConnected){ target.focus(); }
-            }
-
-            function openTeamDeleteDialog(team,trigger){
-                if(!deleteDialog||!team||!editorOf(trigger)||team.getAttribute('data-team-type')==='coordinacion_academica'){ return; }
-                pendingDelete=team;
-                returnFocus=trigger;
-                var nameInput=team.querySelector('input[name$="[nombre]"]');
-                var heading=team.querySelector('.flacso-team-group__heading strong');
-                var name=(nameInput&&nameInput.value.trim())||(heading&&heading.textContent.trim())||'<?php echo esc_js(__('Grupo docente', 'flacso-uruguay')); ?>';
-                deleteDialog.querySelector('[data-team-delete-name]').textContent='“'+name+'”';
-                deleteDialog.hidden=false;
-                deleteDialog.querySelector('[data-team-delete-cancel]').focus();
-            }
-
-            if(deleteDialog){
-                deleteDialog.addEventListener('click',function(event){
-                    if(event.target===deleteDialog||event.target.closest('[data-team-delete-cancel]')){
-                        event.preventDefault();
-                        closeTeamDeleteDialog();
-                        return;
-                    }
-                    if(event.target.closest('[data-team-delete-confirm]')){
-                        event.preventDefault();
-                        if(!pendingDelete||!pendingDelete.isConnected){ closeTeamDeleteDialog(); return; }
-                        var editor=editorOf(pendingDelete);
-                        var next=pendingDelete.nextElementSibling;
-                        var focusTarget=(next&&next.querySelector('[data-remove-team]'))||(editor&&editor.querySelector('[data-add-team]'))||null;
-                        pendingDelete.remove();
-                        closeTeamDeleteDialog(focusTarget);
-                        document.dispatchEvent(new CustomEvent('flacso:academic-team-changed'));
-                    }
-                });
-                document.addEventListener('keydown',function(event){
-                    if(deleteDialog.hidden){ return; }
-                    if(event.key==='Escape'){
-                        event.preventDefault();
-                        closeTeamDeleteDialog();
-                        return;
-                    }
-                    if(event.key!=='Tab'){ return; }
-                    var controls=Array.from(deleteDialog.querySelectorAll('button:not([disabled])'));
-                    if(!controls.length){ event.preventDefault(); return; }
-                    var first=controls[0],last=controls[controls.length-1];
-                    if(event.shiftKey&&(document.activeElement===first||!deleteDialog.contains(document.activeElement))){
-                        event.preventDefault();
-                        last.focus();
-                    } else if(!event.shiftKey&&(document.activeElement===last||!deleteDialog.contains(document.activeElement))){
-                        event.preventDefault();
-                        first.focus();
-                    }
-                });
-            }
-
-            function nextMemberIndex(container){
-                var max=-1;
-                container.querySelectorAll('[data-member-row] select[name]').forEach(function(select){
-                    var match=select.name.match(/\[(\d+)\]\[id\]$/);
-                    if(match){ max=Math.max(max,parseInt(match[1],10)); }
-                });
-                return max+1;
-            }
-
-            function nextGroupIndex(list){
-                var max=-1;
-                list.querySelectorAll('[data-team-group]').forEach(function(group){
-                    var value=parseInt(group.getAttribute('data-group-index')||'-1',10);
-                    if(!isNaN(value)){ max=Math.max(max,value); }
-                });
-                return max+1;
-            }
-
-            /**
-             * Autocompletado con jQuery UI (incluido en WordPress).
-             * El select oculto mantiene la estructura exacta que guardan los
-             * formularios y lee el selector del contacto de la carta.
-             */
-            function initPersonSearch(input){
-                var $=window.jQuery;
-                if(!$||!$.fn.autocomplete||input.dataset.personReady){ return; }
-                var row=input.closest('[data-member-row]');
-                var select=row&&row.querySelector('[data-person-select]');
-                var feedback=row&&row.querySelector('[data-person-feedback]');
-                if(!select){ return; }
-                input.dataset.personReady='1';
-                var selectedName=input.value;
-
-                $(input).on('input',function(){
-                    if(input.value!==selectedName && select.value){
-                        select.value='';
-                        selectedName='';
-                        select.dispatchEvent(new Event('change',{bubbles:true}));
-                    }
-                });
-
-                $(input).autocomplete({
-                    minLength:2,
-                    delay:250,
-                    classes:{'ui-autocomplete':'flacso-team-autocomplete'},
-                    source:function(request,respond){
-                        var editor=editorOf(input);
-                        if(!editor||!window.ajaxurl){ respond([]); return; }
-                        if(feedback){ feedback.textContent='Buscando personas…'; }
-                        $.ajax({
-                            url:window.ajaxurl,
-                            dataType:'json',
-                            timeout:10000,
-                            data:{
-                                action:'flacso_search_team_people',
-                                nonce:editor.dataset.personNonce,
-                                post_id:editor.dataset.postId,
-                                term:request.term,
-                                page:1
-                            }
-                        }).done(function(payload){
-                            if(!payload||!payload.success){
-                                if(feedback){ feedback.textContent=(payload&&payload.data&&payload.data.message)||'No se pudo realizar la búsqueda.'; }
-                                respond([]);
-                                return;
-                            }
-                            var group=input.closest('[data-team-group]');
-                            var otherIds=Array.from(group.querySelectorAll('[data-person-select]'))
-                                .filter(function(other){ return other!==select && other.value; })
-                                .map(function(other){ return String(other.value); });
-                            var results=(payload.data.results||[]).filter(function(person){
-                                return otherIds.indexOf(String(person.id))===-1;
-                            }).map(function(person){
-                                return {
-                                    label:person.name+(person.email?' — '+person.email:''),
-                                    value:person.name,
-                                    id:person.id,
-                                    name:person.name,
-                                    email:person.email||'',
-                                    avatar:person.avatar||''
-                                };
-                            });
-                            if(feedback){
-                                feedback.textContent=payload.data.more
-                                    ?'Mostrando las primeras coincidencias. Escribí más para afinar la búsqueda.'
-                                    :(results.length?'Elegí una persona de la lista.':'No hay personas disponibles con ese criterio.');
-                            }
-                            respond(results);
-                        }).fail(function(){
-                            if(feedback){ feedback.textContent='No se pudo conectar. Intentá nuevamente.'; }
-                            respond([]);
-                        });
-                    },
-                    select:function(event,ui){
-                        event.preventDefault();
-                        var person=ui.item;
-                        select.replaceChildren();
-                        select.add(new Option('— Seleccionar persona —',''));
-                        var option=new Option(person.name,String(person.id),true,true);
-                        option.dataset.name=person.name;
-                        option.dataset.email=person.email;
-                        option.dataset.avatar=person.avatar;
-                        select.add(option);
-                        input.value=person.name;
-                        selectedName=person.name;
-                        if(feedback){ feedback.textContent='Persona seleccionada: '+person.name; }
-                        select.dispatchEvent(new Event('change',{bubbles:true}));
-                        document.dispatchEvent(new CustomEvent('flacso:academic-team-changed'));
-                    }
-                });
-                var autocomplete=$(input).autocomplete('instance');
-                if(autocomplete){
-                    autocomplete._renderItem=function(ul,item){
-                        var node=$('<li>');
-                        var wrapper=$('<div>').text(item.name);
-                        if(item.email){ $('<small>').addClass('flacso-team-person-email').text(item.email).appendTo(wrapper); }
-                        return node.append(wrapper).appendTo(ul);
-                    };
-                }
-            }
-
-            document.addEventListener('click',function(event){
-                var addMember=event.target.closest('[data-add-member]');
-                if(addMember){
-                    event.preventDefault();
-                    var members=addMember.closest('.flacso-team-members');
-                    var editor=editorOf(addMember);
-                    var template=editor&&editor.querySelector('template[data-member-template]');
-                    if(!members||!template){ return; }
-                    var index=nextMemberIndex(members);
-                    var prefix=members.getAttribute('data-members-prefix')||'';
-                    var html=template.innerHTML.split('__MEMBER_NAME__').join(prefix+'['+index+']');
-                    members.querySelector('[data-member-list]').insertAdjacentHTML('beforeend',html);
-                    var added=members.querySelector('[data-member-list] [data-member-row]:last-child [data-person-search]');
-                    if(added){ initPersonSearch(added); added.focus(); }
-                    document.dispatchEvent(new CustomEvent('flacso:academic-team-changed'));
-                    return;
-                }
-
-                var removeMember=event.target.closest('[data-remove-member]');
-                if(removeMember){
-                    event.preventDefault();
-                    var member=removeMember.closest('[data-member-row]');
-                    if(member){ member.remove(); }
-                    document.dispatchEvent(new CustomEvent('flacso:academic-team-changed'));
-                    return;
-                }
-
-                var addTeam=event.target.closest('[data-add-team]');
-                if(addTeam){
-                    event.preventDefault();
-                    var editor=editorOf(addTeam);
-                    var list=editor&&editor.querySelector('[data-team-list]');
-                    var kind=addTeam.getAttribute('data-add-team');
-                    var template=editor&&editor.querySelector('template[data-team-template="'+kind+'"]');
-                    if(!list||!template){ return; }
-                    var zone='custom';
-                    var target=editor.getAttribute('data-flacso-team-editor')==='offer'
-                        ?list.querySelector('[data-team-zone="'+zone+'"] [data-team-zone-list]')
-                        :list;
-                    if(!target){ return; }
-                    var index=nextGroupIndex(list);
-                    target.insertAdjacentHTML('beforeend',template.innerHTML.split('__GROUP__').join(String(index)));
-                    var group=target.querySelector('[data-team-group]:last-child');
-                    if(group){
-                        var first=group.querySelector('input:not([type="hidden"]),select,textarea,button');
-                        if(first){ first.focus(); }
-                    }
-                    document.dispatchEvent(new CustomEvent('flacso:academic-team-changed'));
-                    return;
-                }
-
-                var removeTeam=event.target.closest('[data-remove-team]');
-                if(removeTeam){
-                    event.preventDefault();
-                    openTeamDeleteDialog(removeTeam.closest('[data-team-group]'),removeTeam);
-                    return;
-                }
-            });
-
-            document.addEventListener('change',function(event){
-                if(event.target.closest('[data-flacso-team-editor]')){
-                    document.dispatchEvent(new CustomEvent('flacso:academic-team-changed'));
-                }
-            });
-
-            document.querySelectorAll('[data-flacso-team-editor] [data-person-search]').forEach(initPersonSearch);
-        })();
-        </script>
+        <script src="<?php echo esc_url(FLACSO_OFERTA_ACADEMICA_URL . 'assets/js/academic-team-editor.js'); ?>"></script>
         <?php
     }
 }

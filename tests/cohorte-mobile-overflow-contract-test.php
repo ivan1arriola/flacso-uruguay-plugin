@@ -4,8 +4,8 @@
  * Verifica las causas del desbordamiento (intrinsic sizing), no lo oculta.
  */
 $root = dirname(__DIR__);
-$source = file_get_contents($root . '/modules/oferta-academica/includes/class-cohorte.php');
-$shared = file_get_contents($root . '/modules/oferta-academica/includes/class-academic-admin-ui.php');
+$source = str_replace("\r\n", "\n", file_get_contents($root . '/modules/oferta-academica/includes/class-cohorte.php'));
+$shared = str_replace("\r\n", "\n", file_get_contents($root . '/modules/oferta-academica/includes/class-academic-admin-ui.php'));
 
 function cohort_responsive_assert(bool $condition, string $description): void {
     if (!$condition) {
