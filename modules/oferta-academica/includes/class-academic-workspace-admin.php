@@ -42,7 +42,7 @@ final class FLACSO_Academic_Workspace_Admin {
         }
 
         $url = FLACSO_OFERTA_ACADEMICA_URL . 'assets/';
-        $version = defined('FLACSO_VERSION') ? (string) FLACSO_VERSION : '1.0.0';
+        $version = defined('FLACSO_URUGUAY_VERSION') ? (string) FLACSO_URUGUAY_VERSION : '1.0.0';
 
         wp_enqueue_style(
             'flacso-academic-workspace-admin',
