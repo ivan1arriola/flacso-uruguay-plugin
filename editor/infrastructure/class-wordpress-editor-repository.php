@@ -26,9 +26,12 @@ final class FLACSO_WordPress_Editor_Repository implements FLACSO_Editor_Reposito
 
         $fields = [];
         if ($post->post_type === 'oferta-academica') {
+            $thumbnail_id = get_post_thumbnail_id($id);
             $fields = [
                 'abbreviation' => (string) get_post_meta($id, 'abreviacion', true),
                 'contact_email' => (string) get_post_meta($id, 'correo', true),
+                'thumbnail_id' => $thumbnail_id ? (int) $thumbnail_id : 0,
+                'thumbnail_url' => $thumbnail_id ? (string) (wp_get_attachment_image_url($thumbnail_id, 'medium') ?: '') : '',
             ];
         } else {
             $number = absint(get_post_meta($id, 'numero', true));
@@ -56,6 +59,20 @@ final class FLACSO_WordPress_Editor_Repository implements FLACSO_Editor_Reposito
 
     public function can_edit(int $id): bool {
         return $id > 0 && current_user_can('edit_post', $id);
+    }
+
+    public function can_publish(int $id): bool {
+        if (!$this->can_edit($id)) {
+            return false;
+        }
+        $post = get_post($id);
+        if (!$post instanceof WP_Post) {
+            return false;
+        }
+        $type = get_post_type_object($post->post_type);
+        return $type && isset($type->cap->publish_posts)
+            ? current_user_can((string) $type->cap->publish_posts)
+            : false;
     }
 
     public function legacy_edit_url(int $id): string {
