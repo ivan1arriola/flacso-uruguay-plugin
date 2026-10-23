@@ -31,7 +31,6 @@ if (!defined('ABSPATH')) {
                     name="post_title"
                     value="<?php echo esc_attr((string) $entity['title']); ?>"
                     required
-                    maxlength="250"
                     autocomplete="off"
                 >
             </section>
