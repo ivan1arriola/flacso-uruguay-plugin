@@ -15,6 +15,7 @@ if (!defined('FLACSO_OFERTA_ACADEMICA_URL')) {
 flacso_safe_require('modules/oferta-academica/includes/class-cpt-oferta-academica.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-admin-table-layout.php');
 flacso_safe_require('modules/oferta-academica/includes/class-academic-admin-ui.php');
+flacso_safe_require('modules/oferta-academica/includes/class-academic-workspace-admin.php');
 flacso_safe_require('modules/oferta-academica/includes/class-cpt-programa-academico.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-academica.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-admin-fields.php');
@@ -56,6 +57,7 @@ add_action('init', static function (): void {
 }, 5);
 
 FLACSO_Academic_Admin_UI::init();
+FLACSO_Academic_Workspace_Admin::init();
 FLACSO_Oferta_Admin_Fields::init();
 FLACSO_Academic_Articulations_Admin::init();
 FLACSO_Offer_Carta_Contact_Admin::init();
