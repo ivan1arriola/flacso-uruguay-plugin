@@ -1,0 +1,273 @@
+/* Workspace editorial FLACSO · solo post.php/post-new.php de Ofertas y Cohortes.
+ * Respeta el formulario, el orden de guardado y los metaboxes existentes. */
+.flacso-academic-workspace-screen{
+    --flacso-editor-ink:#1c3049;
+    --flacso-editor-muted:#526478;
+    --flacso-editor-line:#d8e1e9;
+    --flacso-editor-surface:#ffffff;
+    --flacso-editor-bg:#f5f7fa;
+    --flacso-editor-primary:#234770;
+}
+.flacso-academic-workspace-screen #wpbody-content{background:var(--flacso-editor-bg)}
+.flacso-academic-workspace-screen #poststuff{max-width:none;padding-top:12px}
+.flacso-academic-workspace-screen #poststuff #post-body.flacso-editor-layout{
+    display:grid!important;
+    grid-template-columns:208px minmax(0,1fr) 264px;
+    grid-template-areas:"navigation heading publication" "navigation main publication";
+    align-items:start;
+    gap:18px 20px;
+    width:100%;
+    min-width:0;
+}
+.flacso-academic-workspace-screen #post-body.flacso-editor-layout > #post-body-content{
+    grid-area:heading;float:none!important;width:auto!important;min-width:0;
+    margin:0!important;
+}
+.flacso-academic-workspace-screen #post-body.flacso-editor-layout > #postbox-container-1{
+    grid-area:publication;float:none!important;width:auto!important;min-width:0;
+    margin:0!important;
+}
+.flacso-academic-workspace-screen #post-body.flacso-editor-layout > #postbox-container-2{
+    grid-area:main;float:none!important;width:auto!important;min-width:0;
+    margin:0!important;
+}
+.flacso-academic-workspace-screen #post-body.flacso-editor-layout #normal-sortables,
+.flacso-academic-workspace-screen #post-body.flacso-editor-layout #advanced-sortables{
+    min-width:0;
+}
+.flacso-academic-workspace-screen #poststuff #titlediv{
+    background:var(--flacso-editor-surface);
+    border:1px solid var(--flacso-editor-line);
+    border-radius:10px;
+    padding:16px 18px;
+    box-shadow:0 2px 8px rgba(26,51,81,.03);
+}
+.flacso-academic-workspace-screen #poststuff #titlediv #titlewrap{margin:0}
+.flacso-academic-workspace-screen #poststuff #titlediv #title{
+    border:1px solid var(--flacso-editor-line);border-radius:6px;
+    padding:8px 12px;font-size:21px;line-height:1.4;
+    color:var(--flacso-editor-ink);background:#fff;min-height:48px;
+}
+.flacso-academic-workspace-screen #poststuff #titlediv #title:focus{
+    border-color:var(--flacso-editor-primary);
+    box-shadow:0 0 0 2px rgba(35,71,112,.12);
+}
+.flacso-academic-workspace-screen #poststuff .postbox[id^="flacso_"]{
+    border:1px solid var(--flacso-editor-line);
+    border-radius:10px;
+    box-shadow:0 2px 8px rgba(26,51,81,.04);
+    background:var(--flacso-editor-surface);
+    min-width:0;
+}
+.flacso-academic-workspace-screen #poststuff #flacso_oferta_academica_fields > .postbox-header,
+.flacso-academic-workspace-screen #poststuff #flacso_cohorte_meta > .postbox-header{
+    display:none;
+}
+.flacso-academic-workspace-screen #flacso_oferta_academica_fields .inside,
+.flacso-academic-workspace-screen #flacso_cohorte_meta .inside{
+    padding:0;margin:0;background:transparent;
+}
+.flacso-academic-workspace-screen .flacso-oferta-fields,
+.flacso-academic-workspace-screen .flacso-cohort-editor{
+    padding:18px;gap:16px;color:var(--flacso-editor-ink);
+}
+.flacso-academic-workspace-screen .flacso-cohort-editor{display:grid}
+.flacso-academic-workspace-screen .flacso-oferta-workspace,
+.flacso-academic-workspace-screen .flacso-academic-workspace{
+    border:1px solid var(--flacso-editor-line);
+    border-radius:9px;
+    background:#f8fafc;
+    box-shadow:none;
+    color:var(--flacso-editor-ink);
+    padding:18px 20px;
+}
+.flacso-academic-workspace-screen .flacso-oferta-workspace h3,
+.flacso-academic-workspace-screen .flacso-academic-workspace h3{
+    color:var(--flacso-editor-ink);font-size:19px;line-height:1.35;
+}
+.flacso-academic-workspace-screen .flacso-oferta-workspace p,
+.flacso-academic-workspace-screen .flacso-academic-workspace p{
+    color:var(--flacso-editor-muted);font-size:13px;
+}
+.flacso-academic-workspace-screen .flacso-oferta-eyebrow,
+.flacso-academic-workspace-screen .flacso-academic-eyebrow{color:var(--flacso-editor-primary)!important}
+.flacso-academic-workspace-screen .flacso-oferta-pill,
+.flacso-academic-workspace-screen .flacso-academic-pill{
+    background:#fff;color:var(--flacso-editor-ink);
+    border:1px solid var(--flacso-editor-line);
+    border-radius:6px;
+    white-space:normal;overflow-wrap:anywhere;
+}
+.flacso-academic-workspace-screen .flacso-oferta-public-link a{color:var(--flacso-editor-primary)}
+.flacso-academic-workspace-screen .flacso-oferta-section,
+.flacso-academic-workspace-screen .flacso-academic-section{
+    border-color:var(--flacso-editor-line);
+    border-radius:8px;
+    box-shadow:none;
+    scroll-margin-top:72px;
+}
+.flacso-academic-workspace-screen .flacso-oferta-section__summary,
+.flacso-academic-workspace-screen .flacso-academic-section__summary{
+    background:#fff;
+    border-bottom:0;
+    padding:16px 18px;
+    align-items:center;
+}
+.flacso-academic-workspace-screen .flacso-oferta-section__icon,
+.flacso-academic-workspace-screen .flacso-academic-section__icon{
+    color:var(--flacso-editor-primary);
+    background:#edf3f9;
+}
+.flacso-academic-workspace-screen .flacso-oferta-section__copy strong,
+.flacso-academic-workspace-screen .flacso-academic-section__copy strong{
+    color:var(--flacso-editor-ink);font-size:15px;
+}
+.flacso-academic-workspace-screen .flacso-oferta-section__body,
+.flacso-academic-workspace-screen .flacso-academic-section__body{
+    padding:16px 18px 20px;
+}
+.flacso-academic-workspace-screen .flacso-oferta-field,
+.flacso-academic-workspace-screen .flacso-academic-field,
+.flacso-academic-workspace-screen .flacso-oferta-editor{min-width:0}
+.flacso-academic-workspace-screen .flacso-oferta-fields input:not([type=checkbox]):not([type=color]),
+.flacso-academic-workspace-screen .flacso-oferta-fields select,
+.flacso-academic-workspace-screen .flacso-oferta-fields textarea,
+.flacso-academic-workspace-screen .flacso-cohort-editor input:not([type=checkbox]),
+.flacso-academic-workspace-screen .flacso-cohort-editor select,
+.flacso-academic-workspace-screen .flacso-cohort-editor textarea{
+    border:1px solid #bbc9d7;border-radius:5px;
+    max-width:100%;min-width:0;
+}
+.flacso-academic-workspace-screen .flacso-oferta-fields :is(input,select,textarea):focus-visible,
+.flacso-academic-workspace-screen .flacso-cohort-editor :is(input,select,textarea):focus-visible{
+    outline:2px solid var(--flacso-editor-primary);outline-offset:1px;
+}
+.flacso-academic-workspace-screen #postbox-container-1 #submitdiv{
+    border:1px solid var(--flacso-editor-line);
+    border-radius:10px;overflow:hidden;
+    background:#fff;
+    position:sticky;top:48px;
+}
+.flacso-academic-workspace-screen #postbox-container-1 #submitdiv .postbox-header{
+    background:#f7f9fc;border-bottom:1px solid var(--flacso-editor-line);
+}
+.flacso-academic-workspace-screen #postbox-container-1 #submitdiv .inside{padding:10px}
+.flacso-academic-workspace-screen #postbox-container-1 #submitdiv #major-publishing-actions{
+    background:#f7f9fc;border-color:var(--flacso-editor-line);
+}
+.flacso-academic-workspace-screen #poststuff .button-primary,
+.flacso-academic-workspace-screen #flacso-academic-editor-nav .flacso-editor-save{
+    background:var(--flacso-editor-primary);border-color:var(--flacso-editor-primary);
+    color:#fff;
+}
+.flacso-academic-workspace-screen #poststuff .button-primary:hover,
+.flacso-academic-workspace-screen #flacso-academic-editor-nav .flacso-editor-save:hover{
+    background:#173251;border-color:#173251;
+}
+.flacso-academic-workspace-screen #flacso-academic-editor-nav{
+    grid-area:navigation;
+    position:sticky;top:48px;
+    min-width:0;max-height:calc(100vh - 65px);
+    overflow-y:auto;overscroll-behavior:contain;
+    padding:15px 11px 12px;
+    border:1px solid var(--flacso-editor-line);
+    border-radius:10px;
+    background:var(--flacso-editor-surface);
+    box-shadow:0 2px 8px rgba(26,51,81,.04);
+    z-index:5;
+}
+.flacso-academic-workspace-screen .flacso-editor-nav__overline{
+    margin:0 8px 4px;color:var(--flacso-editor-muted);
+    font-size:11px;letter-spacing:.085em;text-transform:uppercase;font-weight:700;
+}
+.flacso-academic-workspace-screen .flacso-editor-nav__title{
+    display:block;margin:0 8px 12px;color:var(--flacso-editor-ink);
+    font-size:15px;font-weight:750;line-height:1.35;
+}
+.flacso-academic-workspace-screen .flacso-editor-nav__links{display:grid;gap:3px}
+.flacso-academic-workspace-screen .flacso-editor-nav__link{
+    display:flex;align-items:center;gap:8px;
+    min-width:0;min-height:36px;padding:8px 10px;
+    border-left:3px solid transparent;border-radius:4px;
+    color:#344a60;text-decoration:none;
+    font-size:12px;font-weight:600;line-height:1.35;
+}
+.flacso-academic-workspace-screen .flacso-editor-nav__link:hover,
+.flacso-academic-workspace-screen .flacso-editor-nav__link:focus{
+    color:var(--flacso-editor-primary);background:#f1f5f9;
+}
+.flacso-academic-workspace-screen .flacso-editor-nav__link[aria-current="location"]{
+    border-left-color:var(--flacso-editor-primary);
+    background:#edf3f9;color:#18395b;
+}
+.flacso-academic-workspace-screen .flacso-editor-nav__link:focus-visible,
+.flacso-academic-workspace-screen .flacso-editor-save:focus-visible{
+    outline:2px solid var(--flacso-editor-primary);outline-offset:2px;
+}
+.flacso-academic-workspace-screen .flacso-editor-nav__actions{
+    display:grid;gap:8px;border-top:1px solid var(--flacso-editor-line);
+    padding:13px 7px 2px;margin-top:13px;
+}
+.flacso-academic-workspace-screen #flacso-academic-editor-nav .flacso-editor-save{
+    width:100%;padding:7px 10px;border-radius:5px;
+    font-size:13px;line-height:1.5;font-weight:700;cursor:pointer;
+    border-style:solid;border-width:1px;min-height:38px;
+}
+.flacso-academic-workspace-screen .flacso-editor-nav__note{
+    color:var(--flacso-editor-muted);
+    font-size:11px;line-height:1.45;margin:0;
+}
+.flacso-academic-workspace-screen .flacso-editor-nav__note.is-dirty{
+    color:#9a5200;font-weight:650;
+}
+@media(max-width:1280px){
+    .flacso-academic-workspace-screen #poststuff #post-body.flacso-editor-layout{
+        grid-template-columns:minmax(0,1fr);
+        grid-template-areas:"navigation" "heading" "publication" "main";
+        gap:12px;
+    }
+    .flacso-academic-workspace-screen #flacso-academic-editor-nav{
+        position:sticky;top:32px;max-height:none;overflow:visible;
+        padding:10px 12px;
+    }
+    .flacso-academic-workspace-screen .flacso-editor-nav__overline,
+    .flacso-academic-workspace-screen .flacso-editor-nav__title,
+    .flacso-academic-workspace-screen .flacso-editor-nav__note{display:none}
+    .flacso-academic-workspace-screen .flacso-editor-nav__body{
+        display:flex;align-items:center;gap:12px;
+    }
+    .flacso-academic-workspace-screen .flacso-editor-nav__links{
+        display:flex;align-items:center;gap:4px;
+        min-width:0;flex:1;overflow-x:auto;scrollbar-width:thin;
+    }
+    .flacso-academic-workspace-screen .flacso-editor-nav__link{
+        flex:0 0 auto;white-space:nowrap;min-height:38px;
+        border:0;border-bottom:3px solid transparent;
+    }
+    .flacso-academic-workspace-screen .flacso-editor-nav__link[aria-current="location"]{
+        border:0;border-bottom:3px solid var(--flacso-editor-primary);
+    }
+    .flacso-academic-workspace-screen .flacso-editor-nav__actions{
+        flex:0 0 auto;display:block;border:0;margin:0;padding:0;
+    }
+    .flacso-academic-workspace-screen #flacso-academic-editor-nav .flacso-editor-save{
+        width:auto;white-space:nowrap;
+    }
+    .flacso-academic-workspace-screen #postbox-container-1 #submitdiv{position:static}
+}
+@media(max-width:782px){
+    .flacso-academic-workspace-screen #flacso-academic-editor-nav{top:46px;border-radius:0}
+    .flacso-academic-workspace-screen .flacso-oferta-fields,
+    .flacso-academic-workspace-screen .flacso-cohort-editor{padding:10px}
+    .flacso-academic-workspace-screen #poststuff #titlediv{padding:12px}
+    .flacso-academic-workspace-screen #poststuff #titlediv #title{font-size:18px}
+    .flacso-academic-workspace-screen .flacso-oferta-workspace,
+    .flacso-academic-workspace-screen .flacso-academic-workspace{padding:14px}
+    .flacso-academic-workspace-screen .flacso-oferta-section__body,
+    .flacso-academic-workspace-screen .flacso-academic-section__body{padding:12px}
+    .flacso-academic-workspace-screen .flacso-oferta-section,
+    .flacso-academic-workspace-screen .flacso-academic-section{scroll-margin-top:110px}
+}
+@media(prefers-reduced-motion:reduce){
+    .flacso-academic-workspace-screen .flacso-editor-nav__link{scroll-behavior:auto}
+}
