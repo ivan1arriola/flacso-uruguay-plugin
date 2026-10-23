@@ -609,9 +609,9 @@ final class FLACSO_Academic_Team_Editor {
         update_post_meta($post_id, 'equipos', $teams);
     }
 
-    public static function render_styles(): void {
+    public static function render_styles(bool $force = false): void {
         $screen = get_current_screen();
-        if (!$screen || !in_array($screen->post_type, [FLACSO_Oferta_Academica::POST_TYPE, FLACSO_Cohorte::POST_TYPE], true)) {
+        if (!$force && (!$screen || !in_array($screen->post_type, [FLACSO_Oferta_Academica::POST_TYPE, FLACSO_Cohorte::POST_TYPE], true))) {
             return;
         }
         ?>
@@ -676,9 +676,9 @@ final class FLACSO_Academic_Team_Editor {
         <?php
     }
 
-    public static function render_script(): void {
+    public static function render_script(bool $force = false): void {
         $screen = get_current_screen();
-        if (!$screen || !in_array($screen->post_type, [FLACSO_Oferta_Academica::POST_TYPE, FLACSO_Cohorte::POST_TYPE], true)) {
+        if (!$force && (!$screen || !in_array($screen->post_type, [FLACSO_Oferta_Academica::POST_TYPE, FLACSO_Cohorte::POST_TYPE], true))) {
             return;
         }
         ?>
