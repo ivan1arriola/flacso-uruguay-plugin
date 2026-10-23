@@ -362,6 +362,7 @@ final class FLACSO_Academic_Assistant {
 
         $allowed = [
             FLACSO_Admin_Panel::PAGE_SLUG,
+            FLACSO_Editor_Router::PAGE_SLUG,
             'edit.php?post_type=oferta-academica',
             'edit.php?post_type=seminario',
         ];
@@ -483,7 +484,7 @@ final class FLACSO_Academic_Assistant {
             );
         }
 
-        if ($page !== '' && $page !== FLACSO_Admin_Panel::PAGE_SLUG) {
+        if ($page !== '' && !in_array($page, [FLACSO_Admin_Panel::PAGE_SLUG, FLACSO_Editor_Router::PAGE_SLUG], true)) {
             wp_die(
                 esc_html__('Esta herramienta está reservada para usuarios administradores.', 'flacso-uruguay'),
                 esc_html__('Acceso restringido', 'flacso-uruguay'),
