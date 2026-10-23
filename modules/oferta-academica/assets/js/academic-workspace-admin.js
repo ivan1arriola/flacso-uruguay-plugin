@@ -76,6 +76,31 @@
             pairs.push({ section: section, link: link });
         });
 
+        // En pantallas pequeñas se reemplaza la tira de pestañas por un selector.
+        var pickerLabel = document.createElement('label');
+        pickerLabel.className = 'flacso-editor-nav__picker';
+        var pickerText = document.createElement('span');
+        pickerText.textContent = 'Ir a sección';
+        var picker = document.createElement('select');
+        picker.setAttribute('aria-label', 'Ir a sección de edición');
+        pairs.forEach(function (pair, index) {
+            var option = document.createElement('option');
+            option.value = String(index);
+            option.textContent = pair.link.textContent;
+            picker.appendChild(option);
+        });
+        picker.addEventListener('change', function () {
+            var current = pairs[Number(picker.value)];
+            if (!current) return;
+            current.section.scrollIntoView({
+                behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+                block: 'start'
+            });
+            setActive(current.link);
+        });
+        pickerLabel.appendChild(pickerText);
+        pickerLabel.appendChild(picker);
+
         var actions = document.createElement('div');
         actions.className = 'flacso-editor-nav__actions';
         var nativeSave = document.getElementById('publish');
@@ -103,6 +128,7 @@
         actions.appendChild(note);
 
         body.appendChild(linksContainer);
+        body.appendChild(pickerLabel);
         body.appendChild(actions);
         nav.appendChild(eyebrow);
         nav.appendChild(title);
@@ -112,9 +138,10 @@
         postBody.classList.add('flacso-editor-layout');
 
         function setActive(activeLink) {
-            pairs.forEach(function (pair) {
+            pairs.forEach(function (pair, index) {
                 if (pair.link === activeLink) {
                     pair.link.setAttribute('aria-current', 'location');
+                    picker.value = String(index);
                 } else {
                     pair.link.removeAttribute('aria-current');
                 }
