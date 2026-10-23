@@ -76,6 +76,12 @@ El código se organiza estrictamente por **dominios de negocio de FLACSO**, nunc
 - Dentro de la carpeta del módulo conviven sus endpoints REST, bloques de Gutenberg, metaboxes de administración, shortcodes y lógica de persistencia.
 - **PROHIBIDO**: Crear carpetas globales agrupadas por tipo de archivo (ej. `shortcodes/shortcode-de-oferta.php`).
 - **Módulos LEGACY**: `modules/posgrados/` y `modules/shortcodes/` existen únicamente por compatibilidad con instalaciones anteriores. **NUNCA agregar código nuevo a estos módulos**.
+- **Excepción de presentación `/editor`**: la carpeta raíz `/editor` es la aplicación administrativa transversal dentro del mismo plugin, no un dominio nuevo. Puede contener contratos, factory, controladores de presentación, vistas, assets y adaptadores.
+  - Las vistas **no** pueden llamar a `get_post_meta()`, `get_posts()` ni clases del dominio: consumen modelos normalizados que prepara el controlador.
+  - Los controladores implementan `FLACSO_Editor_Controller_Interface` y sólo dependen de `FLACSO_Editor_Repository_Interface`.
+  - La factory selecciona controladores por tipo; `bootstrap.php` compone las dependencias; el router no aplica reglas de negocio.
+  - El adaptador `FLACSO_WordPress_Editor_Repository` encapsula `WP_Post`, metadatos, permisos y relaciones. No introducir llamadas HTTP/REST entre componentes PHP.
+  - Las reglas de negocio, persistencia y validaciones canónicas permanecen en `modules/<dominio>/`. **No duplicar lógica de guardado** en `/editor`.
 
 ### B. Registro Central de Módulos (Single Source of Truth)
 - `includes/core/class-flacso-module-registry.php` declara todos los módulos, dependencias obligatorias (`depends`), dependencias opcionales (`optional_depends`) y criticidad (`required`).

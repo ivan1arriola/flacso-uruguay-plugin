@@ -15,8 +15,15 @@ final class FLACSO_Editor_Router {
 
     private const POST_TYPES = ['oferta-academica', 'cohorte'];
     private static $page_hook = '';
+    private static ?FLACSO_Editor_Repository_Interface $repository = null;
+    private static ?FLACSO_Editor_Controller_Factory $factory = null;
 
-    public static function init(): void {
+    public static function init(
+        FLACSO_Editor_Repository_Interface $repository,
+        FLACSO_Editor_Controller_Factory $factory
+    ): void {
+        self::$repository = $repository;
+        self::$factory = $factory;
         if (!is_admin()) {
             return;
         }
@@ -128,11 +135,13 @@ final class FLACSO_Editor_Router {
             return;
         }
 
-        $post = get_post($post_id);
+        // El router sólo controla rutas y autorizaciones. No consulta CPT,
+        // metadatos ni relaciones del dominio: eso pertenece al adaptador.
+        $entity = self::$repository->find($post_id);
         if (
-            !$post instanceof WP_Post
-            || !in_array($post->post_type, self::POST_TYPES, true)
-            || !current_user_can('edit_post', $post_id)
+            !is_array($entity)
+            || !in_array($entity['type'] ?? '', self::POST_TYPES, true)
+            || !self::$repository->can_edit($post_id)
         ) {
             wp_die(
                 esc_html__('No existe el contenido o no tenés permisos para editarlo.', 'flacso-uruguay'),
@@ -141,41 +150,36 @@ final class FLACSO_Editor_Router {
             );
         }
 
-        $legacy_url = get_edit_post_link($post_id, 'raw');
-        if (!$legacy_url) {
+        // Evitar abrir como editable algo que WordPress todavía no guardó.
+        if (($entity['status'] ?? '') === 'auto-draft') {
+            wp_die(
+                esc_html__('Guardá primero el borrador en el editor actual.', 'flacso-uruguay'),
+                '',
+                ['response' => 400]
+            );
+        }
+
+        $legacy_url = self::$repository->legacy_edit_url($post_id);
+        if ($legacy_url === '') {
             wp_die(esc_html__('No se puede abrir el editor actual.', 'flacso-uruguay'));
         }
 
-        $is_offer = $post->post_type === 'oferta-academica';
-        $parent_id = $is_offer ? 0 : absint(get_post_meta($post_id, 'oferta_academica_id', true));
-        $parent = $parent_id > 0 ? get_post($parent_id) : null;
-        $parent_url = $parent instanceof WP_Post && $parent->post_type === 'oferta-academica'
-            && current_user_can('edit_post', $parent_id)
-            ? self::new_url($parent_id)
-            : '';
-
-        $cohorts = [];
-        if ($is_offer) {
-            $related = get_posts([
-                'post_type' => 'cohorte',
-                'post_status' => ['publish', 'draft', 'pending', 'private', 'future'],
-                'posts_per_page' => 100,
-                'meta_key' => 'numero',
-                'orderby' => 'meta_value_num',
-                'order' => 'DESC',
-                'meta_query' => [[
-                    'key' => 'oferta_academica_id',
-                    'value' => $post_id,
-                    'compare' => '=',
-                    'type' => 'NUMERIC',
-                ]],
-            ]);
-            foreach ($related as $candidate) {
-                if ($candidate instanceof WP_Post && current_user_can('edit_post', $candidate->ID)) {
-                    $cohorts[] = $candidate;
-                }
-            }
+        try {
+            $controller = self::$factory->for_type((string) $entity['type']);
+            $model = $controller->build_view_model($entity);
+        } catch (InvalidArgumentException $exception) {
+            wp_die(esc_html__('El tipo de contenido no está disponible en este editor.', 'flacso-uruguay'));
         }
+
+        // Contrato de presentación: la vista sólo recibe arrays normalizados.
+        $is_offer = (bool) $model['is_offer'];
+        $entity = $model['entity'];
+        $fields = (array) ($entity['fields'] ?? []);
+        $cohorts = (array) $model['cohorts'];
+        $parent = $model['parent'];
+        $parent_url = is_array($parent) && !empty($parent['id'])
+            ? self::new_url((int) $parent['id'])
+            : '';
 
         require FLACSO_URUGUAY_PATH . 'editor/views/academic.php';
     }
