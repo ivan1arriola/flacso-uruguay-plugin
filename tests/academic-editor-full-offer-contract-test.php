@@ -93,4 +93,21 @@ foreach ([
 flacso_offer_full_assert(strpos($sources['editor/views/academic.php'], "require FLACSO_URUGUAY_PATH . 'editor/views/offer-form.php'") !== false, 'Ofertas muestra formulario real');
 flacso_offer_full_assert(strpos($sources['editor/assets/js/offer-form.js'], 'tinyMCE.triggerSave()') !== false, 'el texto enriquecido se sincroniza al guardar');
 flacso_offer_full_assert(strpos($sources['editor/assets/js/offer-form.js'], 'beforeunload') !== false, 'avisa sobre cambios sin guardar');
+// Jerarquía: identidad > imagen destacada > campos académicos; publicación lateral.
+$identity_offset = strpos($view, 'id="flacso-offer-title"');
+$image_offset = strpos($view, 'class="flacso-new-editor__card flacso-new-editor__image"');
+$fields_offset = strpos($view, 'class="flacso-new-editor__fields"');
+$publication_offset = strpos($view, 'class="flacso-new-editor__card flacso-new-editor__publication"');
+flacso_offer_full_assert(
+    $identity_offset !== false && $image_offset !== false && $fields_offset !== false
+        && $publication_offset !== false && $identity_offset < $image_offset
+        && $image_offset < $fields_offset && $fields_offset < $publication_offset,
+    'la imagen destacada está inmediatamente después del nombre, antes de los campos y la publicación'
+);
+flacso_offer_full_assert(substr_count($view, 'id="flacso-offer-thumbnail-id"') === 1, 'un único control de imagen destacada');
+$css = (string) file_get_contents($root . '/editor/assets/css/editor.css');
+flacso_offer_full_assert(strpos($css, 'object-fit:contain') !== false, 'no recorta la imagen');
+flacso_offer_full_assert(strpos($css, 'width:min(100%,280px);height:185px') !== false, 'vista previa compacta');
+flacso_offer_full_assert(strpos($css, '@media(max-width:782px)') !== false, 'diseño móvil previsto');
+
 echo "OK academic editor full offer contract\n";

@@ -35,6 +35,30 @@ if (!defined('ABSPATH')) {
                 >
             </section>
 
+            <section class="flacso-new-editor__card flacso-new-editor__image">
+                <p class="flacso-new-editor__eyebrow"><?php esc_html_e('Presentación pública', 'flacso-uruguay'); ?></p>
+                <h2><?php esc_html_e('Imagen destacada', 'flacso-uruguay'); ?></h2>
+                <div class="flacso-new-editor__image-row">
+                    <input
+                        type="hidden"
+                        name="flacso_thumbnail_id"
+                        id="flacso-offer-thumbnail-id"
+                        value="<?php echo esc_attr((string) ($fields['thumbnail_id'] ?? 0)); ?>"
+                    >
+                    <div class="flacso-new-editor__image-preview" id="flacso-offer-thumbnail-preview">
+                        <?php if (!empty($fields['thumbnail_url'])) : ?>
+                            <img src="<?php echo esc_url((string) $fields['thumbnail_url']); ?>" alt="">
+                        <?php else : ?>
+                            <span><?php esc_html_e('Sin imagen destacada', 'flacso-uruguay'); ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="flacso-new-editor__image-actions">
+                        <button type="button" class="button button-secondary" id="flacso-offer-thumbnail-pick"><?php esc_html_e('Elegir imagen', 'flacso-uruguay'); ?></button>
+                        <button type="button" class="button button-link-delete" id="flacso-offer-thumbnail-remove"><?php esc_html_e('Quitar', 'flacso-uruguay'); ?></button>
+                    </div>
+                </div>
+            </section>
+
             <section class="flacso-new-editor__fields" aria-label="<?php esc_attr_e('Todos los campos académicos de la oferta', 'flacso-uruguay'); ?>">
                 <?php if ($controller instanceof FLACSO_Editor_Editable_Controller_Interface) : ?>
                     <?php $controller->render_form((int) $entity['id']); ?>
@@ -80,27 +104,7 @@ if (!defined('ABSPATH')) {
                     </a>
                 </section>
 
-                <section class="flacso-new-editor__card flacso-new-editor__image">
-                    <p class="flacso-new-editor__eyebrow"><?php esc_html_e('Presentación pública', 'flacso-uruguay'); ?></p>
-                    <h2><?php esc_html_e('Imagen destacada', 'flacso-uruguay'); ?></h2>
-                    <input
-                        type="hidden"
-                        name="flacso_thumbnail_id"
-                        id="flacso-offer-thumbnail-id"
-                        value="<?php echo esc_attr((string) ($fields['thumbnail_id'] ?? 0)); ?>"
-                    >
-                    <div class="flacso-new-editor__image-preview" id="flacso-offer-thumbnail-preview">
-                        <?php if (!empty($fields['thumbnail_url'])) : ?>
-                            <img src="<?php echo esc_url((string) $fields['thumbnail_url']); ?>" alt="">
-                        <?php else : ?>
-                            <span><?php esc_html_e('Sin imagen destacada', 'flacso-uruguay'); ?></span>
-                        <?php endif; ?>
-                    </div>
-                    <div class="flacso-new-editor__image-actions">
-                        <button type="button" class="button button-secondary" id="flacso-offer-thumbnail-pick"><?php esc_html_e('Elegir imagen', 'flacso-uruguay'); ?></button>
-                        <button type="button" class="button button-link-delete" id="flacso-offer-thumbnail-remove"><?php esc_html_e('Quitar', 'flacso-uruguay'); ?></button>
-                    </div>
-                </section>
+
             </div>
         </aside>
     </div>
