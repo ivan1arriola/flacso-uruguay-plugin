@@ -11,15 +11,17 @@ if (!defined('ABSPATH')) {
  */
 final class FLACSO_Editor_Controller_Factory {
     private FLACSO_Editor_Repository_Interface $repository;
+    private FLACSO_Editor_Offer_Form_Interface $offer_form;
 
-    public function __construct(FLACSO_Editor_Repository_Interface $repository) {
+    public function __construct(FLACSO_Editor_Repository_Interface $repository, FLACSO_Editor_Offer_Form_Interface $offer_form) {
         $this->repository = $repository;
+        $this->offer_form = $offer_form;
     }
 
     public function for_type(string $post_type): FLACSO_Editor_Controller_Interface {
         switch ($post_type) {
             case 'oferta-academica':
-                return new FLACSO_Oferta_Editor_Controller($this->repository);
+                return new FLACSO_Oferta_Editor_Controller($this->repository, $this->offer_form);
             case 'cohorte':
                 return new FLACSO_Cohorte_Editor_Controller($this->repository);
             default:
