@@ -145,6 +145,5 @@ if (!defined('ABSPATH')) {
             </section>
         </aside>
     </div>
-</div>
     <?php endif; ?>
 </div>
