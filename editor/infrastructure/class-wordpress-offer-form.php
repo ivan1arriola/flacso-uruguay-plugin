@@ -26,6 +26,7 @@ final class FLACSO_WordPress_Offer_Form implements FLACSO_Editor_Offer_Form_Inte
         wp_enqueue_editor();
         wp_enqueue_media();
         wp_enqueue_script('jquery-ui-autocomplete');
+        FLACSO_Academic_Team_Editor::render_script(true);
     }
 
     public function render_head(): void {
@@ -43,7 +44,6 @@ final class FLACSO_WordPress_Offer_Form implements FLACSO_Editor_Offer_Form_Inte
 
         FLACSO_Academic_Admin_UI::render_scripts(true);
         FLACSO_Oferta_Admin_Fields::render_scripts(true);
-        FLACSO_Academic_Team_Editor::render_script(true);
         FLACSO_Offer_Carta_Contact_Admin::render_script(true);
         // Conserva los modos de malla curricular: URL o PDF de Medios.
         FLACSO_Academic_Document_Source_Admin::render_editor($post);

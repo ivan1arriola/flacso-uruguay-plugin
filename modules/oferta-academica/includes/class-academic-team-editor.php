@@ -686,8 +686,16 @@ final class FLACSO_Academic_Team_Editor {
         if (!$force) {
             return;
         }
-        ?>
-        <script src="<?php echo esc_url(FLACSO_OFERTA_ACADEMICA_URL . 'assets/js/academic-team-editor.js'); ?>"></script>
-        <?php
+
+        $relative_js = 'modules/oferta-academica/assets/js/academic-team-editor.js';
+        $absolute_js = FLACSO_URUGUAY_PATH . $relative_js;
+        wp_enqueue_script(
+            'flacso-academic-team-editor',
+            FLACSO_URUGUAY_URL . $relative_js,
+            ['jquery-ui-autocomplete'],
+            is_readable($absolute_js) ? (string) filemtime($absolute_js) : FLACSO_URUGUAY_VERSION,
+            true
+        );
     }
+
 }
