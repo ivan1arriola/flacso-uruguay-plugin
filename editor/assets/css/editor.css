@@ -192,13 +192,24 @@
 .flacso-new-editor__publication button[type=submit] {margin:4px 0}
 .flacso-new-editor__save-hint {margin:0;color:#7f4b18;font-size:12px;min-height:16px}
 .flacso-new-editor__legacy-link {display:block;text-align:center;text-decoration:none;padding:8px 0}
-.flacso-new-editor__image-preview {
-    aspect-ratio:4/3;display:grid;place-items:center;background:#f4f7fa;
-    border:1px dashed #d5dee8;border-radius:6px;overflow:hidden;color:#64748b
+/* La imagen acompaña la identidad académica, no el panel de publicación. */
+.flacso-new-editor__image-row {
+    display:flex;align-items:center;flex-wrap:wrap;gap:16px;min-width:0
 }
-.flacso-new-editor__image-preview img {display:block;width:100%;height:100%;object-fit:contain}
-.flacso-new-editor__image-actions {display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
-.flacso-new-editor__image-actions .button {min-height:35px}
+.flacso-new-editor__image-preview {
+    width:min(100%,280px);height:185px;flex:0 1 280px;
+    display:grid;place-items:center;background:#f4f7fa;
+    border:1px dashed #d5dee8;border-radius:6px;overflow:hidden;color:#64748b;
+    text-align:center
+}
+.flacso-new-editor__image-preview img {
+    display:block;width:100%;height:100%;object-fit:contain
+}
+.flacso-new-editor__image-actions {
+    display:flex;flex-direction:column;align-items:flex-start;gap:10px;
+    min-width:0
+}
+.flacso-new-editor__image-actions .button {min-height:36px;margin:0}
 .flacso-new-editor__flash {margin:0 0 18px;padding:1px 14px}
 .flacso-new-editor__fields {min-width:0}
 .flacso-new-editor__fields .flacso-oferta-fields {
@@ -244,4 +255,11 @@
     .flacso-new-editor__fields .flacso-oferta-section__summary {gap:8px}
     .flacso-new-editor__fields .flacso-oferta-section__copy small {display:block}
     .flacso-new-editor__form .flacso-new-editor__publication button[type=submit] {min-height:44px}
+}
+
+@media(max-width:782px) {
+    .flacso-new-editor__image-row {align-items:flex-start;gap:12px}
+    .flacso-new-editor__image-preview {width:min(100%,320px);height:190px;flex:0 1 320px}
+    .flacso-new-editor__image-actions {flex-direction:row;flex-wrap:wrap}
+    .flacso-new-editor__image-actions .button {min-height:40px}
 }
