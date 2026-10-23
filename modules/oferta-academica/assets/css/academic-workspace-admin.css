@@ -185,6 +185,15 @@
     font-size:15px;font-weight:750;line-height:1.35;
 }
 .flacso-academic-workspace-screen .flacso-editor-nav__links{display:grid;gap:3px}
+.flacso-academic-workspace-screen .flacso-editor-nav__picker{display:none}
+.flacso-academic-workspace-screen .flacso-editor-nav__picker > span{
+    display:block;color:var(--flacso-editor-muted);font-size:11px;font-weight:700;margin-bottom:4px;
+}
+.flacso-academic-workspace-screen .flacso-editor-nav__picker select{
+    width:100%;max-width:100%;min-width:0;min-height:40px;
+    border:1px solid var(--flacso-editor-line);border-radius:5px;
+}
+
 .flacso-academic-workspace-screen .flacso-editor-nav__link{
     display:flex;align-items:center;gap:8px;
     min-width:0;min-height:36px;padding:8px 10px;
@@ -256,6 +265,9 @@
     .flacso-academic-workspace-screen #postbox-container-1 #submitdiv{position:static}
 }
 @media(max-width:782px){
+    .flacso-academic-workspace-screen .flacso-editor-nav__links{display:none}
+    .flacso-academic-workspace-screen .flacso-editor-nav__picker{display:block;min-width:0;flex:1}
+    .flacso-academic-workspace-screen .flacso-editor-nav__body{align-items:flex-end;gap:8px}
     .flacso-academic-workspace-screen #flacso-academic-editor-nav{top:46px;border-radius:0}
     .flacso-academic-workspace-screen .flacso-oferta-fields,
     .flacso-academic-workspace-screen .flacso-cohort-editor{padding:10px}
