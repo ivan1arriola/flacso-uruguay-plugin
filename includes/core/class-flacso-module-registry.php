@@ -25,6 +25,11 @@ final class FLACSO_Uruguay_Module_Registry {
                 'required' => false,
                 'legacy' => false,
             ],
+            'academico' => [
+                'depends' => [],
+                'required' => true,
+                'legacy' => false,
+            ],
             'seminarios' => [
                 'depends' => ['docentes'],
                 'required' => true,
