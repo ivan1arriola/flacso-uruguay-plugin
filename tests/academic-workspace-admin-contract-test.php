@@ -18,7 +18,7 @@ function academic_workspace_assert(bool $condition, string $message): void {
 academic_workspace_assert(strpos($init, 'class-academic-workspace-admin.php') !== false, 'el módulo carga el workspace');
 academic_workspace_assert(strpos($init, 'FLACSO_Academic_Workspace_Admin::init();') !== false, 'se inicializa la interfaz');
 academic_workspace_assert(strpos($php, "'oferta-academica', 'cohorte'") !== false, 'solo aplica a Oferta y Cohorte');
-academic_workspace_assert(strpos($php, "$screen->base === 'post'") !== false, 'solo afecta las pantallas de edición');
+academic_workspace_assert(strpos($php, "->base === 'post'") !== false, 'solo afecta las pantallas de edición');
 academic_workspace_assert(strpos($php, "'admin_enqueue_scripts'") !== false, 'los assets se registran en el hook apropiado');
 academic_workspace_assert(strpos($php, "'admin_body_class'") !== false, 'los estilos se restringen por pantalla');
 academic_workspace_assert(strpos($css, 'grid-template-areas:"navigation heading publication"') !== false, 'distribución editorial desktop');
