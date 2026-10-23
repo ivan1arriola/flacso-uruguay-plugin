@@ -2,7 +2,7 @@
 /**
  * Vista preliminar: no contiene formularios ni escribe datos en WordPress.
  *
- * Variables suministradas por FLACSO_Editor_Router::render_page().
+ * Variables normalizadas suministradas por los controladores de /editor.
  */
 if (!defined('ABSPATH')) {
     exit;
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
     <header class="flacso-new-editor__header">
         <div>
             <p class="flacso-new-editor__eyebrow"><?php echo esc_html($is_offer ? __('Oferta académica', 'flacso-uruguay') : __('Cohorte', 'flacso-uruguay')); ?> · <?php esc_html_e('Editor nuevo', 'flacso-uruguay'); ?></p>
-            <h1><?php echo esc_html(get_the_title($post)); ?></h1>
+            <h1><?php echo esc_html((string) $entity['title']); ?></h1>
             <p class="flacso-new-editor__subtitle"><?php esc_html_e('Vista preliminar de la nueva experiencia de edición académica.', 'flacso-uruguay'); ?></p>
         </div>
         <div class="flacso-new-editor__header-actions">
@@ -52,36 +52,35 @@ if (!defined('ABSPATH')) {
                     </div>
                     <div>
                         <dt><?php esc_html_e('Estado en WordPress', 'flacso-uruguay'); ?></dt>
-                        <dd><?php echo esc_html((string) get_post_status($post)); ?></dd>
+                        <dd><?php echo esc_html((string) $entity['status']); ?></dd>
                     </div>
                     <?php if ($is_offer) : ?>
                         <div>
                             <dt><?php esc_html_e('Abreviación', 'flacso-uruguay'); ?></dt>
-                            <dd><?php echo esc_html((string) get_post_meta($post_id, 'abreviacion', true) ?: '—'); ?></dd>
+                            <dd><?php echo esc_html((string) ($fields['abbreviation'] ?? '') ?: '—'); ?></dd>
                         </div>
                         <div>
                             <dt><?php esc_html_e('Correo de contacto', 'flacso-uruguay'); ?></dt>
-                            <dd><?php echo esc_html((string) get_post_meta($post_id, 'correo', true) ?: '—'); ?></dd>
+                            <dd><?php echo esc_html((string) ($fields['contact_email'] ?? '') ?: '—'); ?></dd>
                         </div>
                     <?php else : ?>
                         <div>
                             <dt><?php esc_html_e('Número de cohorte', 'flacso-uruguay'); ?></dt>
                             <dd><?php
-                                $number = absint(get_post_meta($post_id, 'numero', true));
-                                echo esc_html($number > 0 ? FLACSO_Cohorte::display_name($number) : '—');
+                                echo esc_html((string) ($fields['number_label'] ?? '') ?: '—');
                             ?></dd>
                         </div>
                         <div>
                             <dt><?php esc_html_e('Estado académico', 'flacso-uruguay'); ?></dt>
-                            <dd><?php echo esc_html((string) get_post_meta($post_id, 'estado', true) ?: '—'); ?></dd>
+                            <dd><?php echo esc_html((string) ($fields['academic_status'] ?? '') ?: '—'); ?></dd>
                         </div>
                         <div>
                             <dt><?php esc_html_e('Modalidad', 'flacso-uruguay'); ?></dt>
-                            <dd><?php echo esc_html((string) get_post_meta($post_id, 'modalidad', true) ?: '—'); ?></dd>
+                            <dd><?php echo esc_html((string) ($fields['modality'] ?? '') ?: '—'); ?></dd>
                         </div>
                         <div>
                             <dt><?php esc_html_e('Inicio', 'flacso-uruguay'); ?></dt>
-                            <dd><?php echo esc_html(FLACSO_Cohorte::format_dates($post_id) ?: '—'); ?></dd>
+                            <dd><?php echo esc_html((string) ($fields['start'] ?? '') ?: '—'); ?></dd>
                         </div>
                     <?php endif; ?>
                 </dl>
@@ -102,10 +101,10 @@ if (!defined('ABSPATH')) {
                             <?php foreach ($cohorts as $cohort) : ?>
                                 <li>
                                     <div>
-                                        <strong><?php echo esc_html(get_the_title($cohort)); ?></strong>
-                                        <span><?php echo esc_html((string) get_post_meta($cohort->ID, 'estado', true) ?: __('Sin estado', 'flacso-uruguay')); ?></span>
+                                        <strong><?php echo esc_html((string) $cohort['title']); ?></strong>
+                                        <span><?php echo esc_html((string) ($cohort['fields']['academic_status'] ?? '') ?: __('Sin estado', 'flacso-uruguay')); ?></span>
                                     </div>
-                                    <a class="button button-secondary" href="<?php echo esc_url(FLACSO_Editor_Router::new_url((int) $cohort->ID)); ?>">
+                                    <a class="button button-secondary" href="<?php echo esc_url(FLACSO_Editor_Router::new_url((int) $cohort['id'])); ?>">
                                         <?php esc_html_e('Abrir cohorte', 'flacso-uruguay'); ?>
                                     </a>
                                 </li>
@@ -115,11 +114,11 @@ if (!defined('ABSPATH')) {
                         <p class="flacso-new-editor__muted"><?php esc_html_e('No hay cohortes accesibles para esta oferta.', 'flacso-uruguay'); ?></p>
                     <?php endif; ?>
                 </section>
-            <?php elseif ($parent instanceof WP_Post && $parent->post_type === 'oferta-academica') : ?>
+            <?php elseif (is_array($parent) && ($parent['type'] ?? '') === 'oferta-academica') : ?>
                 <section class="flacso-new-editor__card" aria-labelledby="flacso-editor-parent">
                     <p class="flacso-new-editor__eyebrow"><?php esc_html_e('Relaciones', 'flacso-uruguay'); ?></p>
                     <h2 id="flacso-editor-parent"><?php esc_html_e('Oferta académica', 'flacso-uruguay'); ?></h2>
-                    <p><?php echo esc_html(get_the_title($parent)); ?></p>
+                    <p><?php echo esc_html((string) $parent['title']); ?></p>
                     <?php if ($parent_url !== '') : ?>
                         <a class="button button-secondary" href="<?php echo esc_url($parent_url); ?>"><?php esc_html_e('Abrir oferta', 'flacso-uruguay'); ?></a>
                     <?php endif; ?>
