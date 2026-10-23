@@ -1,0 +1,176 @@
+/* editor/ : diseño de transición entre el editor clásico y el nuevo. */
+.flacso-editor-switch {
+    box-sizing: border-box;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    background: #edf3f8;
+    border: 1px solid #cbd9e7;
+    border-left: 4px solid #234770;
+    padding: 12px 16px;
+    margin: 12px 0 20px;
+}
+.flacso-editor-switch__copy {
+    display: grid;
+    gap: 3px;
+    color: #24364b;
+}
+.flacso-editor-switch__copy strong {font-size: 14px}
+.flacso-editor-switch__copy span,
+.flacso-editor-switch__pending {font-size: 13px;color: #536578}
+.flacso-editor-switch .button {flex: 0 0 auto;white-space: nowrap}
+.flacso-new-editor {
+    --fe-ink:#213248;
+    --fe-muted:#586b7e;
+    --fe-line:#dbe2ea;
+    --fe-surface:#fff;
+    --fe-bg:#f5f7fa;
+    color:var(--fe-ink);
+    max-width: 1440px;
+    margin-top:24px;
+    box-sizing:border-box;
+}
+.flacso-new-editor *, .flacso-editor-switch * {box-sizing:border-box}
+.flacso-new-editor__breadcrumb {
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:9px;
+    color:var(--fe-muted);
+    font-size:12px;
+    margin:0 0 18px;
+}
+.flacso-new-editor__breadcrumb a {color:#234770;text-decoration:none}
+.flacso-new-editor__header {
+    display:flex;
+    align-items:start;
+    justify-content:space-between;
+    gap:20px;
+    margin:0 0 18px;
+}
+.flacso-new-editor__header h1 {
+    font-size:clamp(23px,2.5vw,34px);
+    font-weight:650;
+    line-height:1.2;
+    color:var(--fe-ink);
+    margin:4px 0 9px;
+    padding:0;
+}
+.flacso-new-editor__header-actions {flex:0 0 auto}
+.flacso-new-editor__subtitle,.flacso-new-editor__muted {
+    color:var(--fe-muted);
+    line-height:1.6;
+}
+.flacso-new-editor__subtitle {margin:0}
+.flacso-new-editor__eyebrow {
+    color:#536e8e;
+    font-size:11px;
+    letter-spacing:.09em;
+    text-transform:uppercase;
+    font-weight:700;
+    margin:0 0 8px;
+}
+.flacso-new-editor__notice {
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+    padding:15px 18px;
+    border:1px solid #cddce9;
+    background:#edf3f8;
+    border-radius:7px;
+    margin-bottom:20px;
+}
+.flacso-new-editor__notice .dashicons {color:#28547e;flex:0 0 auto}
+.flacso-new-editor__notice p {margin:0;line-height:1.55}
+.flacso-new-editor__layout {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 290px;
+    gap:20px;
+    align-items:start;
+}
+.flacso-new-editor__main {display:grid;gap:18px;min-width:0}
+.flacso-new-editor__card {
+    background:var(--fe-surface);
+    border:1px solid var(--fe-line);
+    border-radius:9px;
+    padding:22px;
+    min-width:0;
+    box-shadow:0 1px 2px rgba(22,43,68,.035);
+}
+.flacso-new-editor__card h2 {margin:0 0 12px;font-size:17px;color:var(--fe-ink)}
+.flacso-new-editor__section-heading {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:18px;
+    gap:10px;
+}
+.flacso-new-editor__section-heading h2 {margin:0}
+.flacso-new-editor__details {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:16px 20px;
+    margin:0;
+}
+.flacso-new-editor__details>div {
+    min-width:0;
+    padding:12px 14px;
+    border:1px solid #e3e9ee;
+    border-radius:6px;
+    background:#fafbfd;
+}
+.flacso-new-editor__details dt {
+    color:var(--fe-muted);
+    font-size:12px;
+    margin-bottom:6px;
+}
+.flacso-new-editor__details dd {
+    margin:0;
+    font-weight:600;
+    overflow-wrap:anywhere;
+}
+.flacso-new-editor__count {
+    display:inline-flex;
+    padding:5px 10px;
+    background:#e9eff5;
+    border-radius:16px;
+    font-weight:700;
+}
+.flacso-new-editor__cohorts {list-style:none;padding:0;margin:0}
+.flacso-new-editor__cohorts li {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:14px;
+    padding:14px 0;
+    border-top:1px solid var(--fe-line);
+}
+.flacso-new-editor__cohorts li>div {display:grid;gap:6px;min-width:0}
+.flacso-new-editor__cohorts li strong {overflow-wrap:anywhere}
+.flacso-new-editor__cohorts li span {font-size:12px;color:var(--fe-muted)}
+.flacso-new-editor__cohorts .button {flex:0 0 auto}
+.flacso-new-editor__primary-action {
+    display:block!important;
+    text-align:center;
+    height:auto!important;
+    padding:7px 10px!important;
+    white-space:normal!important;
+}
+.flacso-new-editor__landing {max-width:760px;padding:30px}
+.flacso-new-editor__landing h1 {margin:0 0 12px}
+.flacso-new-editor__landing p:not(.flacso-new-editor__eyebrow) {font-size:15px;line-height:1.6}
+@media(max-width:1000px) {
+    .flacso-new-editor__layout {grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:782px) {
+    .flacso-editor-switch,
+    .flacso-new-editor__header {flex-direction:column;align-items:stretch}
+    .flacso-editor-switch .button,
+    .flacso-new-editor__header-actions .button {width:100%;text-align:center}
+    .flacso-new-editor {margin:16px 10px 0 0}
+    .flacso-new-editor__card {padding:16px}
+    .flacso-new-editor__details {grid-template-columns:minmax(0,1fr)}
+    .flacso-new-editor__cohorts li {align-items:stretch;flex-direction:column}
+    .flacso-new-editor__cohorts .button {text-align:center}
+}
