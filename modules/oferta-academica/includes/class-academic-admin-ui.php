@@ -155,9 +155,9 @@ final class FLACSO_Academic_Admin_UI {
         <?php
     }
 
-    public static function render_styles(bool $force = false): void {
+    public static function render_styles(): void {
         $screen = get_current_screen();
-        if (!$force && (!$screen || !in_array($screen->post_type, self::POST_TYPES, true))) {
+        if (!$screen || !in_array($screen->post_type, self::POST_TYPES, true)) {
             return;
         }
         ?>
@@ -279,9 +279,9 @@ final class FLACSO_Academic_Admin_UI {
         <?php
     }
 
-    public static function render_scripts(bool $force = false): void {
+    public static function render_scripts(): void {
         $screen = get_current_screen();
-        if (!$force && (!$screen || !in_array($screen->post_type, self::POST_TYPES, true))) {
+        if (!$screen || !in_array($screen->post_type, self::POST_TYPES, true)) {
             return;
         }
         ?>

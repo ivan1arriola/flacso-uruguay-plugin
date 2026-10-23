@@ -64,9 +64,6 @@ require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-meta-tracking.php
 require_once FLACSO_URUGUAY_PATH . 'includes/core/requires.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/loader.php';
 
-// Editor académico alternativo, dentro del mismo plugin y wp-admin.
-require_once FLACSO_URUGUAY_PATH . 'editor/bootstrap.php';
-
 // ============================================
 // Inicializacion del Plugin
 // ============================================

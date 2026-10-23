@@ -21,8 +21,8 @@ final class FLACSO_Academic_Document_Source_Admin {
     public static function init(): void {
         add_action('init', [self::class, 'register_meta'], 7);
         add_action('admin_enqueue_scripts', [self::class, 'enqueue_media']);
-        add_action('admin_footer-post.php', [self::class, 'render_classic_editor']);
-        add_action('admin_footer-post-new.php', [self::class, 'render_classic_editor']);
+        add_action('admin_footer-post.php', [self::class, 'render_editor']);
+        add_action('admin_footer-post-new.php', [self::class, 'render_editor']);
 
         add_action('save_post_' . FLACSO_Oferta_Academica::POST_TYPE, [self::class, 'save_offer'], 30, 2);
         add_action('save_post_' . FLACSO_Cohorte::POST_TYPE, [self::class, 'save_cohort'], 30, 2);
@@ -78,26 +78,18 @@ final class FLACSO_Academic_Document_Source_Admin {
         wp_enqueue_media();
     }
 
-    /** Callback de hooks de WordPress: no recibe objetos WP_Post. */
-    public static function render_classic_editor(): void {
-        self::render_editor();
-    }
-
-    /** Entrada explícita para /editor, independiente del hook de WordPress. */
-    public static function render_editor(?WP_Post $target_post = null): void {
+    public static function render_editor(): void {
         $screen = get_current_screen();
-        if ($target_post === null && (!$screen || !in_array($screen->post_type, [FLACSO_Oferta_Academica::POST_TYPE, FLACSO_Cohorte::POST_TYPE], true))) {
+        if (!$screen || !in_array($screen->post_type, [FLACSO_Oferta_Academica::POST_TYPE, FLACSO_Cohorte::POST_TYPE], true)) {
             return;
         }
 
-        // /editor proporciona explícitamente el post; el editor clásico
-        // sigue utilizando la variable global como antes.
-        $post = $target_post instanceof WP_Post ? $target_post : ($GLOBALS['post'] ?? null);
+        global $post;
         if (!($post instanceof WP_Post)) {
             return;
         }
 
-        if ($post->post_type === FLACSO_Oferta_Academica::POST_TYPE) {
+        if ($screen->post_type === FLACSO_Oferta_Academica::POST_TYPE) {
             $config = self::source_config(
                 $post->ID,
                 'malla',

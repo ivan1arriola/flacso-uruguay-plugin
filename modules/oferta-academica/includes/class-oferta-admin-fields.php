@@ -581,9 +581,9 @@ final class FLACSO_Oferta_Admin_Fields {
         update_post_meta($post_id, 'mostrar_expedicion_titulo', true);
     }
 
-    public static function render_styles(bool $force = false): void {
+    public static function render_styles(): void {
         $screen = get_current_screen();
-        if (!$force && (!$screen || $screen->post_type !== FLACSO_Oferta_Academica::POST_TYPE)) {
+        if (!$screen || $screen->post_type !== FLACSO_Oferta_Academica::POST_TYPE) {
             return;
         }
         ?>
@@ -663,9 +663,9 @@ final class FLACSO_Oferta_Admin_Fields {
         <?php
     }
 
-    public static function render_scripts(bool $force = false): void {
+    public static function render_scripts(): void {
         $screen = get_current_screen();
-        if (!$force && (!$screen || $screen->post_type !== FLACSO_Oferta_Academica::POST_TYPE)) {
+        if (!$screen || $screen->post_type !== FLACSO_Oferta_Academica::POST_TYPE) {
             return;
         }
         ?>
