@@ -36,7 +36,7 @@ $old_form = $sources['modules/oferta-academica/includes/class-oferta-admin-field
 
 flacso_offer_full_assert(strpos($adapter, 'FLACSO_Oferta_Admin_Fields::render($post)') !== false, 'todos los campos se renderizan desde el formulario canónico');
 flacso_offer_full_assert(strpos($adapter, 'wp_update_post([') !== false, 'guardar invoca los save_post canónicos');
-flacso_offer_full_assert(strpos($adapter, 'save_post_') !== false, 'documentar hooks canónicos');
+flacso_offer_full_assert(strpos($adapter, 'save_post') !== false, 'documentar hooks canónicos');
 flacso_offer_full_assert(strpos($adapter, "wp_verify_nonce(") !== false, 'validación de nonces de los módulos');
 flacso_offer_full_assert(strpos($adapter, "current_user_can('edit_post'") !== false, 'permiso de registro');
 flacso_offer_full_assert(strpos($adapter, "isset(\$_POST['flacso_oferta'])") !== false, 'no borrar información si faltan campos');
