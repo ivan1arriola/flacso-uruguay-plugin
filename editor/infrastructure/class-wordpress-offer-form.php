@@ -97,6 +97,15 @@ final class FLACSO_WordPress_Offer_Form implements FLACSO_Editor_Offer_Form_Inte
             return ['success' => false, 'message' => 'La programación de publicaciones se gestiona desde el editor clásico.'];
         }
 
+        // Comprobar la imagen antes de modificar datos académicos. Si un
+        // adjunto no es válido no se produce un guardado parcial.
+        if (array_key_exists('thumbnail_id', $data)) {
+            $candidate_image_id = absint($data['thumbnail_id']);
+            if ($candidate_image_id > 0 && !wp_attachment_is_image($candidate_image_id)) {
+                return ['success' => false, 'message' => 'La imagen destacada seleccionada no es válida.'];
+            }
+        }
+
         // wp_update_post() invoca TODOS los hooks save_post existentes con
         // los mismos nombres de campos POST y nonces usados por el clásico.
         // Conservar la fecha, slug, contenido y demás propiedades del post.
