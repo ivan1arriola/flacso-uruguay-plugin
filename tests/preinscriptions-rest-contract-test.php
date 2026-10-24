@@ -187,6 +187,10 @@ if (!class_exists('FLACSO_Oferta_Academica')) {
         public static function get_tipo(int $oferta_id): string {
             return self::$tipos[$oferta_id] ?? '';
         }
+        public static function get_offer_emails(int $oferta_id): array {
+            $value = $GLOBALS['flacso_test_post_meta'][$oferta_id]['correo_oferta'] ?? [];
+            return is_array($value) ? $value : [];
+        }
     }
 }
 
@@ -201,6 +205,8 @@ $GLOBALS['flacso_test_posts'][100] = (object) [
 ];
 FLACSO_Oferta_Academica::$tipos[100] = 'maestria';
 $GLOBALS['flacso_test_post_meta'][100]['sigla'] = 'MGPI';
+$GLOBALS['flacso_test_post_meta'][100]['correo'] = 'contacto@flacso.edu.uy';
+$GLOBALS['flacso_test_post_meta'][100]['correo_oferta'] = ['coordinacion@flacso.edu.uy', 'secretaria@flacso.edu.uy'];
 $GLOBALS['flacso_test_post_meta'][100]['orientaciones'] = [
     'Derechos humanos',
     'Políticas públicas',
@@ -308,6 +314,8 @@ flacso_rest_assert_same(100, $target_cohort['wordpress']['offerId'], 'offerId ma
 flacso_rest_assert_same(101, $target_cohort['wordpress']['cohortId'], 'cohortId matches post ID');
 flacso_rest_assert_true((bool) preg_match('/^sha256:[a-f0-9]{64}$/', $target_cohort['configRevision']), 'configRevision is a valid sha256 hash');
 flacso_rest_assert_same('https://flacso.edu.uy/legacy-davia', $target_cohort['urls']['legacyRegistration'], 'preserves legacy registration url');
+flacso_rest_assert_same(['coordinacion@flacso.edu.uy', 'secretaria@flacso.edu.uy'], $target_cohort['notificationEmails'], 'notification emails come from Correo de la Oferta Académica');
+flacso_rest_assert_same('coordinacion@flacso.edu.uy', $target_cohort['notificationEmail'], 'notificationEmail keeps the first offer email for older clients');
 
 $target_short_cohort = FLACSO_Preinscriptions_Serializer::for_cohort(102);
 flacso_rest_assert_same('Maestría en Género y Políticas de Igualdad — Cohorte X', $target_short_cohort['title'], 'a generic cohort title includes its academic offer');
@@ -316,6 +324,7 @@ flacso_rest_assert_same('Maestría en Género y Políticas de Igualdad — Cohor
 $target_edition = FLACSO_Preinscriptions_Serializer::for_edition(201);
 flacso_rest_assert_true(is_array($target_edition), 'edition target is an array');
 flacso_rest_assert_same('seminar', $target_edition['kind'], 'target kind is seminar');
+flacso_rest_assert_true(!isset($target_edition['notificationEmails']), 'seminar editions do not emit offer notification emails');
 flacso_rest_assert_same('seminar', $target_edition['seminar']['type'], 'seminar type is seminar');
 flacso_rest_assert_same([], $target_edition['orientations'], 'seminars have empty orientations');
 flacso_rest_assert_same([], $target_edition['mentions'], 'seminars have empty mentions');

@@ -111,7 +111,7 @@ La columna «Campo interno» permite reconocer la información al hablar con el 
 | Dependencia institucional | programa_academico_id | Programa Académico al que pertenece. |
 | Clase de formación | tipo | Doctorado, maestría, especialización, diplomado o diploma. |
 | Identificación breve | abreviacion | Sigla o abreviatura de la oferta. |
-| Contacto | correo, correo_oferta | Correos almacenados para contacto; el correo propio de la oferta es independiente y opcional. |
+| Contacto | correo, correo_oferta | `correo` es el correo de contacto. `correo_oferta` (Correo de la Oferta Académica) es una lista opcional e independiente: sus direcciones reciben las notificaciones de preinscripciones (`notificationEmails` en `/flacso/v1/preinscripciones`). |
 | Presentación | presentacion | Texto de presentación académica. |
 | Organización del plan | composicion_academica | Secciones del plan formativo con título y contenido. |
 | Duración y dedicación | duracion_meses, carga_horaria, creditos | Meses, horas y créditos de la oferta. |

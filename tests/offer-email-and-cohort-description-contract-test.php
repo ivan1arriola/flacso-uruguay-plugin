@@ -17,17 +17,17 @@ function offer_email_contract_assert(bool $ok, string $label): void {
     }
 }
 offer_email_contract_assert(strpos($admin, "'correo', 'correo_oferta'") !== false, 'ambos correos son campos independientes en datos generales');
-offer_email_contract_assert(strpos($admin, "__('Correo de la Oferta Académica',") !== false, 'campo nuevo identificado claramente');
-offer_email_contract_assert(strpos($admin, "'correo_oferta',") !== false, 'campo nuevo editable');
+offer_email_contract_assert(strpos($admin, "esc_html_e('Correo de la Oferta Académica',") !== false, 'campo nuevo identificado claramente');
+offer_email_contract_assert(strpos($admin, 'name="flacso_oferta[correo_oferta]"') !== false, 'campo nuevo editable como lista');
 offer_email_contract_assert(strpos($admin, "Correo de contacto") !== false, 'correo histórico continúa visible');
 offer_email_contract_assert(strpos($offer, "'correo' => ['type' => 'string', 'sanitize_callback' => 'sanitize_email']") !== false, 'se conserva el metadato de contacto');
-offer_email_contract_assert(strpos($offer, "'correo_oferta' => ['type' => 'string', 'sanitize_callback' => 'sanitize_email']") !== false, 'correo de oferta registrado');
+offer_email_contract_assert(strpos($offer, "'correo_oferta' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_offer_emails']]") !== false, 'correo de oferta registrado como lista');
 offer_email_contract_assert(strpos($repo, "'abreviacion', 'correo', 'correo_oferta',") !== false, 'API expone ambas propiedades');
 offer_email_contract_assert(strpos($repo, "array_key_exists('correo_oferta', \$payload)") !== false, 'API valida únicamente cuando recibe el nuevo campo');
 offer_email_contract_assert(strpos($repo, "'invalid_offer_email'") !== false, 'API rechaza correo inválido');
 offer_email_contract_assert(strpos($admin, "array_key_exists('correo_oferta', \$data)") !== false, 'formulario no borra el nuevo campo al no recibirlo');
-offer_email_contract_assert(strpos($admin, "is_email(\$offer_email)") !== false, 'valida sintaxis del correo en el admin');
-offer_email_contract_assert(strpos($admin, "update_post_meta(\$post_id, 'correo_oferta', \$offer_email)") !== false, 'guarda el correo nuevo por separado');
+offer_email_contract_assert(strpos($admin, "FLACSO_Oferta_Academica::invalid_offer_emails(\$raw_emails)") !== false, 'valida sintaxis de cada correo en el admin');
+offer_email_contract_assert(strpos($admin, "update_post_meta(\$post_id, 'correo_oferta', \$offer_emails)") !== false, 'guarda los correos nuevos por separado');
 offer_email_contract_assert(strpos($admin, "delete_post_meta(\$post_id, 'correo_oferta')") !== false, 'se puede limpiar el campo opcional');
 offer_email_contract_assert(strpos($admin, 'se conservó el valor anterior') !== false, 'avisos cuando es inválido');
 offer_email_contract_assert(strpos($inquiries, "'replyToEmail'         => \$catalog_data['correo']") !== false, 'consulta continúa usando el correo anterior, sin alteraciones');

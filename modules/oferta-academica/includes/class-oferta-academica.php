@@ -91,7 +91,7 @@ final class FLACSO_Oferta_Academica {
             self::META_PROGRAM_ID => ['type' => 'integer', 'sanitize_callback' => 'absint'],
             'abreviacion' => ['type' => 'string', 'sanitize_callback' => [self::class, 'normalize_abbreviation']],
             'correo' => ['type' => 'string', 'sanitize_callback' => 'sanitize_email'],
-            'correo_oferta' => ['type' => 'string', 'sanitize_callback' => 'sanitize_email'],
+            'correo_oferta' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_offer_emails']],
             'presentacion' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'composicion_academica' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_sections']],
             'duracion_meses' => ['type' => 'number', 'sanitize_callback' => [self::class, 'sanitize_number']],
@@ -236,6 +236,42 @@ final class FLACSO_Oferta_Academica {
             $seen[$target_id] = true;
         }
         return $result;
+    }
+
+    /**
+     * Correos de la Oferta Académica (multivaluado). Acepta una lista o un texto
+     * separado por comas, punto y coma o saltos de línea; los valores históricos
+     * guardados como texto único siguen funcionando.
+     */
+    public static function split_offer_emails($value): array {
+        if (is_string($value)) {
+            $value = preg_split('/[\s,;]+/', $value) ?: [];
+        }
+        if (!is_array($value)) {
+            return [];
+        }
+        $emails = [];
+        foreach ($value as $item) {
+            $item = is_scalar($item) ? strtolower(trim((string) $item)) : '';
+            if ($item !== '') {
+                $emails[] = $item;
+            }
+        }
+        return array_values(array_unique($emails));
+    }
+
+    public static function sanitize_offer_emails($value): array {
+        $emails = array_filter(array_map('sanitize_email', self::split_offer_emails($value)), static fn(string $email): bool => is_email($email) !== false);
+        return array_values(array_unique($emails));
+    }
+
+    /** @return string[] Valores que no son direcciones de correo válidas. */
+    public static function invalid_offer_emails($value): array {
+        return array_values(array_filter(self::split_offer_emails($value), static fn(string $email): bool => is_email($email) === false));
+    }
+
+    public static function get_offer_emails(int $post_id): array {
+        return self::sanitize_offer_emails(get_post_meta($post_id, 'correo_oferta', true));
     }
 
     public static function sanitize_text_list($value): array {

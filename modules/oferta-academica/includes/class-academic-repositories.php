@@ -114,6 +114,7 @@ final class FLACSO_Academic_Repository {
         }
         if ($entity === 'ofertas') {
             $data['tipo'] = FLACSO_Oferta_Academica::get_tipo((int) $post->ID);
+            $data['correo_oferta'] = FLACSO_Oferta_Academica::get_offer_emails((int) $post->ID);
         }
         if ($entity === 'cohortes') {
             $data['nombre'] = FLACSO_Cohorte::display_name(absint($data['numero']));
@@ -171,6 +172,9 @@ final class FLACSO_Academic_Repository {
         if (is_wp_error($post_id)) {
             return $post_id;
         }
+        if ($entity === 'ofertas' && array_key_exists('correo_oferta', $payload)) {
+            $payload['correo_oferta'] = FLACSO_Oferta_Academica::sanitize_offer_emails($payload['correo_oferta']);
+        }
         foreach ($definition['fields'] as $field) {
             if (array_key_exists($field, $payload)) {
                 $value = $payload[$field];
@@ -218,13 +222,13 @@ final class FLACSO_Academic_Repository {
                 return new WP_Error('invalid_parent', sprintf(__('El campo %s debe referir a un registro válido.', 'flacso-uruguay'), $key), ['status' => 400]);
             }
         }
-        // Correo propio, opcional e independiente del correo de contacto.
+        // Correos propios (lista), opcionales e independientes del correo de contacto.
         if ($entity === 'ofertas' && array_key_exists('correo_oferta', $payload)) {
-            $raw_email = $payload['correo_oferta'];
-            if (!is_string($raw_email) || ($raw_email !== '' && !is_email(sanitize_email($raw_email)))) {
+            $raw_emails = $payload['correo_oferta'];
+            if (!(is_string($raw_emails) || is_array($raw_emails)) || FLACSO_Oferta_Academica::invalid_offer_emails($raw_emails)) {
                 return new WP_Error(
                     'invalid_offer_email',
-                    __('El Correo de la Oferta Académica debe ser una dirección válida o quedar vacío.', 'flacso-uruguay'),
+                    __('El Correo de la Oferta Académica debe ser una lista de direcciones válidas o quedar vacío.', 'flacso-uruguay'),
                     ['status' => 400]
                 );
             }

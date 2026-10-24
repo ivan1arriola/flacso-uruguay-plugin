@@ -162,14 +162,11 @@ final class FLACSO_Oferta_Admin_Fields {
                 </label>
                 <?php self::text_field($post->ID, 'abreviacion', __('Abreviación', 'flacso-uruguay')); ?>
                 <?php self::text_field($post->ID, 'correo', __('Correo de contacto', 'flacso-uruguay'), 'email'); ?>
-                <?php self::text_field(
-                    $post->ID,
-                    'correo_oferta',
-                    __('Correo de la Oferta Académica', 'flacso-uruguay'),
-                    'email',
-                    false,
-                    __('Opcional. Puede ser igual o diferente al correo de contacto. No reemplaza los destinatarios actuales de consultas ni el contacto de la carta.', 'flacso-uruguay')
-                ); ?>
+                <label class="flacso-oferta-field">
+                    <span><?php esc_html_e('Correo de la Oferta Académica', 'flacso-uruguay'); ?></span>
+                    <textarea name="flacso_oferta[correo_oferta]" rows="3" placeholder="coordinacion@flacso.edu.uy"><?php echo esc_textarea(implode("\n", FLACSO_Oferta_Academica::get_offer_emails($post->ID))); ?></textarea>
+                    <small><?php esc_html_e('Opcional. Uno o más correos, uno por línea (también se aceptan comas). Reciben las notificaciones de preinscripciones de la oferta. Es independiente del correo de contacto y no cambia los destinatarios de consultas ni el contacto de la carta.', 'flacso-uruguay'); ?></small>
+                </label>
                 <label class="flacso-oferta-field flacso-oferta-field--full">
                     <span><?php esc_html_e('Color principal', 'flacso-uruguay'); ?></span>
                     <span class="flacso-oferta-color-control">
@@ -501,19 +498,25 @@ final class FLACSO_Oferta_Admin_Fields {
         // Dato opcional y separado: no sobrescribe correo ni contacto de carta.
         // Si el formulario no incluye este campo, conservar el valor existente.
         if (array_key_exists('correo_oferta', $data)) {
-            $raw_email = $data['correo_oferta'];
-            $submitted_email = is_string($raw_email) ? trim($raw_email) : '';
-            $offer_email = sanitize_email($submitted_email);
-            if (!is_string($raw_email) || ($submitted_email !== '' && !is_email($offer_email))) {
+            $raw_emails = $data['correo_oferta'];
+            $invalid_emails = is_string($raw_emails) || is_array($raw_emails)
+                ? FLACSO_Oferta_Academica::invalid_offer_emails($raw_emails)
+                : [''];
+            $offer_emails = FLACSO_Oferta_Academica::sanitize_offer_emails($raw_emails);
+            if ($invalid_emails) {
                 set_transient(
                     'flacso_oferta_email_error_' . $post_id,
-                    __('El Correo de la Oferta Académica no es válido; se conservó el valor anterior.', 'flacso-uruguay'),
+                    sprintf(
+                        /* translators: %s: correos inválidos separados por coma. */
+                        __('El Correo de la Oferta Académica no es válido (%s); se conservó el valor anterior.', 'flacso-uruguay'),
+                        implode(', ', array_filter($invalid_emails))
+                    ),
                     90
                 );
-            } elseif ($submitted_email === '') {
+            } elseif (!$offer_emails) {
                 delete_post_meta($post_id, 'correo_oferta');
             } else {
-                update_post_meta($post_id, 'correo_oferta', $offer_email);
+                update_post_meta($post_id, 'correo_oferta', $offer_emails);
             }
         }
 

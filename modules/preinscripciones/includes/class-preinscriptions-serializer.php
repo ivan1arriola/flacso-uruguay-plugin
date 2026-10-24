@@ -81,6 +81,11 @@ final class FLACSO_Preinscriptions_Serializer {
             $offer_type = sanitize_key((string) get_post_meta((int) $parent->ID, 'tipo', true));
         }
 
+        // Destinatarios de notificaciones: "Correo de la Oferta Académica", nunca el correo de contacto.
+        $notification_emails = class_exists('FLACSO_Oferta_Academica') && method_exists('FLACSO_Oferta_Academica', 'get_offer_emails')
+            ? FLACSO_Oferta_Academica::get_offer_emails((int) $parent->ID)
+            : [];
+
         $raw_orientations = get_post_meta((int) $parent->ID, 'orientaciones', true);
         $clean_orientations = FLACSO_Preinscriptions_Config::sanitize_text_list($raw_orientations);
 
@@ -134,6 +139,8 @@ final class FLACSO_Preinscriptions_Serializer {
             'id'                 => $target_id,
             'kind'               => 'academic_offer',
             'title'              => $public_title,
+            'notificationEmail'  => $notification_emails[0] ?? null,
+            'notificationEmails' => $notification_emails,
             'wordpress'          => [
                 'offerId'  => (int) $parent->ID,
                 'cohortId' => $cohort_id,
