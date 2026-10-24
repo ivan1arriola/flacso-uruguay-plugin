@@ -29,9 +29,9 @@ Las colecciones temporales aceptan `parent_id`:
 
 Devuelve el catálogo de destinos académicos (cohortes y ediciones de seminarios) tanto abiertos como cerrados, con su configuración efectiva de formulario, revisiones canónicas (`configRevision`), orientaciones/menciones y enlaces asociados.
 
-- Acceso público de solo lectura (sin autenticación requerida para GET).
-- Encabezado `Cache-Control: public, max-age=60`.
-- No almacena ni devuelve datos personales ni información sensible.
+- Acceso público de solo lectura (sin autenticación requerida para GET), con `Cache-Control: public, max-age=60`.
+- Los correos de notificación (`notificationEmail`, `notificationEmails`, tomados del "Correo de la Oferta Académica") **no son públicos**: sólo se incluyen cuando el portal envía `Authorization: Bearer <FLACSO_PREINSCRIPCIONES_CATALOG_TOKEN>` (constante en `wp-config.php`, mínimo 32 caracteres). Esa respuesta usa `Cache-Control: private, no-store`. Un token inválido, o enviado sin la constante configurada, recibe `401`.
+- El correo de contacto de la oferta es público, pero no forma parte de este catálogo.
 - `link_preinscripcion` se conserva en `urls.legacyRegistration` para permitir coexistencia y reversibilidad durante el rollout.
 
 `link_preinscripcion` se carga en cada Cohorte o Edicion y debe apuntar

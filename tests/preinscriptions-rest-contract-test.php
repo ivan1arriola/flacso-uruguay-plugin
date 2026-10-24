@@ -70,13 +70,34 @@ if (!class_exists('WP_REST_Response')) {
 if (!class_exists('WP_REST_Request')) {
     class WP_REST_Request {
         protected $params = [];
+        protected $headers = [];
 
         public function __construct(string $method = 'GET', string $route = '', array $params = []) {
             $this->params = $params;
         }
 
+        public function set_header(string $key, string $value): void {
+            $this->headers[strtolower($key)] = $value;
+        }
+
+        public function get_header(string $key) {
+            return $this->headers[strtolower($key)] ?? null;
+        }
+
         public function get_param(string $key) {
             return $this->params[$key] ?? null;
+        }
+    }
+}
+
+if (!class_exists('WP_Error')) {
+    class WP_Error {
+        public $code;
+        public $data;
+
+        public function __construct(string $code = '', string $message = '', $data = null) {
+            $this->code = $code;
+            $this->data = $data;
         }
     }
 }
@@ -376,7 +397,11 @@ flacso_rest_assert_true(isset($GLOBALS['flacso_registered_rest_routes']['flacso/
 $route_config = $GLOBALS['flacso_registered_rest_routes']['flacso/v1/preinscripciones'][0] ?? $GLOBALS['flacso_registered_rest_routes']['flacso/v1/preinscripciones'];
 flacso_rest_assert_same('GET', $route_config['methods'], 'route allows GET');
 flacso_rest_assert_true(is_callable($route_config['permission_callback']), 'permission_callback is callable');
-flacso_rest_assert_same(true, call_user_func($route_config['permission_callback']), 'permission_callback returns true for public GET');
+$public_request = new WP_REST_Request('GET', '/flacso/v1/preinscripciones');
+flacso_rest_assert_same(true, call_user_func($route_config['permission_callback'], $public_request), 'permission_callback returns true for public GET');
+$unconfigured_request = new WP_REST_Request('GET', '/flacso/v1/preinscripciones');
+$unconfigured_request->set_header('Authorization', 'Bearer ' . str_repeat('a', 64));
+flacso_rest_assert_true(call_user_func($route_config['permission_callback'], $unconfigured_request) instanceof WP_Error, 'a token is rejected while the portal token is not configured');
 
 // Test REST index handler response
 $request = new WP_REST_Request('GET', '/flacso/v1/preinscripciones');
@@ -404,5 +429,30 @@ flacso_rest_assert_true($GLOBALS['flacso_serializer_get_posts_calls'] > $first_c
 $headers = $response->get_headers();
 flacso_rest_assert_true(isset($headers['Cache-Control']), 'Cache-Control header is set');
 flacso_rest_assert_true(strpos($headers['Cache-Control'], 'max-age=60') !== false, 'Cache-Control has max-age=60');
+
+// Offer notification emails are private: only the authenticated portal receives them
+$public_target = $response_data['targets'][0];
+flacso_rest_assert_true(!array_key_exists('notificationEmails', $public_target) && !array_key_exists('notificationEmail', $public_target), 'public catalog hides offer notification emails');
+flacso_rest_assert_same('Authorization', $headers['Vary'] ?? null, 'response varies by Authorization');
+
+define('FLACSO_PREINSCRIPCIONES_CATALOG_TOKEN', str_repeat('t', 64));
+$portal_request = new WP_REST_Request('GET', '/flacso/v1/preinscripciones');
+$portal_request->set_header('Authorization', 'Bearer ' . str_repeat('t', 64));
+flacso_rest_assert_same(true, call_user_func($route_config['permission_callback'], $portal_request), 'portal token is accepted');
+$portal_response = FLACSO_Preinscriptions_REST::index($portal_request);
+$portal_target = null;
+foreach ($portal_response->get_data()['targets'] as $candidate) {
+    if (($candidate['wordpress']['cohortId'] ?? null) === 101) {
+        $portal_target = $candidate;
+    }
+}
+flacso_rest_assert_same(['coordinacion@flacso.edu.uy', 'secretaria@flacso.edu.uy'], $portal_target['notificationEmails'] ?? null, 'portal catalog includes offer notification emails');
+flacso_rest_assert_same('private, no-store', $portal_response->get_headers()['Cache-Control'] ?? null, 'portal response is not cacheable');
+
+$wrong_request = new WP_REST_Request('GET', '/flacso/v1/preinscripciones');
+$wrong_request->set_header('Authorization', 'Bearer ' . str_repeat('x', 64));
+$wrong_result = call_user_func($route_config['permission_callback'], $wrong_request);
+flacso_rest_assert_true($wrong_result instanceof WP_Error && ($wrong_result->data['status'] ?? null) === 401, 'wrong token is rejected with 401');
+flacso_rest_assert_true(!array_key_exists('notificationEmails', FLACSO_Preinscriptions_REST::index($wrong_request)->get_data()['targets'][0]), 'wrong token never receives offer emails');
 
 printf("PASS: preinscriptions REST contract (%d assertions)\n", $GLOBALS['flacso_rest_assertions'] ?? 0);
