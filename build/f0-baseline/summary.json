@@ -1,0 +1,1369 @@
+{
+  "scope": "Static source inspection; NOT runtime registrations or actual DB schemas",
+  "files_php": 1454,
+  "modules_with_php": [
+    "academico",
+    "autoridades",
+    "charlas-abiertas",
+    "consultas",
+    "convenios",
+    "core",
+    "docentes",
+    "eventos",
+    "formularios",
+    "instagram",
+    "mailing",
+    "main-page",
+    "oferta-academica",
+    "posgrados",
+    "preguntas-frecuentes",
+    "preinscripciones",
+    "seminarios",
+    "shortcodes",
+    "site",
+    "telegram"
+  ],
+  "by_module": {
+    "academico": 30,
+    "autoridades": 3,
+    "charlas-abiertas": 7,
+    "consultas": 17,
+    "convenios": 3,
+    "core": 4,
+    "docentes": 13,
+    "eventos": 3,
+    "formularios": 15,
+    "instagram": 1,
+    "mailing": 4,
+    "main-page": 48,
+    "oferta-academica": 30,
+    "posgrados": 7,
+    "preguntas-frecuentes": 2,
+    "preinscripciones": 8,
+    "root": 1096,
+    "seminarios": 13,
+    "shared": 24,
+    "shortcodes": 6,
+    "site": 1,
+    "telegram": 1,
+    "tests": 118
+  },
+  "entrypoints_by_type": {
+    "add_action": 1749,
+    "add_filter": 548,
+    "add_option": 18,
+    "add_shortcode": 140,
+    "delete_option": 22,
+    "get_option": 1358,
+    "get_post_meta": 2931,
+    "get_user_meta": 2,
+    "register_activation_hook": 5,
+    "register_deactivation_hook": 5,
+    "register_meta": 56,
+    "register_post_meta": 241,
+    "register_post_type": 126,
+    "register_rest_route": 134,
+    "register_taxonomy": 5,
+    "update_option": 373,
+    "update_post_meta": 1356,
+    "update_user_meta": 2,
+    "wp_cli": 25,
+    "wp_next_scheduled": 14,
+    "wp_schedule_event": 14
+  },
+  "entrypoints_dynamic": 5502,
+  "symbol_counts": {
+    "type": 910,
+    "function": 11263
+  },
+  "dependency_edges_heuristic": 1606,
+  "candidate_cycles_heuristic": [],
+  "duplicate_declared_types_heuristic": {
+    "FLACSO_Uruguay_Plugin": [
+      ".worktrees/consultas-transaccionales/flacso-uruguay.php",
+      ".worktrees/mautic-offer-campaigns/flacso-uruguay.php",
+      ".worktrees/preinscripciones-integration/flacso-uruguay.php",
+      ".worktrees/seminar-permalink-availability/flacso-uruguay.php",
+      "flacso-uruguay.php"
+    ],
+    "FLACSO_Admin_Panel": [
+      ".worktrees/consultas-transaccionales/includes/core/class-flacso-admin-panel.php",
+      ".worktrees/mautic-offer-campaigns/includes/core/class-flacso-admin-panel.php",
+      ".worktrees/preinscripciones-integration/includes/core/class-flacso-admin-panel.php",
+      ".worktrees/seminar-permalink-availability/includes/core/class-flacso-admin-panel.php",
+      "includes/core/class-flacso-admin-panel.php"
+    ],
+    "FLACSO_Editor_Admin_Mode": [
+      ".worktrees/consultas-transaccionales/includes/core/class-flacso-editor-admin-mode.php",
+      ".worktrees/mautic-offer-campaigns/includes/core/class-flacso-editor-admin-mode.php",
+      ".worktrees/preinscripciones-integration/includes/core/class-flacso-editor-admin-mode.php",
+      ".worktrees/seminar-permalink-availability/includes/core/class-flacso-editor-admin-mode.php",
+      "includes/core/class-flacso-editor-admin-mode.php"
+    ],
+    "FLACSO_Error_Notifier": [
+      ".worktrees/consultas-transaccionales/includes/core/class-flacso-error-notifier.php",
+      ".worktrees/mautic-offer-campaigns/includes/core/class-flacso-error-notifier.php",
+      ".worktrees/preinscripciones-integration/includes/core/class-flacso-error-notifier.php",
+      ".worktrees/seminar-permalink-availability/includes/core/class-flacso-error-notifier.php",
+      "includes/core/class-flacso-error-notifier.php"
+    ],
+    "FLACSO_Integrations_Settings": [
+      ".worktrees/consultas-transaccionales/includes/core/class-flacso-integrations-settings.php",
+      ".worktrees/consultas-transaccionales/tests/academic-settings-api-test.php",
+      ".worktrees/mautic-offer-campaigns/includes/core/class-flacso-integrations-settings.php",
+      ".worktrees/preinscripciones-integration/includes/core/class-flacso-integrations-settings.php",
+      ".worktrees/preinscripciones-integration/tests/academic-settings-api-test.php",
+      ".worktrees/seminar-permalink-availability/includes/core/class-flacso-integrations-settings.php",
+      ".worktrees/seminar-permalink-availability/tests/academic-settings-api-test.php",
+      "includes/core/class-flacso-integrations-settings.php"
+    ],
+    "FLACSO_Legacy_Redirects": [
+      ".worktrees/consultas-transaccionales/includes/core/class-flacso-legacy-redirects.php",
+      ".worktrees/mautic-offer-campaigns/includes/core/class-flacso-legacy-redirects.php",
+      ".worktrees/preinscripciones-integration/includes/core/class-flacso-legacy-redirects.php",
+      ".worktrees/seminar-permalink-availability/includes/core/class-flacso-legacy-redirects.php",
+      "includes/core/class-flacso-legacy-redirects.php"
+    ],
+    "FLACSO_Mautic_Integration_Log": [
+      ".worktrees/consultas-transaccionales/includes/core/class-flacso-mautic-integration-log.php",
+      ".worktrees/mautic-offer-campaigns/includes/core/class-flacso-mautic-integration-log.php",
+      ".worktrees/preinscripciones-integration/includes/core/class-flacso-mautic-integration-log.php",
+      ".worktrees/seminar-permalink-availability/includes/core/class-flacso-mautic-integration-log.php",
+      "includes/core/class-flacso-mautic-integration-log.php"
+    ],
+    "FLACSO_Meta_Leads_Webhook": [
+      ".worktrees/consultas-transaccionales/includes/core/class-flacso-meta-leads-webhook.php",
+      ".worktrees/preinscripciones-integration/includes/core/class-flacso-meta-leads-webhook.php",
+      ".worktrees/seminar-permalink-availability/includes/core/class-flacso-meta-leads-webhook.php"
+    ],
+    "FLACSO_Meta_Tracking": [
+      ".worktrees/consultas-transaccionales/includes/core/class-flacso-meta-tracking.php",
+      ".worktrees/mautic-offer-campaigns/includes/core/class-flacso-meta-tracking.php",
+      ".worktrees/preinscripciones-integration/includes/core/class-flacso-meta-tracking.php",
+      ".worktrees/seminar-permalink-availability/includes/core/class-flacso-meta-tracking.php",
+      "includes/core/class-flacso-meta-tracking.php"
+    ],
+    "FLACSO_Preinscription_Links_Admin": [
+      ".worktrees/consultas-transaccionales/includes/core/class-flacso-preinscription-links-admin.php",
+      ".worktrees/mautic-offer-campaigns/includes/core/class-flacso-preinscription-links-admin.php",
+      ".worktrees/preinscripciones-integration/includes/core/class-flacso-preinscription-links-admin.php",
+      ".worktrees/seminar-permalink-availability/includes/core/class-flacso-preinscription-links-admin.php",
+      "includes/core/class-flacso-preinscription-links-admin.php"
+    ],
+    "FLACSO_REST_DTO_Loader": [
+      ".worktrees/consultas-transaccionales/includes/core/class-flacso-rest-dto-loader.php",
+      ".worktrees/mautic-offer-campaigns/includes/core/class-flacso-rest-dto-loader.php",
+      ".worktrees/preinscripciones-integration/includes/core/class-flacso-rest-dto-loader.php",
+      ".worktrees/seminar-permalink-availability/includes/core/class-flacso-rest-dto-loader.php",
+      "includes/core/class-flacso-rest-dto-loader.php"
+    ],
+    "FLACSO_REST_Visibility": [
+      ".worktrees/consultas-transaccionales/includes/core/class-flacso-rest-visibility.php",
+      ".worktrees/mautic-offer-campaigns/includes/core/class-flacso-rest-visibility.php",
+      ".worktrees/preinscripciones-integration/includes/core/class-flacso-rest-visibility.php",
+      ".worktrees/seminar-permalink-availability/includes/core/class-flacso-rest-visibility.php",
+      "includes/core/class-flacso-rest-visibility.php"
+    ],
+    "FLACSO_System_Settings": [
+      ".worktrees/consultas-transaccionales/includes/core/class-flacso-system-settings.php",
+      ".worktrees/mautic-offer-campaigns/includes/core/class-flacso-system-settings.php",
+      ".worktrees/preinscripciones-integration/includes/core/class-flacso-system-settings.php",
+      ".worktrees/seminar-permalink-availability/includes/core/class-flacso-system-settings.php",
+      "includes/core/class-flacso-system-settings.php"
+    ],
+    "FLACSO_Uruguay_Loader": [
+      ".worktrees/consultas-transaccionales/includes/core/loader.php",
+      ".worktrees/mautic-offer-campaigns/includes/core/loader.php",
+      ".worktrees/preinscripciones-integration/includes/core/loader.php",
+      ".worktrees/seminar-permalink-availability/includes/core/loader.php",
+      "includes/core/loader.php"
+    ],
+    "FLACSO_DB": [
+      ".worktrees/consultas-transaccionales/includes/database/class-flacso-db.php",
+      ".worktrees/mautic-offer-campaigns/includes/database/class-flacso-db.php",
+      ".worktrees/preinscripciones-integration/includes/database/class-flacso-db.php",
+      ".worktrees/seminar-permalink-availability/includes/database/class-flacso-db.php",
+      "includes/database/class-flacso-db.php"
+    ],
+    "FLACSO_Base_Inquiry_Repository": [
+      ".worktrees/consultas-transaccionales/includes/database/repositories/class-flacso-base-inquiry-repository.php",
+      ".worktrees/mautic-offer-campaigns/includes/database/repositories/class-flacso-base-inquiry-repository.php",
+      ".worktrees/preinscripciones-integration/includes/database/repositories/class-flacso-base-inquiry-repository.php",
+      ".worktrees/seminar-permalink-availability/includes/database/repositories/class-flacso-base-inquiry-repository.php",
+      "includes/database/repositories/class-flacso-base-inquiry-repository.php"
+    ],
+    "FLACSO_Inquiry_Analytics_Repository": [
+      ".worktrees/consultas-transaccionales/includes/database/repositories/class-flacso-inquiry-analytics-repository.php",
+      ".worktrees/mautic-offer-campaigns/includes/database/repositories/class-flacso-inquiry-analytics-repository.php",
+      ".worktrees/preinscripciones-integration/includes/database/repositories/class-flacso-inquiry-analytics-repository.php",
+      ".worktrees/seminar-permalink-availability/includes/database/repositories/class-flacso-inquiry-analytics-repository.php",
+      "includes/database/repositories/class-flacso-inquiry-analytics-repository.php"
+    ],
+    "FLACSO_Inquiry_Delivery_Repository": [
+      ".worktrees/consultas-transaccionales/includes/database/repositories/class-flacso-inquiry-delivery-repository.php",
+      ".worktrees/mautic-offer-campaigns/includes/database/repositories/class-flacso-inquiry-delivery-repository.php",
+      ".worktrees/preinscripciones-integration/includes/database/repositories/class-flacso-inquiry-delivery-repository.php",
+      ".worktrees/seminar-permalink-availability/includes/database/repositories/class-flacso-inquiry-delivery-repository.php",
+      "includes/database/repositories/class-flacso-inquiry-delivery-repository.php"
+    ],
+    "FLACSO_Offer_Inquiry_Repository": [
+      ".worktrees/consultas-transaccionales/includes/database/repositories/class-flacso-offer-inquiry-repository.php",
+      ".worktrees/mautic-offer-campaigns/includes/database/repositories/class-flacso-offer-inquiry-repository.php",
+      ".worktrees/preinscripciones-integration/includes/database/repositories/class-flacso-offer-inquiry-repository.php",
+      ".worktrees/seminar-permalink-availability/includes/database/repositories/class-flacso-offer-inquiry-repository.php",
+      "includes/database/repositories/class-flacso-offer-inquiry-repository.php"
+    ],
+    "FLACSO_Seminar_Inquiry_Repository": [
+      ".worktrees/consultas-transaccionales/includes/database/repositories/class-flacso-seminar-inquiry-repository.php",
+      ".worktrees/mautic-offer-campaigns/includes/database/repositories/class-flacso-seminar-inquiry-repository.php",
+      ".worktrees/preinscripciones-integration/includes/database/repositories/class-flacso-seminar-inquiry-repository.php",
+      ".worktrees/seminar-permalink-availability/includes/database/repositories/class-flacso-seminar-inquiry-repository.php",
+      "includes/database/repositories/class-flacso-seminar-inquiry-repository.php"
+    ],
+    "FLACSO_Mailjet_Client": [
+      ".worktrees/consultas-transaccionales/includes/integrations/class-flacso-mailjet-client.php",
+      ".worktrees/preinscripciones-integration/includes/integrations/class-flacso-mailjet-client.php",
+      ".worktrees/seminar-permalink-availability/includes/integrations/class-flacso-mailjet-client.php"
+    ],
+    "FLACSO_Mautic_Client": [
+      ".worktrees/consultas-transaccionales/includes/integrations/class-flacso-mautic-client.php",
+      ".worktrees/mautic-offer-campaigns/includes/integrations/class-flacso-mautic-client.php",
+      ".worktrees/preinscripciones-integration/includes/integrations/class-flacso-mautic-client.php",
+      ".worktrees/seminar-permalink-availability/includes/integrations/class-flacso-mautic-client.php",
+      "includes/integrations/class-flacso-mautic-client.php"
+    ],
+    "FLACSO_Consultas_Admin": [
+      ".worktrees/consultas-transaccionales/modules/consultas/includes/class-flacso-consultas-admin.php",
+      ".worktrees/mautic-offer-campaigns/modules/consultas/includes/class-flacso-consultas-admin.php",
+      ".worktrees/preinscripciones-integration/modules/consultas/includes/class-flacso-consultas-admin.php",
+      ".worktrees/seminar-permalink-availability/modules/consultas/includes/class-flacso-consultas-admin.php",
+      "modules/consultas/includes/class-flacso-consultas-admin.php"
+    ],
+    "FLACSO_Consultas_CLI": [
+      ".worktrees/consultas-transaccionales/modules/consultas/includes/class-flacso-consultas-cli.php",
+      ".worktrees/mautic-offer-campaigns/modules/consultas/includes/class-flacso-consultas-cli.php",
+      ".worktrees/preinscripciones-integration/modules/consultas/includes/class-flacso-consultas-cli.php",
+      ".worktrees/seminar-permalink-availability/modules/consultas/includes/class-flacso-consultas-cli.php",
+      "modules/consultas/includes/class-flacso-consultas-cli.php"
+    ],
+    "FLACSO_Inquiry_Context_Service": [
+      ".worktrees/consultas-transaccionales/modules/consultas/services/class-flacso-inquiry-context-service.php",
+      ".worktrees/mautic-offer-campaigns/modules/consultas/services/class-flacso-inquiry-context-service.php",
+      ".worktrees/preinscripciones-integration/modules/consultas/services/class-flacso-inquiry-context-service.php",
+      ".worktrees/seminar-permalink-availability/modules/consultas/services/class-flacso-inquiry-context-service.php",
+      "modules/consultas/services/class-flacso-inquiry-context-service.php"
+    ],
+    "FLACSO_Inquiry_Delivery_Service": [
+      ".worktrees/consultas-transaccionales/modules/consultas/services/class-flacso-inquiry-delivery-service.php",
+      ".worktrees/mautic-offer-campaigns/modules/consultas/services/class-flacso-inquiry-delivery-service.php",
+      ".worktrees/preinscripciones-integration/modules/consultas/services/class-flacso-inquiry-delivery-service.php",
+      ".worktrees/seminar-permalink-availability/modules/consultas/services/class-flacso-inquiry-delivery-service.php",
+      "modules/consultas/services/class-flacso-inquiry-delivery-service.php"
+    ],
+    "FLACSO_Inquiry_Delivery_Worker": [
+      ".worktrees/consultas-transaccionales/modules/consultas/services/class-flacso-inquiry-delivery-worker.php",
+      ".worktrees/mautic-offer-campaigns/modules/consultas/services/class-flacso-inquiry-delivery-worker.php",
+      ".worktrees/preinscripciones-integration/modules/consultas/services/class-flacso-inquiry-delivery-worker.php",
+      ".worktrees/seminar-permalink-availability/modules/consultas/services/class-flacso-inquiry-delivery-worker.php",
+      "modules/consultas/services/class-flacso-inquiry-delivery-worker.php"
+    ],
+    "FLACSO_Inquiry_Followup_Service": [
+      ".worktrees/consultas-transaccionales/modules/consultas/services/class-flacso-inquiry-followup-service.php",
+      ".worktrees/mautic-offer-campaigns/modules/consultas/services/class-flacso-inquiry-followup-service.php",
+      ".worktrees/preinscripciones-integration/modules/consultas/services/class-flacso-inquiry-followup-service.php",
+      ".worktrees/seminar-permalink-availability/modules/consultas/services/class-flacso-inquiry-followup-service.php",
+      "modules/consultas/services/class-flacso-inquiry-followup-service.php"
+    ],
+    "FLACSO_Inquiry_Marketing_Service": [
+      ".worktrees/consultas-transaccionales/modules/consultas/services/class-flacso-inquiry-marketing-service.php",
+      ".worktrees/mautic-offer-campaigns/modules/consultas/services/class-flacso-inquiry-marketing-service.php",
+      ".worktrees/preinscripciones-integration/modules/consultas/services/class-flacso-inquiry-marketing-service.php",
+      ".worktrees/seminar-permalink-availability/modules/consultas/services/class-flacso-inquiry-marketing-service.php",
+      "modules/consultas/services/class-flacso-inquiry-marketing-service.php"
+    ],
+    "FLACSO_Inquiry_Snapshot": [
+      ".worktrees/consultas-transaccionales/modules/consultas/services/class-flacso-inquiry-snapshot.php",
+      ".worktrees/mautic-offer-campaigns/modules/consultas/services/class-flacso-inquiry-snapshot.php",
+      ".worktrees/preinscripciones-integration/modules/consultas/services/class-flacso-inquiry-snapshot.php",
+      ".worktrees/seminar-permalink-availability/modules/consultas/services/class-flacso-inquiry-snapshot.php",
+      "modules/consultas/services/class-flacso-inquiry-snapshot.php"
+    ],
+    "FLACSO_Inquiry_Tag_Factory": [
+      ".worktrees/consultas-transaccionales/modules/consultas/services/class-flacso-inquiry-tag-factory.php",
+      ".worktrees/mautic-offer-campaigns/modules/consultas/services/class-flacso-inquiry-tag-factory.php",
+      ".worktrees/preinscripciones-integration/modules/consultas/services/class-flacso-inquiry-tag-factory.php",
+      ".worktrees/seminar-permalink-availability/modules/consultas/services/class-flacso-inquiry-tag-factory.php",
+      "modules/consultas/services/class-flacso-inquiry-tag-factory.php"
+    ],
+    "FLACSO_Mautic_Contract_Manifest": [
+      ".worktrees/consultas-transaccionales/modules/consultas/services/class-flacso-mautic-contract-manifest.php",
+      ".worktrees/mautic-offer-campaigns/modules/consultas/services/class-flacso-mautic-contract-manifest.php",
+      ".worktrees/preinscripciones-integration/modules/consultas/services/class-flacso-mautic-contract-manifest.php",
+      ".worktrees/seminar-permalink-availability/modules/consultas/services/class-flacso-mautic-contract-manifest.php",
+      "modules/consultas/services/class-flacso-mautic-contract-manifest.php"
+    ],
+    "FLACSO_Mautic_Contract_Validator": [
+      ".worktrees/consultas-transaccionales/modules/consultas/services/class-flacso-mautic-contract-validator.php",
+      ".worktrees/mautic-offer-campaigns/modules/consultas/services/class-flacso-mautic-contract-validator.php",
+      ".worktrees/preinscripciones-integration/modules/consultas/services/class-flacso-mautic-contract-validator.php",
+      ".worktrees/seminar-permalink-availability/modules/consultas/services/class-flacso-mautic-contract-validator.php",
+      "modules/consultas/services/class-flacso-mautic-contract-validator.php"
+    ],
+    "FLACSO_Mautic_Payload_Builder": [
+      ".worktrees/consultas-transaccionales/modules/consultas/services/class-flacso-mautic-payload-builder.php",
+      ".worktrees/mautic-offer-campaigns/modules/consultas/services/class-flacso-mautic-payload-builder.php",
+      ".worktrees/preinscripciones-integration/modules/consultas/services/class-flacso-mautic-payload-builder.php",
+      ".worktrees/seminar-permalink-availability/modules/consultas/services/class-flacso-mautic-payload-builder.php",
+      "modules/consultas/services/class-flacso-mautic-payload-builder.php"
+    ],
+    "FLACSO_Offer_Inquiry_Service": [
+      ".worktrees/consultas-transaccionales/modules/consultas/services/class-flacso-offer-inquiry-service.php",
+      ".worktrees/mautic-offer-campaigns/modules/consultas/services/class-flacso-offer-inquiry-service.php",
+      ".worktrees/mautic-offer-campaigns/tests/chatbot-inquiry-api-test.php",
+      ".worktrees/preinscripciones-integration/modules/consultas/services/class-flacso-offer-inquiry-service.php",
+      ".worktrees/seminar-permalink-availability/modules/consultas/services/class-flacso-offer-inquiry-service.php",
+      "modules/consultas/services/class-flacso-offer-inquiry-service.php",
+      "tests/chatbot-inquiry-api-test.php"
+    ],
+    "FLACSO_Seminar_Inquiry_Service": [
+      ".worktrees/consultas-transaccionales/modules/consultas/services/class-flacso-seminar-inquiry-service.php",
+      ".worktrees/mautic-offer-campaigns/modules/consultas/services/class-flacso-seminar-inquiry-service.php",
+      ".worktrees/mautic-offer-campaigns/tests/chatbot-inquiry-api-test.php",
+      ".worktrees/preinscripciones-integration/modules/consultas/services/class-flacso-seminar-inquiry-service.php",
+      ".worktrees/seminar-permalink-availability/modules/consultas/services/class-flacso-seminar-inquiry-service.php",
+      "modules/consultas/services/class-flacso-seminar-inquiry-service.php",
+      "tests/chatbot-inquiry-api-test.php"
+    ],
+    "Flacso_Convenios": [
+      ".worktrees/consultas-transaccionales/modules/convenios/includes/class-flacso-convenios.php",
+      ".worktrees/mautic-offer-campaigns/modules/convenios/includes/class-flacso-convenios.php",
+      ".worktrees/preinscripciones-integration/modules/convenios/includes/class-flacso-convenios.php",
+      ".worktrees/seminar-permalink-availability/modules/convenios/includes/class-flacso-convenios.php",
+      "modules/convenios/includes/class-flacso-convenios.php"
+    ],
+    "Flacso_Custom_404": [
+      ".worktrees/consultas-transaccionales/modules/core/includes/class-flacso-custom-404.php",
+      ".worktrees/mautic-offer-campaigns/modules/core/includes/class-flacso-custom-404.php",
+      ".worktrees/mautic-offer-campaigns/tests/custom-404-layout-contract-test.php",
+      ".worktrees/preinscripciones-integration/modules/core/includes/class-flacso-custom-404.php",
+      ".worktrees/seminar-permalink-availability/modules/core/includes/class-flacso-custom-404.php",
+      "modules/core/includes/class-flacso-custom-404.php",
+      "tests/custom-404-layout-contract-test.php"
+    ],
+    "Flacso_Kadence_Compat": [
+      ".worktrees/consultas-transaccionales/modules/core/includes/class-flacso-kadence-compat.php",
+      ".worktrees/mautic-offer-campaigns/modules/core/includes/class-flacso-kadence-compat.php",
+      ".worktrees/preinscripciones-integration/modules/core/includes/class-flacso-kadence-compat.php",
+      ".worktrees/seminar-permalink-availability/modules/core/includes/class-flacso-kadence-compat.php",
+      "modules/core/includes/class-flacso-kadence-compat.php"
+    ],
+    "Flacso_Nav_Announcement": [
+      ".worktrees/consultas-transaccionales/modules/core/includes/class-flacso-nav-announcement.php",
+      ".worktrees/mautic-offer-campaigns/modules/core/includes/class-flacso-nav-announcement.php",
+      ".worktrees/preinscripciones-integration/modules/core/includes/class-flacso-nav-announcement.php",
+      ".worktrees/seminar-permalink-availability/modules/core/includes/class-flacso-nav-announcement.php",
+      "modules/core/includes/class-flacso-nav-announcement.php"
+    ],
+    "Docente_List_Table": [
+      ".worktrees/consultas-transaccionales/modules/docentes/includes/admin.php",
+      ".worktrees/mautic-offer-campaigns/modules/docentes/includes/admin.php",
+      ".worktrees/preinscripciones-integration/modules/docentes/includes/admin.php",
+      ".worktrees/seminar-permalink-availability/modules/docentes/includes/admin.php",
+      "modules/docentes/includes/admin.php"
+    ],
+    "CPT_Docente": [
+      ".worktrees/consultas-transaccionales/modules/docentes/includes/class-cpt-docente.php",
+      ".worktrees/mautic-offer-campaigns/modules/docentes/includes/class-cpt-docente.php",
+      ".worktrees/preinscripciones-integration/modules/docentes/includes/class-cpt-docente.php",
+      ".worktrees/seminar-permalink-availability/modules/docentes/includes/class-cpt-docente.php",
+      "modules/docentes/includes/class-cpt-docente.php"
+    ],
+    "Docente_Meta": [
+      ".worktrees/consultas-transaccionales/modules/docentes/includes/class-docente-meta.php",
+      ".worktrees/mautic-offer-campaigns/modules/docentes/includes/class-docente-meta.php",
+      ".worktrees/preinscripciones-integration/modules/docentes/includes/class-docente-meta.php",
+      ".worktrees/seminar-permalink-availability/modules/docentes/includes/class-docente-meta.php",
+      "modules/docentes/includes/class-docente-meta.php"
+    ],
+    "Docente_Migration": [
+      ".worktrees/consultas-transaccionales/modules/docentes/includes/migration.php",
+      ".worktrees/mautic-offer-campaigns/modules/docentes/includes/migration.php",
+      ".worktrees/preinscripciones-integration/modules/docentes/includes/migration.php",
+      ".worktrees/seminar-permalink-availability/modules/docentes/includes/migration.php",
+      "modules/docentes/includes/migration.php"
+    ],
+    "Docente_Migration_Admin": [
+      ".worktrees/consultas-transaccionales/modules/docentes/includes/migration.php",
+      ".worktrees/mautic-offer-campaigns/modules/docentes/includes/migration.php",
+      ".worktrees/preinscripciones-integration/modules/docentes/includes/migration.php",
+      ".worktrees/seminar-permalink-availability/modules/docentes/includes/migration.php",
+      "modules/docentes/includes/migration.php"
+    ],
+    "Docente_Public_DTO": [
+      ".worktrees/consultas-transaccionales/modules/docentes/includes/rest-dto.php",
+      ".worktrees/mautic-offer-campaigns/modules/docentes/includes/rest-dto.php",
+      ".worktrees/preinscripciones-integration/modules/docentes/includes/rest-dto.php",
+      ".worktrees/seminar-permalink-availability/modules/docentes/includes/rest-dto.php",
+      "modules/docentes/includes/rest-dto.php"
+    ],
+    "Docente_Admin_DTO": [
+      ".worktrees/consultas-transaccionales/modules/docentes/includes/rest-dto.php",
+      ".worktrees/mautic-offer-campaigns/modules/docentes/includes/rest-dto.php",
+      ".worktrees/preinscripciones-integration/modules/docentes/includes/rest-dto.php",
+      ".worktrees/seminar-permalink-availability/modules/docentes/includes/rest-dto.php",
+      "modules/docentes/includes/rest-dto.php"
+    ],
+    "Docente_REST_DTO": [
+      ".worktrees/consultas-transaccionales/modules/docentes/includes/rest-dto.php",
+      ".worktrees/mautic-offer-campaigns/modules/docentes/includes/rest-dto.php",
+      ".worktrees/preinscripciones-integration/modules/docentes/includes/rest-dto.php",
+      ".worktrees/seminar-permalink-availability/modules/docentes/includes/rest-dto.php",
+      "modules/docentes/includes/rest-dto.php"
+    ],
+    "CPT_Eventos_Manager": [
+      ".worktrees/consultas-transaccionales/modules/eventos/includes/class-cpt-eventos-manager.php",
+      ".worktrees/mautic-offer-campaigns/modules/eventos/includes/class-cpt-eventos-manager.php",
+      ".worktrees/preinscripciones-integration/modules/eventos/includes/class-cpt-eventos-manager.php",
+      ".worktrees/seminar-permalink-availability/modules/eventos/includes/class-cpt-eventos-manager.php",
+      "modules/eventos/includes/class-cpt-eventos-manager.php"
+    ],
+    "FLACSO_Mail_Settings": [
+      ".worktrees/consultas-transaccionales/modules/mailing/includes/class-flacso-mail-settings.php",
+      ".worktrees/mautic-offer-campaigns/modules/mailing/includes/class-flacso-mail-settings.php",
+      ".worktrees/preinscripciones-integration/modules/mailing/includes/class-flacso-mail-settings.php",
+      ".worktrees/seminar-permalink-availability/modules/mailing/includes/class-flacso-mail-settings.php",
+      "modules/mailing/includes/class-flacso-mail-settings.php"
+    ],
+    "Flacso_Mailing_Subscription": [
+      ".worktrees/consultas-transaccionales/modules/mailing/includes/class-flacso-mailing-subscription.php",
+      ".worktrees/mautic-offer-campaigns/modules/mailing/includes/class-flacso-mailing-subscription.php",
+      ".worktrees/preinscripciones-integration/modules/mailing/includes/class-flacso-mailing-subscription.php",
+      ".worktrees/seminar-permalink-availability/modules/mailing/includes/class-flacso-mailing-subscription.php",
+      "modules/mailing/includes/class-flacso-mailing-subscription.php"
+    ],
+    "Flacso_Contacto_Seccion_Block": [
+      ".worktrees/consultas-transaccionales/modules/main-page/includes/blocks/contacto-seccion/includes/class-flacso-contacto-seccion-block.php",
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/blocks/contacto-seccion/includes/class-flacso-contacto-seccion-block.php",
+      ".worktrees/preinscripciones-integration/modules/main-page/includes/blocks/contacto-seccion/includes/class-flacso-contacto-seccion-block.php",
+      ".worktrees/seminar-permalink-availability/modules/main-page/includes/blocks/contacto-seccion/includes/class-flacso-contacto-seccion-block.php",
+      "modules/main-page/includes/blocks/contacto-seccion/includes/class-flacso-contacto-seccion-block.php"
+    ],
+    "Flacso_Instagram_Blocks": [
+      ".worktrees/consultas-transaccionales/modules/main-page/includes/blocks/instagram/class-flacso-instagram-blocks.php",
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/blocks/instagram/class-flacso-instagram-blocks.php",
+      ".worktrees/preinscripciones-integration/modules/main-page/includes/blocks/instagram/class-flacso-instagram-blocks.php",
+      ".worktrees/seminar-permalink-availability/modules/main-page/includes/blocks/instagram/class-flacso-instagram-blocks.php",
+      "modules/main-page/includes/blocks/instagram/class-flacso-instagram-blocks.php"
+    ],
+    "not": [
+      ".worktrees/consultas-transaccionales/modules/main-page/includes/blocks/instagram/class-flacso-instagram-blocks.php",
+      ".worktrees/consultas-transaccionales/modules/main-page/sections/instagram.php",
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/blocks/instagram/class-flacso-instagram-blocks.php",
+      ".worktrees/mautic-offer-campaigns/modules/main-page/sections/instagram.php",
+      ".worktrees/preinscripciones-integration/modules/main-page/includes/blocks/instagram/class-flacso-instagram-blocks.php",
+      ".worktrees/preinscripciones-integration/modules/main-page/sections/instagram.php",
+      ".worktrees/seminar-permalink-availability/modules/main-page/includes/blocks/instagram/class-flacso-instagram-blocks.php",
+      ".worktrees/seminar-permalink-availability/modules/main-page/sections/instagram.php",
+      "modules/main-page/includes/blocks/instagram/class-flacso-instagram-blocks.php",
+      "modules/main-page/sections/instagram.php"
+    ],
+    "Flacso_Listar_Paginas_Block": [
+      ".worktrees/consultas-transaccionales/modules/main-page/includes/blocks/listar-paginas/includes/class-flacso-listar-paginas-block.php",
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/blocks/listar-paginas/includes/class-flacso-listar-paginas-block.php",
+      ".worktrees/preinscripciones-integration/modules/main-page/includes/blocks/listar-paginas/includes/class-flacso-listar-paginas-block.php",
+      ".worktrees/seminar-permalink-availability/modules/main-page/includes/blocks/listar-paginas/includes/class-flacso-listar-paginas-block.php",
+      "modules/main-page/includes/blocks/listar-paginas/includes/class-flacso-listar-paginas-block.php"
+    ],
+    "Flacso_Mapa_Contacto_Block": [
+      ".worktrees/consultas-transaccionales/modules/main-page/includes/blocks/mapa-contacto/includes/class-flacso-mapa-contacto-block.php",
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/blocks/mapa-contacto/includes/class-flacso-mapa-contacto-block.php",
+      ".worktrees/preinscripciones-integration/modules/main-page/includes/blocks/mapa-contacto/includes/class-flacso-mapa-contacto-block.php",
+      ".worktrees/seminar-permalink-availability/modules/main-page/includes/blocks/mapa-contacto/includes/class-flacso-mapa-contacto-block.php",
+      "modules/main-page/includes/blocks/mapa-contacto/includes/class-flacso-mapa-contacto-block.php"
+    ],
+    "Flacso_Otros_Contactos_Block": [
+      ".worktrees/consultas-transaccionales/modules/main-page/includes/blocks/otros-contactos/includes/class-flacso-otros-contactos-block.php",
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/blocks/otros-contactos/includes/class-flacso-otros-contactos-block.php",
+      ".worktrees/preinscripciones-integration/modules/main-page/includes/blocks/otros-contactos/includes/class-flacso-otros-contactos-block.php",
+      ".worktrees/seminar-permalink-availability/modules/main-page/includes/blocks/otros-contactos/includes/class-flacso-otros-contactos-block.php",
+      "modules/main-page/includes/blocks/otros-contactos/includes/class-flacso-otros-contactos-block.php"
+    ],
+    "Flacso_AJAX_Handler": [
+      ".worktrees/consultas-transaccionales/modules/main-page/includes/class-flacso-ajax-handler.php",
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/class-flacso-ajax-handler.php",
+      ".worktrees/preinscripciones-integration/modules/main-page/includes/class-flacso-ajax-handler.php",
+      ".worktrees/seminar-permalink-availability/modules/main-page/includes/class-flacso-ajax-handler.php",
+      "modules/main-page/includes/class-flacso-ajax-handler.php"
+    ],
+    "Flacso_AJAX_Settings": [
+      ".worktrees/consultas-transaccionales/modules/main-page/includes/class-flacso-ajax-settings.php",
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/class-flacso-ajax-settings.php",
+      ".worktrees/preinscripciones-integration/modules/main-page/includes/class-flacso-ajax-settings.php",
+      ".worktrees/seminar-permalink-availability/modules/main-page/includes/class-flacso-ajax-settings.php",
+      "modules/main-page/includes/class-flacso-ajax-settings.php"
+    ],
+    "Flacso_Instagram_API": [
+      ".worktrees/consultas-transaccionales/modules/main-page/includes/class-flacso-instagram-api.php",
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/class-flacso-instagram-api.php",
+      ".worktrees/preinscripciones-integration/modules/main-page/includes/class-flacso-instagram-api.php",
+      ".worktrees/seminar-permalink-availability/modules/main-page/includes/class-flacso-instagram-api.php",
+      "modules/main-page/includes/class-flacso-instagram-api.php"
+    ],
+    "Flacso_Instagram_Post_Importer": [
+      ".worktrees/consultas-transaccionales/modules/main-page/includes/class-flacso-instagram-post-importer.php",
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/class-flacso-instagram-post-importer.php",
+      ".worktrees/preinscripciones-integration/modules/main-page/includes/class-flacso-instagram-post-importer.php",
+      ".worktrees/seminar-permalink-availability/modules/main-page/includes/class-flacso-instagram-post-importer.php",
+      "modules/main-page/includes/class-flacso-instagram-post-importer.php"
+    ],
+    "Flacso_Main_Page_Admin": [
+      ".worktrees/consultas-transaccionales/modules/main-page/includes/class-flacso-main-page-admin.php",
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/class-flacso-main-page-admin.php",
+      ".worktrees/preinscripciones-integration/modules/main-page/includes/class-flacso-main-page-admin.php",
+      ".worktrees/seminar-permalink-availability/modules/main-page/includes/class-flacso-main-page-admin.php",
+      "modules/main-page/includes/class-flacso-main-page-admin.php"
+    ],
+    "Flacso_Main_Page_Blocks": [
+      ".worktrees/consultas-transaccionales/modules/main-page/includes/class-flacso-main-page-blocks.php",
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/class-flacso-main-page-blocks.php",
+      ".worktrees/preinscripciones-integration/modules/main-page/includes/class-flacso-main-page-blocks.php",
+      ".worktrees/seminar-permalink-availability/modules/main-page/includes/class-flacso-main-page-blocks.php",
+      "modules/main-page/includes/class-flacso-main-page-blocks.php"
+    ],
+    "Flacso_Main_Page_Loader": [
+      ".worktrees/consultas-transaccionales/modules/main-page/includes/class-flacso-main-page-loader.php",
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/class-flacso-main-page-loader.php",
+      ".worktrees/preinscripciones-integration/modules/main-page/includes/class-flacso-main-page-loader.php",
+      ".worktrees/seminar-permalink-availability/modules/main-page/includes/class-flacso-main-page-loader.php",
+      "modules/main-page/includes/class-flacso-main-page-loader.php"
+    ],
+    "Flacso_Main_Page_Migrations": [
+      ".worktrees/consultas-transaccionales/modules/main-page/includes/class-flacso-main-page-migrations.php",
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/class-flacso-main-page-migrations.php",
+      ".worktrees/preinscripciones-integration/modules/main-page/includes/class-flacso-main-page-migrations.php",
+      ".worktrees/seminar-permalink-availability/modules/main-page/includes/class-flacso-main-page-migrations.php",
+      "modules/main-page/includes/class-flacso-main-page-migrations.php"
+    ],
+    "Flacso_Main_Page_REST_API": [
+      ".worktrees/consultas-transaccionales/modules/main-page/includes/class-flacso-main-page-rest-api.php",
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/class-flacso-main-page-rest-api.php",
+      ".worktrees/preinscripciones-integration/modules/main-page/includes/class-flacso-main-page-rest-api.php",
+      ".worktrees/seminar-permalink-availability/modules/main-page/includes/class-flacso-main-page-rest-api.php",
+      "modules/main-page/includes/class-flacso-main-page-rest-api.php"
+    ],
+    "Flacso_Main_Page_Seminarios": [
+      ".worktrees/consultas-transaccionales/modules/main-page/includes/class-flacso-main-page-seminarios.php",
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/class-flacso-main-page-seminarios.php",
+      ".worktrees/preinscripciones-integration/modules/main-page/includes/class-flacso-main-page-seminarios.php",
+      ".worktrees/seminar-permalink-availability/modules/main-page/includes/class-flacso-main-page-seminarios.php",
+      "modules/main-page/includes/class-flacso-main-page-seminarios.php"
+    ],
+    "Flacso_Main_Page_Settings": [
+      ".worktrees/consultas-transaccionales/modules/main-page/includes/class-flacso-main-page-settings.php",
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/class-flacso-main-page-settings.php",
+      ".worktrees/preinscripciones-integration/modules/main-page/includes/class-flacso-main-page-settings.php",
+      ".worktrees/seminar-permalink-availability/modules/main-page/includes/class-flacso-main-page-settings.php",
+      "modules/main-page/includes/class-flacso-main-page-settings.php"
+    ],
+    "Flacso_Main_Page_Unified_Settings": [
+      ".worktrees/consultas-transaccionales/modules/main-page/includes/class-flacso-main-page-unified-settings.php",
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/class-flacso-main-page-editor-bridge.php",
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/class-flacso-main-page-unified-settings.php",
+      ".worktrees/preinscripciones-integration/modules/main-page/includes/class-flacso-main-page-unified-settings.php",
+      ".worktrees/seminar-permalink-availability/modules/main-page/includes/class-flacso-main-page-unified-settings.php",
+      "modules/main-page/includes/class-flacso-main-page-unified-settings.php"
+    ],
+    "FLACSO_Telegram_Manager": [
+      ".worktrees/consultas-transaccionales/modules/main-page/includes/class-flacso-telegram-manager.php",
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/class-flacso-telegram-manager.php",
+      ".worktrees/preinscripciones-integration/modules/main-page/includes/class-flacso-telegram-manager.php",
+      ".worktrees/seminar-permalink-availability/modules/main-page/includes/class-flacso-telegram-manager.php",
+      "modules/main-page/includes/class-flacso-telegram-manager.php"
+    ],
+    "FLACSO_Academic_Admin_UI": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-academic-admin-ui.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-academic-admin-ui.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-academic-admin-ui.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-academic-admin-ui.php",
+      "modules/oferta-academica/includes/class-academic-admin-ui.php"
+    ],
+    "FLACSO_Academic_API": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-academic-api.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-academic-api.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-academic-api.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-academic-api.php",
+      "modules/oferta-academica/includes/class-academic-api.php"
+    ],
+    "FLACSO_Academic_Catalog": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-academic-catalog.php",
+      ".worktrees/consultas-transaccionales/tests/info-request-sync-test.php",
+      ".worktrees/consultas-transaccionales/tests/inquiry-context-test.php",
+      ".worktrees/consultas-transaccionales/tests/inquiry-followup-service-test.php",
+      ".worktrees/consultas-transaccionales/tests/inquiry-services-test.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-academic-catalog.php",
+      ".worktrees/mautic-offer-campaigns/tests/info-request-sync-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/inquiry-campaign-service-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/inquiry-context-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/inquiry-followup-service-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/inquiry-services-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/mautic-campaign-webhook-test.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-academic-catalog.php",
+      ".worktrees/preinscripciones-integration/tests/info-request-sync-test.php",
+      ".worktrees/preinscripciones-integration/tests/inquiry-context-test.php",
+      ".worktrees/preinscripciones-integration/tests/inquiry-followup-service-test.php",
+      ".worktrees/preinscripciones-integration/tests/inquiry-services-test.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-academic-catalog.php",
+      ".worktrees/seminar-permalink-availability/tests/info-request-sync-test.php",
+      ".worktrees/seminar-permalink-availability/tests/inquiry-context-test.php",
+      ".worktrees/seminar-permalink-availability/tests/inquiry-followup-service-test.php",
+      ".worktrees/seminar-permalink-availability/tests/inquiry-services-test.php",
+      "modules/oferta-academica/includes/class-academic-catalog.php",
+      "tests/info-request-sync-test.php",
+      "tests/inquiry-context-test.php",
+      "tests/inquiry-followup-service-test.php",
+      "tests/inquiry-services-test.php"
+    ],
+    "FLACSO_Academic_CLI_Command": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-academic-cli.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-academic-cli.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-academic-cli.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-academic-cli.php",
+      "modules/oferta-academica/includes/class-academic-cli.php"
+    ],
+    "FLACSO_Academic_Document_Source_Admin": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-academic-document-source-admin.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-academic-document-source-admin.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-academic-document-source-admin.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-academic-document-source-admin.php",
+      "modules/oferta-academica/includes/class-academic-document-source-admin.php"
+    ],
+    "FLACSO_Academic_Meta_Normalizer": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-academic-meta-normalizer.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-academic-meta-normalizer.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-academic-meta-normalizer.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-academic-meta-normalizer.php",
+      "modules/oferta-academica/includes/class-academic-meta-normalizer.php"
+    ],
+    "FLACSO_Academic_Repository": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-academic-repositories.php",
+      ".worktrees/consultas-transaccionales/tests/inquiry-cohort-resolution-test.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-academic-repositories.php",
+      ".worktrees/mautic-offer-campaigns/tests/inquiry-cohort-resolution-test.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-academic-repositories.php",
+      ".worktrees/preinscripciones-integration/tests/inquiry-cohort-resolution-test.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-academic-repositories.php",
+      ".worktrees/seminar-permalink-availability/tests/inquiry-cohort-resolution-test.php",
+      "modules/oferta-academica/includes/class-academic-repositories.php",
+      "tests/academic-latest-public-cohort-test.php",
+      "tests/inquiry-cohort-resolution-test.php",
+      "tests/seminar-cancelled-edition-visibility-test.php"
+    ],
+    "FLACSO_Preinscripcion": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-academic-repositories.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-academic-repositories.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-academic-repositories.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-academic-repositories.php",
+      "modules/oferta-academica/includes/class-academic-repositories.php"
+    ],
+    "FLACSO_Academic_Settings_API": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-academic-settings-api.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-academic-settings-api.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-academic-settings-api.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-academic-settings-api.php",
+      "modules/oferta-academica/includes/class-academic-settings-api.php"
+    ],
+    "FLACSO_Academic_Team_Admin": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-academic-team-admin.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-academic-team-admin.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-academic-team-admin.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-academic-team-admin.php",
+      "modules/oferta-academica/includes/class-academic-team-admin.php"
+    ],
+    "FLACSO_Academic_Team_Editor": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-academic-team-editor.php",
+      ".worktrees/consultas-transaccionales/tests/academic-team-scope-contract-test.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-academic-team-editor.php",
+      ".worktrees/mautic-offer-campaigns/tests/academic-team-scope-contract-test.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-academic-team-editor.php",
+      ".worktrees/preinscripciones-integration/tests/academic-team-scope-contract-test.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-academic-team-editor.php",
+      ".worktrees/seminar-permalink-availability/tests/academic-team-scope-contract-test.php",
+      "modules/oferta-academica/includes/class-academic-team-editor.php",
+      "tests/academic-team-scope-contract-test.php"
+    ],
+    "FLACSO_Cohort_Carta_Contact_Admin": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-cohort-carta-contact-admin.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-cohort-carta-contact-admin.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-cohort-carta-contact-admin.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-cohort-carta-contact-admin.php",
+      "modules/oferta-academica/includes/class-cohort-carta-contact-admin.php"
+    ],
+    "FLACSO_Cohorte": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-cohorte.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-cohorte.php",
+      ".worktrees/mautic-offer-campaigns/tests/preinscription-local-opening-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/preinscriptions-rest-contract-test.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-cohorte.php",
+      ".worktrees/preinscripciones-integration/tests/preinscriptions-rest-contract-test.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-cohorte.php",
+      ".worktrees/seminar-permalink-availability/tests/preinscriptions-rest-contract-test.php",
+      "modules/oferta-academica/includes/class-cohorte.php",
+      "tests/academic-team-person-search-test.php",
+      "tests/oferta-cohortes-responsive-metabox-test.php",
+      "tests/oferta-list-edit-cohort-test.php",
+      "tests/preinscription-local-opening-test.php",
+      "tests/preinscriptions-rest-contract-test.php"
+    ],
+    "CPT_Oferta_Academica": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-cpt-oferta-academica.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-cpt-oferta-academica.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-cpt-oferta-academica.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-cpt-oferta-academica.php",
+      "modules/oferta-academica/includes/class-cpt-oferta-academica.php"
+    ],
+    "FLACSO_Programa_Academico": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-cpt-programa-academico.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-cpt-programa-academico.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-cpt-programa-academico.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-cpt-programa-academico.php",
+      "modules/oferta-academica/includes/class-cpt-programa-academico.php"
+    ],
+    "CPT_Tabla_Precio": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-cpt-tabla-precio.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-cpt-tabla-precio.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-cpt-tabla-precio.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-cpt-tabla-precio.php",
+      "modules/oferta-academica/includes/class-cpt-tabla-precio.php"
+    ],
+    "FLACSO_Django_Ajax_Handlers": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-django-ajax-handlers.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-django-ajax-handlers.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-django-ajax-handlers.php"
+    ],
+    "FLACSO_Django_API_Client": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-django-api-client.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-django-api-client.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-django-api-client.php"
+    ],
+    "FLACSO_Oferta_Academica": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-oferta-academica.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-oferta-academica.php",
+      ".worktrees/mautic-offer-campaigns/tests/chatbot-inquiry-api-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/preinscription-local-opening-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/preinscriptions-rest-contract-test.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-oferta-academica.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-oferta-academica.php",
+      ".worktrees/seminar-permalink-availability/tests/preinscriptions-rest-contract-test.php",
+      "modules/oferta-academica/includes/class-oferta-academica.php",
+      "tests/academic-articulations-domain-test.php",
+      "tests/academic-team-person-search-test.php",
+      "tests/chatbot-inquiry-api-test.php",
+      "tests/preinscription-local-opening-test.php",
+      "tests/preinscriptions-rest-contract-test.php"
+    ],
+    "FLACSO_Oferta_Admin_Fields": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-oferta-admin-fields.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-oferta-admin-fields.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-oferta-admin-fields.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-oferta-admin-fields.php",
+      "modules/oferta-academica/includes/class-oferta-admin-fields.php"
+    ],
+    "FLACSO_Oferta_Admin_Table_Layout": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-oferta-admin-table-layout.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-oferta-admin-table-layout.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-oferta-admin-table-layout.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-oferta-admin-table-layout.php",
+      "modules/oferta-academica/includes/class-oferta-admin-table-layout.php"
+    ],
+    "Oferta_Consulta_Form": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-oferta-consulta-form.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-oferta-consulta-form.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-oferta-consulta-form.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-oferta-consulta-form.php",
+      "modules/oferta-academica/includes/class-oferta-consulta-form.php"
+    ],
+    "Oferta_Taxonomies": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-oferta-taxonomies.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-oferta-taxonomies.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-oferta-taxonomies.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-oferta-taxonomies.php",
+      "modules/oferta-academica/includes/class-oferta-taxonomies.php"
+    ],
+    "FLACSO_Offer_Carta_Contact_Admin": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-offer-carta-contact-admin.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-offer-carta-contact-admin.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-offer-carta-contact-admin.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-offer-carta-contact-admin.php",
+      "modules/oferta-academica/includes/class-offer-carta-contact-admin.php"
+    ],
+    "FLACSO_Offer_Carta_Contact_Bridge": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-offer-carta-contact-bridge.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-offer-carta-contact-bridge.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-offer-carta-contact-bridge.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-offer-carta-contact-bridge.php",
+      "modules/oferta-academica/includes/class-offer-carta-contact-bridge.php"
+    ],
+    "Tabla_Precio_Schema": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-tabla-precio-schema.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-tabla-precio-schema.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-tabla-precio-schema.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-tabla-precio-schema.php",
+      "modules/oferta-academica/includes/class-tabla-precio-schema.php"
+    ],
+    "FLACSO_Price_Table_Repository": [
+      ".worktrees/consultas-transaccionales/modules/oferta-academica/includes/class-tabla-precio-schema.php",
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-tabla-precio-schema.php",
+      ".worktrees/preinscripciones-integration/modules/oferta-academica/includes/class-tabla-precio-schema.php",
+      ".worktrees/seminar-permalink-availability/modules/oferta-academica/includes/class-tabla-precio-schema.php",
+      "modules/oferta-academica/includes/class-tabla-precio-schema.php"
+    ],
+    "FLACSO_Posgrados_Admin_Page": [
+      ".worktrees/consultas-transaccionales/modules/posgrados/includes/admin/class-flacso-posgrados-admin-page.php",
+      ".worktrees/mautic-offer-campaigns/modules/posgrados/includes/admin/class-flacso-posgrados-admin-page.php",
+      ".worktrees/preinscripciones-integration/modules/posgrados/includes/admin/class-flacso-posgrados-admin-page.php",
+      ".worktrees/seminar-permalink-availability/modules/posgrados/includes/admin/class-flacso-posgrados-admin-page.php"
+    ],
+    "FLACSO_Posgrados_Seeder": [
+      ".worktrees/consultas-transaccionales/modules/posgrados/includes/admin/class-flacso-posgrados-seeder.php",
+      ".worktrees/mautic-offer-campaigns/modules/posgrados/includes/admin/class-flacso-posgrados-seeder.php",
+      ".worktrees/preinscripciones-integration/modules/posgrados/includes/admin/class-flacso-posgrados-seeder.php",
+      ".worktrees/seminar-permalink-availability/modules/posgrados/includes/admin/class-flacso-posgrados-seeder.php"
+    ],
+    "FLACSO_Posgrados_Block": [
+      ".worktrees/consultas-transaccionales/modules/posgrados/includes/blocks/class-flacso-posgrados-block.php",
+      ".worktrees/mautic-offer-campaigns/modules/posgrados/includes/blocks/class-flacso-posgrados-block.php",
+      ".worktrees/preinscripciones-integration/modules/posgrados/includes/blocks/class-flacso-posgrados-block.php",
+      ".worktrees/seminar-permalink-availability/modules/posgrados/includes/blocks/class-flacso-posgrados-block.php",
+      "modules/posgrados/includes/blocks/class-flacso-posgrados-block.php"
+    ],
+    "FLACSO_Posgrados_Consultas_Form": [
+      ".worktrees/consultas-transaccionales/modules/posgrados/includes/class-flacso-posgrados-consultas-form.php",
+      ".worktrees/mautic-offer-campaigns/modules/posgrados/includes/class-flacso-posgrados-consultas-form.php",
+      ".worktrees/preinscripciones-integration/modules/posgrados/includes/class-flacso-posgrados-consultas-form.php",
+      ".worktrees/seminar-permalink-availability/modules/posgrados/includes/class-flacso-posgrados-consultas-form.php",
+      "modules/posgrados/includes/class-flacso-posgrados-consultas-form.php"
+    ],
+    "FLACSO_Posgrados_Docentes_Sync": [
+      ".worktrees/consultas-transaccionales/modules/posgrados/includes/class-flacso-posgrados-docentes-sync.php",
+      ".worktrees/mautic-offer-campaigns/modules/posgrados/includes/class-flacso-posgrados-docentes-sync.php",
+      ".worktrees/preinscripciones-integration/modules/posgrados/includes/class-flacso-posgrados-docentes-sync.php",
+      ".worktrees/seminar-permalink-availability/modules/posgrados/includes/class-flacso-posgrados-docentes-sync.php",
+      "modules/posgrados/includes/class-flacso-posgrados-docentes-sync.php"
+    ],
+    "FLACSO_Posgrados_Fields": [
+      ".worktrees/consultas-transaccionales/modules/posgrados/includes/class-flacso-posgrados-fields.php",
+      ".worktrees/mautic-offer-campaigns/modules/posgrados/includes/class-flacso-posgrados-fields.php",
+      ".worktrees/preinscripciones-integration/modules/posgrados/includes/class-flacso-posgrados-fields.php",
+      ".worktrees/seminar-permalink-availability/modules/posgrados/includes/class-flacso-posgrados-fields.php",
+      "modules/posgrados/includes/class-flacso-posgrados-fields.php"
+    ],
+    "FLACSO_Posgrados_Pages": [
+      ".worktrees/consultas-transaccionales/modules/posgrados/includes/class-flacso-posgrados-pages.php",
+      ".worktrees/mautic-offer-campaigns/modules/posgrados/includes/class-flacso-posgrados-pages.php",
+      ".worktrees/preinscripciones-integration/modules/posgrados/includes/class-flacso-posgrados-pages.php",
+      ".worktrees/seminar-permalink-availability/modules/posgrados/includes/class-flacso-posgrados-pages.php",
+      "modules/posgrados/includes/class-flacso-posgrados-pages.php"
+    ],
+    "FLACSO_Posgrados_Plugin": [
+      ".worktrees/consultas-transaccionales/modules/posgrados/includes/class-flacso-posgrados-plugin.php",
+      ".worktrees/mautic-offer-campaigns/modules/posgrados/includes/class-flacso-posgrados-plugin.php",
+      ".worktrees/preinscripciones-integration/modules/posgrados/includes/class-flacso-posgrados-plugin.php",
+      ".worktrees/seminar-permalink-availability/modules/posgrados/includes/class-flacso-posgrados-plugin.php"
+    ],
+    "FLACSO_Preguntas_Frecuentes": [
+      ".worktrees/consultas-transaccionales/modules/preguntas-frecuentes/includes/class-flacso-preguntas-frecuentes.php",
+      ".worktrees/mautic-offer-campaigns/modules/preguntas-frecuentes/includes/class-flacso-preguntas-frecuentes.php",
+      ".worktrees/preinscripciones-integration/modules/preguntas-frecuentes/includes/class-flacso-preguntas-frecuentes.php",
+      ".worktrees/seminar-permalink-availability/modules/preguntas-frecuentes/includes/class-flacso-preguntas-frecuentes.php",
+      "modules/preguntas-frecuentes/includes/class-flacso-preguntas-frecuentes.php"
+    ],
+    "FLACSO_Edicion_Admin_Fields": [
+      ".worktrees/consultas-transaccionales/modules/seminarios/includes/class-edicion-admin-fields.php",
+      ".worktrees/mautic-offer-campaigns/modules/seminarios/includes/class-edicion-admin-fields.php",
+      ".worktrees/preinscripciones-integration/modules/seminarios/includes/class-edicion-admin-fields.php",
+      ".worktrees/seminar-permalink-availability/modules/seminarios/includes/class-edicion-admin-fields.php",
+      "modules/seminarios/includes/class-edicion-admin-fields.php"
+    ],
+    "FLACSO_Edicion": [
+      ".worktrees/consultas-transaccionales/modules/seminarios/includes/class-edicion.php",
+      ".worktrees/mautic-offer-campaigns/modules/seminarios/includes/class-edicion.php",
+      ".worktrees/mautic-offer-campaigns/tests/preinscriptions-rest-contract-test.php",
+      ".worktrees/preinscripciones-integration/modules/seminarios/includes/class-edicion.php",
+      ".worktrees/preinscripciones-integration/tests/preinscriptions-rest-contract-test.php",
+      ".worktrees/seminar-permalink-availability/modules/seminarios/includes/class-edicion.php",
+      ".worktrees/seminar-permalink-availability/tests/preinscriptions-rest-contract-test.php",
+      "modules/seminarios/includes/class-edicion.php",
+      "tests/preinscriptions-rest-contract-test.php"
+    ],
+    "FLACSO_Seminario_Admin_Fields": [
+      ".worktrees/consultas-transaccionales/modules/seminarios/includes/class-seminario-admin-fields.php",
+      ".worktrees/mautic-offer-campaigns/modules/seminarios/includes/class-seminario-admin-fields.php",
+      ".worktrees/preinscripciones-integration/modules/seminarios/includes/class-seminario-admin-fields.php",
+      ".worktrees/seminar-permalink-availability/modules/seminarios/includes/class-seminario-admin-fields.php",
+      "modules/seminarios/includes/class-seminario-admin-fields.php"
+    ],
+    "Seminario_CPT": [
+      ".worktrees/consultas-transaccionales/modules/seminarios/includes/class-seminario-cpt.php",
+      ".worktrees/mautic-offer-campaigns/modules/seminarios/includes/class-seminario-cpt.php",
+      ".worktrees/preinscripciones-integration/modules/seminarios/includes/class-seminario-cpt.php",
+      ".worktrees/seminar-permalink-availability/modules/seminarios/includes/class-seminario-cpt.php",
+      "modules/seminarios/includes/class-seminario-cpt.php"
+    ],
+    "FLACSO_Seminario_Integrado_Meta_Safe": [
+      ".worktrees/consultas-transaccionales/modules/seminarios/includes/class-seminario-integrado-meta-safe.php",
+      ".worktrees/mautic-offer-campaigns/modules/seminarios/includes/class-seminario-integrado-meta-safe.php",
+      ".worktrees/preinscripciones-integration/modules/seminarios/includes/class-seminario-integrado-meta-safe.php",
+      ".worktrees/seminar-permalink-availability/modules/seminarios/includes/class-seminario-integrado-meta-safe.php",
+      "modules/seminarios/includes/class-seminario-integrado-meta-safe.php"
+    ],
+    "FLACSO_Seminario_Integrado_Registration": [
+      ".worktrees/consultas-transaccionales/modules/seminarios/includes/class-seminario-integrado-registration.php",
+      ".worktrees/mautic-offer-campaigns/modules/seminarios/includes/class-seminario-integrado-registration.php",
+      ".worktrees/preinscripciones-integration/modules/seminarios/includes/class-seminario-integrado-registration.php",
+      ".worktrees/seminar-permalink-availability/modules/seminarios/includes/class-seminario-integrado-registration.php",
+      "modules/seminarios/includes/class-seminario-integrado-registration.php"
+    ],
+    "FLACSO_Seminario_Integrado_Workload": [
+      ".worktrees/consultas-transaccionales/modules/seminarios/includes/class-seminario-integrado-workload.php",
+      ".worktrees/mautic-offer-campaigns/modules/seminarios/includes/class-seminario-integrado-workload.php",
+      ".worktrees/preinscripciones-integration/modules/seminarios/includes/class-seminario-integrado-workload.php",
+      ".worktrees/seminar-permalink-availability/modules/seminarios/includes/class-seminario-integrado-workload.php",
+      "modules/seminarios/includes/class-seminario-integrado-workload.php"
+    ],
+    "FLACSO_Seminario_Integrado": [
+      ".worktrees/consultas-transaccionales/modules/seminarios/includes/class-seminario-integrado.php",
+      ".worktrees/mautic-offer-campaigns/modules/seminarios/includes/class-seminario-integrado.php",
+      ".worktrees/preinscripciones-integration/modules/seminarios/includes/class-seminario-integrado.php",
+      ".worktrees/seminar-permalink-availability/modules/seminarios/includes/class-seminario-integrado.php",
+      "modules/seminarios/includes/class-seminario-integrado.php"
+    ],
+    "FLACSO_Seminar_Settings": [
+      ".worktrees/consultas-transaccionales/modules/seminarios/includes/class-seminario-settings.php",
+      ".worktrees/mautic-offer-campaigns/modules/seminarios/includes/class-seminario-settings.php",
+      ".worktrees/preinscripciones-integration/modules/seminarios/includes/class-seminario-settings.php",
+      ".worktrees/seminar-permalink-availability/modules/seminarios/includes/class-seminario-settings.php",
+      "modules/seminarios/includes/class-seminario-settings.php"
+    ],
+    "FLACSO_Seminario_Sort_Safe": [
+      ".worktrees/consultas-transaccionales/modules/seminarios/includes/class-seminario-sort-safe.php",
+      ".worktrees/mautic-offer-campaigns/modules/seminarios/includes/class-seminario-sort-safe.php",
+      ".worktrees/preinscripciones-integration/modules/seminarios/includes/class-seminario-sort-safe.php",
+      ".worktrees/seminar-permalink-availability/modules/seminarios/includes/class-seminario-sort-safe.php",
+      "modules/seminarios/includes/class-seminario-sort-safe.php"
+    ],
+    "FLACSO_Seminario": [
+      ".worktrees/consultas-transaccionales/modules/seminarios/includes/class-seminario.php",
+      ".worktrees/mautic-offer-campaigns/modules/seminarios/includes/class-seminario.php",
+      ".worktrees/mautic-offer-campaigns/tests/preinscription-local-opening-test.php",
+      ".worktrees/preinscripciones-integration/modules/seminarios/includes/class-seminario.php",
+      ".worktrees/seminar-permalink-availability/modules/seminarios/includes/class-seminario.php",
+      "modules/seminarios/includes/class-seminario.php",
+      "tests/preinscription-local-opening-test.php",
+      "tests/preinscriptions-rest-contract-test.php"
+    ],
+    "Seminario_Plugin": [
+      ".worktrees/consultas-transaccionales/modules/seminarios/init.php",
+      ".worktrees/mautic-offer-campaigns/modules/seminarios/init.php",
+      ".worktrees/preinscripciones-integration/modules/seminarios/init.php",
+      ".worktrees/seminar-permalink-availability/modules/seminarios/init.php",
+      "modules/seminarios/init.php"
+    ],
+    "WP_CLI": [
+      ".worktrees/consultas-transaccionales/tests/academic-cli-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/academic-cli-test.php",
+      ".worktrees/preinscripciones-integration/tests/academic-cli-test.php",
+      ".worktrees/seminar-permalink-availability/tests/academic-cli-test.php",
+      "tests/academic-cli-test.php"
+    ],
+    "WP_REST_Server": [
+      ".worktrees/consultas-transaccionales/tests/academic-settings-api-test.php",
+      ".worktrees/consultas-transaccionales/tests/inquiry-handler-wiring-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/academic-settings-api-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/chatbot-inquiry-api-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/inquiry-handler-wiring-test.php",
+      ".worktrees/preinscripciones-integration/tests/academic-settings-api-test.php",
+      ".worktrees/preinscripciones-integration/tests/inquiry-handler-wiring-test.php",
+      ".worktrees/seminar-permalink-availability/tests/academic-settings-api-test.php",
+      ".worktrees/seminar-permalink-availability/tests/inquiry-handler-wiring-test.php",
+      "tests/academic-settings-api-test.php",
+      "tests/chatbot-inquiry-api-test.php",
+      "tests/inquiry-handler-wiring-test.php"
+    ],
+    "WP_REST_Request": [
+      ".worktrees/consultas-transaccionales/tests/academic-settings-api-test.php",
+      ".worktrees/consultas-transaccionales/tests/inquiry-handler-wiring-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/academic-settings-api-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/chatbot-inquiry-api-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/inquiry-handler-wiring-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/mautic-campaign-webhook-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/preinscriptions-rest-contract-test.php",
+      ".worktrees/preinscripciones-integration/tests/academic-settings-api-test.php",
+      ".worktrees/preinscripciones-integration/tests/inquiry-handler-wiring-test.php",
+      ".worktrees/preinscripciones-integration/tests/preinscriptions-rest-contract-test.php",
+      ".worktrees/seminar-permalink-availability/tests/academic-settings-api-test.php",
+      ".worktrees/seminar-permalink-availability/tests/inquiry-handler-wiring-test.php",
+      ".worktrees/seminar-permalink-availability/tests/preinscriptions-rest-contract-test.php",
+      "tests/academic-settings-api-test.php",
+      "tests/chatbot-inquiry-api-test.php",
+      "tests/inquiry-handler-wiring-test.php",
+      "tests/preinscriptions-rest-contract-test.php"
+    ],
+    "WP_REST_Response": [
+      ".worktrees/consultas-transaccionales/tests/academic-settings-api-test.php",
+      ".worktrees/consultas-transaccionales/tests/inquiry-handler-wiring-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/academic-settings-api-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/chatbot-inquiry-api-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/inquiry-handler-wiring-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/mautic-campaign-webhook-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/preinscriptions-rest-contract-test.php",
+      ".worktrees/preinscripciones-integration/tests/academic-settings-api-test.php",
+      ".worktrees/preinscripciones-integration/tests/inquiry-handler-wiring-test.php",
+      ".worktrees/preinscripciones-integration/tests/preinscriptions-rest-contract-test.php",
+      ".worktrees/seminar-permalink-availability/tests/academic-settings-api-test.php",
+      ".worktrees/seminar-permalink-availability/tests/inquiry-handler-wiring-test.php",
+      ".worktrees/seminar-permalink-availability/tests/preinscriptions-rest-contract-test.php",
+      "tests/academic-settings-api-test.php",
+      "tests/chatbot-inquiry-api-test.php",
+      "tests/inquiry-handler-wiring-test.php",
+      "tests/preinscriptions-rest-contract-test.php"
+    ],
+    "WP_Post": [
+      ".worktrees/consultas-transaccionales/tests/academic-team-contact-model-test.php",
+      ".worktrees/consultas-transaccionales/tests/oferta-abreviacion-test.php",
+      ".worktrees/consultas-transaccionales/tests/offer-presentation-color-persistence-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/academic-team-contact-model-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/oferta-abreviacion-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/offer-presentation-color-persistence-test.php",
+      ".worktrees/preinscripciones-integration/tests/academic-team-contact-model-test.php",
+      ".worktrees/preinscripciones-integration/tests/oferta-abreviacion-test.php",
+      ".worktrees/preinscripciones-integration/tests/offer-presentation-color-persistence-test.php",
+      ".worktrees/seminar-permalink-availability/tests/academic-team-contact-model-test.php",
+      ".worktrees/seminar-permalink-availability/tests/oferta-abreviacion-test.php",
+      ".worktrees/seminar-permalink-availability/tests/offer-presentation-color-persistence-test.php",
+      "tests/academic-team-contact-model-test.php",
+      "tests/oferta-abreviacion-test.php",
+      "tests/oferta-list-edit-cohort-test.php",
+      "tests/oferta-list-ui-test.php",
+      "tests/offer-presentation-color-persistence-test.php"
+    ],
+    "WP_Error": [
+      ".worktrees/consultas-transaccionales/tests/inquiry-delivery-service-test.php",
+      ".worktrees/consultas-transaccionales/tests/inquiry-delivery-worker-test.php",
+      ".worktrees/consultas-transaccionales/tests/inquiry-followup-service-test.php",
+      ".worktrees/consultas-transaccionales/tests/inquiry-mailjet-client-test.php",
+      ".worktrees/consultas-transaccionales/tests/inquiry-marketing-consent-test.php",
+      ".worktrees/consultas-transaccionales/tests/inquiry-marketing-tags-test.php",
+      ".worktrees/consultas-transaccionales/tests/mautic-client-test.php",
+      ".worktrees/consultas-transaccionales/tests/mautic-contract-validator-test.php",
+      ".worktrees/consultas-transaccionales/tests/rest-public-visibility-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/chatbot-inquiry-api-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/general-inquiry-mautic-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/inquiry-campaign-service-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/inquiry-delivery-order-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/inquiry-delivery-service-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/inquiry-delivery-worker-batch-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/inquiry-delivery-worker-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/inquiry-followup-service-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/inquiry-marketing-consent-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/inquiry-marketing-tags-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/mautic-campaign-webhook-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/mautic-client-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/mautic-contract-validator-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/rest-public-visibility-test.php",
+      ".worktrees/preinscripciones-integration/tests/inquiry-delivery-service-test.php",
+      ".worktrees/preinscripciones-integration/tests/inquiry-delivery-worker-test.php",
+      ".worktrees/preinscripciones-integration/tests/inquiry-followup-service-test.php",
+      ".worktrees/preinscripciones-integration/tests/inquiry-mailjet-client-test.php",
+      ".worktrees/preinscripciones-integration/tests/inquiry-marketing-consent-test.php",
+      ".worktrees/preinscripciones-integration/tests/inquiry-marketing-tags-test.php",
+      ".worktrees/preinscripciones-integration/tests/mautic-client-test.php",
+      ".worktrees/preinscripciones-integration/tests/mautic-contract-validator-test.php",
+      ".worktrees/preinscripciones-integration/tests/rest-public-visibility-test.php",
+      ".worktrees/seminar-permalink-availability/tests/inquiry-delivery-service-test.php",
+      ".worktrees/seminar-permalink-availability/tests/inquiry-delivery-worker-test.php",
+      ".worktrees/seminar-permalink-availability/tests/inquiry-followup-service-test.php",
+      ".worktrees/seminar-permalink-availability/tests/inquiry-mailjet-client-test.php",
+      ".worktrees/seminar-permalink-availability/tests/inquiry-marketing-consent-test.php",
+      ".worktrees/seminar-permalink-availability/tests/inquiry-marketing-tags-test.php",
+      ".worktrees/seminar-permalink-availability/tests/mautic-client-test.php",
+      ".worktrees/seminar-permalink-availability/tests/mautic-contract-validator-test.php",
+      ".worktrees/seminar-permalink-availability/tests/rest-public-visibility-test.php",
+      "tests/academic-articulations-domain-test.php",
+      "tests/chatbot-inquiry-api-test.php",
+      "tests/general-inquiry-mautic-test.php",
+      "tests/inquiry-delivery-order-test.php",
+      "tests/inquiry-delivery-service-test.php",
+      "tests/inquiry-delivery-worker-batch-test.php",
+      "tests/inquiry-delivery-worker-test.php",
+      "tests/inquiry-followup-service-test.php",
+      "tests/inquiry-marketing-consent-test.php",
+      "tests/inquiry-marketing-tags-test.php",
+      "tests/mautic-client-test.php",
+      "tests/mautic-contract-validator-test.php",
+      "tests/pdf-proxy-security-test.php",
+      "tests/preinscriptions-rest-contract-test.php",
+      "tests/rest-public-visibility-test.php"
+    ],
+    "TestAjaxSuccessException": [
+      ".worktrees/consultas-transaccionales/tests/inquiry-handler-wiring-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/inquiry-handler-wiring-test.php",
+      ".worktrees/preinscripciones-integration/tests/inquiry-handler-wiring-test.php",
+      ".worktrees/seminar-permalink-availability/tests/inquiry-handler-wiring-test.php",
+      "tests/inquiry-handler-wiring-test.php"
+    ],
+    "TestAjaxErrorException": [
+      ".worktrees/consultas-transaccionales/tests/inquiry-handler-wiring-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/inquiry-handler-wiring-test.php",
+      ".worktrees/preinscripciones-integration/tests/inquiry-handler-wiring-test.php",
+      ".worktrees/seminar-permalink-availability/tests/inquiry-handler-wiring-test.php",
+      "tests/inquiry-handler-wiring-test.php"
+    ],
+    "FLACSO_Offer_Inquiry_Repository_Race_Test": [
+      ".worktrees/consultas-transaccionales/tests/inquiry-repositories-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/inquiry-repositories-test.php",
+      ".worktrees/preinscripciones-integration/tests/inquiry-repositories-test.php",
+      ".worktrees/seminar-permalink-availability/tests/inquiry-repositories-test.php",
+      "tests/inquiry-repositories-test.php"
+    ],
+    "TestAjaxException": [
+      ".worktrees/consultas-transaccionales/tests/mail-console-and-consultas-admin-test.php",
+      ".worktrees/preinscripciones-integration/tests/mail-console-and-consultas-admin-test.php",
+      ".worktrees/seminar-permalink-availability/tests/mail-console-and-consultas-admin-test.php"
+    ],
+    "FakeQuery": [
+      ".worktrees/consultas-transaccionales/tests/rest-public-visibility-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/rest-public-visibility-test.php",
+      ".worktrees/preinscripciones-integration/tests/rest-public-visibility-test.php",
+      ".worktrees/seminar-permalink-availability/tests/rest-public-visibility-test.php",
+      "tests/rest-public-visibility-test.php"
+    ],
+    "FakeRequest": [
+      ".worktrees/consultas-transaccionales/tests/rest-public-visibility-test.php",
+      ".worktrees/mautic-offer-campaigns/tests/rest-public-visibility-test.php",
+      ".worktrees/preinscripciones-integration/tests/rest-public-visibility-test.php",
+      ".worktrees/seminar-permalink-availability/tests/rest-public-visibility-test.php",
+      "tests/rest-public-visibility-test.php"
+    ],
+    "FLACSO_Academic_Assistant": [
+      ".worktrees/mautic-offer-campaigns/includes/core/class-flacso-academic-assistant.php",
+      ".worktrees/seminar-permalink-availability/includes/core/class-flacso-academic-assistant.php",
+      "includes/core/class-flacso-academic-assistant.php"
+    ],
+    "FLACSO_Uruguay_Module_Registry": [
+      ".worktrees/mautic-offer-campaigns/includes/core/class-flacso-module-registry.php",
+      "includes/core/class-flacso-module-registry.php"
+    ],
+    "FLACSO_Mailing_Client": [
+      ".worktrees/mautic-offer-campaigns/includes/integrations/class-flacso-mailing-client.php",
+      "includes/integrations/class-flacso-mailing-client.php"
+    ],
+    "FLACSO_Chatbot_Inquiry_API": [
+      ".worktrees/mautic-offer-campaigns/modules/consultas/includes/class-flacso-chatbot-inquiry-api.php",
+      "modules/consultas/includes/class-flacso-chatbot-inquiry-api.php"
+    ],
+    "FLACSO_Mautic_Delivery_Contract_Cache": [
+      ".worktrees/mautic-offer-campaigns/modules/consultas/services/class-flacso-mautic-delivery-contract-cache.php",
+      "modules/consultas/services/class-flacso-mautic-delivery-contract-cache.php"
+    ],
+    "FLACSO_Home_Campaign": [
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/class-flacso-home-campaign.php",
+      ".worktrees/preinscripciones-integration/modules/main-page/includes/class-flacso-home-campaign.php",
+      ".worktrees/seminar-permalink-availability/modules/main-page/includes/class-flacso-home-campaign.php",
+      "modules/main-page/includes/class-flacso-home-campaign.php"
+    ],
+    "Flacso_Homepage_Admin_V2": [
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/class-flacso-homepage-admin-v2.php",
+      "modules/main-page/includes/class-flacso-homepage-admin-v2.php"
+    ],
+    "Flacso_Homepage_Section_Registry": [
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/class-flacso-homepage-section-registry.php",
+      "modules/main-page/includes/class-flacso-homepage-section-registry.php"
+    ],
+    "Flacso_Main_Page_Section_Keys": [
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/class-flacso-main-page-section-keys.php",
+      "modules/main-page/includes/class-flacso-main-page-section-keys.php"
+    ],
+    "Flacso_Main_Page_Settings_Migration": [
+      ".worktrees/mautic-offer-campaigns/modules/main-page/includes/class-flacso-main-page-settings-migration.php",
+      "modules/main-page/includes/class-flacso-main-page-settings-migration.php"
+    ],
+    "FLACSO_Preinscription_Ajax_Handlers": [
+      ".worktrees/mautic-offer-campaigns/modules/oferta-academica/includes/class-preinscription-ajax-handlers.php",
+      "modules/oferta-academica/includes/class-preinscription-ajax-handlers.php"
+    ],
+    "FLACSO_Preinscriptions_Admin": [
+      ".worktrees/mautic-offer-campaigns/modules/preinscripciones/includes/class-preinscriptions-admin.php",
+      ".worktrees/preinscripciones-integration/modules/preinscripciones/includes/class-preinscriptions-admin.php",
+      ".worktrees/seminar-permalink-availability/modules/preinscripciones/includes/class-preinscriptions-admin.php",
+      "modules/preinscripciones/includes/class-preinscriptions-admin.php"
+    ],
+    "FLACSO_Preinscriptions_Cache": [
+      ".worktrees/mautic-offer-campaigns/modules/preinscripciones/includes/class-preinscriptions-cache.php",
+      "modules/preinscripciones/includes/class-preinscriptions-cache.php"
+    ],
+    "FLACSO_Preinscriptions_Config": [
+      ".worktrees/mautic-offer-campaigns/modules/preinscripciones/includes/class-preinscriptions-config.php",
+      ".worktrees/preinscripciones-integration/modules/preinscripciones/includes/class-preinscriptions-config.php",
+      ".worktrees/seminar-permalink-availability/modules/preinscripciones/includes/class-preinscriptions-config.php",
+      "modules/preinscripciones/includes/class-preinscriptions-config.php"
+    ],
+    "FLACSO_Preinscriptions_Field_Catalog": [
+      ".worktrees/mautic-offer-campaigns/modules/preinscripciones/includes/class-preinscriptions-field-catalog.php",
+      ".worktrees/preinscripciones-integration/modules/preinscripciones/includes/class-preinscriptions-field-catalog.php",
+      ".worktrees/seminar-permalink-availability/modules/preinscripciones/includes/class-preinscriptions-field-catalog.php",
+      "modules/preinscripciones/includes/class-preinscriptions-field-catalog.php"
+    ],
+    "FLACSO_Preinscriptions_Meta": [
+      ".worktrees/mautic-offer-campaigns/modules/preinscripciones/includes/class-preinscriptions-meta.php",
+      ".worktrees/preinscripciones-integration/modules/preinscripciones/includes/class-preinscriptions-meta.php",
+      ".worktrees/seminar-permalink-availability/modules/preinscripciones/includes/class-preinscriptions-meta.php",
+      "modules/preinscripciones/includes/class-preinscriptions-meta.php"
+    ],
+    "FLACSO_Preinscriptions_REST": [
+      ".worktrees/mautic-offer-campaigns/modules/preinscripciones/includes/class-preinscriptions-rest.php",
+      ".worktrees/preinscripciones-integration/modules/preinscripciones/includes/class-preinscriptions-rest.php",
+      ".worktrees/seminar-permalink-availability/modules/preinscripciones/includes/class-preinscriptions-rest.php",
+      "modules/preinscripciones/includes/class-preinscriptions-rest.php"
+    ],
+    "FLACSO_Preinscriptions_Serializer": [
+      ".worktrees/mautic-offer-campaigns/modules/preinscripciones/includes/class-preinscriptions-serializer.php",
+      ".worktrees/preinscripciones-integration/modules/preinscripciones/includes/class-preinscriptions-serializer.php",
+      ".worktrees/seminar-permalink-availability/modules/preinscripciones/includes/class-preinscriptions-serializer.php",
+      "modules/preinscripciones/includes/class-preinscriptions-serializer.php"
+    ],
+    "contract": [
+      ".worktrees/mautic-offer-campaigns/tests/academic-assistant-interface-contract-test.php",
+      ".worktrees/seminar-permalink-availability/tests/academic-assistant-interface-contract-test.php",
+      "tests/academic-assistant-interface-contract-test.php"
+    ],
+    "exists": [
+      ".worktrees/mautic-offer-campaigns/tests/custom-404-layout-contract-test.php",
+      "tests/custom-404-layout-contract-test.php"
+    ],
+    "Redirect": [
+      ".worktrees/mautic-offer-campaigns/tests/general-inquiry-handler-test.php",
+      "tests/general-inquiry-handler-test.php"
+    ],
+    "WP_Query": [
+      ".worktrees/mautic-offer-campaigns/tests/home-featured-query-test.php",
+      "tests/home-featured-query-test.php"
+    ],
+    "FLACSO_Counting_PDO": [
+      ".worktrees/mautic-offer-campaigns/tests/inquiry-analytics-query-plan-test.php",
+      "tests/inquiry-analytics-query-plan-test.php"
+    ],
+    "FLACSO_Failing_PDO": [
+      ".worktrees/mautic-offer-campaigns/tests/inquiry-delivery-worker-db-outage-test.php",
+      "tests/inquiry-delivery-worker-db-outage-test.php"
+    ],
+    "PreinscriptionJsonResponse": [
+      ".worktrees/mautic-offer-campaigns/tests/preinscription-local-opening-test.php",
+      "tests/preinscription-local-opening-test.php"
+    ],
+    "does": [
+      ".worktrees/mautic-offer-campaigns/tests/preinscriptions-config-contract-test.php",
+      ".worktrees/preinscripciones-integration/tests/preinscriptions-config-contract-test.php",
+      ".worktrees/seminar-permalink-availability/tests/preinscriptions-config-contract-test.php",
+      "tests/preinscriptions-config-contract-test.php"
+    ]
+  },
+  "hotspot_files": [
+    {
+      "file": ".worktrees/consultas-transaccionales/modules/main-page/sections/novedades-section.php",
+      "module": "root",
+      "lines": 2717,
+      "bytes_utf8": 113989
+    },
+    {
+      "file": ".worktrees/mautic-offer-campaigns/modules/main-page/sections/novedades-section.php",
+      "module": "root",
+      "lines": 2717,
+      "bytes_utf8": 114016
+    },
+    {
+      "file": ".worktrees/preinscripciones-integration/modules/main-page/sections/novedades-section.php",
+      "module": "root",
+      "lines": 2717,
+      "bytes_utf8": 113989
+    },
+    {
+      "file": ".worktrees/seminar-permalink-availability/modules/main-page/sections/novedades-section.php",
+      "module": "root",
+      "lines": 2717,
+      "bytes_utf8": 113989
+    },
+    {
+      "file": "modules/main-page/sections/novedades-section.php",
+      "module": "main-page",
+      "lines": 2717,
+      "bytes_utf8": 114016
+    },
+    {
+      "file": ".worktrees/consultas-transaccionales/includes/core/class-flacso-integrations-settings.php",
+      "module": "root",
+      "lines": 2341,
+      "bytes_utf8": 104935
+    },
+    {
+      "file": ".worktrees/preinscripciones-integration/includes/core/class-flacso-integrations-settings.php",
+      "module": "root",
+      "lines": 2341,
+      "bytes_utf8": 104935
+    },
+    {
+      "file": ".worktrees/seminar-permalink-availability/includes/core/class-flacso-integrations-settings.php",
+      "module": "root",
+      "lines": 2341,
+      "bytes_utf8": 104935
+    },
+    {
+      "file": "modules/main-page/includes/flacso-consultas.php",
+      "module": "main-page",
+      "lines": 2233,
+      "bytes_utf8": 83385
+    },
+    {
+      "file": ".worktrees/consultas-transaccionales/modules/main-page/includes/flacso-consultas.php",
+      "module": "root",
+      "lines": 2202,
+      "bytes_utf8": 81798
+    },
+    {
+      "file": ".worktrees/mautic-offer-campaigns/modules/main-page/includes/flacso-consultas.php",
+      "module": "root",
+      "lines": 2202,
+      "bytes_utf8": 81798
+    },
+    {
+      "file": ".worktrees/preinscripciones-integration/modules/main-page/includes/flacso-consultas.php",
+      "module": "root",
+      "lines": 2202,
+      "bytes_utf8": 81798
+    },
+    {
+      "file": ".worktrees/seminar-permalink-availability/modules/main-page/includes/flacso-consultas.php",
+      "module": "root",
+      "lines": 2202,
+      "bytes_utf8": 81798
+    },
+    {
+      "file": ".worktrees/mautic-offer-campaigns/includes/core/class-flacso-integrations-settings.php",
+      "module": "root",
+      "lines": 2067,
+      "bytes_utf8": 91048
+    },
+    {
+      "file": "includes/core/class-flacso-integrations-settings.php",
+      "module": "shared",
+      "lines": 2067,
+      "bytes_utf8": 91048
+    }
+  ],
+  "limitations": [
+    "Regex matches may include text strings or inactive code; no full PHP AST.",
+    "Class references and cycles are candidate dependencies, never proven calls.",
+    "Dynamic hooks/routes/meta and permission callbacks need runtime verification.",
+    "SQL keywords do not establish a live database table or schema.",
+    "No production, credentials, data records or environment inspected."
+  ]
+}

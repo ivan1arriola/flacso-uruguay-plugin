@@ -25,10 +25,10 @@ class FLACSO_Legacy_Redirects {
             
             $base_url = 'https://preinscripciones.flacso.edu.uy';
             
-            if ($type === 'ofertas') {
-                $redirect_url = $base_url . '/ofertas/' . $slug . '/';
+            if (strtolower($type) === 'ofertas') {
+                $redirect_url = $base_url . '/oferta/' . $slug . '/';
             } else { // formacion/seminarios
-                $redirect_url = $base_url . '/seminarios/' . $slug . '/';
+                $redirect_url = $base_url . '/seminario/' . $slug . '/';
             }
             
             wp_redirect($redirect_url, 301);

@@ -21,7 +21,7 @@ final class FLACSO_Preinscriptions_Cache {
 
         self::$hooks_registered = true;
 
-        foreach (['cohorte', 'edicion', 'oferta-academica'] as $post_type) {
+        foreach (['cohorte', 'edicion', 'oferta-academica', 'seminario'] as $post_type) {
             add_action('save_post_' . $post_type, [self::class, 'handle_post_save'], 99, 1);
         }
 
@@ -74,7 +74,7 @@ final class FLACSO_Preinscriptions_Cache {
         }
 
         $post_type = get_post_type($post_id);
-        if (!in_array($post_type, ['cohorte', 'edicion', 'oferta-academica'], true)) {
+        if (!in_array($post_type, ['cohorte', 'edicion', 'oferta-academica', 'seminario'], true)) {
             return;
         }
 

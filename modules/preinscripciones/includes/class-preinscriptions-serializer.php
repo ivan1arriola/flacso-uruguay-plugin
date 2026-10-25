@@ -19,6 +19,10 @@ final class FLACSO_Preinscriptions_Serializer {
             'order'          => 'ASC',
         ]);
 
+        self::prime_parent_caches($cohort_posts, defined('FLACSO_Cohorte::META_PARENT_ID')
+            ? FLACSO_Cohorte::META_PARENT_ID
+            : 'oferta_academica_id');
+
         foreach ($cohort_posts as $post) {
             $serialized = self::for_cohort((int) $post->ID);
             if ($serialized !== null) {
@@ -36,8 +40,33 @@ final class FLACSO_Preinscriptions_Serializer {
             'order'          => 'ASC',
         ]);
 
+        self::prime_parent_caches($edition_posts, defined('FLACSO_Edicion::META_PARENT_ID')
+            ? FLACSO_Edicion::META_PARENT_ID
+            : 'seminario_id');
+
+        // La preinscripción de un Seminario Integrado corresponde al integrado,
+        // no a sus ediciones componentes individuales.
+        $component_edition_ids = [];
+        if (class_exists('FLACSO_Seminario_Integrado')) {
+            $parent_key = defined('FLACSO_Edicion::META_PARENT_ID')
+                ? FLACSO_Edicion::META_PARENT_ID
+                : 'seminario_id';
+            foreach ($edition_posts as $post) {
+                $edition_id = (int) $post->ID;
+                $seminar_id = (int) get_post_meta($edition_id, $parent_key, true);
+                if ($seminar_id > 0 && FLACSO_Seminario_Integrado::is_integrated($seminar_id)) {
+                    foreach (FLACSO_Seminario_Integrado::component_edition_ids($edition_id) as $comp_id) {
+                        $component_edition_ids[(int) $comp_id] = true;
+                    }
+                }
+            }
+        }
+
         $edition_targets = [];
         foreach ($edition_posts as $post) {
+            if (isset($component_edition_ids[(int) $post->ID])) {
+                continue;
+            }
             $serialized = self::for_edition((int) $post->ID);
             if ($serialized !== null) {
                 $edition_targets[] = $serialized;
@@ -284,6 +313,7 @@ final class FLACSO_Preinscriptions_Serializer {
             foreach ($indexes as $index) {
                 $cohort_targets[$index]['registrationOpen'] = false;
                 $cohort_targets[$index]['registrationAvailability'] = 'conflict';
+                $cohort_targets[$index] = self::refresh_target_revision($cohort_targets[$index]);
             }
         }
 
@@ -318,6 +348,7 @@ final class FLACSO_Preinscriptions_Serializer {
                 if ($has_conflict) {
                     $edition_targets[$index]['registrationOpen'] = false;
                     $edition_targets[$index]['registrationAvailability'] = 'conflict';
+                    $edition_targets[$index] = self::refresh_target_revision($edition_targets[$index]);
                     continue;
                 }
 
@@ -325,10 +356,58 @@ final class FLACSO_Preinscriptions_Serializer {
                 $edition_targets[$index]['registrationAvailability'] = $edition_targets[$index]['registrationOpen']
                     ? 'open'
                     : 'closed';
+                $edition_targets[$index] = self::refresh_target_revision($edition_targets[$index]);
             }
         }
 
         return $edition_targets;
+    }
+
+    /**
+     * Hidrata en bloque posts y metadatos de los padres (ofertas/seminarios) para
+     * evitar una consulta por cada cohorte o edición al serializar el catálogo.
+     */
+    private static function prime_parent_caches(array $posts, string $parent_key): void {
+        if (!function_exists('_prime_post_caches')) {
+            return;
+        }
+
+        $parent_ids = [];
+        foreach ($posts as $post) {
+            $parent_id = (int) get_post_meta((int) $post->ID, $parent_key, true);
+            if ($parent_id > 0) {
+                $parent_ids[$parent_id] = $parent_id;
+            }
+        }
+
+        if ($parent_ids !== []) {
+            _prime_post_caches(array_values($parent_ids), true, true);
+        }
+    }
+
+    private static function refresh_target_revision(array $target): array {
+        $is_seminar = ($target['kind'] ?? '') === 'seminar';
+        $canonical = [
+            'kind'               => $target['kind'] ?? '',
+            'type'               => $is_seminar ? 'seminar' : ($target['offer']['type'] ?? ''),
+            'orientations'       => $target['orientations'] ?? [],
+            'mentions'           => $target['mentions'] ?? [],
+            'registrationOpen'   => (bool) ($target['registrationOpen'] ?? false),
+            'registrationWindow' => [
+                'from'  => $target['registrationWindow']['from'] ?? null,
+                'until' => $target['registrationWindow']['until'] ?? null,
+            ],
+            'urls'               => [
+                'public'             => $target['urls']['public'] ?? null,
+                'wordpress'          => $target['urls']['wordpress'] ?? null,
+                'legacyRegistration' => $target['urls']['legacyRegistration'] ?? null,
+            ],
+        ];
+        if ($is_seminar) {
+            $canonical['registrationAvailability'] = $target['registrationAvailability'] ?? 'closed';
+        }
+        $target['configRevision'] = FLACSO_Preinscriptions_Config::revision($canonical);
+        return $target;
     }
 
     private static function registration_path($url): ?string {

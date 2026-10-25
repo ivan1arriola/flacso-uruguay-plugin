@@ -17,7 +17,7 @@ require_once __DIR__ . '/../modules/preinscripciones/includes/class-preinscripti
 
 FLACSO_Preinscriptions_Cache::init();
 
-foreach (['save_post_cohorte', 'save_post_edicion', 'save_post_oferta-academica'] as $hook) {
+foreach (['save_post_cohorte', 'save_post_edicion', 'save_post_oferta-academica', 'save_post_seminario'] as $hook) {
     if (!isset($registered[$hook])) {
         throw new RuntimeException("Missing cache invalidation hook: {$hook}");
     }
