@@ -221,6 +221,7 @@ final class Flacso_Main_Page_Loader {
             'sections/convenios-responsivos.php',
             'sections/novedades-section.php',
             'sections/quienes-somos.php',
+            'sections/instagram.php',
             'sections/congreso.php',
             'sections/contacto.php',
             'sections/landing-page.php',

@@ -2,8 +2,9 @@
 /**
  * Builder de la portada FLACSO.
  *
- * Las secciones ya no se conocen aquí una por una: se obtienen del registry y
- * el orden/visibilidad proviene de Flacso_Main_Page_Settings.
+ * Las secciones propias de main-page se declaran aquí; cada dominio agrega la
+ * suya con el filtro `flacso_homepage_sections`. El orden y la visibilidad
+ * provienen de Flacso_Main_Page_Settings.
  */
 
 if (!defined('ABSPATH')) {
@@ -12,13 +13,49 @@ if (!defined('ABSPATH')) {
 
 add_shortcode('flacso_homepage_builder', 'flacso_homepage_builder_render');
 
-if (!function_exists('flacso_homepage_builder_render')) {
-    function flacso_homepage_builder_render(): string {
-        if (!class_exists('Flacso_Homepage_Section_Registry')) {
-            return '';
+if (!function_exists('flacso_homepage_builder_get_sections')) {
+    /**
+     * Secciones disponibles para la portada, indexadas por clave.
+     *
+     * @return array<string,array<string,string>>
+     */
+    function flacso_homepage_builder_get_sections(): array {
+        // Sólo contenido cuyo propietario real es main-page.
+        $sections = [
+            'hero' => ['function' => 'flacso_section_hero_render', 'owner' => 'main-page'],
+            'novedades' => ['function' => 'flacso_section_novedades_render', 'owner' => 'main-page'],
+            'quienes' => ['function' => 'flacso_section_quienes_somos_render', 'owner' => 'main-page'],
+            'instagram' => ['function' => 'flacso_section_instagram_render', 'owner' => 'main-page'],
+            'congreso' => ['function' => 'flacso_section_congreso_render', 'owner' => 'main-page'],
+            'contacto' => ['function' => 'flacso_section_contacto_render', 'owner' => 'main-page'],
+        ];
+
+        $sections = apply_filters('flacso_homepage_sections', $sections);
+        if (!is_array($sections)) {
+            return [];
         }
 
-        $registry = Flacso_Homepage_Section_Registry::all();
+        $normalized = [];
+        foreach ($sections as $key => $definition) {
+            $key = sanitize_key((string) $key);
+            $function = is_array($definition) ? (string) ($definition['function'] ?? '') : '';
+            if ($key === '' || $function === '') {
+                continue;
+            }
+            $normalized[$key] = [
+                'key' => $key,
+                'function' => $function,
+                'owner' => sanitize_key((string) ($definition['owner'] ?? 'main-page')),
+                'react_component' => sanitize_key((string) ($definition['react_component'] ?? '')),
+            ];
+        }
+        return $normalized;
+    }
+}
+
+if (!function_exists('flacso_homepage_builder_render')) {
+    function flacso_homepage_builder_render(): string {
+        $registry = flacso_homepage_builder_get_sections();
         $is_frontend_render = !is_admin() && !(defined('REST_REQUEST') && REST_REQUEST);
         $use_react = $is_frontend_render && apply_filters('flacso_main_page_use_react', false);
 
