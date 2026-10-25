@@ -51,30 +51,8 @@ if (!function_exists('dp_strip_prefix_from_name')) {
 
 
 // Función para generar color aleatorio basado en las iniciales (consistente)
-function generar_color_avatar($nombre) {
-    $colores = [
-        '#0d6efd', '#6610f2', '#6f42c1', '#d63384', '#dc3545',
-        '#fd7e14', '#ffc107', '#198754', '#20c997', '#0dcaf0'
-    ];
-    
-    // Generar índice basado en el nombre para consistencia (usando intval para evitar float)
-    $hash = crc32($nombre);
-    $indice = abs($hash) % count($colores);
-    return $colores[$indice];
-}
 
 // Función para generar gradiente basado en el color
-function generar_gradiente($color_base) {
-    $gradientes = [
-        "linear-gradient(135deg, {$color_base} 0%, " . ajustar_luminosidad($color_base, -20) . " 100%)",
-        "linear-gradient(135deg, {$color_base} 0%, " . ajustar_luminosidad($color_base, -30) . " 100%)",
-        "linear-gradient(135deg, " . ajustar_luminosidad($color_base, 10) . " 0%, {$color_base} 100%)"
-    ];
-    
-    $hash = crc32($color_base);
-    $indice = abs($hash) % count($gradientes);
-    return $gradientes[$indice];
-}
 
 // Función auxiliar para ajustar luminosidad
 function ajustar_luminosidad($hex, $percent) {
@@ -226,13 +204,7 @@ function dp_safe_cv_html($html) {
     return wp_kses($html, $allowed);
 }
 }
-function dp_get_docente_emails($docente_id) {
-    return [];
-}
 
-function dp_get_docente_principal_email($docente_id) {
-    return null;
-}
 
 function dp_get_docente_socials($docente_id) {
     $redes = get_post_meta($docente_id, 'docente_redes', true);
@@ -255,111 +227,10 @@ function dp_get_docente_socials($docente_id) {
 /* team-page mapping functions removed */
 
 if (!function_exists('dp_page_has_ancestor_in_list')) {
-function dp_page_has_ancestor_in_list($page_id, array $ancestor_ids) {
-    $page_id = (int) $page_id;
-    if (!$page_id || empty($ancestor_ids)) {
-        return false;
-    }
-
-    if (in_array($page_id, $ancestor_ids, true)) {
-        return true;
-    }
-
-    $ancestors = get_post_ancestors($page_id);
-    if (empty($ancestors)) {
-        return false;
-    }
-
-    return !empty(array_intersect($ancestor_ids, $ancestors));
-}
 }
 
 if (!function_exists('dp_get_posgrado_program_tree')) {
-function dp_get_posgrado_program_tree() {
-    $root_id = (int) apply_filters('dp_posgrado_root_page_id', defined('DP_POSGRADO_ROOT_PAGE_ID') ? DP_POSGRADO_ROOT_PAGE_ID : 0);
-    $excluded = (array) apply_filters('dp_posgrado_excluded_branch_ids', defined('DP_POSGRADO_EXCLUDED_BRANCH_IDS') ? DP_POSGRADO_EXCLUDED_BRANCH_IDS : []);
-
-    $cache_key = $root_id . ':' . implode(',', $excluded);
-    static $cache = [];
-    if (isset($cache[$cache_key])) {
-        return $cache[$cache_key];
-    }
-
-    if (!$root_id) {
-        $cache[$cache_key] = [];
-        return $cache[$cache_key];
-    }
-
-    $excluded = array_map('intval', $excluded);
-
-    $categories = get_pages([
-        'parent' => $root_id,
-        'post_type' => 'page',
-        'post_status' => ['publish'],
-        'sort_column' => 'menu_order,post_title',
-        'hierarchical' => 0,
-        'number' => 0,
-    ]);
-
-    $tree = [];
-
-    foreach ($categories as $category) {
-        if (in_array($category->ID, $excluded, true) || dp_page_has_ancestor_in_list($category->ID, $excluded)) {
-            continue;
-        }
-
-        $programs = get_pages([
-            'parent' => $category->ID,
-            'post_type' => 'page',
-            'post_status' => ['publish'],
-            'sort_column' => 'menu_order,post_title',
-            'hierarchical' => 0,
-            'number' => 0,
-        ]);
-
-        if (!$programs) {
-            continue;
-        }
-
-        $programs = array_values(array_filter($programs, function($page) use ($excluded) {
-            return !dp_page_has_ancestor_in_list($page->ID, $excluded);
-        }));
-
-        if (!$programs) {
-            continue;
-        }
-
-        $tree[] = [
-            'category' => $category,
-            'pages' => $programs,
-        ];
-    }
-
-    $tree = apply_filters('dp_posgrado_program_tree', $tree, $root_id, $excluded);
-    $cache[$cache_key] = $tree;
-
-    return $cache[$cache_key];
-}
 }
 
 if (!function_exists('dp_posgrado_tree_contains_page')) {
-function dp_posgrado_tree_contains_page(array $tree, $page_id) {
-    $page_id = (int) $page_id;
-    if (!$page_id || empty($tree)) {
-        return false;
-    }
-
-    foreach ($tree as $branch) {
-        if (empty($branch['pages'])) {
-            continue;
-        }
-        foreach ($branch['pages'] as $page) {
-            if ((int) $page->ID === $page_id) {
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
 }

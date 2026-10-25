@@ -164,35 +164,6 @@ function flacso_charlas_abiertas_get_settings_page_url(array $args = []) {
     return !empty($args) ? add_query_arg($args, $base) : $base;
 }
 
-function flacso_charlas_abiertas_render_settings_page() {
-    if (!current_user_can('manage_options')) {
-        return;
-    }
-    wp_safe_redirect(flacso_charlas_abiertas_get_settings_page_url());
-    exit;
-    ?>
-    <div class="wrap">
-        <h1>Webhook de Charlas Abiertas</h1>
-        <p>Configura el endpoint que recibirá las inscripciones de charlas abiertas.</p>
-        <form method="post" action="options.php">
-            <?php
-            settings_fields('flacso_charlas_abiertas_settings_group');
-            do_settings_sections('flacso-charlas-abiertas-settings');
-            submit_button();
-            ?>
-        </form>
-
-        <hr>
-        <h2>Prueba del webhook</h2>
-        <p>Envía una solicitud de prueba al endpoint configurado. Si el destino es FLACSO Editor, esta verificación no crea inscripciones ni envía correos.</p>
-        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-            <?php wp_nonce_field('flacso_charlas_abiertas_test_webhook', 'flacso_charlas_abiertas_test_webhook_nonce'); ?>
-            <input type="hidden" name="action" value="flacso_charlas_abiertas_test_webhook" />
-            <?php submit_button('Probar conexión con el editor', 'secondary', 'submit', false); ?>
-        </form>
-    </div>
-    <?php
-}
 
 function flacso_charlas_abiertas_get_webhook_url() {
     $url = get_option(FLACSO_CHARLAS_ABIERTAS_OPTION_WEBHOOK, '');

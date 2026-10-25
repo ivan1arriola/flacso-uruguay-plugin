@@ -249,10 +249,4 @@ final class FLACSO_Academic_Catalog {
     }
 }
 
-function flacso_get_oferta_academica(int $offer_id): array {
-    return FLACSO_Academic_Catalog::get_offer($offer_id);
-}
 
-function flacso_get_seminario(int $seminar_id): array {
-    return FLACSO_Academic_Catalog::get_seminar($seminar_id);
-}

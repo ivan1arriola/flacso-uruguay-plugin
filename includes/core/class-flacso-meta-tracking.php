@@ -718,50 +718,8 @@ class FLACSO_Meta_Tracking {
 }
 
 if (!function_exists('flacso_meta_get_price_usd')) {
-    function flacso_meta_get_price_usd(int $post_id): float {
-        $price = flacso_get_entity_price_usd($post_id);
-        return $price ? (float) $price['value'] : 0.0;
-    }
 }
 
 if (!function_exists('flacso_get_entity_price_usd')) {
-    /**
-     * Precio canonico para Meta. La fuente siempre es TablaPrecio, vinculada
-     * desde la Cohorte o EdicionSeminario correspondiente.
-     */
-    function flacso_get_entity_price_usd(int $post_id): ?array {
-        if ($post_id <= 0 || !class_exists('FLACSO_Price_Table_Repository')) {
-            return null;
-        }
-
-        $money = FLACSO_Price_Table_Repository::monetary_context($post_id);
-        if (!$money) {
-            return null;
-        }
-
-        if ($money['currency'] === 'USD') {
-            return [
-                'value' => (float) $money['value'],
-                'currency' => 'USD',
-                'source' => 'tabla_precio',
-                'table_id' => absint($money['tableId']),
-            ];
-        }
-
-        $exchange_rate = (float) get_option('flacso_usd_exchange_rate', 0);
-        if ($exchange_rate <= 0) {
-            return null;
-        }
-
-        return [
-            'value' => round((float) $money['value'] / $exchange_rate, 2),
-            'currency' => 'USD',
-            'source' => 'tabla_precio_convertida_desde_uyu',
-            'original_value' => (float) $money['value'],
-            'original_currency' => 'UYU',
-            'exchange_rate' => $exchange_rate,
-            'table_id' => absint($money['tableId']),
-        ];
-    }
 }
 FLACSO_Meta_Tracking::init();

@@ -7,45 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-/**
- * Parseo básico de navegador/SO.
- */
-function fc_parse_user_agent_simple( $ua ) {
-	$ua = strtolower( (string) $ua );
-	$browser = 'Desconocido';
-	$os = 'Desconocido';
-
-	if ( strpos( $ua, 'windows nt 10' ) !== false || strpos( $ua, 'windows nt 11' ) !== false ) {
-		$os = 'Windows 10/11';
-	} elseif ( strpos( $ua, 'windows nt 6.1' ) !== false ) {
-		$os = 'Windows 7';
-	} elseif ( strpos( $ua, 'mac os x' ) !== false ) {
-		$os = 'macOS';
-	} elseif ( strpos( $ua, 'android' ) !== false ) {
-		$os = 'Android';
-	} elseif ( strpos( $ua, 'iphone' ) !== false || strpos( $ua, 'ipad' ) !== false ) {
-		$os = 'iOS';
-	} elseif ( strpos( $ua, 'linux' ) !== false ) {
-		$os = 'Linux';
-	}
-
-	if ( strpos( $ua, 'edg' ) !== false ) {
-		$browser = 'Edge';
-	} elseif ( strpos( $ua, 'chrome' ) !== false && strpos( $ua, 'chromium' ) === false ) {
-		$browser = 'Chrome';
-	} elseif ( strpos( $ua, 'firefox' ) !== false ) {
-		$browser = 'Firefox';
-	} elseif ( strpos( $ua, 'safari' ) !== false && strpos( $ua, 'chrome' ) === false ) {
-		$browser = 'Safari';
-	} elseif ( strpos( $ua, 'opr' ) !== false ) {
-		$browser = 'Opera';
-	}
-
-	return [
-		'browser' => $browser,
-		'os'      => $os,
-	];
-}
 
 /**
  * Endpoint externo de compatibilidad para la consulta general.
@@ -972,16 +933,6 @@ function fc_send_info_request_webhook( array $data ) {
     return FLACSO_Offer_Inquiry_Service::submit( $data );
 }
 
-function fc_send_info_request_webhook_test() {
-    return [
-        'ok'      => class_exists( 'FLACSO_Offer_Inquiry_Service' ),
-        'code'    => class_exists( 'FLACSO_Offer_Inquiry_Service' ) ? 200 : 503,
-        'target'  => 'internal',
-        'body'    => '',
-        'error'   => class_exists( 'FLACSO_Offer_Inquiry_Service' ) ? '' : 'Servicio interno no disponible.',
-        'message' => 'Las consultas de ofertas se procesan dentro de WordPress.',
-    ];
-}
 
 /**
  * Calcula la URL /confirmacion-consulta/ basada en la página que contiene el formulario.
@@ -1011,133 +962,6 @@ function fc_get_gracias_url_from_referer() {
     return $scheme . $host . $confirmacion_path;
 }
 
-/**
- * Registra una consulta en la base de datos (CPT) y retorna los identificadores generados.
- *
- * @param array $payload Datos de la consulta (campos clave).
- * @return array {
- *     @type int    $post_id        ID del post insertado (0 on failure).
- *     @type string $control_number Número de control asignado (vacío si no se pudo guardar).
- *     @type string $error          Mensaje de error cuando falla la inserción.
- * }
- */
-function fc_record_consulta_entry( array $payload ) {
-    if ( ! post_type_exists( 'fc_consulta' ) && function_exists( 'fc_register_cpt' ) ) {
-        fc_register_cpt();
-    }
-
-    $defaults = [
-        'nombre'            => '',
-        'apellido'          => '',
-        'email'             => '',
-        'telefono'          => '',
-        'asunto'            => '',
-        'mensaje'           => '',
-        'pais'              => '',
-        'nivel_academico'   => '',
-        'profesion'         => '',
-        'url_base'          => '',
-        'url_referer'       => '',
-        'page_id'           => 0,
-        'titulo_posgrado'   => '',
-        'ip'                => '',
-        'user_agent'        => '',
-        'fecha_envio'       => '',
-    ];
-
-    $data = wp_parse_args( $payload, $defaults );
-    $nombre   = sanitize_text_field( $data['nombre'] );
-    $apellido = sanitize_text_field( $data['apellido'] );
-    $email    = sanitize_email( $data['email'] );
-    $telefono = sanitize_text_field( $data['telefono'] );
-    $asunto   = sanitize_text_field( $data['asunto'] );
-    $mensaje  = isset( $data['mensaje'] ) ? wp_kses_post( $data['mensaje'] ) : '';
-    $pais     = sanitize_text_field( $data['pais'] );
-    $nivel    = sanitize_text_field( $data['nivel_academico'] );
-    $profesion = sanitize_text_field( $data['profesion'] );
-    $url_base = esc_url_raw( $data['url_base'] );
-    $url_referer = esc_url_raw( $data['url_referer'] );
-    $page_id = absint( $data['page_id'] );
-    $titulo_posgrado = sanitize_text_field( $data['titulo_posgrado'] );
-    $user_agent = sanitize_text_field( $data['user_agent'] );
-    $ip_address = sanitize_text_field( $data['ip'] );
-
-    $post_date = current_time( 'mysql' );
-    $ts_local  = current_time( 'timestamp' );
-    if ( ! empty( $data['fecha_envio'] ) ) {
-        $parsed = strtotime( $data['fecha_envio'] );
-        if ( $parsed !== false ) {
-            // Mantener la fecha original para el post_date y meta legibles
-            $post_date = gmdate( 'Y-m-d H:i:s', $parsed );
-            $ts_local  = $parsed;
-        }
-    }
-
-    $title = $asunto ? $asunto : sprintf(
-        __( 'Consulta de %1$s %2$s', 'flacso-flacso-formulario-consultas' ),
-        $nombre,
-        $apellido
-    );
-
-    $post_args = [
-        'post_type'    => 'fc_consulta',
-        'post_status'  => 'publish',
-        'post_title'   => $title,
-        'post_content' => $mensaje,
-        'post_author'  => 0,
-        'post_date'    => $post_date,
-    ];
-
-    $post_id = wp_insert_post( $post_args, true );
-
-    if ( is_wp_error( $post_id ) || ! $post_id ) {
-        $message = is_wp_error( $post_id ) ? $post_id->get_error_message() : 'wp_insert_post returned falsy value';
-        return [
-            'post_id' => 0,
-            'control_number' => '',
-            'error' => $message,
-        ];
-    }
-
-    update_post_meta( $post_id, 'fc_nombre', $nombre );
-    update_post_meta( $post_id, 'fc_apellido', $apellido );
-    update_post_meta( $post_id, 'fc_email', $email );
-    update_post_meta( $post_id, 'fc_telefono', $telefono );
-    update_post_meta( $post_id, 'fc_asunto', $asunto );
-    update_post_meta( $post_id, 'fc_mensaje', $mensaje );
-    update_post_meta( $post_id, 'fc_pais', $pais );
-    update_post_meta( $post_id, 'fc_nivel_academico', $nivel );
-    update_post_meta( $post_id, 'fc_profesion', $profesion );
-    update_post_meta( $post_id, 'fc_url_base', $url_base );
-    update_post_meta( $post_id, 'fc_url_referer', $url_referer );
-    update_post_meta( $post_id, 'fc_programa_id', $page_id );
-    update_post_meta( $post_id, 'fc_programa_titulo', $titulo_posgrado );
-    update_post_meta( $post_id, 'fc_ip', $ip_address );
-    update_post_meta( $post_id, 'fc_user_agent', $user_agent );
-    $ua_info = fc_parse_user_agent_simple( $user_agent );
-    update_post_meta( $post_id, 'fc_navegador', $ua_info['browser'] );
-    update_post_meta( $post_id, 'fc_sistema_operativo', $ua_info['os'] );
-
-    // Guardar fecha y hora legibles (locale de WP)
-    $fecha_legible = date_i18n( 'l, d \\d\\e F \\d\\e Y', $ts_local );
-    $hora_legible  = date_i18n( 'g:i a', $ts_local );
-    update_post_meta( $post_id, 'fc_fecha', $fecha_legible );
-    update_post_meta( $post_id, 'fc_hora', $hora_legible );
-
-    $last_control = (int) get_option( 'fc_last_control_number', 0 );
-    $next_control = $last_control + 1;
-    update_option( 'fc_last_control_number', $next_control );
-    $control_number = sprintf( 'FC-%06d', $next_control );
-    update_post_meta( $post_id, 'fc_control_number', $control_number );
-
-    update_post_meta( $post_id, 'fc_fecha_envio', $post_date );
-
-    return [
-        'post_id' => $post_id,
-        'control_number' => $control_number,
-        'error' => '',
-    ];
-}
 
 /**
  * Registra una solicitud de información (oferta académica) en CPT dedicado.

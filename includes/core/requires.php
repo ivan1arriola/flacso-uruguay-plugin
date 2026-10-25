@@ -23,22 +23,4 @@ if (!function_exists('flacso_require')) {
 }
 
 if (!function_exists('flacso_optional_require')) {
-    /**
-     * Carga opcional. Registra la falla y permite continuar.
-     */
-    function flacso_optional_require(string $relative_path): bool {
-        $relative_path = ltrim($relative_path, '/');
-        $full_path = FLACSO_URUGUAY_PATH . $relative_path;
-        if (!file_exists($full_path)) {
-            error_log('[FLACSO] Archivo opcional no encontrado: ' . $relative_path);
-            return false;
-        }
-        try {
-            require_once $full_path;
-            return true;
-        } catch (Throwable $e) {
-            error_log('[FLACSO] Error en archivo opcional ' . $relative_path . ': ' . $e->getMessage());
-            return false;
-        }
-    }
 }

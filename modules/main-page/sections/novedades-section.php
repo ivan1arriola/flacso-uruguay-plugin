@@ -2265,18 +2265,6 @@ if (!function_exists('flacso_section_novedades_admin_render_post_item')) {
     }
 }
 if (!function_exists('flacso_section_novedades_get_manageable_posts')) {
-    function flacso_section_novedades_get_manageable_posts($limit = 10)
-    {
-        return get_posts([
-            'post_type'      => 'post',
-            'posts_per_page' => $limit,
-            'category_name'  => 'novedades',
-            'post_status'    => 'publish',
-            'orderby'        => 'date',
-            'order'          => 'DESC',
-            'ignore_sticky_posts' => 1,
-        ]);
-    }
 }
 
 // Asignación estable de color por categoría usando hash del slug

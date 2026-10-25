@@ -562,48 +562,6 @@ function flacso_charlas_abiertas_get_charla(WP_REST_Request $request) {
     );
 }
 
-function flacso_charlas_abiertas_email_domain_exists($domain) {
-    $domain = strtolower(trim((string) $domain));
-    if ('' === $domain) {
-        return false;
-    }
-
-    $ends_with = static function ($value, $suffix) {
-        $value = (string) $value;
-        $suffix = (string) $suffix;
-        if ('' === $suffix) {
-            return true;
-        }
-        return substr($value, -strlen($suffix)) === $suffix;
-    };
-
-    // Proveedores confiables: no requiere chequeo DNS.
-    if (
-        'gmail.com' === $domain
-        || 'outlook.com' === $domain
-        || $ends_with($domain, '.gmail.com')
-        || $ends_with($domain, '.outlook.com')
-    ) {
-        return true;
-    }
-
-    $cache_key = 'flacso_mail_domain_' . md5($domain);
-    $cached = get_transient($cache_key);
-    if (false !== $cached) {
-        return '1' === $cached;
-    }
-
-    $exists = false;
-    if (function_exists('checkdnsrr')) {
-        $exists = checkdnsrr($domain, 'MX')
-            || checkdnsrr($domain, 'A')
-            || checkdnsrr($domain, 'AAAA')
-            || checkdnsrr($domain, 'CNAME');
-    }
-
-    set_transient($cache_key, $exists ? '1' : '0', 6 * HOUR_IN_SECONDS);
-    return $exists;
-}
 
 function flacso_charlas_abiertas_receive_inscripcion(WP_REST_Request $request) {
     $started_at = microtime(true);

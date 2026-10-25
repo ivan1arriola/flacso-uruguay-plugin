@@ -48,31 +48,6 @@ if (!function_exists('dp_rest_get_payload')) {
 }
 
 if (!function_exists('dp_rest_sanitize_docente_correos')) {
-    function dp_rest_sanitize_docente_correos($raw): array {
-        if (!is_array($raw)) {
-            return [];
-        }
-
-        $clean = [];
-        foreach ($raw as $correo) {
-            if (!is_array($correo)) {
-                continue;
-            }
-            $email = isset($correo['email']) ? sanitize_email($correo['email']) : '';
-            if (!$email) {
-                continue;
-            }
-            $label = isset($correo['label']) ? sanitize_text_field($correo['label']) : '';
-            $principal = !empty($correo['principal']);
-            $clean[] = [
-                'email' => $email,
-                'label' => $label,
-                'principal' => $principal,
-            ];
-        }
-
-        return $clean;
-    }
 }
 
 if (!function_exists('dp_rest_sanitize_docente_redes')) {

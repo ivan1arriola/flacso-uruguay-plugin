@@ -288,33 +288,6 @@ class FLACSO_Telegram_Manager {
     }
 }
 
-/**
- * Función helper para obtener la instancia del manager
- * 
- * @return FLACSO_Telegram_Manager
- */
-function flacso_telegram() {
-    return FLACSO_Telegram_Manager::get_instance();
-}
 
-/**
- * Función helper para enviar mensaje rápido
- * 
- * @param string $message Mensaje
- * @param string $parse_mode Modo de parseo
- * @param string|null $chat_id Chat ID
- * @return array|WP_Error
- */
-function flacso_telegram_send($message, $parse_mode = 'HTML', $chat_id = null) {
-    return flacso_telegram()->send_message($message, $parse_mode, $chat_id);
-}
 
-/**
- * Función helper para verificar disponibilidad
- * 
- * @return bool
- */
-function flacso_telegram_available() {
-    return flacso_telegram()->is_available();
-}
 
