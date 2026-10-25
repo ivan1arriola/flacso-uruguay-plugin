@@ -9,7 +9,7 @@ final class Flacso_Main_Page_Loader {
 
     public static function init(): void {
         $is_ajax_context = function_exists('wp_doing_ajax') && wp_doing_ajax();
-        if (!is_admin() || $is_ajax_context || (defined('REST_REQUEST') && REST_REQUEST) || self::is_flacso_admin_request()) {
+        if (!is_admin() || $is_ajax_context || flacso_is_rest_request() || self::is_flacso_admin_request()) {
             self::load_components();
         }
 

@@ -25,6 +25,39 @@ if (!function_exists('flacso_asset_version')) {
 }
 
 /**
+ * Detecta una petición a la REST API también antes de `parse_request`.
+ *
+ * WordPress define REST_REQUEST recién en `parse_request`, es decir, después de
+ * `plugins_loaded` e `init`. Para decidir qué cargar en esos momentos se
+ * inspecciona la URL solicitada.
+ */
+if (!function_exists('flacso_is_rest_request')) {
+    function flacso_is_rest_request(): bool {
+        if (defined('REST_REQUEST') && REST_REQUEST) {
+            return true;
+        }
+
+        if (isset($_GET['rest_route'])) {
+            return true;
+        }
+
+        if (empty($_SERVER['REQUEST_URI']) || !function_exists('rest_get_url_prefix')) {
+            return false;
+        }
+
+        $request_path = wp_parse_url((string) wp_unslash($_SERVER['REQUEST_URI']), PHP_URL_PATH);
+        if (!is_string($request_path)) {
+            return false;
+        }
+
+        $home_path = trailingslashit((string) wp_parse_url(home_url('/'), PHP_URL_PATH));
+        $rest_path = $home_path . trailingslashit(rest_get_url_prefix());
+
+        return strpos(trailingslashit($request_path), $rest_path) === 0;
+    }
+}
+
+/**
  * Cargar archivo de forma segura
  */
 if (!function_exists('flacso_safe_require')) {

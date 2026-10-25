@@ -73,7 +73,7 @@ require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/flacso-raw-content-api.php
 // Cargar clases de gestión/admin solo en contexto administrativo.
 $is_admin_context = is_admin()
     || (function_exists('wp_doing_ajax') && wp_doing_ajax())
-    || (defined('REST_REQUEST') && REST_REQUEST);
+    || flacso_is_rest_request();
 if ($is_admin_context) {
     require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-admin.php';
     require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-homepage-admin-v2.php';
