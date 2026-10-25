@@ -238,40 +238,22 @@ final class FLACSO_Oferta_Academica {
         return $result;
     }
 
-    /**
-     * Correos de la Oferta Académica (multivaluado). Acepta una lista o un texto
-     * separado por comas, punto y coma o saltos de línea; los valores históricos
-     * guardados como texto único siguen funcionando.
-     */
+    /** Correos de la Oferta Académica (multivaluado); ver FLACSO_Notification_Emails. */
     public static function split_offer_emails($value): array {
-        if (is_string($value)) {
-            $value = preg_split('/[\s,;]+/', $value) ?: [];
-        }
-        if (!is_array($value)) {
-            return [];
-        }
-        $emails = [];
-        foreach ($value as $item) {
-            $item = is_scalar($item) ? strtolower(trim((string) $item)) : '';
-            if ($item !== '') {
-                $emails[] = $item;
-            }
-        }
-        return array_values(array_unique($emails));
+        return FLACSO_Notification_Emails::split($value);
     }
 
     public static function sanitize_offer_emails($value): array {
-        $emails = array_filter(array_map('sanitize_email', self::split_offer_emails($value)), static fn(string $email): bool => is_email($email) !== false);
-        return array_values(array_unique($emails));
+        return FLACSO_Notification_Emails::sanitize($value);
     }
 
     /** @return string[] Valores que no son direcciones de correo válidas. */
     public static function invalid_offer_emails($value): array {
-        return array_values(array_filter(self::split_offer_emails($value), static fn(string $email): bool => is_email($email) === false));
+        return FLACSO_Notification_Emails::invalid($value);
     }
 
     public static function get_offer_emails(int $post_id): array {
-        return self::sanitize_offer_emails(get_post_meta($post_id, 'correo_oferta', true));
+        return FLACSO_Notification_Emails::from_meta($post_id, 'correo_oferta');
     }
 
     public static function sanitize_text_list($value): array {

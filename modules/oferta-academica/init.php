@@ -17,6 +17,7 @@ flacso_safe_require('modules/oferta-academica/includes/class-oferta-admin-table-
 flacso_safe_require('modules/oferta-academica/includes/class-academic-admin-ui.php');
 flacso_safe_require('modules/oferta-academica/includes/class-academic-workspace-admin.php');
 flacso_safe_require('modules/oferta-academica/includes/class-cpt-programa-academico.php');
+flacso_safe_require('modules/oferta-academica/includes/class-notification-emails.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-academica.php');
 flacso_safe_require('modules/oferta-academica/includes/class-oferta-admin-fields.php');
 flacso_safe_require('modules/oferta-academica/includes/class-academic-articulations.php');

@@ -19,6 +19,7 @@ function get_post_meta(int $post_id, string $key = '', bool $single = false) {
     return $GLOBALS['offer_emails_meta'][$post_id][$key] ?? '';
 }
 
+require_once dirname(__DIR__) . '/modules/oferta-academica/includes/class-notification-emails.php';
 require_once dirname(__DIR__) . '/modules/oferta-academica/includes/class-oferta-academica.php';
 
 function offer_emails_assert($expected, $actual, string $label): void {

@@ -40,6 +40,20 @@ final class FLACSO_Seminario_Admin_Fields {
         add_action('admin_head-post-new.php', [self::class, 'render_styles']);
         add_action('admin_footer-post.php', [self::class, 'render_script']);
         add_action('admin_footer-post-new.php', [self::class, 'render_script']);
+        add_action('admin_notices', [self::class, 'render_notices']);
+    }
+
+    public static function render_notices(): void {
+        $post_id = isset($_GET['post']) ? absint($_GET['post']) : 0;
+        if ($post_id < 1) {
+            return;
+        }
+        $key = 'flacso_seminario_email_error_' . $post_id;
+        $error = get_transient($key);
+        if ($error) {
+            delete_transient($key);
+            echo '<div class="notice notice-error is-dismissible"><p>' . esc_html($error) . '</p></div>';
+        }
     }
 
     public static function add_meta_box(): void {
@@ -163,6 +177,11 @@ final class FLACSO_Seminario_Admin_Fields {
                     <label class="flacso-seminar-field flacso-seminar-field--wide">
                         <span><?php esc_html_e('Correo de contacto', 'flacso-uruguay'); ?></span>
                         <input type="email" name="flacso_seminario[correo]" value="<?php echo esc_attr($correo); ?>" autocomplete="off">
+                    </label>
+                    <label class="flacso-seminar-field flacso-seminar-field--wide">
+                        <span><?php esc_html_e('Correo del Seminario', 'flacso-uruguay'); ?></span>
+                        <textarea name="flacso_seminario[correo_seminario]" rows="3" placeholder="coordinacion@flacso.edu.uy"><?php echo esc_textarea(implode("\n", FLACSO_Seminario::get_notification_emails((int) $post->ID))); ?></textarea>
+                        <small><?php esc_html_e('Opcional. Uno o más correos, uno por línea (también se aceptan comas). Reciben las notificaciones de preinscripciones del seminario y no se publican. Es independiente del correo de contacto.', 'flacso-uruguay'); ?></small>
                     </label>
                     <label class="flacso-seminar-field">
                         <span><?php esc_html_e('Créditos', 'flacso-uruguay'); ?></span>
@@ -305,6 +324,30 @@ final class FLACSO_Seminario_Admin_Fields {
         }
 
         self::save_scalar($post_id, 'correo', sanitize_email((string) ($raw['correo'] ?? '')));
+
+        // Si el formulario no incluye el campo, conservar el valor existente.
+        if (array_key_exists('correo_seminario', $raw)) {
+            $raw_emails = $raw['correo_seminario'];
+            $invalid_emails = is_string($raw_emails) || is_array($raw_emails)
+                ? FLACSO_Notification_Emails::invalid($raw_emails)
+                : [''];
+            $seminar_emails = FLACSO_Notification_Emails::sanitize($raw_emails);
+            if ($invalid_emails) {
+                set_transient(
+                    'flacso_seminario_email_error_' . $post_id,
+                    sprintf(
+                        /* translators: %s: correos inválidos separados por coma. */
+                        __('El Correo del Seminario no es válido (%s); se conservó el valor anterior.', 'flacso-uruguay'),
+                        implode(', ', array_filter($invalid_emails))
+                    ),
+                    90
+                );
+            } elseif (!$seminar_emails) {
+                delete_post_meta($post_id, 'correo_seminario');
+            } else {
+                update_post_meta($post_id, 'correo_seminario', $seminar_emails);
+            }
+        }
         foreach (['presentacion', 'objetivo_general', 'forma_aprobacion', 'acreditacion'] as $field) {
             self::save_scalar($post_id, $field, wp_kses_post((string) ($raw[$field] ?? '')));
         }

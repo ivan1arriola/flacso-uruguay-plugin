@@ -215,6 +215,17 @@ if (!class_exists('FLACSO_Oferta_Academica')) {
     }
 }
 
+if (!class_exists('FLACSO_Seminario')) {
+    class FLACSO_Seminario {
+        public static function get_notification_emails(int $seminario_id): array {
+            $value = $GLOBALS['flacso_test_post_meta'][$seminario_id]['correo_seminario'] ?? [];
+            return is_array($value) ? $value : [];
+        }
+    }
+}
+$GLOBALS['flacso_test_post_meta'][200]['correo'] = 'contacto-seminario@flacso.edu.uy';
+$GLOBALS['flacso_test_post_meta'][200]['correo_seminario'] = ['seminarios@flacso.edu.uy'];
+
 // Set up mock WordPress entities
 // 1. Parent Oferta (Maestría)
 $GLOBALS['flacso_test_posts'][100] = (object) [
@@ -364,7 +375,7 @@ flacso_rest_assert_same('Maestría en Género y Políticas de Igualdad — Cohor
 $target_edition = FLACSO_Preinscriptions_Serializer::for_edition(201);
 flacso_rest_assert_true(is_array($target_edition), 'edition target is an array');
 flacso_rest_assert_same('seminar', $target_edition['kind'], 'target kind is seminar');
-flacso_rest_assert_true(!isset($target_edition['notificationEmails']), 'seminar editions do not emit offer notification emails');
+flacso_rest_assert_same(['seminarios@flacso.edu.uy'], $target_edition['notificationEmails'], 'edition notification emails come from Correo del Seminario, not the contact email');
 flacso_rest_assert_same('seminar', $target_edition['seminar']['type'], 'seminar type is seminar');
 flacso_rest_assert_same([], $target_edition['orientations'], 'seminars have empty orientations');
 flacso_rest_assert_same([], $target_edition['mentions'], 'seminars have empty mentions');

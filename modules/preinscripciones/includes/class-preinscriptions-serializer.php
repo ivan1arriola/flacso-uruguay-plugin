@@ -191,6 +191,11 @@ final class FLACSO_Preinscriptions_Serializer {
                 'until' => null,
             ];
 
+        // Destinatarios de notificaciones: "Correo del Seminario", nunca el correo de contacto.
+        $notification_emails = class_exists('FLACSO_Seminario') && method_exists('FLACSO_Seminario', 'get_notification_emails')
+            ? FLACSO_Seminario::get_notification_emails((int) $parent->ID)
+            : [];
+
         $legacy_link = get_post_meta($edition_id, 'link_preinscripcion', true);
         $public_url = get_permalink((int) $parent->ID);
         $wordpress_url = get_permalink($edition_id);
@@ -223,6 +228,8 @@ final class FLACSO_Preinscriptions_Serializer {
             'id'                 => $target_id,
             'kind'               => 'seminar',
             'title'              => $edition->post_title ?: ($parent->post_title . ' - Edición ' . $edition_number),
+            'notificationEmail'  => $notification_emails[0] ?? null,
+            'notificationEmails' => $notification_emails,
             'wordpress'          => [
                 'seminarId' => (int) $parent->ID,
                 'editionId' => $edition_id,

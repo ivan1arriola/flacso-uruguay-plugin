@@ -11,11 +11,17 @@ final class FLACSO_Seminario {
     public const META_OFERTA_ID = 'oferta_academica_id';
     public const META_COMPONENTES = 'componentes';
 
+    /** Correos que reciben las notificaciones de preinscripciones del seminario (no son públicos). */
+    public static function get_notification_emails(int $post_id): array {
+        return FLACSO_Notification_Emails::from_meta($post_id, 'correo_seminario');
+    }
+
     public static function register_meta(): void {
         $definitions = [
             self::META_PROGRAM_ID => ['type' => 'integer', 'sanitize_callback' => 'absint'],
             self::META_OFERTA_ID => ['type' => 'integer', 'sanitize_callback' => 'absint'],
             'correo' => ['type' => 'string', 'sanitize_callback' => 'sanitize_email'],
+            'correo_seminario' => ['type' => 'array', 'sanitize_callback' => [FLACSO_Notification_Emails::class, 'sanitize']],
             'presentacion' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'objetivo_general' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'objetivos_especificos' => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_html_list']],

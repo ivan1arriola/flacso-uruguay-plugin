@@ -39,7 +39,7 @@ final class FLACSO_Academic_Repository {
             'seminarios' => [
                 'post_type' => FLACSO_Seminario::POST_TYPE,
                 'fields' => [
-                    'programa_academico_id', 'oferta_academica_id', 'correo', 'presentacion', 'objetivo_general',
+                    'programa_academico_id', 'oferta_academica_id', 'correo', 'correo_seminario', 'presentacion', 'objetivo_general',
                     'objetivos_especificos', 'composicion_academica', 'forma_aprobacion',
                     'carga_horaria', 'carga_horaria_descripcion', 'creditos', 'acreditacion',
                     'acredita_maestria', 'acredita_doctorado', 'componentes',
@@ -116,6 +116,9 @@ final class FLACSO_Academic_Repository {
             $data['tipo'] = FLACSO_Oferta_Academica::get_tipo((int) $post->ID);
             $data['correo_oferta'] = FLACSO_Oferta_Academica::get_offer_emails((int) $post->ID);
         }
+        if ($entity === 'seminarios') {
+            $data['correo_seminario'] = FLACSO_Seminario::get_notification_emails((int) $post->ID);
+        }
         if ($entity === 'cohortes') {
             $data['nombre'] = FLACSO_Cohorte::display_name(absint($data['numero']));
             $data['numero_romano'] = FLACSO_Cohorte::to_roman(absint($data['numero']));
@@ -175,6 +178,9 @@ final class FLACSO_Academic_Repository {
         if ($entity === 'ofertas' && array_key_exists('correo_oferta', $payload)) {
             $payload['correo_oferta'] = FLACSO_Oferta_Academica::sanitize_offer_emails($payload['correo_oferta']);
         }
+        if ($entity === 'seminarios' && array_key_exists('correo_seminario', $payload)) {
+            $payload['correo_seminario'] = FLACSO_Notification_Emails::sanitize($payload['correo_seminario']);
+        }
         foreach ($definition['fields'] as $field) {
             if (array_key_exists($field, $payload)) {
                 $value = $payload[$field];
@@ -223,6 +229,16 @@ final class FLACSO_Academic_Repository {
             }
         }
         // Correos propios (lista), opcionales e independientes del correo de contacto.
+        if ($entity === 'seminarios' && array_key_exists('correo_seminario', $payload)) {
+            $raw_emails = $payload['correo_seminario'];
+            if (!(is_string($raw_emails) || is_array($raw_emails)) || FLACSO_Notification_Emails::invalid($raw_emails)) {
+                return new WP_Error(
+                    'invalid_seminar_email',
+                    __('El Correo del Seminario debe ser una lista de direcciones válidas o quedar vacío.', 'flacso-uruguay'),
+                    ['status' => 400]
+                );
+            }
+        }
         if ($entity === 'ofertas' && array_key_exists('correo_oferta', $payload)) {
             $raw_emails = $payload['correo_oferta'];
             if (!(is_string($raw_emails) || is_array($raw_emails)) || FLACSO_Oferta_Academica::invalid_offer_emails($raw_emails)) {
