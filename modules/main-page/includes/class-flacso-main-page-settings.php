@@ -233,10 +233,6 @@ final class Flacso_Main_Page_Settings {
     }
 
     private static function normalize_settings(array $settings): array {
-        if (class_exists('Flacso_Main_Page_Section_Keys')) {
-            $settings = Flacso_Main_Page_Section_Keys::normalize_settings($settings);
-        }
-
         if (isset($settings['mailing']) && is_array($settings['mailing'])) {
             $mailing_title = trim((string) ($settings['mailing']['title'] ?? ''));
             if (in_array($mailing_title, [
@@ -264,9 +260,7 @@ final class Flacso_Main_Page_Settings {
     }
 
     private static function canonical_section_key(string $section): string {
-        return class_exists('Flacso_Main_Page_Section_Keys')
-            ? Flacso_Main_Page_Section_Keys::canonicalize($section)
-            : sanitize_key($section);
+        return sanitize_key($section);
     }
 
     private static function normalize_offer_card(array $card): array {
@@ -336,9 +330,7 @@ final class Flacso_Main_Page_Settings {
     }
 
     public static function get_section_visibility_defaults(): array {
-        $keys = class_exists('Flacso_Main_Page_Section_Keys')
-            ? Flacso_Main_Page_Section_Keys::all()
-            : self::get_homepage_section_order_defaults();
+        $keys = self::get_homepage_section_order_defaults();
         return array_fill_keys($keys, true);
     }
 
@@ -352,10 +344,6 @@ final class Flacso_Main_Page_Settings {
         $visibility = isset($settings['sections_visibility']) && is_array($settings['sections_visibility'])
             ? $settings['sections_visibility']
             : [];
-
-        if (class_exists('Flacso_Main_Page_Section_Keys')) {
-            $visibility = Flacso_Main_Page_Section_Keys::normalize_keyed_map($visibility);
-        }
 
         self::$section_visibility_cache = wp_parse_args($visibility, $defaults);
         return self::$section_visibility_cache;
@@ -394,10 +382,6 @@ final class Flacso_Main_Page_Settings {
         $configured = isset($settings['section_heading_colors']) && is_array($settings['section_heading_colors'])
             ? $settings['section_heading_colors']
             : [];
-        if (class_exists('Flacso_Main_Page_Section_Keys')) {
-            $configured = Flacso_Main_Page_Section_Keys::normalize_keyed_map($configured);
-        }
-
         foreach ($configured as $section_key => $choice) {
             if (isset($result[$section_key]) && in_array($choice, self::SECTION_HEADING_COLOR_CHOICES, true)) {
                 $result[$section_key] = $choice;
@@ -450,11 +434,7 @@ final class Flacso_Main_Page_Settings {
 
     public static function sanitize_homepage_section_order(array $input): array {
         $defaults = self::get_homepage_section_order_defaults();
-        if (class_exists('Flacso_Main_Page_Section_Keys')) {
-            $input = Flacso_Main_Page_Section_Keys::normalize_order($input);
-        } else {
-            $input = array_values(array_filter(array_map('sanitize_key', $input)));
-        }
+        $input = array_values(array_filter(array_map('sanitize_key', $input)));
 
         $order = [];
         foreach ($input as $key) {
@@ -490,10 +470,6 @@ final class Flacso_Main_Page_Settings {
 
     public static function sanitize(array $input): array {
         self::invalidate_cache();
-        if (class_exists('Flacso_Main_Page_Section_Keys')) {
-            $input = Flacso_Main_Page_Section_Keys::normalize_settings($input);
-        }
-
         $defaults = self::get_defaults();
         $output = $defaults;
 
@@ -652,9 +628,7 @@ final class Flacso_Main_Page_Settings {
         }
 
         if (isset($input['sections_visibility']) && is_array($input['sections_visibility'])) {
-            $visibility = class_exists('Flacso_Main_Page_Section_Keys')
-                ? Flacso_Main_Page_Section_Keys::normalize_keyed_map($input['sections_visibility'])
-                : $input['sections_visibility'];
+            $visibility = $input['sections_visibility'];
             foreach (self::get_section_visibility_defaults() as $section_key => $default_state) {
                 $output['sections_visibility'][$section_key] = array_key_exists($section_key, $visibility)
                     ? !empty($visibility[$section_key])
@@ -674,9 +648,7 @@ final class Flacso_Main_Page_Settings {
         }
 
         if (isset($input['section_heading_colors']) && is_array($input['section_heading_colors'])) {
-            $colors = class_exists('Flacso_Main_Page_Section_Keys')
-                ? Flacso_Main_Page_Section_Keys::normalize_keyed_map($input['section_heading_colors'])
-                : $input['section_heading_colors'];
+            $colors = $input['section_heading_colors'];
             $output['section_heading_colors'] = [];
             foreach ($colors as $section_key => $choice) {
                 $choice = sanitize_key((string) $choice);

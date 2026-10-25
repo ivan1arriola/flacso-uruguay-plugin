@@ -24,9 +24,7 @@ if (!function_exists('flacso_homepage_builder_render')) {
 
         $blocks_by_key = [];
         foreach ($registry as $section_key => $definition) {
-            $section_key = class_exists('Flacso_Main_Page_Section_Keys')
-                ? Flacso_Main_Page_Section_Keys::canonicalize((string) $section_key)
-                : sanitize_key((string) $section_key);
+            $section_key = sanitize_key((string) $section_key);
 
             if ($section_key === '' || !Flacso_Main_Page_Settings::is_section_visible($section_key)) {
                 continue;

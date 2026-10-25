@@ -32,69 +32,11 @@ shortcodes/
 
 ## Carga de módulos
 
-`includes/core/class-flacso-module-registry.php` es la fuente de verdad para módulos y dependencias.
-
-Cada definición puede declarar:
-
-- `depends`: dependencias obligatorias;
-- `optional_depends`: integraciones que se intentan cargar, pero no bloquean el consumidor;
-- `required`: si el fallo del módulo debe considerarse crítico;
-- `legacy`: si existe únicamente por compatibilidad;
-- `path`: nombre físico distinto de la clave canónica durante una migración.
-
-El loader resuelve dependencias, detecta ciclos y muestra fallos en administración. Los archivos imprescindibles deben cargarse con `flacso_require()`; `flacso_optional_require()` se reserva para características opcionales.
+Los módulos se cargan en orden fijo desde `FLACSO_Uruguay_Plugin::load_modules()` en `flacso-uruguay.php`, mediante `FLACSO_Uruguay_Loader::load_module()`, que incluye el `init.php` de cada carpeta de `modules/`. Para agregar un módulo hay que sumarlo a esa lista, respetando el orden de dependencias. Los archivos imprescindibles deben cargarse con `flacso_require()`.
 
 ## Portada
 
-`main-page` administra:
-
-- contenido editorial propio del hero y bloques institucionales;
-- orden;
-- visibilidad;
-- configuración global;
-- contrato REST para el editor;
-- composición final.
-
-Los módulos de dominio registran sus secciones mediante:
-
-```php
-add_filter('flacso_homepage_sections', function (array $sections): array {
-    $sections['mi_seccion'] = [
-        'function' => 'mi_renderer',
-        'owner' => 'mi-modulo',
-    ];
-    return $sections;
-});
-```
-
-Los adaptadores pueden agregar archivos de renderer mediante `flacso_main_page_component_files` mientras se completa la migración física de componentes históricos.
-
-### Claves canónicas
-
-La portada utiliza:
-
-```text
-hero
-eventos
-novedades
-novedades_busqueda
-seminarios
-quienes
-instagram
-oferta_academica
-mailing
-contacto
-congreso
-```
-
-Compatibilidad:
-
-```text
-posgrados -> oferta_academica
-festejos  -> retirado
-```
-
-Los valores históricos de `festejos` y `posgrados` se archivan antes de migrar la configuración.
+`main-page` administra el contenido editorial del hero y de los bloques institucionales, el orden, la visibilidad, la configuración global y el contrato REST del editor. La composición visual de la portada vive en el tema.
 
 ## Estructura
 
@@ -104,10 +46,8 @@ flacso-uruguay-plugin/
 ├── includes/
 │   └── core/
 │       ├── loader.php
-│       ├── class-flacso-module-registry.php
 │       └── requires.php
 ├── modules/
-│   ├── site/
 │   ├── docentes/
 │   ├── seminarios/
 │   ├── oferta-academica/
@@ -125,8 +65,6 @@ flacso-uruguay-plugin/
 ├── API.md
 └── CHANGELOG.md
 ```
-
-`modules/site/` es el nombre canónico de las funciones transversales del sitio. Durante la transición, algunas clases siguen físicamente en `modules/core/` detrás del wrapper de `site`.
 
 ## Comunicaciones
 

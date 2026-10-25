@@ -77,10 +77,9 @@ El código se organiza estrictamente por **dominios de negocio de FLACSO**, nunc
 - **PROHIBIDO**: Crear carpetas globales agrupadas por tipo de archivo (ej. `shortcodes/shortcode-de-oferta.php`).
 - **Módulos LEGACY**: `modules/shortcodes/` existe únicamente por compatibilidad con instalaciones anteriores. **NUNCA agregar código nuevo a este módulo**.
 
-### B. Registro Central de Módulos (Single Source of Truth)
-- `includes/core/class-flacso-module-registry.php` declara todos los módulos, dependencias obligatorias (`depends`), dependencias opcionales (`optional_depends`) y criticidad (`required`).
-- Al crear un módulo nuevo, debe registrarse en `class-flacso-module-registry.php`.
-- Usar `flacso_require()` para archivos críticos y `flacso_optional_require()` para dependencias opcionales.
+### B. Carga de módulos
+- La lista de módulos y su orden están en `FLACSO_Uruguay_Plugin::load_modules()` (`flacso-uruguay.php`). Al crear un módulo nuevo, debe agregarse ahí respetando dependencias.
+- Usar `flacso_require()` para archivos críticos.
 
 ### C. Entidades Débiles y Derivación de Etiquetas
 - **`Cohorte`** pertenece a una **`OfertaAcademica`**. No tiene URL pública propia ni menú suelto (`show_in_menu => false`). Se administra desde la Oferta. Su número entero se deriva obligatoriamente a números romanos (`Cohorte VII`).
@@ -126,7 +125,6 @@ flacso-uruguay-plugin/
 ├── includes/
 │   ├── core/
 │   │   ├── loader.php                 # Motor de carga con resolución de dependencias
-│   │   ├── class-flacso-module-registry.php # Declaración de módulos y dependencias
 │   │   ├── requires.php               # Funciones flacso_require / flacso_optional_require
 │   │   ├── helpers.php                # Helpers transversales
 │   │   └── class-flacso-admin-panel.php # Menú administrativo FLACSO
@@ -141,7 +139,6 @@ flacso-uruguay-plugin/
 │   ├── consultas/                     # Bandeja de consultas y sync Mautic
 │   ├── mailing/                       # Integración operativa Mautic
 │   ├── formularios/                   # Formularios web y validaciones
-│   ├── site/                          # Utilidades generales del sitio
 │   └── shortcodes/                    # [LEGACY] Solo compatibilidad
 ├── scripts/
 │   ├── agent_check.py                 # Herramienta de verificación para agentes

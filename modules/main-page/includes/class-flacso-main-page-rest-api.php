@@ -141,12 +141,8 @@ final class Flacso_Main_Page_REST_API {
                 'defaults' => $defaults,
                 'sections' => self::build_sections($settings),
                 'groups' => self::build_groups(),
-                'sectionAliases' => class_exists('Flacso_Main_Page_Section_Keys')
-                    ? Flacso_Main_Page_Section_Keys::aliases()
-                    : [],
-                'retiredSections' => class_exists('Flacso_Main_Page_Section_Keys')
-                    ? Flacso_Main_Page_Section_Keys::retired()
-                    : [],
+                'sectionAliases' => [],
+                'retiredSections' => [],
             ], $extra_data),
         ];
     }

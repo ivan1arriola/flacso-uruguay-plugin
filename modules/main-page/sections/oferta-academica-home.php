@@ -257,19 +257,3 @@ if (!function_exists('flacso_section_home_academic_shortcuts_render')) {
     }
 }
 
-// Aliases de funciones antiguas. No deben usarse en código nuevo.
-if (!function_exists('flacso_section_posgrados_normalize_card')) {
-    function flacso_section_posgrados_normalize_card(array $card): array {
-        return flacso_section_oferta_educativa_normalize_card($card);
-    }
-}
-if (!function_exists('flacso_section_posgrados_get_cards')) {
-    function flacso_section_posgrados_get_cards(): array {
-        return flacso_section_oferta_educativa_get_cards();
-    }
-}
-if (!function_exists('flacso_section_posgrados_render')) {
-    function flacso_section_posgrados_render($atts = []): string {
-        return flacso_section_oferta_educativa_render($atts);
-    }
-}
