@@ -140,6 +140,29 @@ error_notifier_assert(
     FLACSO_Error_Notifier::handle_php_error(E_WARNING, 'Plugin warning', __FILE__, 303) === false,
     'debe preservar el manejador normal de PHP despues de alertar errores del plugin'
 );
-error_notifier_assert(count($GLOBALS['flacso_error_notifier_mail_calls']) === 3, 'debe alertar advertencias originadas dentro del plugin');
+error_notifier_assert(
+    count($GLOBALS['flacso_error_notifier_mail_calls']) === 2 && count($GLOBALS['flacso_error_notifier_http_calls']) === 3,
+    'no debe hacer red ni enviar correo dentro del manejador de errores de PHP'
+);
+FLACSO_Error_Notifier::flush_deferred();
+error_notifier_assert(count($GLOBALS['flacso_error_notifier_mail_calls']) === 3, 'debe alertar advertencias del plugin al cerrar la peticion');
+
+FLACSO_Error_Notifier::handle_php_error(E_WARNING, 'Plugin warning repetido', __FILE__, 404);
+FLACSO_Error_Notifier::handle_php_error(E_WARNING, 'Plugin warning repetido', __FILE__, 404);
+FLACSO_Error_Notifier::flush_deferred();
+error_notifier_assert(count($GLOBALS['flacso_error_notifier_mail_calls']) === 4, 'debe enviar una sola alerta por aviso repetido en la misma peticion');
+
+$GLOBALS['flacso_error_notifier_options']['flacso_error_alert_email'] = '';
+$GLOBALS['flacso_error_notifier_options']['admin_email'] = '';
+FLACSO_Error_Notifier::handle_php_error(E_WARNING, 'Sin canal disponible', __FILE__, 505);
+FLACSO_Error_Notifier::flush_deferred();
+$mail_calls_after_failure = count($GLOBALS['flacso_error_notifier_mail_calls']);
+$GLOBALS['flacso_error_notifier_options']['flacso_error_alert_email'] = 'operaciones@flacso.edu.uy';
+FLACSO_Error_Notifier::handle_php_error(E_WARNING, 'Otro aviso tras el fallo', __FILE__, 606);
+FLACSO_Error_Notifier::flush_deferred();
+error_notifier_assert(
+    count($GLOBALS['flacso_error_notifier_mail_calls']) === $mail_calls_after_failure,
+    'debe pausar los envios tras fallar todos los canales'
+);
 
 echo "OK error notifier\n";

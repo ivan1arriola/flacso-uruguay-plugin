@@ -13,7 +13,13 @@ final class FLACSO_Error_Notifier {
     public const OPTION_EMAIL = 'flacso_error_alert_email';
 
     private const DEDUPLICATION_SECONDS = 900;
+    private const FAILURE_BACKOFF_SECONDS = 300;
+    private const FAILURE_BACKOFF_KEY = 'flacso_error_alert_backoff';
+    private const MAX_DEFERRED_PER_REQUEST = 5;
     private static bool $initialized = false;
+
+    /** @var array<string, array{0:string,1:string,2:int,3:string}> */
+    private static array $deferred = [];
 
     public static function init(): void {
         if (self::$initialized) {
@@ -23,6 +29,7 @@ final class FLACSO_Error_Notifier {
         self::$initialized = true;
         set_error_handler([self::class, 'handle_php_error']);
         register_shutdown_function([self::class, 'handle_shutdown']);
+        register_shutdown_function([self::class, 'flush_deferred']);
     }
 
     public static function handle_php_error(int $level, string $message, string $file, int $line): bool {
@@ -30,9 +37,30 @@ final class FLACSO_Error_Notifier {
             return false;
         }
 
-        self::report($message, $file, $line, self::error_level_name($level));
+        // Nunca se hace red dentro del manejador: una advertencia no debe bloquear la página.
+        self::defer($message, $file, $line, self::error_level_name($level));
 
         return false;
+    }
+
+    /**
+     * Envía las alertas acumuladas durante la petición, ya fuera del camino crítico.
+     */
+    public static function flush_deferred(): void {
+        if (self::$deferred === []) {
+            return;
+        }
+
+        $pending = self::$deferred;
+        self::$deferred = [];
+
+        if (function_exists('fastcgi_finish_request') && !defined('WP_CLI')) {
+            fastcgi_finish_request();
+        }
+
+        foreach ($pending as $signature => [$message, $file, $line, $severity]) {
+            self::deliver($message, $file, $line, $severity, $signature);
+        }
     }
 
     public static function handle_shutdown(): void {
@@ -78,8 +106,27 @@ final class FLACSO_Error_Notifier {
         }
 
         $message = self::redact($message);
-        $signature = 'flacso_error_alert_' . sha1($severity . '|' . $message . '|' . $file . '|' . $line);
-        if (function_exists('get_transient') && get_transient($signature)) {
+
+        return self::deliver($message, $file, $line, $severity, self::signature($severity, $message, $file, $line));
+    }
+
+    private static function defer(string $message, string $file, int $line, string $severity): void {
+        $message = self::redact($message);
+        $signature = self::signature($severity, $message, $file, $line);
+
+        if (isset(self::$deferred[$signature]) || count(self::$deferred) >= self::MAX_DEFERRED_PER_REQUEST) {
+            return;
+        }
+
+        self::$deferred[$signature] = [$message, $file, $line, $severity];
+    }
+
+    private static function signature(string $severity, string $message, string $file, int $line): string {
+        return 'flacso_error_alert_' . sha1($severity . '|' . $message . '|' . $file . '|' . $line);
+    }
+
+    private static function deliver(string $message, string $file, int $line, string $severity, string $signature): bool {
+        if (function_exists('get_transient') && (get_transient($signature) || get_transient(self::FAILURE_BACKOFF_KEY))) {
             return false;
         }
 
@@ -89,8 +136,13 @@ final class FLACSO_Error_Notifier {
             $sent = self::send_email($text);
         }
 
-        if ($sent && function_exists('set_transient')) {
-            set_transient($signature, 1, self::DEDUPLICATION_SECONDS);
+        if (function_exists('set_transient')) {
+            if ($sent) {
+                set_transient($signature, 1, self::DEDUPLICATION_SECONDS);
+            } else {
+                // Si ningún canal responde, se evita reintentar (y esperar) en cada aviso.
+                set_transient(self::FAILURE_BACKOFF_KEY, 1, self::FAILURE_BACKOFF_SECONDS);
+            }
         }
 
         return $sent;
