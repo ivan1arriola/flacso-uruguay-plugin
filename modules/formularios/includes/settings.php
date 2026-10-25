@@ -8,9 +8,6 @@ function fc_register_settings() {
     register_setting( 'fc_options_group', 'fc_asunto_admin', [ 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'default' => '' ] );
     register_setting( 'fc_options_group', 'fc_asunto_usuario', [ 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'default' => '' ] );
     register_setting( 'fc_options_group', 'fc_cargar_bootstrap', [ 'type' => 'string', 'sanitize_callback' => function( $v ){ return $v === '1' ? '1' : '0'; }, 'default' => '1' ] );
-    register_setting( 'fc_options_group', 'fc_use_gmail_api', [ 'type' => 'string', 'sanitize_callback' => function( $v ){ return $v === '1' ? '1' : '0'; }, 'default' => '0' ] );
-    register_setting( 'fc_options_group', 'fc_google_service_account_json', [ 'type' => 'string', 'sanitize_callback' => 'wp_kses_post', 'default' => '' ] );
-    register_setting( 'fc_options_group', 'fc_google_impersonated', [ 'type' => 'string', 'sanitize_callback' => 'sanitize_email', 'default' => 'noreply@flacso.edu.uy' ] );
     register_setting( 'fc_options_group', 'fc_fallback_senders', [ 'type' => 'string', 'sanitize_callback' => function( $v ){ return sanitize_text_field( $v ); }, 'default' => '' ] );
 
     add_settings_section( 'fc_main_section', __( 'Ajustes de formulario de consultas', 'flacso-flacso-formulario-consultas' ), function(){
@@ -21,14 +18,6 @@ function fc_register_settings() {
     add_settings_field( 'fc_asunto_admin', __( 'Asunto para administrador', 'flacso-flacso-formulario-consultas' ), 'fc_field_asunto_admin_cb', 'fc_options_page', 'fc_main_section' );
     add_settings_field( 'fc_asunto_usuario', __( 'Asunto para usuario', 'flacso-flacso-formulario-consultas' ), 'fc_field_asunto_usuario_cb', 'fc_options_page', 'fc_main_section' );
     add_settings_field( 'fc_cargar_bootstrap', __( 'Cargar Bootstrap automáticamente', 'flacso-flacso-formulario-consultas' ), 'fc_field_bootstrap_cb', 'fc_options_page', 'fc_main_section' );
-    // Opción para Gmail API
-    add_settings_field( 'fc_use_gmail_api', __( 'Usar Gmail API (Google Workspace)', 'flacso-flacso-formulario-consultas' ), 'fc_field_use_gmail_api_cb', 'fc_options_page', 'fc_main_section' );
-    // Solo mostrar ajustes correspondientes si la opción está habilitada
-    if ( get_option( 'fc_use_gmail_api', '0' ) === '1' ) {
-        add_settings_field( 'fc_google_impersonated', __( 'Remitente (impersonado)', 'flacso-flacso-formulario-consultas' ), 'fc_field_google_impersonated_cb', 'fc_options_page', 'fc_main_section' );
-        add_settings_field( 'fc_google_service_account_json', __( 'Clave de cuenta de servicio (JSON)', 'flacso-flacso-formulario-consultas' ), 'fc_field_google_json_cb', 'fc_options_page', 'fc_main_section' );
-    }
-    // Remitentes de fallback útiles tanto con como sin Gmail API
     add_settings_field( 'fc_fallback_senders', __( 'Remitentes de fallback (lista)', 'flacso-flacso-formulario-consultas' ), 'fc_field_fallback_senders_cb', 'fc_options_page', 'fc_main_section' );
 
 }
@@ -56,35 +45,13 @@ function fc_field_bootstrap_cb() {
     echo '<label><input type="checkbox" name="fc_cargar_bootstrap" value="1" ' . checked( '1', $value, false ) . ' /> ' . esc_html__( 'Cargar CSS/JS de Bootstrap 5 al mostrar el formulario', 'flacso-flacso-formulario-consultas' ) . '</label>';
 }
 
-function fc_field_use_gmail_api_cb() {
-    $value = get_option( 'fc_use_gmail_api', '0' );
-    echo '<label><input type="checkbox" name="fc_use_gmail_api" value="1" ' . checked( '1', $value, false ) . ' /> ' . esc_html__( 'Enviar correos mediante Gmail API con cuenta de servicio', 'flacso-flacso-formulario-consultas' ) . '</label>';
-    echo '<p class="description">' . esc_html__( 'Requiere dominio Google Workspace con delegación a nivel de dominio y el alcance gmail.send', 'flacso-flacso-formulario-consultas' ) . '</p>';
-}
 
-function fc_field_google_impersonated_cb() {
-    $value = esc_attr( get_option( 'fc_google_impersonated', 'noreply@flacso.edu.uy' ) );
-    echo '<input type="email" class="regular-text" name="fc_google_impersonated" value="' . $value . '" />';
-    echo '<p class="description">' . esc_html__( 'Cuenta del dominio desde la que se envía (p.ej., noreply@flacso.edu.uy).', 'flacso-flacso-formulario-consultas' ) . '</p>';
-}
 
-function fc_field_google_json_cb() {
-    $value = get_option( 'fc_google_service_account_json', '' );
-    $masked = '';
-    if ( $value ) {
-        // Evitar mostrar la clave privada completa
-        $masked = preg_replace( '/"private_key"\s*:\s*"[\s\S]*?"/m', '"private_key":"*** oculto ***"', $value );
-    }
-    echo '<textarea name="fc_google_service_account_json" rows="8" class="large-text code" placeholder="{\n  \"type\": \"service_account\",...\n}">';
-    echo esc_textarea( $masked ? $masked : '' );
-    echo '</textarea>';
-    echo '<p class="description">' . esc_html__( 'Pega aquí el JSON de la cuenta de servicio con delegación a nivel de dominio habilitada.', 'flacso-flacso-formulario-consultas' ) . '</p>';
-}
 
 function fc_field_fallback_senders_cb() {
     $value = esc_attr( get_option( 'fc_fallback_senders', '' ) );
     echo '<input type="text" class="regular-text" name="fc_fallback_senders" value="' . $value . '" placeholder="noreply@flacso.edu.uy, wordpress@flacso.edu.uy, web@flacso.edu.uy" />';
-    echo '<p class="description">' . esc_html__( 'Lista de correos separados por coma usados si Gmail API no está disponible o falla el envío. Se intentan en orden.', 'flacso-flacso-formulario-consultas' ) . '</p>';
+    echo '<p class="description">' . esc_html__( 'Lista de correos separados por coma usados si el envío principal falla. Se intentan en orden.', 'flacso-flacso-formulario-consultas' ) . '</p>';
 }
 
 function fc_add_consulta_settings_submenu() {
@@ -166,15 +133,7 @@ function fc_handle_send_test_email() {
                 . '<p>' . esc_html__( 'Si recibes este correo, la configuración de envío está funcionando.', 'flacso-flacso-formulario-consultas' ) . '</p>';
     $body       = function_exists('fc_wrap_email_html') ? fc_wrap_email_html( $body_inner, __( 'Prueba de correo', 'flacso-flacso-formulario-consultas' ) ) : $body_inner;
 
-    $ok = false;
-    if ( function_exists( 'fc_can_use_gmail_api' ) && fc_can_use_gmail_api() ) {
-        $ok = fc_send_via_gmail_api( $to, $subject, $body, $headers, $from_name, $from_email );
-        if ( ! $ok ) {
-            $ok = fc_send_via_wp_mail_with_fallbacks( $to, $subject, $body, $headers, $from_name, fc_get_fallback_senders_list() );
-        }
-    } else {
-        $ok = fc_send_via_wp_mail_with_fallbacks( $to, $subject, $body, $headers, $from_name, fc_get_fallback_senders_list() );
-    }
+    $ok = fc_send_via_wp_mail_with_fallbacks( $to, $subject, $body, $headers, $from_name, fc_get_fallback_senders_list() );
 
     $res = $ok ? 'success' : 'fail';
     $redirect_url = class_exists( 'FLACSO_Integrations_Settings' )

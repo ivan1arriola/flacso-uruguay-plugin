@@ -60,12 +60,6 @@ function fc_wrap_email_html( $inner_html, $title = '' ) {
                 "</body></html>";
 }
 
-function fc_can_use_gmail_api() {
-    $use = get_option( 'fc_use_gmail_api', '0' ) === '1';
-    $json = get_option( 'fc_google_service_account_json', '' );
-    $imp  = get_option( 'fc_google_impersonated', '' );
-    return $use && ! empty( $json ) && ! empty( $imp ) && function_exists( 'openssl_sign' );
-}
 
 function fc_get_fallback_senders_list() {
     $list = get_option( 'fc_fallback_senders', '' );
@@ -98,113 +92,6 @@ function fc_send_via_wp_mail_with_fallbacks( $to, $subject, $html, $headers, $fr
     return false;
 }
 
-function fc_google_get_access_token() {
-    $cached = get_transient( 'fc_gmail_access_token' );
-    if ( ! empty( $cached ) && is_string( $cached ) ) {
-        return $cached;
-    }
 
-    $json = get_option( 'fc_google_service_account_json', '' );
-    if ( empty( $json ) ) { return new WP_Error( 'no_json', 'Falta la clave de cuenta de servicio.' ); }
-
-    $conf = json_decode( $json, true );
-    if ( ! is_array( $conf ) || empty( $conf['client_email'] ) || empty( $conf['private_key'] ) || empty( $conf['token_uri'] ) ) {
-        return new WP_Error( 'bad_json', 'Clave de cuenta de servicio inválida.' );
-    }
-
-    $now = time();
-    $claims = [
-        'iss'   => $conf['client_email'],
-        'scope' => 'https://www.googleapis.com/auth/gmail.send',
-        'aud'   => $conf['token_uri'],
-        'iat'   => $now,
-        'exp'   => $now + 3600,
-        'sub'   => get_option( 'fc_google_impersonated', '' ),
-    ];
-
-    $jwt_header = [ 'alg' => 'RS256', 'typ' => 'JWT' ];
-    $enc = function( $data ) {
-        return rtrim( strtr( base64_encode( wp_json_encode( $data ) ), '+/', '-_' ), '=' );
-    };
-    $base = $enc( $jwt_header ) . '.' . $enc( $claims );
-
-    $pkey = openssl_pkey_get_private( $conf['private_key'] );
-    if ( ! $pkey ) { return new WP_Error( 'no_key', 'No se pudo leer la private_key.' ); }
-    $sig = '';
-    $ok = openssl_sign( $base, $sig, $pkey, 'sha256' );
-    openssl_free_key( $pkey );
-    if ( ! $ok ) { return new WP_Error( 'sign_fail', 'Fallo al firmar JWT.' ); }
-    $jwt = $base . '.' . rtrim( strtr( base64_encode( $sig ), '+/', '-_' ), '=' );
-
-    $resp = wp_remote_post( $conf['token_uri'], [
-        'headers' => [ 'Content-Type' => 'application/x-www-form-urlencoded' ],
-        'body'    => [
-            'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-            'assertion'  => $jwt,
-        ],
-        'timeout' => 20,
-    ] );
-    if ( is_wp_error( $resp ) ) { return $resp; }
-    $code = wp_remote_retrieve_response_code( $resp );
-    $body = json_decode( wp_remote_retrieve_body( $resp ), true );
-    if ( 200 !== $code || empty( $body['access_token'] ) ) {
-        return new WP_Error( 'token_fail', 'No se pudo obtener access_token', [ 'response' => $body, 'code' => $code ] );
-    }
-    $token = $body['access_token'];
-    $ttl   = ! empty( $body['expires_in'] ) ? ( (int) $body['expires_in'] - 60 ) : 3300;
-    if ( $ttl > 0 ) {
-        set_transient( 'fc_gmail_access_token', $token, $ttl );
-    }
-    return $token;
-}
-
-function fc_send_via_gmail_api( $to, $subject, $html, $headers = [], $from_name = '', $from_email = '' ) {
-    $token = fc_google_get_access_token();
-    if ( is_wp_error( $token ) ) {
-        // Fallback inmediato
-        return fc_send_via_wp_mail_with_fallbacks( $to, $subject, $html, $headers, $from_name, fc_get_fallback_senders_list() );
-    }
-
-    $mime = [];
-    // Asegurar headers esenciales
-    $mime[] = 'From: ' . ( $from_name ? $from_name : $from_email ) . ' <' . $from_email . '>';
-    $mime[] = 'To: ' . $to;
-    $mime[] = 'Subject: ' . $subject;
-    $mime[] = 'MIME-Version: 1.0';
-    $has_ct = false; $has_rt = false;
-    foreach ( (array) $headers as $h ) {
-        if ( stripos( $h, 'content-type:' ) === 0 ) { $has_ct = true; }
-        if ( stripos( $h, 'reply-to:' ) === 0 ) { $has_rt = true; $mime[] = $h; }
-    }
-    if ( ! $has_ct ) {
-        $mime[] = 'Content-Type: text/html; charset=UTF-8';
-    }
-    if ( ! $has_rt && ! empty( $headers ) ) {
-        // Si no se detectó Reply-To en headers, intentar encontrarlo
-        foreach ( (array) $headers as $h ) {
-            if ( stripos( $h, 'reply-to:' ) === 0 ) { $mime[] = $h; break; }
-        }
-    }
-    $mime[] = '';
-    $mime[] = $html;
-
-    $raw = implode( "\r\n", $mime );
-    $raw_b64 = rtrim( strtr( base64_encode( $raw ), '+/', '-_' ), '=' );
-
-    $resp = wp_remote_post( 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send', [
-        'headers' => [
-            'Authorization' => 'Bearer ' . $token,
-            'Content-Type'  => 'application/json',
-        ],
-        'body'    => wp_json_encode( [ 'raw' => $raw_b64 ] ),
-        'timeout' => 20,
-    ] );
-
-    if ( is_wp_error( $resp ) ) {
-        return false;
-    }
-    $code = wp_remote_retrieve_response_code( $resp );
-    return ( $code >= 200 && $code < 300 );
-}
 
 
