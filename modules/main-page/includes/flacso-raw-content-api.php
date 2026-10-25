@@ -13,7 +13,10 @@ function flacso_register_post_rest_fields(): void {
         register_rest_field($type, 'raw_content', [
             'get_callback' => static function ($post_arr) {
                 $post = get_post($post_arr['id']);
-                return $post ? $post->post_content : '';
+                if (!$post || post_password_required($post)) {
+                    return '';
+                }
+                return $post->post_content;
             },
             'schema' => [
                 'description' => __('Contenido original sin procesar', 'flacso-main-page'),
@@ -25,7 +28,7 @@ function flacso_register_post_rest_fields(): void {
         register_rest_field($type, 'plain_text', [
             'get_callback' => static function ($post_arr) {
                 $post = get_post($post_arr['id']);
-                $content = $post ? wp_strip_all_tags($post->post_content) : '';
+                $content = $post && !post_password_required($post) ? wp_strip_all_tags($post->post_content) : '';
                 return trim(preg_replace('/\s+/', ' ', $content));
             },
             'schema' => [
@@ -63,13 +66,6 @@ add_action('rest_api_init', function () {
                 'required'          => true,
                 'validate_callback' => static function ($param, $request, $key) {
                     return is_numeric($param);
-                },
-            ],
-            'type' => [
-                'required' => false,
-                'default'  => 'post',
-                'validate_callback' => static function ($param) {
-                    return is_string($param) && post_type_exists($param);
                 },
             ],
             'type' => [
@@ -120,6 +116,10 @@ function flacso_get_raw_content(WP_REST_Request $request) {
         return new WP_Error('not_found', __('No se encontró el contenido solicitado.', 'flacso-main-page'), ['status' => 404]);
     }
 
+    if (!current_user_can('edit_post', $post->ID)) {
+        return new WP_Error('forbidden', __('No tenés permisos para ver este contenido.', 'flacso-main-page'), ['status' => 403]);
+    }
+
     return [
         'id'          => $post->ID,
         'type'        => $post->post_type,
@@ -140,9 +140,17 @@ function flacso_update_raw_content(WP_REST_Request $request) {
         return new WP_Error('invalid_type', __('El tipo solicitado no existe.', 'flacso-main-page'), ['status' => 400]);
     }
 
+    if (!is_string($new_content)) {
+        return new WP_Error('invalid_content', __('El contenido debe ser texto.', 'flacso-main-page'), ['status' => 400]);
+    }
+
     $post = get_post($id);
     if (!$post || $post->post_type !== $type) {
         return new WP_Error('not_found', __('No se encontró el contenido a actualizar.', 'flacso-main-page'), ['status' => 404]);
+    }
+
+    if (!current_user_can('edit_post', $post->ID)) {
+        return new WP_Error('forbidden', __('No tenés permisos para editar este contenido.', 'flacso-main-page'), ['status' => 403]);
     }
 
     $new_content = preg_replace_callback('/\\\\u([0-9a-fA-F]{4})/', static function ($matches) {
@@ -151,16 +159,11 @@ function flacso_update_raw_content(WP_REST_Request $request) {
 
     $new_content = wp_unslash($new_content);
 
-    remove_filter('content_save_pre', 'wp_filter_post_kses');
-    remove_filter('content_filtered_save_pre', 'wp_filter_post_kses');
-
+    // WordPress ya omite KSES para quienes tienen `unfiltered_html`; el resto no debe saltárselo.
     $updated_id = wp_update_post([
         'ID'           => $id,
         'post_content' => $new_content,
     ], true);
-
-    add_filter('content_save_pre', 'wp_filter_post_kses');
-    add_filter('content_filtered_save_pre', 'wp_filter_post_kses');
 
     if (is_wp_error($updated_id)) {
         return new WP_Error('update_failed', __('Error al actualizar el contenido.', 'flacso-main-page'), ['status' => 500]);
@@ -173,6 +176,11 @@ function flacso_update_raw_content(WP_REST_Request $request) {
     ];
 }
 
-function flacso_check_permissions() {
+function flacso_check_permissions(?WP_REST_Request $request = null) {
+    $id = $request ? absint($request['id']) : 0;
+    if ($id > 0) {
+        return current_user_can('edit_post', $id);
+    }
+
     return current_user_can('edit_posts');
 }
