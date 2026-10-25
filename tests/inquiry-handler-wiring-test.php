@@ -320,6 +320,10 @@ CREATE TABLE seminar_inquiries (
 flacso_test_install_delivery_tables($pdo);
 FLACSO_DB::set_connection($pdo);
 
+if (!function_exists('apply_filters')) {
+    function apply_filters(string $hook, $value) { return $value; }
+}
+
 // Include handlers
 require_once $root . '/modules/main-page/includes/flacso-consultas.php';
 require_once $root . '/modules/formularios/includes/helpers.php';

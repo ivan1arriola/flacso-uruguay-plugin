@@ -78,25 +78,29 @@ add_action( 'enqueue_block_assets', 'flacso_consultas_enqueue_bootstrap_icons' )
  * Helpers generales.
  */
 function flacso_get_user_ip() {
-	$ip_keys = array(
-		'HTTP_X_REAL_IP',
-		'HTTP_CLIENT_IP',
-		'HTTP_X_FORWARDED_FOR',
-		'HTTP_X_FORWARDED',
-		'HTTP_X_CLUSTER_CLIENT_IP',
-		'HTTP_FORWARDED_FOR',
-		'HTTP_FORWARDED',
-		'REMOTE_ADDR',
-	);
-	foreach ( $ip_keys as $key ) {
-		if ( ! empty( $_SERVER[ $key ] ) ) {
-			$ip = trim( current( explode( ',', $_SERVER[ $key ] ) ) );
-			if ( filter_var( $ip, FILTER_VALIDATE_IP ) ) {
-				return sanitize_text_field( $ip );
+	$remote_addr = isset( $_SERVER['REMOTE_ADDR'] ) ? trim( (string) $_SERVER['REMOTE_ADDR'] ) : '';
+	if ( ! filter_var( $remote_addr, FILTER_VALIDATE_IP ) ) {
+		return 'unknown';
+	}
+
+	// Las cabeceras de reenvío las controla el cliente: solo se aceptan si la conexión
+	// llega desde un proxy propio (red privada/loopback) o uno declarado en el filtro.
+	$trusted_proxies = (array) apply_filters( 'flacso_trusted_proxies', array() );
+	$via_proxy       = in_array( $remote_addr, $trusted_proxies, true )
+		|| ! filter_var( $remote_addr, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE );
+
+	if ( $via_proxy ) {
+		foreach ( array( 'HTTP_X_REAL_IP', 'HTTP_X_FORWARDED_FOR' ) as $key ) {
+			if ( ! empty( $_SERVER[ $key ] ) ) {
+				$ip = trim( current( explode( ',', (string) $_SERVER[ $key ] ) ) );
+				if ( filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+					return sanitize_text_field( $ip );
+				}
 			}
 		}
 	}
-	return 'unknown';
+
+	return sanitize_text_field( $remote_addr );
 }
 
 function flacso_remove_accents_local( $str ) {
@@ -1052,6 +1056,19 @@ function flacso_enviar_consulta_func() {
 		wp_send_json_error( 'El formulario está temporalmente fuera de servicio.' );
 	}
 
+	// Límite por IP: cada envío dispara escrituras y llamadas externas.
+	$rate_ip = flacso_get_user_ip();
+	if ( 'unknown' !== $rate_ip ) {
+		$rate_key   = 'flacso_consulta_rate_' . md5( $rate_ip );
+		$rate_count = (int) get_transient( $rate_key );
+		$rate_max   = (int) apply_filters( 'flacso_consultas_rate_limit', 20 );
+		if ( $rate_count >= $rate_max ) {
+			status_header( 429 );
+			wp_send_json_error( 'Demasiadas solicitudes. Intentá nuevamente en unos minutos.' );
+		}
+		set_transient( $rate_key, $rate_count + 1, 10 * MINUTE_IN_SECONDS );
+	}
+
 	$sanitize_deep = function( $value ) use ( &$sanitize_deep ) {
 		if ( is_array( $value ) ) {
 			$out = array();
@@ -1125,6 +1142,10 @@ function flacso_enviar_consulta_func() {
 			preg_split( '/\s*,\s*/', (string) wp_unslash( $_POST['selected_offer_ids'] ), -1, PREG_SPLIT_NO_EMPTY )
 		);
 	}
+
+	// Cada oferta seleccionada genera una escritura y una entrega: se acota el total por solicitud.
+	$max_offers         = max( 1, (int) apply_filters( 'flacso_consultas_max_offers', 5 ) );
+	$selected_offer_ids = array_slice( $selected_offer_ids, 0, $max_offers );
 
 	$campos_obligatorios = array( 'nombre', 'apellido', 'pais', 'nivel_academico', 'correo', 'profesion' );
 	$faltan              = array();
