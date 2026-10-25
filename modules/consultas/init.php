@@ -47,6 +47,7 @@ $flacso_consultas_files = [
     'modules/consultas/services/class-flacso-inquiry-followup-service.php',
 
     'modules/consultas/includes/class-flacso-chatbot-inquiry-api.php',
+    'modules/consultas/includes/class-flacso-offer-status-api.php',
     'modules/consultas/includes/class-flacso-consultas-cli.php',
     'modules/consultas/includes/class-flacso-consultas-admin.php',
 ];
@@ -77,4 +78,8 @@ if (class_exists('FLACSO_Consultas_Admin') && function_exists('add_action')) {
 
 if (class_exists('FLACSO_Chatbot_Inquiry_API')) {
     FLACSO_Chatbot_Inquiry_API::init();
+}
+
+if (class_exists('FLACSO_Offer_Status_API')) {
+    FLACSO_Offer_Status_API::init();
 }

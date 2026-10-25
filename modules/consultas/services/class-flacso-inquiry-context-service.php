@@ -11,15 +11,61 @@ if (!defined('ABSPATH') && !defined('STDIN')) {
 
 class FLACSO_Inquiry_Context_Service {
     public static function resolve(int $offer_id, array $inquiry_data = []): array {
-        $catalog_data = [];
-        if ($offer_id > 0 && class_exists('FLACSO_Academic_Catalog') && method_exists('FLACSO_Academic_Catalog', 'get_offer')) {
-            try {
-                $catalog_data = FLACSO_Academic_Catalog::get_offer($offer_id);
-            } catch (\Throwable $t) {
-                $catalog_data = [];
-            }
+        return self::from_catalog($offer_id, self::catalog_offer($offer_id), $inquiry_data);
+    }
+
+    /**
+     * Estado público de una oferta para las campañas Mautic. Usa la misma
+     * cohorte que la consulta; "abierta" exige además enlace de preinscripción,
+     * como el catálogo de Preinscripciones. Null si la oferta no existe.
+     */
+    public static function offer_status(int $offer_id): ?array {
+        $catalog_data = self::catalog_offer($offer_id);
+        if (!$catalog_data) {
+            return null;
         }
 
+        $context = self::from_catalog($offer_id, $catalog_data, []);
+        $status = (string) $context['offerStatus'];
+        if ($status === 'abierta' && empty($context['preinscripcionUrl'])) {
+            $status = 'cerrada';
+        }
+
+        return [
+            'offerWpId' => $offer_id,
+            'nombre' => (string) $context['offerName'],
+            'tipo' => (string) ($context['offerType'] ?? ''),
+            'resumen' => (string) ($catalog_data['resumen'] ?? ''),
+            'url' => function_exists('get_permalink') ? (string) get_permalink($offer_id) : '',
+            'estado' => $status,
+            'cohorte' => $context['cohortWpId'] === null ? null : [
+                'id' => $context['cohortWpId'],
+                'numero' => $context['cohortNumber'],
+                'nombre' => (string) $context['cohortName'],
+                'fechaInicio' => (string) $context['startDate'],
+                'precision' => $context['startDatePrecision'],
+                'modalidad' => $context['modality'],
+            ],
+            'preinscripcion' => [
+                'url' => $context['preinscripcionUrl'],
+                'desde' => $context['registrationOpenAt'],
+                'hasta' => $context['registrationCloseAt'],
+            ],
+        ];
+    }
+
+    private static function catalog_offer(int $offer_id): array {
+        if ($offer_id <= 0 || !class_exists('FLACSO_Academic_Catalog') || !method_exists('FLACSO_Academic_Catalog', 'get_offer')) {
+            return [];
+        }
+        try {
+            return FLACSO_Academic_Catalog::get_offer($offer_id);
+        } catch (\Throwable $t) {
+            return [];
+        }
+    }
+
+    private static function from_catalog(int $offer_id, array $catalog_data, array $inquiry_data): array {
         $offer_name = trim((string)($inquiry_data['offerName'] ?? $inquiry_data['titulo_posgrado'] ?? ''));
         if ($offer_name === '' && !empty($catalog_data['nombre'])) {
             $offer_name = (string)$catalog_data['nombre'];
