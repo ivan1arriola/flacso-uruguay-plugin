@@ -57,17 +57,23 @@ if (!function_exists('flacso_view_pdf')) {
 
         if ($expired) {
             $fetch_remote = static function ($url, $cookies = array()) {
-                return wp_remote_get(
-                    $url,
-                    array(
-                        'timeout'     => 45,
-                        'redirection' => 5,
-                        'cookies'     => $cookies,
-                        'headers'     => array(
-                            'User-Agent' => 'FLACSO-PDF-Proxy/1.0',
-                        ),
-                    )
+                $args = array(
+                    'timeout'     => 45,
+                    'redirection' => 5,
+                    'cookies'     => $cookies,
+                    'headers'     => array(
+                        'User-Agent' => 'FLACSO-PDF-Proxy/1.0',
+                    ),
                 );
+
+                // Los hosts externos (Google) se piden con la variante "safe", que rechaza
+                // loopback, redes privadas y metadatos de nube (SSRF). El host propio puede
+                // resolver a una IP interna en algunos servidores, por eso queda fuera.
+                if (flacso_pdf_proxy_is_site_host($url)) {
+                    return wp_remote_get($url, $args);
+                }
+
+                return wp_safe_remote_get($url, $args);
             };
 
             $is_pdf_payload = static function ($ctype, $body) {
@@ -282,10 +288,36 @@ if (!function_exists('flacso_map_wp_uploads_file')) {
             return false;
         }
 
-        $rel  = ltrim(substr($u_url['path'], strlen($base_path)), '/');
-        $file = trailingslashit($uploads['basedir']) . $rel;
+        if (!empty($u_url['host']) && !empty($u_base['host'])
+            && strtolower($u_url['host']) !== strtolower($u_base['host'])
+        ) {
+            return false;
+        }
 
-        return file_exists($file) ? $file : false;
+        $rel = rawurldecode(ltrim(substr($u_url['path'], strlen($base_path)), '/'));
+        if ($rel === '' || strpos($rel, "\0") !== false) {
+            return false;
+        }
+
+        // Canonicaliza y exige que el archivo siga dentro de uploads (evita ../ y symlinks).
+        $real_base = realpath($uploads['basedir']);
+        $real_file = realpath(trailingslashit($uploads['basedir']) . $rel);
+        if ($real_base === false || $real_file === false || !is_file($real_file)) {
+            return false;
+        }
+
+        $real_base = trailingslashit(wp_normalize_path($real_base));
+        $real_file = wp_normalize_path($real_file);
+        if (strpos($real_file, $real_base) !== 0) {
+            return false;
+        }
+
+        // Este proxy solo sirve PDF.
+        if (strtolower(pathinfo($real_file, PATHINFO_EXTENSION)) !== 'pdf') {
+            return false;
+        }
+
+        return $real_file;
     }
 }
 
@@ -327,7 +359,8 @@ if (!function_exists('flacso_serve_pdf_file')) {
         }
 
         if (isset($_SERVER['HTTP_RANGE'])) {
-            list(, $range) = explode('=', $_SERVER['HTTP_RANGE'], 2);
+            $range_header = (string) $_SERVER['HTTP_RANGE'];
+            $range        = strpos($range_header, '=') !== false ? explode('=', $range_header, 2)[1] : '';
 
             if (strpos($range, ',') !== false) {
                 header('HTTP/1.1 416 Requested Range Not Satisfiable');
@@ -382,6 +415,19 @@ if (!function_exists('flacso_serve_pdf_file')) {
     }
 }
 
+if (!function_exists('flacso_pdf_proxy_is_site_host')) {
+    /**
+     * Indica si la URL pertenece al mismo host que el sitio.
+     */
+    function flacso_pdf_proxy_is_site_host($url)
+    {
+        $host      = wp_parse_url($url, PHP_URL_HOST);
+        $site_host = wp_parse_url(home_url(), PHP_URL_HOST);
+
+        return !empty($host) && !empty($site_host) && strtolower($host) === strtolower($site_host);
+    }
+}
+
 if (!function_exists('flacso_resolve_pdf_export_url')) {
     /**
      * Normaliza URL a un endpoint PDF visualizable.
@@ -399,21 +445,29 @@ if (!function_exists('flacso_resolve_pdf_export_url')) {
         $path  = isset($parts['path']) ? $parts['path'] : '';
         $query = isset($parts['query']) ? $parts['query'] : '';
 
-        if (preg_match('~\.pdf(\?.*)?$~i', $url)) {
-            return $url;
+        if (!in_array($parts['scheme'], array('http', 'https'), true)) {
+            return new WP_Error('bad_url', 'URL inválida.');
         }
 
         $site_host = parse_url(home_url(), PHP_URL_HOST);
-        if (!empty($site_host)
-            && $host === strtolower($site_host)
-            && strpos($path, '/wp-content/uploads/') === 0
-        ) {
-            return $url;
+        $is_site   = !empty($site_host) && $host === strtolower($site_host);
+        $allowed   = array('docs.google.com', 'drive.google.com');
+
+        // La lista blanca de hosts se evalúa siempre, también para URLs que terminan en .pdf.
+        if (!$is_site && !in_array($host, $allowed, true)) {
+            return new WP_Error('forbidden', 'Origen no permitido. Solo Google Docs/Drive o PDFs del sitio.');
         }
 
-        $allowed = array('docs.google.com', 'drive.google.com');
-        if (!in_array($host, $allowed, true)) {
-            return new WP_Error('forbidden', 'Origen no permitido. Solo Google Docs/Drive o PDFs directos.');
+        if ($is_site) {
+            if (strpos($path, '/wp-content/uploads/') === 0 || preg_match('~\.pdf$~i', $path)) {
+                return $url;
+            }
+
+            return new WP_Error('forbidden', 'Origen no permitido. Solo Google Docs/Drive o PDFs del sitio.');
+        }
+
+        if (preg_match('~\.pdf$~i', $path)) {
+            return $url;
         }
 
         if ($host === 'docs.google.com') {
