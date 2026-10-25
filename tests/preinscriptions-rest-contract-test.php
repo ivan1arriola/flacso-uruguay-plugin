@@ -225,7 +225,7 @@ $GLOBALS['flacso_test_posts'][100] = (object) [
     'post_name'   => 'maestria-genero',
 ];
 FLACSO_Oferta_Academica::$tipos[100] = 'maestria';
-$GLOBALS['flacso_test_post_meta'][100]['sigla'] = 'MGPI';
+$GLOBALS['flacso_test_post_meta'][100]['abreviacion'] = 'MGPI';
 $GLOBALS['flacso_test_post_meta'][100]['correo'] = 'contacto@flacso.edu.uy';
 $GLOBALS['flacso_test_post_meta'][100]['correo_oferta'] = ['coordinacion@flacso.edu.uy', 'secretaria@flacso.edu.uy'];
 $GLOBALS['flacso_test_post_meta'][100]['orientaciones'] = [
@@ -257,7 +257,6 @@ $GLOBALS['flacso_test_post_meta'][101]['oferta_academica_id'] = 100;
 $GLOBALS['flacso_test_post_meta'][101]['numero'] = 11;
 $GLOBALS['flacso_test_post_meta'][101]['nombre'] = 'Cohorte XI';
 $GLOBALS['flacso_test_post_meta'][101]['link_preinscripcion'] = 'https://flacso.edu.uy/legacy-davia';
-$GLOBALS['flacso_test_post_meta'][101]['fecha_limite_preinscripcion'] = '2026-05-15';
 // Legacy meta to prove serializer does not output them
 $GLOBALS['flacso_test_post_meta'][101]['preinscripcion_formulario'] = [
     ['key' => 'documento', 'position' => 10, 'required' => true],
@@ -278,6 +277,8 @@ $GLOBALS['flacso_test_posts'][102] = (object) [
 $GLOBALS['flacso_test_post_meta'][102]['oferta_academica_id'] = 100;
 $GLOBALS['flacso_test_post_meta'][102]['numero'] = 10;
 $GLOBALS['flacso_test_post_meta'][102]['nombre'] = 'Cohorte X';
+// Same registration link as the open cohort 101 (real case: a new cohort reuses the offer link)
+$GLOBALS['flacso_test_post_meta'][102]['link_preinscripcion'] = 'https://flacso.edu.uy/legacy-davia/';
 FLACSO_Cohorte::$open_cohorts[102] = false;
 
 // 4. Seminario
@@ -337,6 +338,24 @@ flacso_rest_assert_true((bool) preg_match('/^sha256:[a-f0-9]{64}$/', $target_coh
 flacso_rest_assert_same('https://flacso.edu.uy/legacy-davia', $target_cohort['urls']['legacyRegistration'], 'preserves legacy registration url');
 flacso_rest_assert_same(['coordinacion@flacso.edu.uy', 'secretaria@flacso.edu.uy'], $target_cohort['notificationEmails'], 'notification emails come from Correo de la Oferta Académica');
 flacso_rest_assert_same('coordinacion@flacso.edu.uy', $target_cohort['notificationEmail'], 'notificationEmail keeps the first offer email for older clients');
+
+flacso_rest_assert_same('MGPI', $target_cohort['offer']['name'], 'offer name uses the abbreviation (abreviacion)');
+flacso_rest_assert_same(null, $target_cohort['registrationWindow']['until'], 'cohorts have no registration deadline');
+flacso_rest_assert_same('open', $target_cohort['registrationAvailability'], 'open cohort reports availability');
+
+$cohort_availability = static function (): array {
+    $result = [];
+    foreach (FLACSO_Preinscriptions_Serializer::all_targets() as $candidate) {
+        if (isset($candidate['wordpress']['cohortId'])) {
+            $result[$candidate['wordpress']['cohortId']] = $candidate['registrationAvailability'];
+        }
+    }
+    return $result;
+};
+flacso_rest_assert_same([101 => 'open', 102 => 'closed'], $cohort_availability(), 'a closed cohort sharing the link does not affect the open one');
+FLACSO_Cohorte::$open_cohorts[102] = true;
+flacso_rest_assert_same([101 => 'conflict', 102 => 'conflict'], $cohort_availability(), 'two open cohorts behind the same link are a conflict');
+FLACSO_Cohorte::$open_cohorts[102] = false;
 
 $target_short_cohort = FLACSO_Preinscriptions_Serializer::for_cohort(102);
 flacso_rest_assert_same('Maestría en Género y Políticas de Igualdad — Cohorte X', $target_short_cohort['title'], 'a generic cohort title includes its academic offer');

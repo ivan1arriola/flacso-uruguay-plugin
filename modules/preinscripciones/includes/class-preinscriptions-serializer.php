@@ -25,6 +25,7 @@ final class FLACSO_Preinscriptions_Serializer {
                 $targets[] = $serialized;
             }
         }
+        $targets = self::resolve_cohort_availability($targets);
 
         // 2. Ediciones de Seminario
         $edition_posts = get_posts([
@@ -92,15 +93,6 @@ final class FLACSO_Preinscriptions_Serializer {
         $raw_mentions = get_post_meta((int) $parent->ID, 'menciones', true);
         $clean_mentions = FLACSO_Preinscriptions_Config::sanitize_text_list($raw_mentions);
 
-        $fecha_limite = get_post_meta($cohort_id, 'fecha_limite_preinscripcion', true);
-        $iso_until = null;
-        if (!empty($fecha_limite) && is_string($fecha_limite)) {
-            $ts = strtotime($fecha_limite);
-            if ($ts !== false) {
-                $iso_until = date('c', $ts);
-            }
-        }
-
         $legacy_link = get_post_meta($cohort_id, 'link_preinscripcion', true);
         $public_url = get_permalink((int) $parent->ID);
         $wordpress_url = get_permalink($cohort_id);
@@ -112,9 +104,10 @@ final class FLACSO_Preinscriptions_Serializer {
             'orientations'       => $clean_orientations,
             'mentions'           => $clean_mentions,
             'registrationOpen'   => $is_open,
+            // Las cohortes no tienen ventana de fechas: se abren y cierran manualmente.
             'registrationWindow' => [
                 'from'  => null,
-                'until' => $iso_until,
+                'until' => null,
             ],
             'urls'               => [
                 'public'             => $public_url,
@@ -127,7 +120,7 @@ final class FLACSO_Preinscriptions_Serializer {
         $target_id = sprintf('target_%s', substr(hash('sha256', 'cohorte:' . $cohort_id), 0, 12));
         $cohort_number = get_post_meta($cohort_id, 'numero', true);
         $cohort_name = get_post_meta($cohort_id, 'nombre', true);
-        $offer_sigla = get_post_meta((int) $parent->ID, 'sigla', true);
+        $offer_abbreviation = get_post_meta((int) $parent->ID, 'abreviacion', true);
         $cohort_title = trim((string) $cohort->post_title);
         $is_generic_cohort_title = $cohort_title !== '' && preg_match('/^cohorte(?:\\s|$)/ui', $cohort_title) === 1;
         $public_title = $cohort_title;
@@ -148,7 +141,7 @@ final class FLACSO_Preinscriptions_Serializer {
             'offer'              => [
                 'id'           => (int) $parent->ID,
                 'slug'         => (string) $parent->post_name,
-                'name'         => (string) ($offer_sigla ?: $parent->post_title),
+                'name'         => (string) ($offer_abbreviation ?: $parent->post_title),
                 'type'         => $offer_type,
                 'orientations' => $clean_orientations,
                 'mentions'     => $clean_mentions,
@@ -158,9 +151,10 @@ final class FLACSO_Preinscriptions_Serializer {
                 'name'   => (string) ($cohort_name ?: ('Cohorte ' . $cohort_number)),
             ],
             'registrationOpen'   => $is_open,
+            'registrationAvailability' => $is_open ? 'open' : 'closed',
             'registrationWindow' => [
                 'from'  => null,
-                'until' => $iso_until,
+                'until' => null,
             ],
             'configRevision'     => $revision,
             'orientations'       => $clean_orientations,
@@ -259,6 +253,32 @@ final class FLACSO_Preinscriptions_Serializer {
                 'legacyRegistration' => !empty($legacy_link) ? (string) $legacy_link : null,
             ],
         ];
+    }
+
+    /**
+     * Una misma oferta no puede tener dos cohortes abiertas detrás del mismo enlace
+     * de preinscripción: el portal no sabría cuál mostrar.
+     */
+    private static function resolve_cohort_availability(array $cohort_targets): array {
+        $open_by_link = [];
+        foreach ($cohort_targets as $index => $target) {
+            $path = self::registration_path($target['urls']['legacyRegistration'] ?? null);
+            if ($path !== null && ($target['registrationAvailability'] ?? null) === 'open') {
+                $open_by_link[(int) ($target['wordpress']['offerId'] ?? 0) . '|' . $path][] = $index;
+            }
+        }
+
+        foreach ($open_by_link as $indexes) {
+            if (count($indexes) < 2) {
+                continue;
+            }
+            foreach ($indexes as $index) {
+                $cohort_targets[$index]['registrationOpen'] = false;
+                $cohort_targets[$index]['registrationAvailability'] = 'conflict';
+            }
+        }
+
+        return $cohort_targets;
     }
 
     private static function resolve_edition_availability(array $edition_targets): array {
