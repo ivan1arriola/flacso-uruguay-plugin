@@ -16,7 +16,7 @@ from f0_audit import detect, dependency_cycles  # noqa: E402
 EXPECTED_MODULES = (
     "core", "consultas", "docentes", "autoridades", "seminarios",
     "eventos", "convenios", "oferta-academica", "formularios",
-    "charlas-abiertas", "shortcodes", "mailing",
+    "charlas-abiertas", "mailing",
     "preguntas-frecuentes", "preinscripciones", "main-page",
 )
 EXPECTED_CPTS = {

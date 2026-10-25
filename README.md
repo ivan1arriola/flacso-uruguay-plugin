@@ -10,7 +10,7 @@ El plugin se organiza por **dominios de FLACSO**, no por mecanismos técnicos ni
 - **Seminario** es una unidad académica propia: puede ofrecerse individualmente y también integrar otras ofertas académicas.
 - **Main Page** compone la portada, pero no es dueño de los datos de Eventos, Seminarios, Oferta Académica o Mailing.
 - **Docentes**, **Eventos**, **Convenios**, **Formularios**, **Preinscripción**, etc. conservan sus responsabilidades específicas.
-- El módulo genérico `shortcodes` es compatibilidad histórica; no debe recibir funcionalidad nueva. El módulo `posgrados` se retiró.
+- Los módulos legados `posgrados` y `shortcodes` se retiraron. El proxy de PDFs vive en `oferta-academica`.
 
 ### Regla para código nuevo
 
@@ -59,8 +59,7 @@ flacso-uruguay-plugin/
 │   ├── formularios-webhook/
 │   ├── preinscripcion/
 │   ├── mailing/
-│   ├── main-page/
-│   └── shortcodes/                # legacy
+│   └── main-page/
 ├── tests/
 ├── API.md
 └── CHANGELOG.md

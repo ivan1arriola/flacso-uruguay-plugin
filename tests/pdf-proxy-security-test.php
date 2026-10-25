@@ -23,7 +23,7 @@ function wp_get_upload_dir(): array {
 }
 $GLOBALS['uploads'] = $uploads;
 
-require dirname(__DIR__) . '/modules/shortcodes/includes/pdf-proxy.php';
+require dirname(__DIR__) . '/modules/oferta-academica/includes/pdf-proxy.php';
 
 function pdf_proxy_assert(bool $condition, string $message): void {
     if (!$condition) {

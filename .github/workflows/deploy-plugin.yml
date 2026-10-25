@@ -37,7 +37,7 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           test -f "$PLUGIN_FILE"
-          test -f modules/shortcodes/includes/shortcodes-programa.php
+          test -f modules/oferta-academica/includes/pdf-proxy.php
           test -f modules/oferta-academica/includes/class-academic-team-editor.php
 
           symlink="$(find . -path './.git' -prune -o -type l -print -quit)"
@@ -219,7 +219,7 @@ jobs:
           WP_ROOT="/var/www/clients/client2/web5/web"
           TARGET="${WP_ROOT}/wp-content/plugins/flacso-uruguay-plugin"
           PLUGIN_FILE="flacso-uruguay.php"
-          MISSING_SHORTCODE='[FLACSO] Archivo no encontrado: modules/shortcodes/includes/shortcodes-programa.php'
+          MISSING_PDF_PROXY='[FLACSO] Archivo no encontrado: modules/oferta-academica/includes/pdf-proxy.php'
           OPCACHE_TOKEN="$(openssl rand -hex 24)"
           OPCACHE_RESET_REL="flacso-deploy-opcache-reset-${DEPLOY_SHA}.php"
           RUNTIME_CHECK_REL="flacso-deploy-runtime-check-${DEPLOY_SHA}.php"
@@ -270,7 +270,7 @@ jobs:
           trap cleanup EXIT
 
           test -f "$SOURCE/$PLUGIN_FILE"
-          test -f "$SOURCE/modules/shortcodes/includes/shortcodes-programa.php"
+          test -f "$SOURCE/modules/oferta-academica/includes/pdf-proxy.php"
           test -f "$SOURCE/modules/oferta-academica/includes/class-academic-team-editor.php"
           test -d "$WP_ROOT"
           test -d "$TARGET"
@@ -348,7 +348,7 @@ jobs:
           activated=1
 
           test -f "$TARGET/$PLUGIN_FILE"
-          test -f "$TARGET/modules/shortcodes/includes/shortcodes-programa.php"
+          test -f "$TARGET/modules/oferta-academica/includes/pdf-proxy.php"
           test -f "$TARGET/modules/oferta-academica/includes/class-academic-team-editor.php"
           test -f "$TARGET/$OPCACHE_RESET_REL"
           test -f "$TARGET/$RUNTIME_CHECK_REL"
@@ -433,8 +433,8 @@ jobs:
           echo wp_json_encode(["catalog_items_count" => count($data["items"])]) . "\n";
           '
 
-          if grep -Fq "$MISSING_SHORTCODE" <<< "$validation_output"; then
-            echo "Shortcode file warning is still present after deployment." >&2
+          if grep -Fq "$MISSING_PDF_PROXY" <<< "$validation_output"; then
+            echo "PDF proxy file warning is still present after deployment." >&2
             exit 1
           fi
 

@@ -24,6 +24,7 @@ flacso_safe_require('modules/oferta-academica/includes/class-academic-articulati
 flacso_safe_require('modules/oferta-academica/includes/class-academic-articulations-admin.php');
 flacso_safe_require('modules/oferta-academica/includes/class-offer-carta-contact-admin.php');
 flacso_safe_require('modules/oferta-academica/includes/class-offer-carta-contact-bridge.php');
+flacso_safe_require('modules/oferta-academica/includes/pdf-proxy.php');
 flacso_safe_require('modules/oferta-academica/includes/class-cohorte.php');
 flacso_safe_require('modules/oferta-academica/includes/class-academic-document-source-admin.php');
 // No cargar el editor legado: en algunos runtimes quedó una definición antigua
