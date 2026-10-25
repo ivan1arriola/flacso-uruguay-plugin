@@ -188,6 +188,14 @@ jobs:
             --exclude='debug-*.php' \
             --exclude='test-schema.php' \
             --exclude='*.log' \
+            --exclude='*.zip' \
+            --exclude='AGENTS.md' \
+            --exclude='.cursorrules' \
+            --exclude='.superpowers/' \
+            --exclude='.worktrees/' \
+            --exclude='build/' \
+            --exclude='/scripts/*.php' \
+            --exclude='/scripts/*.py' \
             -e "$RSYNC_RSH" \
             ./ "$EC2_USER@$EC2_HOST:$REMOTE_STAGE/"
 

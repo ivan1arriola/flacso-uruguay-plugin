@@ -81,7 +81,15 @@ jobs:
             --exclude "API.md" \
             --exclude "debug-*.php" \
             --exclude "test-schema.php" \
-            --exclude "*.log"
+            --exclude "*.log" \
+            --exclude "*.zip" \
+            --exclude "AGENTS.md" \
+            --exclude ".cursorrules" \
+            --exclude ".superpowers/" \
+            --exclude ".worktrees/" \
+            --exclude "build/" \
+            --exclude "/scripts/*.php" \
+            --exclude "/scripts/*.py"
 
           plugin_copy="dist/flacso-uruguay-plugin/flacso-uruguay.php"
           sed -i -E "s/^(\s*\* Version:\s*).*/\1${RELEASE_VERSION}/" "$plugin_copy"
