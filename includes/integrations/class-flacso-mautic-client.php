@@ -24,6 +24,7 @@ class FLACSO_Mautic_Client {
     private const DEFAULT_BASE_URL = 'https://envios.flacso.edu.uy';
     private const DEFAULT_AUTH_TYPE = 'oauth2';
     private const TIMEOUT_SECONDS = 4;
+    private const ENROLLMENT_TIMEOUT_SECONDS = 30;
 
     /** @var callable|null Transporte HTTP inyectable exclusivamente para pruebas. */
     private static $http_transport = null;
@@ -875,6 +876,68 @@ class FLACSO_Mautic_Client {
             'error' => self::extract_error_message($response, $code),
             'acceptance_unknown' => false,
             'data' => is_array($data) ? $data : [],
+        ];
+    }
+
+    /**
+     * Alta de una consulta en la campaña de su oferta (POST /api/flacso/inquiries
+     * del plugin FLACSO de Mautic), que además dispara el acuse.
+     *
+     * El plugin es idempotente por consultaId, así que una respuesta perdida se
+     * reintenta sin riesgo: sólo un 422 (datos u oferta sin campaña) es definitivo.
+     *
+     * @return array{ok: bool, status: string, http_code: int, error: ?string, data: array}
+     *               status: accepted | failed | retryable_failed
+     */
+    public static function enroll_offer_inquiry(array $payload): array {
+        if (!self::is_configured()) {
+            return ['ok' => false, 'status' => 'retryable_failed', 'http_code' => 0, 'error' => 'Mautic no está configurado o está deshabilitado.', 'data' => []];
+        }
+
+        $settings = self::get_settings();
+        $headers = self::get_request_headers($settings);
+        if (empty($headers['Authorization'])) {
+            return ['ok' => false, 'status' => 'retryable_failed', 'http_code' => 0, 'error' => self::$last_auth_error !== '' ? self::$last_auth_error : 'No se pudo autenticar contra Mautic.', 'data' => []];
+        }
+
+        try {
+            $response = self::http_request($settings['base_url'] . '/api/flacso/inquiries', [
+                'method' => 'POST',
+                'headers' => $headers,
+                'body' => function_exists('wp_json_encode') ? wp_json_encode($payload) : json_encode($payload),
+                // Incluye la verificación del estado en WordPress y el envío del acuse.
+                'timeout' => self::ENROLLMENT_TIMEOUT_SECONDS,
+            ]);
+        } catch (Throwable $e) {
+            return ['ok' => false, 'status' => 'retryable_failed', 'http_code' => 0, 'error' => $e->getMessage(), 'data' => []];
+        }
+
+        if (is_wp_error($response) || !is_array($response)) {
+            $error = is_wp_error($response) ? $response->get_error_message() : 'Respuesta HTTP no disponible.';
+            return ['ok' => false, 'status' => 'retryable_failed', 'http_code' => 0, 'error' => $error, 'data' => []];
+        }
+
+        $code = function_exists('wp_remote_retrieve_response_code')
+            ? (int) wp_remote_retrieve_response_code($response)
+            : (int) ($response['response']['code'] ?? 0);
+        $body = function_exists('wp_remote_retrieve_body')
+            ? wp_remote_retrieve_body($response)
+            : (string) ($response['body'] ?? '');
+        $data = json_decode((string) $body, true);
+        $data = is_array($data) ? $data : [];
+
+        if ($code >= 200 && $code < 300) {
+            return ['ok' => true, 'status' => 'accepted', 'http_code' => $code, 'error' => null, 'data' => $data];
+        }
+
+        $error = trim((string) ($data['message'] ?? $data['error'] ?? '')) ?: self::extract_error_message($response, $code);
+
+        return [
+            'ok' => false,
+            'status' => $code === 422 ? 'failed' : 'retryable_failed',
+            'http_code' => $code,
+            'error' => $error,
+            'data' => $data,
         ];
     }
 

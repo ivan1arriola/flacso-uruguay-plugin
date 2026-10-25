@@ -221,7 +221,11 @@ function flacso_consultas_dispatch_single_info_request( array $data ) {
 	}
 
 	if ( class_exists( 'FLACSO_Offer_Inquiry_Service' ) ) {
-		return FLACSO_Offer_Inquiry_Service::submit( $data );
+		// Este formulario muestra el texto de consentimiento junto al botón: la evidencia la genera el servidor.
+		$consent = class_exists( 'FLACSO_Offer_Campaigns' )
+			? FLACSO_Offer_Campaigns::form_consent( (int) ( $data['id_pagina'] ?? 0 ), gmdate( 'c' ) )
+			: array();
+		return FLACSO_Offer_Inquiry_Service::submit( $data, $consent );
 	}
 
 	return flacso_consultas_direct_service_unavailable_response();
@@ -463,6 +467,10 @@ function flacso_consultas_render_form( $attributes = array() ) {
 					Enviando...
 				</span>
 			</button>
+
+			<p class="flacso-consultas-consent small text-muted text-center mt-2 mb-0">
+				<?php echo esc_html( class_exists( 'FLACSO_Offer_Campaigns' ) ? FLACSO_Offer_Campaigns::CONSENT_TEXT : 'Al enviar, aceptás recibir información de FLACSO Uruguay sobre este programa.' ); ?>
+			</p>
 
 			<div id="form-consultas-mensaje" class="alert d-none mt-3" role="alert" aria-live="polite"></div>
 		</form>

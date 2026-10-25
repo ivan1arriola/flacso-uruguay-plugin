@@ -1,5 +1,23 @@
 # Consultas: correo transaccional y campañas
 
+## Campañas por oferta (desde 2026-10-25)
+
+Diseño completo: `FLACSO-Uruguay-Mautic-Plugin/docs/2026-10-25-campanas-por-oferta-diseno.md`.
+
+Con `flacso_mautic_offer_campaigns_enabled = 1`, una consulta de oferta **con consentimiento** deja de recibir el acuse transaccional. Su entrega de la cola hace `POST /api/flacso/inquiries` al plugin FLACSO de Mautic, que da de alta al contacto en la campaña de la oferta. La campaña envía el acuse según el estado de preinscripción y después el seguimiento.
+
+- **Consentimiento:** lo genera el servidor (`FLACSO_Offer_Campaigns::form_consent()`) sólo en el formulario «Más información», que muestra `FLACSO_Offer_Campaigns::CONSENT_TEXT` junto al botón. `FLACSO_Offer_Inquiry_Service::submit()` lo recibe como segundo argumento y nunca lo lee del navegador. El bot de Meta, cuando se implemente, debe pasar su propia evidencia por ese argumento. El formulario flotante y los formularios heredados no entran a campañas.
+- **Oferta sin campaña:** si el plugin responde `campaign_not_configured` o `campaign_unpublished`, la entrega sigue con el acuse transaccional. Así se puede activar oferta por oferta cargando el mapa en Mautic (`php bin/console flacso:offer-campaign set <oferta> <campaña>`).
+- **Errores:** un 422 por datos es definitivo y alerta. 5xx, 401/403/429 o un fallo de red se reintentan cada 5 minutos, hasta 6 intentos. El plugin es idempotente por `consultaId`, así que reintentar es seguro.
+- **Campaña global:** con el interruptor encendido, las consultas que van a la campaña por oferta no se agregan a `flacso_mautic_campaign_consultas_id`.
+
+Activación (después del piloto en Mautic):
+
+```bash
+wp option update flacso_mautic_offer_campaigns_enabled 1   # encender
+wp option update flacso_mautic_offer_campaigns_enabled 0   # volver atrás
+```
+
 ## Acuse transaccional
 
 - La operación vigente usa dos plantillas Mautic de envío directo desde WordPress:

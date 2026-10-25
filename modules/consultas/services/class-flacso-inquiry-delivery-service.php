@@ -18,8 +18,19 @@ if (!class_exists('FLACSO_Mautic_Client')) {
 if (!class_exists('FLACSO_Mautic_Contract_Validator')) {
     require_once __DIR__ . '/class-flacso-mautic-contract-validator.php';
 }
+if (!class_exists('FLACSO_Mautic_Payload_Builder')) {
+    require_once __DIR__ . '/class-flacso-mautic-payload-builder.php';
+}
+if (!class_exists('FLACSO_Offer_Campaigns')) {
+    require_once __DIR__ . '/class-flacso-offer-campaigns.php';
+}
 
 final class FLACSO_Inquiry_Delivery_Service {
+    private const ENROLLMENT_MAX_ATTEMPTS = 6;
+
+    /** Errores del plugin que indican una oferta sin campaña utilizable: se usa el acuse transaccional. */
+    private const CAMPAIGN_UNAVAILABLE = ['campaign_not_configured', 'campaign_unpublished'];
+
     private static ?FLACSO_Inquiry_Delivery_Repository $repository = null;
 
     /** @var callable|null */
@@ -73,6 +84,13 @@ final class FLACSO_Inquiry_Delivery_Service {
 
         $snapshot = json_decode((string) ($delivery['snapshotJson'] ?? ''), true);
         $payload = json_decode((string) ($delivery['payloadJson'] ?? ''), true);
+        if (is_array($payload) && FLACSO_Offer_Campaigns::routes_to_campaign($delivery, $payload)) {
+            $enrollment = self::process_campaign_enrollment($delivery_id, $delivery, $snapshot, $payload, $repository);
+            if ($enrollment !== null) {
+                return $enrollment;
+            }
+            // La oferta no tiene campaña utilizable: sigue con el acuse transaccional.
+        }
         if (($delivery['assignedProvider'] ?? 'mautic') === 'flacso_mail') {
             if (!is_array($snapshot)) {
                 $repository->mark_failed($delivery_id, null, 'invalid_snapshot', 'Snapshot transaccional inválido.');
@@ -227,6 +245,62 @@ final class FLACSO_Inquiry_Delivery_Service {
         $repository->mark_failed($delivery_id, $http_code, 'mautic_http', $send['error'] ?? null);
         self::notify_failure($delivery_id, 'failed', 'mautic_http');
         return ['ok' => false, 'status' => 'failed', 'attempt_id' => $attempt_id];
+    }
+
+    /**
+     * Alta en la campaña de la oferta. Devuelve null cuando la oferta no tiene
+     * campaña utilizable, para que la entrega siga con el acuse transaccional.
+     */
+    private static function process_campaign_enrollment(
+        string $delivery_id,
+        array $delivery,
+        $snapshot,
+        array $payload,
+        FLACSO_Inquiry_Delivery_Repository $repository
+    ): ?array {
+        try {
+            if (!is_array($snapshot)) {
+                throw new InvalidArgumentException('Snapshot transaccional inválido.');
+            }
+            $body = FLACSO_Offer_Campaigns::enrollment_payload($snapshot, $payload['marketingConsent']);
+        } catch (Throwable $e) {
+            $repository->mark_failed($delivery_id, null, 'invalid_snapshot', $e->getMessage());
+            self::notify_failure($delivery_id, 'failed', 'invalid_snapshot');
+            return ['ok' => false, 'status' => 'failed', 'route' => 'campaign'];
+        }
+
+        $attempt_id = bin2hex(random_bytes(16));
+        $repository->record_attempt_start($delivery_id, $attempt_id);
+        $result = FLACSO_Mautic_Client::enroll_offer_inquiry($body);
+        $http_code = (int) ($result['http_code'] ?? 0) ?: null;
+
+        if (!empty($result['ok'])) {
+            $contact_id = (int) ($result['data']['contactId'] ?? 0);
+            if ($contact_id > 0) {
+                $repository->set_contact_id($delivery_id, $contact_id);
+            }
+            $repository->finish_attempt($attempt_id, 'accepted', $http_code);
+            $repository->mark_accepted($delivery_id, $http_code);
+            return ['ok' => true, 'status' => 'accepted', 'http_code' => $http_code, 'attempt_id' => $attempt_id, 'route' => 'campaign'];
+        }
+
+        $detail = (string) ($result['error'] ?? 'Fallo del alta en la campaña de la oferta.');
+        if (in_array((string) ($result['data']['error'] ?? ''), self::CAMPAIGN_UNAVAILABLE, true)) {
+            $repository->finish_attempt($attempt_id, 'failed', $http_code, 'campaign_unavailable', $detail);
+            return null;
+        }
+
+        $attempts_after_start = ((int) ($delivery['attempts'] ?? 0)) + 1;
+        if (($result['status'] ?? '') === 'retryable_failed' && $attempts_after_start < self::ENROLLMENT_MAX_ATTEMPTS) {
+            $repository->finish_attempt($attempt_id, 'retryable_failed', $http_code, 'campaign_enrollment', $detail);
+            $repository->mark_retryable_failure($delivery_id, $http_code, 'campaign_enrollment', $detail, 300);
+            return ['ok' => false, 'status' => 'retryable_failed', 'attempt_id' => $attempt_id, 'route' => 'campaign'];
+        }
+
+        $repository->finish_attempt($attempt_id, 'failed', $http_code, 'campaign_enrollment', $detail);
+        $repository->mark_failed($delivery_id, $http_code, 'campaign_enrollment', $detail);
+        self::notify_failure($delivery_id, 'failed', 'campaign_enrollment', $detail);
+        return ['ok' => false, 'status' => 'failed', 'attempt_id' => $attempt_id, 'route' => 'campaign'];
     }
 
     private static function notify_failure(string $delivery_id, string $state, string $error_class, string $detail = ''): void {

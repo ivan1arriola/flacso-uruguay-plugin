@@ -39,16 +39,22 @@ if (!class_exists('FLACSO_Inquiry_Snapshot')) {
 if (!class_exists('FLACSO_Inquiry_Delivery_Repository')) {
     require_once dirname(__DIR__, 3) . '/includes/database/repositories/class-flacso-inquiry-delivery-repository.php';
 }
+if (!class_exists('FLACSO_Offer_Campaigns')) {
+    require_once __DIR__ . '/class-flacso-offer-campaigns.php';
+}
 
 class FLACSO_Offer_Inquiry_Service {
 
     /**
      * Procesa una consulta de oferta académica.
      *
-     * @param array $data Datos de la consulta (compatibles con snake_case y camelCase).
+     * @param array $data    Datos de la consulta (compatibles con snake_case y camelCase).
+     * @param array $consent Evidencia de consentimiento comercial generada por el
+     *                       servidor (FLACSO_Offer_Campaigns::form_consent()). Nunca
+     *                       se toma de $data: llega del navegador.
      * @return array Resultado con ok, consulta_id, duplicate, email, etc.
      */
-    public static function submit(array $data): array {
+    public static function submit(array $data, array $consent = []): array {
         // 1. Extraer o generar consultaId
         $consulta_id = trim((string)($data['event_id'] ?? $data['consultaId'] ?? $data['consulta_id'] ?? $data['id'] ?? ''));
         if ($consulta_id === '') {
@@ -351,8 +357,7 @@ class FLACSO_Offer_Inquiry_Service {
                 $snapshot,
                 'offer',
                 '',
-                class_exists('FLACSO_Inquiry_Marketing_Service')
-                    ? FLACSO_Inquiry_Marketing_Service::extract_consent($data) : []
+                $consent
             );
         } catch (\Throwable $e) {
             error_log('[FLACSO] Error al persistir consulta/snapshot/entrega de oferta: ' . $e->getMessage());
@@ -380,11 +385,14 @@ class FLACSO_Offer_Inquiry_Service {
 
         $record_id = (string) ($insert_result['id'] ?? '');
         $marketing = ['ok' => true, 'status' => 'skipped', 'reason' => 'consent_required'];
-        if (class_exists('FLACSO_Inquiry_Marketing_Service')) {
+        if (FLACSO_Offer_Campaigns::is_enabled() && FLACSO_Offer_Campaigns::valid_consent($consent)) {
+            // El plugin de Mautic hace el contacto y el alta en la campaña de la oferta al procesar la entrega.
+            $marketing = ['ok' => true, 'status' => 'skipped', 'reason' => 'offer_campaign'];
+        } elseif (class_exists('FLACSO_Inquiry_Marketing_Service')) {
             try {
                 $marketing = FLACSO_Inquiry_Marketing_Service::sync_commercial_contact(
                     $snapshot,
-                    FLACSO_Inquiry_Marketing_Service::extract_consent($data),
+                    $consent,
                     $repo,
                     $record_id
                 );
@@ -411,234 +419,6 @@ class FLACSO_Offer_Inquiry_Service {
             'marketing_sync'       => $marketing,
             'followup_status'      => 'none',
             'followup_due_at'      => null,
-            'code'                 => 200,
-        ];
-
-        // 6. Selección de motor de correo y despacho (Enviar después)
-        $engine = function_exists('get_option') ? (string) get_option('flacso_inquiry_email_engine', 'mautic') : 'mautic';
-        $engine = strtolower(trim($engine));
-        if ($engine !== 'mailjet') {
-            $engine = 'mautic';
-        }
-
-        $inquiry_payload = [
-            'consultaId'     => $consulta_id,
-            'firstName'      => $first_name,
-            'lastName'       => $last_name,
-            'fullName'       => $full_name,
-            'email'          => $email,
-            'country'        => $country,
-            'profession'     => $profession,
-            'educationLevel' => $education_level,
-            'replyToEmail'   => $reply_to,
-            'cohortName'     => $cohort_name,
-            'cohortNumber'   => $cohort_number,
-        ];
-
-        $program_payload = [
-            'id'                      => $offer_id,
-            'name'                    => $offer_name,
-            'offerType'               => $offer_type,
-            'isInscripcionesAbiertas' => $is_open,
-            'urlBase'                 => $program_url,
-            'programUrl'              => $program_url,
-            'cartaUrl'                => $carta_url,
-            'preinscripcionUrl'       => $preinscripcion_url,
-            'startValue'              => $start_value,
-            'startPrecision'          => $start_precision,
-            'modalityLabel'           => $modality,
-        ];
-
-        $email_status       = 'failed';
-        $email_sender       = $engine;
-        $message_id         = null;
-        $message_uuid       = null;
-        $mautic_sync_result = null;
-
-        if ($engine === 'mautic') {
-            // Caso A: Motor Mautic con fallback automático a Mailjet
-
-            // 1. Sincronización previa del contacto en Mautic para obtener contact_id
-            $record_id = !empty($insert_result['id']) ? (string)$insert_result['id'] : (string)$consulta_id;
-            if (class_exists('FLACSO_Inquiry_Marketing_Service')) {
-                try {
-                    $mautic_sync_result = FLACSO_Inquiry_Marketing_Service::sync_inquiry($record_id, $record, $repo);
-                } catch (\Throwable $e) {
-                    error_log('[FLACSO] Error al sincronizar contacto Mautic previo a envío: ' . $e->getMessage());
-                    $mautic_sync_result = ['ok' => false, 'status' => 'failed', 'error' => $e->getMessage()];
-                }
-            }
-            $contact_id = !empty($mautic_sync_result['contact_id']) ? (int) $mautic_sync_result['contact_id'] : 0;
-
-            // 2. Resolver plantilla de Mautic según estado de la oferta
-            $template_id = 0;
-            if ($is_open) {
-                $template_id = (int) (function_exists('get_option') ? get_option('flacso_mautic_template_consulta_abierta', 0) : 0);
-            } else {
-                $template_id = (int) (function_exists('get_option') ? get_option('flacso_mautic_template_consulta_cerrada', 0) : 0);
-            }
-
-            // 3. Intentar despacho vía Mautic si hay contact_id y template_id válidos
-            $mautic_sent = false;
-            if ($contact_id > 0 && $template_id > 0 && class_exists('FLACSO_Mautic_Client') && method_exists('FLACSO_Mautic_Client', 'send_email_to_contact')) {
-                try {
-                    $tokens = class_exists('FLACSO_Inquiry_Marketing_Service')
-                        ? FLACSO_Inquiry_Marketing_Service::compile_tokens($inquiry_payload, $program_payload, $is_open)
-                        : [];
-                    $send_res = FLACSO_Mautic_Client::send_email_to_contact($template_id, $contact_id, $tokens);
-                    if (!empty($send_res['ok'])) {
-                        $mautic_sent  = true;
-                        $email_status = 'sent';
-                        $email_sender = 'mautic';
-                        $message_id   = (string) $template_id;
-                        $message_uuid = null;
-                    } else {
-                        $send_err = $send_res['error'] ?? 'desconocido';
-                        error_log('[FLACSO] Fallo al enviar correo por Mautic: ' . $send_err . '. Activando fallback a Mailjet.');
-                        if ($record_id !== '' && method_exists($repo, 'update_mautic_status')) {
-                            $repo->update_mautic_status($record_id, [
-                                'mauticLastError' => 'Fallo al enviar correo: ' . $send_err,
-                            ]);
-                        }
-                    }
-                } catch (\Throwable $e) {
-                    error_log('[FLACSO] Excepción al enviar correo por Mautic: ' . $e->getMessage() . '. Activando fallback a Mailjet.');
-                    if ($record_id !== '' && method_exists($repo, 'update_mautic_status')) {
-                        $repo->update_mautic_status($record_id, [
-                            'mauticLastError' => 'Excepción al enviar correo: ' . $e->getMessage(),
-                        ]);
-                    }
-                }
-            } else {
-                if ($contact_id <= 0) {
-                    error_log('[FLACSO] Mautic no devolvió un contact_id válido (' . $contact_id . '). Activando fallback a Mailjet.');
-                }
-                if ($template_id <= 0) {
-                    $tmpl_msg = 'Plantilla de Mautic no configurada para consulta (' . ($is_open ? 'abierta' : 'cerrada') . '). Activando fallback a Mailjet.';
-                    error_log('[FLACSO] ' . $tmpl_msg);
-                    if ($record_id !== '' && method_exists($repo, 'update_mautic_status')) {
-                        $repo->update_mautic_status($record_id, [
-                            'mauticLastError' => 'Plantilla Mautic (' . ($is_open ? 'abierta' : 'cerrada') . ') no configurada',
-                        ]);
-                    }
-                }
-            }
-
-            // 4. Si Mautic no pudo enviar, fallback automático inmediato a Mailjet
-            if (!$mautic_sent) {
-                $mail_result = [
-                    'ok'           => false,
-                    'status'       => 'failed',
-                    'message_id'   => null,
-                    'message_uuid' => null,
-                    'error'        => null,
-                ];
-
-                try {
-                    if (class_exists('FLACSO_Mailjet_Client')) {
-                        $mail_result = FLACSO_Mailjet_Client::send_offer_inquiry($inquiry_payload, $program_payload);
-                    } else {
-                        $mail_result['error'] = 'FLACSO_Mailjet_Client no está disponible.';
-                    }
-                } catch (\Throwable $e) {
-                    error_log('[FLACSO] Excepción al ejecutar fallback a Mailjet: ' . $e->getMessage());
-                    $mail_result['error'] = $e->getMessage();
-                }
-
-                $email_status = $mail_result['status'] ?? 'failed';
-                $email_sender = 'mailjet_fallback';
-                $message_id   = $mail_result['message_id'] ?? null;
-                $message_uuid = $mail_result['message_uuid'] ?? null;
-            }
-        } else {
-            // Caso B: Motor Mailjet
-            $mail_result = [
-                'ok'           => false,
-                'status'       => 'failed',
-                'message_id'   => null,
-                'message_uuid' => null,
-                'error'        => null,
-            ];
-
-            try {
-                if (class_exists('FLACSO_Mailjet_Client')) {
-                    $mail_result = FLACSO_Mailjet_Client::send_offer_inquiry($inquiry_payload, $program_payload);
-                } else {
-                    $mail_result['error'] = 'FLACSO_Mailjet_Client no está disponible.';
-                }
-            } catch (\Throwable $e) {
-                error_log('[FLACSO] Excepción al enviar correo de oferta vía Mailjet: ' . $e->getMessage());
-                $mail_result['error'] = $e->getMessage();
-            }
-
-            $email_status = $mail_result['status'] ?? 'failed';
-            $email_sender = 'mailjet';
-            $message_id   = $mail_result['message_id'] ?? null;
-            $message_uuid = $mail_result['message_uuid'] ?? null;
-        }
-
-        // 7. Actualizar estado del email en la base de datos
-        try {
-            $repo->update_email_status(
-                $consulta_id,
-                $email_status,
-                $email_sender,
-                $message_id,
-                $message_uuid
-            );
-        } catch (\Throwable $e) {
-            error_log('[FLACSO] Error al actualizar estado de email en base de datos: ' . $e->getMessage());
-        }
-
-        // 7b. Sincronizar contacto con listas de Mailjet asignadas a la oferta y/o lista global
-        try {
-            if (class_exists('FLACSO_Mail_Settings') && class_exists('FLACSO_Mailjet_Client')) {
-                $target_lists = FLACSO_Mail_Settings::get_target_lists_for_offer((int) ($offer_id ?? 0));
-                if (!empty($target_lists)) {
-                    FLACSO_Mailjet_Client::sync_contact_to_lists($email, $full_name, [
-                        'firstname' => $first_name,
-                        'lastname'  => $last_name,
-                        'country'   => (string) ($country ?? ''),
-                    ], $target_lists);
-                }
-            }
-        } catch (\Throwable $e) {
-            error_log('[FLACSO] Aviso al sincronizar contacto en lista Mailjet (oferta): ' . $e->getMessage());
-        }
-
-        // 7c. Sincronización en paralelo con Mautic (únicamente cuando el motor es Mailjet, ya que Mautic sincroniza en Paso A)
-        if ($engine !== 'mautic') {
-            if (class_exists('FLACSO_Inquiry_Marketing_Service')) {
-                try {
-                    $record_id = !empty($insert_result['id']) ? (string)$insert_result['id'] : (string)$consulta_id;
-                    $mautic_sync_result = FLACSO_Inquiry_Marketing_Service::sync_inquiry($record_id, $record, $repo);
-                } catch (\Throwable $e) {
-                    error_log('[FLACSO] Error en sincronización de consulta con Mautic: ' . $e->getMessage());
-                    $mautic_sync_result = [
-                        'ok'     => false,
-                        'status' => 'failed',
-                        'error'  => $e->getMessage(),
-                    ];
-                }
-            }
-        }
-
-        // 8. Retornar resultado
-        return [
-            'ok'                   => true,
-            'consulta_id'          => $consulta_id,
-            'duplicate'            => false,
-            'email'                => $email_status,
-            'email_sender'         => $email_sender,
-            'email_engine'         => $engine,
-            'mailjet_message_id'   => $message_id,
-            'mailjet_message_uuid' => $message_uuid,
-            'offer_status'         => $offer_status,
-            'cohort_number'        => $cohort_number,
-            'offer_abbreviation'   => $offer_abbr,
-            'mautic_sync'          => $mautic_sync_result,
-            'followup_status'      => $followup_status,
-            'followup_due_at'      => $followup_due_at,
             'code'                 => 200,
         ];
     }
