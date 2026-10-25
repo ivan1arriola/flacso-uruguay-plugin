@@ -15,7 +15,6 @@ function wiring_assert(bool $cond, string $msg): void {
 // ---------------------------------------------------------------------------
 $ofertas_code = (string) file_get_contents($root . '/modules/main-page/includes/flacso-consultas.php');
 $seminarios_code = (string) file_get_contents($root . '/modules/oferta-academica/includes/class-academic-api.php');
-$posgrados_code = (string) file_get_contents($root . '/modules/posgrados/includes/class-flacso-posgrados-consultas-form.php');
 $helpers_code = (string) file_get_contents($root . '/modules/formularios/includes/helpers.php');
 
 wiring_assert(
@@ -31,11 +30,6 @@ wiring_assert(
 wiring_assert(
     strpos($seminarios_code, 'editor.flacso.edu.uy/api/consultas/seminarios') === false,
     'class-academic-api.php no debe referenciar el endpoint externo del Editor'
-);
-
-wiring_assert(
-    preg_match('/public\s+static\s+function\s+handle_ajax\s*\(\)\s*:\s*void\s*\{\s*if\s*\(\s*function_exists\(\s*[\'"]flacso_enviar_consulta_func[\'"]\s*\)\s*\)\s*\{\s*flacso_enviar_consulta_func\(\);\s*return;\s*\}/s', $posgrados_code) === 1,
-    'FLACSO_Posgrados_Consultas_Form::handle_ajax debe delegar incondicionalmente a flacso_enviar_consulta_func'
 );
 
 wiring_assert(
@@ -327,7 +321,6 @@ if (!function_exists('apply_filters')) {
 // Include handlers
 require_once $root . '/modules/main-page/includes/flacso-consultas.php';
 require_once $root . '/modules/formularios/includes/helpers.php';
-require_once $root . '/modules/posgrados/includes/class-flacso-posgrados-consultas-form.php';
 require_once $root . '/modules/oferta-academica/includes/class-academic-api.php';
 
 wiring_assert(
@@ -505,7 +498,7 @@ wiring_assert($wb_row['email'] === 'valeria.silva@example.com', 'Email del regis
 wiring_assert((int)$wb_row['offerWpId'] === 108, 'offerWpId del webhook debe ser 108');
 
 // ---------------------------------------------------------------------------
-// 6. Test FLACSO_Posgrados_Consultas_Form::handle_ajax unconditional delegation
+// 6. Test flacso_enviar_consulta_func vía AJAX (formulario de un solo posgrado)
 // ---------------------------------------------------------------------------
 $_POST = [
     'id_pagina'            => '109',
@@ -522,21 +515,21 @@ $_POST = [
 
 $ajax_caught = false;
 try {
-    FLACSO_Posgrados_Consultas_Form::handle_ajax();
+    flacso_enviar_consulta_func();
 } catch (TestAjaxSuccessException $e) {
     $ajax_caught = true;
     $ajax_data = $e->data;
-    wiring_assert(!empty($ajax_data['note']) && $ajax_data['note'] === 'ok', 'handle_ajax debe responder con note => ok');
+    wiring_assert(!empty($ajax_data['note']) && $ajax_data['note'] === 'ok', 'flacso_enviar_consulta_func debe responder con note => ok');
 } catch (TestAjaxErrorException $e) {
-    wiring_assert(false, 'handle_ajax no debe fallar para una consulta válida');
+    wiring_assert(false, 'flacso_enviar_consulta_func no debe fallar para una consulta válida');
 }
-wiring_assert($ajax_caught, 'handle_ajax debe delegar incondicionalmente a flacso_enviar_consulta_func y terminar con éxito');
+wiring_assert($ajax_caught, 'flacso_enviar_consulta_func debe delegar incondicionalmente a flacso_enviar_consulta_func y terminar con éxito');
 
 $stmt_ajax = $pdo->prepare('SELECT * FROM offer_inquiries WHERE email = ?');
 $stmt_ajax->execute(['mateo.ramos@example.com']);
 $ajax_row = $stmt_ajax->fetch();
-wiring_assert(!empty($ajax_row), 'Consulta procesada por handle_ajax debe persistirse en offer_inquiries');
-wiring_assert((int)$ajax_row['offerWpId'] === 109, 'offerWpId de handle_ajax debe ser 109');
+wiring_assert(!empty($ajax_row), 'Consulta procesada por flacso_enviar_consulta_func debe persistirse en offer_inquiries');
+wiring_assert((int)$ajax_row['offerWpId'] === 109, 'offerWpId de flacso_enviar_consulta_func debe ser 109');
 
 // ---------------------------------------------------------------------------
 // 7. Un fallo real de persistencia nunca puede convertirse en éxito por RELAXED_MODE
@@ -563,7 +556,7 @@ $_POST = [
 
 $db_error_caught = false;
 try {
-    FLACSO_Posgrados_Consultas_Form::handle_ajax();
+    flacso_enviar_consulta_func();
 } catch (TestAjaxErrorException $e) {
     $db_error_caught = true;
 } catch (TestAjaxSuccessException $e) {

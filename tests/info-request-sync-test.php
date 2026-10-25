@@ -6,7 +6,6 @@
 
 $root = dirname(__DIR__);
 $helpers = file_get_contents($root . "/modules/formularios/includes/helpers.php");
-$form_posgrados = file_get_contents($root . "/modules/posgrados/includes/class-flacso-posgrados-consultas-form.php");
 $form_main = file_get_contents($root . "/modules/main-page/includes/flacso-consultas.php");
 
 function sync_assert($condition, string $message): void {
@@ -34,11 +33,6 @@ sync_assert(strpos($helpers, "'oferta_academica_url_preinscripcion'") !== false,
 sync_assert(strpos($helpers, "'cohorte_nombre'") !== false, "payload debe contener cohorte_nombre");
 sync_assert(strpos($helpers, "'inscripciones_abiertas'") !== false, "payload debe contener inscripciones_abiertas");
 sync_assert(strpos($helpers, "'modalidad'") !== false, "payload debe contener modalidad");
-
-// 3. Verificación en class-flacso-posgrados-consultas-form.php
-sync_assert(strpos($form_posgrados, "FLACSO_Academic_Catalog::get_offer") !== false, "formulario de posgrados debe resolver oferta por catálogo");
-sync_assert(strpos($form_posgrados, '$preinsc_url') !== false, 'formulario de posgrados debe definir preinsc_url');
-sync_assert(strpos($form_posgrados, "'consulta'") !== false, "formulario de posgrados debe aceptar campo consulta");
 
 // 4. Verificación en flacso-consultas.php
 sync_assert(strpos($form_main, "FLACSO_Academic_Catalog::get_offer") !== false, "flacso-consultas debe resolver oferta por catálogo");

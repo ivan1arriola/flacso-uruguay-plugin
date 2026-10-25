@@ -42,8 +42,6 @@ define('FLACSO_OFERTA_ACADEMICA_VERSION', FLACSO_URUGUAY_VERSION);
 define('FLACSO_OFERTA_ACADEMICA_PATH', FLACSO_URUGUAY_PATH);
 define('FLACSO_OFERTA_ACADEMICA_URL', FLACSO_URUGUAY_URL);
 
-define('FLACSO_POSGRADOS_SLUG', 'flacso-posgrados-docentes');
-define('FLACSO_POSGRADOS_PLUGIN_PATH', FLACSO_URUGUAY_PATH);
 
 // ============================================
 // Carga de funciones principales
@@ -177,7 +175,6 @@ class FLACSO_Uruguay_Plugin {
         $loader->load_module('oferta-academica'); // Oferta Academica
         $loader->load_module('formularios'); // Formularios
         $loader->load_module('charlas-abiertas'); // Charlas Abiertas
-        $loader->load_module('posgrados');  // Posgrados
         $loader->load_module('shortcodes'); // Shortcodes
         $loader->load_module('mailing'); // Suscripciones al mailing
         $loader->load_module('preguntas-frecuentes'); // FAQ administrables

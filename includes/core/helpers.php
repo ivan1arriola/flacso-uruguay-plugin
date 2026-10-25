@@ -117,22 +117,6 @@ if (!function_exists('dp_nombre_completo')) {
 }
 
 // ============================================
-// Funciones para posgrados
-// ============================================
-
-if (!function_exists('flacso_posgrados_safe_require')) {
-    function flacso_posgrados_safe_require(string $path): bool {
-        return flacso_safe_require($path);
-    }
-}
-
-if (!function_exists('flacso_posgrados_asset_version')) {
-    function flacso_posgrados_asset_version(string $relative_path): string {
-        return flacso_asset_version($relative_path);
-    }
-}
-
-// ============================================
 // Helpers de admin
 // ============================================
 

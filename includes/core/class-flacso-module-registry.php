@@ -105,12 +105,6 @@ final class FLACSO_Uruguay_Module_Registry {
             ],
 
             // Compatibilidad histórica. No agregar funcionalidad nueva aquí.
-            'legacy-posgrados' => [
-                'path' => 'posgrados',
-                'depends' => ['docentes', 'oferta-academica'],
-                'required' => false,
-                'legacy' => true,
-            ],
             'legacy-shortcodes' => [
                 'path' => 'shortcodes',
                 'depends' => ['oferta-academica'],

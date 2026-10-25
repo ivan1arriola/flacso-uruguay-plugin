@@ -75,7 +75,7 @@ El código se organiza estrictamente por **dominios de negocio de FLACSO**, nunc
 - Cada dominio tiene su propio módulo dentro de `modules/` (ej. `oferta-academica/`, `seminarios/`, `docentes/`, `main-page/`, `formularios/`, `eventos/`).
 - Dentro de la carpeta del módulo conviven sus endpoints REST, bloques de Gutenberg, metaboxes de administración, shortcodes y lógica de persistencia.
 - **PROHIBIDO**: Crear carpetas globales agrupadas por tipo de archivo (ej. `shortcodes/shortcode-de-oferta.php`).
-- **Módulos LEGACY**: `modules/posgrados/` y `modules/shortcodes/` existen únicamente por compatibilidad con instalaciones anteriores. **NUNCA agregar código nuevo a estos módulos**.
+- **Módulos LEGACY**: `modules/shortcodes/` existe únicamente por compatibilidad con instalaciones anteriores. **NUNCA agregar código nuevo a este módulo**.
 
 ### B. Registro Central de Módulos (Single Source of Truth)
 - `includes/core/class-flacso-module-registry.php` declara todos los módulos, dependencias obligatorias (`depends`), dependencias opcionales (`optional_depends`) y criticidad (`required`).
@@ -142,7 +142,6 @@ flacso-uruguay-plugin/
 │   ├── mailing/                       # Integración operativa Mautic
 │   ├── formularios/                   # Formularios web y validaciones
 │   ├── site/                          # Utilidades generales del sitio
-│   ├── posgrados/                     # [LEGACY] Solo compatibilidad
 │   └── shortcodes/                    # [LEGACY] Solo compatibilidad
 ├── scripts/
 │   ├── agent_check.py                 # Herramienta de verificación para agentes
