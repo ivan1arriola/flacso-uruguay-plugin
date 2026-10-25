@@ -86,6 +86,7 @@ class Docente_Meta {
         $redes            = get_post_meta($post->ID, 'docente_redes', true);
         if (!is_array($redes)) $redes = [];
 
+        wp_nonce_field('flacso_docente_save', 'flacso_docente_nonce');
         ?>
         <div style="margin-bottom: 20px; padding: 12px 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
             <label style="font-weight: 600; display: block; margin-bottom: 8px;">
@@ -239,6 +240,10 @@ class Docente_Meta {
 
     public static function save_meta($post_id): void {
         if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+
+        $nonce = isset($_POST['flacso_docente_nonce']) ? sanitize_text_field(wp_unslash($_POST['flacso_docente_nonce'])) : '';
+        if (!wp_verify_nonce($nonce, 'flacso_docente_save')) return;
+        if (wp_is_post_revision($post_id) || !current_user_can('edit_post', $post_id)) return;
 
         // Campos obligatorios
         $obligatorios = ['nombre', 'apellido', 'cv'];
