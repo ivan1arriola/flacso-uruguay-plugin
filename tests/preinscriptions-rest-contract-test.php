@@ -351,6 +351,7 @@ flacso_rest_assert_same(['coordinacion@flacso.edu.uy', 'secretaria@flacso.edu.uy
 flacso_rest_assert_same('coordinacion@flacso.edu.uy', $target_cohort['notificationEmail'], 'notificationEmail keeps the first offer email for older clients');
 
 flacso_rest_assert_same('MGPI', $target_cohort['offer']['name'], 'offer name uses the abbreviation (abreviacion)');
+flacso_rest_assert_same('MGPI', $target_cohort['offer']['abbreviation'], 'offer exposes its stable abbreviation');
 flacso_rest_assert_same(null, $target_cohort['registrationWindow']['until'], 'cohorts have no registration deadline');
 flacso_rest_assert_same('open', $target_cohort['registrationAvailability'], 'open cohort reports availability');
 

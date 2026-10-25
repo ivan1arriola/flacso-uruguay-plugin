@@ -142,6 +142,8 @@ final class FLACSO_Preinscriptions_Serializer {
                 'id'           => (int) $parent->ID,
                 'slug'         => (string) $parent->post_name,
                 'name'         => (string) ($offer_abbreviation ?: $parent->post_title),
+                // Código estable de la oferta (tags de Mautic); vacío si no se cargó.
+                'abbreviation' => (string) $offer_abbreviation,
                 'type'         => $offer_type,
                 'orientations' => $clean_orientations,
                 'mentions'     => $clean_mentions,
