@@ -9,6 +9,12 @@
 
 declare(strict_types=1);
 
+// Herramienta de línea de comandos: nunca debe ejecutarse por HTTP.
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    exit;
+}
+
 $options = getopt('', ['dry-run', 'apply', 'host:', 'port:', 'dbname:', 'user:', 'password:']);
 $is_dry_run = isset($options['dry-run']) || !isset($options['apply']);
 
@@ -16,7 +22,11 @@ $db_host = $options['host'] ?? getenv('DB_HOST') ?: '127.0.0.1';
 $db_port = $options['port'] ?? getenv('DB_PORT') ?: '3307';
 $db_name = $options['dbname'] ?? getenv('DB_NAME') ?: 'flacso';
 $db_user = $options['user'] ?? getenv('DB_USER') ?: 'antigravity_ro';
-$db_pass = $options['password'] ?? getenv('DB_PASSWORD') ?: '7cdead317928d9aae419ab90f1c889205bec95e899318cd1';
+$db_pass = $options['password'] ?? getenv('DB_PASSWORD') ?: '';
+if ($db_pass === '') {
+    fwrite(STDERR, "Falta la contraseña de la base de datos: use --password o la variable de entorno DB_PASSWORD.\n");
+    exit(1);
+}
 
 echo "=================================================================\n";
 echo "MIGRACIÓN Y LIMPIEZA DEL MODELO ACADÉMICO FLACSO URUGUAY (v7)\n";
