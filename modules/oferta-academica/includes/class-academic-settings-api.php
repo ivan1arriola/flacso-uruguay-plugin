@@ -47,7 +47,7 @@ final class FLACSO_Academic_Settings_API {
         return current_user_can("manage_options") || current_user_can("edit_posts");
     }
 
-    public static function get_settings(WP_REST_Request $request = null) {
+    public static function get_settings(?WP_REST_Request $request = null) {
         $include_secrets = false;
         if ($request instanceof WP_REST_Request) {
             $include_secrets = rest_sanitize_boolean($request->get_param("include_secrets"));

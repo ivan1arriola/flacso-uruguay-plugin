@@ -33,7 +33,9 @@ function team_search_assert($condition, string $message): void {
 }
 $class = new ReflectionClass('FLACSO_Academic_Team_Editor');
 $method = $class->getMethod('render_member_row');
-$method->setAccessible(true);
+if (PHP_VERSION_ID < 80100) {
+    $method->setAccessible(true);
+}
 ob_start();
 $method->invoke(null, 'flacso_oferta_equipos[0][docentes][0]', ['id' => 41, 'rol' => 'Coordinación', 'correo' => 'contacto@flacso.edu.uy'], []);
 $html = ob_get_clean();

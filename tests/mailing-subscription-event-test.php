@@ -23,7 +23,9 @@ FLACSO_Mailing_Client::set_http_transport(function ($url, $args) use (&$requests
     $requests[] = [$url, $args]; return ['response' => ['code' => 202]];
 });
 $process = new ReflectionMethod('Flacso_Mailing_Subscription', 'process');
-$process->setAccessible(true);
+if (PHP_VERSION_ID < 80100) {
+    $process->setAccessible(true);
+}
 $data = [
     'flacso_mailing_nonce' => 'valid', 'email' => ' ANA@example.org ',
     'first_name' => 'Ana', 'consent' => '1', 'submission_id' => str_repeat('a', 32),

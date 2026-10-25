@@ -134,7 +134,7 @@ final class FLACSO_Academic_Catalog {
                     'id'                  => $cohort_id,
                     'nombre'              => (string) ($chosen_cohort['nombre'] ?? ''),
                     'numero'              => max(1, absint($chosen_cohort['numero'] ?? 0)),
-                    'anio_inicio'         => absint($chosen_cohort['anio_inicio'] ?: ($chosen_cohort['fecha_inicio'] ? date('Y', strtotime($chosen_cohort['fecha_inicio'])) : 2026)),
+                    'anio_inicio'         => absint(($chosen_cohort['anio_inicio'] ?? 0) ?: (!empty($chosen_cohort['fecha_inicio']) ? date('Y', strtotime($chosen_cohort['fecha_inicio'])) : 2026)),
                     'fecha_inicio'        => (string) ($chosen_cohort['fecha_inicio'] ?? '') ?: null,
                     'fecha_fin'           => (string) ($chosen_cohort['fecha_fin'] ?? '') ?: null,
                     // En este DTO, estado describe la apertura transaccional,
