@@ -14,7 +14,7 @@ add_filter('flacso_main_page_component_files', static function (array $files): a
 
 add_filter('flacso_homepage_sections', static function (array $sections): array {
     $sections['seminarios'] = [
-        'function' => 'flacso_section_seminarios_proximos_render',
+        'function' => 'flacso_lista_seminarios_render',
         'owner' => 'seminarios',
     ];
     return $sections;

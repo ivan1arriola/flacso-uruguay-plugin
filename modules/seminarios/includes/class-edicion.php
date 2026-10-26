@@ -300,7 +300,6 @@ final class FLACSO_Edicion {
                 return FLACSO_Academic_Assistant::can_manage_academic_post((int) $seminario->ID);
             }));
         }
-        $tablas = get_posts(['post_type' => 'tabla-precio', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC']);
         $all_docentes = get_posts(['post_type' => 'docente', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC']);
 
         wp_nonce_field('save_edicion_meta', 'edicion_nonce');
@@ -365,14 +364,10 @@ final class FLACSO_Edicion {
                     <input type="date" name="fecha_fin" value="<?php echo esc_attr($fecha_fin); ?>" style="width: 100%;">
                 </div>
                 <div>
-                    <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Tabla de Aranceles:', 'flacso-uruguay'); ?></label>
+                    <label style="font-weight: 600; display: block; margin-bottom: 4px;"><?php esc_html_e('Tabla de precios:', 'flacso-uruguay'); ?></label>
                     <select name="tabla_precio_id" style="width: 100%;">
                         <option value="0"><?php esc_html_e('— Sin tabla asignada —', 'flacso-uruguay'); ?></option>
-                        <?php foreach ($tablas as $tabla) : ?>
-                            <option value="<?php echo esc_attr((string) $tabla->ID); ?>" <?php selected($tabla_precio_id, $tabla->ID); ?>>
-                                <?php echo esc_html($tabla->post_title); ?>
-                            </option>
-                        <?php endforeach; ?>
+                        <?php CPT_Tabla_Precio::render_select_options('seminario', $tabla_precio_id); ?>
                     </select>
                 </div>
             </div>

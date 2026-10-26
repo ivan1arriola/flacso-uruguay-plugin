@@ -85,3 +85,13 @@ function flacso_generar_seminarios_combinados_html(int $offset = 0, array $atts 
 }
 
 add_shortcode('lista_seminarios', 'flacso_lista_seminarios_render');
+
+/**
+ * Alias de compatibilidad para la sección de portada.
+ *
+ * @param array $atts
+ * @return string
+ */
+function flacso_section_seminarios_proximos_render(array $atts = []): string {
+    return flacso_lista_seminarios_render($atts);
+}
