@@ -42,6 +42,10 @@ price_table_editor_assert(strpos($cpt, 'flacso_price_featured') !== false, 'debe
 price_table_editor_assert(strpos($cpt, 'data-usd-toggle') !== false, 'debe permitir mostrar u ocultar USD sin borrar datos');
 price_table_editor_assert(strpos($css, '@media (max-width: 782px)') !== false, 'el editor debe ser usable en móvil');
 price_table_editor_assert(strpos($cpt, 'FLACSO_Price_Table_Repository::linked_uses') !== false, 'debe mostrar y proteger los usos de la tabla');
+price_table_editor_assert(
+    strpos($cpt, 'FLACSO_OFERTA_ACADEMICA_URL .') === false && strpos($cpt, 'plugin_dir_url(__DIR__)') !== false,
+    'los assets del editor deben resolverse desde el módulo: FLACSO_OFERTA_ACADEMICA_URL es la raíz del plugin'
+);
 price_table_editor_assert(stripos($cpt, 'aranceles') === false, 'la interfaz debe hablar de tablas de precios, no de aranceles');
 
 // Ámbito: cada tabla se marca como de oferta académica o de seminario.

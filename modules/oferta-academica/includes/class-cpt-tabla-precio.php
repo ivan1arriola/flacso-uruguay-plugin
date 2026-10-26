@@ -704,22 +704,25 @@ class CPT_Tabla_Precio {
             return;
         }
 
+        // FLACSO_OFERTA_ACADEMICA_URL apunta a la raíz del plugin; los assets viven en el módulo.
+        $module_path = dirname(__DIR__) . '/';
+        $module_url = plugin_dir_url(__DIR__);
         $css = 'assets/css/tabla-precio-admin.css';
         wp_enqueue_style('dashicons');
         wp_enqueue_style(
             'flacso-price-table-admin',
-            FLACSO_OFERTA_ACADEMICA_URL . $css,
+            $module_url . $css,
             ['dashicons'],
-            (string) filemtime(FLACSO_OFERTA_ACADEMICA_PATH . $css)
+            (string) filemtime($module_path . $css)
         );
 
         if (in_array($hook_suffix, ['post.php', 'post-new.php'], true)) {
             $js = 'assets/js/tabla-precio-admin.js';
             wp_enqueue_script(
                 'flacso-price-table-admin',
-                FLACSO_OFERTA_ACADEMICA_URL . $js,
+                $module_url . $js,
                 [],
-                (string) filemtime(FLACSO_OFERTA_ACADEMICA_PATH . $js),
+                (string) filemtime($module_path . $js),
                 true
             );
         }
