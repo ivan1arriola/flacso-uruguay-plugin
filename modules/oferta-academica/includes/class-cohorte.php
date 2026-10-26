@@ -265,14 +265,6 @@ final class FLACSO_Cohorte {
                 return FLACSO_Academic_Assistant::can_manage_academic_post((int) $oferta->ID);
             }));
         }
-        $tablas = get_posts([
-            'post_type' => 'tabla-precio',
-            'post_status' => ['publish', 'draft', 'pending', 'private'],
-            'posts_per_page' => -1,
-            'orderby' => 'title',
-            'order' => 'ASC',
-        ]);
-
         $parent_title = $parent_id > 0 ? get_the_title($parent_id) : '';
         $table_title = $tabla_precio_id > 0 ? get_the_title($tabla_precio_id) : '';
         $state_labels = [
@@ -290,7 +282,7 @@ final class FLACSO_Cohorte {
                 $post,
                 __('Cohorte', 'flacso-uruguay'),
                 get_the_title($post) !== '' ? get_the_title($post) : __('Nueva cohorte', 'flacso-uruguay'),
-                __('Concentra los datos temporales de una oferta: comienzo, estado, cursado, preinscripción y la tabla de aranceles elegida.', 'flacso-uruguay'),
+                __('Concentra los datos temporales de una oferta: comienzo, estado, cursado, preinscripción y la tabla de precios elegida.', 'flacso-uruguay'),
                 [
                     ['icon' => 'dashicons-welcome-learn-more', 'label' => $parent_title !== '' ? $parent_title : __('Sin oferta padre', 'flacso-uruguay')],
                     ['icon' => 'dashicons-flag', 'label' => $estado !== '' ? ($state_labels[$estado] ?? $estado) : __('Sin estado', 'flacso-uruguay')],
@@ -337,9 +329,9 @@ final class FLACSO_Cohorte {
                 $state_price_summary[] = $table_title;
             }
             FLACSO_Academic_Admin_UI::section_start(
-                'flacso-cohorte-estado-aranceles',
-                __('Estado y aranceles', 'flacso-uruguay'),
-                __('Estado académico de la cohorte y Tabla de Aranceles reutilizable asignada.', 'flacso-uruguay'),
+                'flacso-cohorte-estado-precios',
+                __('Estado y precios', 'flacso-uruguay'),
+                __('Estado académico de la cohorte y Tabla de precios reutilizable asignada.', 'flacso-uruguay'),
                 'dashicons-money-alt',
                 $state_price_summary ? implode(' · ', $state_price_summary) : __('Sin completar', 'flacso-uruguay')
             );
@@ -361,12 +353,10 @@ final class FLACSO_Cohorte {
                         </select>
                     </label>
                     <label class="flacso-academic-field">
-                        <span><?php esc_html_e('Tabla de Aranceles', 'flacso-uruguay'); ?></span>
+                        <span><?php esc_html_e('Tabla de precios', 'flacso-uruguay'); ?></span>
                         <select name="tabla_precio_id">
                             <option value="0"><?php esc_html_e('— Sin completar —', 'flacso-uruguay'); ?></option>
-                            <?php foreach ($tablas as $tabla) : ?>
-                                <option value="<?php echo esc_attr((string) $tabla->ID); ?>" <?php selected($tabla_precio_id, $tabla->ID); ?>><?php echo esc_html($tabla->post_title); ?></option>
-                            <?php endforeach; ?>
+                            <?php CPT_Tabla_Precio::render_select_options('oferta', $tabla_precio_id); ?>
                         </select>
                         <?php if ($tabla_precio_id > 0 && get_edit_post_link($tabla_precio_id)) : ?>
                             <small><a href="<?php echo esc_url(get_edit_post_link($tabla_precio_id)); ?>"><?php esc_html_e('Editar la tabla asignada', 'flacso-uruguay'); ?></a></small>

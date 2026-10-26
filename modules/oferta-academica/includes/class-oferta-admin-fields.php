@@ -248,7 +248,7 @@ final class FLACSO_Oferta_Admin_Fields {
             <section class="flacso-oferta-section" id="flacso-oferta-cohortes">
                 <header class="flacso-oferta-section__summary">
                     <span class="flacso-oferta-section__icon dashicons dashicons-calendar-alt" aria-hidden="true"></span>
-                    <span class="flacso-oferta-section__copy"><strong><?php esc_html_e('Cohortes', 'flacso-uruguay'); ?></strong><small><?php esc_html_e('Aperturas temporales de esta oferta: comienzo, estado, cursado, preinscripción y aranceles.', 'flacso-uruguay'); ?></small></span>
+                    <span class="flacso-oferta-section__copy"><strong><?php esc_html_e('Cohortes', 'flacso-uruguay'); ?></strong><small><?php esc_html_e('Aperturas temporales de esta oferta: comienzo, estado, cursado, preinscripción y precios.', 'flacso-uruguay'); ?></small></span>
                     <span class="flacso-oferta-section__status <?php echo $cohort_ids ? 'is-complete' : ''; ?>"><?php echo esc_html($cohort_ids ? sprintf(_n('%d cohorte', '%d cohortes', count($cohort_ids), 'flacso-uruguay'), count($cohort_ids)) : __('Sin cohortes', 'flacso-uruguay')); ?></span>
                 </header>
                 <div class="flacso-oferta-section__body">

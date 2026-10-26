@@ -74,7 +74,7 @@ academic_editor_redesign_assert(
     'Oferta debe permitir elegir, previsualizar y limpiar el color sin aplicarlo públicamente'
 );
 
-foreach (['Oferta padre', 'Estado y aranceles', 'Comienzo', 'Cursado', 'Preinscripción', 'Enlaces útiles'] as $section) {
+foreach (['Oferta padre', 'Estado y precios', 'Comienzo', 'Cursado', 'Preinscripción', 'Enlaces útiles'] as $section) {
     academic_editor_redesign_assert(strpos($cohort, $section) !== false, "Cohorte debe incluir {$section}");
 }
 academic_editor_redesign_assert(strpos($teams, 'Equipos de la cohorte') !== false, 'Cohorte debe incluir Equipos de la cohorte');
@@ -103,10 +103,10 @@ academic_editor_redesign_assert(
 );
 
 foreach (['Identificación', 'Filas de precios', 'Nota', 'Usos vinculados'] as $section) {
-    academic_editor_redesign_assert(strpos($price, $section) !== false, "Tabla de Aranceles debe incluir {$section}");
+    academic_editor_redesign_assert(strpos($price, $section) !== false, "Tabla de precios debe incluir {$section}");
 }
 foreach (['data-add-price-row', 'data-remove-price-row', 'flacso_price_featured', 'data-empty-state', 'FLACSO_Price_Table_Repository::linked_uses'] as $needle) {
-    academic_editor_redesign_assert(strpos($price, $needle) !== false, "Tabla de Aranceles debe preservar {$needle}");
+    academic_editor_redesign_assert(strpos($price, $needle) !== false, "Tabla de precios debe preservar {$needle}");
 }
 
 echo "OK academic editor redesign contract\n";

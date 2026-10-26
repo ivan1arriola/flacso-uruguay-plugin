@@ -29,6 +29,6 @@ cohort_responsive_assert(strpos($source, 'grid-row:2;justify-self:start') !== fa
 cohort_responsive_assert(strpos($source, 'overflow-x:hidden') === false, 'no tapa el desbordamiento ocultando contenido');
 cohort_responsive_assert(strpos($source, 'name="oferta_academica_id"') !== false, 'se conserva Oferta padre');
 cohort_responsive_assert(strpos($source, 'name="numero_cohorte"') !== false, 'se conserva número de Cohorte');
-cohort_responsive_assert(strpos($source, 'name="tabla_precio_id"') !== false, 'se conserva Tabla de Aranceles');
+cohort_responsive_assert(strpos($source, 'name="tabla_precio_id"') !== false, 'se conserva Tabla de precios');
 cohort_responsive_assert(strpos($shared, "self::is_static_editor() ? '</div></section>'") !== false, 'las secciones continúan permanentes, sin acordeones');
 echo "OK: cohort responsive admin contract\n";

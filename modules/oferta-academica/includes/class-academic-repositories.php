@@ -23,7 +23,7 @@ final class FLACSO_Academic_Repository {
                     'titulos_certificaciones_html', 'menciones', 'orientaciones', 'titulos_intermedios',
                     'malla_curricular', 'documentos', 'equipos', 'reconocido_mec',
                     'reconocimiento_internacional', 'reconocimiento_red_flacso', 'convenio_iin_oea', 'mostrar_costos_envio',
-                    'mostrar_expedicion_titulo', 'seminarios',
+                    'mostrar_expedicion_titulo', 'seminarios', 'equipo_academico', 'colores_presentacion', 'color_principal', 'resumen', 'carta_presentacion_html', 'carta_instancias_presenciales',
                 ],
             ],
             'cohortes' => [
@@ -56,7 +56,10 @@ final class FLACSO_Academic_Repository {
             ],
             'tablas-precio' => [
                 'post_type' => 'tabla-precio',
-                'fields' => ['tabla_precios_tipo', 'precios_filas', 'precios_nota', 'mostrar_precios_dolares'],
+                'fields' => [
+                    'tabla_precios_tipo', 'tabla_precios_ambito', 'precios_columnas', 'precios_filas',
+                    'precios_nota', 'precios_nota_texto', 'precios_nota_letra_chica', 'mostrar_precios_dolares',
+                ],
             ],
         ];
     }
@@ -115,6 +118,12 @@ final class FLACSO_Academic_Repository {
         if ($entity === 'ofertas') {
             $data['tipo'] = FLACSO_Oferta_Academica::get_tipo((int) $post->ID);
             $data['correo_oferta'] = FLACSO_Oferta_Academica::get_offer_emails((int) $post->ID);
+            $colores = $data['colores_presentacion'] ?? get_post_meta($post->ID, 'colores_presentacion', true);
+            if (is_array($colores) && !empty($colores['principal'])) {
+                $data['color_principal'] = (string) $colores['principal'];
+            } elseif (empty($data['color_principal'])) {
+                $data['color_principal'] = (string) (get_post_meta($post->ID, 'color_principal', true) ?: '');
+            }
         }
         if ($entity === 'seminarios') {
             $data['correo_seminario'] = FLACSO_Seminario::get_notification_emails((int) $post->ID);
