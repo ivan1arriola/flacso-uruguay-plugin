@@ -22,21 +22,22 @@ $offer_editor = (string) file_get_contents($offer_editor_file);
 $init = (string) file_get_contents($init_file);
 
 carta_contact_assert(strpos($admin, "FLACSO_Oferta_Academica::POST_TYPE") !== false, 'el contacto debe pertenecer a Oferta Académica');
-carta_contact_assert(strpos($admin, "save_post_' . FLACSO_Oferta_Academica::POST_TYPE") !== false, 'debe guardarse al guardar la oferta');
+carta_contact_assert(strpos($admin, 'sync_from_groups') !== false, 'debe sincronizarse al guardar los equipos de la oferta');
 carta_contact_assert(strpos($admin, "FLACSO_Cohorte::POST_TYPE") === false, 'el contacto no puede pertenecer a Cohorte');
 
 foreach (['carta_contacto_docente_id', 'carta_contacto_titulo', 'carta_contacto_correo'] as $key) {
     carta_contact_assert(strpos($admin, $key) !== false, "falta el campo canónico {$key}");
 }
 
-carta_contact_assert(strpos($admin, 'offer_coordination_member_ids') !== false, 'el selector debe limitarse a Coordinación académica');
-carta_contact_assert(strpos($admin, 'is_valid_contact_person') !== false, 'el guardado debe validar pertenencia a Coordinación académica');
-carta_contact_assert(strpos($admin, 'Se conservó el contacto previamente guardado') !== false, 'una selección inválida debe conservar el contacto anterior');
-carta_contact_assert(strpos($admin, 'Persona que aparece') !== false, 'debe existir selector de persona');
-carta_contact_assert(strpos($admin, 'Título que se muestra') !== false, 'debe existir campo de título visible');
-carta_contact_assert(strpos($admin, 'Vista previa del contacto') !== false, 'debe existir vista previa');
-carta_contact_assert(strpos($admin, "add_meta_box(") === false, 'el contacto debe integrarse al editor principal y no quedar como metabox separado');
-carta_contact_assert(strpos($offer_editor, 'FLACSO_Offer_Carta_Contact_Admin::render_section($post)') !== false, 'Oferta debe incluir la sección Contacto de la carta');
+carta_contact_assert(strpos($admin, 'coordination_contact_member') !== false, 'el contacto sale del integrante marcado en Coordinación académica');
+carta_contact_assert(strpos($admin, 'is_valid_contact_person') !== false, 'debe poder validarse la pertenencia a Coordinación académica');
+carta_contact_assert(strpos($admin, "add_meta_box(") === false, 'el contacto no debe quedar como metabox separado');
+carta_contact_assert(strpos($offer_editor, 'FLACSO_Offer_Carta_Contact_Admin::render_section') === false, 'no hay sección separada: el contacto vive en Coordinación académica');
+
+$team_editor = (string) file_get_contents($root . '/modules/oferta-academica/includes/class-academic-team-editor.php');
+foreach (['data-carta-pick', 'data-carta-flag', 'data-carta-preview', 'data-role-select', 'Asistencia Técnica', 'Coordinación Ejecutiva', 'Asistencia Académica', 'Coordinación Académica', '__custom__', 'sync_from_groups'] as $needle) {
+    carta_contact_assert(strpos($team_editor, $needle) !== false, "Coordinación académica debe integrar {$needle}");
+}
 
 foreach (['asistente_academica_docente_id', 'asistente_academica_rol', 'asistente_academica_correo'] as $legacy_key) {
     carta_contact_assert(strpos($bridge, $legacy_key) !== false, "debe conservar compatibilidad con {$legacy_key}");

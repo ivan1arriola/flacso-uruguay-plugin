@@ -125,74 +125,88 @@ team_contact_assert(
     'un integrante de un grupo estable distinto no puede ser contacto'
 );
 
-$GLOBALS['test_meta'][100] = [
-    FLACSO_Offer_Carta_Contact_Admin::META_PERSON_ID => 7,
-    FLACSO_Offer_Carta_Contact_Admin::META_TITLE => 'Título anterior',
-    FLACSO_Offer_Carta_Contact_Admin::META_EMAIL => 'anterior@example.org',
-];
+// Orden: el orden enviado por el formulario es el orden guardado, para grupos e integrantes.
+$ordered = FLACSO_Academic_Team_Editor::sanitize_academic_team([
+    3 => ['tipo' => 'personalizado', 'nombre' => 'Tercero', 'docentes' => [['id' => 8], ['id' => 7], ['id' => 10]]],
+    0 => ['tipo' => 'coordinacion_academica', 'docentes' => [['id' => 10, 'rol' => 'Asistencia Técnica'], ['id' => 7, 'rol' => 'Coordinación Ejecutiva']]],
+    1 => ['tipo' => 'personalizado', 'nombre' => 'Primero', 'docentes' => [['id' => 7]]],
+]);
+team_contact_assert(array_column($ordered, 'nombre') === ['Coordinación académica', 'Tercero', 'Primero'], 'los grupos personalizados conservan el orden enviado y Coordinación va primero');
+team_contact_assert(array_column($ordered[1]['docentes'], 'id') === [8, 7, 10], 'los integrantes conservan el orden enviado');
+team_contact_assert(array_column($ordered[0]['docentes'], 'id') === [10, 7], 'los integrantes de Coordinación conservan el orden enviado');
 
-$post = new WP_Post();
-$post->post_type = FLACSO_Oferta_Academica::POST_TYPE;
+team_contact_assert(
+    FLACSO_Academic_Team_Editor::coordination_role_presets() === ['Coordinación Académica', 'Asistencia Académica', 'Asistencia Técnica', 'Coordinación Ejecutiva'],
+    'Coordinación ofrece los cuatro roles predeterminados'
+);
+$custom_role = FLACSO_Academic_Team_Editor::sanitize_academic_team([[
+    'tipo' => 'coordinacion_academica',
+    'docentes' => [['id' => 7, 'rol' => 'Dirección de posgrados']],
+]]);
+team_contact_assert(($custom_role[0]['docentes'][0]['rol'] ?? '') === 'Dirección de posgrados', 'Coordinación admite roles personalizados');
 
-$_POST = [
-    'flacso_offer_carta_contact_nonce' => 'ok',
-    'flacso_carta_contact' => [
-        'person_id' => '8',
-        'title' => 'Título inválido',
-        'email' => 'invalido@example.org',
+// Contacto de la carta: un único integrante marcado de Coordinación.
+$with_contact = [
+    [
+        'tipo' => 'coordinacion_academica',
+        'docentes' => [
+            ['id' => 7, 'rol' => 'Coordinación Académica'],
+            ['id' => 10, 'rol' => 'Asistencia Académica', 'correo' => 'asistencia@example.org', 'carta' => '1'],
+            ['id' => 8, 'rol' => 'Asistencia Técnica', 'carta' => '1'],
+        ],
     ],
-    'flacso_oferta_equipos' => $submitted_groups,
+    ['tipo' => 'personalizado', 'nombre' => 'Comité', 'docentes' => [['id' => 8, 'carta' => '1']]],
 ];
+$normalized_contact = FLACSO_Academic_Team_Editor::sanitize_academic_team($with_contact);
+team_contact_assert(!empty($normalized_contact[0]['docentes'][1]['carta']), 'se conserva el contacto marcado');
+team_contact_assert(empty($normalized_contact[0]['docentes'][2]['carta']), 'solo un integrante de Coordinación puede ser el contacto');
+team_contact_assert(empty($normalized_contact[1]['docentes'][0]['carta']), 'fuera de Coordinación no hay contacto de la carta');
+team_contact_assert((FLACSO_Academic_Team_Editor::coordination_contact_member($with_contact)['id'] ?? 0) === 10, 'el contacto es el integrante marcado');
 
-FLACSO_Offer_Carta_Contact_Admin::save(100, $post);
+FLACSO_Offer_Carta_Contact_Admin::sync_from_groups(100, $with_contact);
+team_contact_assert($GLOBALS['test_meta'][100][FLACSO_Offer_Carta_Contact_Admin::META_PERSON_ID] === 10, 'se usa el docente seleccionado');
+team_contact_assert($GLOBALS['test_meta'][100][FLACSO_Offer_Carta_Contact_Admin::META_TITLE] === 'Asistencia Académica', 'se usa el rol del integrante como título');
+team_contact_assert($GLOBALS['test_meta'][100][FLACSO_Offer_Carta_Contact_Admin::META_EMAIL] === 'asistencia@example.org', 'se usa el correo de contacto del integrante');
 
-team_contact_assert($GLOBALS['test_meta'][100][FLACSO_Offer_Carta_Contact_Admin::META_PERSON_ID] === 7, 'un contacto inválido debe conservar la persona anterior');
-team_contact_assert($GLOBALS['test_meta'][100][FLACSO_Offer_Carta_Contact_Admin::META_TITLE] === 'Título anterior', 'un contacto inválido debe conservar el título anterior');
-team_contact_assert($GLOBALS['test_meta'][100][FLACSO_Offer_Carta_Contact_Admin::META_EMAIL] === 'anterior@example.org', 'un contacto inválido debe conservar el correo anterior');
-team_contact_assert(!empty($GLOBALS['test_transients']), 'un contacto inválido debe producir un error visible');
+// Sin correo propio no se guarda uno: la carta usa el de la persona.
+$no_email = [['tipo' => 'coordinacion_academica', 'docentes' => [['id' => 7, 'rol' => 'Coordinación Ejecutiva', 'carta' => '1']]]];
+FLACSO_Offer_Carta_Contact_Admin::sync_from_groups(100, $no_email);
+team_contact_assert($GLOBALS['test_meta'][100][FLACSO_Offer_Carta_Contact_Admin::META_PERSON_ID] === 7, 'cambiar el contacto actualiza la persona');
+team_contact_assert(!isset($GLOBALS['test_meta'][100][FLACSO_Offer_Carta_Contact_Admin::META_EMAIL]), 'sin correo propio se borra el correo guardado');
 
-$_POST = [
-    'flacso_offer_carta_contact_nonce' => 'ok',
-    'flacso_carta_contact' => [
-        'person_id' => '10',
-        'title' => 'Coordinación de la oferta',
-        'email' => 'coord@example.org',
-    ],
-    'flacso_oferta_equipos' => $submitted_groups,
-];
+// Sin marcar a nadie: se limpia si el contacto guardado era de Coordinación.
+$unmarked = [['tipo' => 'coordinacion_academica', 'docentes' => [['id' => 7, 'rol' => 'Coordinación Ejecutiva']]]];
+FLACSO_Offer_Carta_Contact_Admin::sync_from_groups(100, $unmarked);
+team_contact_assert(!isset($GLOBALS['test_meta'][100][FLACSO_Offer_Carta_Contact_Admin::META_PERSON_ID]), 'desmarcar el contacto lo limpia');
 
-FLACSO_Offer_Carta_Contact_Admin::save(100, $post);
-
-team_contact_assert($GLOBALS['test_meta'][100][FLACSO_Offer_Carta_Contact_Admin::META_PERSON_ID] === 10, 'un segundo integrante de Coordinación debe poder guardarse');
-team_contact_assert($GLOBALS['test_meta'][100][FLACSO_Offer_Carta_Contact_Admin::META_TITLE] === 'Coordinación de la oferta', 'debe guardar el título del contacto válido');
-team_contact_assert($GLOBALS['test_meta'][100][FLACSO_Offer_Carta_Contact_Admin::META_EMAIL] === 'coord@example.org', 'debe guardar el correo del contacto válido');
-
+// Contacto histórico ajeno a Coordinación: se conserva salvo pedido explícito.
 $GLOBALS['test_meta'][101] = [
-    'asistente_academica_docente_id' => 7,
+    'asistente_academica_docente_id' => 8,
     'asistente_academica_rol' => 'Contacto histórico',
     'asistente_academica_correo' => 'historico@example.org',
 ];
+$GLOBALS['test_meta'][102] = [FLACSO_Offer_Carta_Contact_Admin::META_PERSON_ID => 8];
+$only_seven = [['tipo' => 'coordinacion_academica', 'docentes' => [['id' => 7]]]];
+FLACSO_Offer_Carta_Contact_Admin::sync_from_groups(102, $only_seven);
+team_contact_assert(($GLOBALS['test_meta'][102][FLACSO_Offer_Carta_Contact_Admin::META_PERSON_ID] ?? 0) === 8, 'un contacto histórico fuera de Coordinación se conserva');
+FLACSO_Offer_Carta_Contact_Admin::sync_from_groups(102, $only_seven, true);
+team_contact_assert(!isset($GLOBALS['test_meta'][102][FLACSO_Offer_Carta_Contact_Admin::META_PERSON_ID]), '“Sin contacto específico” limpia el contacto');
 
-$_POST = [
-    'flacso_offer_carta_contact_nonce' => 'ok',
-    'flacso_carta_contact' => [
-        'person_id' => '8',
-        'title' => 'Intento inválido',
-        'email' => 'invalido@example.org',
-    ],
-    'flacso_oferta_equipos' => $submitted_groups,
-];
-
-FLACSO_Offer_Carta_Contact_Admin::save(101, $post);
+// Puente con los metas históricos: solo se consolida tras sincronizar un cambio.
+$post = new WP_Post();
+$post->post_type = FLACSO_Oferta_Academica::POST_TYPE;
 FLACSO_Offer_Carta_Contact_Bridge::consolidate_legacy_meta(101, $post);
-
-team_contact_assert(($GLOBALS['test_meta'][101]['asistente_academica_docente_id'] ?? 0) === 7, 'una selección inválida no debe borrar la persona legacy');
-team_contact_assert(($GLOBALS['test_meta'][101]['asistente_academica_rol'] ?? '') === 'Contacto histórico', 'una selección inválida no debe borrar el título legacy');
-team_contact_assert(($GLOBALS['test_meta'][101]['asistente_academica_correo'] ?? '') === 'historico@example.org', 'una selección inválida no debe borrar el correo legacy');
+team_contact_assert(($GLOBALS['test_meta'][101]['asistente_academica_docente_id'] ?? 0) === 8, 'sin sincronización no se borran los metas históricos');
+FLACSO_Offer_Carta_Contact_Admin::sync_from_groups(101, $with_contact);
+FLACSO_Offer_Carta_Contact_Bridge::consolidate_legacy_meta(101, $post);
+team_contact_assert(!isset($GLOBALS['test_meta'][101]['asistente_academica_docente_id']), 'tras sincronizar se consolidan los metas históricos');
+team_contact_assert(($GLOBALS['test_meta'][101][FLACSO_Offer_Carta_Contact_Admin::META_PERSON_ID] ?? 0) === 10, 'queda el contacto canónico');
 
 $teamEditorSource = file_get_contents(__DIR__ . '/../modules/oferta-academica/includes/class-academic-team-editor.php');
 team_contact_assert(strpos($teamEditorSource, 'data-add-team="offer-coordination"') === false, 'no existe botón de alta de Coordinación académica');
 team_contact_assert(strpos($teamEditorSource, 'offer-coordination') === false, 'no existe plantilla ni acción para duplicar Coordinación');
 team_contact_assert(strpos($teamEditorSource, 'data-team-zone="coordination"') !== false, 'Coordinación permanente y separada');
+team_contact_assert(strpos($teamEditorSource, 'data-move-team') !== false && strpos($teamEditorSource, 'data-move-member') !== false, 'grupos e integrantes son reordenables');
+team_contact_assert(strpos($teamEditorSource, "wp_enqueue_script('jquery-ui-sortable')") !== false, 'el arrastre usa jQuery UI Sortable');
 
 echo "OK academic team and carta contact model\n";

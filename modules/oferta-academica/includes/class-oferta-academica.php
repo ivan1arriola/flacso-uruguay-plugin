@@ -310,6 +310,9 @@ final class FLACSO_Oferta_Academica {
                 if (is_array($member) && !empty($member['correo'])) {
                     $entry['correo'] = sanitize_email((string) $member['correo']);
                 }
+                if (is_array($member) && !empty($member['carta'])) {
+                    $entry['carta'] = '1';
+                }
                 $members[] = $entry;
             }
             if (!$members) {
@@ -318,7 +321,7 @@ final class FLACSO_Oferta_Academica {
             $groups[] = [
                 'nombre' => sanitize_text_field((string) ($group['nombre'] ?? $group['rol'] ?? '')),
                 'descripcion' => wp_kses_post((string) ($group['descripcion'] ?? '')),
-                'importancia' => in_array((string) ($group['importancia'] ?? '3'), ['1', '2', '3'], true) ? (string) $group['importancia'] : '3',
+                'importancia' => in_array((string) ($group['importancia'] ?? '3'), ['1', '2', '3'], true) ? (string) ($group['importancia'] ?? '3') : '3',
                 'docentes' => $members,
             ];
         }
