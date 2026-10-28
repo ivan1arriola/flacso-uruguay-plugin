@@ -33,7 +33,7 @@ final class FLACSO_Academic_Repository {
                     'precision_fecha_inicio', 'estado', 'calendario_academico',
                     'modalidad', 'modalidad_descripcion', 'tabla_precio_id', 'link_preinscripcion',
                     'preinscripcion_habilitada',
-                    'instancias_presenciales',
+                    'instancias_presenciales', 'carta_mensaje_html',
                 ],
             ],
             'seminarios' => [
