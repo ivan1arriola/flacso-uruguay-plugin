@@ -9,12 +9,6 @@ if (!defined("ABSPATH")) {
  * Expone /wp-json/flacso/v1/ofertas/settings y /wp-json/flacso/v1/ofertas/settings/mailjet-lists
  */
 final class FLACSO_Academic_Settings_API {
-    private const DEFAULT_CARTA_MAS_INFO_SECTION_TITLE = "Más información";
-    private const DEFAULT_CARTA_MAS_INFO_TRAYECTORIA_TITLE = "Trayectoria Académica";
-    private const DEFAULT_CARTA_MAS_INFO_TRAYECTORIA_HTML = "<p>Nuestra <strong>Facultad de Posgrados</strong> busca formar a sus estudiantes a nivel <strong>académico, profesional y laboral</strong>. Nos distinguen <strong>19 años de trayectoria</strong> a nivel nacional y más de <strong>65 años a nivel internacional</strong>. Además, más de <strong>7000 personas egresadas</strong> de FLACSO Uruguay trabajan en el ámbito público y privado.</p>";
-    private const DEFAULT_CARTA_MAS_INFO_GESTION_TITLE = "Gestión Académica";
-    private const DEFAULT_CARTA_MAS_INFO_GESTION_HTML = "<p>Nos distingue un sistema de <strong>gestión académica eficiente y cercano</strong>, que acompaña de forma <strong>personalizada</strong> a cada estudiante y garantiza <strong>altos niveles de egreso, superiores al 90%</strong>.</p>";
-
     public static function init(): void {
         add_action("rest_api_init", [self::class, "register_routes"]);
     }
@@ -74,21 +68,13 @@ final class FLACSO_Academic_Settings_API {
 
         return rest_ensure_response([
             "ok" => true,
-            "data" => [
-                "mensaje_bienvenida" => get_option("flacso_mensaje_bienvenida", ""),
+            "data" => array_merge([                "mensaje_bienvenida" => get_option("flacso_mensaje_bienvenida", ""),
                 "flacso_webhook_token" => $masked_token,
                 "flacso_google_drive_folder_id" => get_option("flacso_google_drive_folder_id", ""),
                 "flacso_webhook_forms_drive_folder_id" => get_option("flacso_webhook_forms_drive_folder_id", ""),
                 "flacso_preinscripciones_telegram_bot_token" => $masked_telegram_bot_token,
                 "flacso_preinscripciones_telegram_chat_id" => get_option("flacso_preinscripciones_telegram_chat_id", ""),
                 "correos_excluidos" => get_option("flacso_correos_excluidos", ""),
-
-                // Campos de Más Información en Carta
-                "carta_mas_info_section_title" => get_option("flacso_carta_mas_info_section_title", self::DEFAULT_CARTA_MAS_INFO_SECTION_TITLE),
-                "carta_mas_info_trayectoria_title" => get_option("flacso_carta_mas_info_trayectoria_title", self::DEFAULT_CARTA_MAS_INFO_TRAYECTORIA_TITLE),
-                "carta_mas_info_trayectoria_html" => get_option("flacso_carta_mas_info_trayectoria_html", self::DEFAULT_CARTA_MAS_INFO_TRAYECTORIA_HTML),
-                "carta_mas_info_gestion_title" => get_option("flacso_carta_mas_info_gestion_title", self::DEFAULT_CARTA_MAS_INFO_GESTION_TITLE),
-                "carta_mas_info_gestion_html" => get_option("flacso_carta_mas_info_gestion_html", self::DEFAULT_CARTA_MAS_INFO_GESTION_HTML),
 
                 // Variables de integraciones
                 "fc_consultas_webhook_url" => get_option("fc_consultas_webhook_url", ""),
@@ -112,7 +98,7 @@ final class FLACSO_Academic_Settings_API {
                 "flacso_meta_test_event_code" => get_option("flacso_meta_test_event_code", ""),
                 "flacso_meta_track_pageview" => (bool) get_option("flacso_meta_track_pageview", 1),
                 "flacso_general_inquiries_email" => get_option("flacso_general_inquiries_email", ""),
-            ]
+            ], FLACSO_Carta_Settings::all()) // Textos de la carta: claves y valores por defecto en FLACSO_Carta_Settings
         ]);
     }
 
@@ -149,21 +135,7 @@ final class FLACSO_Academic_Settings_API {
         if (isset($payload["correos_excluidos"])) {
             update_option("flacso_correos_excluidos", sanitize_textarea_field($payload["correos_excluidos"]));
         }
-        if (isset($payload["carta_mas_info_section_title"])) {
-            update_option("flacso_carta_mas_info_section_title", sanitize_text_field($payload["carta_mas_info_section_title"]));
-        }
-        if (isset($payload["carta_mas_info_trayectoria_title"])) {
-            update_option("flacso_carta_mas_info_trayectoria_title", sanitize_text_field($payload["carta_mas_info_trayectoria_title"]));
-        }
-        if (isset($payload["carta_mas_info_trayectoria_html"])) {
-            update_option("flacso_carta_mas_info_trayectoria_html", wp_kses_post($payload["carta_mas_info_trayectoria_html"]));
-        }
-        if (isset($payload["carta_mas_info_gestion_title"])) {
-            update_option("flacso_carta_mas_info_gestion_title", sanitize_text_field($payload["carta_mas_info_gestion_title"]));
-        }
-        if (isset($payload["carta_mas_info_gestion_html"])) {
-            update_option("flacso_carta_mas_info_gestion_html", wp_kses_post($payload["carta_mas_info_gestion_html"]));
-        }
+        FLACSO_Carta_Settings::update_from_payload($payload);
 
         // Variables de integraciones
         if (isset($payload["fc_consultas_webhook_url"])) {

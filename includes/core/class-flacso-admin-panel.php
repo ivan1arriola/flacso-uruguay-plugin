@@ -130,6 +130,7 @@ final class FLACSO_Admin_Panel {
             'edit.php?post_type=edicion' => 50,
             'edit.php?post_type=tabla-precio' => 60,
             'flacso-main-page' => 70,
+            'flacso-carta-textos' => 72,
             'fc_options_page' => 75,
             'flacso-consultas' => 78,
             'flacso-correos' => 80,

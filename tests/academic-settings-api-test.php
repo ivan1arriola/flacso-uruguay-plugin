@@ -126,6 +126,7 @@ function add_action(string $tag, $callback, int $priority = 10, int $accepted_ar
     return true;
 }
 
+require_once $root . "/modules/oferta-academica/includes/class-carta-settings.php";
 require_once $root . "/modules/oferta-academica/includes/class-academic-settings-api.php";
 
 // 1. Registro de rutas
