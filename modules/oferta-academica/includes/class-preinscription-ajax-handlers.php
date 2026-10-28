@@ -155,6 +155,27 @@ final class FLACSO_Preinscription_Ajax_Handlers {
         }
     }
 
+    /**
+     * Cierra las demás cohortes de la oferta cuando una cohorte quedó abierta
+     * por un camino distinto del botón Abrir (por ejemplo, la API académica).
+     */
+    public static function close_sibling_cohorts(int $cohort_id): void {
+        if ($cohort_id < 1
+            || !rest_sanitize_boolean(get_post_meta($cohort_id, 'preinscripcion_habilitada', true))) {
+            return;
+        }
+        $offer_id = absint(get_post_meta($cohort_id, FLACSO_Cohorte::META_PARENT_ID, true));
+        if ($offer_id < 1) {
+            return;
+        }
+        self::set_single_open_instance(
+            FLACSO_Cohorte::POST_TYPE,
+            FLACSO_Cohorte::META_PARENT_ID,
+            $offer_id,
+            $cohort_id
+        );
+    }
+
     private static function set_single_open_instance(
         string $post_type,
         string $parent_key,

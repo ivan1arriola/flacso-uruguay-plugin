@@ -168,4 +168,22 @@ if ($GLOBALS['flacso_local_opening_meta'][203]['preinscripcion_habilitada'] !== 
     throw new RuntimeException('Una edición vencida debe conservarse cerrada.');
 }
 
+// Abrir por la API académica deja la meta en la cohorte y debe cerrar a las hermanas.
+$GLOBALS['flacso_local_opening_meta'][101]['preinscripcion_habilitada'] = true;
+FLACSO_Preinscription_Ajax_Handlers::close_sibling_cohorts(101);
+if ($GLOBALS['flacso_local_opening_meta'][101]['preinscripcion_habilitada'] !== true) {
+    throw new RuntimeException('La cohorte abierta por API debe seguir abierta.');
+}
+if ($GLOBALS['flacso_local_opening_meta'][102]['preinscripcion_habilitada'] !== false) {
+    throw new RuntimeException('Abrir una cohorte por API debe cerrar a las hermanas de la oferta.');
+}
+
+// Cerrar por API no debe abrir ni cerrar otras cohortes.
+$GLOBALS['flacso_local_opening_meta'][102]['preinscripcion_habilitada'] = true;
+$GLOBALS['flacso_local_opening_meta'][101]['preinscripcion_habilitada'] = false;
+FLACSO_Preinscription_Ajax_Handlers::close_sibling_cohorts(101);
+if ($GLOBALS['flacso_local_opening_meta'][102]['preinscripcion_habilitada'] !== true) {
+    throw new RuntimeException('Cerrar una cohorte por API no debe tocar a las demás.');
+}
+
 echo "OK: local preinscription opening\n";

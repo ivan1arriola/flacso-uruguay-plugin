@@ -200,6 +200,9 @@ final class FLACSO_Academic_Repository {
                 }
             }
         }
+        if ($entity === 'cohortes' && array_key_exists('preinscripcion_habilitada', $payload)) {
+            FLACSO_Preinscription_Ajax_Handlers::close_sibling_cohorts((int) $post_id);
+        }
         if ($entity === 'ofertas' && array_key_exists('tipo', $payload)) {
             $type = sanitize_key((string) $payload['tipo']);
             wp_set_object_terms($post_id, [$type], FLACSO_Oferta_Academica::TYPE_TAXONOMY, false);
