@@ -88,11 +88,7 @@ final class FLACSO_Offer_Carta_Contact_Bridge {
         // Consolidar únicamente después de un guardado canónico válido
         // (o una limpieza explícita). Una selección inválida debe conservar
         // intacto el contacto previamente guardado, incluso si aún es legacy.
-        if (
-            !isset($_POST['flacso_carta_contact'])
-            || !is_array($_POST['flacso_carta_contact'])
-            || !FLACSO_Offer_Carta_Contact_Admin::did_complete_save($post_id)
-        ) {
+        if (!FLACSO_Offer_Carta_Contact_Admin::did_complete_save($post_id)) {
             return;
         }
 

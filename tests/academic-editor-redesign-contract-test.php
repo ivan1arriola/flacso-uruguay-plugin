@@ -62,7 +62,7 @@ foreach ([
     academic_editor_redesign_assert(strpos($offer, $section) !== false, "Oferta debe incluir {$section}");
 }
 academic_editor_redesign_assert(strpos($teams, 'Equipos estables') !== false, 'Oferta debe incluir Equipos estables');
-academic_editor_redesign_assert(strpos($carta, 'Contacto de la carta') !== false, 'Oferta debe incluir Contacto de la carta');
+academic_editor_redesign_assert(strpos($teams, 'Contacto de la carta') !== false, 'Coordinación académica debe integrar el Contacto de la carta');
 academic_editor_redesign_assert(
     strpos($offer_model, "META_PRESENTATION_COLORS = 'colores_presentacion'") !== false,
     'Oferta debe registrar el metadato colores_presentacion'
@@ -88,8 +88,8 @@ academic_editor_redesign_assert(
 );
 academic_editor_redesign_assert(
     strpos($offer, 'FLACSO_Academic_Team_Editor::render_offer_section($post)') !== false
-        && strpos($offer, 'FLACSO_Offer_Carta_Contact_Admin::render_section($post)') !== false,
-    'Oferta debe integrar equipos estables y contacto de carta dentro del editor principal'
+        && strpos($offer, 'FLACSO_Offer_Carta_Contact_Admin::render_section') === false,
+    'Oferta integra el contacto de carta en Coordinación académica, sin sección separada'
 );
 academic_editor_redesign_assert(
     strpos($cohort, 'FLACSO_Academic_Team_Editor::render_cohort_section($post)') !== false,

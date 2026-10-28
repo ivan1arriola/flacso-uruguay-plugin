@@ -219,7 +219,6 @@ final class FLACSO_Oferta_Admin_Fields {
             <?php self::section_end(); ?>
 
             <?php FLACSO_Academic_Team_Editor::render_offer_section($post); ?>
-            <?php FLACSO_Offer_Carta_Contact_Admin::render_section($post); ?>
 
             <section class="flacso-oferta-section">
                 <header class="flacso-oferta-section__summary">
