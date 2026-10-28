@@ -23,6 +23,10 @@ function selected($a, $b, $echo = true) {
     if ($echo) echo $result;
     return $result;
 }
+function sanitize_text_field($value) { return trim(strip_tags((string) $value)); }
+function esc_url($value) { return (string) $value; }
+function current_user_can($capability, ...$args) { return true; }
+function get_edit_post_link($id, $context = 'display') { return 'https://example.test/wp-admin/post.php?post=' . (int) $id . '&action=edit'; }
 function wp_create_nonce($action) { return 'nonce-' . $action; }
 function get_current_screen() { return (object) ['post_type' => 'oferta-academica']; }
 function wp_enqueue_script($handle) { $GLOBALS['test_enqueued'][] = $handle; }
@@ -40,6 +44,7 @@ ob_start();
 $method->invoke(null, 'flacso_oferta_equipos[0][docentes][0]', ['id' => 41, 'rol' => 'Coordinación', 'correo' => 'contacto@flacso.edu.uy'], []);
 $html = ob_get_clean();
 team_search_assert(strpos($html, 'data-person-search') !== false, 'input buscable en integrantes');
+team_search_assert(strpos($html, 'data-member-preview') !== false && strpos($html, 'data-preview-avatar') !== false, 'cada integrante tiene previsualización');
 team_search_assert(strpos($html, 'data-person-select') !== false, 'select compatibilidad con contacto de carta');
 team_search_assert(strpos($html, 'name="flacso_oferta_equipos[0][docentes][0][id]"') !== false, 'nombre de campo intacto');
 team_search_assert(strpos($html, 'value="41"') !== false, 'conserva identificador de persona seleccionada');

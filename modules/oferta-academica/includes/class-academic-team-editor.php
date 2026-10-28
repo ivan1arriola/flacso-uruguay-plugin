@@ -347,6 +347,8 @@ final class FLACSO_Academic_Team_Editor {
                 'name' => (string) $person->post_title,
                 'email' => self::person_email($id),
                 'avatar' => self::person_avatar($id),
+                'cargo' => self::person_cargo($id),
+                'edit' => self::person_edit_url($id),
             ];
         }
         wp_send_json_success(['results' => $results, 'more' => count($rows) > $per_page]);
@@ -358,6 +360,14 @@ final class FLACSO_Academic_Team_Editor {
 
     private static function person_avatar(int $id): string {
         return $id > 0 ? (string) (get_the_post_thumbnail_url($id, 'thumbnail') ?: '') : '';
+    }
+
+    private static function person_cargo(int $id): string {
+        return $id > 0 ? sanitize_text_field((string) get_post_meta($id, 'cargo', true)) : '';
+    }
+
+    private static function person_edit_url(int $id): string {
+        return $id > 0 && current_user_can('edit_post', $id) ? (string) get_edit_post_link($id, 'raw') : '';
     }
 
     public static function render_offer_section(WP_Post $post): void {
@@ -500,7 +510,9 @@ final class FLACSO_Academic_Team_Editor {
             <option value="<?php echo esc_attr((string) $selected); ?>"
                 data-name="<?php echo esc_attr(get_the_title($selected)); ?>"
                 data-email="<?php echo esc_attr(self::person_email($selected)); ?>"
-                data-avatar="<?php echo esc_attr(self::person_avatar($selected)); ?>" selected><?php echo esc_html(get_the_title($selected)); ?></option>
+                data-avatar="<?php echo esc_attr(self::person_avatar($selected)); ?>"
+                data-cargo="<?php echo esc_attr(self::person_cargo($selected)); ?>"
+                data-edit="<?php echo esc_url(self::person_edit_url($selected)); ?>" selected><?php echo esc_html(get_the_title($selected)); ?></option>
         <?php endif; ?>
         <?php
     }
@@ -568,6 +580,16 @@ final class FLACSO_Academic_Team_Editor {
                 <input type="hidden" data-carta-flag name="<?php echo esc_attr($name_prefix . '[carta]'); ?>" value="<?php echo $is_contact ? '1' : ''; ?>">
             <?php endif; ?>
             <button type="button" class="button-link-delete" data-remove-member><?php esc_html_e('Quitar', 'flacso-uruguay'); ?></button>
+            <div class="flacso-team-preview" data-member-preview aria-live="polite" hidden>
+                <span class="flacso-team-preview__avatar" data-preview-avatar aria-hidden="true"></span>
+                <div class="flacso-team-preview__body">
+                    <strong data-preview-name></strong>
+                    <span class="flacso-team-preview__role" data-preview-role></span>
+                    <span class="flacso-team-preview__cargo" data-preview-cargo></span>
+                    <span class="flacso-team-preview__email" data-preview-email></span>
+                </div>
+                <a class="flacso-team-preview__edit" data-preview-edit href="#" target="_blank" rel="noopener" hidden><?php esc_html_e('Ver ficha', 'flacso-uruguay'); ?></a>
+            </div>
         </div>
         <?php
     }
@@ -844,6 +866,17 @@ final class FLACSO_Academic_Team_Editor {
             .flacso-team-member--coordination{grid-template-columns:auto minmax(200px,1.3fr) minmax(190px,1fr) minmax(180px,1fr) auto auto}
             .flacso-team-member label{display:grid;gap:4px}
             .flacso-team-member .button-link-delete{align-self:center}
+            .flacso-team-preview{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid #d3ddeb;border-left:4px solid #2c4777;border-radius:8px;background:#fff;min-width:0}
+            .flacso-team-preview[hidden]{display:none}
+            .flacso-team-preview__avatar{flex:none;display:flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:9px;background:#2c4777;color:#fff;font-size:22px;font-weight:700;overflow:hidden}
+            .flacso-team-preview__avatar img{width:100%;height:100%;object-fit:cover}
+            .flacso-team-preview__body{display:grid;gap:2px;min-width:0;flex:1}
+            .flacso-team-preview__body strong{font-size:15px;color:#1d2327;overflow-wrap:anywhere}
+            .flacso-team-preview__role{justify-self:start;padding:2px 8px;border-radius:99px;background:#e1ebf9;color:#29456d;font-size:11px;font-weight:700}
+            .flacso-team-preview__cargo{color:#526074;font-size:12px}
+            .flacso-team-preview__email{color:#50575e;font-size:12px;overflow-wrap:anywhere}
+            .flacso-team-preview [hidden]{display:none}
+            .flacso-team-preview__edit{flex:none;font-size:12px}
             .flacso-team-role-field{display:grid;gap:6px;min-width:0}
             .flacso-team-role-field input[hidden]{display:none}
             .flacso-team-carta-pick{align-self:center;grid-auto-flow:column;align-items:center;justify-content:start;gap:6px;white-space:nowrap}
@@ -1030,7 +1063,9 @@ final class FLACSO_Academic_Team_Editor {
                                     id:person.id,
                                     name:person.name,
                                     email:person.email||'',
-                                    avatar:person.avatar||''
+                                    avatar:person.avatar||'',
+                                    cargo:person.cargo||'',
+                                    edit:person.edit||''
                                 };
                             });
                             if(feedback){
@@ -1053,6 +1088,8 @@ final class FLACSO_Academic_Team_Editor {
                         option.dataset.name=person.name;
                         option.dataset.email=person.email;
                         option.dataset.avatar=person.avatar;
+                        option.dataset.cargo=person.cargo||'';
+                        option.dataset.edit=person.edit||'';
                         select.add(option);
                         input.value=person.name;
                         selectedName=person.name;
@@ -1243,14 +1280,63 @@ final class FLACSO_Academic_Team_Editor {
                 emailOut.textContent=(emailInput&&emailInput.value.trim())||(option&&option.dataset.email)||'<?php echo esc_js(__('Sin correo', 'flacso-uruguay')); ?>';
             }
 
+            /** Previsualización de cada integrante: foto, nombre, cargo, rol y el correo que se mostrará. */
+            function updateMemberPreview(row){
+                var preview=row.querySelector('[data-member-preview]');
+                var select=row.querySelector('[data-person-select]');
+                if(!preview||!select){ return; }
+                if(!select.value){ preview.hidden=true; return; }
+                var option=select.options[select.selectedIndex];
+                var data=(option&&option.dataset)||{};
+                var name=data.name||(option&&option.textContent)||'';
+                var roleInput=row.querySelector('input[name$="[rol]"]');
+                var emailInput=row.querySelector('[data-member-email]');
+                var role=roleInput?roleInput.value.trim():'';
+                var email=(emailInput&&emailInput.value.trim())||data.email||'';
+
+                preview.querySelector('[data-preview-name]').textContent=name;
+                var roleOut=preview.querySelector('[data-preview-role]');
+                roleOut.textContent=role;
+                roleOut.hidden=!role;
+                var cargoOut=preview.querySelector('[data-preview-cargo]');
+                cargoOut.textContent=data.cargo||'';
+                cargoOut.hidden=!data.cargo;
+                var emailOut=preview.querySelector('[data-preview-email]');
+                emailOut.textContent=email;
+                emailOut.hidden=!email;
+
+                var avatar=preview.querySelector('[data-preview-avatar]');
+                avatar.replaceChildren();
+                if(data.avatar){
+                    var img=document.createElement('img');
+                    img.src=data.avatar;
+                    img.alt='';
+                    avatar.appendChild(img);
+                } else {
+                    avatar.textContent=(name.trim().charAt(0)||'?').toUpperCase();
+                }
+
+                var edit=preview.querySelector('[data-preview-edit]');
+                edit.hidden=!data.edit;
+                if(data.edit){ edit.href=data.edit; }
+                preview.hidden=false;
+            }
+            function updateAllPreviews(){
+                document.querySelectorAll('[data-flacso-team-editor] [data-member-row]').forEach(updateMemberPreview);
+            }
+
             document.addEventListener('flacso:academic-team-changed',syncCartaContact);
+            document.addEventListener('flacso:academic-team-changed',updateAllPreviews);
             document.addEventListener('input',function(event){
                 if(event.target.closest('[data-role-input],[data-member-email]')){ syncCartaContact(); }
+                var inputRow=event.target.closest('[data-flacso-team-editor] [data-member-row]');
+                if(inputRow&&event.target.closest('input[name$="[rol]"],[data-member-email]')){ updateMemberPreview(inputRow); }
             });
 
             document.querySelectorAll('[data-flacso-team-editor] [data-person-search]').forEach(initPersonSearch);
             document.querySelectorAll('[data-flacso-team-editor]').forEach(initSortables);
             syncCartaContact();
+            updateAllPreviews();
         })();
         </script>
         <?php
