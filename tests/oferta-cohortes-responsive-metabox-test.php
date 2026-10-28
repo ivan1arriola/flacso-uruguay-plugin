@@ -37,6 +37,7 @@ class FLACSO_Cohorte {
         return $id === 201 ? '29 de julio de 2026' : '<script>alert(1)</script>';
     }
     public static function accepts_registration(int $id): bool { return $id === 201; }
+    public static function registration_url(int $id): string { return (string) get_post_meta($id, 'link_preinscripcion'); }
 }
 
 require_once $root . '/modules/oferta-academica/includes/class-cpt-oferta-academica.php';

@@ -392,7 +392,7 @@ final class FLACSO_Admin_Panel {
             if (FLACSO_Academic_Assistant::is_assistant() && !in_array(absint(get_post_meta($id, 'oferta_academica_id', true)), $offer_ids, true)) {
                 continue;
             }
-            if (get_post_meta($id, 'link_preinscripcion', true) && FLACSO_Cohorte::accepts_registration((int) $id)) {
+            if (FLACSO_Cohorte::registration_url((int) $id) !== '' && FLACSO_Cohorte::accepts_registration((int) $id)) {
                 $total++;
             }
         }
@@ -418,7 +418,6 @@ final class FLACSO_Admin_Panel {
             ['oferta-academica', 'programa_academico_id', __('Ofertas sin programa', 'flacso-uruguay'), $offer_posts],
             ['seminario', 'programa_academico_id', __('Seminarios sin programa', 'flacso-uruguay'), $seminar_posts],
             ['cohorte', 'numero', __('Cohortes sin número', 'flacso-uruguay'), $cohort_posts],
-            ['cohorte', 'link_preinscripcion', __('Cohortes sin enlace', 'flacso-uruguay'), $cohort_posts],
             ['edicion', 'link_preinscripcion', __('Ediciones sin enlace', 'flacso-uruguay'), $edition_posts],
         ];
         foreach ($checks as [$post_type, $meta_key, $label, $posts]) {

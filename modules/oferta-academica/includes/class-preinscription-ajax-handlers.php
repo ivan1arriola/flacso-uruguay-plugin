@@ -31,7 +31,7 @@ final class FLACSO_Preinscription_Ajax_Handlers {
             $cohorte_id
         );
 
-        $url = self::set_canonical_link($cohorte_id, 'oferta', $oferta_id);
+        $url = self::offer_url($oferta_id);
         wp_send_json_success([
             'url' => $url,
             'abierta' => true,
@@ -53,7 +53,7 @@ final class FLACSO_Preinscription_Ajax_Handlers {
         );
 
         wp_send_json_success([
-            'url' => (string) get_post_meta($cohorte_id, 'link_preinscripcion', true),
+            'url' => self::offer_url($oferta_id),
             'abierta' => false,
             'message' => 'Preinscripción cerrada.',
         ]);

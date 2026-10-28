@@ -234,7 +234,7 @@ class CPT_Oferta_Academica {
 
         $configured = metadata_exists('post', $cohorte->ID, 'preinscripcion_habilitada');
         $open = FLACSO_Cohorte::accepts_registration($cohorte->ID);
-        $url = (string) get_post_meta($cohorte->ID, 'link_preinscripcion', true) ?: FLACSO_Preinscription_Ajax_Handlers::offer_url($post_id);
+        $url = FLACSO_Cohorte::registration_url((int) $cohorte->ID) ?: FLACSO_Preinscription_Ajax_Handlers::offer_url($post_id);
         echo '<div class="flacso-current-instance flacso-current-instance--registration' . ($open ? ' flacso-current-instance--open' : '') . '">';
         echo '<span class="flacso-status flacso-status--' . ($open ? 'open' : ($configured ? 'closed' : 'neutral')) . '">';
         echo esc_html($open ? __('Abierta', 'flacso-uruguay') : ($configured ? __('Cerrada', 'flacso-uruguay') : __('Sin configurar', 'flacso-uruguay')));
@@ -695,7 +695,7 @@ class CPT_Oferta_Academica {
                         $roman = FLACSO_Cohorte::to_roman($num) ?: (string) $num;
                         $estado = FLACSO_Cohorte::sanitize_state(get_post_meta($c->ID, 'estado', true));
                         $fechas_txt = FLACSO_Cohorte::format_dates($c->ID);
-                        $link = (string) get_post_meta($c->ID, 'link_preinscripcion', true);
+                        $link = FLACSO_Cohorte::registration_url((int) $c->ID);
                         $abierta = FLACSO_Cohorte::accepts_registration($c->ID);
                         $edit_url = get_edit_post_link($c->ID);
                     ?>

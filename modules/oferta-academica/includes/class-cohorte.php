@@ -42,7 +42,6 @@ final class FLACSO_Cohorte {
             'modalidad'              => ['type' => 'string', 'sanitize_callback' => [self::class, 'sanitize_modality']],
             'modalidad_descripcion'  => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
             'tabla_precio_id'        => ['type' => 'integer', 'sanitize_callback' => 'absint'],
-            'link_preinscripcion'    => ['type' => 'string', 'sanitize_callback' => [self::class, 'sanitize_registration_url']],
             'preinscripcion_habilitada' => ['type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean'],
             'instancias_presenciales' => ['type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean'],
             // Información extra (promociones, becas) de la cohorte; la carta la muestra justo después de la sección 01.
@@ -98,6 +97,15 @@ final class FLACSO_Cohorte {
         return $date && $date->format('Y-m-d') === $value ? $value : '';
     }
 
+
+    /**
+     * Enlace de preinscripción de la cohorte: el de su oferta, calculado desde el slug
+     * (/oferta/<slug>/). Es único por oferta; las cohortes no guardan uno propio.
+     */
+    public static function registration_url(int $cohort_id): string {
+        $offer_id = absint(get_post_meta($cohort_id, self::META_PARENT_ID, true));
+        return $offer_id > 0 ? FLACSO_Preinscription_Ajax_Handlers::offer_url($offer_id) : '';
+    }
 
     public static function sanitize_registration_url($value): string {
         $url = esc_url_raw((string) $value, ['https']);
@@ -241,12 +249,11 @@ final class FLACSO_Cohorte {
         $has_precision = metadata_exists('post', $post->ID, 'precision_fecha_inicio');
         $precision = $has_precision ? (string) get_post_meta($post->ID, 'precision_fecha_inicio', true) : '';
         $tabla_precio_id = absint(get_post_meta($post->ID, 'tabla_precio_id', true));
-        $link_preinscripcion = (string) get_post_meta($post->ID, 'link_preinscripcion', true);
+        $link_preinscripcion = self::registration_url((int) $post->ID);
         $pre_habilitada = metadata_exists('post', $post->ID, 'preinscripcion_habilitada')
             ? rest_sanitize_boolean(get_post_meta($post->ID, 'preinscripcion_habilitada', true))
             : false;
-        $pre_configurada = metadata_exists('post', $post->ID, 'preinscripcion_habilitada')
-            || $link_preinscripcion !== '';
+        $pre_configurada = metadata_exists('post', $post->ID, 'preinscripcion_habilitada');
 
         $modalidad = self::sanitize_modality(get_post_meta($post->ID, 'modalidad', true));
         $modalidad_descripcion = (string) get_post_meta($post->ID, 'modalidad_descripcion', true);
@@ -487,8 +494,8 @@ final class FLACSO_Cohorte {
                 <div class="flacso-academic-grid">
                     <label class="flacso-academic-field flacso-academic-field--full">
                         <span><?php esc_html_e('URL de preinscripción', 'flacso-uruguay'); ?></span>
-                        <input type="url" name="link_preinscripcion" value="<?php echo esc_attr($link_preinscripcion); ?>" placeholder="https://preinscripciones.flacso.edu.uy/…">
-                        <small><?php esc_html_e('Solo se guardan URLs HTTPS del portal preinscripciones.flacso.edu.uy.', 'flacso-uruguay'); ?></small>
+                        <input type="url" value="<?php echo esc_attr($link_preinscripcion); ?>" placeholder="https://preinscripciones.flacso.edu.uy/…" readonly>
+                        <small><?php esc_html_e('Es el único enlace de la oferta y coincide con su slug: se cambia editando el slug de la Oferta Académica.', 'flacso-uruguay'); ?></small>
                     </label>
                 </div>
 
@@ -733,9 +740,6 @@ final class FLACSO_Cohorte {
         if (isset($_POST['tabla_precio_id'])) {
             self::update_or_delete_meta($post_id, 'tabla_precio_id', absint($_POST['tabla_precio_id']) ?: '');
         }
-        if (isset($_POST['link_preinscripcion'])) {
-            self::update_or_delete_meta($post_id, 'link_preinscripcion', self::sanitize_registration_url($_POST['link_preinscripcion']));
-        }
 
         $typed_fields = [
             'modalidad' => [self::class, 'sanitize_modality'],
@@ -806,7 +810,7 @@ final class FLACSO_Cohorte {
                 echo $formatted !== '' ? esc_html($formatted) : '<span style="color:#94a3b8;">—</span>';
                 break;
             case 'preinscripcion':
-                $url = (string) get_post_meta($post_id, 'link_preinscripcion', true);
+                $url = self::registration_url((int) $post_id);
                 $abierta = self::accepts_registration($post_id);
                 if ($url) {
                     if ($abierta) {

@@ -4,7 +4,10 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-/** Generador masivo de enlaces canónicos de preinscripción para Cohortes y Ediciones. */
+/**
+ * Generador masivo de enlaces canónicos de preinscripción para las Ediciones de Seminarios.
+ * Las Ofertas Académicas tienen un único enlace calculado desde su slug (FLACSO_Cohorte::registration_url).
+ */
 final class FLACSO_Preinscription_Links_Admin {
     public const PAGE_SLUG = 'flacso-preinscripcion-links';
     private const CAPABILITY = 'edit_posts';
@@ -48,7 +51,7 @@ final class FLACSO_Preinscription_Links_Admin {
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('Links de preinscripción', 'flacso-uruguay'); ?></h1>
-            <p><?php esc_html_e('Los links se generan automáticamente a partir del slug canónico de cada Oferta Académica o Seminario y se guardan en sus Cohortes y Ediciones.', 'flacso-uruguay'); ?></p>
+            <p><?php esc_html_e('Los links de los Seminarios se generan a partir de su slug y se guardan en sus Ediciones. Las Ofertas Académicas no se guardan aquí: tienen un único link calculado desde su slug.', 'flacso-uruguay'); ?></p>
 
             <?php if (isset($_GET['updated']) || isset($_GET['invalid'])) : ?>
                 <div class="notice <?php echo $invalid ? 'notice-warning' : 'notice-success'; ?> is-dismissible"><p>
@@ -123,7 +126,7 @@ final class FLACSO_Preinscription_Links_Admin {
         $updated = 0;
         $invalid = 0;
 
-        foreach (['cohorte', 'edicion'] as $post_type) {
+        foreach (['edicion'] as $post_type) {
             foreach (self::post_ids($post_type) as $id) {
                 if (!current_user_can('edit_post', $id)) {
                     $invalid++;
@@ -136,9 +139,7 @@ final class FLACSO_Preinscription_Links_Admin {
                     continue;
                 }
 
-                $sanitized = $post_type === 'cohorte'
-                    ? FLACSO_Cohorte::sanitize_registration_url($url)
-                    : FLACSO_Edicion::sanitize_registration_url($url);
+                $sanitized = FLACSO_Edicion::sanitize_registration_url($url);
 
                 if ($sanitized === '') {
                     $invalid++;
@@ -163,19 +164,13 @@ final class FLACSO_Preinscription_Links_Admin {
     /**
      * Calcula los links esperados sin escribir en la base.
      *
-     * Cohorte:  /oferta/<slug-oferta>/
      * Edición:  /seminario/<slug-seminario>/
      *
      * Las Ediciones componentes de un Seminario Integrado heredan el link de la
      * Edición integrada, de acuerdo con el modelo académico vigente.
      */
     private static function expected_links(): array {
-        $result = ['cohorte' => [], 'edicion' => []];
-
-        foreach (self::post_ids('cohorte') as $id) {
-            $parent_id = absint(get_post_meta($id, FLACSO_Cohorte::META_PARENT_ID, true));
-            $result['cohorte'][$id] = self::canonical_parent_url($parent_id, 'oferta');
-        }
+        $result = ['edicion' => []];
 
         $integrated = [];
         $component_ids = [];
@@ -255,19 +250,6 @@ final class FLACSO_Preinscription_Links_Admin {
 
     private static function rows(array $expected): array {
         $rows = [];
-        foreach (self::post_ids('cohorte') as $id) {
-            $parent_id = absint(get_post_meta($id, FLACSO_Cohorte::META_PARENT_ID, true));
-            $rows[] = [
-                'post_type' => 'cohorte',
-                'tipo' => __('Cohorte', 'flacso-uruguay'),
-                'padre' => $parent_id ? get_the_title($parent_id) : __('Sin oferta', 'flacso-uruguay'),
-                'instancia' => FLACSO_Cohorte::display_name(absint(get_post_meta($id, 'numero', true))),
-                'id' => $id,
-                'link' => (string) get_post_meta($id, 'link_preinscripcion', true),
-                'expected' => $expected['cohorte'][$id] ?? '',
-            ];
-        }
-
         foreach (self::post_ids('edicion') as $id) {
             $parent_id = absint(get_post_meta($id, FLACSO_Edicion::META_PARENT_ID, true));
             $rows[] = [

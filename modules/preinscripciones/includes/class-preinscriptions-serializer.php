@@ -122,7 +122,8 @@ final class FLACSO_Preinscriptions_Serializer {
         $raw_mentions = get_post_meta((int) $parent->ID, 'menciones', true);
         $clean_mentions = FLACSO_Preinscriptions_Config::sanitize_text_list($raw_mentions);
 
-        $legacy_link = get_post_meta($cohort_id, 'link_preinscripcion', true);
+        // Un único enlace por oferta, calculado desde su slug: las cohortes no tienen uno propio.
+        $legacy_link = FLACSO_Cohorte::registration_url($cohort_id);
         $public_url = get_permalink((int) $parent->ID);
         $wordpress_url = get_permalink($cohort_id);
         $edit_url = admin_url('post.php?post=' . $cohort_id . '&action=edit');

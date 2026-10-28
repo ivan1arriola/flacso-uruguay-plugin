@@ -318,7 +318,6 @@ class FLACSO_Academic_CLI_Command {
                 $roman = self::to_roman($num);
                 $canonical_title = "Cohorte $roman";
                 $tp_id = $tabla_precio_map[$of_id] ?? null;
-                $link_pre = "https://preinscripciones.flacso.edu.uy/ofertas/$of_id/instancias/cohorte-$num/";
 
                 WP_CLI::log("  - Creando $canonical_title para Oferta #$of_id (Número: $num, Estado: {$d['estado']})");
 
@@ -343,7 +342,6 @@ class FLACSO_Academic_CLI_Command {
                     update_post_meta($cohorte_id, 'estado', $d['estado'] ?? 'planificada');
                     update_post_meta($cohorte_id, 'calendario_academico', $d['calendario_academico'] ?? '');
                     update_post_meta($cohorte_id, 'tabla_precio_id', $tp_id ?: '');
-                    update_post_meta($cohorte_id, 'link_preinscripcion', $link_pre);
                 }
             }
 

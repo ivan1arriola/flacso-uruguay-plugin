@@ -111,6 +111,12 @@ if (!class_exists('FLACSO_Cohorte')) {
         public static function accepts_registration(int $cohort_id, ?int $timestamp = null): bool {
             return !empty(self::$open_cohorts[$cohort_id]);
         }
+
+        // Único enlace por oferta, calculado desde su slug (en el test, "offer-<id>").
+        public static function registration_url(int $cohort_id): string {
+            $offer_id = (int) get_post_meta($cohort_id, self::META_PARENT_ID, true);
+            return $offer_id > 0 ? 'https://preinscripciones.flacso.edu.uy/oferta/offer-' . $offer_id . '/' : '';
+        }
     }
 }
 
@@ -267,6 +273,7 @@ $GLOBALS['flacso_test_posts'][101] = (object) [
 $GLOBALS['flacso_test_post_meta'][101]['oferta_academica_id'] = 100;
 $GLOBALS['flacso_test_post_meta'][101]['numero'] = 11;
 $GLOBALS['flacso_test_post_meta'][101]['nombre'] = 'Cohorte XI';
+// Aunque una cohorte conserve un link viejo guardado, el catálogo publica el de su oferta.
 $GLOBALS['flacso_test_post_meta'][101]['link_preinscripcion'] = 'https://flacso.edu.uy/legacy-davia';
 // Legacy meta to prove serializer does not output them
 $GLOBALS['flacso_test_post_meta'][101]['preinscripcion_formulario'] = [
@@ -288,8 +295,7 @@ $GLOBALS['flacso_test_posts'][102] = (object) [
 $GLOBALS['flacso_test_post_meta'][102]['oferta_academica_id'] = 100;
 $GLOBALS['flacso_test_post_meta'][102]['numero'] = 10;
 $GLOBALS['flacso_test_post_meta'][102]['nombre'] = 'Cohorte X';
-// Same registration link as the open cohort 101 (real case: a new cohort reuses the offer link)
-$GLOBALS['flacso_test_post_meta'][102]['link_preinscripcion'] = 'https://flacso.edu.uy/legacy-davia/';
+// Same registration link as the open cohort 101: every cohort shares the offer link
 FLACSO_Cohorte::$open_cohorts[102] = false;
 
 // 4. Seminario
@@ -346,7 +352,12 @@ flacso_rest_assert_same(true, $target_cohort['registrationOpen'], 'cohort 101 re
 flacso_rest_assert_same(100, $target_cohort['wordpress']['offerId'], 'offerId matches parent');
 flacso_rest_assert_same(101, $target_cohort['wordpress']['cohortId'], 'cohortId matches post ID');
 flacso_rest_assert_true((bool) preg_match('/^sha256:[a-f0-9]{64}$/', $target_cohort['configRevision']), 'configRevision is a valid sha256 hash');
-flacso_rest_assert_same('https://flacso.edu.uy/legacy-davia', $target_cohort['urls']['legacyRegistration'], 'preserves legacy registration url');
+flacso_rest_assert_same('https://preinscripciones.flacso.edu.uy/oferta/offer-100/', $target_cohort['urls']['legacyRegistration'], 'cohort publishes the single link of its offer, ignoring any stored cohort link');
+flacso_rest_assert_same(
+    $target_cohort['urls']['legacyRegistration'],
+    FLACSO_Preinscriptions_Serializer::for_cohort(102)['urls']['legacyRegistration'],
+    'all cohorts of an offer share the same registration link'
+);
 flacso_rest_assert_same(['coordinacion@flacso.edu.uy', 'secretaria@flacso.edu.uy'], $target_cohort['notificationEmails'], 'notification emails come from Correo de la Oferta Académica');
 flacso_rest_assert_same('coordinacion@flacso.edu.uy', $target_cohort['notificationEmail'], 'notificationEmail keeps the first offer email for older clients');
 

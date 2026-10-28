@@ -31,7 +31,7 @@ final class FLACSO_Academic_Repository {
                 'fields' => [
                     'oferta_academica_id', 'numero', 'fecha_inicio', 'fecha_fin', 'anio_inicio', 'anio_fin',
                     'precision_fecha_inicio', 'estado', 'calendario_academico',
-                    'modalidad', 'modalidad_descripcion', 'tabla_precio_id', 'link_preinscripcion',
+                    'modalidad', 'modalidad_descripcion', 'tabla_precio_id',
                     'preinscripcion_habilitada',
                     'instancias_presenciales', 'carta_info_extra_html',
                 ],
@@ -349,7 +349,7 @@ final class FLACSO_Preinscripcion {
     public static function for_cohort(int $cohort_id): array {
         return [
             'abierta' => FLACSO_Cohorte::accepts_registration($cohort_id),
-            'url' => get_post_meta($cohort_id, 'link_preinscripcion', true) ?: null,
+            'url' => FLACSO_Cohorte::registration_url($cohort_id) ?: null,
         ];
     }
 
