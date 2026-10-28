@@ -23,7 +23,7 @@ final class FLACSO_Academic_Repository {
                     'titulos_certificaciones_html', 'menciones', 'orientaciones', 'titulos_intermedios',
                     'malla_curricular', 'documentos', 'equipos', 'reconocido_mec',
                     'reconocimiento_internacional', 'reconocimiento_red_flacso', 'convenio_iin_oea', 'mostrar_costos_envio',
-                    'mostrar_expedicion_titulo', 'seminarios', 'equipo_academico', 'colores_presentacion', 'color_principal', 'resumen', 'carta_presentacion_html', 'carta_instancias_presenciales',
+                    'mostrar_expedicion_titulo', 'seminarios', 'equipo_academico', 'colores_presentacion', 'color_principal', 'resumen', 'carta_info_extra_html', 'carta_instancias_presenciales',
                 ],
             ],
             'cohortes' => [
@@ -116,6 +116,14 @@ final class FLACSO_Academic_Repository {
             $data[$field] = get_post_meta($post->ID, $field, true);
         }
         if ($entity === 'ofertas') {
+            // «Información extra» de la carta (promociones, becas). Antes se llamaba
+            // carta_presentacion_html: se lee como respaldo y se mantiene como alias obsoleto.
+            $info_extra = (string) ($data['carta_info_extra_html'] ?? '');
+            if ($info_extra === '') {
+                $info_extra = (string) get_post_meta($post->ID, 'carta_presentacion_html', true);
+            }
+            $data['carta_info_extra_html'] = $info_extra;
+            $data['carta_presentacion_html'] = $info_extra;
             $data['tipo'] = FLACSO_Oferta_Academica::get_tipo((int) $post->ID);
             $data['correo_oferta'] = FLACSO_Oferta_Academica::get_offer_emails((int) $post->ID);
             $colores = $data['colores_presentacion'] ?? get_post_meta($post->ID, 'colores_presentacion', true);
@@ -190,6 +198,9 @@ final class FLACSO_Academic_Repository {
         if ($entity === 'seminarios' && array_key_exists('correo_seminario', $payload)) {
             $payload['correo_seminario'] = FLACSO_Notification_Emails::sanitize($payload['correo_seminario']);
         }
+        if ($entity === 'ofertas' && array_key_exists('carta_presentacion_html', $payload) && !array_key_exists('carta_info_extra_html', $payload)) {
+            $payload['carta_info_extra_html'] = $payload['carta_presentacion_html'];
+        }
         foreach ($definition['fields'] as $field) {
             if (array_key_exists($field, $payload)) {
                 $value = $payload[$field];
@@ -199,6 +210,10 @@ final class FLACSO_Academic_Repository {
                     update_post_meta($post_id, $field, $value);
                 }
             }
+        }
+        if ($entity === 'ofertas' && array_key_exists('carta_info_extra_html', $payload)) {
+            // Evita que el nombre anterior reaparezca como respaldo si se vacía el campo.
+            delete_post_meta($post_id, 'carta_presentacion_html');
         }
         if ($entity === 'ofertas' && array_key_exists('tipo', $payload)) {
             $type = sanitize_key((string) $payload['tipo']);
