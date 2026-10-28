@@ -45,6 +45,7 @@ $method->invoke(null, 'flacso_oferta_equipos[0][docentes][0]', ['id' => 41, 'rol
 $html = ob_get_clean();
 team_search_assert(strpos($html, 'data-person-search') !== false, 'input buscable en integrantes');
 team_search_assert(strpos($html, 'data-member-preview') !== false && strpos($html, 'data-preview-avatar') !== false, 'cada integrante tiene previsualización');
+team_search_assert(strpos($html, 'data-fullname=') !== false && strpos($html, 'data-title=') !== false && strpos($html, 'data-preview-title') !== false, 'la previsualización muestra el nombre con la abreviación del título y el título debajo');
 team_search_assert(strpos($html, 'data-person-select') !== false, 'select compatibilidad con contacto de carta');
 team_search_assert(strpos($html, 'name="flacso_oferta_equipos[0][docentes][0][id]"') !== false, 'nombre de campo intacto');
 team_search_assert(strpos($html, 'value="41"') !== false, 'conserva identificador de persona seleccionada');
@@ -56,6 +57,7 @@ $source = file_get_contents(dirname(__DIR__) . '/modules/oferta-academica/includ
 team_search_assert(strpos($source, 'posts_per_page' . "' => -1") === false, 'no carga todas las personas en el render');
 team_search_assert(strpos($source, 'wp_ajax_flacso_search_team_people') !== false, 'end-point AJAX solo autenticado');
 team_search_assert(strpos($source, 'check_ajax_referer') !== false, 'requiere nonce');
+team_search_assert(strpos($source, "'fullname' => self::person_fullname($id)") !== false && strpos($source, "'title' => self::person_title($id)") !== false, 'la búsqueda devuelve nombre publicado y título');
 team_search_assert(strpos($source, "current_user_can('edit_post', \$post_id)") !== false, 'respeta permisos de edición');
 team_search_assert(strpos($source, '$wpdb->prepare(') !== false, 'consulta SQL parametrizada');
 team_search_assert(strpos($source, '$wpdb->esc_like(') !== false, 'patrón LIKE seguro');

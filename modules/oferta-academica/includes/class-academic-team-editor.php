@@ -347,7 +347,8 @@ final class FLACSO_Academic_Team_Editor {
                 'name' => (string) $person->post_title,
                 'email' => self::person_email($id),
                 'avatar' => self::person_avatar($id),
-                'cargo' => self::person_cargo($id),
+                'fullname' => self::person_fullname($id),
+                'title' => self::person_title($id),
                 'edit' => self::person_edit_url($id),
             ];
         }
@@ -362,8 +363,27 @@ final class FLACSO_Academic_Team_Editor {
         return $id > 0 ? (string) (get_the_post_thumbnail_url($id, 'thumbnail') ?: '') : '';
     }
 
-    private static function person_cargo(int $id): string {
-        return $id > 0 ? sanitize_text_field((string) get_post_meta($id, 'cargo', true)) : '';
+    /** Nombre como se publica: abreviación del título (Dra., Mag., Lic.) y nombre completo. */
+    private static function person_fullname(int $id): string {
+        if ($id < 1) {
+            return '';
+        }
+        if (function_exists('dp_nombre_completo')) {
+            $name = trim((string) dp_nombre_completo($id, false));
+            if ($name !== '') {
+                return $name;
+            }
+        }
+        return (string) get_the_title($id);
+    }
+
+    /** Título académico de la persona (si no lo tiene, su cargo). */
+    private static function person_title(int $id): string {
+        if ($id < 1) {
+            return '';
+        }
+        $title = sanitize_text_field((string) get_post_meta($id, 'titulo_academico', true));
+        return $title !== '' ? $title : sanitize_text_field((string) get_post_meta($id, 'cargo', true));
     }
 
     private static function person_edit_url(int $id): string {
@@ -511,7 +531,8 @@ final class FLACSO_Academic_Team_Editor {
                 data-name="<?php echo esc_attr(get_the_title($selected)); ?>"
                 data-email="<?php echo esc_attr(self::person_email($selected)); ?>"
                 data-avatar="<?php echo esc_attr(self::person_avatar($selected)); ?>"
-                data-cargo="<?php echo esc_attr(self::person_cargo($selected)); ?>"
+                data-fullname="<?php echo esc_attr(self::person_fullname($selected)); ?>"
+                data-title="<?php echo esc_attr(self::person_title($selected)); ?>"
                 data-edit="<?php echo esc_url(self::person_edit_url($selected)); ?>" selected><?php echo esc_html(get_the_title($selected)); ?></option>
         <?php endif; ?>
         <?php
@@ -584,8 +605,8 @@ final class FLACSO_Academic_Team_Editor {
                 <span class="flacso-team-preview__avatar" data-preview-avatar aria-hidden="true"></span>
                 <div class="flacso-team-preview__body">
                     <strong data-preview-name></strong>
+                    <span class="flacso-team-preview__title" data-preview-title></span>
                     <span class="flacso-team-preview__role" data-preview-role></span>
-                    <span class="flacso-team-preview__cargo" data-preview-cargo></span>
                     <span class="flacso-team-preview__email" data-preview-email></span>
                 </div>
                 <a class="flacso-team-preview__edit" data-preview-edit href="#" target="_blank" rel="noopener" hidden><?php esc_html_e('Ver ficha', 'flacso-uruguay'); ?></a>
@@ -873,7 +894,7 @@ final class FLACSO_Academic_Team_Editor {
             .flacso-team-preview__body{display:grid;gap:2px;min-width:0;flex:1}
             .flacso-team-preview__body strong{font-size:15px;color:#1d2327;overflow-wrap:anywhere}
             .flacso-team-preview__role{justify-self:start;padding:2px 8px;border-radius:99px;background:#e1ebf9;color:#29456d;font-size:11px;font-weight:700}
-            .flacso-team-preview__cargo{color:#526074;font-size:12px}
+            .flacso-team-preview__title{color:#3c434a;font-size:13px}
             .flacso-team-preview__email{color:#50575e;font-size:12px;overflow-wrap:anywhere}
             .flacso-team-preview [hidden]{display:none}
             .flacso-team-preview__edit{flex:none;font-size:12px}
@@ -1064,7 +1085,8 @@ final class FLACSO_Academic_Team_Editor {
                                     name:person.name,
                                     email:person.email||'',
                                     avatar:person.avatar||'',
-                                    cargo:person.cargo||'',
+                                    fullname:person.fullname||person.name,
+                                    title:person.title||'',
                                     edit:person.edit||''
                                 };
                             });
@@ -1088,7 +1110,8 @@ final class FLACSO_Academic_Team_Editor {
                         option.dataset.name=person.name;
                         option.dataset.email=person.email;
                         option.dataset.avatar=person.avatar;
-                        option.dataset.cargo=person.cargo||'';
+                        option.dataset.fullname=person.fullname||person.name;
+                        option.dataset.title=person.title||'';
                         option.dataset.edit=person.edit||'';
                         select.add(option);
                         input.value=person.name;
@@ -1280,7 +1303,7 @@ final class FLACSO_Academic_Team_Editor {
                 emailOut.textContent=(emailInput&&emailInput.value.trim())||(option&&option.dataset.email)||'<?php echo esc_js(__('Sin correo', 'flacso-uruguay')); ?>';
             }
 
-            /** Previsualización de cada integrante: foto, nombre, cargo, rol y el correo que se mostrará. */
+            /** Previsualización de cada integrante: foto, nombre con la abreviación del título, título académico, rol y el correo que se mostrará. */
             function updateMemberPreview(row){
                 var preview=row.querySelector('[data-member-preview]');
                 var select=row.querySelector('[data-person-select]');
@@ -1288,7 +1311,7 @@ final class FLACSO_Academic_Team_Editor {
                 if(!select.value){ preview.hidden=true; return; }
                 var option=select.options[select.selectedIndex];
                 var data=(option&&option.dataset)||{};
-                var name=data.name||(option&&option.textContent)||'';
+                var name=data.fullname||data.name||(option&&option.textContent)||'';
                 var roleInput=row.querySelector('input[name$="[rol]"]');
                 var emailInput=row.querySelector('[data-member-email]');
                 var role=roleInput?roleInput.value.trim():'';
@@ -1298,9 +1321,9 @@ final class FLACSO_Academic_Team_Editor {
                 var roleOut=preview.querySelector('[data-preview-role]');
                 roleOut.textContent=role;
                 roleOut.hidden=!role;
-                var cargoOut=preview.querySelector('[data-preview-cargo]');
-                cargoOut.textContent=data.cargo||'';
-                cargoOut.hidden=!data.cargo;
+                var titleOut=preview.querySelector('[data-preview-title]');
+                titleOut.textContent=data.title||'';
+                titleOut.hidden=!data.title;
                 var emailOut=preview.querySelector('[data-preview-email]');
                 emailOut.textContent=email;
                 emailOut.hidden=!email;
