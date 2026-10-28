@@ -45,8 +45,8 @@ final class FLACSO_Cohorte {
             'link_preinscripcion'    => ['type' => 'string', 'sanitize_callback' => [self::class, 'sanitize_registration_url']],
             'preinscripcion_habilitada' => ['type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean'],
             'instancias_presenciales' => ['type' => 'boolean', 'sanitize_callback' => 'rest_sanitize_boolean'],
-            // Mensaje propio de la cohorte que la carta muestra justo después de la sección 01.
-            'carta_mensaje_html'     => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
+            // Información extra (promociones, becas) de la cohorte; la carta la muestra justo después de la sección 01.
+            'carta_info_extra_html'  => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
         ];
         foreach ($definitions as $key => $definition) {
             register_post_meta(self::POST_TYPE, $key, array_merge([
@@ -251,7 +251,7 @@ final class FLACSO_Cohorte {
         $modalidad = self::sanitize_modality(get_post_meta($post->ID, 'modalidad', true));
         $modalidad_descripcion = (string) get_post_meta($post->ID, 'modalidad_descripcion', true);
         $calendario_academico = (string) get_post_meta($post->ID, 'calendario_academico', true);
-        $carta_mensaje_html = (string) get_post_meta($post->ID, 'carta_mensaje_html', true);
+        $carta_info_extra_html = (string) get_post_meta($post->ID, 'carta_info_extra_html', true);
         $instancias_presenciales = metadata_exists('post', $post->ID, 'instancias_presenciales')
             ? rest_sanitize_boolean(get_post_meta($post->ID, 'instancias_presenciales', true))
             : false;
@@ -439,14 +439,14 @@ final class FLACSO_Cohorte {
 
             <?php
             FLACSO_Academic_Admin_UI::section_start(
-                'flacso-cohorte-carta-mensaje',
-                __('Mensaje en la carta', 'flacso-uruguay'),
-                __('Texto propio de esta cohorte (becas, cupos, novedades). La carta lo muestra justo después de la sección 01 «Sobre la propuesta».', 'flacso-uruguay'),
+                'flacso-cohorte-carta-info-extra',
+                __('Información extra para Carta', 'flacso-uruguay'),
+                __('Promociones, becas u otras novedades de esta cohorte. La carta lo muestra justo después de la sección 01 «Sobre la propuesta».', 'flacso-uruguay'),
                 'dashicons-megaphone',
-                trim(wp_strip_all_tags($carta_mensaje_html)) !== '' ? __('Con mensaje', 'flacso-uruguay') : __('Sin mensaje', 'flacso-uruguay')
+                trim(wp_strip_all_tags($carta_info_extra_html)) !== '' ? __('Con información', 'flacso-uruguay') : __('Sin información', 'flacso-uruguay')
             );
-            wp_editor($carta_mensaje_html, 'carta_mensaje_html', [
-                'textarea_name' => 'carta_mensaje_html',
+            wp_editor($carta_info_extra_html, 'carta_info_extra_html', [
+                'textarea_name' => 'carta_info_extra_html',
                 'textarea_rows' => 7,
                 'media_buttons' => false,
                 'teeny' => true,
@@ -741,7 +741,7 @@ final class FLACSO_Cohorte {
             'modalidad' => [self::class, 'sanitize_modality'],
             'modalidad_descripcion' => 'wp_kses_post',
             'calendario_academico' => 'esc_url_raw',
-            'carta_mensaje_html' => 'wp_kses_post',
+            'carta_info_extra_html' => 'wp_kses_post',
         ];
         foreach ($typed_fields as $key => $sanitizer) {
             if (isset($_POST[$key])) {
