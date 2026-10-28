@@ -297,7 +297,7 @@ function flacso_consultas_render_form( $attributes = array() ) {
 	}
 	$heading_text = trim( (string) $atts['heading_text'] );
 	if ( $heading_text === '' ) {
-		$heading_text = __( 'Solicitá información', 'flacso-consultas' );
+		$heading_text = __( 'Más Información', 'flacso-consultas' );
 	}
 	$offer_choices = flacso_consultas_build_offer_choices( $atts['offer_choices'] );
 	$is_dynamic_info_form = ! empty( $offer_choices );
@@ -1328,7 +1328,7 @@ function flacso_render_solicitar_info_virtual() {
 	$current_url = home_url( '/' . trim( $path, '/' ) . '/' );
 	$gracias_url = add_query_arg( 'tipo', 'solicitud_informacion', trailingslashit( $oferta_url ) . 'gracias/' );
 	$thumb_url = get_the_post_thumbnail_url( $oferta_id, 'full' );
-	$page_title = sprintf( 'Solicitá información - %s', $oferta_title );
+	$page_title = sprintf( 'Más Información - %s', $oferta_title );
 	$intro_text = sprintf(
 		'Completá el formulario y recibí información sobre cursada, inscripción y financiación de %s.',
 		$oferta_title
