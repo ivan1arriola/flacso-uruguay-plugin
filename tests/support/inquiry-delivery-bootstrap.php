@@ -85,6 +85,8 @@ function flacso_test_delivery_pdo(): PDO {
         mauticContactId TEXT, mauticSyncStatus TEXT DEFAULT "skipped", mauticSyncedAt TEXT, mauticLastError TEXT,
         followupDueAt TEXT, followupStatus TEXT DEFAULT "none", followupSentAt TEXT,
         followupAttempts INTEGER DEFAULT 0, followupLastError TEXT,
+        mauticCampaignId INTEGER, mauticCampaignStatus TEXT DEFAULT "pending", mauticCampaignAttemptedAt TEXT,
+        mauticCampaignAttempts INTEGER DEFAULT 0, mauticCampaignLastError TEXT,
         emailStatus TEXT, emailSender TEXT, gmailMessageUrl TEXT, mailjetMessageId TEXT,
         mailjetMessageUuid TEXT, payload TEXT, createdAt TEXT, updatedAt TEXT
     );

@@ -65,6 +65,20 @@ final class FLACSO_Offer_Campaigns {
     }
 
     /**
+     * Motivo por el que una consulta de oferta no va a campaña. Queda guardado
+     * como nota de la consulta para que la bandeja lo explique.
+     */
+    public static function skip_reason(array $delivery, array $payload): string {
+        if (!self::is_enabled()) {
+            return 'interruptor_apagado';
+        }
+        if (!self::valid_consent(is_array($payload['marketingConsent'] ?? null) ? $payload['marketingConsent'] : [])) {
+            return 'sin_consentimiento';
+        }
+        return 'otro_canal';
+    }
+
+    /**
      * Cuerpo de POST /api/flacso/inquiries a partir del snapshot inmutable.
      *
      * @throws InvalidArgumentException si el snapshot no identifica la oferta

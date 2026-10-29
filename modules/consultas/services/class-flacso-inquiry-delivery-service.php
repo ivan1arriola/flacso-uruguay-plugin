@@ -90,6 +90,8 @@ final class FLACSO_Inquiry_Delivery_Service {
                 return $enrollment;
             }
             // La oferta no tiene campaña utilizable: sigue con el acuse transaccional.
+        } elseif (is_array($payload) && ($delivery['inquiryType'] ?? '') === 'offer') {
+            self::record_campaign_outcome($delivery, 'skipped', null, FLACSO_Offer_Campaigns::skip_reason($delivery, $payload));
         }
         if (($delivery['assignedProvider'] ?? 'mautic') === 'flacso_mail') {
             if (!is_array($snapshot)) {
@@ -265,6 +267,7 @@ final class FLACSO_Inquiry_Delivery_Service {
             $body = FLACSO_Offer_Campaigns::enrollment_payload($snapshot, $payload['marketingConsent']);
         } catch (Throwable $e) {
             $repository->mark_failed($delivery_id, null, 'invalid_snapshot', $e->getMessage());
+            self::record_campaign_outcome($delivery, 'failed', null, 'invalid_snapshot');
             self::notify_failure($delivery_id, 'failed', 'invalid_snapshot');
             return ['ok' => false, 'status' => 'failed', 'route' => 'campaign'];
         }
@@ -281,12 +284,16 @@ final class FLACSO_Inquiry_Delivery_Service {
             }
             $repository->finish_attempt($attempt_id, 'accepted', $http_code);
             $repository->mark_accepted($delivery_id, $http_code);
+            $campaign_id = (int) ($result['data']['campaignId'] ?? 0);
+            self::record_campaign_outcome($delivery, 'joined', $campaign_id > 0 ? $campaign_id : null, null);
             return ['ok' => true, 'status' => 'accepted', 'http_code' => $http_code, 'attempt_id' => $attempt_id, 'route' => 'campaign'];
         }
 
         $detail = (string) ($result['error'] ?? 'Fallo del alta en la campaña de la oferta.');
-        if (in_array((string) ($result['data']['error'] ?? ''), self::CAMPAIGN_UNAVAILABLE, true)) {
+        $plugin_error = (string) ($result['data']['error'] ?? '');
+        if (in_array($plugin_error, self::CAMPAIGN_UNAVAILABLE, true)) {
             $repository->finish_attempt($attempt_id, 'failed', $http_code, 'campaign_unavailable', $detail);
+            self::record_campaign_outcome($delivery, 'skipped', null, $plugin_error);
             return null;
         }
 
@@ -294,13 +301,39 @@ final class FLACSO_Inquiry_Delivery_Service {
         if (($result['status'] ?? '') === 'retryable_failed' && $attempts_after_start < self::ENROLLMENT_MAX_ATTEMPTS) {
             $repository->finish_attempt($attempt_id, 'retryable_failed', $http_code, 'campaign_enrollment', $detail);
             $repository->mark_retryable_failure($delivery_id, $http_code, 'campaign_enrollment', $detail, 300);
+            self::record_campaign_outcome($delivery, 'pending', null, $detail);
             return ['ok' => false, 'status' => 'retryable_failed', 'attempt_id' => $attempt_id, 'route' => 'campaign'];
         }
 
         $repository->finish_attempt($attempt_id, 'failed', $http_code, 'campaign_enrollment', $detail);
         $repository->mark_failed($delivery_id, $http_code, 'campaign_enrollment', $detail);
+        self::record_campaign_outcome($delivery, 'failed', null, $detail);
         self::notify_failure($delivery_id, 'failed', 'campaign_enrollment', $detail);
         return ['ok' => false, 'status' => 'failed', 'attempt_id' => $attempt_id, 'route' => 'campaign'];
+    }
+
+    /**
+     * Guarda en la consulta de oferta qué pasó con su campaña, para la bandeja.
+     * Nunca debe cambiar el resultado de la entrega.
+     */
+    private static function record_campaign_outcome(array $delivery, string $status, ?int $campaign_id, ?string $note): void {
+        $inquiry_id = trim((string) ($delivery['inquiryId'] ?? ''));
+        if (($delivery['inquiryType'] ?? '') !== 'offer' || $inquiry_id === '') {
+            return;
+        }
+
+        try {
+            if (!class_exists('FLACSO_Offer_Inquiry_Repository')) {
+                require_once dirname(__DIR__, 3) . '/includes/database/repositories/class-flacso-offer-inquiry-repository.php';
+            }
+            (new FLACSO_Offer_Inquiry_Repository())->update_mautic_campaign_status($inquiry_id, [
+                'mauticCampaignId' => $campaign_id,
+                'mauticCampaignStatus' => $status,
+                'mauticCampaignLastError' => $note,
+            ]);
+        } catch (Throwable $e) {
+            // La bandeja puede quedar sin este dato; la entrega no se ve afectada.
+        }
     }
 
     private static function notify_failure(string $delivery_id, string $state, string $error_class, string $detail = ''): void {

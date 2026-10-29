@@ -11,6 +11,8 @@ Con `flacso_mautic_offer_campaigns_enabled = 1`, una consulta de oferta **con co
 - **Errores:** un 422 por datos es definitivo y alerta. 5xx, 401/403/429 o un fallo de red se reintentan cada 5 minutos, hasta 6 intentos. El plugin es idempotente por `consultaId`, así que reintentar es seguro.
 - **Campaña global:** con el interruptor encendido, las consultas que van a la campaña por oferta no se agregan a `flacso_mautic_campaign_consultas_id`.
 
+- **Bandeja de Consultas:** la entrega guarda en `offer_inquiries` qué pasó con la campaña (`mauticCampaignStatus`, `mauticCampaignId`, `mauticCampaignLastError`). `joined` es en campaña; `skipped` es acuse transaccional, con el motivo en la nota (`sin_consentimiento`, `interruptor_apagado`, `campaign_unpublished`, `campaign_not_configured`); `failed` es un rechazo definitivo; `pending` es un reintento en curso. Las consultas anteriores a este cambio figuran como «Anterior». El estado derivado vive en `FLACSO_Inquiry_Analytics_Repository::campaign_state_sql()` (filtro y aviso) y en `FLACSO_Consultas_Admin::campaign_state()` (pantalla); deben coincidir. La bandeja no consulta a Mautic: no muestra si el acuse o el seguimiento ya salieron, solo que la consulta entró a la campaña.
+
 Activación (después del piloto en Mautic):
 
 ```bash

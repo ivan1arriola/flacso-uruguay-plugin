@@ -136,6 +136,13 @@ function delivery_row(string $id): array {
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
+/** Lo que la bandeja lee de la consulta: estado, campaña y nota. */
+function campaign_outcome(string $consulta): array {
+    $stmt = FLACSO_DB::connection()->prepare('SELECT mauticCampaignId AS id, mauticCampaignStatus AS status, mauticCampaignLastError AS note FROM offer_inquiries WHERE consultaId = :c');
+    $stmt->execute([':c' => $consulta]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
 // Alta correcta
 $calls = [];
 campaign_transport([201, ['ok' => true, 'contactId' => 77, 'campaignId' => 7]], $calls);
@@ -150,6 +157,8 @@ campaign_assert($body['consent'] === $consent, 'envía la evidencia de consentim
 campaign_assert(in_array('interes-mae', $body['tags'], true), 'envía los tags de la consulta');
 campaign_assert($calls[0][2] === 30, 'usa un timeout largo para el alta');
 campaign_assert((int) delivery_row($d['delivery_id'])['contactId'] === 77, 'guarda el contacto devuelto por el plugin');
+$o = campaign_outcome('camp-1');
+campaign_assert($o['status'] === 'joined' && (int) $o['id'] === 7 && $o['note'] === null, 'la consulta queda en la campaña #7 para la bandeja');
 
 // Oferta sin campaña: vuelve al acuse transaccional
 $calls = [];
@@ -158,11 +167,15 @@ $d = campaign_delivery($repository, $source, 'camp-2', $consent);
 $r = FLACSO_Inquiry_Delivery_Service::process($d['delivery_id']);
 campaign_assert($r['status'] === 'accepted' && !isset($r['route']), 'sin campaña, la entrega se completa con el acuse transaccional');
 campaign_assert(array_column($calls, 0) === ['enroll', 'acuse'], 'intenta el alta y luego envía el acuse');
+$o = campaign_outcome('camp-2');
+campaign_assert($o['status'] === 'skipped' && $o['id'] === null && $o['note'] === 'campaign_not_configured', 'la bandeja explica que la oferta no tiene campaña');
 
 $calls = [];
 campaign_transport([422, ['ok' => false, 'error' => 'campaign_unpublished']], $calls);
 $d = campaign_delivery($repository, $source, 'camp-3', $consent);
 campaign_assert(FLACSO_Inquiry_Delivery_Service::process($d['delivery_id'])['status'] === 'accepted', 'campaña sin publicar también vuelve al acuse');
+$o = campaign_outcome('camp-3');
+campaign_assert($o['status'] === 'skipped' && $o['note'] === 'campaign_unpublished', 'la bandeja explica que la campaña no está publicada');
 
 // Datos rechazados: definitivo, sin acuse transaccional
 $calls = [];
@@ -171,6 +184,8 @@ $d = campaign_delivery($repository, $source, 'camp-4', $consent);
 $r = FLACSO_Inquiry_Delivery_Service::process($d['delivery_id']);
 campaign_assert($r['status'] === 'failed' && array_column($calls, 0) === ['enroll'], 'un rechazo de datos falla sin reintentar');
 campaign_assert(str_contains((string) delivery_row($d['delivery_id'])['lastError'], 'contact.email'), 'conserva el motivo');
+$o = campaign_outcome('camp-4');
+campaign_assert($o['status'] === 'failed' && str_contains((string) $o['note'], 'contact.email'), 'la bandeja muestra el error del alta');
 
 // Errores transitorios: reintenta y, al agotar los intentos, falla
 foreach ([[503, []], ['wp_error', []], [401, []]] as $transient) {
@@ -180,6 +195,7 @@ foreach ([[503, []], ['wp_error', []], [401, []]] as $transient) {
     $r = FLACSO_Inquiry_Delivery_Service::process($d['delivery_id']);
     campaign_assert($r['status'] === 'retryable_failed', "HTTP {$transient[0]} se reintenta");
     campaign_assert(delivery_row($d['delivery_id'])['state'] === 'retryable_failed' || delivery_row($d['delivery_id'])['state'] === 'pending', 'la entrega queda para reintento');
+    campaign_assert(campaign_outcome('camp-t-' . $transient[0])['status'] === 'pending', 'mientras se reintenta, la bandeja la muestra pendiente');
 }
 $calls = [];
 campaign_transport([503, []], $calls);
@@ -187,18 +203,23 @@ $d = campaign_delivery($repository, $source, 'camp-last', $consent);
 FLACSO_DB::connection()->prepare('UPDATE inquiry_deliveries SET attempts = 5 WHERE id = :id')->execute([':id' => $d['delivery_id']]);
 $r = FLACSO_Inquiry_Delivery_Service::process($d['delivery_id']);
 campaign_assert($r['status'] === 'failed', 'al agotar los intentos la entrega falla');
+campaign_assert(campaign_outcome('camp-last')['status'] === 'failed', 'al agotar los intentos la bandeja la muestra con error');
 
 // Sin consentimiento o con el interruptor apagado: acuse transaccional de siempre
 $calls = [];
 campaign_transport([201, ['ok' => true]], $calls);
 $d = campaign_delivery($repository, $source, 'camp-noconsent', []);
 campaign_assert(FLACSO_Inquiry_Delivery_Service::process($d['delivery_id'])['status'] === 'accepted' && array_column($calls, 0) === ['acuse'], 'sin consentimiento recibe el acuse transaccional');
+$o = campaign_outcome('camp-noconsent');
+campaign_assert($o['status'] === 'skipped' && $o['note'] === 'sin_consentimiento', 'la bandeja explica la falta de consentimiento');
 
 campaigns_on(false);
 $calls = [];
 campaign_transport([201, ['ok' => true]], $calls);
 $d = campaign_delivery($repository, $source, 'camp-off', $consent);
 campaign_assert(FLACSO_Inquiry_Delivery_Service::process($d['delivery_id'])['status'] === 'accepted' && array_column($calls, 0) === ['acuse'], 'con el interruptor apagado nada cambia');
+$o = campaign_outcome('camp-off');
+campaign_assert($o['status'] === 'skipped' && $o['note'] === 'interruptor_apagado', 'la bandeja explica que las campañas estaban apagadas');
 campaigns_on(true);
 
 // Payload: el snapshot debe identificar la oferta

@@ -210,6 +210,9 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			$item_col            = FLACSO_Inquiry_Analytics_Repository::ALLOWED_TABLES[ $table ]['item_col'] ?? 'offerName';
 			$detail['item_name'] = $detail[ $item_col ] ?? '';
 			$detail['table']     = $table;
+				if ( 'offer_inquiries' === $table ) {
+					$detail['campaignState'] = self::campaign_state( $detail );
+				}
 
 			wp_send_json_success( $detail );
 		}
@@ -439,6 +442,82 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 		}
 
 		/**
+			 * Estado de campaña de una consulta de oferta: joined (en campaña), skipped
+			 * (acuse transaccional), failed, pending o legacy (anterior a las campañas
+			 * por oferta). Debe coincidir con FLACSO_Inquiry_Analytics_Repository::campaign_state_sql().
+			 *
+			 * @param array $row Fila con mauticCampaignStatus y emailStatus.
+			 */
+			public static function campaign_state( array $row ): string {
+				$status = strtolower( trim( (string) ( $row['mauticCampaignStatus'] ?? '' ) ) );
+				if ( in_array( $status, array( 'joined', 'failed', 'skipped' ), true ) ) {
+					return $status;
+				}
+				$email = strtolower( trim( (string) ( $row['emailStatus'] ?? '' ) ) );
+				return in_array( $email, array( 'pending', 'retryable_failed', 'processing' ), true ) ? 'pending' : 'legacy';
+			}
+
+			/**
+			 * Badge del estado de la consulta en la campaña de su oferta.
+			 *
+			 * @param array $row Fila con mauticCampaignId, mauticCampaignStatus y mauticCampaignLastError.
+			 */
+			public static function render_campaign_badge( array $row ): string {
+				$state = self::campaign_state( $row );
+				$note  = trim( (string) ( $row['mauticCampaignLastError'] ?? '' ) );
+				$id    = (int) ( $row['mauticCampaignId'] ?? 0 );
+
+				if ( 'joined' === $state ) {
+					$label = $id > 0 ? sprintf( __( 'Campaña #%d', 'flacso-uruguay' ), $id ) : __( 'En campaña', 'flacso-uruguay' );
+					return '<span class="flacso-badge campaign-joined" title="' . esc_attr__( 'Incorporada a la campaña de su oferta: el acuse y el seguimiento salen desde Mautic.', 'flacso-uruguay' ) . '">📣 ' . esc_html( $label ) . '</span>';
+				}
+
+				if ( 'failed' === $state ) {
+					$title = '' !== $note ? $note : __( 'No se pudo incorporar a la campaña de su oferta.', 'flacso-uruguay' );
+					return '<span class="flacso-badge campaign-failed" title="' . esc_attr( $title ) . '">🔴 ' . esc_html__( 'Error', 'flacso-uruguay' ) . '</span>';
+				}
+
+				if ( 'pending' === $state ) {
+					$title = '' !== $note ? $note : __( 'Pendiente de incorporarse a la campaña de su oferta.', 'flacso-uruguay' );
+					return '<span class="flacso-badge campaign-pending" title="' . esc_attr( $title ) . '">🟡 ' . esc_html__( 'Pendiente', 'flacso-uruguay' ) . '</span>';
+				}
+
+				if ( 'skipped' === $state ) {
+					$reasons = array(
+						'interruptor_apagado'     => array( __( 'Sin campaña', 'flacso-uruguay' ), __( 'Las campañas por oferta estaban apagadas al consultar; recibió el acuse transaccional.', 'flacso-uruguay' ) ),
+						'sin_consentimiento'      => array( __( 'Sin consentimiento', 'flacso-uruguay' ), __( 'No marcó el consentimiento de comunicaciones; solo recibe el acuse transaccional.', 'flacso-uruguay' ) ),
+						'campaign_unpublished'    => array( __( 'Campaña no publicada', 'flacso-uruguay' ), __( 'La campaña de la oferta no estaba publicada; recibió el acuse transaccional.', 'flacso-uruguay' ) ),
+						'campaign_not_configured' => array( __( 'Sin campaña asociada', 'flacso-uruguay' ), __( 'La oferta no tiene campaña asociada; recibió el acuse transaccional.', 'flacso-uruguay' ) ),
+						'otro_canal'              => array( __( 'Sin campaña', 'flacso-uruguay' ), __( 'Esta consulta no se envía a campañas por su canal de envío.', 'flacso-uruguay' ) ),
+					);
+					$reason = $reasons[ $note ] ?? array( __( 'Sin campaña', 'flacso-uruguay' ), __( 'No se incorporó a una campaña; recibió el acuse transaccional.', 'flacso-uruguay' ) );
+					return '<span class="flacso-badge campaign-skipped" title="' . esc_attr( $reason[1] ) . '">⚪ ' . esc_html( $reason[0] ) . '</span>';
+				}
+
+				return '<span class="flacso-badge campaign-legacy" title="' . esc_attr__( 'Consulta anterior a las campañas por oferta: recibió el acuse transaccional.', 'flacso-uruguay' ) . '">⚪ ' . esc_html__( 'Anterior', 'flacso-uruguay' ) . '</span>';
+			}
+
+			/**
+			 * Celda «Estado del correo»: en campaña el acuse y el seguimiento salen de
+			 * Mautic; fuera de campaña se muestra el acuse transaccional de respaldo.
+			 *
+			 * @param array $row      Fila de la bandeja.
+			 * @param bool  $is_offer Si la fila es de una oferta académica.
+			 */
+			public static function render_delivery_cell( array $row, bool $is_offer ): string {
+				if ( $is_offer && 'joined' === self::campaign_state( $row ) ) {
+					return '<span class="flacso-badge sent mautic" title="' . esc_attr__( 'La campaña de la oferta envía el acuse y, pasados los días configurados, el seguimiento, salvo que la persona se inscriba.', 'flacso-uruguay' ) . '">acuse por campaña</span>'
+						. '<small class="flacso-delivery-caption">' . esc_html__( 'Acuse y seguimiento en la campaña', 'flacso-uruguay' ) . '</small>';
+				}
+
+				$html = self::render_email_status_badge( $row );
+				if ( $is_offer ) {
+					$html .= '<small class="flacso-delivery-caption">' . esc_html__( 'Acuse transaccional', 'flacso-uruguay' ) . '</small>';
+				}
+				return $html;
+			}
+
+			/**
 		 * Renderiza el badge HTML correspondiente al estado y motor de envío del correo.
 		 *
 		 * @param array $row Fila de consulta con emailStatus y emailSender.
@@ -657,8 +736,26 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			}
 			$summary = empty( $parts ) ? 'sin datos de cola' : implode( ' · ', $parts );
 
+			$campaigns_on = function_exists( 'get_option' )
+				&& '1' === (string) get_option( 'flacso_mautic_offer_campaigns_enabled', '0' );
+			$states       = class_exists( 'FLACSO_Inquiry_Analytics_Repository' )
+				? FLACSO_Inquiry_Analytics_Repository::campaign_state_counts( gmdate( 'Y-m-d', strtotime( '-30 days' ) ) )
+				: array();
+
 			echo '<div class="flacso-consultas-diagnostic flacso-transactional-diagnostics" role="status"><p>';
-			echo '<strong>' . esc_html__( 'Acuses transaccionales', 'flacso-uruguay' ) . ':</strong> ';
+			echo '<strong>' . esc_html__( 'Campañas por oferta', 'flacso-uruguay' ) . ':</strong> ';
+			echo esc_html( $campaigns_on ? 'encendidas' : 'apagadas' );
+			if ( ! empty( $states ) ) {
+				echo ' · ' . esc_html( 'últimos 30 días: en campaña ' . $states['joined'] );
+				echo ' · ' . esc_html( 'sin campaña (acuse transaccional) ' . $states['skipped'] );
+				echo ' · ' . esc_html( 'con error ' . $states['failed'] );
+				echo ' · ' . esc_html( 'pendientes ' . $states['pending'] );
+				if ( $states['legacy'] > 0 ) {
+					echo ' · ' . esc_html( 'anteriores a las campañas ' . $states['legacy'] );
+				}
+			}
+			echo '</p><p>';
+			echo '<strong>' . esc_html__( 'Acuse transaccional (respaldo)', 'flacso-uruguay' ) . ':</strong> ';
 			echo esc_html( $queue_enabled ? 'cola habilitada' : 'cola deshabilitada' );
 			echo ' · ' . esc_html( 'contrato Mautic: ' . $contract_status );
 			echo ' · ' . esc_html( $summary );
@@ -835,6 +932,11 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					.flacso-badge.mautic-failed { background: #fee2e2; color: #991b1b; }
 					.flacso-badge.mautic-pending { background: #fef3c7; color: #92400e; }
 					.flacso-badge.mautic-skipped { background: #f1f5f9; color: #64748b; }
+					.flacso-badge.campaign-joined { background: #f3e8ff; color: #6b21a8; }
+					.flacso-badge.campaign-failed { background: #fee2e2; color: #991b1b; }
+					.flacso-badge.campaign-pending { background: #fef3c7; color: #92400e; }
+					.flacso-badge.campaign-skipped, .flacso-badge.campaign-legacy { background: #f1f5f9; color: #64748b; }
+					.flacso-delivery-caption { display: block; margin-top: 3px; font-size: 11px; color: #64748b; }
 					.flacso-badge.followup-pending { background: #e0f2fe; color: #0369a1; }
 					.flacso-badge.followup-sent { background: #dcfce7; color: #15803d; }
 					.flacso-badge.followup-skipped { background: #f1f5f9; color: #64748b; }
@@ -945,6 +1047,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			$source       = isset( $_GET['source'] ) ? sanitize_key( wp_unslash( $_GET['source'] ) ) : '';
 			$email_status = isset( $_GET['email_status'] ) ? sanitize_key( wp_unslash( $_GET['email_status'] ) ) : '';
 			$offer_status = isset( $_GET['offer_status'] ) ? sanitize_key( wp_unslash( $_GET['offer_status'] ) ) : '';
+			$campaign_status = isset( $_GET['campaign_status'] ) ? sanitize_key( wp_unslash( $_GET['campaign_status'] ) ) : '';
 			$search       = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '';
 			$paged        = isset( $_GET['paged'] ) ? max( 1, (int) $_GET['paged'] ) : 1;
 
@@ -959,6 +1062,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					'source'       => $source,
 					'email_status' => $email_status,
 					'offer_status' => $offer_status,
+					'campaign_status' => $campaign_status,
 					'search'       => $search,
 					'desde'        => $from,
 					'hasta'        => $to,
@@ -1043,6 +1147,20 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 						</div>
 					<?php endif; ?>
 
+					<?php if ( 'offer_inquiries' === $table ) : ?>
+						<div class="fg">
+							<label>Campaña</label>
+							<select name="campaign_status">
+								<option value="">— Todas —</option>
+								<option value="joined" <?php selected( $campaign_status, 'joined' ); ?>>📣 En campaña</option>
+								<option value="skipped" <?php selected( $campaign_status, 'skipped' ); ?>>⚪ Sin campaña (acuse transaccional)</option>
+								<option value="failed" <?php selected( $campaign_status, 'failed' ); ?>>🔴 Con error</option>
+								<option value="pending" <?php selected( $campaign_status, 'pending' ); ?>>🟡 Pendiente</option>
+								<option value="legacy" <?php selected( $campaign_status, 'legacy' ); ?>>⚪ Anteriores a las campañas</option>
+							</select>
+						</div>
+					<?php endif; ?>
+
 					<div class="fg">
 						<label>Desde</label>
 						<input type="date" name="from" value="<?php echo esc_attr( $from ); ?>">
@@ -1080,7 +1198,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 							<?php if ( 'offer_inquiries' === $table ) : ?>
 								<th>Oferta / Cohorte</th>
 								<th>Estado de la consulta</th>
-								<th>Mautic</th>
+								<th>Campaña</th>
 							<?php else : ?>
 								<th>Oferta / Seminario</th>
 							<?php endif; ?>
@@ -1138,7 +1256,8 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 											?>
 										</td>
 										<td class="flacso-mautic-cell" data-id="<?php echo esc_attr( (string) $row['id'] ); ?>">
-											<?php echo self::render_mautic_badge( $row ); ?>
+											<?php echo self::render_campaign_badge( $row ); ?>
+											<span class="flacso-mautic-sync"><?php echo 'failed' === strtolower( (string) ( $row['mauticSyncStatus'] ?? '' ) ) ? self::render_mautic_badge( $row ) : ''; ?></span>
 										</td>
 									<?php else : ?>
 										<td>
@@ -1150,7 +1269,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 										<?php echo esc_html( (string) ( $row['country'] ?: '—' ) ); ?>
 									</td>
 									<td class="flacso-status-cell flacso-cp-delivery" data-id="<?php echo esc_attr( (string) $row['id'] ); ?>">
-										<?php echo self::render_email_status_badge( $row ); ?>
+										<?php echo self::render_delivery_cell( $row, 'offer_inquiries' === $table ); ?>
 										<?php
 										if ( 'offer_inquiries' === $table ) {
 											$followup_badge = self::render_followup_status_badge( $row );
@@ -1169,7 +1288,8 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 										<?php
 										$email_status = strtolower( trim( (string) ( $row['emailStatus'] ?? '' ) ) );
 										if ( in_array( $table, array( 'offer_inquiries', 'seminar_inquiries' ), true )
-											&& self::is_retryable_email_status( $email_status ) ) :
+											&& self::is_retryable_email_status( $email_status )
+										&& 'joined' !== self::campaign_state( $row ) ) :
 											?>
 											<button type="button" class="button button-small flacso-js-retry-email"
 												data-id="<?php echo esc_attr( (string) $row['id'] ); ?>"
@@ -1246,7 +1366,8 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 									return;
 								}
 								const d = res.data;
-								let senderLabel = d.emailSender || '—';
+								const esc = v => String(v ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+									let senderLabel = d.emailSender || '—';
 								if (d.emailSender === 'mailjet_fallback') {
 									senderLabel = 'Mailjet (Conmutación por fallo de Mautic)';
 								} else if (d.emailSender === 'mautic') {
@@ -1263,7 +1384,8 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 											<tr><th>Oferta / Programa</th><td>${d.item_name || ''}</td></tr>
 											<tr><th>País / Teléfono</th><td>${d.country || '—'} / ${d.phone || '—'}</td></tr>
 											<tr><th>Estado Email</th><td><strong>${d.emailStatus || ''}</strong> (Remitente: ${senderLabel})</td></tr>
-											${d.mauticSyncStatus ? `<tr><th>Estado Mautic</th><td><strong>${d.mauticSyncStatus}</strong> (Contact ID: ${d.mauticContactId || '—'} | Sincronizado: ${d.mauticSyncedAt || '—'}${d.mauticLastError ? ' | Error: ' + d.mauticLastError : ''})</td></tr>` : ''}
+											${(d.table === 'offer_inquiries' || tbl === 'offer_inquiries') ? `<tr><th>Campaña de la oferta</th><td><strong>${esc(d.campaignState || '—')}</strong> (Campaña Mautic: ${d.mauticCampaignId ? '#' + esc(d.mauticCampaignId) : '—'}${d.mauticCampaignLastError ? ' | Nota: ' + esc(d.mauticCampaignLastError) : ''})</td></tr>` : ''}
+												${d.mauticSyncStatus ? `<tr><th>Estado Mautic</th><td><strong>${d.mauticSyncStatus}</strong> (Contact ID: ${d.mauticContactId || '—'} | Sincronizado: ${d.mauticSyncedAt || '—'}${d.mauticLastError ? ' | Error: ' + d.mauticLastError : ''})</td></tr>` : ''}
 											${(d.table === 'offer_inquiries' || tbl === 'offer_inquiries') ? `<tr><th>Seguimiento (+X días)</th><td><strong>${d.followupStatus || 'none'}</strong> (Vencimiento: ${d.followupDueAt || '—'} | Enviado: ${d.followupSentAt || '—'}${d.followupLastError ? ' | Nota: ' + d.followupLastError : ''})${d.followupStatus !== 'sent' ? '<div style="margin-top:8px;"><button type="button" class="button button-secondary flacso-js-trigger-followup" data-id="' + d.id + '">🚀 Enviar Seguimiento Ahora</button><span class="flacso-followup-msg" style="margin-left:10px;font-size:12px;font-weight:600;display:inline-block;vertical-align:middle;"></span></div>' : ''}</td></tr>` : ''}
 											<tr><th>UTM / Campaña</th><td>Source: ${d.campaignSource || '—'} | Medium: ${d.campaignMedium || '—'} | Campaign: ${d.campaignName || '—'}</td></tr>
 											<tr><th>Página Origen</th><td><a href="${d.pageUrl || '#'}" target="_blank">${d.pageUrl || '—'}</a></td></tr>
@@ -1392,7 +1514,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 							.then(r => r.json())
 							.then(res => {
 								if (res.success) {
-									const cell = document.querySelector(`.flacso-mautic-cell[data-id="${id}"]`);
+									const cell = document.querySelector(`.flacso-mautic-cell[data-id="${id}"] .flacso-mautic-sync`);
 									if (cell) {
 										const status = res.data?.status;
 										if (status === 'skipped') {

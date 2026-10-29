@@ -696,6 +696,71 @@ class FLACSO_Inquiry_Analytics_Repository {
     /**
      * Listado paginado para la Bandeja e Histórico Unificado (soporta modo agrupado por [oferta+correo] e individual).
      */
+    /** Estados derivados de campaña que entiende la bandeja (ver campaign_state_sql()). */
+    public const CAMPAIGN_STATES = ['joined', 'skipped', 'failed', 'pending', 'legacy'];
+
+    /**
+     * Expresión SQL que clasifica una consulta de oferta según su campaña:
+     * joined (en campaña), skipped (acuse transaccional), failed, pending o
+     * legacy (anterior a las campañas por oferta, sin dato de campaña).
+     * Devuelve null si la tabla aún no tiene las columnas de campaña.
+     *
+     * @param string[] $columns
+     */
+    public static function campaign_state_sql(array $columns): ?string {
+        if (!in_array('mauticCampaignStatus', $columns, true)) {
+            return null;
+        }
+        $pending_email = in_array('emailStatus', $columns, true)
+            ? "WHEN \"emailStatus\" IN ('pending', 'retryable_failed', 'processing') THEN 'pending'"
+            : '';
+
+        return "(CASE
+                    WHEN \"mauticCampaignStatus\" = 'joined' THEN 'joined'
+                    WHEN \"mauticCampaignStatus\" = 'failed' THEN 'failed'
+                    WHEN \"mauticCampaignStatus\" = 'skipped' THEN 'skipped'
+                    {$pending_email}
+                    ELSE 'legacy'
+                 END)";
+    }
+
+    /**
+     * Cantidad de consultas de oferta por estado de campaña desde $since
+     * (formato Y-m-d). Vacío si no hay base o columnas.
+     *
+     * @return array<string,int>
+     */
+    public static function campaign_state_counts(string $since = ''): array {
+        $pdo = self::get_pdo();
+        if (!$pdo || !self::table_exists($pdo, 'offer_inquiries')) {
+            return [];
+        }
+        $sql_state = self::campaign_state_sql(self::get_table_columns($pdo, 'offer_inquiries'));
+        if ($sql_state === null) {
+            return [];
+        }
+
+        $where  = '';
+        $params = [];
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $since)) {
+            $where = 'WHERE ' . self::timestamp_expression($pdo) . ' >= :since';
+            $params[':since'] = $since . ' 00:00:00';
+        }
+
+        try {
+            $stmt = $pdo->prepare("SELECT {$sql_state} AS state, COUNT(*) AS total FROM \"offer_inquiries\" {$where} GROUP BY 1");
+            $stmt->execute($params);
+            $counts = array_fill_keys(self::CAMPAIGN_STATES, 0);
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+                $counts[(string) $row['state']] = (int) $row['total'];
+            }
+            return $counts;
+        } catch (Throwable $e) {
+            error_log('[FLACSO Analytics] Error en campaign_state_counts: ' . $e->getMessage());
+            return [];
+        }
+    }
+
     public static function get_paginated_inquiries(array $filters = []): array {
         $table        = isset($filters['table']) && isset(self::ALLOWED_TABLES[$filters['table']]) ? $filters['table'] : 'offer_inquiries';
         $mode         = ($filters['mode'] ?? 'grouped') === 'raw' ? 'raw' : 'grouped';
@@ -803,6 +868,15 @@ class FLACSO_Inquiry_Analytics_Repository {
             $params[':offer_status'] = $offer_status;
         }
 
+        $campaign_status = trim((string) ($filters['campaign_status'] ?? ''));
+        if ($table === 'offer_inquiries' && in_array($campaign_status, self::CAMPAIGN_STATES, true)) {
+            $campaign_sql = self::campaign_state_sql($columns);
+            if ($campaign_sql !== null) {
+                $where[] = "{$campaign_sql} = :campaign_state";
+                $params[':campaign_state'] = $campaign_status;
+            }
+        }
+
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $desde)) {
             $where[] = "{$timestamp_sql} >= :desde";
             $params[':desde'] = $desde . ' 00:00:00';
@@ -843,6 +917,11 @@ class FLACSO_Inquiry_Analytics_Repository {
             }
             if (in_array('mauticLastError', $columns, true)) {
                 $select_context .= '"mauticLastError", ';
+            }
+            foreach (['mauticCampaignId', 'mauticCampaignStatus', 'mauticCampaignAttemptedAt', 'mauticCampaignLastError'] as $campaign_col) {
+                if (in_array($campaign_col, $columns, true)) {
+                    $select_context .= '"' . $campaign_col . '", ';
+                }
             }
             if (in_array('followupStatus', $columns, true)) {
                 $select_context .= '"followupStatus", ';
