@@ -26,6 +26,9 @@ class FLACSO_Mautic_Client {
     private const TIMEOUT_SECONDS = 4;
     private const ENROLLMENT_TIMEOUT_SECONDS = 30;
 
+    /** La bandeja de consultas no debe esperar a Mautic: si no responde, muestra lo que sabe. */
+    private const STATUS_TIMEOUT_SECONDS = 6;
+
     /** @var callable|null Transporte HTTP inyectable exclusivamente para pruebas. */
     private static $http_transport = null;
 
@@ -939,6 +942,60 @@ class FLACSO_Mautic_Client {
             'error' => $error,
             'data' => $data,
         ];
+    }
+
+    /**
+     * Recorrido real de consultas ya incorporadas a la campaña de su oferta
+     * (POST /api/flacso/inquiries/status del plugin FLACSO de Mautic). Sólo lee.
+     * Pensado para la bandeja de consultas: timeout corto y sin reintentos.
+     *
+     * @param list<array<string, mixed>> $items consultaId, email, campaignId, offerWpId, since y until
+     * @return array{ok: bool, statuses: array<string, array>, error: ?string}
+     */
+    public static function fetch_inquiry_statuses(array $items): array {
+        $failure = static fn (string $error): array => ['ok' => false, 'statuses' => [], 'error' => $error];
+        if ($items === []) {
+            return ['ok' => true, 'statuses' => [], 'error' => null];
+        }
+        if (!self::is_configured()) {
+            return $failure('Mautic no está configurado o está deshabilitado.');
+        }
+
+        $settings = self::get_settings();
+        $headers = self::get_request_headers($settings);
+        if (empty($headers['Authorization'])) {
+            return $failure(self::$last_auth_error !== '' ? self::$last_auth_error : 'No se pudo autenticar contra Mautic.');
+        }
+
+        $payload = ['items' => array_values($items)];
+        try {
+            $response = self::http_request($settings['base_url'] . '/api/flacso/inquiries/status', [
+                'method' => 'POST',
+                'headers' => $headers,
+                'body' => function_exists('wp_json_encode') ? wp_json_encode($payload) : json_encode($payload),
+                'timeout' => self::STATUS_TIMEOUT_SECONDS,
+            ]);
+        } catch (Throwable $e) {
+            return $failure($e->getMessage());
+        }
+
+        if (is_wp_error($response) || !is_array($response)) {
+            return $failure(is_wp_error($response) ? $response->get_error_message() : 'Respuesta HTTP no disponible.');
+        }
+
+        $code = function_exists('wp_remote_retrieve_response_code')
+            ? (int) wp_remote_retrieve_response_code($response)
+            : (int) ($response['response']['code'] ?? 0);
+        $body = function_exists('wp_remote_retrieve_body')
+            ? wp_remote_retrieve_body($response)
+            : (string) ($response['body'] ?? '');
+        $data = json_decode((string) $body, true);
+
+        if ($code >= 200 && $code < 300 && is_array($data) && is_array($data['statuses'] ?? null)) {
+            return ['ok' => true, 'statuses' => $data['statuses'], 'error' => null];
+        }
+
+        return $failure('HTTP ' . $code . ': ' . (trim((string) (is_array($data) ? ($data['message'] ?? $data['error'] ?? '') : '')) ?: 'respuesta inválida'));
     }
 
     /**

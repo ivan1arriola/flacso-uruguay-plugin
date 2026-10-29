@@ -503,9 +503,13 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			 *
 			 * @param array $row      Fila de la bandeja.
 			 * @param bool  $is_offer Si la fila es de una oferta académica.
+			 * @param array|null $live Recorrido real informado por Mautic (FLACSO_Offer_Campaign_Status), si respondió.
 			 */
-			public static function render_delivery_cell( array $row, bool $is_offer ): string {
+			public static function render_delivery_cell( array $row, bool $is_offer, ?array $live = null ): string {
 				if ( $is_offer && 'joined' === self::campaign_state( $row ) ) {
+					if ( is_array( $live ) && ! empty( $live['found'] ) ) {
+						return self::render_live_campaign_cell( $live );
+					}
 					return '<span class="flacso-badge sent mautic" title="' . esc_attr__( 'La campaña de la oferta envía el acuse y, pasados los días configurados, el seguimiento, salvo que la persona se inscriba.', 'flacso-uruguay' ) . '">acuse por campaña</span>'
 						. '<small class="flacso-delivery-caption">' . esc_html__( 'Acuse y seguimiento en la campaña', 'flacso-uruguay' ) . '</small>';
 				}
@@ -515,6 +519,81 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					$html .= '<small class="flacso-delivery-caption">' . esc_html__( 'Acuse transaccional', 'flacso-uruguay' ) . '</small>';
 				}
 				return $html;
+			}
+
+			/**
+			 * Fecha o fecha y hora de un instante ISO 8601 (UTC) en la zona de WordPress.
+			 */
+			private static function format_status_time( $iso, string $format = 'd/m H:i' ): string {
+				$timestamp = is_string( $iso ) && '' !== $iso ? strtotime( $iso ) : false;
+				if ( false === $timestamp ) {
+					return '';
+				}
+				return function_exists( 'wp_date' ) ? (string) wp_date( $format, $timestamp ) : gmdate( $format, $timestamp );
+			}
+
+			/**
+			 * Celda «Estado del correo» con el recorrido real de la campaña: si el acuse
+			 * salió y qué pasa con el seguimiento.
+			 *
+			 * @param array $live Estado que devuelve Mautic para la consulta.
+			 */
+			public static function render_live_campaign_cell( array $live ): string {
+				$acuse  = is_array( $live['acuse'] ?? null ) ? $live['acuse'] : array();
+				$follow = is_array( $live['followUp'] ?? null ) ? $live['followUp'] : array();
+				$closed = 'cerrada' === ( $acuse['kind'] ?? '' );
+
+				switch ( (string) ( $acuse['state'] ?? 'pending' ) ) {
+					case 'sent':
+						$when  = self::format_status_time( $acuse['at'] ?? null );
+						$label = trim( 'acuse enviado ' . $when );
+						$class = 'sent mautic';
+						$title = $closed
+							? __( 'Mautic envió el acuse de oferta cerrada. No implica lectura.', 'flacso-uruguay' )
+							: __( 'Mautic envió el acuse de oferta abierta. No implica lectura.', 'flacso-uruguay' );
+						break;
+					case 'queued':
+						$label = 'acuse en cola';
+						$class = 'pending';
+						$title = __( 'La campaña ya lo procesó pero Mautic aún no lo registra como enviado.', 'flacso-uruguay' );
+						break;
+					case 'failed':
+						$label = 'acuse falló';
+						$class = 'failed';
+						$title = __( 'Mautic no pudo enviar el acuse.', 'flacso-uruguay' );
+						break;
+					default:
+						$label = 'acuse pendiente';
+						$class = 'pending';
+						$title = __( 'La campaña todavía no envió el acuse.', 'flacso-uruguay' );
+				}
+
+				$enrolled = ! empty( $live['enrolled'] );
+				switch ( (string) ( $follow['state'] ?? 'pending' ) ) {
+					case 'scheduled':
+						$caption = 'Seguimiento: ' . self::format_status_time( $follow['at'] ?? null, 'd/m' );
+						break;
+					case 'sent':
+						$caption = trim( 'Seguimiento enviado ' . self::format_status_time( $follow['at'] ?? null ) );
+						break;
+					case 'cancelled':
+						$caption = $enrolled ? 'Seguimiento cancelado: se inscribió' : 'Seguimiento cancelado: retirada de la campaña';
+						break;
+					case 'completed':
+						$caption = 'Seguimiento: sin envío';
+						break;
+					case 'not_applicable':
+						$caption = 'Sin seguimiento: oferta cerrada';
+						break;
+					case 'failed':
+						$caption = 'Seguimiento falló';
+						break;
+					default:
+						$caption = 'Seguimiento pendiente';
+				}
+
+				return '<span class="flacso-badge ' . esc_attr( $class ) . '" title="' . esc_attr( $title ) . '">' . esc_html( $label ) . '</span>'
+					. '<small class="flacso-delivery-caption">' . esc_html( $caption ) . '</small>';
 			}
 
 			/**
@@ -1269,7 +1348,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 										<?php echo esc_html( (string) ( $row['country'] ?: '—' ) ); ?>
 									</td>
 									<td class="flacso-status-cell flacso-cp-delivery" data-id="<?php echo esc_attr( (string) $row['id'] ); ?>">
-										<?php echo self::render_delivery_cell( $row, 'offer_inquiries' === $table ); ?>
+										<?php echo self::render_delivery_cell( $row, 'offer_inquiries' === $table, $live_statuses[ (string) ( $row['consultaId'] ?? '' ) ] ?? null ); ?>
 										<?php
 										if ( 'offer_inquiries' === $table ) {
 											$followup_badge = self::render_followup_status_badge( $row );
@@ -1739,6 +1818,10 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					esc_html( $delta['icon'] ),
 					esc_html( $delta['label'] )
 				);
+			// Estado real de acuse y seguimiento: se le pregunta a Mautic (con caché). Si no responde, queda vacío.
+			$live_statuses = ( 'offer_inquiries' === $table && class_exists( 'FLACSO_Offer_Campaign_Status' ) )
+				? FLACSO_Offer_Campaign_Status::for_rows( $result['items'] )
+				: array();
 			};
 			?>
 			<div class="flacso-cp-card">

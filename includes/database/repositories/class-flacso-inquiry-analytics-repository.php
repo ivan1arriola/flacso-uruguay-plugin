@@ -923,6 +923,17 @@ class FLACSO_Inquiry_Analytics_Repository {
                     $select_context .= '"' . $campaign_col . '", ';
                 }
             }
+            // Ventana de cada consulta en su campaña: desde su createdAt (UTC) hasta la
+            // siguiente consulta de la misma persona y oferta, que reinicia la campaña.
+            if (in_array('createdAt', $columns, true)) {
+                $select_context .= '"createdAt", ';
+                if ($wp_id_col && in_array('emailNormalized', $columns, true) && in_array($wp_id_col, $columns, true)) {
+                    $select_context .= "(SELECT MIN(nxt.\"createdAt\") FROM \"{$table}\" nxt"
+                        . " WHERE nxt.\"emailNormalized\" = \"{$table}\".\"emailNormalized\""
+                        . " AND nxt.\"{$wp_id_col}\" = \"{$table}\".\"{$wp_id_col}\""
+                        . " AND nxt.\"createdAt\" > \"{$table}\".\"createdAt\") AS \"nextInquiryAt\", ";
+                }
+            }
             if (in_array('followupStatus', $columns, true)) {
                 $select_context .= '"followupStatus", ';
             }

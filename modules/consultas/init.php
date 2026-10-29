@@ -40,6 +40,7 @@ $flacso_consultas_files = [
     'modules/consultas/services/class-flacso-mautic-payload-builder.php',
     'modules/consultas/services/class-flacso-inquiry-marketing-service.php',
     'modules/consultas/services/class-flacso-offer-campaigns.php',
+    'modules/consultas/services/class-flacso-offer-campaign-status.php',
     'modules/consultas/services/class-flacso-inquiry-delivery-service.php',
     'modules/consultas/services/class-flacso-inquiry-delivery-worker.php',
 
