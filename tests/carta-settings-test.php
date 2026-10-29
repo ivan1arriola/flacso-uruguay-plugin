@@ -23,7 +23,7 @@ function carta_settings_assert(bool $condition, string $message): void {
 $expected = [
     'carta_badge_mec', 'carta_badge_apostilla', 'carta_badge_red', 'carta_badge_iin', 'carta_badge_presenciales',
     'carta_pago_dolares', 'carta_pago_pesos', 'carta_vencimiento_cuotas', 'carta_titulo_exterior', 'carta_titulo_sin_costo',
-    'carta_envio_titulos', 'carta_convenio_iin_titulo', 'carta_convenio_iin_texto', 'carta_financiacion_label',
+    'carta_envio_titulos', 'carta_financiacion_label',
     'carta_mas_info_section_title', 'carta_mas_info_trayectoria_title', 'carta_mas_info_trayectoria_html',
     'carta_mas_info_gestion_title', 'carta_mas_info_gestion_html',
     'carta_correo_inscripciones', 'carta_telefono', 'carta_contacto_nombre', 'carta_contacto_rol',
@@ -44,7 +44,7 @@ carta_settings_assert(!FLACSO_Carta_Settings::applies('carta_titulo_sin_costo', 
 carta_settings_assert(FLACSO_Carta_Settings::applies('carta_titulo_sin_costo', $no_apostille) && FLACSO_Carta_Settings::applies('carta_titulo_sin_costo', []), 'el título sin costo es el caso por defecto');
 carta_settings_assert(FLACSO_Carta_Settings::applies('carta_envio_titulos', $apostille) && FLACSO_Carta_Settings::applies('carta_envio_titulos', $no_apostille), 'el envío aplica a todas las cartas');
 carta_settings_assert(FLACSO_Carta_Settings::applies('carta_badge_mec', ['reconocido_mec' => true]) && !FLACSO_Carta_Settings::applies('carta_badge_mec', []), 'el distintivo MEC depende de su marca');
-carta_settings_assert(FLACSO_Carta_Settings::applies('carta_convenio_iin_texto', ['convenio_iin_oea' => true]) && !FLACSO_Carta_Settings::applies('carta_convenio_iin_texto', []), 'el convenio IIN-OEA depende de su marca');
+carta_settings_assert(FLACSO_Carta_Settings::applies('carta_badge_iin', ['convenio_iin_oea' => true]) && !FLACSO_Carta_Settings::applies('carta_badge_iin', []), 'el distintivo IIN-OEA depende de su marca');
 carta_settings_assert(strpos(FLACSO_Carta_Settings::get('carta_titulo_exterior'), 'envío') === false, 'el texto del título con costo no menciona el envío (se explica aparte)');
 carta_settings_assert(strpos(FLACSO_Carta_Settings::visible_text('carta_pago_pesos', [], ['{anio}' => '2027']), 'todo 2027,') !== false, 'visible_text reemplaza los marcadores');
 carta_settings_assert(FLACSO_Carta_Settings::visible_text('carta_titulo_exterior', $no_apostille) === '', 'visible_text devuelve vacío si la regla no se cumple');

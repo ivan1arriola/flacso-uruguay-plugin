@@ -87,8 +87,6 @@ final class FLACSO_Carta_Settings {
             'carta_titulo_exterior' => [self::TYPE_TEXT, 'El título se expide en el exterior y tiene un costo asociado de USD 150, que incluye el trámite de Apostilla de La Haya.', 'practica', 'Emisión del título con costo (Apostilla)', self::COND_APOSTILLE, true],
             'carta_titulo_sin_costo' => [self::TYPE_TEXT, 'La emisión del título no tiene costo adicional. Tampoco existe costo asociado por concepto de matrícula.', 'practica', 'Emisión del título sin costo', self::COND_NO_APOSTILLE, true],
             'carta_envio_titulos' => [self::TYPE_TEXT, 'El costo de envío de títulos al exterior dependerá del país destino y del courier elegido para su recepción.', 'practica', 'Envío de títulos al exterior', self::COND_ALWAYS, true],
-            'carta_convenio_iin_titulo' => [self::TYPE_TEXT, 'Convenio IIN-OEA:', 'practica', 'Convenio IIN-OEA: encabezado', self::COND_IIN, false],
-            'carta_convenio_iin_texto' => [self::TYPE_TEXT, 'los funcionarios o referentes de los Estados Miembros que cuenten con aval institucional acceden a bonificaciones especiales para cursar este programa.', 'practica', 'Convenio IIN-OEA: texto', self::COND_IIN, true],
             'carta_financiacion_label' => [self::TYPE_TEXT, 'Consultá por otros planes de financiación en', 'practica', 'Planes de financiación (seguido del correo)', self::COND_ALWAYS, false],
 
             'carta_mas_info_section_title' => [self::TYPE_TEXT, 'Más información', 'confianza', 'Título de la sección', self::COND_ALWAYS, false],
