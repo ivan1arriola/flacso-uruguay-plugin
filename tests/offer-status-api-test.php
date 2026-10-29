@@ -57,6 +57,7 @@ $open = FLACSO_Inquiry_Context_Service::offer_status(10);
 status_assert($open['estado'] === 'abierta', 'cohorte abierta con enlace es abierta');
 status_assert($open['offerWpId'] === 10 && $open['nombre'] === 'Maestría de prueba', 'identifica la oferta');
 status_assert($open['url'] === 'https://flacso.edu.uy/oferta/10/', 'incluye la URL pública de la oferta');
+status_assert($open['carta']['url'] === 'https://flacso.edu.uy/oferta/10/carta', 'incluye el enlace público a la carta');
 status_assert($open['cohorte']['id'] === 105 && $open['cohorte']['nombre'] === 'Cohorte VI', 'incluye la cohorte de consulta');
 status_assert($open['cohorte']['precision'] === 'month' && $open['cohorte']['modalidad'] === 'virtual', 'normaliza precisión y modalidad');
 status_assert($open['preinscripcion']['url'] === 'https://preinscripciones.flacso.edu.uy/x', 'incluye el enlace de preinscripción');

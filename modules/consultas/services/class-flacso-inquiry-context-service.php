@@ -31,12 +31,17 @@ class FLACSO_Inquiry_Context_Service {
             $status = 'cerrada';
         }
 
+        $offer_url = function_exists('get_permalink') ? (string) get_permalink($offer_id) : '';
+
         return [
             'offerWpId' => $offer_id,
             'nombre' => (string) $context['offerName'],
             'tipo' => (string) ($context['offerType'] ?? ''),
             'resumen' => (string) ($catalog_data['resumen'] ?? ''),
-            'url' => function_exists('get_permalink') ? (string) get_permalink($offer_id) : '',
+            'url' => $offer_url,
+            'carta' => [
+                'url' => $offer_url !== '' ? rtrim($offer_url, '/') . '/carta' : '',
+            ],
             'estado' => $status,
             'cohorte' => $context['cohortWpId'] === null ? null : [
                 'id' => $context['cohortWpId'],
