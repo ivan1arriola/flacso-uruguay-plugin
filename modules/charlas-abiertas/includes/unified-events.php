@@ -45,15 +45,6 @@ function flacso_eventos_register_form_meta() {
         'evento_fin_hora' => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
         'evento_display_title' => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
         '_charla_inicio' => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
-        '_charla_modalidad' => ['type' => 'string', 'sanitize_callback' => 'sanitize_key'],
-        '_charla_plataforma_reunion' => ['type' => 'string', 'sanitize_callback' => 'flacso_charlas_abiertas_normalize_reunion_platform'],
-        '_charla_reunion_join_url' => ['type' => 'string', 'sanitize_callback' => 'esc_url_raw'],
-        '_charla_zoom_join_url' => ['type' => 'string', 'sanitize_callback' => 'esc_url_raw'],
-        '_charla_youtube_transmision_url' => ['type' => 'string', 'sanitize_callback' => 'esc_url_raw'],
-        '_charla_duracion_minutos' => ['type' => 'integer', 'sanitize_callback' => 'absint'],
-        '_charla_direccion' => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
-        '_charla_lugar_nombre' => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
-        '_charla_google_maps_url' => ['type' => 'string', 'sanitize_callback' => 'esc_url_raw'],
         '_charla_descripcion' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
         '_evento_formulario_url' => ['type' => 'string', 'sanitize_callback' => 'esc_url_raw'],
         '_evento_mostrar_web' => ['type' => 'boolean', 'sanitize_callback' => static function ($value) {
@@ -89,15 +80,6 @@ function flacso_eventos_render_registration_meta_box($post) {
 
     $show_web = !empty(get_post_meta($post->ID, '_evento_mostrar_web', true));
     $form_url = (string) get_post_meta($post->ID, '_evento_formulario_url', true);
-    $modalidad = (string) get_post_meta($post->ID, '_charla_modalidad', true) ?: 'virtual';
-    $duration = flacso_charlas_abiertas_format_duracion_hhmm_desde_minutos(
-        get_post_meta($post->ID, '_charla_duracion_minutos', true)
-    );
-    $platform = flacso_charlas_abiertas_normalize_reunion_platform(get_post_meta($post->ID, '_charla_plataforma_reunion', true));
-    $meeting_url = (string) get_post_meta($post->ID, '_charla_reunion_join_url', true);
-    if ('' === $meeting_url) {
-        $meeting_url = (string) get_post_meta($post->ID, '_charla_zoom_join_url', true);
-    }
     ?>
     <p>
         <label><input type="checkbox" name="evento_mostrar_web" value="1" <?php checked($show_web); ?>>
@@ -110,38 +92,6 @@ function flacso_eventos_render_registration_meta_box($post) {
         <input class="widefat" type="url" name="evento_formulario_url" value="<?php echo esc_attr($form_url); ?>" placeholder="https://formularios.flacso.edu.uy/f/..."></label>
     </p>
     <p class="description"><?php esc_html_e('Si se completa, la página del evento muestra el botón «Inscribirme». El formulario lo gestiona Formularios FLACSO.', 'flacso-uruguay'); ?></p>
-    <p>
-        <label for="flacso_charla_modalidad"><strong><?php esc_html_e('Modalidad', 'flacso-uruguay'); ?></strong></label><br>
-        <select id="flacso_charla_modalidad" name="flacso_charla_modalidad">
-            <option value="virtual" <?php selected($modalidad, 'virtual'); ?>><?php esc_html_e('Virtual', 'flacso-uruguay'); ?></option>
-            <option value="presencial" <?php selected($modalidad, 'presencial'); ?>><?php esc_html_e('Presencial', 'flacso-uruguay'); ?></option>
-            <option value="hibrida" <?php selected($modalidad, 'hibrida'); ?>><?php esc_html_e('Híbrida', 'flacso-uruguay'); ?></option>
-        </select>
-    </p>
-    <p><label><strong><?php esc_html_e('Duración (HH:MM)', 'flacso-uruguay'); ?></strong><br>
-        <input type="text" name="flacso_charla_duracion_hhmm" value="<?php echo esc_attr($duration); ?>" pattern="[0-9]{1,3}:[0-5][0-9]" placeholder="01:30"></label>
-    </p>
-    <p><label><strong><?php esc_html_e('Plataforma online', 'flacso-uruguay'); ?></strong><br>
-        <select name="flacso_charla_plataforma_reunion">
-            <option value="zoom" <?php selected($platform, 'zoom'); ?>>Zoom</option>
-            <option value="meet" <?php selected($platform, 'meet'); ?>>Google Meet</option>
-        </select></label>
-    </p>
-    <p><label><strong><?php esc_html_e('URL de acceso online', 'flacso-uruguay'); ?></strong><br>
-        <input class="widefat" type="url" name="flacso_charla_reunion_join_url" value="<?php echo esc_attr($meeting_url); ?>"></label>
-    </p>
-    <p><label><strong><?php esc_html_e('YouTube transmisión URL', 'flacso-uruguay'); ?></strong><br>
-        <input class="widefat" type="url" name="flacso_charla_youtube_transmision_url" value="<?php echo esc_attr(get_post_meta($post->ID, '_charla_youtube_transmision_url', true)); ?>"></label>
-    </p>
-    <p><label><strong><?php esc_html_e('Lugar', 'flacso-uruguay'); ?></strong><br>
-        <input class="widefat" type="text" name="flacso_charla_lugar_nombre" value="<?php echo esc_attr(get_post_meta($post->ID, '_charla_lugar_nombre', true)); ?>"></label>
-    </p>
-    <p><label><strong><?php esc_html_e('Dirección', 'flacso-uruguay'); ?></strong><br>
-        <input class="widefat" type="text" name="flacso_charla_direccion" value="<?php echo esc_attr(get_post_meta($post->ID, '_charla_direccion', true)); ?>"></label>
-    </p>
-    <p><label><strong><?php esc_html_e('Google Maps URL', 'flacso-uruguay'); ?></strong><br>
-        <input class="widefat" type="url" name="flacso_charla_google_maps_url" value="<?php echo esc_attr(get_post_meta($post->ID, '_charla_google_maps_url', true)); ?>"></label>
-    </p>
     <?php
 }
 
@@ -158,31 +108,6 @@ function flacso_eventos_save_registration_meta($post_id, $post) {
 
     update_post_meta($post_id, '_evento_mostrar_web', isset($_POST['evento_mostrar_web']) ? 1 : 0);
     update_post_meta($post_id, '_evento_formulario_url', esc_url_raw(wp_unslash($_POST['evento_formulario_url'] ?? '')));
-
-    $modalidad = sanitize_key(wp_unslash($_POST['flacso_charla_modalidad'] ?? 'virtual'));
-    update_post_meta($post_id, '_charla_modalidad', in_array($modalidad, ['virtual', 'presencial', 'hibrida'], true) ? $modalidad : 'virtual');
-
-    update_post_meta($post_id, '_charla_plataforma_reunion', flacso_charlas_abiertas_normalize_reunion_platform(wp_unslash($_POST['flacso_charla_plataforma_reunion'] ?? 'zoom')));
-    $meeting_url = esc_url_raw(wp_unslash($_POST['flacso_charla_reunion_join_url'] ?? ($_POST['flacso_charla_zoom_join_url'] ?? '')));
-    update_post_meta($post_id, '_charla_reunion_join_url', $meeting_url);
-    update_post_meta($post_id, '_charla_zoom_join_url', $meeting_url);
-
-    $fields = [
-        'flacso_charla_youtube_transmision_url' => ['_charla_youtube_transmision_url', 'esc_url_raw'],
-        'flacso_charla_lugar_nombre' => ['_charla_lugar_nombre', 'sanitize_text_field'],
-        'flacso_charla_direccion' => ['_charla_direccion', 'sanitize_text_field'],
-        'flacso_charla_google_maps_url' => ['_charla_google_maps_url', 'esc_url_raw'],
-    ];
-    foreach ($fields as $input => [$meta_key, $sanitizer]) {
-        update_post_meta($post_id, $meta_key, $sanitizer(wp_unslash($_POST[$input] ?? '')));
-    }
-
-    $duration = flacso_charlas_abiertas_parse_duracion_hhmm_a_minutos(wp_unslash($_POST['flacso_charla_duracion_hhmm'] ?? ''));
-    if ($duration === null) {
-        delete_post_meta($post_id, '_charla_duracion_minutos');
-    } else {
-        update_post_meta($post_id, '_charla_duracion_minutos', $duration);
-    }
 
     $date = (string) get_post_meta($post_id, 'evento_inicio_fecha', true);
     $time = (string) get_post_meta($post_id, 'evento_inicio_hora', true);
