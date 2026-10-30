@@ -9,13 +9,6 @@ function flacso_charlas_abiertas_normalize_reunion_platform($value) {
     return in_array($platform, ['zoom', 'meet'], true) ? $platform : 'zoom';
 }
 
-function flacso_charlas_abiertas_normalize_form_variant($value) {
-    $variant = sanitize_key((string) $value);
-    return in_array($variant, ['nombre_apellido', 'nombre_apellido_sin_telefono'], true)
-        ? $variant
-        : 'estandar';
-}
-
 function flacso_charlas_abiertas_parse_duracion_hhmm_a_minutos($value) {
     if (!is_scalar($value) || !preg_match('/^(\d{1,3}):([0-5]\d)$/', trim((string) $value), $matches)) {
         return null;
@@ -62,10 +55,7 @@ function flacso_eventos_register_form_meta() {
         '_charla_lugar_nombre' => ['type' => 'string', 'sanitize_callback' => 'sanitize_text_field'],
         '_charla_google_maps_url' => ['type' => 'string', 'sanitize_callback' => 'esc_url_raw'],
         '_charla_descripcion' => ['type' => 'string', 'sanitize_callback' => 'wp_kses_post'],
-        '_charla_form_variant' => ['type' => 'string', 'sanitize_callback' => 'flacso_charlas_abiertas_normalize_form_variant'],
-        '_evento_formulario_habilitado' => ['type' => 'boolean', 'sanitize_callback' => static function ($value) {
-            return !empty($value);
-        }],
+        '_evento_formulario_url' => ['type' => 'string', 'sanitize_callback' => 'esc_url_raw'],
         '_evento_mostrar_web' => ['type' => 'boolean', 'sanitize_callback' => static function ($value) {
             return !empty($value);
         }],
@@ -97,10 +87,8 @@ function flacso_eventos_add_registration_meta_box() {
 function flacso_eventos_render_registration_meta_box($post) {
     wp_nonce_field('flacso_evento_registration_save', 'flacso_evento_registration_nonce');
 
-    $enabled = !metadata_exists('post', $post->ID, '_evento_formulario_habilitado')
-        || !empty(get_post_meta($post->ID, '_evento_formulario_habilitado', true));
     $show_web = !empty(get_post_meta($post->ID, '_evento_mostrar_web', true));
-    $variant = flacso_charlas_abiertas_normalize_form_variant(get_post_meta($post->ID, '_charla_form_variant', true));
+    $form_url = (string) get_post_meta($post->ID, '_evento_formulario_url', true);
     $modalidad = (string) get_post_meta($post->ID, '_charla_modalidad', true) ?: 'virtual';
     $duration = flacso_charlas_abiertas_format_duracion_hhmm_desde_minutos(
         get_post_meta($post->ID, '_charla_duracion_minutos', true)
@@ -118,19 +106,10 @@ function flacso_eventos_render_registration_meta_box($post) {
     </p>
     <p class="description"><?php esc_html_e('Los eventos no se publican como Novedades ni generan un post asociado.', 'flacso-uruguay'); ?></p>
     <hr>
-    <p>
-        <label><input type="checkbox" name="evento_formulario_habilitado" value="1" <?php checked($enabled); ?>>
-            <strong><?php esc_html_e('Mostrar formulario de inscripción en la página del evento', 'flacso-uruguay'); ?></strong>
-        </label>
+    <p><label><strong><?php esc_html_e('URL del formulario de inscripción (Formularios FLACSO)', 'flacso-uruguay'); ?></strong><br>
+        <input class="widefat" type="url" name="evento_formulario_url" value="<?php echo esc_attr($form_url); ?>" placeholder="https://formularios.flacso.edu.uy/f/..."></label>
     </p>
-    <p>
-        <label for="flacso_charla_form_variant"><strong><?php esc_html_e('Versión del formulario', 'flacso-uruguay'); ?></strong></label><br>
-        <select id="flacso_charla_form_variant" name="flacso_charla_form_variant">
-            <option value="estandar" <?php selected($variant, 'estandar'); ?>><?php esc_html_e('Estándar', 'flacso-uruguay'); ?></option>
-            <option value="nombre_apellido" <?php selected($variant, 'nombre_apellido'); ?>><?php esc_html_e('Nombre y apellido', 'flacso-uruguay'); ?></option>
-            <option value="nombre_apellido_sin_telefono" <?php selected($variant, 'nombre_apellido_sin_telefono'); ?>><?php esc_html_e('Nombre y apellido, sin teléfono', 'flacso-uruguay'); ?></option>
-        </select>
-    </p>
+    <p class="description"><?php esc_html_e('Si se completa, la página del evento muestra el botón «Inscribirme». El formulario lo gestiona Formularios FLACSO.', 'flacso-uruguay'); ?></p>
     <p>
         <label for="flacso_charla_modalidad"><strong><?php esc_html_e('Modalidad', 'flacso-uruguay'); ?></strong></label><br>
         <select id="flacso_charla_modalidad" name="flacso_charla_modalidad">
@@ -178,8 +157,7 @@ function flacso_eventos_save_registration_meta($post_id, $post) {
     }
 
     update_post_meta($post_id, '_evento_mostrar_web', isset($_POST['evento_mostrar_web']) ? 1 : 0);
-    update_post_meta($post_id, '_evento_formulario_habilitado', isset($_POST['evento_formulario_habilitado']) ? 1 : 0);
-    update_post_meta($post_id, '_charla_form_variant', flacso_charlas_abiertas_normalize_form_variant(wp_unslash($_POST['flacso_charla_form_variant'] ?? '')));
+    update_post_meta($post_id, '_evento_formulario_url', esc_url_raw(wp_unslash($_POST['evento_formulario_url'] ?? '')));
 
     $modalidad = sanitize_key(wp_unslash($_POST['flacso_charla_modalidad'] ?? 'virtual'));
     update_post_meta($post_id, '_charla_modalidad', in_array($modalidad, ['virtual', 'presencial', 'hibrida'], true) ? $modalidad : 'virtual');
@@ -217,22 +195,6 @@ function flacso_eventos_save_registration_meta($post_id, $post) {
 
     // El evento es ahora el contenido de detalle; se elimina el acoplamiento.
     delete_post_meta($post_id, 'evento_post_asociado');
-}
-
-add_filter('the_content', 'flacso_eventos_append_registration_form', 20);
-function flacso_eventos_append_registration_form($content) {
-    if (!is_singular('evento') || !in_the_loop() || !is_main_query()) {
-        return $content;
-    }
-
-    $event_id = get_the_ID();
-    $enabled = !metadata_exists('post', $event_id, '_evento_formulario_habilitado')
-        || !empty(get_post_meta($event_id, '_evento_formulario_habilitado', true));
-    if (!$enabled || !function_exists('flacso_charlas_abiertas_render_block')) {
-        return $content;
-    }
-
-    return $content . flacso_charlas_abiertas_render_block(['eventoId' => $event_id]);
 }
 
 add_action('admin_init', 'flacso_eventos_migrate_legacy_charlas_once');
@@ -314,7 +276,6 @@ function flacso_eventos_migrate_legacy_charlas_once() {
             '_charla_lugar_nombre',
             '_charla_google_maps_url',
             '_charla_descripcion',
-            '_charla_form_variant',
         ];
         foreach ($meta_keys as $meta_key) {
             $value = get_post_meta($legacy_id, $meta_key, true);
@@ -338,7 +299,6 @@ function flacso_eventos_migrate_legacy_charlas_once() {
             }
         }
 
-        update_post_meta($event_id, '_evento_formulario_habilitado', 1);
         update_post_meta($event_id, '_evento_mostrar_web', empty(get_post_meta($legacy_id, '_charla_ocultar_evento', true)) ? 1 : 0);
         update_post_meta($event_id, '_evento_legacy_charla_id', $legacy_id);
         update_post_meta($legacy_id, '_charla_evento_id', $event_id);

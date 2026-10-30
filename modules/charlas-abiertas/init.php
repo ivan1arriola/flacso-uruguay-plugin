@@ -1,7 +1,7 @@
 <?php
 /**
  * Modulo de Charlas Abiertas - FLACSO Uruguay
- * Integracion de CPT, bloque Gutenberg y endpoints REST.
+ * Eventos unificados y endpoints REST de lectura.
  */
 
 if (!defined('ABSPATH')) {
@@ -30,7 +30,4 @@ if (!defined('FLACSO_CHARLAS_ABIERTAS_URL')) {
 // El archivo legacy se conserva en el paquete únicamente para poder reconocer y
 // migrar instalaciones anteriores.
 flacso_safe_require('modules/charlas-abiertas/includes/unified-events.php');
-flacso_safe_require('modules/charlas-abiertas/includes/frontend-assets.php');
-flacso_safe_require('modules/charlas-abiertas/includes/block.php');
 flacso_safe_require('modules/charlas-abiertas/includes/rest.php');
-flacso_safe_require('modules/charlas-abiertas/includes/settings.php');
