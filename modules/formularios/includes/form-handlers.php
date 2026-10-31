@@ -90,7 +90,7 @@ function fc_handle_form_submit() {
         wp_safe_redirect( add_query_arg( 'fc_exito', 1, fc_get_gracias_url_from_referer() ) );
         exit;
     }
-    // Consulta general: registro en WordPress y entrega mediante Mautic.
+    // Consulta general: no se almacena; se entrega por Mautic y se avisa por Telegram.
     $event_id = wp_generate_uuid4();
     $webhook_payload = [
             'event_id'    => $event_id,
@@ -127,7 +127,6 @@ function fc_handle_form_submit() {
         exit;
     }
     $webhook_payload['reference'] = $reference;
-    $webhook_payload['delivery_lock'] = $duplicate_key . '_lock';
     $webhook_result = fc_send_general_inquiry( $webhook_payload );
     if ( empty( $webhook_result['ok'] ) ) {
         $unknown = !empty( $webhook_result['acceptance_unknown'] );
@@ -161,6 +160,20 @@ function fc_handle_form_submit() {
 
     set_transient( $duplicate_key, 1, 10 * MINUTE_IN_SECONDS );
     delete_option( $duplicate_key . '_lock' );
+
+    if ( 'failed' === ( $webhook_result['acuse'] ?? '' ) ) {
+        // La consulta ya llegó a recepción; sólo el acuse al consultante falló.
+        fc_notify_form_admin_error(
+            [
+                'reference'  => $reference,
+                'form'       => 'Consulta general',
+                'stage'      => 'acuse de recibo al consultante',
+                'detail'     => (string) ( $webhook_result['acuse_error'] ?? '' ),
+                'url'        => $url_referer,
+                'user_email' => $email,
+            ]
+        );
+    }
 
     $redirect_base = fc_get_gracias_url_from_referer();
     $redirect = add_query_arg(

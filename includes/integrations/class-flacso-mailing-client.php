@@ -87,66 +87,6 @@ final class FLACSO_Mailing_Client {
         return ['ok' => false, 'status' => 'failed', 'http_code' => $code, 'error' => 'Mailing rechazó el evento.'];
     }
 
-    /** Deliver a general inquiry to the operational template without creating a contact. */
-    public static function send_general_inquiry(int $post_id, array $payload): array {
-        if (!self::is_configured()) return ['ok' => false, 'status' => 'blocked', 'error' => 'Mailing no está configurado.'];
-        $email = strtolower(trim((string) ($payload['email'] ?? '')));
-        $message = trim((string) ($payload['mensaje'] ?? ''));
-        if ($post_id <= 0 || !filter_var($email, FILTER_VALIDATE_EMAIL) || $message === '') {
-            return ['ok' => false, 'status' => 'blocked', 'error' => 'Identidad de consulta general incompleta.'];
-        }
-        $occurred_at = trim((string) ($payload['fecha_envio'] ?? ''));
-        if ($occurred_at === '' || strtotime($occurred_at) === false) $occurred_at = gmdate('c');
-        $event = [
-            'event_type' => 'general.inquiry.created',
-            'idempotency_key' => 'wp_general_' . $post_id,
-            'occurred_at' => $occurred_at,
-            'data' => [
-                'external_submission_id' => (string) $post_id,
-                'visitor' => [
-                    'email' => $email,
-                    'first_name' => trim((string) ($payload['nombre'] ?? '')),
-                    'last_name' => trim((string) ($payload['apellido'] ?? '')),
-                ],
-                'message_body' => $message,
-                'page_url' => (string) ($payload['page_url'] ?? $payload['url'] ?? 'https://flacso.edu.uy/contacto/'),
-            ],
-        ];
-        $body = json_encode($event, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        if (!is_string($body)) return ['ok' => false, 'status' => 'blocked', 'error' => 'No se pudo serializar el evento.'];
-        $timestamp = (string) time();
-        $url = self::base_url() . '/api/v1/events/general-inquiries';
-        $args = [
-            'timeout' => 8, 'redirection' => 0,
-            'headers' => [
-                'Content-Type' => 'application/json',
-                'Idempotency-Key' => $event['idempotency_key'],
-                'X-Flacso-Timestamp' => $timestamp,
-                'X-Flacso-Signature' => 'sha256=' . hash_hmac('sha256', $timestamp . '.' . $body, WP_WEBHOOK_HMAC_SECRET),
-            ],
-            'body' => $body,
-        ];
-        try {
-            $response = is_callable(self::$transport) ? call_user_func(self::$transport, $url, $args) : wp_remote_post($url, $args);
-        } catch (Throwable $error) {
-            return ['ok' => false, 'status' => 'acceptance_unknown', 'acceptance_unknown' => true, 'error' => 'No se pudo confirmar la recepción en Mailing.'];
-        }
-        if (function_exists('is_wp_error') && is_wp_error($response)) {
-            return ['ok' => false, 'status' => 'acceptance_unknown', 'acceptance_unknown' => true, 'error' => 'No se pudo confirmar la recepción en Mailing.'];
-        }
-        $code = (int) (function_exists('wp_remote_retrieve_response_code')
-            ? wp_remote_retrieve_response_code($response) : ($response['response']['code'] ?? 0));
-        if ($code === 200 || $code === 202) return ['ok' => true, 'status' => 'accepted', 'http_code' => $code];
-        if ($code === 409) return ['ok' => false, 'status' => 'failed', 'http_code' => $code, 'error' => 'Conflicto de idempotencia en Mailing.'];
-        if ($code === 0 || $code === 408 || $code >= 500) {
-            return ['ok' => false, 'status' => 'acceptance_unknown', 'acceptance_unknown' => true, 'http_code' => $code ?: null, 'error' => 'Mailing no pudo confirmar la recepción en Mailing.'];
-        }
-        if ($code === 429) {
-            return ['ok' => false, 'status' => 'retryable_failed', 'http_code' => $code ?: null, 'error' => 'Mailing no pudo aceptar el evento.'];
-        }
-        return ['ok' => false, 'status' => 'failed', 'http_code' => $code, 'error' => 'Mailing rechazó el evento.'];
-    }
-
     /** Synchronize an explicitly consented subscriber through the signed contact event. */
     public static function sync_contact(array $data, string $idempotency_key): array {
         if (!self::is_configured()) return ['ok' => false, 'status' => 'blocked', 'error' => 'Mailing no está configurado.'];

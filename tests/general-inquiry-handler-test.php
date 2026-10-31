@@ -37,7 +37,7 @@ function submit() { try { fc_handle_form_submit(); } catch (Redirect $redirect) 
 $GLOBALS['delivery_result'] = ['ok' => true];
 check(strpos(submit(), 'confirmacion-consulta') !== false, 'Successful Mautic handoff confirms the consultation');
 check($GLOBALS['deliveries'] === 1 && $GLOBALS['payload']['email'] === 'ana@example.org', 'Form submits contact data to Mautic processing');
-check($GLOBALS['payload']['reference'] === 'TEST-REFERENCE' && !empty($GLOBALS['payload']['delivery_lock']), 'Tracking reference and lock identity accompany the saved consultation');
+check($GLOBALS['payload']['reference'] === 'TEST-REFERENCE', 'Tracking reference accompanies the consultation');
 check(strpos(submit(), 'fc_exito=1') !== false && $GLOBALS['deliveries'] === 1, 'Repeated successful submission does not send twice');
 $GLOBALS['transients'] = []; $GLOBALS['delivery_result'] = ['ok' => false, 'acceptance_unknown' => false];
 check(strpos(submit(), 'fc_error=unavailable') !== false && empty($GLOBALS['options']), 'Definite failure releases the lock and offers a retry');

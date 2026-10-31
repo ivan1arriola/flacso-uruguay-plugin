@@ -4,54 +4,73 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 function fc_register_settings() {
-    register_setting( 'fc_options_group', 'fc_destinatario_email', [ 'type' => 'string', 'sanitize_callback' => 'sanitize_email', 'default' => get_option( 'admin_email' ) ] );
-    register_setting( 'fc_options_group', 'fc_asunto_admin', [ 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'default' => '' ] );
-    register_setting( 'fc_options_group', 'fc_asunto_usuario', [ 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'default' => '' ] );
-    register_setting( 'fc_options_group', 'fc_cargar_bootstrap', [ 'type' => 'string', 'sanitize_callback' => function( $v ){ return $v === '1' ? '1' : '0'; }, 'default' => '1' ] );
-    register_setting( 'fc_options_group', 'fc_fallback_senders', [ 'type' => 'string', 'sanitize_callback' => function( $v ){ return sanitize_text_field( $v ); }, 'default' => '' ] );
+    $text = [ 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'default' => '' ];
+    $flag = static function ( $default ) {
+        return [ 'type' => 'string', 'sanitize_callback' => static function ( $v ) { return $v === '1' ? '1' : '0'; }, 'default' => $default ];
+    };
+    register_setting( 'fc_options_group', 'fc_destinatario_email', [ 'type' => 'string', 'sanitize_callback' => 'sanitize_email', 'default' => '' ] );
+    register_setting( 'fc_options_group', 'fc_asunto_admin', $text );
+    register_setting( 'fc_options_group', 'fc_asunto_usuario', $text );
+    register_setting( 'fc_options_group', 'fc_enviar_acuse', $flag( '1' ) );
+    register_setting( 'fc_options_group', 'fc_texto_acuse', [ 'type' => 'string', 'sanitize_callback' => 'sanitize_textarea_field', 'default' => '' ] );
+    register_setting( 'fc_options_group', 'fc_telegram_notify_consultas', $flag( '1' ) );
+    register_setting( 'fc_options_group', 'fc_cargar_bootstrap', $flag( '1' ) );
 
-    add_settings_section( 'fc_main_section', __( 'Ajustes de formulario de consultas', 'flacso-flacso-formulario-consultas' ), function(){
-        echo '<p>' . esc_html__( 'Configura el destinatario y los asuntos de los correos. Inserta el formulario con el bloque “Formulario de Consulta”.', 'flacso-flacso-formulario-consultas' ) . '</p>';
+    add_settings_section( 'fc_main_section', __( 'Recepción de consultas', 'flacso-flacso-formulario-consultas' ), function(){
+        echo '<p>' . esc_html__( 'Las consultas no se guardan: llegan por correo a recepción, el consultante recibe un acuse y el equipo recibe un aviso por Telegram. Los correos salen por Mautic. En asuntos y texto podés usar {nombre}, {apellido} y {asunto}.', 'flacso-flacso-formulario-consultas' ) . '</p>';
     }, 'fc_options_page' );
 
-    add_settings_field( 'fc_destinatario_email', __( 'Email destinatario', 'flacso-flacso-formulario-consultas' ), 'fc_field_email_cb', 'fc_options_page', 'fc_main_section' );
-    add_settings_field( 'fc_asunto_admin', __( 'Asunto para administrador', 'flacso-flacso-formulario-consultas' ), 'fc_field_asunto_admin_cb', 'fc_options_page', 'fc_main_section' );
-    add_settings_field( 'fc_asunto_usuario', __( 'Asunto para usuario', 'flacso-flacso-formulario-consultas' ), 'fc_field_asunto_usuario_cb', 'fc_options_page', 'fc_main_section' );
+    add_settings_field( 'fc_destinatario_email', __( 'Correo de recepción', 'flacso-flacso-formulario-consultas' ), 'fc_field_email_cb', 'fc_options_page', 'fc_main_section' );
+    add_settings_field( 'fc_asunto_admin', __( 'Asunto del aviso a recepción', 'flacso-flacso-formulario-consultas' ), 'fc_field_asunto_admin_cb', 'fc_options_page', 'fc_main_section' );
+    add_settings_field( 'fc_enviar_acuse', __( 'Acuse al consultante', 'flacso-flacso-formulario-consultas' ), 'fc_field_acuse_cb', 'fc_options_page', 'fc_main_section' );
+    add_settings_field( 'fc_asunto_usuario', __( 'Asunto del acuse', 'flacso-flacso-formulario-consultas' ), 'fc_field_asunto_usuario_cb', 'fc_options_page', 'fc_main_section' );
+    add_settings_field( 'fc_texto_acuse', __( 'Texto del acuse', 'flacso-flacso-formulario-consultas' ), 'fc_field_texto_acuse_cb', 'fc_options_page', 'fc_main_section' );
+    add_settings_field( 'fc_telegram_notify_consultas', __( 'Aviso por Telegram', 'flacso-flacso-formulario-consultas' ), 'fc_field_telegram_cb', 'fc_options_page', 'fc_main_section' );
     add_settings_field( 'fc_cargar_bootstrap', __( 'Cargar Bootstrap automáticamente', 'flacso-flacso-formulario-consultas' ), 'fc_field_bootstrap_cb', 'fc_options_page', 'fc_main_section' );
-    add_settings_field( 'fc_fallback_senders', __( 'Remitentes de fallback (lista)', 'flacso-flacso-formulario-consultas' ), 'fc_field_fallback_senders_cb', 'fc_options_page', 'fc_main_section' );
-
 }
 add_action( 'admin_init', 'fc_register_settings' );
 
 function fc_field_email_cb() {
-    $value = esc_attr( get_option( 'fc_destinatario_email', get_option( 'admin_email' ) ) );
-    echo '<input type="email" class="regular-text" name="fc_destinatario_email" value="' . $value . '" />';
+    $value = esc_attr( get_option( 'fc_destinatario_email', '' ) );
+    echo '<input type="email" class="regular-text" name="fc_destinatario_email" value="' . $value . '" placeholder="' . esc_attr( FC_DEFAULT_RECEPTION_EMAIL ) . '" />';
+    echo '<p class="description">' . esc_html__( 'A esta casilla llega cada consulta, con respuesta directa al consultante. Vacío usa el valor por defecto que se muestra.', 'flacso-flacso-formulario-consultas' ) . '</p>';
 }
 
 function fc_field_asunto_admin_cb() {
     $value = esc_attr( get_option( 'fc_asunto_admin', '' ) );
-    echo '<input type="text" class="regular-text" name="fc_asunto_admin" value="' . $value . '" placeholder="' . esc_attr__( 'Nueva consulta desde {sitio}', 'flacso-flacso-formulario-consultas' ) . '" />';
+    echo '<input type="text" class="regular-text" name="fc_asunto_admin" value="' . $value . '" placeholder="' . esc_attr__( 'Consulta web FLACSO: {asunto}', 'flacso-flacso-formulario-consultas' ) . '" />';
     echo '<p class="description">' . esc_html__( 'Déjalo vacío para usar el asunto por defecto.', 'flacso-flacso-formulario-consultas' ) . '</p>';
+}
+
+function fc_field_acuse_cb() {
+    echo '<label><input type="checkbox" name="fc_enviar_acuse" value="1" ' . checked( '1', get_option( 'fc_enviar_acuse', '1' ), false ) . ' /> ' . esc_html__( 'Enviar un correo de confirmación a quien consulta', 'flacso-flacso-formulario-consultas' ) . '</label>';
+    echo '<p class="description">' . esc_html__( 'Sale sólo cuando recepción ya recibió la consulta. Si el consultante responde, la respuesta llega al correo de recepción.', 'flacso-flacso-formulario-consultas' ) . '</p>';
 }
 
 function fc_field_asunto_usuario_cb() {
     $value = esc_attr( get_option( 'fc_asunto_usuario', '' ) );
-    echo '<input type="text" class="regular-text" name="fc_asunto_usuario" value="' . $value . '" placeholder="' . esc_attr__( 'Hemos recibido tu consulta', 'flacso-flacso-formulario-consultas' ) . '" />';
-    echo '<p class="description">' . esc_html__( 'Déjalo vacío para usar el asunto por defecto.', 'flacso-flacso-formulario-consultas' ) . '</p>';
+    echo '<input type="text" class="regular-text" name="fc_asunto_usuario" value="' . $value . '" placeholder="' . esc_attr( FC_DEFAULT_ACK_SUBJECT ) . '" />';
+}
+
+function fc_field_texto_acuse_cb() {
+    $value = esc_textarea( get_option( 'fc_texto_acuse', '' ) );
+    echo '<textarea class="large-text" rows="7" name="fc_texto_acuse" placeholder="' . esc_attr( FC_DEFAULT_ACK_TEXT ) . '">' . $value . '</textarea>';
+    echo '<p class="description">' . esc_html__( 'Texto plano. Vacío usa el texto por defecto que se muestra.', 'flacso-flacso-formulario-consultas' ) . '</p>';
+}
+
+function fc_field_telegram_cb() {
+    echo '<label><input type="checkbox" name="fc_telegram_notify_consultas" value="1" ' . checked( '1', get_option( 'fc_telegram_notify_consultas', '1' ), false ) . ' /> ' . esc_html__( 'Avisar cada consulta por Telegram', 'flacso-flacso-formulario-consultas' ) . '</label>';
+    $ready = function_exists( 'fc_can_use_telegram' ) && fc_can_use_telegram();
+    $sistema = esc_url( admin_url( 'admin.php?page=flacso-sistema' ) );
+    echo '<p class="description">' . ( $ready
+        ? esc_html__( 'Telegram está configurado.', 'flacso-flacso-formulario-consultas' )
+        : sprintf( wp_kses( __( 'Telegram no está configurado: cargá el bot y el chat en <a href="%s">FLACSO › Sistema</a>.', 'flacso-flacso-formulario-consultas' ), [ 'a' => [ 'href' => [] ] ] ), $sistema ) )
+        . '</p>';
 }
 
 function fc_field_bootstrap_cb() {
     $value = get_option( 'fc_cargar_bootstrap', '1' );
     echo '<label><input type="checkbox" name="fc_cargar_bootstrap" value="1" ' . checked( '1', $value, false ) . ' /> ' . esc_html__( 'Cargar CSS/JS de Bootstrap 5 al mostrar el formulario', 'flacso-flacso-formulario-consultas' ) . '</label>';
-}
-
-
-
-
-function fc_field_fallback_senders_cb() {
-    $value = esc_attr( get_option( 'fc_fallback_senders', '' ) );
-    echo '<input type="text" class="regular-text" name="fc_fallback_senders" value="' . $value . '" placeholder="noreply@flacso.edu.uy, wordpress@flacso.edu.uy, web@flacso.edu.uy" />';
-    echo '<p class="description">' . esc_html__( 'Lista de correos separados por coma usados si el envío principal falla. Se intentan en orden.', 'flacso-flacso-formulario-consultas' ) . '</p>';
 }
 
 function fc_add_consulta_settings_submenu() {
@@ -85,7 +104,7 @@ function fc_render_options_page() {
     ?>
     <div class="wrap">
         <h1><?php esc_html_e( 'Formulario general', 'flacso-flacso-formulario-consultas' ); ?></h1>
-        <p><?php esc_html_e( 'Configuración de presentación y del correo legacy del formulario general. Endpoint, Telegram y reCAPTCHA se administran en FLACSO > Sistema.', 'flacso-flacso-formulario-consultas' ); ?></p>
+        <p><?php esc_html_e( 'Destinatario, acuse y avisos del formulario de contacto. El bot de Telegram y reCAPTCHA se administran en FLACSO > Sistema.', 'flacso-flacso-formulario-consultas' ); ?></p>
         <form action="options.php" method="post">
             <?php
             settings_fields( 'fc_options_group' );
@@ -95,23 +114,19 @@ function fc_render_options_page() {
         </form>
 
         <hr>
-        <h2><?php esc_html_e( 'Prueba de envío de correo', 'flacso-flacso-formulario-consultas' ); ?></h2>
+        <h2><?php esc_html_e( 'Consulta de prueba', 'flacso-flacso-formulario-consultas' ); ?></h2>
+        <p><?php esc_html_e( 'Recorre el flujo real con una consulta de ejemplo: el aviso va a recepción, el acuse a tu correo y el mensaje a Telegram.', 'flacso-flacso-formulario-consultas' ); ?></p>
         <form action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post">
             <?php wp_nonce_field( 'fc_send_test_email', 'fc_test_nonce' ); ?>
             <input type="hidden" name="action" value="fc_send_test_email" />
-            <?php $test_to = esc_attr( get_option( 'fc_destinatario_email', get_option( 'admin_email' ) ) ); ?>
-            <p>
-                <label for="fc_test_email" class="screen-reader-text"><?php esc_html_e( 'Correo de prueba', 'flacso-flacso-formulario-consultas' ); ?></label>
-                <input type="email" id="fc_test_email" name="fc_test_email" value="<?php echo $test_to; ?>" class="regular-text" required />
-            </p>
-            <?php submit_button( __( 'Enviar correo de prueba', 'flacso-flacso-formulario-consultas' ), 'secondary' ); ?>
+            <?php submit_button( __( 'Enviar consulta de prueba', 'flacso-flacso-formulario-consultas' ), 'secondary' ); ?>
         </form>
 
     </div>
     <?php
 }
 
-// Handler de envío de prueba
+// Handler de consulta de prueba
 function fc_handle_send_test_email() {
     if ( ! current_user_can( 'manage_options' ) ) {
         wp_die( esc_html__( 'No tienes permisos suficientes.', 'flacso-flacso-formulario-consultas' ) );
@@ -119,26 +134,22 @@ function fc_handle_send_test_email() {
     if ( ! isset( $_POST['fc_test_nonce'] ) || ! wp_verify_nonce( wp_unslash( $_POST['fc_test_nonce'] ), 'fc_send_test_email' ) ) {
         wp_die( esc_html__( 'Solicitud no válida.', 'flacso-flacso-formulario-consultas' ) );
     }
-    $to = isset( $_POST['fc_test_email'] ) ? sanitize_email( wp_unslash( $_POST['fc_test_email'] ) ) : '';
-    if ( ! is_email( $to ) ) {
-        $to = get_option( 'admin_email' );
-    }
+    $user = wp_get_current_user();
+    $result = fc_send_general_inquiry( [
+        'event_id' => wp_generate_uuid4(),
+        'nombre'   => 'Prueba',
+        'apellido' => 'FLACSO',
+        'email'    => $user->user_email,
+        'telefono' => '+598 0000 0000',
+        'asunto'   => 'Consulta de prueba',
+        'mensaje'  => 'Mensaje de prueba enviado desde Formulario general.',
+    ] );
 
-    $site_name  = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
-    $from_name  = $site_name;
-    $from_email = get_option( 'fc_google_impersonated', 'noreply@flacso.edu.uy' );
-    $headers    = [ 'Content-Type: text/html; charset=UTF-8', 'Reply-To: ' . $site_name . ' <' . $from_email . '>' ];
-    $subject    = sprintf( __( 'Prueba de correo – %s', 'flacso-flacso-formulario-consultas' ), $site_name );
-    $body_inner = '<p>' . esc_html__( 'Este es un mensaje de prueba del plugin Formulario de Consultas.', 'flacso-flacso-formulario-consultas' ) . '</p>'
-                . '<p>' . esc_html__( 'Si recibes este correo, la configuración de envío está funcionando.', 'flacso-flacso-formulario-consultas' ) . '</p>';
-    $body       = function_exists('fc_wrap_email_html') ? fc_wrap_email_html( $body_inner, __( 'Prueba de correo', 'flacso-flacso-formulario-consultas' ) ) : $body_inner;
-
-    $ok = fc_send_via_wp_mail_with_fallbacks( $to, $subject, $body, $headers, $from_name, fc_get_fallback_senders_list() );
-
-    $res = $ok ? 'success' : 'fail';
+    $ok = ! empty( $result['ok'] ) && 'failed' !== ( $result['acuse'] ?? '' );
+    $args = [ 'fc_test' => $ok ? 'success' : 'fail' ];
     $redirect_url = class_exists( 'FLACSO_Integrations_Settings' )
-        ? FLACSO_Integrations_Settings::get_redirect_url_from_request( [ 'fc_test' => $res ], fc_get_consultas_settings_page_url() )
-        : fc_get_consultas_settings_page_url( [ 'fc_test' => $res ] );
+        ? FLACSO_Integrations_Settings::get_redirect_url_from_request( $args, fc_get_consultas_settings_page_url() )
+        : fc_get_consultas_settings_page_url( $args );
     wp_safe_redirect( $redirect_url );
     exit;
 }
@@ -224,9 +235,9 @@ function fc_settings_admin_notices() {
     if ( 'fc_options_page' === $page ) {
         if ( isset( $_GET['fc_test'] ) ) {
             if ( $_GET['fc_test'] === 'success' ) {
-                echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Correo de prueba enviado correctamente.', 'flacso-flacso-formulario-consultas' ) . '</p></div>';
+                echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Consulta de prueba enviada: revisá la casilla de recepción, tu correo y Telegram.', 'flacso-flacso-formulario-consultas' ) . '</p></div>';
             } else {
-                echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'No se pudo enviar el correo de prueba. Revisa la configuración o el registro (debug.log).', 'flacso-flacso-formulario-consultas' ) . '</p></div>';
+                echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'No se pudo completar la consulta de prueba. Revisá la conexión con Mautic en FLACSO › Correos.', 'flacso-flacso-formulario-consultas' ) . '</p></div>';
             }
         }
     }

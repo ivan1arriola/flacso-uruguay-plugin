@@ -1006,7 +1006,7 @@ class FLACSO_Mautic_Client {
      * @param array|null $payload Cuerpo JSON, o null si la operación no lo requiere.
      * @return array{ok: bool, status: string, http_code: int, error: ?string, data: array}
      */
-    public static function send_general_inquiry_notification(array $inquiry): array {
+    public static function send_general_inquiry_notification(array $inquiry, string $recipient_email = 'inscripciones@flacso.edu.uy', string $subject = ''): array {
         $reply_to = trim((string) ($inquiry['email'] ?? ''));
         if (preg_match('/[\r\n]/', $reply_to) || filter_var($reply_to, FILTER_VALIDATE_EMAIL) === false) {
             return self::contact_operation_failure('Correo de contacto inválido.');
@@ -1014,29 +1014,70 @@ class FLACSO_Mautic_Client {
 
         // Resolve the institutional recipient, never the visitor. Do not put
         // the inquiry in mutable contact fields or enroll anyone in campaigns.
-        $recipient = self::ensure_delivery_recipient('inscripciones@flacso.edu.uy', 'Inscripciones', 'FLACSO Uruguay');
+        $recipient = self::ensure_delivery_recipient($recipient_email, 'Consultas', 'FLACSO Uruguay');
         if (empty($recipient['ok'])) {
             return self::contact_operation_failure('No fue posible preparar el destinatario en Mautic.');
         }
         $name = trim((string) ($inquiry['nombre'] ?? '') . ' ' . (string) ($inquiry['apellido'] ?? ''));
-        $subject = preg_replace('/[\r\n]+/', ' ', (string) ($inquiry['asunto'] ?? 'Consulta general'));
+        $inquiry_subject = preg_replace('/[\r\n]+/', ' ', (string) ($inquiry['asunto'] ?? 'Consulta general'));
         $text = 'Nombre: ' . $name . "\nCorreo: " . $reply_to
             . "\nTeléfono: " . (string) ($inquiry['telefono'] ?? '')
-            . "\nAsunto: " . $subject . "\n\nConsulta:\n" . (string) ($inquiry['mensaje'] ?? '');
+            . "\nAsunto: " . $inquiry_subject . "\n\nConsulta:\n" . (string) ($inquiry['mensaje'] ?? '');
         $html = '<!doctype html><html><body><h2>Consulta de contacto — FLACSO Uruguay</h2><div style="white-space:pre-wrap">'
             . nl2br(htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')) . '</div></body></html>';
+        $subject = preg_replace('/[\r\n]+/', ' ', trim($subject));
 
-        // A separate template per inquiry keeps dynamic Reply-To and message
-        // immutable: concurrent submissions cannot overwrite a shared email.
+        return self::send_isolated_inquiry_email(
+            'Consulta general ' . (string) ($inquiry['event_id'] ?? ''),
+            $subject !== '' ? $subject : 'Consulta web FLACSO: ' . $inquiry_subject,
+            $html,
+            $text,
+            $reply_to,
+            (int) $recipient['contact_id']
+        );
+    }
+
+    /**
+     * Acuse de recibo al consultante. La respuesta del consultante vuelve al
+     * correo de recepción, no a una casilla sin atender.
+     */
+    public static function send_general_inquiry_acknowledgement(array $inquiry, string $reply_to, string $subject, string $body): array {
+        $visitor = trim((string) ($inquiry['email'] ?? ''));
+        $reply_to = trim($reply_to);
+        if (preg_match('/[\r\n]/', $visitor) || filter_var($visitor, FILTER_VALIDATE_EMAIL) === false
+            || preg_match('/[\r\n]/', $reply_to) || filter_var($reply_to, FILTER_VALIDATE_EMAIL) === false) {
+            return self::contact_operation_failure('Correo de contacto inválido.');
+        }
+        $recipient = self::ensure_delivery_recipient($visitor, (string) ($inquiry['nombre'] ?? ''), (string) ($inquiry['apellido'] ?? ''));
+        if (empty($recipient['ok'])) {
+            return self::contact_operation_failure('No fue posible preparar el destinatario en Mautic.');
+        }
+        $html = '<!doctype html><html><body><div style="white-space:pre-wrap">'
+            . nl2br(htmlspecialchars($body, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')) . '</div></body></html>';
+
+        return self::send_isolated_inquiry_email(
+            'Acuse consulta general ' . (string) ($inquiry['event_id'] ?? ''),
+            preg_replace('/[\r\n]+/', ' ', trim($subject)),
+            $html,
+            $body,
+            $reply_to,
+            (int) $recipient['contact_id']
+        );
+    }
+
+    /**
+     * Un correo plantilla por consulta mantiene el reply-to y el cuerpo
+     * inmutables: envíos concurrentes no pueden pisar un correo compartido.
+     */
+    private static function send_isolated_inquiry_email(string $name, string $subject, string $html, string $text, string $reply_to, int $contact_id): array {
         $created = self::request_contact_endpoint('/api/emails/new', 'POST', [
-            'name' => 'Consulta general ' . (string) ($inquiry['event_id'] ?? ''),
-            'subject' => 'Consulta web FLACSO: ' . $subject,
+            'name' => $name,
+            'subject' => $subject,
             'emailType' => 'template',
             'isPublished' => true,
             'publicPreview' => false,
             'useOwnerAsMailer' => false,
             'replyToAddress' => $reply_to,
-            'bccAddress' => 'web@flacso.edu.uy',
             'customHtml' => $html,
             'plainText' => $text,
         ]);
@@ -1044,7 +1085,7 @@ class FLACSO_Mautic_Client {
         if (empty($created['ok']) || $email_id <= 0) {
             return self::contact_operation_failure('No fue posible preparar el correo en Mautic.', (int) ($created['http_code'] ?? 0));
         }
-        $sent = self::send_transactional_email_to_contact($email_id, (int) $recipient['contact_id'], []);
+        $sent = self::send_transactional_email_to_contact($email_id, $contact_id, []);
         if ((int) ($sent['http_code'] ?? 0) >= 500) {
             $sent['status'] = 'acceptance_unknown';
             $sent['acceptance_unknown'] = true;

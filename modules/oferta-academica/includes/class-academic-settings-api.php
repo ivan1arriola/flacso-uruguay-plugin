@@ -97,7 +97,6 @@ final class FLACSO_Academic_Settings_API {
                 "flacso_meta_access_token" => $masked_flacso_meta_access_token,
                 "flacso_meta_test_event_code" => get_option("flacso_meta_test_event_code", ""),
                 "flacso_meta_track_pageview" => (bool) get_option("flacso_meta_track_pageview", 1),
-                "flacso_general_inquiries_email" => get_option("flacso_general_inquiries_email", ""),
             ], FLACSO_Carta_Settings::all()) // Textos de la carta: claves y valores por defecto en FLACSO_Carta_Settings
         ]);
     }
@@ -212,9 +211,6 @@ final class FLACSO_Academic_Settings_API {
         }
         if (isset($payload["flacso_meta_track_pageview"])) {
             update_option("flacso_meta_track_pageview", !empty($payload["flacso_meta_track_pageview"]) ? 1 : 0);
-        }
-        if (isset($payload["flacso_general_inquiries_email"])) {
-            update_option("flacso_general_inquiries_email", sanitize_email($payload["flacso_general_inquiries_email"]));
         }
 
         return self::get_settings();
