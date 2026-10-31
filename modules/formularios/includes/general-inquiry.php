@@ -4,47 +4,6 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-/**
- * Copia la consulta en PostgreSQL para que aparezca en la bandeja y la analítica.
- * Es de mejor esfuerzo: WordPress sigue siendo el registro principal y un fallo
- * aquí nunca debe impedir la notificación.
- */
-function fc_mirror_general_inquiry(array $payload): string {
-    try {
-        if (!class_exists('FLACSO_DB')) {
-            require_once dirname(__DIR__, 3) . '/includes/database/class-flacso-db.php';
-        }
-        if (!FLACSO_DB::is_configured()) {
-            return 'not_configured';
-        }
-        if (!class_exists('FLACSO_General_Inquiry_Repository')) {
-            require_once dirname(__DIR__, 3) . '/includes/database/repositories/class-flacso-general-inquiry-repository.php';
-        }
-        (new FLACSO_General_Inquiry_Repository())->insert([
-            'consultaId'         => (string) ($payload['event_id'] ?? ''),
-            'firstName'          => (string) ($payload['nombre'] ?? ''),
-            'lastName'           => (string) ($payload['apellido'] ?? ''),
-            'email'              => (string) ($payload['email'] ?? ''),
-            'phone'              => (string) ($payload['telefono'] ?? ''),
-            'subject'            => (string) ($payload['asunto'] ?? ''),
-            'message'            => (string) ($payload['mensaje'] ?? ''),
-            'source'             => 'Contacto',
-            'campaignProvider'   => $payload['campaign_provider'] ?? null,
-            'campaignSource'     => $payload['campaign_source'] ?? null,
-            'campaignMedium'     => $payload['campaign_medium'] ?? null,
-            'campaignName'       => $payload['campaign_name'] ?? null,
-            'campaignExternalId' => $payload['campaign_external_id'] ?? null,
-            'urlReferer'         => $payload['url_referer'] ?? null,
-            'ipAddress'          => $payload['ip'] ?? null,
-            'userAgent'          => $payload['user_agent'] ?? null,
-        ]);
-        return 'stored';
-    } catch (Throwable $error) {
-        error_log('[FLACSO] No se pudo copiar la consulta general a PostgreSQL: ' . $error->getMessage());
-        return 'failed';
-    }
-}
-
 function fc_send_general_inquiry(array $payload): array {
     $post_id = wp_insert_post([
         'post_type' => 'fc_consulta',
@@ -65,8 +24,6 @@ function fc_send_general_inquiry(array $payload): array {
     if (is_wp_error($post_id) || !$post_id) {
         return ['ok' => false, 'error' => 'No fue posible guardar la consulta.', 'acceptance_unknown' => false];
     }
-
-    update_post_meta($post_id, '_fc_database_status', fc_mirror_general_inquiry($payload));
 
     if (!class_exists('FLACSO_Mailing_Client')) {
         require_once dirname(__DIR__, 3) . '/includes/integrations/class-flacso-mailing-client.php';
