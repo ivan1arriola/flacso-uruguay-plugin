@@ -12,7 +12,6 @@ class FLACSO_Editor_Admin_Mode {
         'cohorte',
         'seminario',
         'edicion',
-        'charla_abierta',
         'fc_consulta',
         'fc_info_request',
     ];
@@ -32,8 +31,6 @@ class FLACSO_Editor_Admin_Mode {
         'fc_oferta_options_page',
         'fc_consultas_overview',
         'fc_info_overview',
-        'flacso-charlas-abiertas-settings',
-        'flacso-charlas-abiertas-visualizador',
         'flacso-main-page',
     ];
 

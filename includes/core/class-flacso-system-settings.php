@@ -17,7 +17,6 @@ final class FLACSO_System_Settings {
 
     private const OPTION_CONSULTAS_WEBHOOK_URL = 'fc_consultas_webhook_url';
     private const OPTION_WEBHOOK_TOKEN = 'flacso_webhook_token';
-    private const OPTION_CHARLAS_WEBHOOK_URL = 'flacso_charlas_abiertas_webhook_url';
     private const OPTION_PREINSCRIPCIONES_WEBHOOK_URL = 'flacso_preinscripciones_webhook_url';
     private const OPTION_TELEGRAM_BOT_TOKEN = FLACSO_Telegram::OPTION_BOT_TOKEN;
     private const OPTION_TELEGRAM_CHAT_ID = FLACSO_Telegram::OPTION_CHAT_ID;
@@ -54,11 +53,6 @@ final class FLACSO_System_Settings {
         register_setting(self::SETTINGS_GROUP, self::OPTION_WEBHOOK_TOKEN, [
             'type' => 'string',
             'sanitize_callback' => 'sanitize_text_field',
-            'default' => '',
-        ]);
-        register_setting(self::SETTINGS_GROUP, self::OPTION_CHARLAS_WEBHOOK_URL, [
-            'type' => 'string',
-            'sanitize_callback' => [self::class, 'sanitize_charlas_webhook_url'],
             'default' => '',
         ]);
         register_setting(self::SETTINGS_GROUP, self::OPTION_PREINSCRIPCIONES_WEBHOOK_URL, [
@@ -100,14 +94,6 @@ final class FLACSO_System_Settings {
 
     public static function sanitize_toggle($value): string {
         return (string) $value === '1' ? '1' : '0';
-    }
-
-    public static function sanitize_charlas_webhook_url($value): string {
-        if (function_exists('flacso_charlas_abiertas_sanitize_webhook_url')) {
-            return (string) flacso_charlas_abiertas_sanitize_webhook_url($value);
-        }
-
-        return (string) esc_url_raw($value);
     }
 
     public static function get_page_url(array $args = []): string {
@@ -159,7 +145,6 @@ final class FLACSO_System_Settings {
             : false;
 
         $consultas_url = trim((string) get_option(self::OPTION_CONSULTAS_WEBHOOK_URL, ''));
-        $charlas_url = trim((string) get_option(self::OPTION_CHARLAS_WEBHOOK_URL, ''));
         $preinscripciones_url = trim((string) get_option(self::OPTION_PREINSCRIPCIONES_WEBHOOK_URL, ''));
         $error_alert_email = (string) get_option(FLACSO_Error_Notifier::OPTION_EMAIL, '');
         ?>
@@ -176,7 +161,6 @@ final class FLACSO_System_Settings {
                     <?php self::status_row(__('Extensión pdo_pgsql', 'flacso-uruguay'), $pdo_ready); ?>
                     <?php self::status_row(__('Mautic transaccional', 'flacso-uruguay'), $mail_ready, __('La configuración se administra en FLACSO > Correos.', 'flacso-uruguay')); ?>
                     <?php self::status_row(__('Consultas generales', 'flacso-uruguay'), $consultas_url !== '', $consultas_url); ?>
-                    <?php self::status_row(__('Charlas abiertas', 'flacso-uruguay'), $charlas_url !== '', $charlas_url); ?>
                     <?php self::status_row(__('Preinscripciones', 'flacso-uruguay'), $preinscripciones_url !== '', $preinscripciones_url); ?>
                 </tbody>
             </table>
@@ -190,10 +174,6 @@ final class FLACSO_System_Settings {
                     <tr>
                         <th scope="row"><label for="<?php echo esc_attr(self::OPTION_CONSULTAS_WEBHOOK_URL); ?>"><?php esc_html_e('Consultas generales', 'flacso-uruguay'); ?></label></th>
                         <td><input class="large-text code" type="url" id="<?php echo esc_attr(self::OPTION_CONSULTAS_WEBHOOK_URL); ?>" name="<?php echo esc_attr(self::OPTION_CONSULTAS_WEBHOOK_URL); ?>" value="<?php echo esc_attr($consultas_url); ?>"></td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><label for="<?php echo esc_attr(self::OPTION_CHARLAS_WEBHOOK_URL); ?>"><?php esc_html_e('Charlas abiertas', 'flacso-uruguay'); ?></label></th>
-                        <td><input class="large-text code" type="url" id="<?php echo esc_attr(self::OPTION_CHARLAS_WEBHOOK_URL); ?>" name="<?php echo esc_attr(self::OPTION_CHARLAS_WEBHOOK_URL); ?>" value="<?php echo esc_attr($charlas_url); ?>"></td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="<?php echo esc_attr(self::OPTION_PREINSCRIPCIONES_WEBHOOK_URL); ?>"><?php esc_html_e('Preinscripciones', 'flacso-uruguay'); ?></label></th>

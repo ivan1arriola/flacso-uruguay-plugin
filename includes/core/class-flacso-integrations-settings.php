@@ -13,7 +13,6 @@ class FLACSO_Integrations_Settings {
     private const OPTION_UNIFIED_WEBHOOK_TOKEN = 'flacso_webhook_token';
     private const OPTION_INFO_REQUEST_WEBHOOK_URL = 'fc_oferta_webhook_url';
     private const OPTION_OFERTA_FLOTANTE_ENDPOINT = 'flacso_oferta_consulta_endpoint_url';
-    private const OPTION_CHARLAS_WEBHOOK_URL = 'flacso_charlas_abiertas_webhook_url';
     private const OPTION_PREINSCRIPCIONES_WEBHOOK_URL = 'flacso_preinscripciones_webhook_url';
     private const OPTION_RECAPTCHA_SITE_KEY = 'fc_recaptcha_site_key';
     private const OPTION_RECAPTCHA_SECRET_KEY = 'fc_recaptcha_secret_key';
@@ -104,22 +103,6 @@ class FLACSO_Integrations_Settings {
             'sanitize_callback' => 'absint',
             'default' => 40,
         ]);
-    }
-
-    public static function sanitize_charlas_webhook_url($value): string {
-        if (function_exists('flacso_charlas_abiertas_sanitize_webhook_url')) {
-            return (string) flacso_charlas_abiertas_sanitize_webhook_url($value);
-        }
-
-        return (string) esc_url_raw($value);
-    }
-
-    public static function sanitize_charlas_webhook_token($value): string {
-        if (function_exists('flacso_charlas_abiertas_sanitize_webhook_token')) {
-            return (string) flacso_charlas_abiertas_sanitize_webhook_token($value);
-        }
-
-        return trim((string) $value);
     }
 
     public static function sanitize_oferta_flotante_endpoint($value): string {
@@ -572,7 +555,6 @@ class FLACSO_Integrations_Settings {
             .card-consultas .flacso-card-icon { background: #eff6ff; color: #3b82f6; }
             .card-ofertas .flacso-card-icon { background: #eef2ff; color: #4338ca; }
             .card-meta .flacso-card-icon { background: #effcf6; color: #059669; }
-            .card-charlas .flacso-card-icon { background: #faf5ff; color: #a855f7; }
             .card-flotante .flacso-card-icon { background: #fef2f2; color: #ef4444; }
             .card-preinscripciones .flacso-card-icon { background: #ecfdf5; color: #10b981; }
             .card-mailjet .flacso-card-icon { background: #effcf6; color: #16a34a; }
@@ -1146,11 +1128,6 @@ class FLACSO_Integrations_Settings {
                                 code = finalUrl.searchParams.get('fc_oferta_webhook_code') || '';
                                 message = finalUrl.searchParams.get('fc_oferta_webhook_message') || '';
                                 tokenVar = 'FLACSO_WEBHOOK_TOKEN';
-                            } else if (finalUrl.searchParams.has('flacso_charlas_webhook_test')) {
-                                status = finalUrl.searchParams.get('flacso_charlas_webhook_test');
-                                code = finalUrl.searchParams.get('flacso_charlas_webhook_code') || '';
-                                message = finalUrl.searchParams.get('flacso_charlas_webhook_message') || '';
-                                tokenVar = 'FLACSO_WEBHOOK_TOKEN';
                             } else if (finalUrl.searchParams.has('flacso_preinscripciones_webhook_test')) {
                                 status = finalUrl.searchParams.get('flacso_preinscripciones_webhook_test');
                                 code = finalUrl.searchParams.get('flacso_preinscripciones_webhook_code') || '';
@@ -1549,34 +1526,6 @@ class FLACSO_Integrations_Settings {
         <span class="flacso-meta-status-badge flacso-meta-status-badge--<?php echo esc_attr($variant); ?>">
             <?php echo esc_html($label); ?>
         </span>
-        <?php
-    }
-
-    private static function render_charlas_card(): void {
-        ?>
-        <section class="flacso-integrations-card card-charlas">
-            <div class="flacso-card-header">
-                <div class="flacso-card-icon-title">
-                    <span class="flacso-card-icon">🎤</span>
-                    <h2><?php esc_html_e('Charlas abiertas', 'flacso-uruguay'); ?></h2>
-                </div>
-                <p class="flacso-integrations-lead"><?php esc_html_e('Configura el webhook que recibe inscripciones para la app. Comparte el mismo token global.', 'flacso-uruguay'); ?></p>
-            </div>
-
-            <div class="flacso-card-body">
-                <?php
-                self::render_input_field(
-                    self::OPTION_CHARLAS_WEBHOOK_URL,
-                    __('Webhook URL', 'flacso-uruguay'),
-                    'url',
-                    'https://tu-dominio.com/api/charlas/inscripciones',
-                    __('Ruta sugerida si el destino es FLACSO Editor.', 'flacso-uruguay')
-                );
-                ?>
-            </div>
-
-            <span class="flacso-integrations-note">🔒 <?php esc_html_e('Usa el Token Global superior', 'flacso-uruguay'); ?></span>
-        </section>
         <?php
     }
 
@@ -2011,16 +1960,6 @@ class FLACSO_Integrations_Settings {
             $message = isset($_GET['fc_oferta_webhook_message']) ? sanitize_text_field(wp_unslash($_GET['fc_oferta_webhook_message'])) : '';
             fc_render_webhook_test_notice($status, $code, $message, 'FLACSO_WEBHOOK_TOKEN');
         }
-
-        if (!isset($_GET['flacso_charlas_webhook_test'])) {
-            return;
-        }
-
-        $status = sanitize_key(wp_unslash($_GET['flacso_charlas_webhook_test']));
-        $code = isset($_GET['flacso_charlas_webhook_code']) ? absint(wp_unslash($_GET['flacso_charlas_webhook_code'])) : 0;
-        $message = isset($_GET['flacso_charlas_webhook_message']) ? sanitize_text_field(wp_unslash($_GET['flacso_charlas_webhook_message'])) : '';
-
-        fc_render_webhook_test_notice($status, $code, $message, 'FLACSO_WEBHOOK_TOKEN');
     }
 
     private static function render_meta_inline_notice(): void {

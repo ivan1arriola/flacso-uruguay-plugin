@@ -75,7 +75,6 @@ final class FLACSO_Academic_Settings_API {
                 // Variables de integraciones
                 "fc_consultas_webhook_url" => get_option("fc_consultas_webhook_url", ""),
                 "fc_oferta_webhook_url" => get_option("fc_oferta_webhook_url", ""),
-                "flacso_charlas_abiertas_webhook_url" => get_option("flacso_charlas_abiertas_webhook_url", ""),
                 "flacso_preinscripciones_webhook_url" => get_option("flacso_preinscripciones_webhook_url", ""),
                 "flacso_oferta_consulta_endpoint_url" => get_option("flacso_oferta_consulta_endpoint_url", ""),
                 "flacso_external_editor_url" => get_option("flacso_external_editor_url", "https://editor.flacso.edu.uy"),
@@ -129,9 +128,6 @@ final class FLACSO_Academic_Settings_API {
         }
         if (isset($payload["fc_oferta_webhook_url"])) {
             update_option("fc_oferta_webhook_url", esc_url_raw($payload["fc_oferta_webhook_url"]));
-        }
-        if (isset($payload["flacso_charlas_abiertas_webhook_url"])) {
-            update_option("flacso_charlas_abiertas_webhook_url", esc_url_raw($payload["flacso_charlas_abiertas_webhook_url"]));
         }
         if (isset($payload["flacso_preinscripciones_webhook_url"])) {
             update_option("flacso_preinscripciones_webhook_url", esc_url_raw($payload["flacso_preinscripciones_webhook_url"]));
