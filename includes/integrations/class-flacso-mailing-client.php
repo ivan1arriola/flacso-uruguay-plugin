@@ -12,9 +12,9 @@ final class FLACSO_Mailing_Client {
             && is_string(WP_WEBHOOK_HMAC_SECRET) && strlen(WP_WEBHOOK_HMAC_SECRET) >= 32;
     }
 
+    /** Mautic es el único proveedor de correos; el ajuste que permitía elegir Mailing se retiró. */
     public static function delivery_provider(): string {
-        $provider = function_exists('get_option') ? strtolower(trim((string) get_option('flacso_inquiry_delivery_provider', 'mautic'))) : 'mautic';
-        return in_array($provider, ['mautic', 'flacso_mail'], true) ? $provider : 'mautic';
+        return 'mautic';
     }
 
     /** Send the immutable academic inquiry event using the same key and bytes on every retry. */
