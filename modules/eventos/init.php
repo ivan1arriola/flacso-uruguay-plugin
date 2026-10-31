@@ -11,6 +11,7 @@ flacso_require('modules/eventos/includes/class-cpt-eventos-manager.php');
 flacso_require('modules/eventos/includes/homepage.php');
 flacso_require('modules/eventos/includes/event-fields.php');
 flacso_require('modules/eventos/includes/rest.php');
+flacso_require('modules/eventos/includes/admin-list.php');
 
 add_action('init', static function (): void {
     new CPT_Eventos_Manager();
