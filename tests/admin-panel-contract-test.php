@@ -28,9 +28,13 @@ foreach (['programa-academico', 'oferta-academica', 'cohorte', 'seminario', 'edi
     panel_assert(strpos($panel, "edit.php?post_type={$post_type}") !== false, "falta acceso a {$post_type}");
 }
 
-foreach (['Contenido', 'Inscripciones', 'Análisis', 'Configuración'] as $group) {
-    panel_assert(strpos($panel, "__('{$group}', 'flacso-uruguay') => [") !== false, "falta el grupo de menú {$group}");
+$organizer = file_get_contents($root . '/includes/core/class-flacso-admin-menu-organizer.php');
+foreach (['Inicio FLACSO', 'Formación', 'Sitio y contenidos', 'Inscripciones y consultas', 'Diseño del sitio', 'Sistema y herramientas'] as $group) {
+    panel_assert(strpos($organizer, "__('{$group}', 'flacso-uruguay')") !== false, "falta el grupo de menú {$group}");
 }
-panel_assert(strpos($panel, 'flacso-menu-group') !== false, 'los grupos del menú tienen estilo propio');
+panel_assert(strpos($main, 'class-flacso-admin-menu-organizer.php') !== false, 'el plugin carga el organizador del menú');
+panel_assert(strpos($panel, 'flacso-menu-group') === false && strpos($panel, "'Contenido'") === false, 'el panel ya no agrupa el submenú: lo hace el organizador');
+panel_assert(strpos($panel, "'resumen'     => ['title' => __('Panel FLACSO'") !== false, 'la barra superior conserva el acceso al panel');
+panel_assert(strpos($panel, "admin.php?page=' . self::PAGE_SLUG") !== false, 'el panel conserva su slug canónico en la barra superior');
 
 fwrite(STDOUT, "OK FLACSO admin panel contract\n");

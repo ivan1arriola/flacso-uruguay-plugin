@@ -56,6 +56,7 @@ require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-academic-assistan
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-editor-admin-mode.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-integrations-settings.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-admin-panel.php';
+require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-admin-menu-organizer.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-system-settings.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-preinscription-links-admin.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-legacy-redirects.php';
