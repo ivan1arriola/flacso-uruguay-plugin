@@ -170,8 +170,8 @@ final class FLACSO_System_Settings {
 
         $pg_ready = self::pg_is_configured();
         $pdo_ready = extension_loaded('pdo_pgsql');
-        $mail_ready = class_exists('FLACSO_Mail_Settings')
-            ? FLACSO_Mail_Settings::is_transactional_ready()
+        $mail_ready = class_exists('FLACSO_Mautic_Client')
+            ? FLACSO_Mautic_Client::is_configured()
             : false;
 
         $consultas_url = trim((string) get_option(self::OPTION_CONSULTAS_WEBHOOK_URL, ''));
@@ -190,7 +190,7 @@ final class FLACSO_System_Settings {
                 <tbody>
                     <?php self::status_row(__('PostgreSQL configurado', 'flacso-uruguay'), $pg_ready, __('Se usan las constantes FLACSO_PG_* del servidor.', 'flacso-uruguay')); ?>
                     <?php self::status_row(__('Extensión pdo_pgsql', 'flacso-uruguay'), $pdo_ready); ?>
-                    <?php self::status_row(__('Mailjet transaccional', 'flacso-uruguay'), $mail_ready, __('La configuración se administra en FLACSO > Correos.', 'flacso-uruguay')); ?>
+                    <?php self::status_row(__('Mautic transaccional', 'flacso-uruguay'), $mail_ready, __('La configuración se administra en FLACSO > Correos.', 'flacso-uruguay')); ?>
                     <?php self::status_row(__('Consultas generales', 'flacso-uruguay'), $consultas_url !== '', $consultas_url); ?>
                     <?php self::status_row(__('Charlas abiertas', 'flacso-uruguay'), $charlas_url !== '', $charlas_url); ?>
                     <?php self::status_row(__('Preinscripciones', 'flacso-uruguay'), $preinscripciones_url !== '', $preinscripciones_url); ?>
