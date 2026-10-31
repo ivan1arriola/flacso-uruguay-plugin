@@ -4,128 +4,35 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-add_action('rest_api_init', 'flacso_charlas_abiertas_register_rest_routes');
-function flacso_charlas_abiertas_register_rest_routes() {
+add_action('rest_api_init', 'flacso_eventos_register_rest_routes');
+function flacso_eventos_register_rest_routes() {
     register_rest_route('flacso-charlas/v1', '/eventos', [
         'methods' => 'GET',
-        'callback' => 'flacso_charlas_abiertas_list_charlas',
+        'callback' => 'flacso_eventos_list_events',
         'permission_callback' => '__return_true',
         'args' => [
             'page' => ['default' => 1, 'sanitize_callback' => 'absint'],
             'per_page' => ['default' => 10, 'sanitize_callback' => 'absint'],
             'search' => ['sanitize_callback' => 'sanitize_text_field'],
             'modalidad' => ['sanitize_callback' => 'sanitize_text_field'],
-            'desde' => ['sanitize_callback' => 'sanitize_text_field', 'validate_callback' => 'flacso_charlas_abiertas_validate_iso8601_arg'],
-            'hasta' => ['sanitize_callback' => 'sanitize_text_field', 'validate_callback' => 'flacso_charlas_abiertas_validate_iso8601_arg'],
+            'desde' => ['sanitize_callback' => 'sanitize_text_field', 'validate_callback' => 'flacso_eventos_validate_iso8601_arg'],
+            'hasta' => ['sanitize_callback' => 'sanitize_text_field', 'validate_callback' => 'flacso_eventos_validate_iso8601_arg'],
             'order' => ['default' => 'desc', 'sanitize_callback' => 'sanitize_text_field'],
         ],
     ]);
 
     register_rest_route('flacso-charlas/v1', '/eventos/(?P<id>\d+)', [
         'methods' => 'GET',
-        'callback' => 'flacso_charlas_abiertas_get_charla',
+        'callback' => 'flacso_eventos_get_event',
         'permission_callback' => '__return_true',
         'args' => [
             'id' => ['required' => true, 'sanitize_callback' => 'absint'],
         ],
     ]);
-
-    register_rest_route('flacso-charlas/v1', '/charla-abierta', [
-        'methods' => 'GET',
-        'callback' => 'flacso_charlas_abiertas_list_charlas',
-        'permission_callback' => '__return_true',
-        'args' => [
-            'page' => [
-                'default' => 1,
-                'sanitize_callback' => 'absint',
-            ],
-            'per_page' => [
-                'default' => 10,
-                'sanitize_callback' => 'absint',
-            ],
-            'search' => [
-                'sanitize_callback' => 'sanitize_text_field',
-            ],
-            'modalidad' => [
-                'sanitize_callback' => 'sanitize_text_field',
-            ],
-            'desde' => [
-                'sanitize_callback' => 'sanitize_text_field',
-                'validate_callback' => 'flacso_charlas_abiertas_validate_iso8601_arg',
-            ],
-            'hasta' => [
-                'sanitize_callback' => 'sanitize_text_field',
-                'validate_callback' => 'flacso_charlas_abiertas_validate_iso8601_arg',
-            ],
-            'order' => [
-                'default' => 'desc',
-                'sanitize_callback' => 'sanitize_text_field',
-            ],
-        ],
-    ]);
-
-    register_rest_route('flacso-charlas/v1', '/charla-abierta/(?P<id>\d+)', [
-        'methods' => 'GET',
-        'callback' => 'flacso_charlas_abiertas_get_charla',
-        'permission_callback' => '__return_true',
-        'args' => [
-            'id' => [
-                'required' => true,
-                'sanitize_callback' => 'absint',
-            ],
-        ],
-    ]);
-
-    // Alias de compatibilidad hacia atrás.
-    register_rest_route('flacso-charlas/v1', '/charlas', [
-        'methods' => 'GET',
-        'callback' => 'flacso_charlas_abiertas_list_charlas',
-        'permission_callback' => '__return_true',
-        'args' => [
-            'page' => [
-                'default' => 1,
-                'sanitize_callback' => 'absint',
-            ],
-            'per_page' => [
-                'default' => 10,
-                'sanitize_callback' => 'absint',
-            ],
-            'search' => [
-                'sanitize_callback' => 'sanitize_text_field',
-            ],
-            'modalidad' => [
-                'sanitize_callback' => 'sanitize_text_field',
-            ],
-            'desde' => [
-                'sanitize_callback' => 'sanitize_text_field',
-                'validate_callback' => 'flacso_charlas_abiertas_validate_iso8601_arg',
-            ],
-            'hasta' => [
-                'sanitize_callback' => 'sanitize_text_field',
-                'validate_callback' => 'flacso_charlas_abiertas_validate_iso8601_arg',
-            ],
-            'order' => [
-                'default' => 'desc',
-                'sanitize_callback' => 'sanitize_text_field',
-            ],
-        ],
-    ]);
-
-    register_rest_route('flacso-charlas/v1', '/charlas/(?P<id>\d+)', [
-        'methods' => 'GET',
-        'callback' => 'flacso_charlas_abiertas_get_charla',
-        'permission_callback' => '__return_true',
-        'args' => [
-            'id' => [
-                'required' => true,
-                'sanitize_callback' => 'absint',
-            ],
-        ],
-    ]);
 }
 
-add_filter('rest_prepare_evento', 'flacso_charlas_abiertas_expose_charla_in_wp_json', 10, 3);
-function flacso_charlas_abiertas_expose_charla_in_wp_json($response, $post, $request) {
+add_filter('rest_prepare_evento', 'flacso_eventos_expose_in_wp_json', 10, 3);
+function flacso_eventos_expose_in_wp_json($response, $post, $request) {
     if (!($response instanceof WP_REST_Response)) {
         return $response;
     }
@@ -135,7 +42,7 @@ function flacso_charlas_abiertas_expose_charla_in_wp_json($response, $post, $req
         return $response;
     }
 
-    $charla_data = flacso_charlas_abiertas_build_charla_data($post);
+    $charla_data = flacso_eventos_build_event_data($post);
     if (!is_array($charla_data)) {
         return $response;
     }
@@ -145,7 +52,7 @@ function flacso_charlas_abiertas_expose_charla_in_wp_json($response, $post, $req
     return $response;
 }
 
-function flacso_charlas_abiertas_validate_iso8601_arg($value, $request, $param) {
+function flacso_eventos_validate_iso8601_arg($value, $request, $param) {
     if (null === $value || '' === $value) {
         return true;
     }
@@ -161,11 +68,11 @@ function flacso_charlas_abiertas_validate_iso8601_arg($value, $request, $param) 
     }
 }
 
-function flacso_charlas_abiertas_processing_ms($started_at) {
+function flacso_eventos_processing_ms($started_at) {
     return round((microtime(true) - $started_at) * 1000, 2);
 }
 
-function flacso_charlas_abiertas_error_response($started_at, $http_status, $code, $message, $details = null) {
+function flacso_eventos_error_response($started_at, $http_status, $code, $message, $details = null) {
     return new WP_REST_Response([
         'ok' => false,
         'code' => $code,
@@ -174,27 +81,27 @@ function flacso_charlas_abiertas_error_response($started_at, $http_status, $code
             'message' => $message,
             'details' => $details,
         ],
-        'processing_ms' => flacso_charlas_abiertas_processing_ms($started_at),
+        'processing_ms' => flacso_eventos_processing_ms($started_at),
     ], $http_status);
 }
 
-function flacso_charlas_abiertas_success_response($started_at, $code, $data) {
+function flacso_eventos_success_response($started_at, $code, $data) {
     return new WP_REST_Response([
         'ok' => true,
         'code' => $code,
         'data' => $data,
         'error' => null,
-        'processing_ms' => flacso_charlas_abiertas_processing_ms($started_at),
+        'processing_ms' => flacso_eventos_processing_ms($started_at),
     ], 200);
 }
 
-function flacso_charlas_abiertas_is_public_charla($post) {
+function flacso_eventos_is_public_event($post) {
     return $post
-        && in_array($post->post_type, ['evento', 'charla_abierta'], true)
+        && 'evento' === $post->post_type
         && 'publish' === $post->post_status;
 }
 
-function flacso_charlas_abiertas_parse_inicio_timestamp($inicio) {
+function flacso_eventos_parse_inicio_timestamp($inicio) {
     if (!is_scalar($inicio) || '' === trim((string) $inicio)) {
         return null;
     }
@@ -206,7 +113,7 @@ function flacso_charlas_abiertas_parse_inicio_timestamp($inicio) {
     }
 }
 
-function flacso_charlas_abiertas_build_charla_data($post) {
+function flacso_eventos_build_event_data($post) {
     $post = get_post($post);
     if (!$post) {
         return null;
@@ -214,9 +121,7 @@ function flacso_charlas_abiertas_build_charla_data($post) {
 
     $inicio = (string) get_post_meta($post->ID, '_charla_inicio', true);
     $modalidad = (string) get_post_meta($post->ID, '_charla_modalidad', true);
-    $plataforma_reunion = function_exists('flacso_charlas_abiertas_normalize_reunion_platform')
-        ? flacso_charlas_abiertas_normalize_reunion_platform(get_post_meta($post->ID, '_charla_plataforma_reunion', true))
-        : 'zoom';
+    $plataforma_reunion = flacso_eventos_normalize_reunion_platform(get_post_meta($post->ID, '_charla_plataforma_reunion', true));
     $reunion_join_url = (string) get_post_meta($post->ID, '_charla_reunion_join_url', true);
     $zoom_join_url = (string) get_post_meta($post->ID, '_charla_zoom_join_url', true);
     if ('' === $reunion_join_url && '' !== $zoom_join_url) {
@@ -231,20 +136,14 @@ function flacso_charlas_abiertas_build_charla_data($post) {
     $lugar_nombre = (string) get_post_meta($post->ID, '_charla_lugar_nombre', true);
     $direccion = (string) get_post_meta($post->ID, '_charla_direccion', true);
     $google_maps_url = (string) get_post_meta($post->ID, '_charla_google_maps_url', true);
-    $descripcion = function_exists('flacso_charlas_abiertas_get_charla_descripcion_html')
-        ? flacso_charlas_abiertas_get_charla_descripcion_html($post)
-        : ((string) get_post_meta($post->ID, '_charla_descripcion', true) ?: (string) $post->post_content);
+    $descripcion = flacso_eventos_get_description_html($post);
     $post_featured_image = get_the_post_thumbnail_url($post, 'full');
-    $inicio_timestamp = flacso_charlas_abiertas_parse_inicio_timestamp($inicio);
+    $inicio_timestamp = flacso_eventos_parse_inicio_timestamp($inicio);
     $is_unified_event = 'evento' === $post->post_type;
     $post_id = $is_unified_event ? 0 : (int) get_post_meta($post->ID, '_charla_post_id', true);
     $evento_id = $is_unified_event ? (int) $post->ID : (int) get_post_meta($post->ID, '_charla_evento_id', true);
-    $sync_post_enabled = function_exists('flacso_charlas_abiertas_should_sync_post')
-        ? flacso_charlas_abiertas_should_sync_post($post->ID)
-        : !empty(get_post_meta($post->ID, '_charla_sync_post', true));
-    $sync_evento_enabled = function_exists('flacso_charlas_abiertas_should_sync_evento')
-        ? flacso_charlas_abiertas_should_sync_evento($post->ID)
-        : !empty(get_post_meta($post->ID, '_charla_sync_evento', true));
+    $sync_post_enabled = !empty(get_post_meta($post->ID, '_charla_sync_post', true));
+    $sync_evento_enabled = !empty(get_post_meta($post->ID, '_charla_sync_evento', true));
     $ocultar_post = get_post_meta($post->ID, '_charla_ocultar_post', true);
     $ocultar_evento = get_post_meta($post->ID, '_charla_ocultar_evento', true);
 
@@ -296,7 +195,7 @@ function flacso_charlas_abiertas_build_charla_data($post) {
     ];
 }
 
-function flacso_charlas_abiertas_list_charlas(WP_REST_Request $request) {
+function flacso_eventos_list_events(WP_REST_Request $request) {
     $started_at = microtime(true);
     $page = max(1, absint($request->get_param('page')));
     $per_page = absint($request->get_param('per_page'));
@@ -366,10 +265,10 @@ function flacso_charlas_abiertas_list_charlas(WP_REST_Request $request) {
     $items = [];
 
     foreach ($query->posts as $post) {
-        $items[] = flacso_charlas_abiertas_build_charla_data($post);
+        $items[] = flacso_eventos_build_event_data($post);
     }
 
-    return flacso_charlas_abiertas_success_response(
+    return flacso_eventos_success_response(
         $started_at,
         'CHARLAS_LIST',
         [
@@ -391,25 +290,25 @@ function flacso_charlas_abiertas_list_charlas(WP_REST_Request $request) {
     );
 }
 
-function flacso_charlas_abiertas_get_charla(WP_REST_Request $request) {
+function flacso_eventos_get_event(WP_REST_Request $request) {
     $started_at = microtime(true);
     $charla_id = absint($request->get_param('id'));
     $post = get_post($charla_id);
 
-    if (!$post || !flacso_charlas_abiertas_is_public_charla($post)) {
-        return flacso_charlas_abiertas_error_response(
+    if (!$post || !flacso_eventos_is_public_event($post)) {
+        return flacso_eventos_error_response(
             $started_at,
             404,
             'NOT_FOUND',
-            'La charla solicitada no existe o no está publicada.',
+            'El evento solicitado no existe o no está publicado.',
             null
         );
     }
 
-    return flacso_charlas_abiertas_success_response(
+    return flacso_eventos_success_response(
         $started_at,
         'CHARLA_FOUND',
-        flacso_charlas_abiertas_build_charla_data($post)
+        flacso_eventos_build_event_data($post)
     );
 }
 

@@ -54,7 +54,6 @@ flacso-uruguay-plugin/
 │   ├── eventos/
 │   ├── autoridades/
 │   ├── convenios/
-│   ├── charlas-abiertas/
 │   ├── formularios/
 │   ├── formularios-webhook/
 │   ├── preinscripcion/

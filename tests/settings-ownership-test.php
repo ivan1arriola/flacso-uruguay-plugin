@@ -77,7 +77,7 @@ ownership_assert(strpos($mail_init, "FLACSO_Mail_Settings::init()") !== false, '
 // Sistema solo conserva dependencias técnicas todavía externas.
 ownership_assert(strpos($system, "PAGE_SLUG = 'flacso-sistema'") !== false, 'Sistema debe tener página propia');
 ownership_assert(strpos($system, "fc_consultas_webhook_url") !== false, 'Sistema debe administrar la consulta general todavía externa');
-ownership_assert(strpos($system, "flacso_charlas_abiertas_webhook_url") !== false, 'Sistema debe administrar Charlas');
+ownership_assert(strpos($system, "flacso_charlas_abiertas_webhook_url") === false, 'Sistema no debe exponer el webhook retirado de Charlas');
 ownership_assert(strpos($system, "flacso_preinscripciones_webhook_url") !== false, 'Sistema debe administrar Preinscripciones');
 ownership_assert(strpos($system, "fc_oferta_webhook_url") === false, 'Sistema no debe exponer webhook de ofertas');
 ownership_assert(strpos($system, "flacso_oferta_consulta_endpoint_url") === false, 'Sistema no debe exponer endpoint flotante de ofertas');
