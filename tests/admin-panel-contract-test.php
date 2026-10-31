@@ -28,4 +28,9 @@ foreach (['programa-academico', 'oferta-academica', 'cohorte', 'seminario', 'edi
     panel_assert(strpos($panel, "edit.php?post_type={$post_type}") !== false, "falta acceso a {$post_type}");
 }
 
+foreach (['Contenido', 'Inscripciones', 'Análisis', 'Configuración'] as $group) {
+    panel_assert(strpos($panel, "__('{$group}', 'flacso-uruguay') => [") !== false, "falta el grupo de menú {$group}");
+}
+panel_assert(strpos($panel, 'flacso-menu-group') !== false, 'los grupos del menú tienen estilo propio');
+
 fwrite(STDOUT, "OK FLACSO admin panel contract\n");

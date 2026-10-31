@@ -17,6 +17,7 @@ final class FLACSO_Admin_Panel {
         add_action('admin_menu', [self::class, 'register_menu'], 1);
         add_action('admin_menu', [self::class, 'sort_submenus'], 999);
         add_action('admin_enqueue_scripts', [self::class, 'enqueue_assets']);
+        add_action('admin_head', [self::class, 'print_menu_styles']);
     }
 
     public static function register_menu(): void {
@@ -121,25 +122,54 @@ final class FLACSO_Admin_Panel {
                 return true;
             }
         ));
-        $order = [
-            self::PAGE_SLUG => 0,
-            'edit.php?post_type=programa-academico' => 10,
-            'edit.php?post_type=oferta-academica' => 20,
-            'edit.php?post_type=cohorte' => 30,
-            'edit.php?post_type=seminario' => 40,
-            'edit.php?post_type=edicion' => 50,
-            'edit.php?post_type=tabla-precio' => 60,
-            'flacso-main-page' => 70,
-            'flacso-carta-textos' => 72,
-            'fc_options_page' => 75,
-            'flacso-consultas' => 78,
-            'flacso-correos' => 80,
-            'flacso-integracion-meta' => 90,
-            'flacso-sistema' => 100,
+        $groups = [
+            __('Contenido', 'flacso-uruguay') => [
+                'edit.php?post_type=programa-academico', 'edit.php?post_type=oferta-academica', 'edit.php?post_type=cohorte',
+                'edit.php?post_type=seminario', 'edit.php?post_type=edicion', 'edit.php?post_type=tabla-precio',
+                'flacso-main-page', 'flacso-carta-textos',
+            ],
+            __('Inscripciones', 'flacso-uruguay') => [
+                'flacso-consultas', 'flacso-preinscripcion-links', 'fc_options_page', 'flacso-correos',
+            ],
+            __('Análisis', 'flacso-uruguay') => [
+                'flacso-consultas-resumen', 'flacso-consultas-oferta-pais', 'flacso-consultas-comparacion',
+                'flacso-consultas-campanas', 'flacso-consultas-exportar', 'flacso-integracion-meta',
+            ],
+            __('Configuración', 'flacso-uruguay') => ['flacso-sistema'],
         ];
+        $order = [self::PAGE_SLUG => 0];
+        $position = 10;
+        foreach ($groups as $slugs) {
+            foreach ($slugs as $slug) {
+                $order[$slug] = $position++;
+            }
+            $position += 10;
+        }
         usort($submenu[self::PAGE_SLUG], static function (array $left, array $right) use ($order): int {
             return ($order[$left[2]] ?? 500) <=> ($order[$right[2]] ?? 500);
         });
+
+        // Títulos de grupo: sólo para los grupos con al menos un ítem visible.
+        $grouped = [];
+        $seen = [];
+        foreach ($submenu[self::PAGE_SLUG] as $item) {
+            foreach ($groups as $label => $slugs) {
+                if (in_array($item[2], $slugs, true) && !isset($seen[$label])) {
+                    $seen[$label] = true;
+                    $grouped[] = [$label, self::capability(), 'flacso-grupo-' . sanitize_title($label), '', 'flacso-menu-group'];
+                }
+            }
+            $grouped[] = $item;
+        }
+        $submenu[self::PAGE_SLUG] = $grouped;
+    }
+
+    /** Los títulos de grupo del menú no son enlaces. */
+    public static function print_menu_styles(): void {
+        echo '<style id="flacso-menu-groups">'
+            . '#adminmenu .wp-submenu li.flacso-menu-group{pointer-events:none;margin-top:6px;border-top:1px solid rgba(255,255,255,.12)}'
+            . '#adminmenu .wp-submenu li.flacso-menu-group a{color:#8c93a0!important;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}'
+            . '</style>';
     }
 
     public static function render(): void {
