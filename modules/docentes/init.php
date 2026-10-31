@@ -23,6 +23,7 @@ define('FLACSO_MAIN_DOCENTES_MODULE_LOADED', true);
 // Cargar clases principales del modulo.
 flacso_safe_require('modules/docentes/includes/class-cpt-docente.php');
 flacso_safe_require('modules/docentes/includes/class-docente-meta.php');
+flacso_safe_require('modules/docentes/includes/class-docente-appearances.php');
 
 // Cargar archivos de utilidades.
 flacso_safe_require('modules/docentes/includes/assets.php');

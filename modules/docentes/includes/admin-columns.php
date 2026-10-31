@@ -11,6 +11,7 @@ add_filter('manage_docente_posts_columns', function ($columns) {
         'title' => __('Persona', 'flacso-uruguay'),
         'roles' => __('Función institucional', 'flacso-uruguay'),
         'cargo' => __('Cargo', 'flacso-uruguay'),
+        'apariciones' => __('En la web', 'flacso-uruguay'),
         'perfil' => __('Perfil público', 'flacso-uruguay'),
     ];
 });
@@ -35,6 +36,23 @@ add_action('manage_docente_posts_custom_column', function ($column, $post_id) {
             $cargo = trim((string) get_post_meta($post_id, 'cargo', true));
             echo $cargo !== '' ? esc_html($cargo) : '<span class="flacso-team-muted">' . esc_html__('Sin cargo registrado', 'flacso-uruguay') . '</span>';
             break;
+        case 'apariciones':
+            $appearances = Docente_Appearances::for_person((int) $post_id);
+            if ($appearances['total'] === 0) {
+                echo '<span class="flacso-team-muted">' . esc_html__('No aparece', 'flacso-uruguay') . '</span>';
+                break;
+            }
+            $parts = [];
+            foreach (Docente_Appearances::kinds() as $kind => $labels) {
+                $count = (int) ($appearances['kinds'][$kind] ?? 0);
+                if ($count > 0) {
+                    $parts[] = $count . ' ' . ($count === 1 ? $labels[0] : $labels[1]);
+                }
+            }
+            echo '<strong class="flacso-team-appearances" title="' . esc_attr(implode("
+", $appearances['titles'])) . '">' . (int) $appearances['total'] . '</strong>';
+            echo '<span class="flacso-team-muted"> · ' . esc_html(implode(', ', $parts)) . '</span>';
+            break;
         case 'perfil':
             if (get_post_status($post_id) === 'publish') {
                 echo '<a href="' . esc_url(get_permalink($post_id)) . '" target="_blank" rel="noopener noreferrer">' . esc_html__('Ver perfil ↗', 'flacso-uruguay') . '</a>';
@@ -44,6 +62,32 @@ add_action('manage_docente_posts_custom_column', function ($column, $post_id) {
             break;
     }
 }, 10, 2);
+
+// Ordenar por cantidad de apariciones: el índice es global, así que el orden se arma con los IDs.
+add_filter('manage_edit-docente_sortable_columns', function ($columns) {
+    $columns['apariciones'] = ['apariciones', true];
+    return $columns;
+});
+
+add_action('pre_get_posts', function ($query) {
+    if (!is_admin() || !($query instanceof WP_Query) || !$query->is_main_query()) return;
+    if ($query->get('post_type') !== 'docente' || $query->get('orderby') !== 'apariciones') return;
+
+    $ids = get_posts([
+        'post_type' => 'docente',
+        'post_status' => 'any',
+        'posts_per_page' => -1,
+        'fields' => 'ids',
+        'no_found_rows' => true,
+    ]);
+    $direction = strtolower((string) $query->get('order')) === 'asc' ? 1 : -1;
+    usort($ids, static function ($a, $b) use ($direction) {
+        $diff = Docente_Appearances::for_person((int) $a)['total'] <=> Docente_Appearances::for_person((int) $b)['total'];
+        return $diff !== 0 ? $diff * $direction : strcasecmp(get_the_title($a), get_the_title($b));
+    });
+    $query->set('post__in', $ids ?: [0]);
+    $query->set('orderby', 'post__in');
+});
 
 // Imagen junto al título original, sin alterar los enlaces ni las acciones de WP.
 add_action('admin_head-edit.php', function () {
@@ -57,9 +101,11 @@ add_action('admin_head-edit.php', function () {
       body.post-type-docente .wp-list-table tbody tr:nth-child(odd) {background:#f8fafc}
       body.post-type-docente .wp-list-table tbody tr:hover {background:#eef5fd}
       body.post-type-docente .wp-list-table td {vertical-align:middle;padding-top:13px;padding-bottom:13px}
-      body.post-type-docente .column-title {width:37%}
-      body.post-type-docente .column-roles {width:21%}
-      body.post-type-docente .column-cargo {width:25%}
+      body.post-type-docente .column-title {width:31%}
+      body.post-type-docente .column-roles {width:17%}
+      body.post-type-docente .column-cargo {width:20%}
+      body.post-type-docente .column-apariciones {width:22%}
+      body.post-type-docente .flacso-team-appearances {font-size:15px;color:#213b65;cursor:help}
       body.post-type-docente .column-perfil {width:13%}
       body.post-type-docente .flacso-team-identity {display:flex;gap:12px;align-items:center}
       body.post-type-docente .flacso-team-avatar {height:44px;width:44px;flex:0 0 44px;border-radius:50%;object-fit:cover;background:#dce6f3;color:#234878;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700}
@@ -70,7 +116,7 @@ add_action('admin_head-edit.php', function () {
       body.post-type-docente .tablenav .actions select,body.post-type-docente .search-box input[type=search] {min-height:36px;border-color:#bfcddd}
       body.post-type-docente .button-primary {background:#2c4777;border-color:#2c4777}
       @media(max-width:782px) {
-        body.post-type-docente .wp-list-table .column-roles,body.post-type-docente .wp-list-table .column-cargo,body.post-type-docente .wp-list-table .column-perfil {display:none}
+        body.post-type-docente .wp-list-table .column-roles,body.post-type-docente .wp-list-table .column-cargo,body.post-type-docente .wp-list-table .column-apariciones,body.post-type-docente .wp-list-table .column-perfil {display:none}
         body.post-type-docente .wp-list-table .column-title {width:auto}
         body.post-type-docente .flacso-team-avatar {width:38px;height:38px;flex-basis:38px}
         body.post-type-docente .flacso-team-identity {gap:9px}
