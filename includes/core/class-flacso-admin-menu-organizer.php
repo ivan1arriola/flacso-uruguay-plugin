@@ -93,7 +93,7 @@ final class FLACSO_Admin_Menu_Organizer {
         $assign(self::GROUP_CONTENIDOS, [
             'flacso-main-page', 'flacso-carta-textos', 'flacso-autoridades',
             'edit.php', 'edit.php?post_type=page', 'edit.php?post_type=evento', 'visualizador_eventos',
-            'edit.php?post_type=flacso_faq', 'upload.php', 'media-new.php', 'edit-comments.php',
+            'edit.php?post_type=flacso_faq', 'edit.php?post_type=pregunta-frecuente', 'upload.php', 'media-new.php', 'edit-comments.php',
         ]);
 
         $assign(self::GROUP_INSCRIPCIONES, [
@@ -103,7 +103,7 @@ final class FLACSO_Admin_Menu_Organizer {
             'fc_consultas_overview', 'fc_info_overview',
         ]);
 
-        $assign(self::GROUP_DISENO, ['themes.php', 'customize.php', 'site-editor.php', 'nav-menus.php', 'widgets.php']);
+        $assign(self::GROUP_DISENO, ['themes.php', 'customize.php', 'site-editor.php', 'nav-menus.php', 'widgets.php', 'font-library.php']);
 
         $assign(self::GROUP_SISTEMA, [
             'flacso-sistema', 'flacso-integracion-meta', 'flacso-integraciones',
@@ -117,9 +117,24 @@ final class FLACSO_Admin_Menu_Organizer {
     /** Grupo de una ruta interna; las rutas sin clasificar caen en Sistema y herramientas. */
     public static function group_for_slug(string $slug): string {
         $slug = trim($slug);
+        // Un enlace escrito como admin.php?page=x es la misma pantalla que x.
+        if (preg_match('#^admin\.php\?page=([^&]+)#', $slug, $page)) {
+            $slug = rawurldecode($page[1]);
+        }
         $manifest = self::group_manifest();
         if (isset($manifest[$slug])) {
             return $manifest[$slug];
+        }
+
+        // Accesos externos de los asistentes: se agrupan según el servicio al que llevan.
+        if (preg_match('#^https?://([^/]+)#i', $slug, $host)) {
+            if (stripos($host[1], 'preinscripciones') !== false) {
+                return self::GROUP_INSCRIPCIONES;
+            }
+            if (stripos($host[1], 'salavirtual') !== false) {
+                return self::GROUP_FORMACION;
+            }
+            return self::GROUP_SISTEMA;
         }
 
         $query = [];
@@ -133,7 +148,7 @@ final class FLACSO_Admin_Menu_Organizer {
             'edicion' => self::GROUP_FORMACION, 'tabla-precio' => self::GROUP_FORMACION,
             'convenio' => self::GROUP_FORMACION, 'docente' => self::GROUP_FORMACION,
             'page' => self::GROUP_CONTENIDOS, 'evento' => self::GROUP_CONTENIDOS,
-            'flacso_faq' => self::GROUP_CONTENIDOS, 'attachment' => self::GROUP_CONTENIDOS,
+            'flacso_faq' => self::GROUP_CONTENIDOS, 'pregunta-frecuente' => self::GROUP_CONTENIDOS, 'attachment' => self::GROUP_CONTENIDOS,
             'fc_consulta' => self::GROUP_INSCRIPCIONES, 'fc_info_request' => self::GROUP_INSCRIPCIONES,
         ];
         $post_type = isset($query['post_type']) ? (string) $query['post_type'] : '';
@@ -158,6 +173,8 @@ final class FLACSO_Admin_Menu_Organizer {
             'flacso-consultas' => self::GROUP_INSCRIPCIONES,
             'flacso-preinscripcion' => self::GROUP_INSCRIPCIONES,
             'kadence' => self::GROUP_DISENO,
+            'themes.php' => self::GROUP_DISENO,
+            'customize.php' => self::GROUP_DISENO,
         ];
         foreach ($prefixes as $prefix => $group) {
             if (strpos($slug, $prefix) === 0) {
@@ -268,12 +285,19 @@ final class FLACSO_Admin_Menu_Organizer {
         foreach ($indexed as $row) {
             $group = $row['group'];
             if (!isset($seen[$group]) && self::user_can_see($row['item'])) {
+                // WordPress enlaza el menú FLACSO a su primera entrada: el primer encabezado
+                // apunta a una pantalla real; los demás son anclas inertes.
+                $target = $seen === [] ? self::link_for((string) $row['item'][2]) : '#flacso-grupo-' . $group;
                 $seen[$group] = true;
-                $result[] = [$groups[$group], 'read', 'flacso-grupo-' . $group, '', self::HEADING_CLASS];
+                $result[] = [$groups[$group], 'read', $target, '', self::HEADING_CLASS];
             }
             $result[] = $row['item'];
         }
         return $result;
+    }
+
+    private static function link_for(string $slug): string {
+        return strpos($slug, '.php') !== false ? $slug : 'admin.php?page=' . $slug;
     }
 
     public static function filter_parent_file($parent_file) {

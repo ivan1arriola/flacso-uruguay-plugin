@@ -29,8 +29,9 @@ $expected = [
     'post-new.php?post_type=seminario' => 'formacion',
     'edit.php' => 'contenidos', 'edit.php?post_type=page' => 'contenidos', 'upload.php' => 'contenidos', 'edit.php?post_type=flacso_faq' => 'contenidos',
     'edit-tags.php?taxonomy=category' => 'contenidos',
-    'flacso-consultas' => 'inscripciones', 'fc_options_page' => 'inscripciones', 'flacso-correos' => 'inscripciones', 'flacso-consultas-exportar' => 'inscripciones',
-    'themes.php' => 'diseno', 'customize.php' => 'diseno', 'kadence' => 'diseno', 'kadence-starter-templates' => 'diseno',
+    'flacso-consultas' => 'inscripciones', 'admin.php?page=flacso-consultas' => 'inscripciones', 'admin.php?page=flacso-sistema' => 'sistema', 'fc_options_page' => 'inscripciones', 'flacso-correos' => 'inscripciones', 'flacso-consultas-exportar' => 'inscripciones',
+    'themes.php' => 'diseno', 'customize.php' => 'diseno', 'font-library.php' => 'diseno', 'themes.php?page=kadence' => 'diseno', 'edit.php?post_type=pregunta-frecuente' => 'contenidos', 'post-new.php?post_type=pregunta-frecuente' => 'contenidos', 'kadence' => 'diseno', 'kadence-starter-templates' => 'diseno',
+    'https://preinscripciones.flacso.edu.uy' => 'inscripciones', 'https://salavirtual.flacso.edu.uy' => 'formacion', 'https://ejemplo.org/otro' => 'sistema',
     'flacso-sistema' => 'sistema', 'options-general.php' => 'sistema', 'users.php' => 'sistema', 'tools.php' => 'sistema', 'plugins.php' => 'sistema',
     'googlesitekit-dashboard' => 'sistema', 'rank-math' => 'sistema', 'smush' => 'sistema', 'action-scheduler' => 'sistema',
 ];
@@ -100,13 +101,17 @@ foreach ([
 $headings = array_values(array_filter(root_entries(), static fn($e) => ($e[4] ?? '') === 'flacso-menu-group'));
 check(array_map(static fn($e) => $e[0], $headings) === ['Inicio FLACSO', 'Formación', 'Sitio y contenidos', 'Inscripciones y consultas', 'Diseño del sitio', 'Sistema y herramientas'], 'Los seis encabezados aparecen en orden');
 check(count(array_unique(array_map(static fn($e) => $e[2], $headings))) === 6, 'Cada encabezado tiene identificador propio');
+check(root_entries()[0][2] === 'admin.php?page=flacso-panel', 'El menú FLACSO enlaza a una pantalla real, no a un encabezado');
+foreach (array_slice($headings, 1) as $heading) {
+    check($heading[2][0] === '#', 'Los demás encabezados son anclas inertes y no rutas de wp-admin');
+}
 check(array_unique(array_map(static fn($e) => $e[1], $headings)) === ['read'], 'Los encabezados no exigen más que iniciar sesión');
 
 // Orden: cada ruta queda entre el encabezado de su grupo y el siguiente.
 $current = '';
 $by_group = [];
 foreach (root_entries() as $entry) {
-    if (($entry[4] ?? '') === 'flacso-menu-group') { $current = $entry[2]; continue; }
+    if (($entry[4] ?? '') === 'flacso-menu-group') { $current = 'flacso-grupo-' . array_search($entry[0], FLACSO_Admin_Menu_Organizer::groups(), true); continue; }
     $by_group[$current][] = $entry[2];
 }
 check(($by_group['flacso-grupo-inicio'] ?? []) === ['flacso-panel'], 'Inicio FLACSO contiene el panel');
