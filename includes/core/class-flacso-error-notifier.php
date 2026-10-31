@@ -8,8 +8,6 @@ if (!defined('ABSPATH')) {
  * Envía alertas operativas por errores originados dentro del plugin.
  */
 final class FLACSO_Error_Notifier {
-    public const OPTION_TELEGRAM_BOT_TOKEN = 'flacso_error_alert_telegram_bot_token';
-    public const OPTION_TELEGRAM_CHAT_ID = 'flacso_error_alert_telegram_chat_id';
     public const OPTION_EMAIL = 'flacso_error_alert_email';
 
     private const DEDUPLICATION_SECONDS = 900;
@@ -149,28 +147,7 @@ final class FLACSO_Error_Notifier {
     }
 
     private static function send_telegram(string $text): bool {
-        $token = trim((string) get_option(self::OPTION_TELEGRAM_BOT_TOKEN, ''));
-        $chat_id = trim((string) get_option(self::OPTION_TELEGRAM_CHAT_ID, ''));
-        if ($token === '' || $chat_id === '' || !function_exists('wp_remote_post')) {
-            return false;
-        }
-
-        $response = wp_remote_post(
-            'https://api.telegram.org/bot' . rawurlencode($token) . '/sendMessage',
-            [
-                'timeout' => 5,
-                'body' => [
-                    'chat_id' => $chat_id,
-                    'text' => self::truncate($text, 3900),
-                    'disable_web_page_preview' => true,
-                ],
-            ]
-        );
-
-        return !is_wp_error($response)
-            && function_exists('wp_remote_retrieve_response_code')
-            && wp_remote_retrieve_response_code($response) >= 200
-            && wp_remote_retrieve_response_code($response) < 300;
+        return class_exists('FLACSO_Telegram') && FLACSO_Telegram::send(self::truncate($text, 3900), false, 5);
     }
 
     private static function send_email(string $text): bool {

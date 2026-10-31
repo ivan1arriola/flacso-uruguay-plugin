@@ -47,6 +47,7 @@ define('FLACSO_OFERTA_ACADEMICA_URL', FLACSO_URUGUAY_URL);
 // Carga de funciones principales
 // ============================================
 require_once FLACSO_URUGUAY_PATH . 'includes/core/helpers.php';
+require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-telegram.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-error-notifier.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-mautic-integration-log.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-rest-visibility.php';

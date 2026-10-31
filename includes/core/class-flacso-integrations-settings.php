@@ -15,8 +15,6 @@ class FLACSO_Integrations_Settings {
     private const OPTION_OFERTA_FLOTANTE_ENDPOINT = 'flacso_oferta_consulta_endpoint_url';
     private const OPTION_CHARLAS_WEBHOOK_URL = 'flacso_charlas_abiertas_webhook_url';
     private const OPTION_PREINSCRIPCIONES_WEBHOOK_URL = 'flacso_preinscripciones_webhook_url';
-    private const OPTION_TELEGRAM_BOT_TOKEN = 'fc_telegram_bot_token';
-    private const OPTION_TELEGRAM_CHAT_ID = 'fc_telegram_chat_id';
     private const OPTION_RECAPTCHA_SITE_KEY = 'fc_recaptcha_site_key';
     private const OPTION_RECAPTCHA_SECRET_KEY = 'fc_recaptcha_secret_key';
     private const OPTION_EXTERNAL_EDITOR_URL = 'flacso_external_editor_url';
@@ -1865,20 +1863,6 @@ class FLACSO_Integrations_Settings {
 
             <div class="flacso-card-body">
                 <?php
-                self::render_input_field(
-                    self::OPTION_TELEGRAM_BOT_TOKEN,
-                    __('Telegram Bot Token', 'flacso-uruguay'),
-                    'password',
-                    '123456789:ABC-DEF1234ghIkl-zyx57W2v1u123ew11',
-                    __('Se usa si están activadas las notificaciones por Telegram en el formulario general.', 'flacso-uruguay')
-                );
-                self::render_input_field(
-                    self::OPTION_TELEGRAM_CHAT_ID,
-                    __('Telegram Chat ID', 'flacso-uruguay'),
-                    'text',
-                    '7456441753 o -1001234567890',
-                    __('Chat o canal de destino para las notificaciones.', 'flacso-uruguay')
-                );
                 self::render_input_field(
                     self::OPTION_RECAPTCHA_SITE_KEY,
                     __('reCAPTCHA Site Key', 'flacso-uruguay'),

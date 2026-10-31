@@ -51,7 +51,6 @@ final class FLACSO_Academic_Settings_API {
         }
 
         $token = get_option("flacso_webhook_token", "");
-        $telegram_bot_token = get_option("flacso_preinscripciones_telegram_bot_token", "");
         $fc_telegram_bot_token = get_option("fc_telegram_bot_token", "");
         $fc_recaptcha_secret_key = get_option("fc_recaptcha_secret_key", "");
         $flacso_mailjet_api_key = get_option("flacso_mailjet_api_key", "");
@@ -59,7 +58,6 @@ final class FLACSO_Academic_Settings_API {
         $flacso_meta_access_token = get_option("flacso_meta_access_token", "");
 
         $masked_token = !empty($token) && !$include_secrets ? "********" : $token;
-        $masked_telegram_bot_token = !empty($telegram_bot_token) && !$include_secrets ? "********" : $telegram_bot_token;
         $masked_fc_telegram_bot_token = !empty($fc_telegram_bot_token) && !$include_secrets ? "********" : $fc_telegram_bot_token;
         $masked_fc_recaptcha_secret_key = !empty($fc_recaptcha_secret_key) && !$include_secrets ? "********" : $fc_recaptcha_secret_key;
         $masked_flacso_mailjet_api_key = !empty($flacso_mailjet_api_key) && !$include_secrets ? "********" : $flacso_mailjet_api_key;
@@ -72,8 +70,6 @@ final class FLACSO_Academic_Settings_API {
                 "flacso_webhook_token" => $masked_token,
                 "flacso_google_drive_folder_id" => get_option("flacso_google_drive_folder_id", ""),
                 "flacso_webhook_forms_drive_folder_id" => get_option("flacso_webhook_forms_drive_folder_id", ""),
-                "flacso_preinscripciones_telegram_bot_token" => $masked_telegram_bot_token,
-                "flacso_preinscripciones_telegram_chat_id" => get_option("flacso_preinscripciones_telegram_chat_id", ""),
                 "correos_excluidos" => get_option("flacso_correos_excluidos", ""),
 
                 // Variables de integraciones
@@ -121,15 +117,6 @@ final class FLACSO_Academic_Settings_API {
         }
         if (isset($payload["flacso_webhook_forms_drive_folder_id"])) {
             update_option("flacso_webhook_forms_drive_folder_id", sanitize_text_field($payload["flacso_webhook_forms_drive_folder_id"]));
-        }
-        if (isset($payload["flacso_preinscripciones_telegram_bot_token"])) {
-            $new_telegram_bot_token = sanitize_text_field($payload["flacso_preinscripciones_telegram_bot_token"]);
-            if ($new_telegram_bot_token !== "********") {
-                update_option("flacso_preinscripciones_telegram_bot_token", $new_telegram_bot_token);
-            }
-        }
-        if (isset($payload["flacso_preinscripciones_telegram_chat_id"])) {
-            update_option("flacso_preinscripciones_telegram_chat_id", sanitize_text_field($payload["flacso_preinscripciones_telegram_chat_id"]));
         }
         if (isset($payload["correos_excluidos"])) {
             update_option("flacso_correos_excluidos", sanitize_textarea_field($payload["correos_excluidos"]));

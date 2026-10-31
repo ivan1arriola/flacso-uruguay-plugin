@@ -13,8 +13,8 @@ if (!defined('MINUTE_IN_SECONDS')) {
 }
 
 $GLOBALS['flacso_error_notifier_options'] = [
-    'flacso_error_alert_telegram_bot_token' => '',
-    'flacso_error_alert_telegram_chat_id' => '',
+    'fc_telegram_bot_token' => '',
+    'fc_telegram_chat_id' => '',
     'flacso_error_alert_email' => '',
     'admin_email' => 'admin@flacso.edu.uy',
 ];
@@ -84,10 +84,11 @@ function error_notifier_assert(bool $condition, string $message): void {
     }
 }
 
+require_once dirname(__DIR__) . '/includes/core/class-flacso-telegram.php';
 require_once dirname(__DIR__) . '/includes/core/class-flacso-error-notifier.php';
 
-$GLOBALS['flacso_error_notifier_options']['flacso_error_alert_telegram_bot_token'] = '123:token';
-$GLOBALS['flacso_error_notifier_options']['flacso_error_alert_telegram_chat_id'] = '-100123';
+$GLOBALS['flacso_error_notifier_options']['fc_telegram_bot_token'] = '123:token';
+$GLOBALS['flacso_error_notifier_options']['fc_telegram_chat_id'] = '-100123';
 
 error_notifier_assert(
     FLACSO_Error_Notifier::report('Database unavailable', __FILE__, 101),
@@ -110,8 +111,8 @@ error_notifier_assert(
     'la prueba manual debe indicar su contexto'
 );
 
-$GLOBALS['flacso_error_notifier_options']['flacso_error_alert_telegram_bot_token'] = '';
-$GLOBALS['flacso_error_notifier_options']['flacso_error_alert_telegram_chat_id'] = '';
+$GLOBALS['flacso_error_notifier_options']['fc_telegram_bot_token'] = '';
+$GLOBALS['flacso_error_notifier_options']['fc_telegram_chat_id'] = '';
 $GLOBALS['flacso_error_notifier_options']['flacso_error_alert_email'] = 'operaciones@flacso.edu.uy';
 error_notifier_assert(
     FLACSO_Error_Notifier::report('Mailer unavailable', __FILE__, 202),
@@ -126,8 +127,8 @@ error_notifier_assert(
 );
 error_notifier_assert(count($GLOBALS['flacso_error_notifier_mail_calls']) === 1, 'no debe repetir el correo para el mismo error');
 
-$GLOBALS['flacso_error_notifier_options']['flacso_error_alert_telegram_bot_token'] = '123:token';
-$GLOBALS['flacso_error_notifier_options']['flacso_error_alert_telegram_chat_id'] = '-100123';
+$GLOBALS['flacso_error_notifier_options']['fc_telegram_bot_token'] = '123:token';
+$GLOBALS['flacso_error_notifier_options']['fc_telegram_chat_id'] = '-100123';
 $GLOBALS['flacso_error_notifier_http_response'] = ['response' => ['code' => 502]];
 error_notifier_assert(
     FLACSO_Error_Notifier::report('Telegram unavailable', __FILE__, 252),
@@ -135,7 +136,7 @@ error_notifier_assert(
 );
 error_notifier_assert(count($GLOBALS['flacso_error_notifier_mail_calls']) === 2, 'debe usar correo tras un fallo de Telegram');
 
-$GLOBALS['flacso_error_notifier_options']['flacso_error_alert_telegram_bot_token'] = '';
+$GLOBALS['flacso_error_notifier_options']['fc_telegram_bot_token'] = '';
 error_notifier_assert(
     FLACSO_Error_Notifier::handle_php_error(E_WARNING, 'Plugin warning', __FILE__, 303) === false,
     'debe preservar el manejador normal de PHP despues de alertar errores del plugin'

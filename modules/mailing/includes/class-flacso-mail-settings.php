@@ -127,18 +127,6 @@ final class FLACSO_Mail_Settings {
         ];
 
         if (class_exists('FLACSO_Error_Notifier')) {
-            $settings[FLACSO_Error_Notifier::OPTION_TELEGRAM_BOT_TOKEN] = [
-                'type' => 'string',
-                'sanitize_callback' => static function ($value): string {
-                    return self::sanitize_secret($value, FLACSO_Error_Notifier::OPTION_TELEGRAM_BOT_TOKEN);
-                },
-                'default' => '',
-            ];
-            $settings[FLACSO_Error_Notifier::OPTION_TELEGRAM_CHAT_ID] = [
-                'type' => 'string',
-                'sanitize_callback' => 'sanitize_text_field',
-                'default' => '',
-            ];
             $settings[FLACSO_Error_Notifier::OPTION_EMAIL] = [
                 'type' => 'string',
                 'sanitize_callback' => 'sanitize_email',
@@ -384,11 +372,8 @@ final class FLACSO_Mail_Settings {
         $mailing_base_url = self::sanitize_mailing_base_url(get_option(self::OPTION_MAILING_BASE_URL, ''));
         $nonce = wp_create_nonce(self::AJAX_NONCE_ACTION);
 
-        $telegram_token_option = class_exists('FLACSO_Error_Notifier') ? FLACSO_Error_Notifier::OPTION_TELEGRAM_BOT_TOKEN : '';
-        $telegram_chat_option = class_exists('FLACSO_Error_Notifier') ? FLACSO_Error_Notifier::OPTION_TELEGRAM_CHAT_ID : '';
         $alert_email_option = class_exists('FLACSO_Error_Notifier') ? FLACSO_Error_Notifier::OPTION_EMAIL : '';
 
-        $telegram_chat = $telegram_chat_option !== '' ? (string) get_option($telegram_chat_option, '') : '';
         $alert_email = $alert_email_option !== '' ? (string) get_option($alert_email_option, '') : '';
         ?>
         <div class="wrap flacso-mautic-admin">
@@ -546,18 +531,19 @@ final class FLACSO_Mail_Settings {
                             </span>
                         </label>
 
-                        <?php if ($telegram_token_option !== ''): ?>
-                            <div class="flacso-credentials-grid">
-                                <div class="flacso-field">
-                                    <label for="<?php echo esc_attr($telegram_token_option); ?>"><?php esc_html_e('Telegram Bot Token', 'flacso-uruguay'); ?></label>
-                                    <input class="large-text code" type="password" autocomplete="new-password" id="<?php echo esc_attr($telegram_token_option); ?>" name="<?php echo esc_attr($telegram_token_option); ?>" value="" placeholder="123456:ABC…">
-                                    <p class="description"><?php echo esc_html(self::secret_hint($telegram_token_option)); ?></p>
-                                </div>
-                                <div class="flacso-field">
-                                    <label for="<?php echo esc_attr($telegram_chat_option); ?>"><?php esc_html_e('Telegram Chat ID', 'flacso-uruguay'); ?></label>
-                                    <input class="large-text code" type="text" id="<?php echo esc_attr($telegram_chat_option); ?>" name="<?php echo esc_attr($telegram_chat_option); ?>" value="<?php echo esc_attr($telegram_chat); ?>" placeholder="-1001234567890">
-                                </div>
-                            </div>
+                        <?php if ($alert_email_option !== ''): ?>
+                            <p class="description">
+                                <?php
+                                echo wp_kses(
+                                    sprintf(
+                                        /* translators: %s: URL de la pantalla Sistema */
+                                        __('El bot y el chat de Telegram se configuran en un solo lugar: <a href="%s">FLACSO › Sistema</a>.', 'flacso-uruguay'),
+                                        esc_url(admin_url('admin.php?page=flacso-sistema'))
+                                    ),
+                                    ['a' => ['href' => []]]
+                                );
+                                ?>
+                            </p>
                             <div class="flacso-field">
                                 <label for="<?php echo esc_attr($alert_email_option); ?>"><?php esc_html_e('Correo de respaldo', 'flacso-uruguay'); ?></label>
                                 <input class="large-text" type="email" id="<?php echo esc_attr($alert_email_option); ?>" name="<?php echo esc_attr($alert_email_option); ?>" value="<?php echo esc_attr($alert_email); ?>">
