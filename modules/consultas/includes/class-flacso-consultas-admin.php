@@ -510,8 +510,8 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					if ( is_array( $live ) && ! empty( $live['found'] ) ) {
 						return self::render_live_campaign_cell( $live );
 					}
-					return '<span class="flacso-badge sent mautic" title="' . esc_attr__( 'La campaña de la oferta envía el acuse y, pasados los días configurados, el seguimiento, salvo que la persona se inscriba.', 'flacso-uruguay' ) . '">acuse por campaña</span>'
-						. '<small class="flacso-delivery-caption">' . esc_html__( 'Acuse y seguimiento en la campaña', 'flacso-uruguay' ) . '</small>';
+					return '<span class="flacso-badge pending" title="' . esc_attr__( 'La consulta entró a la campaña; no se pudo confirmar el envío del correo en Mautic.', 'flacso-uruguay' ) . '">envío sin confirmar</span>'
+						. '<small class="flacso-delivery-caption">' . esc_html__( 'Consulta incorporada a la campaña', 'flacso-uruguay' ) . '</small>';
 				}
 
 				$html = self::render_email_status_badge( $row );
@@ -562,6 +562,11 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 						$class = 'failed';
 						$title = __( 'Mautic no pudo enviar el acuse.', 'flacso-uruguay' );
 						break;
+					case 'suppressed':
+						$label = 'acuse bloqueado';
+						$class = 'failed';
+						$title = __( 'El contacto tiene una baja de correo en Mautic; el acuse no se envió.', 'flacso-uruguay' );
+						break;
 					default:
 						$label = 'acuse pendiente';
 						$class = 'pending';
@@ -587,6 +592,9 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 						break;
 					case 'failed':
 						$caption = 'Seguimiento falló';
+						break;
+					case 'suppressed':
+						$caption = 'Sin seguimiento: baja de correo';
 						break;
 					default:
 						$caption = 'Seguimiento pendiente';

@@ -185,13 +185,14 @@ status_assert(str_contains($render(['followUp' => ['state' => 'sent', 'at' => '2
 status_assert(str_contains($render(['acuse' => ['kind' => 'cerrada'], 'followUp' => ['state' => 'not_applicable']]), 'Sin seguimiento: oferta cerrada'), 'oferta cerrada');
 status_assert(str_contains($render(['acuse' => ['state' => 'failed']]), 'acuse falló'), 'acuse fallido');
 status_assert(str_contains($render(['acuse' => ['state' => 'queued']]), 'acuse en cola'), 'acuse en cola');
+status_assert(str_contains($render(['acuse' => ['state' => 'suppressed'], 'followUp' => ['state' => 'suppressed']]), 'acuse bloqueado') && str_contains($render(['acuse' => ['state' => 'suppressed'], 'followUp' => ['state' => 'suppressed']]), 'baja de correo'), 'baja previa visible en la bandeja');
 status_assert(str_contains($render(['acuse' => ['state' => 'pending', 'at' => null], 'followUp' => ['state' => 'pending', 'at' => null]]), 'Seguimiento pendiente'), 'recién incorporada');
 
 // Sin datos de Mautic: lo de siempre
 $fallback = FLACSO_Consultas_Admin::render_delivery_cell(joined_row('x'), true, null);
-status_assert(str_contains($fallback, 'Acuse y seguimiento en la campaña'), 'sin respuesta de Mautic muestra el texto genérico');
+status_assert(str_contains($fallback, 'envío sin confirmar'), 'sin respuesta de Mautic no afirma que salió el acuse');
 $not_found = FLACSO_Consultas_Admin::render_delivery_cell(joined_row('x'), true, ['found' => false]);
-status_assert(str_contains($not_found, 'Acuse y seguimiento en la campaña'), 'contacto no encontrado en Mautic: texto genérico');
+status_assert(str_contains($not_found, 'envío sin confirmar'), 'contacto no encontrado en Mautic: estado sin confirmar');
 status_assert(!str_contains(FLACSO_Consultas_Admin::render_delivery_cell(joined_row('x', ['mauticCampaignStatus' => 'skipped']), true, $live), 'acuse enviado'), 'fuera de campaña no se usa el estado de Mautic');
 
 echo "OK offer-campaign-status-test\n";
