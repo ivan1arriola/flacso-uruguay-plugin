@@ -8,6 +8,8 @@ class FLACSO_Meta_Tracking {
     private const AJAX_ACTION = 'flacso_meta_track_event';
     private const GRAPH_API_VERSION = 'v25.0';
     private const LAST_TEST_OPTION = 'flacso_meta_last_test_result';
+    private const QUEUE_HOOK = 'flacso_meta_send_queued_event';
+    private const MAX_REQUESTS_PER_MINUTE = 30;
     private static $noscript_rendered = false;
 
     public static function init(): void {
@@ -18,6 +20,7 @@ class FLACSO_Meta_Tracking {
         add_action('wp_ajax_' . self::AJAX_ACTION, [self::class, 'handle_track_event']);
         add_action('wp_ajax_nopriv_' . self::AJAX_ACTION, [self::class, 'handle_track_event']);
         add_action('admin_post_flacso_meta_test_event', [self::class, 'handle_admin_test_event']);
+        add_action(self::QUEUE_HOOK, [self::class, 'process_queued_event'], 10, 3);
     }
 
     public static function enqueue_frontend_assets(): void {
@@ -114,20 +117,65 @@ class FLACSO_Meta_Tracking {
             'external_id' => $external_id,
         ]);
 
-        $response = self::send_capi_event($settings, $payload);
+        // El seguimiento es auxiliar: no debe bloquear trabajadores PHP mientras Meta responde.
+        // La limitación es por IP y agente, únicamente para este endpoint.
+        $client_key = hash('sha256', self::get_client_ip_address() . '|' . self::get_user_agent());
+        $rate_key = 'flacso_meta_rate_' . substr($client_key, 0, 32);
+        $count = (int) get_transient($rate_key);
+        if ($count >= self::MAX_REQUESTS_PER_MINUTE) {
+            wp_send_json_success(['queued' => false, 'reason' => 'rate_limited']);
+        }
+        set_transient($rate_key, $count + 1, MINUTE_IN_SECONDS);
 
-        if (is_wp_error($response)) {
-            self::log_error('request_failed', $response->get_error_message());
-            wp_send_json_error(['message' => 'request_failed'], 502);
+        // La misma ID se comparte con Pixel para deduplicar. Ignorar reenvíos del navegador.
+        $dedup_key = 'flacso_meta_dedup_' . md5($event_name . ':' . $event_id);
+        if (get_transient($dedup_key)) {
+            wp_send_json_success(['queued' => false, 'reason' => 'duplicate', 'event_id' => $event_id]);
         }
 
-        $status_code = (int) wp_remote_retrieve_response_code($response);
-        if ($status_code < 200 || $status_code >= 300) {
-            self::log_error('http_' . $status_code, wp_remote_retrieve_body($response));
-            wp_send_json_error(['message' => 'meta_rejected', 'status' => $status_code], 502);
+        // Preferir Action Scheduler si está disponible; fallback a WP-Cron.
+        // El evento incluye la IP y User-Agent obtenidos antes de salir de AJAX.
+        $queued = false;
+        $test_code = (string) ($settings['test_event_code'] ?? '');
+        if (function_exists('as_enqueue_async_action')) {
+            $queued = (bool) as_enqueue_async_action(self::QUEUE_HOOK, [$payload, $test_code, 0], 'flacso-meta');
+        } else {
+            $queued = (bool) wp_schedule_single_event(time() + 5, self::QUEUE_HOOK, [$payload, $test_code, 0]);
         }
 
-        wp_send_json_success(['sent' => true, 'event_id' => $event_id]);
+        if (!$queued) {
+            wp_send_json_error(['message' => 'queue_unavailable'], 503);
+        }
+
+        set_transient($dedup_key, 1, DAY_IN_SECONDS);
+        wp_send_json_success(['queued' => true, 'event_id' => $event_id]);
+    }
+
+    /**
+     * Ejecutado fuera del request AJAX. Reintenta fallos temporales con límite.
+     */
+    public static function process_queued_event(array $event, string $test_code = '', int $attempt = 0): void {
+        $settings = self::get_settings();
+        if (!$settings['enabled'] || !$settings['capi_enabled'] || $settings['pixel_id'] === '' || $settings['access_token'] === '') {
+            return;
+        }
+
+        $settings['test_event_code'] = $test_code;
+        $response = self::send_capi_event($settings, $event);
+        $status = is_wp_error($response) ? 0 : (int) wp_remote_retrieve_response_code($response);
+        if ($status >= 200 && $status < 300) {
+            return;
+        }
+
+        self::log_error('queued_event_failed', is_wp_error($response) ? $response->get_error_message() : 'HTTP ' . $status);
+
+        // No reintentar errores permanentes 4xx, salvo rate limit (429).
+        if ($attempt >= 2 || ($status >= 400 && $status < 500 && $status !== 429)) {
+            return;
+        }
+
+        $delay = $attempt === 0 ? 60 : 300;
+        wp_schedule_single_event(time() + $delay, self::QUEUE_HOOK, [$event, $test_code, $attempt + 1]);
     }
 
     public static function handle_admin_test_event(): void {
