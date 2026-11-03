@@ -95,7 +95,7 @@ final class FLACSO_Carta_Settings {
             'carta_mas_info_gestion_title' => [self::TYPE_TEXT, 'Gestión Académica', 'confianza', 'Gestión: título', self::COND_ALWAYS, false],
             'carta_mas_info_gestion_html' => [self::TYPE_HTML, '<p>Nos distingue un sistema de <strong>gestión académica eficiente y cercano</strong>, que acompaña de forma <strong>personalizada</strong> a cada estudiante y garantiza <strong>altos niveles de egreso, superiores al 90%</strong>.</p>', 'confianza', 'Gestión: texto', self::COND_ALWAYS, true],
 
-            'carta_correo_inscripciones' => [self::TYPE_EMAIL, 'inscripciones@flacso.edu.uy', 'contacto', 'Correo de inscripciones', self::COND_ALWAYS, false],
+            'carta_correo_inscripciones' => [self::TYPE_EMAIL, '', 'contacto', 'Correo de inscripciones', self::COND_ALWAYS, false],
             'carta_telefono' => [self::TYPE_TEXT, '+598 2481 7459', 'contacto', 'Teléfono', self::COND_ALWAYS, false],
             'carta_contacto_nombre' => [self::TYPE_TEXT, 'Inscripciones FLACSO Uruguay', 'contacto', 'Contacto de respaldo: nombre', self::COND_NO_CONTACT, false],
             'carta_contacto_rol' => [self::TYPE_TEXT, 'Asistencia Académica', 'contacto', 'Contacto de respaldo: rol', self::COND_NO_CONTACT, false],
