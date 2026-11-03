@@ -31,7 +31,7 @@ $expected = [
 carta_settings_assert(FLACSO_Carta_Settings::keys() === $expected, 'las claves de la carta están definidas en un solo lugar');
 carta_settings_assert(strpos(FLACSO_Carta_Settings::get('carta_pago_pesos'), '{anio}') !== false, 'el texto de pagos en pesos conserva el marcador {anio}');
 carta_settings_assert(FLACSO_Carta_Settings::get('carta_mas_info_section_title') === 'Más información', 'el título por defecto coincide con la API de ajustes');
-carta_settings_assert(FLACSO_Carta_Settings::get('carta_correo_inscripciones') === 'inscripciones@flacso.edu.uy', 'correo institucional por defecto');
+carta_settings_assert(FLACSO_Carta_Settings::get('carta_correo_inscripciones') === '', 'sin correo institucional predeterminado');
 carta_settings_assert(FLACSO_Carta_Settings::get('desconocida') === '', 'una clave desconocida devuelve vacío');
 carta_settings_assert(FLACSO_Carta_Settings::option_name('carta_telefono') === 'flacso_carta_telefono', 'nombre de opción con prefijo flacso_');
 
