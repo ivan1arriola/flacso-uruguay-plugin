@@ -1109,6 +1109,17 @@ class FLACSO_Inquiry_Analytics_Repository {
             if (!$row) {
                 return null;
             }
+            if ($table === 'offer_inquiries' && !empty($row['emailNormalized']) && !empty($row['offerWpId']) && !empty($row['createdAt'])) {
+                // Limita el estado de Mautic a esta consulta cuando la misma persona
+                // vuelve a consultar la misma oferta y reinicia la campaña.
+                $next = $pdo->prepare('SELECT MIN("createdAt") FROM "offer_inquiries" WHERE "emailNormalized" = :email AND "offerWpId" = :offer_id AND "createdAt" > :created_at');
+                $next->execute([
+                    ':email' => $row['emailNormalized'],
+                    ':offer_id' => $row['offerWpId'],
+                    ':created_at' => $row['createdAt'],
+                ]);
+                $row['nextInquiryAt'] = $next->fetchColumn() ?: null;
+            }
             if (!empty($row['payload']) && is_string($row['payload'])) {
                 $decoded = json_decode($row['payload'], true);
                 if (is_array($decoded)) {

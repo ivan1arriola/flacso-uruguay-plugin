@@ -172,6 +172,10 @@ status_assert($by_id['nueva']['createdAt'] === '2026-10-29 18:09:05', 'trae crea
 $grouped = FLACSO_Inquiry_Analytics_Repository::get_paginated_inquiries(['table' => 'offer_inquiries', 'mode' => 'grouped', 'page' => 1, 'page_size' => 25]);
 $head = array_values(array_filter($grouped['items'], static fn(array $r): bool => $r['consultaId'] === 'nueva'));
 status_assert(count($head) === 1 && array_key_exists('nextInquiryAt', $head[0]), 'la vista agrupada también trae la ventana');
+$old_detail = FLACSO_Inquiry_Analytics_Repository::get_inquiry_detail('offer_inquiries', 'vieja');
+$new_detail = FLACSO_Inquiry_Analytics_Repository::get_inquiry_detail('offer_inquiries', 'nueva');
+status_assert($old_detail['nextInquiryAt'] === '2026-10-29 18:09:05', 'el detalle de la consulta vieja no atribuye el acuse de la siguiente');
+status_assert($new_detail['nextInquiryAt'] === null, 'el detalle de la consulta reciente queda sin tope');
 
 // Celda «Estado del correo»
 $cell = FLACSO_Consultas_Admin::render_delivery_cell(joined_row('x'), true, $live);

@@ -210,9 +210,13 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			$item_col            = FLACSO_Inquiry_Analytics_Repository::ALLOWED_TABLES[ $table ]['item_col'] ?? 'offerName';
 			$detail['item_name'] = $detail[ $item_col ] ?? '';
 			$detail['table']     = $table;
-				if ( 'offer_inquiries' === $table ) {
-					$detail['campaignState'] = self::campaign_state( $detail );
+			if ( 'offer_inquiries' === $table ) {
+				$detail['campaignState'] = self::campaign_state( $detail );
+				if ( 'joined' === $detail['campaignState'] && class_exists( 'FLACSO_Offer_Campaign_Status' ) ) {
+					$live = FLACSO_Offer_Campaign_Status::for_rows( array( $detail ) );
+					$detail['campaignLive'] = $live[ (string) ( $detail['consultaId'] ?? '' ) ] ?? null;
 				}
+			}
 
 			wp_send_json_success( $detail );
 		}
@@ -1454,32 +1458,61 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 								}
 								const d = res.data;
 								const esc = v => String(v ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
-									let senderLabel = d.emailSender || '—';
-								if (d.emailSender === 'mailjet_fallback') {
-									senderLabel = 'Mailjet (Conmutación por fallo de Mautic)';
-								} else if (d.emailSender === 'mautic') {
-									senderLabel = 'Mautic';
-								} else if (d.emailSender === 'mailjet') {
-									senderLabel = 'Mailjet';
+								const isOffer = d.table === 'offer_inquiries';
+								const joined = isOffer && d.campaignState === 'joined';
+								const live = joined && d.campaignLive?.found ? d.campaignLive : null;
+								const acuse = live?.acuse || {};
+								const follow = live?.followUp || {};
+								const when = value => {
+									if (!value) return '';
+									const date = new Date(value);
+									return Number.isNaN(date.getTime()) ? esc(value) : esc(new Intl.DateTimeFormat('es-UY', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Montevideo' }).format(date));
+								};
+								const row = (label, value, note = '') => `<tr><th scope="row" style="width:190px;">${label}</th><td>${value}${note ? `<div style="color:#475569;margin-top:4px;">${note}</div>` : ''}</td></tr>`;
+								const acuseLabels = { sent: 'Acuse enviado', queued: 'Acuse en cola', failed: 'Falló el envío', suppressed: 'Correo bloqueado por baja', pending: 'Acuse pendiente' };
+								const followLabels = { scheduled: 'Seguimiento programado', sent: 'Seguimiento enviado', cancelled: 'Seguimiento cancelado', completed: 'Finalizado sin otro correo', not_applicable: 'No corresponde seguimiento', failed: 'Falló el seguimiento', suppressed: 'Bloqueado por baja de correo', pending: 'Seguimiento pendiente' };
+								let delivery = '';
+								let campaign = '';
+								let followup = '';
+								if (joined) {
+									const acuseState = acuse.state || 'pending';
+									delivery = row('Correo de respuesta', `<strong>${acuseLabels[acuseState] || 'Estado sin confirmar'}</strong>${acuse.at ? ' · ' + when(acuse.at) : ''}`, live ? 'Estado informado por Mautic. «Enviado» no confirma lectura.' : 'La consulta entró a la campaña, pero Mautic no pudo confirmar aún el estado del correo.');
+									campaign = row('Campaña de la oferta', `<strong>Incorporada${d.mauticCampaignId ? ' a la campaña #' + esc(d.mauticCampaignId) : ''}</strong>`, 'La aceptación de la consulta confirma el alta, no el envío del correo.');
+									const followState = follow.state || 'pending';
+									followup = row('Próximo contacto', `<strong>${live ? (followLabels[followState] || 'Estado sin confirmar') : 'Sin confirmar'}</strong>${follow.at ? ' · ' + when(follow.at) : ''}`, live ? '' : 'El seguimiento lo administra la campaña en Mautic.');
+								} else {
+									const emailLabels = { accepted: 'Solicitud de envío aceptada', sent: 'Correo enviado', pending: 'Envío pendiente', processing: 'Envío en proceso', retryable_failed: 'Se reintentará el envío', failed: 'Falló el envío', blocked: 'Envío bloqueado', acceptance_unknown: 'Envío sin confirmar' };
+									delivery = row('Correo de respuesta', `<strong>${emailLabels[d.emailStatus] || esc(d.emailStatus || 'Sin datos')}</strong>`, d.emailStatus === 'accepted' ? 'El proveedor aceptó la solicitud; este estado no confirma la recepción en el buzón.' : 'Acuse transaccional gestionado desde WordPress y Mautic.');
+									if (isOffer) {
+										const campaignLabels = { skipped: 'Sin campaña para esta consulta', pending: 'Alta en campaña pendiente', failed: 'No se pudo incorporar', legacy: 'Consulta anterior a las campañas' };
+										campaign = row('Campaña de la oferta', `<strong>${campaignLabels[d.campaignState] || 'Sin datos'}</strong>`, d.mauticCampaignLastError ? esc(d.mauticCampaignLastError) : '');
+										if (d.followupStatus && d.followupStatus !== 'none') {
+											const manual = d.followupStatus !== 'sent' ? `<div style="margin-top:8px;"><button type="button" class="button button-secondary flacso-js-trigger-followup" data-id="${esc(d.id)}">Enviar seguimiento ahora</button><span class="flacso-followup-msg" style="margin-left:10px;font-size:12px;font-weight:600;"></span></div>` : '';
+											followup = row('Seguimiento', `<strong>${followLabels[d.followupStatus] || esc(d.followupStatus)}</strong>${d.followupDueAt ? ' · Previsto: ' + esc(d.followupDueAt) : ''}${d.followupSentAt ? ' · Enviado: ' + esc(d.followupSentAt) : ''}${manual}`);
+										}
+									}
 								}
+								const payload = d.payload_decoded || {};
+								const rawUrl = String(d.pageUrl || d.urlBase || payload.url_base || '');
+								const pageUrl = /^https?:\/\//i.test(rawUrl) ? rawUrl : '';
+								const campaignInfo = [d.campaignSource, d.campaignMedium, d.campaignName].filter(Boolean).map(esc).join(' · ');
+								const senderLabel = { mautic: 'Mautic', mautic_transactional_queue: 'Mautic', mailjet: 'Mailjet', mailjet_fallback: 'Mailjet' }[d.emailSender] || d.emailSender || '—';
 								content.innerHTML = `
-									<table class="widefat striped" style="margin-bottom:14px;">
-										<tbody>
-											<tr><th>ID / Consulta ID</th><td><code>${d.id}</code> / <code>${d.consultaId || ''}</code></td></tr>
-											<tr><th>Nombre completo</th><td><strong>${d.fullName || ''}</strong></td></tr>
-											<tr><th>Correo electrónico</th><td>${d.email || ''}</td></tr>
-											<tr><th>Oferta / Programa</th><td>${d.item_name || ''}</td></tr>
-											<tr><th>País / Teléfono</th><td>${d.country || '—'} / ${d.phone || '—'}</td></tr>
-											<tr><th>Estado Email</th><td><strong>${d.emailStatus || ''}</strong> (Remitente: ${senderLabel})</td></tr>
-											${(d.table === 'offer_inquiries' || tbl === 'offer_inquiries') ? `<tr><th>Campaña de la oferta</th><td><strong>${esc(d.campaignState || '—')}</strong> (Campaña Mautic: ${d.mauticCampaignId ? '#' + esc(d.mauticCampaignId) : '—'}${d.mauticCampaignLastError ? ' | Nota: ' + esc(d.mauticCampaignLastError) : ''})</td></tr>` : ''}
-												${d.mauticSyncStatus ? `<tr><th>Estado Mautic</th><td><strong>${d.mauticSyncStatus}</strong> (Contact ID: ${d.mauticContactId || '—'} | Sincronizado: ${d.mauticSyncedAt || '—'}${d.mauticLastError ? ' | Error: ' + d.mauticLastError : ''})</td></tr>` : ''}
-											${(d.table === 'offer_inquiries' || tbl === 'offer_inquiries') ? `<tr><th>Seguimiento (+X días)</th><td><strong>${d.followupStatus || 'none'}</strong> (Vencimiento: ${d.followupDueAt || '—'} | Enviado: ${d.followupSentAt || '—'}${d.followupLastError ? ' | Nota: ' + d.followupLastError : ''})${d.followupStatus !== 'sent' ? '<div style="margin-top:8px;"><button type="button" class="button button-secondary flacso-js-trigger-followup" data-id="' + d.id + '">🚀 Enviar Seguimiento Ahora</button><span class="flacso-followup-msg" style="margin-left:10px;font-size:12px;font-weight:600;display:inline-block;vertical-align:middle;"></span></div>' : ''}</td></tr>` : ''}
-											<tr><th>UTM / Campaña</th><td>Source: ${d.campaignSource || '—'} | Medium: ${d.campaignMedium || '—'} | Campaign: ${d.campaignName || '—'}</td></tr>
-											<tr><th>Página Origen</th><td><a href="${d.pageUrl || '#'}" target="_blank">${d.pageUrl || '—'}</a></td></tr>
-										</tbody>
-									</table>
-									<h4 style="margin:10px 0 6px;">Payload Original (JSON)</h4>
-									<pre style="background:#0f172a; color:#e2e8f0; padding:12px; border-radius:8px; overflow:auto; max-height:240px; font-size:12px;">${JSON.stringify(d.payload_decoded || {}, null, 2)}</pre>
+									<div style="background:#f1f5f9;padding:14px 16px;border-radius:8px;margin-bottom:16px;">
+										<strong style="font-size:16px;">${esc(d.fullName || 'Persona sin nombre')}</strong>
+										<div>${esc(d.email || '')}</div>
+										<div style="margin-top:6px;">${esc(d.item_name || 'Programa no identificado')}</div>
+									</div>
+									<table class="widefat striped" style="margin-bottom:16px;"><tbody>
+										${delivery}${campaign}${followup}
+										${d.country || d.phone ? row('Datos de contacto', [d.country, d.phone].filter(Boolean).map(esc).join(' · ')) : ''}
+										${campaignInfo ? row('Origen de campaña', campaignInfo) : ''}
+										${pageUrl ? row('Página de origen', `<a href="${esc(pageUrl)}" target="_blank" rel="noopener noreferrer">Ver programa ↗</a>`) : ''}
+									</tbody></table>
+									<details style="margin-top:12px;"><summary style="cursor:pointer;font-weight:600;">Datos técnicos de la consulta</summary>
+										<p><strong>ID:</strong> <code>${esc(d.id)}</code><br><strong>ID de consulta:</strong> <code>${esc(d.consultaId || '—')}</code><br><strong>Ruta de entrega:</strong> ${esc(senderLabel)}${d.mauticContactId ? '<br><strong>Contacto Mautic:</strong> #' + esc(d.mauticContactId) : ''}</p>
+										<pre style="background:#0f172a;color:#e2e8f0;padding:12px;border-radius:8px;overflow:auto;max-height:240px;font-size:12px;">${esc(JSON.stringify(payload, null, 2))}</pre>
+									</details>
 								`;
 
 								const triggerBtn = content.querySelector('.flacso-js-trigger-followup');
