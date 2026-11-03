@@ -18,6 +18,8 @@ final class FLACSO_Meta_Event_Queue {
         add_filter('cron_schedules', [self::class, 'cron_schedules']);
         add_action('init', [self::class, 'ensure_initialized'], 20);
         add_action(self::CRON_HOOK, [self::class, 'process']);
+        // Drain jobs created by PR #93 during a rolling upgrade without hitting Meta directly.
+        add_action('flacso_meta_send_queued_event', [self::class, 'migrate_legacy_event'], 10, 3);
     }
 
     public static function cron_schedules(array $schedules): array {
@@ -90,6 +92,10 @@ final class FLACSO_Meta_Event_Queue {
         ], ['%s', '%s', '%s', '%d', '%s', '%s']);
 
         return $result === 1;
+    }
+
+    public static function migrate_legacy_event(array $event, string $test_code = '', int $attempt = 0): void {
+        self::enqueue($event, $test_code);
     }
 
     public static function process(): void {
