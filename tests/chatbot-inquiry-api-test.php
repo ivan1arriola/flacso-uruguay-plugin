@@ -112,6 +112,26 @@ chatbot_assert($sem_result->status === 200, 'Seminario permitido');
 chatbot_assert($GLOBALS['records'][1]['kind'] === 'seminar', 'Servicio seminarios correcto');
 chatbot_assert($GLOBALS['records'][1]['payload']['source'] === 'Facebook Messenger', 'Canal Messenger correcto');
 
+$consola = $base;
+$consola['channel'] = 'consola';
+$consola['eventId'] = 'metabot-' . str_repeat('c', 64);
+$consola['country'] = 'Chile';
+$consola['profession'] = 'Psicóloga';
+$consola['educationLevel'] = 'Título universitario';
+chatbot_assert(FLACSO_Chatbot_Inquiry_API::submit(new WP_REST_Request($consola))->status === 200, 'Canal consola permitido');
+$payload = $GLOBALS['records'][2]['payload'];
+chatbot_assert($payload['source'] === 'Asistente IA (consola)', 'Origen de la consola');
+chatbot_assert($payload['country'] === 'Chile' && $payload['profession'] === 'Psicóloga'
+    && $payload['educationLevel'] === 'Título universitario', 'Conserva país, profesión y nivel');
+$bad_level = $consola;
+$bad_level['eventId'] = 'metabot-' . str_repeat('d', 64);
+$bad_level['educationLevel'] = 'Doctorado inventado';
+chatbot_assert(FLACSO_Chatbot_Inquiry_API::submit(new WP_REST_Request($bad_level))->status === 422, 'Rechaza nivel fuera de la lista');
+$bad_channel = $base;
+$bad_channel['channel'] = 'telegram';
+chatbot_assert(FLACSO_Chatbot_Inquiry_API::submit(new WP_REST_Request($bad_channel))->status === 422, 'Rechaza canal desconocido');
+$GLOBALS['records'] = array_slice($GLOBALS['records'], 0, 2);
+
 $draft = $seminar;
 $draft['academic']['id'] = 55;
 $denied = FLACSO_Chatbot_Inquiry_API::submit(new WP_REST_Request($draft));

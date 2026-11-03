@@ -12,6 +12,21 @@ if (!defined('ABSPATH')) {
 final class FLACSO_Chatbot_Inquiry_API {
     private const NAMESPACE = 'flacso/v1';
 
+    /** Canal => etiqueta de origen que se guarda en la consulta. */
+    private const CHANNELS = [
+        'instagram' => 'Instagram',
+        'messenger' => 'Facebook Messenger',
+        'consola' => 'Asistente IA (consola)',
+    ];
+
+    /** Mismos valores que el campo «Nivel académico» del formulario web. */
+    private const EDUCATION_LEVELS = [
+        'Título universitario',
+        'Título terciario no universitario',
+        'Estudiante en curso (aún no egresado/a)',
+        'Sin formación terciaria',
+    ];
+
     public static function init(): void {
         if (function_exists('add_action')) {
             add_action('rest_api_init', [self::class, 'register_routes']);
@@ -121,14 +136,19 @@ final class FLACSO_Chatbot_Inquiry_API {
         $first = sanitize_text_field((string) ($body['firstName'] ?? ''));
         $last = sanitize_text_field((string) ($body['lastName'] ?? ''));
         $email = sanitize_email((string) ($body['email'] ?? ''));
+        $country = sanitize_text_field((string) ($body['country'] ?? ''));
+        $profession = sanitize_text_field((string) ($body['profession'] ?? ''));
+        $education = sanitize_text_field((string) ($body['educationLevel'] ?? ''));
 
-        if (!in_array($channel, ['instagram', 'messenger'], true)
+        if (!isset(self::CHANNELS[$channel])
             || !preg_match('/^metabot-[a-f0-9]{64}$/', $event_id)
             || !is_array($academic)
             || !in_array(($academic['kind'] ?? null), ['offer', 'seminar'], true)
             || !isset($academic['id']) || !is_numeric($academic['id'])
             || (int) $academic['id'] <= 0 || $first === ''
             || strlen($first) > 120 || strlen($last) > 120
+            || strlen($country) > 100 || strlen($profession) > 100
+            || ($education !== '' && !in_array($education, self::EDUCATION_LEVELS, true))
             || !is_email($email)) {
             return self::error('invalid_fields', 'Los datos de la consulta son incompletos o inválidos.', 422);
         }
@@ -141,7 +161,7 @@ final class FLACSO_Chatbot_Inquiry_API {
             return self::error('academic_not_found', 'No se encontró el posgrado publicado.', 422);
         }
 
-        $source = $channel === 'instagram' ? 'Instagram' : 'Facebook Messenger';
+        $source = self::CHANNELS[$channel];
         $message = sanitize_textarea_field((string) ($body['message'] ?? ''));
         $payload = [
             'event_id' => $event_id,
@@ -151,6 +171,9 @@ final class FLACSO_Chatbot_Inquiry_API {
             'source' => $source,
             'consulta' => mb_substr($message, 0, 2000),
             'telefono' => sanitize_text_field((string) ($body['phone'] ?? '')),
+            'country' => $country,
+            'profession' => $profession,
+            'educationLevel' => $education,
             'marketingConsentGranted' => false,
         ];
         if ($kind === 'offer') {
