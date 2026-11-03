@@ -60,6 +60,7 @@ require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-admin-menu-organi
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-system-settings.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-preinscription-links-admin.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-legacy-redirects.php';
+require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-meta-event-queue.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-meta-tracking.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/requires.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/loader.php';
