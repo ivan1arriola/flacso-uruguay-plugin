@@ -157,6 +157,11 @@ final class FLACSO_Inquiry_Delivery_Service {
 
         if (empty($contract['ok'])) {
             $detail = self::contract_failure_message($contract);
+            if (($contract['status'] ?? '') === 'retryable_failed') {
+                $repository->mark_retryable_failure($delivery_id, null, 'mautic_contract_read', $detail, 300);
+                self::notify_failure($delivery_id, 'retryable_failed', 'mautic_contract_read', $detail);
+                return ['ok' => false, 'status' => 'retryable_failed', 'contract' => $contract, 'error' => $detail];
+            }
             $repository->mark_blocked($delivery_id, 'mautic_contract', $detail);
             self::notify_failure($delivery_id, 'blocked', 'mautic_contract', $detail);
             return ['ok' => false, 'status' => 'blocked', 'contract' => $contract, 'error' => $detail];

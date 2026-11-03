@@ -73,15 +73,23 @@ final class FLACSO_Mautic_Contract_Validator {
 
         $email_response = FLACSO_Mautic_Client::get_email_template($template_id);
         if (empty($email_response['ok'])) {
+            $http_code = (int) ($email_response['http_code'] ?? 0);
+            $retryable = $http_code === 0 || $http_code === 408 || $http_code === 429 || $http_code >= 500;
             $requirements[] = [
                 'key' => 'template_read',
                 'ok' => false,
                 'blocking' => true,
-                'message' => sprintf('%s (#%d): no fue posible leer el correo en Mautic.', $label, $template_id),
+                'retryable' => $retryable,
+                'message' => sprintf(
+                    '%s (#%d): no fue posible leer el correo en Mautic%s.',
+                    $label,
+                    $template_id,
+                    $http_code > 0 ? sprintf(' (HTTP %d)', $http_code) : ''
+                ),
             ];
             return [
                 'ok' => false,
-                'status' => 'blocked',
+                'status' => $retryable ? 'retryable_failed' : 'blocked',
                 'manifest_version' => (string) ($manifest['version'] ?? ''),
                 'requirements' => $requirements,
             ];
@@ -192,11 +200,19 @@ final class FLACSO_Mautic_Contract_Validator {
 
             $email_response = FLACSO_Mautic_Client::get_email_template($template_id);
             if (empty($email_response['ok'])) {
+                $http_code = (int) ($email_response['http_code'] ?? 0);
+                $retryable = $http_code === 0 || $http_code === 408 || $http_code === 429 || $http_code >= 500;
                 $requirements[] = [
                     'key' => 'template_read:' . $key,
                     'ok' => false,
                     'blocking' => true,
-                    'message' => sprintf('%s (#%d): no fue posible leer el correo en Mautic.', $label, $template_id),
+                    'retryable' => $retryable,
+                    'message' => sprintf(
+                        '%s (#%d): no fue posible leer el correo en Mautic%s.',
+                        $label,
+                        $template_id,
+                        $http_code > 0 ? sprintf(' (HTTP %d)', $http_code) : ''
+                    ),
                 ];
                 $ok = false;
                 continue;
@@ -233,10 +249,19 @@ final class FLACSO_Mautic_Contract_Validator {
 
         return [
             'ok' => $ok,
-            'status' => $ok ? 'valid' : 'blocked',
+            'status' => $ok ? 'valid' : (self::has_retryable_requirement($requirements) ? 'retryable_failed' : 'blocked'),
             'manifest_version' => (string) ($manifest['version'] ?? ''),
             'requirements' => $requirements,
         ];
+    }
+
+    private static function has_retryable_requirement(array $requirements): bool {
+        foreach ($requirements as $requirement) {
+            if (is_array($requirement) && !empty($requirement['retryable'])) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static function normalized_template_content(array $email): string {
