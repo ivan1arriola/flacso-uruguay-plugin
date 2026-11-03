@@ -4,7 +4,9 @@
     var config = window.flacsoMetaConfig || {};
     var queueStorageKey = "flacso_meta_pending_events";
     var queueMaxItems = 100;
-    var queueTtlMs = 7 * 24 * 60 * 60 * 1000;
+    var queueTtlMs = 24 * 60 * 60 * 1000;
+    var maxConcurrentRequests = 2;
+    var maxRetryAttempts = 3;
     var inflightEvents = {};
     var advancedMatchingFingerprint = "";
 
@@ -313,12 +315,26 @@
             return null;
         }
 
+        if (Object.keys(inflightEvents).length >= maxConcurrentRequests) {
+            return null;
+        }
+
+        if ((payload.attempts || 0) >= maxRetryAttempts) {
+            removeQueuedEvent(payload.eventId);
+            return null;
+        }
+
+        // Retroceso exponencial para no reenviar toda la cola en cada navegación.
+        if (payload.lastAttemptAt && nowTs() - payload.lastAttemptAt < Math.pow(2, payload.attempts || 0) * 30000) {
+            return null;
+        }
+
         body = buildRequestBody(payload);
         markQueuedEventAttempt(payload.eventId);
 
         if (typeof window.fetch !== "function") {
-            if (allowBeaconFallback) {
-                trySendBeacon(body);
+            if (allowBeaconFallback && trySendBeacon(body)) {
+                removeQueuedEvent(payload.eventId);
             }
             return null;
         }
@@ -343,18 +359,17 @@
                 console.warn("[FLACSO Meta] fetch falló", error);
             }
 
-            if (allowBeaconFallback) {
-                trySendBeacon(body);
-            }
-
+            // No usar sendBeacon después de fallar fetch: podría duplicar el POST.
             return false;
         });
 
         inflightEvents[payload.eventId] = request.then(function (result) {
             delete inflightEvents[payload.eventId];
+            flushPendingServerEvents();
             return result;
         }, function (error) {
             delete inflightEvents[payload.eventId];
+            flushPendingServerEvents();
             throw error;
         });
 
@@ -371,6 +386,9 @@
 
         queue = readQueue();
         for (i = 0; i < queue.length; i += 1) {
+            if (Object.keys(inflightEvents).length >= maxConcurrentRequests) {
+                break;
+            }
             if (queue[i] && queue[i].eventId && !inflightEvents[queue[i].eventId]) {
                 transportQueuedEvent(queue[i], false);
             }

@@ -14,19 +14,32 @@ function register_rest_route($namespace, $route, $args) { $GLOBALS['routes'][$na
 
 final class WP_REST_Server { public const READABLE = 'GET'; }
 final class WP_REST_Request implements ArrayAccess {
-    public function __construct(private array $params) {}
+    private array $params;
+    public function __construct(array $params) { $this->params = $params; }
     public function offsetExists($key): bool { return isset($this->params[$key]); }
-    public function offsetGet($key): mixed { return $this->params[$key] ?? null; }
+    public function offsetGet($key) { return $this->params[$key] ?? null; }
     public function offsetSet($key, $value): void { $this->params[$key] = $value; }
     public function offsetUnset($key): void { unset($this->params[$key]); }
 }
 final class WP_REST_Response {
+    public $data;
+    public int $status;
     public array $headers = [];
-    public function __construct(public $data, public int $status) {}
+    public function __construct($data, int $status) {
+        $this->data = $data;
+        $this->status = $status;
+    }
     public function header($name, $value) { $this->headers[$name] = $value; }
 }
 final class WP_Error {
-    public function __construct(public string $code, public string $message, public array $data) {}
+    public string $code;
+    public string $message;
+    public array $data;
+    public function __construct(string $code, string $message, array $data) {
+        $this->code = $code;
+        $this->message = $message;
+        $this->data = $data;
+    }
 }
 
 $GLOBALS['offers'] = [];
