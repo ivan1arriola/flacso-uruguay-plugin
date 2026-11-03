@@ -8,7 +8,6 @@ class FLACSO_Meta_Tracking {
     private const AJAX_ACTION = 'flacso_meta_track_event';
     private const GRAPH_API_VERSION = 'v25.0';
     private const LAST_TEST_OPTION = 'flacso_meta_last_test_result';
-    private const QUEUE_HOOK = 'flacso_meta_send_queued_event';
     private const MAX_REQUESTS_PER_MINUTE = 30;
     private static $noscript_rendered = false;
 
@@ -20,7 +19,6 @@ class FLACSO_Meta_Tracking {
         add_action('wp_ajax_' . self::AJAX_ACTION, [self::class, 'handle_track_event']);
         add_action('wp_ajax_nopriv_' . self::AJAX_ACTION, [self::class, 'handle_track_event']);
         add_action('admin_post_flacso_meta_test_event', [self::class, 'handle_admin_test_event']);
-        add_action(self::QUEUE_HOOK, [self::class, 'process_queued_event'], 10, 3);
     }
 
     public static function enqueue_frontend_assets(): void {
@@ -133,18 +131,11 @@ class FLACSO_Meta_Tracking {
             wp_send_json_success(['queued' => false, 'reason' => 'duplicate', 'event_id' => $event_id]);
         }
 
-        // Preferir Action Scheduler si está disponible; fallback a WP-Cron.
-        // El evento incluye la IP y User-Agent obtenidos antes de salir de AJAX.
-        $queued = false;
+        // Encolar únicamente en la tabla local; nunca llamar a Meta desde AJAX.
+        // Una sola tarea cron procesa hasta tres lotes de 20 eventos por ejecución.
         $test_code = (string) ($settings['test_event_code'] ?? '');
-        if (function_exists('as_enqueue_async_action')) {
-            $queued = (bool) as_enqueue_async_action(self::QUEUE_HOOK, [$payload, $test_code, 0], 'flacso-meta');
-        } else {
-            $queued = (bool) wp_schedule_single_event(time() + 5, self::QUEUE_HOOK, [$payload, $test_code, 0]);
-        }
-
-        if (!$queued) {
-            wp_send_json_error(['message' => 'queue_unavailable'], 503);
+        if (!FLACSO_Meta_Event_Queue::enqueue($payload, $test_code)) {
+            wp_send_json_error(['message' => 'queue_unavailable_or_full'], 503);
         }
 
         set_transient($dedup_key, 1, DAY_IN_SECONDS);
@@ -152,30 +143,17 @@ class FLACSO_Meta_Tracking {
     }
 
     /**
-     * Ejecutado fuera del request AJAX. Reintenta fallos temporales con límite.
+     * El worker únicamente usa este método para enviar lotes a Meta.
+     * Los eventos se mantienen con sus event_id originales para deduplicación.
      */
-    public static function process_queued_event(array $event, string $test_code = '', int $attempt = 0): void {
+    public static function send_queued_capi_batch(array $events, string $test_code = '') {
         $settings = self::get_settings();
         if (!$settings['enabled'] || !$settings['capi_enabled'] || $settings['pixel_id'] === '' || $settings['access_token'] === '') {
-            return;
+            return new WP_Error('meta_disabled', 'Meta CAPI is disabled');
         }
 
         $settings['test_event_code'] = $test_code;
-        $response = self::send_capi_event($settings, $event);
-        $status = is_wp_error($response) ? 0 : (int) wp_remote_retrieve_response_code($response);
-        if ($status >= 200 && $status < 300) {
-            return;
-        }
-
-        self::log_error('queued_event_failed', is_wp_error($response) ? $response->get_error_message() : 'HTTP ' . $status);
-
-        // No reintentar errores permanentes 4xx, salvo rate limit (429).
-        if ($attempt >= 2 || ($status >= 400 && $status < 500 && $status !== 429)) {
-            return;
-        }
-
-        $delay = $attempt === 0 ? 60 : 300;
-        wp_schedule_single_event(time() + $delay, self::QUEUE_HOOK, [$event, $test_code, $attempt + 1]);
+        return self::send_capi_events($settings, $events);
     }
 
     public static function handle_admin_test_event(): void {
@@ -643,6 +621,10 @@ class FLACSO_Meta_Tracking {
     }
 
     private static function send_capi_event(array $settings, array $event) {
+        return self::send_capi_events($settings, [$event]);
+    }
+
+    private static function send_capi_events(array $settings, array $events) {
         $endpoint = sprintf(
             'https://graph.facebook.com/%s/%s/events',
             self::GRAPH_API_VERSION,
@@ -650,7 +632,7 @@ class FLACSO_Meta_Tracking {
         );
 
         $body = [
-            'data' => [$event],
+            'data' => array_values($events),
         ];
 
         if ($settings['test_event_code'] !== '') {
