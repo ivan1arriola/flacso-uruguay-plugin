@@ -69,6 +69,10 @@ $consent = $form_consent();
 campaign_assert($consent['granted'] === true && $consent['source'] === 'mas-informacion-123', 'el formulario genera la evidencia con su origen');
 campaign_assert($consent['textVersion'] === FLACSO_Offer_Campaigns::CONSENT_TEXT_VERSION, 'registra la versión del texto');
 campaign_assert(FLACSO_Offer_Campaigns::form_consent(0, 'x') === [], 'sin oferta no hay evidencia');
+$assistant = FLACSO_Offer_Campaigns::assistant_consent(123, 'instagram', '2026-11-07T12:00:00+00:00');
+campaign_assert(FLACSO_Offer_Campaigns::valid_consent($assistant) && $assistant['source'] === 'asistente-ia-instagram-123'
+    && $assistant['textVersion'] === FLACSO_Offer_Campaigns::ASSISTANT_CONSENT_TEXT_VERSION, 'el asistente genera evidencia válida con su origen y versión');
+campaign_assert(FLACSO_Offer_Campaigns::assistant_consent(0, 'instagram', 'x') === [] && FLACSO_Offer_Campaigns::assistant_consent(123, '', 'x') === [], 'sin oferta o canal no hay evidencia');
 campaign_assert(FLACSO_Offer_Campaigns::valid_consent($consent), 'la evidencia del formulario es válida');
 campaign_assert(!FLACSO_Offer_Campaigns::valid_consent(['granted' => '1'] + $consent), 'granted debe ser true literal');
 campaign_assert(!FLACSO_Offer_Campaigns::valid_consent(['acceptedAt' => 'ayer'] + $consent), 'fecha inválida');

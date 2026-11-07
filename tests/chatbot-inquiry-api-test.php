@@ -58,9 +58,14 @@ function get_permalink($post): string { return 'https://flacso.edu.uy/formacion/
 class FLACSO_Oferta_Academica {
     public static function get_tipo(int $id): string { return 'maestria'; }
 }
+class FLACSO_Offer_Campaigns {
+    public static function assistant_consent(int $offer_wp_id, string $channel, string $accepted_at): array {
+        return ['granted' => true, 'acceptedAt' => $accepted_at, 'source' => 'asistente-ia-' . $channel . '-' . $offer_wp_id, 'textVersion' => 'v'];
+    }
+}
 class FLACSO_Offer_Inquiry_Service {
-    public static function submit(array $payload): array {
-        $GLOBALS['records'][] = ['kind' => 'offer', 'payload' => $payload];
+    public static function submit(array $payload, array $consent = []): array {
+        $GLOBALS['records'][] = ['kind' => 'offer', 'payload' => $payload, 'consent' => $consent];
         return ['ok' => true, 'consulta_id' => $payload['event_id'], 'duplicate' => false];
     }
 }
@@ -102,15 +107,32 @@ chatbot_assert($valid->status === 200 && $valid->data['ok'], 'Envío válido');
 chatbot_assert($GLOBALS['records'][0]['kind'] === 'offer', 'Servicio académico correcto');
 chatbot_assert($GLOBALS['records'][0]['payload']['source'] === 'Instagram', 'Conserva origen');
 chatbot_assert($GLOBALS['records'][0]['payload']['marketingConsentGranted'] === false, 'No infiere consentimiento');
+chatbot_assert($GLOBALS['records'][0]['consent'] === [], 'Sin consentimiento del bot no hay evidencia');
+
+$with_consent = $base;
+$with_consent['eventId'] = 'metabot-' . str_repeat('d', 64);
+$with_consent['marketingConsentGranted'] = true;
+chatbot_assert(FLACSO_Chatbot_Inquiry_API::submit(new WP_REST_Request($with_consent))->status === 200, 'Oferta con consentimiento');
+$consent_record = array_pop($GLOBALS['records']);
+chatbot_assert($consent_record['consent']['granted'] === true
+    && $consent_record['consent']['source'] === 'asistente-ia-instagram-17'
+    && $consent_record['consent']['acceptedAt'] !== '', 'El servidor genera la evidencia de la oferta');
+$string_consent = $with_consent;
+$string_consent['eventId'] = 'metabot-' . str_repeat('e', 64);
+$string_consent['marketingConsentGranted'] = 'true';
+FLACSO_Chatbot_Inquiry_API::submit(new WP_REST_Request($string_consent));
+chatbot_assert(array_pop($GLOBALS['records'])['consent'] === [], 'Sólo acepta el booleano true');
 
 $seminar = $base;
 $seminar['academic'] = ['kind' => 'seminar', 'id' => 42];
 $seminar['channel'] = 'messenger';
 $seminar['eventId'] = 'metabot-' . str_repeat('b', 64);
+$seminar['marketingConsentGranted'] = true;
 $sem_result = FLACSO_Chatbot_Inquiry_API::submit(new WP_REST_Request($seminar));
 chatbot_assert($sem_result->status === 200, 'Seminario permitido');
 chatbot_assert($GLOBALS['records'][1]['kind'] === 'seminar', 'Servicio seminarios correcto');
 chatbot_assert($GLOBALS['records'][1]['payload']['source'] === 'Facebook Messenger', 'Canal Messenger correcto');
+chatbot_assert($GLOBALS['records'][1]['payload']['marketingConsentGranted'] === false, 'Los seminarios nunca llevan consentimiento');
 
 $consola = $base;
 $consola['channel'] = 'consola';

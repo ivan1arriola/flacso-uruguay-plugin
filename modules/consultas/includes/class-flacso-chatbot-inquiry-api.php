@@ -174,13 +174,19 @@ final class FLACSO_Chatbot_Inquiry_API {
             'country' => $country,
             'profession' => $profession,
             'educationLevel' => $education,
-            'marketingConsentGranted' => false,
+            // Dato crudo; la evidencia la genera el servidor sólo para ofertas.
+            'marketingConsentGranted' => ($body['marketingConsentGranted'] ?? false) === true,
         ];
+        $consent = [];
         if ($kind === 'offer') {
+            if ($payload['marketingConsentGranted'] && class_exists('FLACSO_Offer_Campaigns')) {
+                $consent = FLACSO_Offer_Campaigns::assistant_consent($post_id, $channel, gmdate('c'));
+            }
             $payload['offerWpId'] = $post_id;
             $payload['offerName'] = (string) get_the_title($post);
             $service = 'FLACSO_Offer_Inquiry_Service';
         } else {
+            $payload['marketingConsentGranted'] = false;
             $payload['seminarWpId'] = $post_id;
             $payload['seminarName'] = (string) get_the_title($post);
             $service = 'FLACSO_Seminar_Inquiry_Service';
@@ -191,7 +197,7 @@ final class FLACSO_Chatbot_Inquiry_API {
         }
 
         try {
-            $result = $service::submit($payload);
+            $result = $kind === 'offer' ? $service::submit($payload, $consent) : $service::submit($payload);
         } catch (Throwable $error) {
             error_log('[FLACSO] Falló el puente de consultas del chatbot: ' . get_class($error));
             return self::error('submission_failed', 'No se pudo registrar la consulta.', 503);

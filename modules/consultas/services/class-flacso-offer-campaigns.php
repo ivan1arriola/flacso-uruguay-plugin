@@ -24,6 +24,7 @@ final class FLACSO_Offer_Campaigns {
     /** Texto visible junto al botón del formulario. Al cambiarlo, subir la versión. */
     public const CONSENT_TEXT = 'Al enviar, aceptás recibir información de FLACSO Uruguay sobre este programa.';
     public const CONSENT_TEXT_VERSION = '2026-10-25';
+    public const ASSISTANT_CONSENT_TEXT_VERSION = '2026-11-07';
 
     public static function is_enabled(): bool {
         return function_exists('get_option') && (string) get_option(self::OPTION_ENABLED, '0') === '1';
@@ -43,6 +44,25 @@ final class FLACSO_Offer_Campaigns {
             'acceptedAt' => $accepted_at,
             'source' => 'mas-informacion-' . $offer_wp_id,
             'textVersion' => self::CONSENT_TEXT_VERSION,
+        ];
+    }
+
+    /**
+     * Evidencia de consentimiento del asistente de IA: el resumen que la persona
+     * confirma muestra el aviso (el texto de la versión 2026-11-07 de
+     * flacso-asistente-ia: «Al confirmar, acepta recibir información de FLACSO
+     * Uruguay sobre este programa.»). Al cambiar ese aviso, subir la versión.
+     */
+    public static function assistant_consent(int $offer_wp_id, string $channel, string $accepted_at): array {
+        if (!self::is_enabled() || $offer_wp_id <= 0 || $channel === '') {
+            return [];
+        }
+
+        return [
+            'granted' => true,
+            'acceptedAt' => $accepted_at,
+            'source' => 'asistente-ia-' . $channel . '-' . $offer_wp_id,
+            'textVersion' => self::ASSISTANT_CONSENT_TEXT_VERSION,
         ];
     }
 
