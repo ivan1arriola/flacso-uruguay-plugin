@@ -22,6 +22,8 @@ final class FLACSO_Inquiry_Delivery_Worker {
     public const MAX_BATCH_SIZE = 10;
     private const LOCK_OPTION = 'flacso_inquiry_delivery_worker_lock';
     private const LOCK_SECONDS = 180;
+    /** No se inicia otra entrega pasado este tiempo, para no superar el bloqueo global. */
+    private const TIME_BUDGET_SECONDS = 120;
 
     private static ?FLACSO_Inquiry_Delivery_Repository $repository = null;
     private static bool $process_lock = false;
@@ -74,17 +76,26 @@ final class FLACSO_Inquiry_Delivery_Worker {
             $repository = self::$repository ?? new FLACSO_Inquiry_Delivery_Repository();
             FLACSO_Inquiry_Delivery_Service::set_repository($repository);
 
-            $claimed = $repository->claim_pending_batch(
-                min(self::MAX_BATCH_SIZE, max(1, $limit)),
-                120
-            );
+            // Se reserva una entrega por vez, justo antes de procesarla: una reserva
+            // tomada para todo el lote vencería mientras las primeras filas esperan
+            // respuestas lentas y las últimas quedarían como inciertas sin haber salido.
+            $max = min(self::MAX_BATCH_SIZE, max(1, $limit));
+            $deadline = time() + self::TIME_BUDGET_SECONDS;
             $results = [];
-            foreach ($claimed as $delivery) {
+            while (count($results) < $max && time() < $deadline) {
+                $claimed = $repository->claim_pending_batch(1, 120);
+                $delivery = $claimed[0] ?? null;
+                if ($delivery === null) {
+                    break;
+                }
                 $id = (string) ($delivery['id'] ?? '');
                 if ($id === '') {
-                    continue;
+                    break;
                 }
-                $results[$id] = FLACSO_Inquiry_Delivery_Service::process($id);
+                $results[$id] = FLACSO_Inquiry_Delivery_Service::process(
+                    $id,
+                    (string) ($delivery['claimToken'] ?? '')
+                );
             }
 
             return [

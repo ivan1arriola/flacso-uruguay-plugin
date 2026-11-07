@@ -862,6 +862,15 @@ class FLACSO_Mautic_Client {
         $data = json_decode($body, true);
 
         if ($code >= 200 && $code < 300) {
+            // Un 2xx con un fallo explícito en el cuerpo no es una aceptación.
+            if (is_array($data) && array_key_exists('success', $data) && !$data['success']) {
+                return [
+                    'ok' => false, 'status' => 'failed', 'http_code' => $code,
+                    'email_id' => $email_id, 'contact_id' => $contact_id,
+                    'error' => 'Mautic respondió 2xx pero informó que el envío no se realizó.',
+                    'acceptance_unknown' => false, 'data' => $data,
+                ];
+            }
             return [
                 'ok' => true, 'status' => 'accepted', 'http_code' => $code,
                 'email_id' => $email_id, 'contact_id' => $contact_id,
@@ -872,7 +881,7 @@ class FLACSO_Mautic_Client {
 
         return [
             'ok' => false,
-            'status' => $code >= 500 ? 'retryable_failed' : 'failed',
+            'status' => ($code >= 500 || $code === 429 || $code === 408) ? 'retryable_failed' : 'failed',
             'http_code' => $code,
             'email_id' => $email_id,
             'contact_id' => $contact_id,
@@ -930,6 +939,12 @@ class FLACSO_Mautic_Client {
         $data = is_array($data) ? $data : [];
 
         if ($code >= 200 && $code < 300) {
+            // Un 2xx sólo vale si el cuerpo confirma el alta (o que ya estaba procesada).
+            $confirmed = ($data['ok'] ?? null) === true
+                && (($data['duplicate'] ?? false) === true || (int) ($data['contactId'] ?? 0) > 0);
+            if (!$confirmed) {
+                return ['ok' => false, 'status' => 'retryable_failed', 'http_code' => $code, 'error' => 'Respuesta 2xx sin confirmación del alta en la campaña.', 'data' => $data];
+            }
             return ['ok' => true, 'status' => 'accepted', 'http_code' => $code, 'error' => null, 'data' => $data];
         }
 

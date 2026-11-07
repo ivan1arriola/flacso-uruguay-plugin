@@ -134,10 +134,30 @@ class FLACSO_Offer_Inquiry_Repository extends FLACSO_Base_Inquiry_Repository {
 
         $pdo = FLACSO_DB::connection();
 
+        // En PostgreSQL un error dentro de una transacción la deja abortada y toda
+        // consulta posterior falla. Un SAVEPOINT permite recuperar la fila existente
+        // tras una colisión de unicidad sin perder la transacción del llamador.
+        $in_transaction = $pdo->inTransaction();
+        $savepoint = 'flacso_offer_inquiry_insert';
+
         try {
+            if ($in_transaction) {
+                $pdo->exec('SAVEPOINT ' . $savepoint);
+            }
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
+            if ($in_transaction) {
+                $pdo->exec('RELEASE SAVEPOINT ' . $savepoint);
+            }
         } catch (PDOException $e) {
+            if ($in_transaction) {
+                try {
+                    $pdo->exec('ROLLBACK TO SAVEPOINT ' . $savepoint);
+                } catch (PDOException $rollback_error) {
+                    // Si ni siquiera se puede volver al punto, se propaga el error original.
+                    throw $e;
+                }
+            }
             // Recuperar si ocurrió colisión por condición de carrera
             if ($this->is_unique_violation($e)) {
                 $existing = $this->find_by_consulta_id($consulta_id);

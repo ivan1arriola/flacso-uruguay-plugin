@@ -40,6 +40,7 @@ function flacso_test_install_delivery_tables(PDO $pdo): void {
         claimedAt TEXT NULL,
         claimedUntil TEXT NULL,
         claimToken TEXT NULL,
+        attemptStartedAt TEXT NULL,
         acceptedAt TEXT NULL,
         terminalAt TEXT NULL,
         lastHttpCode INTEGER NULL,

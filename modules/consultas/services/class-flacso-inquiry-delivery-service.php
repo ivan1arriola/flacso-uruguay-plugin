@@ -66,7 +66,11 @@ final class FLACSO_Inquiry_Delivery_Service {
             : 'El contrato Mautic no superó la validación.';
     }
 
-    public static function process(string $delivery_id): array {
+    /**
+     * @param string|null $claim_token Token de la reserva con la que el llamador
+     *                                 tomó la entrega. Si se omite se usa el de la fila.
+     */
+    public static function process(string $delivery_id, ?string $claim_token = null): array {
         $repository = self::$repository ?? new FLACSO_Inquiry_Delivery_Repository();
         $delivery = $repository->find_by_delivery_id(trim($delivery_id));
 
@@ -82,10 +86,27 @@ final class FLACSO_Inquiry_Delivery_Service {
             return ['ok' => false, 'status' => 'not_claimed'];
         }
 
+        $token = $claim_token ?? (string) ($delivery['claimToken'] ?? '');
+        $token = $token !== '' ? $token : null;
+
+        try {
+            return self::process_claimed($delivery_id, $delivery, $repository, $token);
+        } catch (FLACSO_Delivery_Claim_Lost_Exception $lost) {
+            // La reserva venció o la tomó otro proceso: no se envía nada desde aquí.
+            return ['ok' => false, 'status' => 'claim_lost'];
+        }
+    }
+
+    private static function process_claimed(
+        string $delivery_id,
+        array $delivery,
+        FLACSO_Inquiry_Delivery_Repository $repository,
+        ?string $token
+    ): array {
         $snapshot = json_decode((string) ($delivery['snapshotJson'] ?? ''), true);
         $payload = json_decode((string) ($delivery['payloadJson'] ?? ''), true);
         if (is_array($payload) && FLACSO_Offer_Campaigns::routes_to_campaign($delivery, $payload)) {
-            $enrollment = self::process_campaign_enrollment($delivery_id, $delivery, $snapshot, $payload, $repository);
+            $enrollment = self::process_campaign_enrollment($delivery_id, $delivery, $snapshot, $payload, $repository, $token);
             if ($enrollment !== null) {
                 return $enrollment;
             }
@@ -95,14 +116,14 @@ final class FLACSO_Inquiry_Delivery_Service {
         }
         if (($delivery['assignedProvider'] ?? 'mautic') === 'flacso_mail') {
             if (!is_array($snapshot)) {
-                $repository->mark_failed($delivery_id, null, 'invalid_snapshot', 'Snapshot transaccional inválido.');
+                $repository->mark_failed($delivery_id, null, 'invalid_snapshot', 'Snapshot transaccional inválido.', $token);
                 return ['ok' => false, 'status' => 'failed'];
             }
             if (!class_exists('FLACSO_Mailing_Client')) {
                 require_once dirname(__DIR__, 3) . '/includes/integrations/class-flacso-mailing-client.php';
             }
             $attempt_id = bin2hex(random_bytes(16));
-            $repository->record_attempt_start($delivery_id, $attempt_id);
+            $repository->record_attempt_start($delivery_id, $attempt_id, $token);
             try {
                 $send = FLACSO_Mailing_Client::send_academic_inquiry(
                     $delivery,
@@ -115,30 +136,30 @@ final class FLACSO_Inquiry_Delivery_Service {
             $http_code = isset($send['http_code']) ? (int) $send['http_code'] : null;
             if (!empty($send['ok'])) {
                 $repository->finish_attempt($attempt_id, 'accepted', $http_code);
-                $repository->mark_accepted($delivery_id, $http_code);
+                $repository->mark_accepted($delivery_id, $http_code, $token);
                 return ['ok' => true, 'status' => 'accepted', 'http_code' => $http_code, 'attempt_id' => $attempt_id];
             }
             $status = (string) ($send['status'] ?? 'failed');
             $detail = (string) ($send['error'] ?? 'Fallo de entrega en Mailing.');
             if ($status === 'acceptance_unknown') {
                 $repository->finish_attempt($attempt_id, $status, $http_code, 'mailing_response_unknown', $detail);
-                $repository->mark_acceptance_unknown($delivery_id, 'mailing_response_unknown', $detail);
-            } elseif ($status === 'retryable_failed' && ((int) ($delivery['attempts'] ?? 0) + 1) < 3) {
+                $repository->mark_acceptance_unknown($delivery_id, 'mailing_response_unknown', $detail, $token);
+            } elseif ($status === 'retryable_failed' && (int) ($delivery['attempts'] ?? 0) < 3) {
                 $repository->finish_attempt($attempt_id, $status, $http_code, 'mailing_http', $detail);
-                $repository->mark_retryable_failure($delivery_id, $http_code, 'mailing_http', $detail, 300);
+                $repository->mark_retryable_failure($delivery_id, $http_code, 'mailing_http', $detail, 300, $token);
             } elseif ($status === 'blocked') {
                 $repository->finish_attempt($attempt_id, 'failed', $http_code, 'mailing_configuration', $detail);
-                $repository->mark_blocked($delivery_id, 'mailing_configuration', $detail);
+                $repository->mark_blocked($delivery_id, 'mailing_configuration', $detail, $token);
             } else {
                 $repository->finish_attempt($attempt_id, 'failed', $http_code, 'mailing_http', $detail);
-                $repository->mark_failed($delivery_id, $http_code, 'mailing_http', $detail);
+                $repository->mark_failed($delivery_id, $http_code, 'mailing_http', $detail, $token);
                 $status = 'failed';
             }
             self::notify_failure($delivery_id, $status, 'mailing_delivery');
             return ['ok' => false, 'status' => $status, 'attempt_id' => $attempt_id];
         }
         if (!is_array($snapshot) || !is_array($payload) || !is_array($payload['tokens'] ?? null)) {
-            $repository->mark_failed($delivery_id, null, 'invalid_snapshot', 'Snapshot o payload transaccional inválido.');
+            $repository->mark_failed($delivery_id, null, 'invalid_snapshot', 'Snapshot o payload transaccional inválido.', $token);
             self::notify_failure($delivery_id, 'failed', 'invalid_snapshot');
             return ['ok' => false, 'status' => 'failed'];
         }
@@ -146,7 +167,7 @@ final class FLACSO_Inquiry_Delivery_Service {
         $recipient = is_array($snapshot['recipient'] ?? null) ? $snapshot['recipient'] : [];
         $template_id = (int) ($delivery['templateId'] ?? 0);
         if (trim((string) ($recipient['email'] ?? '')) === '' || $template_id <= 0) {
-            $repository->mark_blocked($delivery_id, 'delivery_identity', 'Falta destinatario o plantilla versionada.');
+            $repository->mark_blocked($delivery_id, 'delivery_identity', 'Falta destinatario o plantilla versionada.', $token);
             self::notify_failure($delivery_id, 'blocked', 'delivery_identity');
             return ['ok' => false, 'status' => 'blocked'];
         }
@@ -158,11 +179,11 @@ final class FLACSO_Inquiry_Delivery_Service {
         if (empty($contract['ok'])) {
             $detail = self::contract_failure_message($contract);
             if (($contract['status'] ?? '') === 'retryable_failed') {
-                $repository->mark_retryable_failure($delivery_id, null, 'mautic_contract_read', $detail, 300);
+                $repository->mark_retryable_failure($delivery_id, null, 'mautic_contract_read', $detail, 300, $token);
                 self::notify_failure($delivery_id, 'retryable_failed', 'mautic_contract_read', $detail);
                 return ['ok' => false, 'status' => 'retryable_failed', 'contract' => $contract, 'error' => $detail];
             }
-            $repository->mark_blocked($delivery_id, 'mautic_contract', $detail);
+            $repository->mark_blocked($delivery_id, 'mautic_contract', $detail, $token);
             self::notify_failure($delivery_id, 'blocked', 'mautic_contract', $detail);
             return ['ok' => false, 'status' => 'blocked', 'contract' => $contract, 'error' => $detail];
         }
@@ -179,7 +200,7 @@ final class FLACSO_Inquiry_Delivery_Service {
                     $delivery_id,
                     'recipient_creation_unknown',
                     'No fue posible conciliar la creación del destinatario.'
-                );
+                , $token);
                 self::notify_failure($delivery_id, 'acceptance_unknown', 'recipient_creation_unknown');
                 return ['ok' => false, 'status' => 'acceptance_unknown'];
             }
@@ -190,22 +211,22 @@ final class FLACSO_Inquiry_Delivery_Service {
                 'recipient_unavailable',
                 'No fue posible asegurar el destinatario mínimo.',
                 300
-            );
+            , $token);
             self::notify_failure($delivery_id, 'retryable_failed', 'recipient_unavailable');
             return ['ok' => false, 'status' => 'retryable_failed'];
         }
 
         $contact_id = (int) ($recipient_result['contact_id'] ?? 0);
         if ($contact_id <= 0 || $template_id <= 0) {
-            $repository->mark_blocked($delivery_id, 'delivery_identity', 'Falta destinatario o plantilla versionada.');
+            $repository->mark_blocked($delivery_id, 'delivery_identity', 'Falta destinatario o plantilla versionada.', $token);
             self::notify_failure($delivery_id, 'blocked', 'delivery_identity');
             return ['ok' => false, 'status' => 'blocked'];
         }
 
-        $repository->set_contact_id($delivery_id, $contact_id);
+        $repository->set_contact_id($delivery_id, $contact_id, $token);
 
         $attempt_id = bin2hex(random_bytes(16));
-        $repository->record_attempt_start($delivery_id, $attempt_id);
+        $repository->record_attempt_start($delivery_id, $attempt_id, $token);
 
         try {
             $send = FLACSO_Mautic_Client::send_transactional_email_to_contact(
@@ -215,7 +236,7 @@ final class FLACSO_Inquiry_Delivery_Service {
             );
         } catch (Throwable $e) {
             $repository->finish_attempt($attempt_id, 'acceptance_unknown', null, 'transport_exception', $e->getMessage());
-            $repository->mark_acceptance_unknown($delivery_id, 'transport_exception', $e->getMessage());
+            $repository->mark_acceptance_unknown($delivery_id, 'transport_exception', $e->getMessage(), $token);
             self::notify_failure($delivery_id, 'acceptance_unknown', 'transport_exception');
             return ['ok' => false, 'status' => 'acceptance_unknown'];
         }
@@ -224,7 +245,7 @@ final class FLACSO_Inquiry_Delivery_Service {
 
         if (!empty($send['ok'])) {
             $repository->finish_attempt($attempt_id, 'accepted', $http_code);
-            $repository->mark_accepted($delivery_id, $http_code);
+            $repository->mark_accepted($delivery_id, $http_code, $token);
             return [
                 'ok' => true,
                 'status' => 'accepted',
@@ -235,21 +256,21 @@ final class FLACSO_Inquiry_Delivery_Service {
 
         if (!empty($send['acceptance_unknown']) || ($send['status'] ?? '') === 'acceptance_unknown') {
             $repository->finish_attempt($attempt_id, 'acceptance_unknown', $http_code, 'response_lost', $send['error'] ?? null);
-            $repository->mark_acceptance_unknown($delivery_id, 'response_lost', $send['error'] ?? null);
+            $repository->mark_acceptance_unknown($delivery_id, 'response_lost', $send['error'] ?? null, $token);
             self::notify_failure($delivery_id, 'acceptance_unknown', 'response_lost');
             return ['ok' => false, 'status' => 'acceptance_unknown', 'attempt_id' => $attempt_id];
         }
 
-        $attempts_after_start = ((int) ($delivery['attempts'] ?? 0)) + 1;
+        $attempts_after_start = (int) ($delivery['attempts'] ?? 0);
         if (($send['status'] ?? '') === 'retryable_failed' && $attempts_after_start < 3) {
             $repository->finish_attempt($attempt_id, 'retryable_failed', $http_code, 'mautic_http', $send['error'] ?? null);
-            $repository->mark_retryable_failure($delivery_id, $http_code, 'mautic_http', $send['error'] ?? null, 300);
+            $repository->mark_retryable_failure($delivery_id, $http_code, 'mautic_http', $send['error'] ?? null, 300, $token);
             self::notify_failure($delivery_id, 'retryable_failed', 'mautic_http');
             return ['ok' => false, 'status' => 'retryable_failed', 'attempt_id' => $attempt_id];
         }
 
         $repository->finish_attempt($attempt_id, 'failed', $http_code, 'mautic_http', $send['error'] ?? null);
-        $repository->mark_failed($delivery_id, $http_code, 'mautic_http', $send['error'] ?? null);
+        $repository->mark_failed($delivery_id, $http_code, 'mautic_http', $send['error'] ?? null, $token);
         self::notify_failure($delivery_id, 'failed', 'mautic_http');
         return ['ok' => false, 'status' => 'failed', 'attempt_id' => $attempt_id];
     }
@@ -263,7 +284,8 @@ final class FLACSO_Inquiry_Delivery_Service {
         array $delivery,
         $snapshot,
         array $payload,
-        FLACSO_Inquiry_Delivery_Repository $repository
+        FLACSO_Inquiry_Delivery_Repository $repository,
+        ?string $token = null
     ): ?array {
         try {
             if (!is_array($snapshot)) {
@@ -271,24 +293,24 @@ final class FLACSO_Inquiry_Delivery_Service {
             }
             $body = FLACSO_Offer_Campaigns::enrollment_payload($snapshot, $payload['marketingConsent']);
         } catch (Throwable $e) {
-            $repository->mark_failed($delivery_id, null, 'invalid_snapshot', $e->getMessage());
+            $repository->mark_failed($delivery_id, null, 'invalid_snapshot', $e->getMessage(), $token);
             self::record_campaign_outcome($delivery, 'failed', null, 'invalid_snapshot');
             self::notify_failure($delivery_id, 'failed', 'invalid_snapshot');
             return ['ok' => false, 'status' => 'failed', 'route' => 'campaign'];
         }
 
         $attempt_id = bin2hex(random_bytes(16));
-        $repository->record_attempt_start($delivery_id, $attempt_id);
+        $repository->record_attempt_start($delivery_id, $attempt_id, $token);
         $result = FLACSO_Mautic_Client::enroll_offer_inquiry($body);
         $http_code = (int) ($result['http_code'] ?? 0) ?: null;
 
         if (!empty($result['ok'])) {
             $contact_id = (int) ($result['data']['contactId'] ?? 0);
             if ($contact_id > 0) {
-                $repository->set_contact_id($delivery_id, $contact_id);
+                $repository->set_contact_id($delivery_id, $contact_id, $token);
             }
             $repository->finish_attempt($attempt_id, 'accepted', $http_code);
-            $repository->mark_accepted($delivery_id, $http_code);
+            $repository->mark_accepted($delivery_id, $http_code, $token);
             $campaign_id = (int) ($result['data']['campaignId'] ?? 0);
             self::record_campaign_outcome($delivery, 'joined', $campaign_id > 0 ? $campaign_id : null, null);
             return ['ok' => true, 'status' => 'accepted', 'http_code' => $http_code, 'attempt_id' => $attempt_id, 'route' => 'campaign'];
@@ -298,20 +320,21 @@ final class FLACSO_Inquiry_Delivery_Service {
         $plugin_error = (string) ($result['data']['error'] ?? '');
         if (in_array($plugin_error, self::CAMPAIGN_UNAVAILABLE, true)) {
             $repository->finish_attempt($attempt_id, 'failed', $http_code, 'campaign_unavailable', $detail);
+            $repository->clear_attempt_started($delivery_id, $token);
             self::record_campaign_outcome($delivery, 'skipped', null, $plugin_error);
             return null;
         }
 
-        $attempts_after_start = ((int) ($delivery['attempts'] ?? 0)) + 1;
+        $attempts_after_start = (int) ($delivery['attempts'] ?? 0);
         if (($result['status'] ?? '') === 'retryable_failed' && $attempts_after_start < self::ENROLLMENT_MAX_ATTEMPTS) {
             $repository->finish_attempt($attempt_id, 'retryable_failed', $http_code, 'campaign_enrollment', $detail);
-            $repository->mark_retryable_failure($delivery_id, $http_code, 'campaign_enrollment', $detail, 300);
+            $repository->mark_retryable_failure($delivery_id, $http_code, 'campaign_enrollment', $detail, 300, $token);
             self::record_campaign_outcome($delivery, 'pending', null, $detail);
             return ['ok' => false, 'status' => 'retryable_failed', 'attempt_id' => $attempt_id, 'route' => 'campaign'];
         }
 
         $repository->finish_attempt($attempt_id, 'failed', $http_code, 'campaign_enrollment', $detail);
-        $repository->mark_failed($delivery_id, $http_code, 'campaign_enrollment', $detail);
+        $repository->mark_failed($delivery_id, $http_code, 'campaign_enrollment', $detail, $token);
         self::record_campaign_outcome($delivery, 'failed', null, $detail);
         self::notify_failure($delivery_id, 'failed', 'campaign_enrollment', $detail);
         return ['ok' => false, 'status' => 'failed', 'attempt_id' => $attempt_id, 'route' => 'campaign'];

@@ -19,7 +19,13 @@ if (!class_exists('FLACSO_Inquiry_Snapshot')) {
     require_once dirname(__DIR__, 3) . '/modules/consultas/services/class-flacso-inquiry-snapshot.php';
 }
 
+/** La reserva de una entrega venció o la tomó otro proceso. */
+class FLACSO_Delivery_Claim_Lost_Exception extends RuntimeException {}
+
 final class FLACSO_Inquiry_Delivery_Repository {
+    /** Reclamos máximos por entrega: un reclamo equivale a una pasada del worker. */
+    public const MAX_CLAIM_ATTEMPTS = 6;
+
     private PDO $pdo;
 
     public function __construct(?PDO $pdo = null) {
@@ -209,6 +215,34 @@ final class FLACSO_Inquiry_Delivery_Repository {
         $now = gmdate('c');
         $until = gmdate('c', time() + $lease_seconds);
 
+        // Reserva vencida sin ningún intento externo autorizado: nada salió hacia el
+        // proveedor, así que vuelve a la cola. "attemptStartedAt" vive en la misma fila
+        // que la reserva y la fija record_attempt_start() con un UPDATE condicional, de
+        // modo que recuperación e inicio del envío se excluyen entre sí a nivel de fila.
+        // El NOT EXISTS es un cinturón extra para filas de una versión anterior (o de un
+        // worker antiguo aún activo), que registraban el intento sin esa marca: sólo
+        // vuelven a la cola si tampoco hay ningún intento registrado.
+        $unstarted = $this->pdo->prepare(
+            'UPDATE inquiry_deliveries
+             SET state = :pending, "claimedAt" = NULL, "claimedUntil" = NULL, "claimToken" = NULL,
+                 "lastErrorClass" = :error_class, "updatedAt" = :now
+             WHERE state = :processing AND "claimedUntil" IS NOT NULL AND "claimedUntil" < :now
+               AND "attemptStartedAt" IS NULL
+               AND NOT EXISTS (
+                   SELECT 1 FROM inquiry_delivery_attempts a
+                   WHERE a."deliveryId" = inquiry_deliveries.id
+                     AND (inquiry_deliveries."claimedAt" IS NULL OR a."startedAt" >= inquiry_deliveries."claimedAt")
+                     AND COALESCE(a."errorClass", \'\') <> \'campaign_unavailable\'
+               )'
+        );
+        $unstarted->execute([
+            ':pending'     => 'pending',
+            ':processing'  => 'processing',
+            ':error_class' => 'lease_expired_before_attempt',
+            ':now'         => $now,
+        ]);
+
+        // Reserva vencida con un intento iniciado: el resultado externo es incierto.
         $stale = $this->pdo->prepare(
             'UPDATE inquiry_deliveries
              SET state = :unknown, "terminalAt" = COALESCE("terminalAt", :now),
@@ -222,11 +256,37 @@ final class FLACSO_Inquiry_Delivery_Repository {
             ':now'         => $now,
         ]);
 
+        // Presupuesto agotado: ninguna rama puede reintentarse indefinidamente.
+        $exhausted = $this->pdo->prepare(
+            'SELECT id FROM inquiry_deliveries
+             WHERE (state = :pending OR state = :retryable) AND attempts >= ' . self::MAX_CLAIM_ATTEMPTS
+        );
+        $exhausted->execute([':pending' => 'pending', ':retryable' => 'retryable_failed']);
+        foreach ($exhausted->fetchAll(PDO::FETCH_COLUMN) as $exhausted_id) {
+            $close = $this->pdo->prepare(
+                'UPDATE inquiry_deliveries
+                 SET state = :failed, "terminalAt" = COALESCE("terminalAt", :now),
+                     "lastErrorClass" = :error_class, "updatedAt" = :now
+                 WHERE id = :id AND (state = :pending OR state = :retryable)'
+            );
+            $close->execute([
+                ':failed'      => 'failed',
+                ':now'         => $now,
+                ':error_class' => 'attempts_exhausted',
+                ':id'          => (string) $exhausted_id,
+                ':pending'     => 'pending',
+                ':retryable'   => 'retryable_failed',
+            ]);
+            if ($close->rowCount() === 1) {
+                $this->sync_source_email_status((string) $exhausted_id, 'failed');
+            }
+        }
+
         $select = $this->pdo->prepare(
             'SELECT id
              FROM inquiry_deliveries
              WHERE (state = :pending OR state = :retryable)
-               AND attempts < 3
+               AND attempts < ' . self::MAX_CLAIM_ATTEMPTS . '
                AND ("nextAttemptAt" IS NULL OR "nextAttemptAt" <= :now)
              ORDER BY "createdAt" ASC
              LIMIT ' . $limit
@@ -243,11 +303,11 @@ final class FLACSO_Inquiry_Delivery_Repository {
             $token = bin2hex(random_bytes(16));
             $update = $this->pdo->prepare(
                 'UPDATE inquiry_deliveries
-                 SET state = :processing, "claimedAt" = :now, "claimedUntil" = :until,
-                     "claimToken" = :claim_token, "updatedAt" = :now
+                 SET state = :processing, attempts = attempts + 1, "claimedAt" = :now, "claimedUntil" = :until,
+                     "claimToken" = :claim_token, "attemptStartedAt" = NULL, "updatedAt" = :now
                  WHERE id = :id
                    AND (state = :pending OR state = :retryable)
-                   AND attempts < 3
+                   AND attempts < ' . self::MAX_CLAIM_ATTEMPTS . '
                    AND ("nextAttemptAt" IS NULL OR "nextAttemptAt" <= :now)'
             );
             $update->execute([
@@ -343,6 +403,8 @@ final class FLACSO_Inquiry_Delivery_Repository {
         $stmt = $this->pdo->prepare(
             'UPDATE inquiry_deliveries
              SET state = :processing,
+                 attempts = 1,
+                 "attemptStartedAt" = NULL,
                  "terminalAt" = NULL,
                  "acceptedAt" = NULL,
                  "nextAttemptAt" = NULL,
@@ -374,9 +436,34 @@ final class FLACSO_Inquiry_Delivery_Repository {
         return $claimed;
     }
 
-    public function record_attempt_start(string $delivery_id, string $attempt_id): string {
-        $attempt_row_id = FLACSO_Base_Inquiry_Repository::generate_cuid();
+    /**
+     * Registra el inicio de un intento externo. Con $claim_token exige que la
+     * reserva siga vigente y pertenezca a quien llama: si se perdió, lanza
+     * FLACSO_Delivery_Claim_Lost_Exception y el llamador debe abandonar sin enviar.
+     */
+    public function record_attempt_start(string $delivery_id, string $attempt_id, ?string $claim_token = null): string {
         $now = gmdate('c');
+
+        // Un solo UPDATE condicional valida propiedad y vigencia de la reserva y deja
+        // constancia de que el envío está autorizado. Si la recuperación ganó la fila,
+        // no afecta ninguna fila y el llamador abandona sin enviar.
+        $authorize = $this->pdo->prepare(
+            'UPDATE inquiry_deliveries
+             SET "attemptStartedAt" = :now, "updatedAt" = :now
+             WHERE id = :id AND state = :processing
+               AND "claimedUntil" IS NOT NULL AND "claimedUntil" >= :now'
+            . (($claim_token !== null && $claim_token !== '') ? ' AND "claimToken" = :token' : '')
+        );
+        $params = [':now' => $now, ':id' => $delivery_id, ':processing' => 'processing'];
+        if ($claim_token !== null && $claim_token !== '') {
+            $params[':token'] = $claim_token;
+        }
+        $authorize->execute($params);
+        if ($authorize->rowCount() !== 1) {
+            throw new FLACSO_Delivery_Claim_Lost_Exception('La reserva de la entrega ya no pertenece a este proceso.');
+        }
+
+        $attempt_row_id = FLACSO_Base_Inquiry_Repository::generate_cuid();
 
         $stmt = $this->pdo->prepare(
             'INSERT INTO inquiry_delivery_attempts
@@ -391,18 +478,25 @@ final class FLACSO_Inquiry_Delivery_Repository {
             ':started_at'  => $now,
         ]);
 
-        $update = $this->pdo->prepare(
-            'UPDATE inquiry_deliveries
-             SET attempts = attempts + 1, "updatedAt" = :now
-             WHERE id = :id AND state = :processing'
-        );
-        $update->execute([
-            ':now'        => $now,
-            ':id'         => $delivery_id,
-            ':processing' => 'processing',
-        ]);
-
         return $attempt_row_id;
+    }
+
+    /**
+     * Un rechazo determinista previo al envío (p. ej. la oferta no tiene campaña)
+     * garantiza que nada salió: se retira la marca para que, si la reserva vence
+     * antes del acuse de respaldo, la entrega vuelva a la cola y no quede incierta.
+     */
+    public function clear_attempt_started(string $delivery_id, ?string $claim_token = null): void {
+        $token_sql = ($claim_token !== null && $claim_token !== '') ? ' AND "claimToken" = :token' : '';
+        $stmt = $this->pdo->prepare(
+            'UPDATE inquiry_deliveries SET "attemptStartedAt" = NULL, "updatedAt" = :now
+             WHERE id = :id AND state = :processing' . $token_sql
+        );
+        $params = [':now' => gmdate('c'), ':id' => $delivery_id, ':processing' => 'processing'];
+        if ($token_sql !== '') {
+            $params[':token'] = $claim_token;
+        }
+        $stmt->execute($params);
     }
 
     public function finish_attempt(
@@ -428,31 +522,36 @@ final class FLACSO_Inquiry_Delivery_Repository {
         ]);
     }
 
-    public function set_contact_id(string $delivery_id, int $contact_id): void {
+    public function set_contact_id(string $delivery_id, int $contact_id, ?string $claim_token = null): void {
+        $token_sql = ($claim_token !== null && $claim_token !== '') ? ' AND "claimToken" = :token' : '';
         $stmt = $this->pdo->prepare(
-            'UPDATE inquiry_deliveries SET "contactId" = :contact_id, "updatedAt" = :now WHERE id = :id'
+            'UPDATE inquiry_deliveries SET "contactId" = :contact_id, "updatedAt" = :now WHERE id = :id' . $token_sql
         );
-        $stmt->execute([
+        $params = [
             ':contact_id' => $contact_id > 0 ? $contact_id : null,
             ':now' => gmdate('c'),
             ':id' => $delivery_id,
-        ]);
+        ];
+        if ($token_sql !== '') {
+            $params[':token'] = $claim_token;
+        }
+        $stmt->execute($params);
     }
 
-    public function mark_accepted(string $delivery_id, ?int $http_code = null): bool {
-        return $this->transition_terminal($delivery_id, 'accepted', $http_code, null, null, true);
+    public function mark_accepted(string $delivery_id, ?int $http_code = null, ?string $claim_token = null): bool {
+        return $this->transition_terminal($delivery_id, 'accepted', $http_code, null, null, true, $claim_token);
     }
 
-    public function mark_acceptance_unknown(string $delivery_id, ?string $error_class = null, ?string $error = null): bool {
-        return $this->transition_terminal($delivery_id, 'acceptance_unknown', null, $error_class, $error);
+    public function mark_acceptance_unknown(string $delivery_id, ?string $error_class = null, ?string $error = null, ?string $claim_token = null): bool {
+        return $this->transition_terminal($delivery_id, 'acceptance_unknown', null, $error_class, $error, false, $claim_token);
     }
 
-    public function mark_failed(string $delivery_id, ?int $http_code = null, ?string $error_class = null, ?string $error = null): bool {
-        return $this->transition_terminal($delivery_id, 'failed', $http_code, $error_class, $error);
+    public function mark_failed(string $delivery_id, ?int $http_code = null, ?string $error_class = null, ?string $error = null, ?string $claim_token = null): bool {
+        return $this->transition_terminal($delivery_id, 'failed', $http_code, $error_class, $error, false, $claim_token);
     }
 
-    public function mark_blocked(string $delivery_id, ?string $error_class = null, ?string $error = null): bool {
-        return $this->transition_terminal($delivery_id, 'blocked', null, $error_class, $error);
+    public function mark_blocked(string $delivery_id, ?string $error_class = null, ?string $error = null, ?string $claim_token = null): bool {
+        return $this->transition_terminal($delivery_id, 'blocked', null, $error_class, $error, false, $claim_token);
     }
 
     public function mark_retryable_failure(
@@ -460,17 +559,19 @@ final class FLACSO_Inquiry_Delivery_Repository {
         ?int $http_code,
         ?string $error_class,
         ?string $error,
-        int $delay_seconds = 300
+        int $delay_seconds = 300,
+        ?string $claim_token = null
     ): bool {
         $next = gmdate('c', time() + max(60, $delay_seconds));
+        $token_sql = ($claim_token !== null && $claim_token !== '') ? ' AND "claimToken" = :token' : '';
         $stmt = $this->pdo->prepare(
             'UPDATE inquiry_deliveries
              SET state = :state, "nextAttemptAt" = :next_attempt, "claimedAt" = NULL,
                  "claimedUntil" = NULL, "claimToken" = NULL, "lastHttpCode" = :http_code,
                  "lastErrorClass" = :error_class, "lastError" = :error, "updatedAt" = :now
-             WHERE id = :id AND state = :processing'
+             WHERE id = :id AND state = :processing' . $token_sql
         );
-        $stmt->execute([
+        $params = [
             ':state'       => 'retryable_failed',
             ':processing'  => 'processing',
             ':next_attempt'=> $next,
@@ -479,7 +580,11 @@ final class FLACSO_Inquiry_Delivery_Repository {
             ':error'       => self::redact($error),
             ':now'         => gmdate('c'),
             ':id'          => $delivery_id,
-        ]);
+        ];
+        if ($token_sql !== '') {
+            $params[':token'] = $claim_token;
+        }
+        $stmt->execute($params);
         $changed = $stmt->rowCount() === 1;
         if ($changed) {
             $this->sync_source_email_status($delivery_id, 'retryable_failed');
@@ -575,18 +680,20 @@ final class FLACSO_Inquiry_Delivery_Repository {
         ?int $http_code = null,
         ?string $error_class = null,
         ?string $error = null,
-        bool $accepted = false
+        bool $accepted = false,
+        ?string $claim_token = null
     ): bool {
         $now = gmdate('c');
+        $token_sql = ($claim_token !== null && $claim_token !== '') ? ' AND "claimToken" = :token' : '';
         $stmt = $this->pdo->prepare(
             'UPDATE inquiry_deliveries
              SET state = :state, "acceptedAt" = :accepted_at, "terminalAt" = :terminal_at,
                  "claimedAt" = NULL, "claimedUntil" = NULL, "claimToken" = NULL,
                  "lastHttpCode" = :http_code, "lastErrorClass" = :error_class,
                  "lastError" = :error, "updatedAt" = :now
-             WHERE id = :id AND state = :processing'
+             WHERE id = :id AND state = :processing' . $token_sql
         );
-        $stmt->execute([
+        $params = [
             ':state'        => $state,
             ':processing'   => 'processing',
             ':accepted_at'  => $accepted ? $now : null,
@@ -596,7 +703,11 @@ final class FLACSO_Inquiry_Delivery_Repository {
             ':error'        => self::redact($error),
             ':now'          => $now,
             ':id'           => $delivery_id,
-        ]);
+        ];
+        if ($token_sql !== '') {
+            $params[':token'] = $claim_token;
+        }
+        $stmt->execute($params);
         $changed = $stmt->rowCount() === 1;
         if ($changed) {
             $this->sync_source_email_status($delivery_id, $state);
