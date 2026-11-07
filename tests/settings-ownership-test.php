@@ -24,7 +24,6 @@ $files = [
     'portada' => $root . '/modules/main-page/includes/class-flacso-main-page-unified-settings.php',
     'portada_ajax' => $root . '/modules/main-page/includes/class-flacso-ajax-settings.php',
     'seminars' => $root . '/modules/seminarios/includes/class-seminario-settings.php',
-    'offer_form' => $root . '/modules/oferta-academica/includes/class-oferta-consulta-form.php',
     'routing' => $root . '/modules/formularios/includes/editor-routing.php',
 ];
 
@@ -40,7 +39,6 @@ $mail_init = (string) file_get_contents($files['mail_init']);
 $portada = (string) file_get_contents($files['portada']);
 $portada_ajax = (string) file_get_contents($files['portada_ajax']);
 $seminars = (string) file_get_contents($files['seminars']);
-$offer_form = (string) file_get_contents($files['offer_form']);
 $routing = (string) file_get_contents($files['routing']);
 
 // Navegación principal por dominios.
@@ -91,10 +89,9 @@ ownership_assert(strpos($portada_ajax, "flacso_nav_announcement_enabled") !== fa
 // Seminarios es dueño de su comportamiento global.
 ownership_assert(strpos($seminars, "flacso_seminarios_dias_cierre_post_inicio") !== false, 'Seminarios conserva el ajuste del plazo automático de cierre');
 
-// Oferta ya no conoce un endpoint externo.
-ownership_assert(strpos($offer_form, "FLACSO_Offer_Inquiry_Service::submit") !== false, 'Formulario de Oferta debe usar el servicio interno');
-ownership_assert(strpos($offer_form, "flacso_oferta_consulta_endpoint_url") === false, 'Formulario de Oferta no debe tener option de endpoint');
-ownership_assert(strpos($offer_form, "wp_safe_remote_post") === false, 'Formulario de Oferta no debe publicar a un endpoint remoto');
+// El formulario flotante de ofertas se retiró: el único formulario es el de «Más información».
+ownership_assert(!file_exists($root . '/modules/oferta-academica/includes/class-oferta-consulta-form.php'), 'El formulario flotante de Oferta no debe existir');
+ownership_assert(strpos(file_get_contents($root . '/modules/oferta-academica/init.php'), 'Oferta_Consulta_Form') === false, 'El módulo de Oferta no debe cargar el formulario flotante');
 
 // El reparador legacy no vuelve a crear el webhook de ofertas.
 ownership_assert(strpos($routing, "get_option('fc_oferta_webhook_url'") === false, 'Ruteo legacy no debe leer webhook de oferta');

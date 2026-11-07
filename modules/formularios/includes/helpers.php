@@ -9,6 +9,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 /**
+ * Profesión sanitizada y llevada al enum del formulario cuando ese módulo está cargado.
+ */
+function flacso_formularios_profession_value( $value ): string {
+	$value = sanitize_text_field( (string) $value );
+	return function_exists( 'flacso_consultas_normalize_profession' )
+		? flacso_consultas_normalize_profession( $value )
+		: $value;
+}
+
+
+/**
  * Endpoint externo de compatibilidad para la consulta general.
  *
  * Las solicitudes de información de ofertas no usan este valor.
@@ -832,7 +843,7 @@ function fc_build_info_request_webhook_payload( array $data ) {
         'first_name'      => isset( $data['nombre'] ) ? sanitize_text_field( $data['nombre'] ) : '',
         'last_name'       => isset( $data['apellido'] ) ? sanitize_text_field( $data['apellido'] ) : '',
         'country'         => isset( $data['pais'] ) ? sanitize_text_field( $data['pais'] ) : '',
-        'profession'      => isset( $data['profesion'] ) ? sanitize_text_field( $data['profesion'] ) : '',
+        'profession'      => isset( $data['profesion'] ) ? flacso_formularios_profession_value( $data['profesion'] ) : '',
         'education_level' => isset( $data['nivel_academico'] ) ? sanitize_text_field( $data['nivel_academico'] ) : '',
         'offer_id'        => $offer_id,
         'offer_name'      => isset( $data['offer_name'] ) ? sanitize_text_field( $data['offer_name'] ) : ( isset( $data['titulo_posgrado'] ) ? sanitize_text_field( $data['titulo_posgrado'] ) : '' ),
@@ -890,7 +901,7 @@ function fc_build_info_request_webhook_payload( array $data ) {
         'apellido'        => isset( $data['apellido'] ) ? sanitize_text_field( $data['apellido'] ) : '',
         'correo'          => isset( $data['correo'] ) ? sanitize_email( $data['correo'] ) : '',
         'pais'            => isset( $data['pais'] ) ? sanitize_text_field( $data['pais'] ) : '',
-        'profesion'       => isset( $data['profesion'] ) ? sanitize_text_field( $data['profesion'] ) : '',
+        'profesion'       => isset( $data['profesion'] ) ? flacso_formularios_profession_value( $data['profesion'] ) : '',
         'nivel_academico' => isset( $data['nivel_academico'] ) ? sanitize_text_field( $data['nivel_academico'] ) : '',
         'nivel_educativo' => isset( $data['nivel_academico'] ) ? sanitize_text_field( $data['nivel_academico'] ) : '',
         'id_pagina'       => $offer_id,

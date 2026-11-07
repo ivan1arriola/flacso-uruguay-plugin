@@ -192,7 +192,7 @@ $o = campaign_outcome('camp-4');
 campaign_assert($o['status'] === 'failed' && str_contains((string) $o['note'], 'contact.email'), 'la bandeja muestra el error del alta');
 
 // Errores transitorios: reintenta y, al agotar los intentos, falla
-foreach ([[503, []], ['wp_error', []], [401, []]] as $transient) {
+foreach ([[503, []], ['wp_error', []], [401, []], [429, []], [200, ['ok' => false]]] as $transient) {
     $calls = [];
     campaign_transport($transient, $calls);
     $d = campaign_delivery($repository, $source, 'camp-t-' . $transient[0], $consent);
@@ -204,7 +204,7 @@ foreach ([[503, []], ['wp_error', []], [401, []]] as $transient) {
 $calls = [];
 campaign_transport([503, []], $calls);
 $d = campaign_delivery($repository, $source, 'camp-last', $consent);
-FLACSO_DB::connection()->prepare('UPDATE inquiry_deliveries SET attempts = 5 WHERE id = :id')->execute([':id' => $d['delivery_id']]);
+FLACSO_DB::connection()->prepare('UPDATE inquiry_deliveries SET attempts = 6 WHERE id = :id')->execute([':id' => $d['delivery_id']]); // el sexto reclamo ya está contado
 $r = FLACSO_Inquiry_Delivery_Service::process($d['delivery_id']);
 campaign_assert($r['status'] === 'failed', 'al agotar los intentos la entrega falla');
 campaign_assert(campaign_outcome('camp-last')['status'] === 'failed', 'al agotar los intentos la bandeja la muestra con error');

@@ -226,6 +226,10 @@ class FLACSO_Offer_Inquiry_Service {
 
         $country = isset($data['country']) ? (string)$data['country'] : (isset($data['pais']) ? (string)$data['pais'] : null);
         $profession = isset($data['profession']) ? (string)$data['profession'] : (isset($data['profesion']) ? (string)$data['profesion'] : null);
+        if ($profession !== null && function_exists('flacso_consultas_normalize_profession')) {
+            // Cualquier canal termina con una opción del enum de profesiones (o vacío).
+            $profession = flacso_consultas_normalize_profession($profession);
+        }
         $education_level = isset($data['educationLevel']) ? (string)$data['educationLevel'] : (isset($data['nivel_academico']) ? (string)$data['nivel_academico'] : null);
         $reply_to = isset($data['replyToEmail']) ? (string)$data['replyToEmail'] : (isset($data['reply_to']) ? (string)$data['reply_to'] : null);
         if (($reply_to === null || trim($reply_to) === '') && !empty($context['replyToEmail'])) {
@@ -383,6 +387,8 @@ class FLACSO_Offer_Inquiry_Service {
             ];
         }
 
+        self::alert_if_queue_disabled();
+
         $record_id = (string) ($insert_result['id'] ?? '');
         $marketing = ['ok' => true, 'status' => 'skipped', 'reason' => 'consent_required'];
         if (FLACSO_Offer_Campaigns::is_enabled() && FLACSO_Offer_Campaigns::valid_consent($consent)) {
@@ -421,6 +427,33 @@ class FLACSO_Offer_Inquiry_Service {
             'followup_due_at'      => null,
             'code'                 => 200,
         ];
+    }
+
+    /**
+     * La consulta ya está guardada, pero si la cola de entregas está apagada nada
+     * llegará a Mautic. Se avisa como máximo una vez por hora.
+     */
+    private static function alert_if_queue_disabled(): void {
+        if (!function_exists('get_option') || (string) get_option('flacso_inquiry_delivery_queue_enabled', '0') === '1') {
+            return;
+        }
+        if (!function_exists('get_transient') || !function_exists('set_transient') || get_transient('flacso_queue_disabled_alert')) {
+            return;
+        }
+        set_transient('flacso_queue_disabled_alert', 1, 3600);
+
+        if (class_exists('FLACSO_Error_Notifier')) {
+            try {
+                FLACSO_Error_Notifier::report(
+                    'Se guardó una consulta pero la cola de entregas a Mautic está deshabilitada (flacso_inquiry_delivery_queue_enabled).',
+                    __FILE__,
+                    __LINE__,
+                    'consultas_queue_disabled'
+                );
+            } catch (\Throwable $e) {
+                // Una alerta nunca debe romper el guardado de la consulta.
+            }
+        }
     }
 
     /**

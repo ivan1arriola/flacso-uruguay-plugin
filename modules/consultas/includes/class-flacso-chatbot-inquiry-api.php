@@ -172,7 +172,10 @@ final class FLACSO_Chatbot_Inquiry_API {
             'consulta' => mb_substr($message, 0, 2000),
             'telefono' => sanitize_text_field((string) ($body['phone'] ?? '')),
             'country' => $country,
-            'profession' => $profession,
+            // El canal no tiene selector: el texto libre se traduce al enum del formulario.
+            'profession' => function_exists('flacso_consultas_normalize_profession')
+                ? flacso_consultas_normalize_profession($profession)
+                : $profession,
             'educationLevel' => $education,
             // Dato crudo; la evidencia la genera el servidor sólo para ofertas.
             'marketingConsentGranted' => ($body['marketingConsentGranted'] ?? false) === true,

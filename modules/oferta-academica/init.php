@@ -40,7 +40,6 @@ flacso_safe_require('modules/oferta-academica/includes/class-carta-settings.php'
 flacso_safe_require('modules/oferta-academica/includes/class-carta-settings-admin.php');
 flacso_safe_require('modules/oferta-academica/includes/class-academic-settings-api.php');
 flacso_safe_require('modules/oferta-academica/includes/class-preinscription-ajax-handlers.php');
-flacso_safe_require('modules/oferta-academica/includes/class-oferta-consulta-form.php');
 flacso_safe_require('modules/oferta-academica/includes/homepage.php');
 
 if (defined('WP_CLI') && WP_CLI) {
@@ -57,7 +56,6 @@ add_action('init', static function (): void {
     FLACSO_Cohorte::register();
     CPT_Tabla_Precio::init();
     Oferta_Taxonomies::init();
-    Oferta_Consulta_Form::init();
 }, 5);
 
 FLACSO_Academic_Admin_UI::init();

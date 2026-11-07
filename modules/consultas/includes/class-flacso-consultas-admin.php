@@ -29,9 +29,21 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			return current_user_can( 'manage_options' ) || current_user_can( FLACSO_Academic_Assistant::MANAGE_INQUIRIES );
 		}
 
+		/**
+		 * Avisa cuando la cola de entregas está apagada: el formulario confirma las
+		 * consultas, pero nada llega a Mautic mientras la cola no corra.
+		 */
+		public static function render_queue_disabled_notice(): void {
+			if ( ! current_user_can( 'manage_options' ) || '1' === (string) get_option( 'flacso_inquiry_delivery_queue_enabled', '0' ) ) {
+				return;
+			}
+			echo '<div class="notice notice-error"><p><strong>FLACSO consultas:</strong> la cola de entregas a Mautic está deshabilitada (<code>flacso_inquiry_delivery_queue_enabled</code>). Las consultas se guardan, pero no se envían ni entran a campañas hasta activarla.</p></div>';
+		}
+
 		public static function init(): void {
 			add_action( 'admin_menu', array( __CLASS__, 'register_menu' ), 12 );
 			add_action( 'admin_init', array( __CLASS__, 'redirect_legacy_tab' ) );
+			add_action( 'admin_notices', array( __CLASS__, 'render_queue_disabled_notice' ) );
 			add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_admin_assets' ) );
 			add_action( 'wp_ajax_flacso_consultas_detail', array( __CLASS__, 'ajax_get_detail' ) );
 			add_action( 'wp_ajax_flacso_consultas_retry_email', array( __CLASS__, 'ajax_retry_email' ) );

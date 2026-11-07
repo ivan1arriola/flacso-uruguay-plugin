@@ -314,6 +314,9 @@ CREATE TABLE seminar_inquiries (
 flacso_test_install_delivery_tables($pdo);
 FLACSO_DB::set_connection($pdo);
 
+if (!function_exists('wp_salt')) {
+    function wp_salt(string $scheme = 'auth'): string { return 'test-salt-' . $scheme; }
+}
 if (!function_exists('apply_filters')) {
     function apply_filters(string $hook, $value) { return $value; }
 }
@@ -508,7 +511,7 @@ $_POST = [
     'correo'               => 'mateo.ramos@example.com',
     'pais'                 => 'Uruguay',
     'nivel_academico'      => 'Universitario',
-    'profesion'            => 'Profesor',
+    'profesion'            => flacso_consultas_profession_options()[0],
     'url_base'             => 'https://flacso.edu.uy/oferta/especializacion-educacion',
     'dynamic_info_form_id' => '0', // Single posgrado form (no dynamic form id)
 ];
@@ -549,7 +552,7 @@ $_POST = [
     'correo'               => 'laura.perez@example.com',
     'pais'                 => 'Uruguay',
     'nivel_academico'      => 'Universitario',
-    'profesion'            => 'Docente',
+    'profesion'            => flacso_consultas_profession_options()[0],
     'url_base'             => 'https://flacso.edu.uy/oferta/diploma-prueba',
     'dynamic_info_form_id' => '0',
 ];
@@ -566,5 +569,135 @@ wiring_assert($db_error_caught, 'Un fallo de PostgreSQL debe responder wp_send_j
 
 FLACSO_DB::set_connection($pdo);
 FLACSO_Base_Inquiry_Repository::clear_cache();
+
+// ---------------------------------------------------------------------------
+// 8. Antiabuso, clave de envío estable y confirmación honesta
+// ---------------------------------------------------------------------------
+function wiring_base_post(string $email, string $offer_id): array {
+    return [
+        'id_pagina'            => $offer_id,
+        'titulo_posgrado'      => 'Diploma de prueba',
+        'nombre'               => 'Rosa',
+        'apellido'             => 'Gómez',
+        'correo'               => $email,
+        'pais'                 => 'Uruguay',
+        'nivel_academico'      => 'Universitario',
+        'profesion'            => flacso_consultas_profession_options()[0],
+        'url_base'             => 'https://flacso.edu.uy/oferta/diploma-prueba',
+        'dynamic_info_form_id' => '0',
+    ];
+}
+
+function wiring_run_handler(array $post): array {
+    $_POST = $post;
+    try {
+        flacso_enviar_consulta_func();
+    } catch (TestAjaxSuccessException $e) {
+        return ['success' => true, 'data' => $e->data];
+    } catch (TestAjaxErrorException $e) {
+        return ['success' => false, 'data' => $e->data];
+    }
+    return ['success' => null, 'data' => null];
+}
+
+function wiring_count_rows(PDO $pdo, string $email): int {
+    $stmt = $pdo->prepare('SELECT COUNT(*) FROM offer_inquiries WHERE email = ?');
+    $stmt->execute([$email]);
+    return (int) $stmt->fetchColumn();
+}
+
+// Honeypot relleno: éxito visual, nada guardado, sin conversión.
+$res = wiring_run_handler(wiring_base_post('bot.honeypot@example.com', '111') + ['flacso_hp_ref' => 'http://spam.example']);
+wiring_assert($res['success'] === true && ($res['data']['persisted'] ?? null) === false, 'honeypot relleno se descarta con persisted=false');
+wiring_assert(wiring_count_rows($pdo, 'bot.honeypot@example.com') === 0, 'el honeypot no persiste la consulta');
+
+// Token recién emitido (envío instantáneo) o falsificado.
+$fast = wiring_run_handler(wiring_base_post('bot.fast@example.com', '111') + ['flacso_form_token' => flacso_consultas_form_token()]);
+wiring_assert(($fast['data']['persisted'] ?? null) === false, 'un token recién emitido se descarta');
+$forged = wiring_run_handler(wiring_base_post('bot.forged@example.com', '111') + ['flacso_form_token' => '1700000000.deadbeef']);
+wiring_assert(($forged['data']['persisted'] ?? null) === false, 'un token falsificado se descarta');
+wiring_assert(wiring_count_rows($pdo, 'bot.fast@example.com') + wiring_count_rows($pdo, 'bot.forged@example.com') === 0, 'los envíos descartados no persisten');
+
+// Token antiguo y válido (página en caché): se acepta.
+$issued = (string) (time() - 3600);
+$old_token = $issued . '.' . hash_hmac('sha256', 'flacso_consulta|' . $issued, wp_salt('auth'));
+$ok = wiring_run_handler(wiring_base_post('humana.cache@example.com', '111') + ['flacso_form_token' => $old_token]);
+wiring_assert($ok['success'] === true && ($ok['data']['persisted'] ?? true) !== false, 'un token válido y antiguo se acepta');
+wiring_assert(wiring_count_rows($pdo, 'humana.cache@example.com') === 1, 'se persiste la consulta con token válido');
+
+// Sin token (formulario en caché anterior al despliegue): se acepta mientras no sea obligatorio.
+$legacy = wiring_run_handler(wiring_base_post('humana.legacy@example.com', '111'));
+wiring_assert($legacy['success'] === true && wiring_count_rows($pdo, 'humana.legacy@example.com') === 1, 'formulario sin token sigue funcionando');
+
+// Reenviar con la misma clave no duplica; con otra clave sí crea otra consulta.
+$key = '3f2b8c1e-5d4a-4e7b-9c6d-1a2b3c4d5e6f';
+$first = wiring_run_handler(wiring_base_post('clave.estable@example.com', '112') + ['consulta_key' => $key]);
+$again = wiring_run_handler(wiring_base_post('clave.estable@example.com', '112') + ['consulta_key' => $key]);
+wiring_assert($first['success'] === true && $again['success'] === true, 'ambos envíos con la misma clave responden éxito');
+wiring_assert(wiring_count_rows($pdo, 'clave.estable@example.com') === 1, 'reenviar con la misma clave no duplica la consulta');
+$stmt = $pdo->prepare('SELECT consultaId FROM offer_inquiries WHERE email = ?');
+$stmt->execute(['clave.estable@example.com']);
+wiring_assert($stmt->fetchColumn() === $key . '-112', 'el consultaId deriva de la clave y la oferta');
+wiring_run_handler(wiring_base_post('clave.estable@example.com', '112') + ['consulta_key' => '00000000-0000-4000-8000-000000000001']);
+wiring_assert(wiring_count_rows($pdo, 'clave.estable@example.com') === 2, 'otra clave crea otra consulta');
+$bad_key = wiring_run_handler(wiring_base_post('clave.invalida@example.com', '112') + ['consulta_key' => "x'; DROP TABLE"]);
+wiring_assert($bad_key['success'] === true && wiring_count_rows($pdo, 'clave.invalida@example.com') === 1, 'una clave inválida se ignora sin romper el envío');
+
+// Formulario anterior al despliegue: profesión en texto libre y sin token. Se guarda siempre una opción del enum.
+$legacy_cases = [
+    ['legacy.docente@example.com', 'Docente', 'Educación y docencia'],
+    ['legacy.abogada@example.com', 'Abogada', 'Derecho y justicia'],
+    ['legacy.ingeniero@example.com', 'Ingeniero civil', 'Ingeniería, informática y tecnología'],
+    ['legacy.otro@example.com', 'Cocinero', 'Otra área profesional'],
+];
+foreach ($legacy_cases as [$mail, $typed, $expected]) {
+    $legacy_prof = wiring_base_post($mail, '113');
+    $legacy_prof['profesion'] = $typed;
+    $res = wiring_run_handler($legacy_prof);
+    wiring_assert($res['success'] === true && wiring_count_rows($pdo, $mail) === 1, "un POST anterior con profesión {$typed} se acepta");
+    $stmt = $pdo->prepare('SELECT profession FROM offer_inquiries WHERE email = ?');
+    $stmt->execute([$mail]);
+    $stored = $stmt->fetchColumn();
+    wiring_assert($stored === $expected, "{$typed} se guarda como {$expected}, no como texto libre");
+    wiring_assert(in_array($stored, flacso_consultas_profession_options(), true), 'lo guardado pertenece siempre al enum');
+}
+// Formulario nuevo (con token): la lista cerrada sí se exige.
+$issued = (string) (time() - 3600);
+$tok = $issued . '.' . hash_hmac('sha256', 'flacso_consulta|' . $issued, wp_salt('auth'));
+$strict = wiring_base_post('nuevo.profesion@example.com', '113') + ['flacso_form_token' => $tok];
+$strict['profesion'] = 'Docente';
+$res = wiring_run_handler($strict);
+wiring_assert($res['success'] === false && wiring_count_rows($pdo, 'nuevo.profesion@example.com') === 0, 'el formulario nuevo rechaza una profesión fuera de la lista');
+
+// Canales sin selector (chatbot, webhook legacy): siempre enum, o vacío si no se informó.
+wiring_assert(flacso_consultas_normalize_profession('') === '', 'una profesión no informada sigue vacía');
+wiring_assert(flacso_consultas_normalize_profession('  ') === '', 'espacios cuentan como no informada');
+wiring_assert(flacso_consultas_normalize_profession('Estudiante') === 'Estudiante', 'una opción válida se conserva');
+wiring_assert(flacso_consultas_normalize_profession('psicóloga clínica') === 'Psicología y salud mental', 'texto libre con tilde se traduce');
+wiring_assert(flacso_consultas_normalize_profession('Panadero') === 'Otra área profesional', 'sin coincidencia va a Otra área profesional');
+
+// Contraejemplos de la heurística: la raíz se busca al inicio de palabra y gana la frase específica.
+$mapping_cases = [
+    'Tractorista' => 'Otra área profesional',
+    'Exalumno' => 'Otra área profesional',
+    'Periodoncista' => 'Otra área profesional',
+    'Trabajador bancario' => 'Otra área profesional',
+    'Interventor contable' => 'Otra área profesional',
+    'Administrador de sistemas' => 'Ingeniería, informática y tecnología',
+    'Trabajadora social' => 'Trabajo social e intervención social',
+    'Periodista' => 'Comunicación, periodismo y contenidos',
+    'Actriz' => 'Artes, cultura, patrimonio y bibliotecas',
+];
+foreach ($mapping_cases as $typed => $expected) {
+    wiring_assert(flacso_consultas_map_legacy_profession($typed) === $expected, "{$typed} => {$expected}");
+}
+// Honeypot renombrado: el nombre antiguo ya no descarta.
+$old_name = wiring_run_handler(wiring_base_post('honeypot.viejo@example.com', '114') + ['website_url' => 'x']);
+wiring_assert(wiring_count_rows($pdo, 'honeypot.viejo@example.com') === 1, 'el campo website_url (autocompletado) ya no descarta consultas reales');
+// El webhook legacy también termina en el enum.
+$wh = fc_send_info_request_webhook(['id_pagina' => 108, 'titulo_posgrado' => 'Diploma Superior en Políticas', 'nombre' => 'Eva', 'apellido' => 'Paz', 'correo' => 'eva.webhook@example.com', 'pais' => 'Uruguay', 'nivel_academico' => 'Universitario', 'profesion' => 'Economista', 'url_base' => 'https://flacso.edu.uy/oferta/diploma-politicas']);
+$stmt = $pdo->prepare('SELECT profession FROM offer_inquiries WHERE email = ?');
+$stmt->execute(['eva.webhook@example.com']);
+wiring_assert($stmt->fetchColumn() === 'Administración, economía y recursos humanos', 'el webhook legacy guarda una opción del enum');
 
 echo "OK inquiry-handler-wiring-test\n";

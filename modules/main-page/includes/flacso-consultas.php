@@ -103,6 +103,59 @@ function flacso_get_user_ip() {
 	return sanitize_text_field( $remote_addr );
 }
 
+/**
+ * Token de formulario: hora de render firmada. Sirve para descartar envíos
+ * automáticos instantáneos sin exigir un nonce (que las páginas en caché vencen).
+ */
+function flacso_consultas_form_token(): string {
+	$issued = (string) time();
+	return $issued . '.' . hash_hmac( 'sha256', 'flacso_consulta|' . $issued, wp_salt( 'auth' ) );
+}
+
+/**
+ * @return string ok | missing | invalid | too_fast
+ */
+function flacso_consultas_check_form_token( string $token ): string {
+	$token = trim( $token );
+	if ( '' === $token ) {
+		return 'missing';
+	}
+	$parts = explode( '.', $token, 2 );
+	if ( 2 !== count( $parts ) || ! ctype_digit( $parts[0] ) ) {
+		return 'invalid';
+	}
+	$expected = hash_hmac( 'sha256', 'flacso_consulta|' . $parts[0], wp_salt( 'auth' ) );
+	if ( ! hash_equals( $expected, (string) $parts[1] ) ) {
+		return 'invalid';
+	}
+	$min_seconds = max( 0, (int) apply_filters( 'flacso_consultas_min_fill_seconds', 3 ) );
+	if ( ( time() - (int) $parts[0] ) < $min_seconds ) {
+		return 'too_fast';
+	}
+	return 'ok';
+}
+
+/**
+ * Cuenta una solicitud por IP en una ventana fija. Es atómico con caché de objetos
+ * persistente; sin ella usa transients (lectura y escritura separadas).
+ */
+function flacso_consultas_rate_hit( string $ip, int $window_seconds = 600 ): int {
+	$window = (int) floor( time() / max( 60, $window_seconds ) );
+	$key    = 'flacso_consulta_rate_' . md5( $ip ) . '_' . $window;
+
+	if ( function_exists( 'wp_using_ext_object_cache' ) && wp_using_ext_object_cache() ) {
+		wp_cache_add( $key, 0, 'flacso_consultas', $window_seconds + 60 );
+		$count = wp_cache_incr( $key, 1, 'flacso_consultas' );
+		if ( false !== $count ) {
+			return (int) $count;
+		}
+	}
+
+	$count = (int) get_transient( $key ) + 1;
+	set_transient( $key, $count, $window_seconds + 60 );
+	return $count;
+}
+
 function flacso_remove_accents_local( $str ) {
 	if ( function_exists( 'remove_accents' ) ) {
 		return remove_accents( $str );
@@ -238,6 +291,83 @@ function flacso_consultas_dispatch_single_info_request( array $data ) {
  *
  * @return string
  */
+/**
+ * Traduce una profesión escrita a mano (formulario anterior) a una opción de la lista
+ * cerrada. Sin coincidencia clara devuelve «Otra área profesional».
+ */
+function flacso_consultas_map_legacy_profession( $text ) {
+	$norm = trim( (string) $text );
+	$norm = function_exists( 'remove_accents' ) ? remove_accents( $norm ) : $norm;
+	// Respaldo propio: no depender de que remove_accents() exista ni de la codificación.
+	$norm = strtr( $norm, array( 'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n', 'Á' => 'a', 'É' => 'e', 'Í' => 'i', 'Ó' => 'o', 'Ú' => 'u', 'Ü' => 'u', 'Ñ' => 'n' ) );
+	$norm = function_exists( 'mb_strtolower' ) ? mb_strtolower( $norm, 'UTF-8' ) : strtolower( $norm );
+
+	// Las raíces se buscan al INICIO de una palabra («actor» no coincide con «tractorista»).
+	// Primero las frases específicas, que desambiguan sustantivos genéricos.
+	$rules = array(
+		'Ingeniería, informática y tecnología'            => array( 'administrador de sistemas', 'administrador de redes', 'ingenier', 'informatic', 'programador', 'desarrollador', 'analista de sistemas', 'tecnolog' ),
+		'Trabajo social e intervención social'            => array( 'trabajador social', 'trabajadora social', 'trabajo social', 'asistente social', 'educador social', 'educadora social' ),
+		'Educación y docencia'                            => array( 'docente', 'profesor', 'maestr', 'educador', 'educadora', 'pedagog', 'educacion' ),
+		'Psicología y salud mental'                       => array( 'psicolog', 'psiquiatr', 'salud mental' ),
+		'Salud: medicina, enfermería y otras profesiones' => array( 'medic', 'doctor', 'enfermer', 'odontolog', 'nutricion', 'fisioterap', 'kinesiolog', 'partera', 'obstetr' ),
+		'Derecho y justicia'                              => array( 'abogad', 'derecho', 'juez', 'jueza', 'fiscal', 'escribano', 'notari' ),
+		'Ciencias sociales, políticas e internacionales'  => array( 'sociolog', 'politolog', 'cientista', 'antropolog', 'historiador', 'relaciones internacionales' ),
+		'Comunicación, periodismo y contenidos'           => array( 'periodista', 'periodismo', 'comunicador', 'comunicadora', 'comunicacion', 'publicist', 'redactor' ),
+		'Administración, economía y recursos humanos'     => array( 'econom', 'contador', 'contadora', 'administrador', 'administradora', 'administracion', 'gerente', 'recursos humanos', 'rrhh', 'empresari', 'financ' ),
+		'Arquitectura y diseño'                           => array( 'arquitect', 'disenador', 'disenadora', 'diseno' ),
+		'Artes, cultura, patrimonio y bibliotecas'        => array( 'artista', 'musico', 'bibliotecari', 'archivist', 'museolog', 'actor', 'actriz' ),
+		'Ciencias naturales y ambiente'                   => array( 'biolog', 'quimic', 'ambient', 'agronom', 'veterinari', 'geolog', 'ecolog' ),
+		'Turismo y hotelería'                             => array( 'turismo', 'turistic', 'hotel', 'gastronom' ),
+		'Estudiante'                                      => array( 'estudiante' ),
+		'Prefiero no informar'                            => array( 'prefiero no', 'no informar' ),
+	);
+	if ( '' !== $norm ) {
+		foreach ( $rules as $option => $stems ) {
+			foreach ( $stems as $stem ) {
+				if ( 1 === preg_match( '/(?<![a-z0-9])' . preg_quote( $stem, '/' ) . '/u', $norm ) ) {
+					return $option;
+				}
+			}
+		}
+	}
+	return 'Otra área profesional';
+}
+
+/**
+ * Devuelve siempre una opción del enum de profesiones, o '' si no se informó nada.
+ * Lo que no pertenece a la lista (texto libre de canales sin selector) se traduce.
+ */
+function flacso_consultas_normalize_profession( $value ) {
+	$value = trim( (string) $value );
+	if ( '' === $value ) {
+		return '';
+	}
+	return in_array( $value, flacso_consultas_profession_options(), true )
+		? $value
+		: flacso_consultas_map_legacy_profession( $value );
+}
+
+function flacso_consultas_profession_options() {
+	return array(
+		'Educación y docencia',
+		'Trabajo social e intervención social',
+		'Psicología y salud mental',
+		'Salud: medicina, enfermería y otras profesiones',
+		'Derecho y justicia',
+		'Ciencias sociales, políticas e internacionales',
+		'Comunicación, periodismo y contenidos',
+		'Administración, economía y recursos humanos',
+		'Ingeniería, informática y tecnología',
+		'Arquitectura y diseño',
+		'Artes, cultura, patrimonio y bibliotecas',
+		'Ciencias naturales y ambiente',
+		'Turismo y hotelería',
+		'Estudiante',
+		'Otra área profesional',
+		'Prefiero no informar',
+	);
+}
+
 function flacso_consultas_render_form( $attributes = array() ) {
 	if ( isset( $attributes['mostrarPreinscripcion'] ) ) {
 		$attributes['mostrar_preinscripcion'] = $attributes['mostrarPreinscripcion'] ? 'true' : 'false';
@@ -358,6 +488,11 @@ function flacso_consultas_render_form( $attributes = array() ) {
 			<input type="hidden" name="url_referer" value="<?php echo esc_url( wp_get_referer() ?: $url_actual ); ?>">
 			<input type="hidden" name="dynamic_info_form_id" value="<?php echo esc_attr( $dynamic_form_id ); ?>">
 			<input type="hidden" name="selected_offer_ids" value="">
+			<input type="hidden" name="flacso_form_token" value="<?php echo esc_attr( flacso_consultas_form_token() ); ?>">
+			<div aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">
+				<label for="flacso-hp-ref">No completar este campo</label>
+				<input type="text" id="flacso-hp-ref" name="flacso_hp_ref" value="" tabindex="-1" autocomplete="new-password">
+			</div>
 			<?php if ( function_exists( 'fc_render_campaign_attribution_hidden_fields' ) ) { fc_render_campaign_attribution_hidden_fields( fc_get_current_request_url(), wp_get_referer() ?: '' ); } ?>
 			<?php if ( FLACSO_USE_NONCE ) { wp_nonce_field( 'flacso_consultas_form', 'flacso_nonce' ); } ?>
 
@@ -447,12 +582,14 @@ function flacso_consultas_render_form( $attributes = array() ) {
 			</div>
 
 			<div class="form-floating mb-3">
-				<input
-					type="text" id="profesion" name="profesion" class="form-control"
-					placeholder="Profesión" required minlength="2" maxlength="100"
-					inputmode="text" autocomplete="organization-title" aria-required="true" />
-				<label for="profesion">Profesión *</label>
-				<div class="invalid-feedback">Ingresá tu profesión (mínimo 2 caracteres)</div>
+				<select id="profesion" name="profesion" class="form-select" required aria-required="true">
+					<option value="" selected disabled>Seleccioná…</option>
+					<?php foreach ( flacso_consultas_profession_options() as $profession_option ) : ?>
+						<option value="<?php echo esc_attr( $profession_option ); ?>"><?php echo esc_html( $profession_option ); ?></option>
+					<?php endforeach; ?>
+				</select>
+				<label for="profesion">Área profesional *</label>
+				<div class="invalid-feedback">Seleccioná tu área profesional</div>
 			</div>
 
 			<button
@@ -500,6 +637,31 @@ function flacso_consultas_render_form( $attributes = array() ) {
 			let infoRequestFormViewTracked = false;
 			const metaSessionStorageKey = 'consultaMetaUserData';
 			const metaLeadPendingStorageKey = 'consultaMetaLeadPending';
+			const submitKeyStorageKey = 'consultaSubmitKey';
+			let inFlight = false;
+			const newSubmitKey = function() {
+				if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+					return window.crypto.randomUUID();
+				}
+				return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+					const r = Math.random() * 16 | 0;
+					return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+				});
+			};
+			// La clave identifica un envío lógico: sobrevive a recargas y reintentos,
+			// y cambia si la persona cambia el correo o las ofertas.
+			const submitKeyFor = function(fingerprint) {
+				const maxAge = 24 * 60 * 60 * 1000;
+				try {
+					const saved = JSON.parse(sessionStorage.getItem(submitKeyStorageKey) || 'null');
+					if (saved && saved.fp === fingerprint && saved.key && (Date.now() - saved.ts) < maxAge) {
+						return saved.key;
+					}
+				} catch (e) {}
+				const key = newSubmitKey();
+				try { sessionStorage.setItem(submitKeyStorageKey, JSON.stringify({ key: key, fp: fingerprint, ts: Date.now() })); } catch (e) {}
+				return key;
+			};
 			const buildGraciasUrl = function(baseUrl, pid, offerIds, dynamicFormId) {
 				const redirectUrl = new URL(baseUrl, window.location.href);
 				const currentParams = new URLSearchParams(window.location.search);
@@ -653,7 +815,10 @@ function flacso_consultas_render_form( $attributes = array() ) {
 
 		$form.on('submit', async function(e) {
 			e.preventDefault();
-			$form.find('input, select').each(function() {
+			if (inFlight) {
+				return;
+			}
+$form.find('input, select').each(function() {
 				normalizeField(this);
 				validateField(this);
 			});
@@ -676,10 +841,23 @@ function flacso_consultas_render_form( $attributes = array() ) {
 				return;
 			}
 
-			const metaUserData = await buildMetaUserData();
-			persistMetaUserData(metaUserData);
+			inFlight = true;
+			let metaUserData;
+			try {
+				metaUserData = await buildMetaUserData();
+				persistMetaUserData(metaUserData);
+			} catch (prepError) {
+				inFlight = false;
+				showMessage('No se pudo preparar el envío. Intentá de nuevo.', 'danger');
+				return;
+			}
 
 			const formData = new FormData(this);
+			const offerFingerprint = [
+				String($form.find('[name="correo"]').val() || '').trim().toLowerCase(),
+				String($form.find('[name="dynamic_info_form_id"]').val() || '')
+			].join('|');
+			formData.set('consulta_key', submitKeyFor(offerFingerprint));
 			const payload = new URLSearchParams(formData).toString();
 			toggleLoading(true);
 
@@ -694,11 +872,14 @@ function flacso_consultas_render_form( $attributes = array() ) {
 					if (!response || !response.success) {
 						const message = response && response.data && typeof response.data === 'string'
 							? response.data
-							: 'No se pudo enviar la consulta. Intentá más tarde.';
+							: (response && response.data && response.data.message) || 'No se pudo enviar la consulta. Intentá más tarde.';
 						showMessage(message, 'danger');
 						return;
 					}
-					const selectedOfferLabels = $form.find('[name="selected_offers[]"]:checked').map(function() {
+					// Sólo una consulta guardada puede registrar un Lead de Meta.
+					const wasPersisted = !(response.data && response.data.persisted === false);
+					try { sessionStorage.removeItem(submitKeyStorageKey); } catch (e) {}
+const selectedOfferLabels = $form.find('[name="selected_offers[]"]:checked').map(function() {
 						return $(this).closest('.flacso-consultas-offer-choice').text().trim().replace(/\s+/g, ' ');
 					}).get();
 					let selectedOfferIds = $form.find('[name="selected_offers[]"]:checked').map(function() {
@@ -718,20 +899,25 @@ function flacso_consultas_render_form( $attributes = array() ) {
 							$form.find('[name="nombre"]').val() + ' ' + $form.find('[name="apellido"]').val());
 						sessionStorage.setItem('consultaPrograma', selectedOfferLabels.length ? selectedOfferLabels.join(', ') : $form.find('[name="titulo_posgrado"]').val());
 						sessionStorage.setItem('consultaOrigen', urlBase);
-						sessionStorage.setItem(metaLeadPendingStorageKey, JSON.stringify({
-							pid: String(pid || ''),
-							tipo: (new URL(gracias, window.location.href)).searchParams.get('tipo') || 'consulta',
-							createdAt: Date.now()
-						}));
+						if (wasPersisted) {
+							sessionStorage.setItem(metaLeadPendingStorageKey, JSON.stringify({
+								pid: String(pid || ''),
+								tipo: (new URL(gracias, window.location.href)).searchParams.get('tipo') || 'consulta',
+								createdAt: Date.now()
+							}));
+						}
 					} catch (e) {}
 					window.location.href = buildGraciasUrl(gracias, pid, selectedOfferIds, dynamicFormId);
 				},
-				error: function() {
+				error: function(xhr) {
 					// No redirigir a /gracias en caso de error AJAX.
-					// No disparar Lead si el envío falló.
-					showMessage('No se pudo enviar la consulta. Revisá tu conexión e intentá de nuevo.', 'danger');
+					// No disparar Lead si el envío falló. La clave de envío se conserva:
+					// reintentar no duplica las consultas que ya se habían guardado.
+					const detail = xhr && xhr.responseJSON && xhr.responseJSON.data;
+					const serverMessage = detail && typeof detail === 'object' && detail.message ? detail.message : '';
+					showMessage(serverMessage || 'No se pudo enviar la consulta. Revisá tu conexión e intentá de nuevo.', 'danger');
 				},
-				complete: function() { toggleLoading(false); }
+				complete: function() { inFlight = false; toggleLoading(false); }
 			});
 		});
 
@@ -1067,14 +1253,37 @@ function flacso_enviar_consulta_func() {
 	// Límite por IP: cada envío dispara escrituras y llamadas externas.
 	$rate_ip = flacso_get_user_ip();
 	if ( 'unknown' !== $rate_ip ) {
-		$rate_key   = 'flacso_consulta_rate_' . md5( $rate_ip );
-		$rate_count = (int) get_transient( $rate_key );
-		$rate_max   = (int) apply_filters( 'flacso_consultas_rate_limit', 20 );
-		if ( $rate_count >= $rate_max ) {
+		$rate_max = (int) apply_filters( 'flacso_consultas_rate_limit', 20 );
+		if ( flacso_consultas_rate_hit( $rate_ip ) > $rate_max ) {
 			status_header( 429 );
 			wp_send_json_error( 'Demasiadas solicitudes. Intentá nuevamente en unos minutos.' );
 		}
-		set_transient( $rate_key, $rate_count + 1, 10 * MINUTE_IN_SECONDS );
+	}
+
+	// Honeypot y hora mínima: se responde como si todo hubiera salido bien, pero sin
+	// guardar nada y avisando al navegador para que no registre una conversión.
+	$honeypot       = isset( $_POST['flacso_hp_ref'] ) ? trim( (string) wp_unslash( $_POST['flacso_hp_ref'] ) ) : '';
+	$form_token     = isset( $_POST['flacso_form_token'] ) ? (string) wp_unslash( $_POST['flacso_form_token'] ) : '';
+	$token_status   = flacso_consultas_check_form_token( $form_token );
+	$token_required = (bool) apply_filters( 'flacso_consultas_require_form_token', false );
+	if ( '' !== $honeypot
+		|| in_array( $token_status, array( 'invalid', 'too_fast' ), true )
+		|| ( $token_required && 'missing' === $token_status ) ) {
+		error_log( '[FLACSO] Envío descartado por antiabuso: ' . ( '' !== $honeypot ? 'honeypot' : $token_status ) );
+		wp_send_json_success(
+			array(
+				'note'           => 'discarded',
+				'persisted'      => false,
+				'count'          => 0,
+				'first_offer_id' => absint( $_POST['id_pagina'] ?? 0 ),
+				'offer_ids'      => array(),
+			)
+		);
+	}
+
+	$submit_key = isset( $_POST['consulta_key'] ) ? strtolower( trim( (string) wp_unslash( $_POST['consulta_key'] ) ) ) : '';
+	if ( ! preg_match( '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $submit_key ) ) {
+		$submit_key = '';
 	}
 
 	$sanitize_deep = function( $value ) use ( &$sanitize_deep ) {
@@ -1166,6 +1375,15 @@ function flacso_enviar_consulta_func() {
 		error_log( '[FLACSO] Faltan campos obligatorios: ' . implode( ', ', $faltan ) );
 		wp_send_json_error( 'Completá todos los campos obligatorios.' );
 	}
+	// Siempre se guarda una opción de la lista cerrada. Un formulario anterior al
+	// despliegue (HTML en caché o pestaña abierta) no trae token y envía texto libre:
+	// se traduce a la opción más cercana en lugar de rechazar la consulta.
+	if ( 'missing' === $token_status && ! in_array( $data['profesion'], flacso_consultas_profession_options(), true ) ) {
+		$data['profesion'] = flacso_consultas_map_legacy_profession( $data['profesion'] );
+	}
+	if ( ! in_array( $data['profesion'], flacso_consultas_profession_options(), true ) ) {
+		wp_send_json_error( 'Seleccioná un área profesional válida.' );
+	}
 	if ( ! empty( $data['correo'] ) && ! is_email( $data['correo'] ) ) {
 		if ( ! FLACSO_RELAXED_MODE ) {
 			wp_send_json_error( 'Correo inválido.' );
@@ -1225,6 +1443,10 @@ function flacso_enviar_consulta_func() {
 	$deliveries = array();
 	$failures   = array();
 	foreach ( $offer_payloads as $offer_payload ) {
+		if ( '' !== $submit_key && (int) $offer_payload['id_pagina'] > 0 ) {
+			// Una clave por envío lógico y oferta: reintentar no duplica consultas ya guardadas.
+			$offer_payload['event_id'] = $submit_key . '-' . (int) $offer_payload['id_pagina'];
+		}
 		$delivery = flacso_consultas_dispatch_single_info_request( $offer_payload );
 		$deliveries[] = array(
 			'ok'       => ! empty( $delivery['ok'] ),
@@ -1244,6 +1466,25 @@ function flacso_enviar_consulta_func() {
 		}
 	}
 
+	if ( ! empty( $failures ) && count( $failures ) < count( $offer_payloads ) ) {
+		// Algunas ofertas se guardaron y otras no: no se confirma el envío completo.
+		// Con la clave de envío, reintentar sólo crea las que faltan.
+		$saved_offer_ids = array();
+		foreach ( $deliveries as $delivery_result ) {
+			if ( ! empty( $delivery_result['ok'] ) ) {
+				$saved_offer_ids[] = (int) $delivery_result['offer_id'];
+			}
+		}
+		wp_send_json_error(
+			array(
+				'message'         => 'No pudimos registrar todas tus consultas. Volvé a enviar el formulario: solo se reintentarán las pendientes.',
+				'deliveries'      => $deliveries,
+				'saved_offer_ids' => $saved_offer_ids,
+			),
+			500
+		);
+	}
+
 	if ( ! empty( $failures ) && count( $failures ) === count( $offer_payloads ) ) {
 		// El servicio interno es ahora la fuente canónica. Un fallo de persistencia
 		// no puede degradarse a éxito aunque FLACSO_RELAXED_MODE esté activo: el
@@ -1254,7 +1495,7 @@ function flacso_enviar_consulta_func() {
 
         wp_send_json_success(
                 array(
-                        'note'           => empty( $failures ) ? 'ok' : 'partial_ok',
+                        'note'           => 'ok',
                         'deliveries'     => $deliveries,
                         'count'          => count( $offer_payloads ),
                         'first_offer_id' => (int) ( $offer_payloads[0]['id_pagina'] ?? 0 ),
