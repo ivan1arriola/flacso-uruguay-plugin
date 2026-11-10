@@ -14,6 +14,7 @@ class FLACSO_Meta_Tracking {
     public static function init(): void {
         add_action('init', [self::class, 'maybe_handle_test_event_code_cookie']);
         add_action('wp_enqueue_scripts', [self::class, 'enqueue_frontend_assets'], 1);
+        add_action('wp_head', [self::class, 'render_pixel_bootstrap'], 1);
         add_action('wp_body_open', [self::class, 'render_noscript_pixel']);
         add_action('wp_footer', [self::class, 'render_noscript_pixel_fallback'], 1);
         add_action('wp_ajax_' . self::AJAX_ACTION, [self::class, 'handle_track_event']);
@@ -281,6 +282,35 @@ class FLACSO_Meta_Tracking {
             'flacso_meta_test_message' => $message,
         ], $redirect_url));
         exit;
+    }
+
+    /**
+     * Código base oficial de Meta Pixel, impreso en línea en el <head>.
+     * Así Meta (Data Advisor, Pixel Helper) detecta el píxel aunque un plugin de
+     * caché/minificación difiera meta-tracking.js. El PageView lo sigue enviando
+     * meta-tracking.js con event_id compartido con CAPI, para no duplicar.
+     */
+    public static function render_pixel_bootstrap(): void {
+        if (!self::should_boot_frontend_tracking()) {
+            return;
+        }
+
+        $settings = self::get_settings();
+        if (!$settings['enabled'] || $settings['pixel_id'] === '') {
+            return;
+        }
+
+        $pixel_id = wp_json_encode((string) $settings['pixel_id']);
+        echo "<!-- Meta Pixel Code -->
+<script>
+";
+        echo "!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+";
+        echo 'fbq("init",' . $pixel_id . ");window.__flacsoMetaInitialized=true;
+"; // phpcs:ignore WordPress.Security.EscapeOutput
+        echo "</script>
+<!-- End Meta Pixel Code -->
+";
     }
 
     public static function render_noscript_pixel(): void {
