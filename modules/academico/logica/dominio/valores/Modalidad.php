@@ -7,7 +7,7 @@ namespace FLACSO\Academico\Dominio\Valores;
 use FLACSO\Academico\Logica\Excepciones\ReglaDeDominioException;
 
 final class Modalidad {
-    private const PERMITIDAS = ['virtual', 'presencial', 'semipresencial', 'hibrida'];
+    private const PERMITIDAS = ['virtual', 'virtual-sincronica', 'presencial', 'semipresencial', 'hibrida'];
     private $valor;
 
     public function __construct(string $valor) {

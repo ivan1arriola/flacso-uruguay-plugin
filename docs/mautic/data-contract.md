@@ -28,7 +28,7 @@ Aliases canónicos:
 
 - startDate
 - startDatePrecision: day, month o year
-- modality: virtual, presencial, semipresencial o hibrida
+- modality: virtual, virtual-sincronica, presencial, semipresencial o hibrida
 
 No existen aliases paralelos startValue / modalityLabel dentro del contrato nuevo.
 

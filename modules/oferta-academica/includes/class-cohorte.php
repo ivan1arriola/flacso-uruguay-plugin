@@ -83,7 +83,7 @@ final class FLACSO_Cohorte {
 
     public static function sanitize_modality($value): string {
         $modality = sanitize_key((string) $value);
-        return in_array($modality, ['virtual', 'presencial', 'semipresencial', 'hibrida'], true) ? $modality : '';
+        return in_array($modality, ['virtual', 'virtual-sincronica', 'presencial', 'semipresencial', 'hibrida'], true) ? $modality : '';
     }
 
     public static function sanitize_year($value): int {
@@ -423,6 +423,7 @@ final class FLACSO_Cohorte {
                         <select name="modalidad">
                             <option value=""><?php esc_html_e('— Sin completar —', 'flacso-uruguay'); ?></option>
                             <option value="virtual" <?php selected($modalidad, 'virtual'); ?>><?php esc_html_e('Virtual', 'flacso-uruguay'); ?></option>
+                            <option value="virtual-sincronica" <?php selected($modalidad, 'virtual-sincronica'); ?>><?php esc_html_e('Virtual con encuentros sincrónicos', 'flacso-uruguay'); ?></option>
                             <option value="presencial" <?php selected($modalidad, 'presencial'); ?>><?php esc_html_e('Presencial', 'flacso-uruguay'); ?></option>
                             <option value="semipresencial" <?php selected($modalidad, 'semipresencial'); ?>><?php esc_html_e('Semipresencial', 'flacso-uruguay'); ?></option>
                             <option value="hibrida" <?php selected($modalidad, 'hibrida'); ?>><?php esc_html_e('Híbrida', 'flacso-uruguay'); ?></option>

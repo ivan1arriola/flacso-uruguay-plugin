@@ -150,6 +150,6 @@ class FLACSO_Inquiry_Context_Service {
         $value = strtolower(trim($value));
         $value = strtr($value, ['á'=>'a','é'=>'e','í'=>'i','ó'=>'o','ú'=>'u','ü'=>'u']);
         $value = ['hibrido'=>'hibrida','mixta'=>'hibrida','mixto'=>'hibrida'][$value] ?? $value;
-        return in_array($value, ['virtual','presencial','semipresencial','hibrida'], true) ? $value : '';
+        return in_array($value, ['virtual','virtual-sincronica','presencial','semipresencial','hibrida'], true) ? $value : '';
     }
 }

@@ -314,6 +314,7 @@ final class FLACSO_Academic_Meta_Normalizer {
         $value = strtolower(remove_accents($value));
         if (str_contains($value, 'hibrid')) return 'hibrida';
         if (str_contains($value, 'semipresencial') || str_contains($value, 'semi presencial')) return 'semipresencial';
+        if (str_contains($value, 'virtual') && str_contains($value, 'sincron') && !str_contains($value, 'asincron')) return 'virtual-sincronica';
         if (str_contains($value, 'virtual')) return 'virtual';
         if (str_contains($value, 'presencial')) return 'presencial';
         return '';

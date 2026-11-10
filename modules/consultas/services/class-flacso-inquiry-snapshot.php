@@ -244,7 +244,7 @@ final class FLACSO_Inquiry_Snapshot {
             'mixto' => 'hibrida',
         ];
         $value = $map[$value] ?? $value;
-        return in_array($value, ['virtual', 'presencial', 'semipresencial', 'hibrida'], true) ? $value : '';
+        return in_array($value, ['virtual', 'virtual-sincronica', 'presencial', 'semipresencial', 'hibrida'], true) ? $value : '';
     }
 
     private static function slug(string $value): string {
@@ -289,6 +289,7 @@ final class FLACSO_Inquiry_Snapshot {
     private static function humanize_modality(string $value): string {
         $labels = [
             'virtual' => 'Virtual',
+            'virtual-sincronica' => 'Virtual con encuentros sincrónicos',
             'presencial' => 'Presencial',
             'semipresencial' => 'Semipresencial',
             'hibrida' => 'Híbrida',
