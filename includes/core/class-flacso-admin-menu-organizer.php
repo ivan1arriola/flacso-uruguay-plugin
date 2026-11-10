@@ -85,7 +85,7 @@ final class FLACSO_Admin_Menu_Organizer {
             'flacso-oferta-consulta', 'edit.php?post_type=cohorte',
             'edit.php?post_type=seminario', 'flacso-seminarios-settings', 'edit.php?post_type=edicion',
             'edit.php?post_type=tabla-precio',
-            'edit.php?post_type=convenio', 'flacso-convenios-migration',
+            'edit.php?post_type=convenio',
             'edit.php?post_type=docente', 'docentes_panel', 'docentes_lista', 'docentes_documentacion',
             'docentes_api', 'docentes_migracion',
         ]);

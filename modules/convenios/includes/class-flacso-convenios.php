@@ -1,6 +1,6 @@
 <?php
 /**
- * CPT Convenio y migracion desde entradas de la categoria convenios.
+ * Gestión del tipo de contenido Convenio.
  *
  * @package FLACSO_Uruguay
  */
@@ -14,8 +14,6 @@ final class Flacso_Convenios {
     public const META_EXTERNAL_URL = '_flacso_convenio_external_url';
     public const META_SOURCE_POST_ID = '_flacso_convenio_source_post_id';
     public const META_MIGRATED_ID = '_flacso_convenio_migrated_id';
-    private const MIGRATION_ACTION = 'flacso_migrate_convenios';
-    private const MIGRATION_NONCE = 'flacso_migrate_convenios_nonce';
 
     public static function init(): void {
         add_action('init', [__CLASS__, 'register_post_type']);
@@ -27,8 +25,6 @@ final class Flacso_Convenios {
         add_filter('manage_' . self::POST_TYPE . '_posts_columns', [__CLASS__, 'admin_columns']);
         add_action('manage_' . self::POST_TYPE . '_posts_custom_column', [__CLASS__, 'render_admin_column'], 10, 2);
         add_action('admin_notices', [__CLASS__, 'required_fields_notice']);
-        add_action('admin_menu', [__CLASS__, 'register_migration_page']);
-        add_action('admin_post_' . self::MIGRATION_ACTION, [__CLASS__, 'handle_migration']);
         add_action('template_redirect', [__CLASS__, 'redirect_migrated_source']);
         add_action('save_post_' . self::POST_TYPE, [__CLASS__, 'flush_list_cache']);
         add_action('deleted_post', [__CLASS__, 'flush_list_cache']);
@@ -215,187 +211,6 @@ final class Flacso_Convenios {
             $url = (string) get_post_meta($post_id, self::META_EXTERNAL_URL, true);
             echo $url !== '' ? '<a href="' . esc_url($url) . '" target="_blank" rel="noopener noreferrer">' . esc_html__('Abrir', 'flacso-uruguay') . '</a>' : '—';
         }
-    }
-
-    public static function register_migration_page(): void {
-        add_submenu_page(
-            'edit.php?post_type=' . self::POST_TYPE,
-            __('Migrar convenios', 'flacso-uruguay'),
-            __('Migrar entradas', 'flacso-uruguay'),
-            'manage_options',
-            'flacso-convenios-migration',
-            [__CLASS__, 'render_migration_page']
-        );
-    }
-
-    private static function source_posts(): array {
-        return get_posts([
-            'post_type' => 'post',
-            'post_status' => ['publish', 'draft', 'pending', 'private', 'future'],
-            'category_name' => 'convenios',
-            'posts_per_page' => -1,
-            'orderby' => 'ID',
-            'order' => 'ASC',
-        ]);
-    }
-
-    private static function existing_target_id(int $source_id): int {
-        $ids = get_posts([
-            'post_type' => self::POST_TYPE,
-            'post_status' => 'any',
-            'posts_per_page' => 1,
-            'fields' => 'ids',
-            'meta_key' => self::META_SOURCE_POST_ID,
-            'meta_value' => $source_id,
-        ]);
-        return isset($ids[0]) ? (int) $ids[0] : 0;
-    }
-
-    private static function clean_source_title(string $title): string {
-        $title = html_entity_decode(wp_strip_all_tags($title), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $clean = preg_replace('/^Convenio\s*\p{Pd}\s*/iu', '', $title);
-        if ($clean === $title) {
-            $clean = preg_replace('/^Convenio\W+\s*/iu', '', $title);
-        }
-        return trim((string) $clean);
-    }
-
-    private static function source_external_url(int $source_id): string {
-        foreach (['enlace_externo', 'url_externa', 'link_externo', 'convenio_url', self::META_EXTERNAL_URL] as $key) {
-            $url = esc_url_raw((string) get_post_meta($source_id, $key, true));
-            if ($url !== '') {
-                return $url;
-            }
-        }
-        return '';
-    }
-
-    public static function render_migration_page(): void {
-        if (!current_user_can('manage_options')) {
-            return;
-        }
-        $sources = self::source_posts();
-        $ready = 0;
-        $migrated = 0;
-        $without_image = 0;
-        foreach ($sources as $source) {
-            if (self::existing_target_id((int) $source->ID)) {
-                $migrated++;
-            } elseif (!has_post_thumbnail($source->ID)) {
-                $without_image++;
-            } else {
-                $ready++;
-            }
-        }
-        $report = get_transient('flacso_convenios_migration_report_' . get_current_user_id());
-        delete_transient('flacso_convenios_migration_report_' . get_current_user_id());
-        ?>
-        <div class="wrap">
-            <h1><?php esc_html_e('Migrar convenios', 'flacso-uruguay'); ?></h1>
-            <p><?php esc_html_e('Copia las entradas de la categoría “convenios” al nuevo CPT. No elimina ni modifica las entradas originales y puede ejecutarse más de una vez sin duplicar registros.', 'flacso-uruguay'); ?></p>
-            <table class="widefat striped" style="max-width:760px">
-                <tbody>
-                    <tr><th><?php esc_html_e('Entradas encontradas', 'flacso-uruguay'); ?></th><td><?php echo esc_html((string) count($sources)); ?></td></tr>
-                    <tr><th><?php esc_html_e('Listas para migrar', 'flacso-uruguay'); ?></th><td><?php echo esc_html((string) $ready); ?></td></tr>
-                    <tr><th><?php esc_html_e('Ya migradas', 'flacso-uruguay'); ?></th><td><?php echo esc_html((string) $migrated); ?></td></tr>
-                    <tr><th><?php esc_html_e('Sin imagen obligatoria', 'flacso-uruguay'); ?></th><td><?php echo esc_html((string) $without_image); ?></td></tr>
-                </tbody>
-            </table>
-            <?php if (is_array($report)) : ?>
-                <div class="notice notice-<?php echo empty($report['errors']) ? 'success' : 'warning'; ?> inline"><p>
-                    <?php
-                    printf(
-                        esc_html__('Migrados: %1$d. Omitidos por falta de imagen: %2$d. Ya existentes: %3$d. Errores: %4$d.', 'flacso-uruguay'),
-                        (int) $report['created'],
-                        (int) $report['without_image'],
-                        (int) $report['existing'],
-                        count($report['errors'])
-                    );
-                    ?>
-                </p></div>
-            <?php endif; ?>
-            <?php if ($ready > 0) : ?>
-                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="margin-top:20px">
-                    <input type="hidden" name="action" value="<?php echo esc_attr(self::MIGRATION_ACTION); ?>">
-                    <?php wp_nonce_field(self::MIGRATION_NONCE); ?>
-                    <?php submit_button(__('Ejecutar migración', 'flacso-uruguay'), 'primary', 'submit', false); ?>
-                </form>
-            <?php endif; ?>
-        </div>
-        <?php
-    }
-
-    public static function handle_migration(): void {
-        if (!current_user_can('manage_options')) {
-            wp_die(esc_html__('No tenés permisos para ejecutar esta migración.', 'flacso-uruguay'));
-        }
-        check_admin_referer(self::MIGRATION_NONCE);
-
-        $report = [
-            'created' => 0,
-            'without_image' => 0,
-            'existing' => 0,
-            'errors' => [],
-        ];
-
-        foreach (self::source_posts() as $source) {
-            $source_id = (int) $source->ID;
-            $existing_id = self::existing_target_id($source_id);
-            if ($existing_id) {
-                update_post_meta($source_id, self::META_MIGRATED_ID, $existing_id);
-                $report['existing']++;
-                continue;
-            }
-            $thumbnail_id = get_post_thumbnail_id($source_id);
-            if (!$thumbnail_id) {
-                $report['without_image']++;
-                continue;
-            }
-            $title = self::clean_source_title((string) $source->post_title);
-            if ($title === '') {
-                $report['errors'][] = sprintf('Post %d: nombre vacío.', $source_id);
-                continue;
-            }
-
-            $target_status = $source->post_status;
-            $target_id = wp_insert_post([
-                'post_type' => self::POST_TYPE,
-                'post_status' => 'draft',
-                'post_title' => $title,
-                'post_name' => $source->post_name,
-                'post_content' => $source->post_content,
-                'post_excerpt' => $source->post_excerpt,
-                'post_author' => $source->post_author,
-                'post_date' => $source->post_date,
-                'post_date_gmt' => $source->post_date_gmt,
-                'comment_status' => 'closed',
-                'ping_status' => 'closed',
-                'meta_input' => [
-                    self::META_SOURCE_POST_ID => $source_id,
-                    self::META_EXTERNAL_URL => self::source_external_url($source_id),
-                ],
-            ], true);
-
-            if (is_wp_error($target_id)) {
-                $report['errors'][] = sprintf('Post %d: %s', $source_id, $target_id->get_error_message());
-                continue;
-            }
-
-            set_post_thumbnail($target_id, $thumbnail_id);
-            if ($target_status !== 'draft') {
-                wp_update_post([
-                    'ID' => (int) $target_id,
-                    'post_status' => $target_status,
-                ]);
-            }
-            update_post_meta($source_id, self::META_MIGRATED_ID, (int) $target_id);
-            $report['created']++;
-        }
-
-        self::flush_list_cache();
-        set_transient('flacso_convenios_migration_report_' . get_current_user_id(), $report, 5 * MINUTE_IN_SECONDS);
-        wp_safe_redirect(admin_url('edit.php?post_type=' . self::POST_TYPE . '&page=flacso-convenios-migration'));
-        exit;
     }
 
     public static function redirect_migrated_source(): void {
