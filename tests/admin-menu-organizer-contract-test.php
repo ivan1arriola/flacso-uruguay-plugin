@@ -62,14 +62,14 @@ function fresh_menu(): void {
             ['Sistema', 'manage_options', 'flacso-sistema', 'Sistema'],
         ],
         'edit.php' => [['Todas las entradas', 'edit_posts', 'edit.php'], ['Añadir nueva', 'edit_posts', 'post-new.php']],
-        'edit.php?post_type=convenio' => [['Convenios', 'edit_posts', 'edit.php?post_type=convenio'], ['Migración', 'manage_options', 'flacso-convenios-migration', 'Migración de convenios']],
+        'edit.php?post_type=convenio' => [['Convenios', 'edit_posts', 'edit.php?post_type=convenio']],
         'themes.php' => [['Temas', 'switch_themes', 'themes.php']],
         'options-general.php' => [['General', 'manage_options', 'options-general.php'], ['Ajustes de ejemplo', 'manage_options', 'flacso-ajustes-ejemplo', 'Ajustes de ejemplo']],
         'rank-math' => [['Panel', 'manage_options', 'rank-math'], ['Herramientas', 'manage_options', 'rank-math-tools']],
     ];
     $admin_page_hooks = ['flacso-panel' => 'flacso', 'options-general.php' => 'settings', 'rank-math' => 'rank-math', 'edit.php?post_type=convenio' => 'convenios'];
-    $wp_filter = ['settings_page_flacso-ajustes-ejemplo' => ['callback-original'], 'convenios_page_flacso-convenios-migration' => ['callback-migracion']];
-    $_registered_pages = ['settings_page_flacso-ajustes-ejemplo' => true, 'convenios_page_flacso-convenios-migration' => true];
+    $wp_filter = ['settings_page_flacso-ajustes-ejemplo' => ['callback-original']];
+    $_registered_pages = ['settings_page_flacso-ajustes-ejemplo' => true];
 }
 function root_entries(): array { global $submenu; return $submenu['flacso-panel']; }
 function slugs(array $entries): array { return array_values(array_map(static fn($e) => $e[2], array_filter($entries, static fn($e) => ($e[4] ?? '') !== 'flacso-menu-group'))); }
@@ -88,7 +88,7 @@ $resumen = find_entry('flacso-panel');
 check($resumen !== null && $resumen[0] === 'Resumen' && $resumen[1] === 'edit_posts', 'El panel FLACSO conserva su ruta, etiqueta y capacidad');
 foreach ([
     'edit.php' => ['Todas las entradas', 'edit_posts'], 'post-new.php' => ['Añadir nueva', 'edit_posts'],
-    'edit.php?post_type=convenio' => ['Convenios', 'edit_posts'], 'flacso-convenios-migration' => ['Migración', 'manage_options'],
+    'edit.php?post_type=convenio' => ['Convenios', 'edit_posts'],
     'themes.php' => ['Temas', 'switch_themes'], 'options-general.php' => ['General', 'manage_options'],
     'flacso-ajustes-ejemplo' => ['Ajustes de ejemplo', 'manage_options'], 'rank-math-tools' => ['Herramientas', 'manage_options'],
     'flacso-consultas' => ['Consultas', 'edit_posts'], 'flacso-sistema' => ['Sistema', 'manage_options'],
@@ -115,7 +115,7 @@ foreach (root_entries() as $entry) {
     $by_group[$current][] = $entry[2];
 }
 check(($by_group['flacso-grupo-inicio'] ?? []) === ['flacso-panel'], 'Inicio FLACSO contiene el panel');
-check(($by_group['flacso-grupo-formacion'] ?? []) === ['edit.php?post_type=convenio', 'flacso-convenios-migration'], 'Formación contiene Convenios');
+check(($by_group['flacso-grupo-formacion'] ?? []) === ['edit.php?post_type=convenio'], 'Formación contiene Convenios sin la pantalla de migración');
 check(($by_group['flacso-grupo-contenidos'] ?? []) === ['edit.php', 'post-new.php'], 'Sitio y contenidos contiene Entradas');
 check(in_array('flacso-consultas', $by_group['flacso-grupo-inscripciones'] ?? [], true), 'Inscripciones y consultas contiene la bandeja');
 check(($by_group['flacso-grupo-diseno'] ?? []) === ['themes.php'], 'Diseño del sitio contiene Apariencia');
@@ -123,7 +123,6 @@ check(in_array('rank-math-tools', $by_group['flacso-grupo-sistema'] ?? [], true)
 
 // Callbacks: la pantalla movida conserva su callback con el hook que tendrá bajo FLACSO.
 check($wp_filter['flacso_page_flacso-ajustes-ejemplo'] === ['callback-original'], 'El callback de una pantalla de Ajustes sigue enlazado tras moverla');
-check($wp_filter['flacso_page_flacso-convenios-migration'] === ['callback-migracion'], 'El callback de una pantalla de Convenios sigue enlazado tras moverla');
 check(!empty($_registered_pages['flacso_page_flacso-ajustes-ejemplo']), 'La pantalla movida queda registrada como página válida');
 check($wp_filter['settings_page_flacso-ajustes-ejemplo'] === ['callback-original'], 'El hook original no se elimina');
 
