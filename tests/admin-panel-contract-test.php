@@ -31,7 +31,7 @@ foreach (['programa-academico', 'oferta-academica', 'cohorte', 'seminario', 'edi
 // Menú nativo de WordPress: sin raíz FLACSO universal ni reagrupación de terceros.
 panel_assert(!file_exists($root . '/includes/core/class-flacso-admin-menu-organizer.php'), 'no existe el organizador que reubica menús ajenos');
 panel_assert(strpos($main, 'admin-menu-organizer') === false, 'el plugin no carga el organizador');
-panel_assert(strpos($panel, "add_submenu_page(\n            'index.php'") !== false, 'el resumen FLACSO vive bajo Escritorio');
+panel_assert(preg_match("/add_submenu_page\(\s*'index\.php'/", $panel) === 1, 'el resumen FLACSO vive bajo Escritorio');
 panel_assert(strpos($panel, "admin.php?page=' . self::PAGE_SLUG") !== false, 'el panel conserva su URL canónica');
 panel_assert(strpos($panel, "if (!FLACSO_Academic_Assistant::is_assistant())") !== false, 'la barra superior sólo añade accesos para la Asistente');
 

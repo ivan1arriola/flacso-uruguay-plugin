@@ -474,7 +474,10 @@ final class FLACSO_Academic_Assistant {
             );
         }
 
-        if ($page !== '' && $page !== FLACSO_Admin_Panel::PAGE_SLUG) {
+        // Consultas es de lectura para la Asistente (el menú se lo ofrece); exportar y modificar los valida el propio módulo.
+        $reads_inquiries = strpos($page, 'flacso-consultas') === 0 && current_user_can(self::VIEW_INQUIRIES);
+
+        if ($page !== '' && $page !== FLACSO_Admin_Panel::PAGE_SLUG && !$reads_inquiries) {
             wp_die(
                 esc_html__('Esta herramienta está reservada para usuarios administradores.', 'flacso-uruguay'),
                 esc_html__('Acceso restringido', 'flacso-uruguay'),
