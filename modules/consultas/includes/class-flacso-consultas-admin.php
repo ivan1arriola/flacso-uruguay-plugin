@@ -63,7 +63,17 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 		}
 
 		public static function register_menu(): void {
-			$parent_slug = class_exists( 'FLACSO_Admin_Panel' ) ? FLACSO_Admin_Panel::PAGE_SLUG : 'flacso-panel';
+			// Menú propio de primer nivel; el PR de Consultas y analítica lo rediseña.
+			$parent_slug = self::PAGE_BANDEJA;
+			add_menu_page(
+				__( 'Consultas y analítica', 'flacso-uruguay' ),
+				__( 'Consultas', 'flacso-uruguay' ),
+				FLACSO_Academic_Assistant::VIEW_INQUIRIES,
+				$parent_slug,
+				array( __CLASS__, 'render_page' ),
+				'dashicons-chart-bar',
+				30
+			);
 
 			$pages = array(
 				self::PAGE_BANDEJA => array( __( 'Consultas', 'flacso-uruguay' ), 'render_page' ),

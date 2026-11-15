@@ -72,7 +72,7 @@ class CPT_Tabla_Precio {
             'public' => false,
             'publicly_queryable' => false,
             'show_ui' => true,
-            'show_in_menu' => FLACSO_Admin_Panel::PAGE_SLUG,
+            'show_in_menu' => true,
             'show_in_rest' => true,
             'query_var' => false,
             'rewrite' => false,

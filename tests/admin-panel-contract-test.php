@@ -24,17 +24,32 @@ panel_assert(strpos($panel, "'id'    => 'flacso-panel'") === false, 'la barra su
 panel_assert(substr_count($panel, "admin_bar->add_node") >= 2, 'la barra superior conserva accesos de gestión dentro del menú del sitio');
 panel_assert(strpos($styles, '@media (max-width: 782px)') !== false, 'el panel tiene diseño móvil');
 
-foreach (['programa-academico', 'oferta-academica', 'cohorte', 'seminario', 'edicion', 'tabla-precio'] as $post_type) {
-    panel_assert(strpos($panel, "edit.php?post_type={$post_type}") !== false, "falta acceso a {$post_type}");
+foreach (['programa-academico', 'oferta-academica', 'cohorte', 'seminario', 'edicion'] as $post_type) {
+    panel_assert(strpos($panel, "'{$post_type}'") !== false, "el panel enlaza {$post_type}");
 }
 
-$organizer = file_get_contents($root . '/includes/core/class-flacso-admin-menu-organizer.php');
-foreach (['Inicio FLACSO', 'Formación', 'Sitio y contenidos', 'Inscripciones y consultas', 'Diseño del sitio', 'Sistema y herramientas'] as $group) {
-    panel_assert(strpos($organizer, "__('{$group}', 'flacso-uruguay')") !== false, "falta el grupo de menú {$group}");
+// Menú nativo de WordPress: sin raíz FLACSO universal ni reagrupación de terceros.
+panel_assert(!file_exists($root . '/includes/core/class-flacso-admin-menu-organizer.php'), 'no existe el organizador que reubica menús ajenos');
+panel_assert(strpos($main, 'admin-menu-organizer') === false, 'el plugin no carga el organizador');
+panel_assert(strpos($panel, "add_submenu_page(\n            'index.php'") !== false, 'el resumen FLACSO vive bajo Escritorio');
+panel_assert(strpos($panel, "admin.php?page=' . self::PAGE_SLUG") !== false, 'el panel conserva su URL canónica');
+panel_assert(strpos($panel, "if (!FLACSO_Academic_Assistant::is_assistant())") !== false, 'la barra superior sólo añade accesos para la Asistente');
+
+// Ninguna pantalla ni CPT queda colgada del antiguo menú raíz.
+$iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS));
+foreach ($iterator as $file) {
+    $path = str_replace(DIRECTORY_SEPARATOR, '/', (string) $file);
+    if (substr($path, -4) !== '.php' || strpos($path, '/tests/') !== false || strpos($path, '/vendor/') !== false || strpos($path, '/node_modules/') !== false || strpos($path, '/.worktrees/') !== false || strpos($path, '/build/') !== false) {
+        continue;
+    }
+    $code = (string) file_get_contents($path);
+    if (strpos($path, 'class-flacso-admin-panel.php') !== false) {
+        continue;
+    }
+    panel_assert(
+        !preg_match('/(add_submenu_page\(\s*|show_in_menu\'\s*=>\s*)FLACSO_Admin_Panel::PAGE_SLUG/', $code),
+        'nada cuelga del menú raíz FLACSO: ' . basename($path)
+    );
 }
-panel_assert(strpos($main, 'class-flacso-admin-menu-organizer.php') !== false, 'el plugin carga el organizador del menú');
-panel_assert(strpos($panel, 'flacso-menu-group') === false && strpos($panel, "'Contenido'") === false, 'el panel ya no agrupa el submenú: lo hace el organizador');
-panel_assert(strpos($panel, "'resumen'     => ['title' => __('Panel FLACSO'") !== false, 'la barra superior conserva el acceso al panel');
-panel_assert(strpos($panel, "admin.php?page=' . self::PAGE_SLUG") !== false, 'el panel conserva su slug canónico en la barra superior');
 
 fwrite(STDOUT, "OK FLACSO admin panel contract\n");

@@ -360,22 +360,13 @@ final class FLACSO_Academic_Assistant {
             }
         }
 
-        $allowed = [
-            FLACSO_Admin_Panel::PAGE_SLUG,
-            'edit.php?post_type=oferta-academica',
-            'edit.php?post_type=seminario',
+        // Las ofertas y los seminarios tienen ahora su propio menú nativo, que se
+        // quitó arriba: se reexponen aquí para conservar el menú reducido.
+        $submenu[FLACSO_Admin_Panel::PAGE_SLUG] = [
+            [__('Resumen', 'flacso-uruguay'), self::ACCESS, FLACSO_Admin_Panel::PAGE_SLUG],
+            [__('Ofertas académicas', 'flacso-uruguay'), self::ACCESS, 'edit.php?post_type=oferta-academica'],
+            [__('Seminarios', 'flacso-uruguay'), self::ACCESS, 'edit.php?post_type=seminario'],
         ];
-
-        if (isset($submenu[FLACSO_Admin_Panel::PAGE_SLUG]) && is_array($submenu[FLACSO_Admin_Panel::PAGE_SLUG])) {
-            $submenu[FLACSO_Admin_Panel::PAGE_SLUG] = array_values(array_filter(
-                $submenu[FLACSO_Admin_Panel::PAGE_SLUG],
-                static function (array $item) use ($allowed): bool {
-                    return isset($item[2]) && in_array((string) $item[2], $allowed, true);
-                }
-            ));
-        } else {
-            $submenu[FLACSO_Admin_Panel::PAGE_SLUG] = [];
-        }
 
         $submenu[FLACSO_Admin_Panel::PAGE_SLUG][] = [
             __('Personas / Equipo', 'flacso-uruguay'),

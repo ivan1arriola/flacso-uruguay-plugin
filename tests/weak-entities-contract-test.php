@@ -17,7 +17,7 @@ function weak_assert($condition, string $message): void {
 // 1. Ocultas del menú suelto
 weak_assert(strpos($cohorte, "'show_in_menu' => false") !== false, "Cohorte tiene show_in_menu false");
 weak_assert(strpos($edicion, "'show_in_menu' => false") !== false, "Edicion tiene show_in_menu false");
-weak_assert(strpos($panel, "hidden_submenus") !== false, "Admin panel oculta submenus de cohortes y ediciones sueltas");
+weak_assert(strpos($panel, "sort_submenus") === false, "El panel ya no reordena el menú: cohortes y ediciones no tienen entrada propia");
 
 // 2. Oferta Académica gestiona sus Cohortes
 weak_assert(strpos($oferta, "flacso_oferta_cohortes_box") !== false, "Oferta Academica tiene metabox de cohortes");
