@@ -33,7 +33,7 @@ class Seminario_CPT
                 'with_front' => false,
             ),
             'show_in_rest'  => true,
-            'show_in_menu'  => FLACSO_Admin_Panel::PAGE_SLUG,
+            'show_in_menu'  => true,
             'map_meta_cap'   => true,
             'capabilities'   => FLACSO_Academic_Assistant::post_type_capabilities('seminar'),
             'menu_position' => 20,

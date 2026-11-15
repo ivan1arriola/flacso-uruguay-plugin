@@ -63,7 +63,7 @@ class FLACSO_Integrations_Settings {
 
     public static function register_menu(): void {
         add_submenu_page(
-            FLACSO_Admin_Panel::PAGE_SLUG,
+            'options-general.php',
             __('Analítica / Meta', 'flacso-uruguay'),
             __('Analítica / Meta', 'flacso-uruguay'),
             'manage_options',

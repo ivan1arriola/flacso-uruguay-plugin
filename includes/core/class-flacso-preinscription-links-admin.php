@@ -24,7 +24,7 @@ final class FLACSO_Preinscription_Links_Admin {
 
     public static function register_menu(): void {
         add_submenu_page(
-            FLACSO_Admin_Panel::PAGE_SLUG,
+            'tools.php',
             __('Links de preinscripción', 'flacso-uruguay'),
             __('Links de preinscripción', 'flacso-uruguay'),
             self::CAPABILITY,

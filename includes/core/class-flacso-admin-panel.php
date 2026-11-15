@@ -15,24 +15,31 @@ final class FLACSO_Admin_Panel {
             return;
         }
         add_action('admin_menu', [self::class, 'register_menu'], 1);
-        add_action('admin_menu', [self::class, 'sort_submenus'], 999);
         add_action('admin_enqueue_scripts', [self::class, 'enqueue_assets']);
     }
 
+    /**
+     * El resumen vive bajo Escritorio, en el menú nativo de WordPress. Sólo la
+     * Asistente Académica, cuyo menú se reduce a lo suyo, lo ve como raíz.
+     */
     public static function register_menu(): void {
-        add_menu_page(
-            __('FLACSO Uruguay', 'flacso-uruguay'),
-            __('FLACSO', 'flacso-uruguay'),
-            self::capability(),
-            self::PAGE_SLUG,
-            [self::class, 'render'],
-            'dashicons-building',
-            2
-        );
+        $title = __('Resumen FLACSO', 'flacso-uruguay');
+        if (class_exists('FLACSO_Academic_Assistant') && FLACSO_Academic_Assistant::is_assistant()) {
+            add_menu_page(
+                __('FLACSO Uruguay', 'flacso-uruguay'),
+                __('FLACSO', 'flacso-uruguay'),
+                self::capability(),
+                self::PAGE_SLUG,
+                [self::class, 'render'],
+                'dashicons-building',
+                2
+            );
+            return;
+        }
         add_submenu_page(
-            self::PAGE_SLUG,
+            'index.php',
+            $title,
             __('Resumen FLACSO', 'flacso-uruguay'),
-            __('Resumen', 'flacso-uruguay'),
             self::capability(),
             self::PAGE_SLUG,
             [self::class, 'render']
@@ -49,24 +56,12 @@ final class FLACSO_Admin_Panel {
         if (!$admin_bar->get_node('site-name')) {
             return;
         }
-        $items = FLACSO_Academic_Assistant::is_assistant()
-            ? FLACSO_Academic_Assistant::assistant_admin_bar_items()
-            : [
-            'resumen'     => ['title' => __('Panel FLACSO', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=' . self::PAGE_SLUG)],
-            'programas'   => ['title' => __('Programas Académicos', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=programa-academico')],
-            'ofertas'     => ['title' => __('Ofertas Académicas', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=oferta-academica')],
-            'seminarios'  => ['title' => __('Seminarios', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=seminario')],
-            'tablas'      => ['title' => __('Tablas de precios', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=tabla-precio')],
-            'docentes'    => ['title' => __('Personas / Equipo', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=docente')],
-            'convenios'   => ['title' => __('Convenios', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=convenio')],
-            'eventos'     => ['title' => __('Eventos', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=evento')],
-            'faqs'        => ['title' => __('Preguntas Frecuentes', 'flacso-uruguay'), 'href' => admin_url('edit.php?post_type=flacso_faq')],
-            'portada'     => ['title' => __('Portada FLACSO', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-main-page')],
-            'consultas'   => ['title' => __('Consultas', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-consultas')],
-            'correos'      => ['title' => __('Correos', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-correos')],
-            'analitica'    => ['title' => __('Analítica / Meta', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-integracion-meta')],
-            'sistema'      => ['title' => __('Sistema', 'flacso-uruguay'), 'href' => admin_url('admin.php?page=flacso-sistema')],
-            ];
+        // El menú nativo de WordPress ya cubre a los administradores: sólo la
+        // Asistente Académica, con su menú reducido, conserva estos accesos.
+        if (!FLACSO_Academic_Assistant::is_assistant()) {
+            return;
+        }
+        $items = FLACSO_Academic_Assistant::assistant_admin_bar_items();
 
         $admin_bar->add_node([
             'id'     => 'site-name-flacso-group',
@@ -86,7 +81,7 @@ final class FLACSO_Admin_Panel {
     }
 
     public static function enqueue_assets(string $hook): void {
-        if ($hook !== 'toplevel_page_' . self::PAGE_SLUG) {
+        if (!in_array($hook, ['toplevel_page_' . self::PAGE_SLUG, 'dashboard_page_' . self::PAGE_SLUG], true)) {
             return;
         }
         $relative = 'includes/assets/flacso-admin-panel.css';
@@ -97,30 +92,6 @@ final class FLACSO_Admin_Panel {
             [],
             file_exists($path) ? (string) filemtime($path) : FLACSO_URUGUAY_VERSION
         );
-    }
-
-    public static function sort_submenus(): void {
-        global $submenu;
-        if (empty($submenu[self::PAGE_SLUG]) || !is_array($submenu[self::PAGE_SLUG])) {
-            return;
-        }
-        // Cohortes y Ediciones son entidades débiles subordinadas; no deben listarse sueltas en el submenú.
-        $hidden_submenus = ['edit.php?post_type=cohorte', 'edit.php?post_type=edicion'];
-        $academic_types = ['programa-academico', 'oferta-academica', 'cohorte', 'seminario', 'edicion', 'tabla-precio'];
-        $submenu[self::PAGE_SLUG] = array_values(array_filter(
-            $submenu[self::PAGE_SLUG],
-            static function (array $item) use ($academic_types, $hidden_submenus): bool {
-                if (in_array($item[2], $hidden_submenus, true)) {
-                    return false;
-                }
-                foreach ($academic_types as $post_type) {
-                    if ($item[2] === 'post-new.php?post_type=' . $post_type) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-        ));
     }
 
     public static function render(): void {

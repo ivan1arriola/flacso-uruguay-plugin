@@ -35,7 +35,7 @@ final class FLACSO_System_Settings {
 
     public static function register_menu(): void {
         add_submenu_page(
-            FLACSO_Admin_Panel::PAGE_SLUG,
+            'options-general.php',
             __('Sistema', 'flacso-uruguay'),
             __('Sistema', 'flacso-uruguay'),
             'manage_options',

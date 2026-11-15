@@ -78,7 +78,7 @@ FLACSO_Carta_Settings::reset('carta_envio_titulos');
 carta_settings_assert(get_option('flacso_carta_envio_titulos', null) === null && strpos(FLACSO_Carta_Settings::get('carta_envio_titulos'), 'courier') !== false, 'reset vuelve al texto por defecto');
 
 $admin = (string) file_get_contents(__DIR__ . '/../modules/oferta-academica/includes/class-carta-settings-admin.php');
-foreach (['add_submenu_page(', 'FLACSO_Admin_Panel::PAGE_SLUG', 'check_admin_referer', 'current_user_can(self::CAPABILITY)', 'describe(', 'carta_textos_reset'] as $needle) {
+foreach (['add_submenu_page(', "'edit.php?post_type=oferta-academica'", 'check_admin_referer', 'current_user_can(self::CAPABILITY)', 'describe(', 'carta_textos_reset'] as $needle) {
     carta_settings_assert(strpos($admin, $needle) !== false, "la pantalla de administración incluye {$needle}");
 }
 

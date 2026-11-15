@@ -30,7 +30,7 @@ final class FLACSO_Academic_Articulations {
             'publicly_queryable' => false,
             'exclude_from_search' => true,
             'show_ui' => true,
-            'show_in_menu' => FLACSO_Admin_Panel::PAGE_SLUG,
+            'show_in_menu' => 'edit.php?post_type=oferta-academica',
             'show_in_rest' => false,
             'supports' => ['title', 'revisions'],
             'capability_type' => 'post',

@@ -25,7 +25,7 @@ final class FLACSO_Programa_Academico {
             'public'             => true,
             'publicly_queryable' => true,
             'show_ui'            => true,
-            'show_in_menu'       => FLACSO_Admin_Panel::PAGE_SLUG,
+            'show_in_menu'       => true,
             'show_in_rest'       => true,
             'rest_base'          => 'programas-academicos-wp',
             'supports'           => ['title', 'thumbnail', 'revisions'],
