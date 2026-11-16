@@ -6,13 +6,21 @@ function featured_assert($ok, $message) {
 function get_option($key, $default = []) { return $GLOBALS['sticky_ids']; }
 function absint($value) { return abs((int) $value); }
 function get_posts($args) { return $GLOBALS['sticky_ids']; }
+function wp_json_encode($v) { return json_encode($v); }
+function get_transient($k) { return false; }
+function set_transient($k, $v, $t) { return true; }
+const MINUTE_IN_SECONDS = 60;
 class WP_Query {
     public $posts;
+    public $max_num_pages = 1;
     public function __construct($args) {
         $GLOBALS['query_args'] = $args;
         $ids = isset($args['post__in']) ? $args['post__in'] : array_diff(range(1, 12), $args['post__not_in']);
         $this->posts = array_map(static fn($id) => (object) ['ID' => $id], array_values($ids));
-        if ($args['posts_per_page'] !== -1) { $this->posts = array_slice($this->posts, 0, $args['posts_per_page']); }
+        if ($args['posts_per_page'] !== -1) {
+            $this->max_num_pages = max(1, (int) ceil(count($this->posts) / $args['posts_per_page']));
+            $this->posts = array_slice($this->posts, 0, $args['posts_per_page']);
+        }
     }
     public function have_posts() { return !empty($this->posts); }
 }
@@ -34,5 +42,6 @@ foreach ([0, 1, 2, 3, 4, 5, 8] as $count) {
     $latest = flacso_section_novedades_get_posts(6, 'novedades', 1);
     featured_assert(count($latest['posts']) <= 6, 'lista cronológica de hasta seis noticias');
     featured_assert(!array_intersect(array_column($latest['posts'], 'ID'), $GLOBALS['sticky_ids']), 'los destacados no se repiten abajo');
+    featured_assert($GLOBALS['query_args']['posts_per_page'] === 6 && $GLOBALS['query_args']['paged'] === 1, 'paginación en SQL, no en PHP');
 }
 echo "OK featured query: 0, 1, 2, 3, 4, 5 y 8 destacados, límites y exclusión\n";

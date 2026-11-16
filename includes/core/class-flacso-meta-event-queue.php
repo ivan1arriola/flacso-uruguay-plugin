@@ -24,8 +24,8 @@ final class FLACSO_Meta_Event_Queue {
 
     public static function cron_schedules(array $schedules): array {
         $schedules['flacso_meta_minute'] = [
-            'interval' => MINUTE_IN_SECONDS,
-            'display' => 'Cada minuto (Meta CAPI)',
+            'interval' => 5 * MINUTE_IN_SECONDS,
+            'display' => 'Cada 5 minutos (Meta CAPI)',
         ];
         return $schedules;
     }
@@ -58,7 +58,7 @@ final class FLACSO_Meta_Event_Queue {
             }
         }
         if (!wp_next_scheduled(self::CRON_HOOK)) {
-            wp_schedule_event(time() + MINUTE_IN_SECONDS, 'flacso_meta_minute', self::CRON_HOOK);
+            wp_schedule_event(time() + 5 * MINUTE_IN_SECONDS, 'flacso_meta_minute', self::CRON_HOOK);
         }
     }
 

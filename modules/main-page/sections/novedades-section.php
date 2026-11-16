@@ -2586,11 +2586,18 @@ if (!function_exists('flacso_section_novedades_search_ajax')) {
         // En front público, un nonce cacheado no debe romper la experiencia de búsqueda.
         check_ajax_referer('flacso_section_novedades_nonce', 'nonce', false);
         $search_term = isset($_POST['search_term']) ? sanitize_text_field(wp_unslash($_POST['search_term'])) : '';
-        if (strlen($search_term) < 2) {
+        if (strlen($search_term) < 3) {
             wp_send_json_success(['html' => '']);
         }
+        $rate_key = 'flacso_nov_rate_' . md5(isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '');
+        $hits = (int) get_transient($rate_key);
+        if ($hits >= 30) {
+            wp_send_json_error(['message' => 'rate_limited'], 429);
+        }
+        set_transient($rate_key, $hits + 1, MINUTE_IN_SECONDS);
         // Buscar en todos los posts y páginas publicados
         $args = [
+            'no_found_rows' => true,
             'post_type' => ['post','page'],
             'post_status' => 'publish',
             'posts_per_page' => 6,
@@ -2642,8 +2649,19 @@ if (!function_exists('flacso_section_novedades_paginate_ajax')) {
         // En front público, un nonce cacheado no debe bloquear paginación AJAX.
         check_ajax_referer('flacso_section_novedades_nonce', 'nonce', false);
 
-        $page = isset($_POST['page']) ? max(1, intval($_POST['page'])) : 1;
+        // Endpoint público: tope por IP (búsqueda LIKE y paginación son costosas ante bots).
+        $rate_key = 'flacso_nov_rate_' . md5(isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '');
+        $hits = (int) get_transient($rate_key);
+        if ($hits >= 30) {
+            wp_send_json_error(['message' => 'rate_limited'], 429);
+        }
+        set_transient($rate_key, $hits + 1, MINUTE_IN_SECONDS);
+
+        $page = isset($_POST['page']) ? min(200, max(1, intval($_POST['page']))) : 1;
         $search_term = isset($_POST['search_term']) ? sanitize_text_field(wp_unslash($_POST['search_term'])) : '';
+        if ($search_term !== '' && mb_strlen($search_term) < 3) {
+            $search_term = '';
+        }
         $per_page = Flacso_Main_Page_Settings::get_novedades_per_page();
 
         $posts_data = flacso_section_novedades_get_posts($per_page, 'novedades', $page, $search_term);
@@ -2676,8 +2694,22 @@ if (!function_exists('flacso_section_novedades_get_posts')) {
             $stickies = [];
         }
 
+        $posts_per_page = max(1, (int) $posts_per_page);
+        $paged = max(1, (int) $paged);
+
+        // La home pide siempre lo mismo: se cachea unos minutos (sin búsqueda).
+        $cache_key = 'flacso_novedades_' . md5(wp_json_encode([$category, $posts_per_page, $paged, $stickies]));
+        if ($search_term === '') {
+            $cached = get_transient($cache_key);
+            if (is_array($cached) && isset($cached['posts'], $cached['total_pages'])) {
+                return $cached;
+            }
+        }
+
+        // Paginación en SQL: antes se cargaban todos los posts y se recortaba en PHP.
         $query_args = [
-            'posts_per_page'      => -1,
+            'posts_per_page'      => $posts_per_page,
+            'paged'               => $paged,
             'category_name'       => $category,
             'ignore_sticky_posts' => 1,
             'post_status'         => 'publish',
@@ -2689,16 +2721,16 @@ if (!function_exists('flacso_section_novedades_get_posts')) {
         }
 
         $query = new WP_Query($query_args);
-        $posts = $query->posts;
 
-        $posts_per_page = max(1, (int) $posts_per_page);
-        $paged = max(1, (int) $paged);
-        $total_pages = max(1, (int) ceil(count($posts) / $posts_per_page));
-        $posts = array_slice($posts, ($paged - 1) * $posts_per_page, $posts_per_page);
-
-        return [
-            'posts'       => $posts,
-            'total_pages' => $total_pages,
+        $result = [
+            'posts'       => $query->posts,
+            'total_pages' => max(1, (int) $query->max_num_pages),
         ];
+
+        if ($search_term === '') {
+            set_transient($cache_key, $result, 5 * MINUTE_IN_SECONDS);
+        }
+
+        return $result;
     }
 }

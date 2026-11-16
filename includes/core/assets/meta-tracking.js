@@ -404,6 +404,12 @@
             return;
         }
 
+        // Cada envío CAPI es un POST a admin-ajax.php (arranque completo de WordPress, sin caché de página).
+        // PageView y ViewContent ocurren en cada visita: los cubre el píxel del navegador. CAPI queda para conversiones.
+        if (eventName === "PageView" || eventName === "ViewContent") {
+            return;
+        }
+
         fbp = getCookie("_fbp");
         fbc = ensureFbcCookie();
 

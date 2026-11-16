@@ -56,10 +56,41 @@ if (!function_exists('flacso_view_pdf')) {
         $expired   = !file_exists($file) || (time() - filemtime($file) > $ttl_hours * 3600);
 
         if ($expired) {
-            $fetch_remote = static function ($url, $cookies = array()) {
+            // Endpoint público: cada descarga remota ocupa una plaza PHP-FPM. Se corta
+            // el abuso con un fallo cacheado y un tope de descargas por IP.
+            $fail_key = 'flacso_pdf_fail_' . $key;
+            $failed   = get_transient($fail_key);
+            if ($failed === 'redirect') {
+                wp_redirect($resolved, 302);
+                exit;
+            }
+            if ($failed) {
+                status_header(502);
+                echo 'Origen no disponible.';
+                exit;
+            }
+
+            $ip_key   = 'flacso_pdf_rate_' . md5(isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '');
+            $fetches  = (int) get_transient($ip_key);
+            if ($fetches >= 5) {
+                status_header(429);
+                header('Retry-After: 600');
+                echo 'Demasiadas solicitudes. Intentá nuevamente en unos minutos.';
+                exit;
+            }
+            set_transient($ip_key, $fetches + 1, 10 * MINUTE_IN_SECONDS);
+
+            // shortcut: tope de 4 pedidos HTTP por solicitud; subirlo si Drive exige más reintentos.
+            $budget = 4;
+
+            $fetch_remote = static function ($url, $cookies = array()) use (&$budget) {
+                if ($budget-- <= 0) {
+                    return new WP_Error('budget', 'Límite de reintentos alcanzado.');
+                }
+
                 $args = array(
-                    'timeout'     => 45,
-                    'redirection' => 5,
+                    'timeout'     => 12,
+                    'redirection' => 3,
                     'cookies'     => $cookies,
                     'headers'     => array(
                         'User-Agent' => 'FLACSO-PDF-Proxy/1.0',
@@ -87,6 +118,7 @@ if (!function_exists('flacso_view_pdf')) {
             $res = $fetch_remote($resolved);
 
             if (is_wp_error($res)) {
+                set_transient($fail_key, 1, 5 * MINUTE_IN_SECONDS);
                 status_header(502);
                 echo 'No se pudo descargar el PDF (error de conexión).';
                 exit;
@@ -97,6 +129,7 @@ if (!function_exists('flacso_view_pdf')) {
             $ctype = wp_remote_retrieve_header($res, 'content-type');
 
             if ($code !== 200 || empty($body)) {
+                set_transient($fail_key, 1, 5 * MINUTE_IN_SECONDS);
                 status_header(502);
                 echo 'Origen no disponible.';
                 exit;
@@ -190,16 +223,17 @@ if (!function_exists('flacso_view_pdf')) {
             if (!$looks_like_pdf) {
                 // No forzar PDF: algunos recursos en Drive son DOCX u otros formatos.
                 // En ese caso, redirigimos al recurso resuelto para que el navegador/Drive lo maneje.
+                set_transient($fail_key, 'redirect', HOUR_IN_SECONDS);
                 wp_redirect($resolved, 302);
                 exit;
             }
 
             file_put_contents($file, $body);
-        }
 
-        foreach (glob($dir . '/*.pdf') as $f) {
-            if (time() - filemtime($f) > $ttl_hours * 3600) {
-                @unlink($f);
+            foreach ((array) glob($dir . '/*.pdf') as $f) {
+                if (time() - filemtime($f) > $ttl_hours * 3600) {
+                    @unlink($f);
+                }
             }
         }
 
@@ -335,7 +369,7 @@ if (!function_exists('flacso_serve_pdf_file')) {
             exit;
         }
 
-        @set_time_limit(0);
+        @set_time_limit(120);
         if (function_exists('apache_setenv')) {
             @apache_setenv('no-gzip', '1');
         }
