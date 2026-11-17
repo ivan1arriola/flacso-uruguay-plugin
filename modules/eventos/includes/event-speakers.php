@@ -1,6 +1,6 @@
 <?php
 /**
- * Expositores de un evento: personas del CPT docente, en el orden elegido.
+ * Participantes de un evento: personas del CPT docente, en el orden elegido.
  */
 
 if (!defined('ABSPATH')) {
@@ -42,7 +42,7 @@ function flacso_eventos_register_speakers_meta(): void {
 add_action('add_meta_boxes_evento', static function (): void {
     add_meta_box(
         'flacso_evento_speakers',
-        __('Expositores', 'flacso-uruguay'),
+        __('Participantes', 'flacso-uruguay'),
         'flacso_eventos_render_speakers_meta_box',
         'evento',
         'normal',
@@ -78,7 +78,7 @@ function flacso_eventos_render_speakers_meta_box($post): void {
         <?php foreach ($selected as $id) { $row($id); } ?>
     </div>
     <template id="flacso-speaker-template"><?php $row(0); ?></template>
-    <p><button type="button" class="button" id="flacso-speaker-add"><?php esc_html_e('Agregar expositor', 'flacso-uruguay'); ?></button></p>
+    <p><button type="button" class="button" id="flacso-speaker-add"><?php esc_html_e('Agregar participante', 'flacso-uruguay'); ?></button></p>
     <script>
     (function () {
         var list = document.getElementById('flacso-speakers-list');
