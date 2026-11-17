@@ -23,6 +23,7 @@ jobs:
   deploy:
     name: Validate and deploy plugin to production
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout triggering commit
@@ -231,7 +232,8 @@ jobs:
           local_request() {
             local url="$1"
             local body_file="$2"
-            curl --silent --show-error --insecure \
+            # Sin --max-time, un FPM saturado deja el despliegue colgado indefinidamente.
+            curl --silent --show-error --insecure --max-time 60 \
               --resolve flacso.edu.uy:443:127.0.0.1 \
               --output "$body_file" \
               --write-out '%{http_code}' \

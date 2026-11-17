@@ -117,14 +117,10 @@ class FLACSO_Meta_Tracking {
         ]);
 
         // El seguimiento es auxiliar: no debe bloquear trabajadores PHP mientras Meta responde.
-        // La limitación es por IP y agente, únicamente para este endpoint.
-        $client_key = hash('sha256', self::get_client_ip_address() . '|' . self::get_user_agent());
-        $rate_key = 'flacso_meta_rate_' . substr($client_key, 0, 32);
-        $count = (int) get_transient($rate_key);
-        if ($count >= self::MAX_REQUESTS_PER_MINUTE) {
+        // La IP sale de flacso_get_user_ip(): cambiar cabeceras no evita el límite.
+        if (flacso_public_rate_exceeded('meta', self::MAX_REQUESTS_PER_MINUTE)) {
             wp_send_json_success(['queued' => false, 'reason' => 'rate_limited']);
         }
-        set_transient($rate_key, $count + 1, MINUTE_IN_SECONDS);
 
         // La misma ID se comparte con Pixel para deduplicar. Ignorar reenvíos del navegador.
         $dedup_key = 'flacso_meta_dedup_' . md5($event_name . ':' . $event_id);
@@ -686,27 +682,8 @@ class FLACSO_Meta_Tracking {
     }
 
     private static function get_client_ip_address(): string {
-        $candidates = [
-            'HTTP_X_REAL_IP',
-            'HTTP_CLIENT_IP',
-            'HTTP_X_FORWARDED_FOR',
-            'REMOTE_ADDR',
-        ];
-
-        foreach ($candidates as $key) {
-            if (empty($_SERVER[$key])) {
-                continue;
-            }
-
-            $raw = is_array($_SERVER[$key]) ? reset($_SERVER[$key]) : $_SERVER[$key];
-            $parts = explode(',', (string) $raw);
-            $first = trim((string) ($parts[0] ?? ''));
-            if (filter_var($first, FILTER_VALIDATE_IP)) {
-                return $first;
-            }
-        }
-
-        return '';
+        $ip = flacso_get_user_ip();
+        return $ip === 'unknown' ? '' : $ip;
     }
 
     private static function get_user_agent(): string {

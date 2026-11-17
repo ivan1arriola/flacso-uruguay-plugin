@@ -58,6 +58,90 @@ if (!function_exists('flacso_is_rest_request')) {
 }
 
 /**
+ * true en admin (incluye admin-ajax), cron y WP-CLI. Las comprobaciones de
+ * instalación/migración corren solo ahí: en una visita pública cada una cuesta
+ * consultas a la base que no cambian nada.
+ */
+if (!function_exists('flacso_is_maintenance_request')) {
+    function flacso_is_maintenance_request(): bool {
+        return is_admin() || wp_doing_cron() || (defined('WP_CLI') && WP_CLI);
+    }
+}
+
+// ============================================
+// Límite de solicitudes en endpoints públicos
+// ============================================
+
+/**
+ * IP del visitante. Las cabeceras de reenvío las controla el cliente: solo se
+ * aceptan si la conexión llega desde un proxy propio (red privada/loopback) o
+ * uno declarado en el filtro `flacso_trusted_proxies`.
+ */
+if (!function_exists('flacso_get_user_ip')) {
+    function flacso_get_user_ip() {
+        $remote_addr = isset($_SERVER['REMOTE_ADDR']) ? trim((string) $_SERVER['REMOTE_ADDR']) : '';
+        if (!filter_var($remote_addr, FILTER_VALIDATE_IP)) {
+            return 'unknown';
+        }
+
+        $trusted_proxies = (array) apply_filters('flacso_trusted_proxies', array());
+        $via_proxy = in_array($remote_addr, $trusted_proxies, true)
+            || !filter_var($remote_addr, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
+
+        if ($via_proxy) {
+            foreach (array('HTTP_X_REAL_IP', 'HTTP_X_FORWARDED_FOR') as $key) {
+                if (!empty($_SERVER[$key])) {
+                    $ip = trim(current(explode(',', (string) $_SERVER[$key])));
+                    if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                        return sanitize_text_field($ip);
+                    }
+                }
+            }
+        }
+
+        return sanitize_text_field($remote_addr);
+    }
+}
+
+/**
+ * Cuenta una solicitud por IP en una ventana fija. Es atómico con caché de objetos
+ * persistente; sin ella usa transients (lectura y escritura separadas).
+ */
+if (!function_exists('flacso_consultas_rate_hit')) {
+    function flacso_consultas_rate_hit(string $ip, int $window_seconds = 600, string $bucket = 'consulta'): int {
+        $window = (int) floor(time() / max(60, $window_seconds));
+        $key    = 'flacso_' . $bucket . '_rate_' . md5($ip) . '_' . $window;
+
+        if (function_exists('wp_using_ext_object_cache') && wp_using_ext_object_cache()) {
+            wp_cache_add($key, 0, 'flacso_consultas', $window_seconds + 60);
+            $count = wp_cache_incr($key, 1, 'flacso_consultas');
+            if (false !== $count) {
+                return (int) $count;
+            }
+        }
+
+        $count = (int) get_transient($key) + 1;
+        set_transient($key, $count, $window_seconds + 60);
+        return $count;
+    }
+}
+
+/**
+ * Cuenta esta solicitud y devuelve true si la IP superó `$max` en la ventana del
+ * endpoint `$bucket`. Sin IP válida no se limita (no se castiga a todos juntos).
+ */
+if (!function_exists('flacso_public_rate_exceeded')) {
+    function flacso_public_rate_exceeded(string $bucket, int $max, int $window_seconds = 60): bool {
+        $ip = flacso_get_user_ip();
+        if ($ip === 'unknown') {
+            return false;
+        }
+
+        return flacso_consultas_rate_hit($ip, $window_seconds, $bucket) > $max;
+    }
+}
+
+/**
  * Cargar archivo de forma segura
  */
 if (!function_exists('flacso_safe_require')) {

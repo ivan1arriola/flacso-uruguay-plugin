@@ -47,7 +47,7 @@ class Flacso_Instagram_API {
         ]);
 
         if (is_wp_error($response)) {
-            set_transient(self::TRANSIENT_KEY, $response, 5 * MINUTE_IN_SECONDS);
+            set_transient($cache_key, $response, 5 * MINUTE_IN_SECONDS);
             return $response;
         }
 
@@ -58,7 +58,7 @@ class Flacso_Instagram_API {
         if ($status_code !== 200 || empty($data['data'])) {
             $error_message = $data['error']['message'] ?? 'Unknown error fetching Instagram feed.';
             $error = new WP_Error('api_error', $error_message);
-            set_transient(self::TRANSIENT_KEY, $error, 5 * MINUTE_IN_SECONDS);
+            set_transient($cache_key, $error, 5 * MINUTE_IN_SECONDS);
             return $error;
         }
 

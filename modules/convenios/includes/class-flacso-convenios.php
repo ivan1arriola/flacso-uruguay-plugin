@@ -87,6 +87,9 @@ final class Flacso_Convenios {
     }
 
     public static function maybe_flush_rewrite_rules(): void {
+        if (!flacso_is_maintenance_request()) {
+            return;
+        }
         $version = '1';
         if (get_option('flacso_convenios_rewrite_version') === $version) {
             return;

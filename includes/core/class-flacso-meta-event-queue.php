@@ -36,6 +36,9 @@ final class FLACSO_Meta_Event_Queue {
     }
 
     public static function ensure_initialized(): void {
+        if (!flacso_is_maintenance_request()) {
+            return;
+        }
         if (get_option('flacso_meta_queue_schema') !== self::SCHEMA_VERSION) {
             global $wpdb;
             require_once ABSPATH . 'wp-admin/includes/upgrade.php';

@@ -70,15 +70,12 @@ if (!function_exists('flacso_view_pdf')) {
                 exit;
             }
 
-            $ip_key   = 'flacso_pdf_rate_' . md5(isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '');
-            $fetches  = (int) get_transient($ip_key);
-            if ($fetches >= 5) {
+            if (flacso_public_rate_exceeded('pdf', 5, 600)) {
                 status_header(429);
                 header('Retry-After: 600');
                 echo 'Demasiadas solicitudes. Intentá nuevamente en unos minutos.';
                 exit;
             }
-            set_transient($ip_key, $fetches + 1, 10 * MINUTE_IN_SECONDS);
 
             // shortcut: tope de 4 pedidos HTTP por solicitud; subirlo si Drive exige más reintentos.
             $budget = 4;

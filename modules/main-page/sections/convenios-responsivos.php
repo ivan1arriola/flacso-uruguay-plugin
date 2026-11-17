@@ -313,7 +313,12 @@ if (!function_exists('flacso_convenios_responsivos_sc')) {
 
 if (!function_exists('flacso_ajax_buscar_convenios_distancia')) {
     function flacso_ajax_buscar_convenios_distancia(): void {
-        $query = isset($_GET['q']) ? sanitize_text_field(wp_unslash($_GET['q'])) : '';
+        // levenshtein() cuesta largo(q) × largo(título) por convenio: se acota el largo y la frecuencia.
+        if (flacso_public_rate_exceeded('convenios', 30)) {
+            status_header(429);
+            wp_die();
+        }
+        $query = isset($_GET['q']) ? mb_substr(sanitize_text_field(wp_unslash($_GET['q'])), 0, 80) : '';
         if ($query === '') {
             echo flacso_render_convenios_html();
             wp_die();

@@ -692,25 +692,3 @@ function fc_handle_delete_consulta() {
 	exit;
 }
 add_action( 'admin_post_fc_delete_consulta', 'fc_handle_delete_consulta' );
-
-/**
- * Limpieza automática y segura del CPT obsoleto fc_info_request y sus metadatos.
- * Se ejecuta una sola vez en el admin_init para purgar la base de datos de WordPress.
- */
-function fc_cleanup_legacy_info_requests() {
-    if ( get_option( 'fc_info_requests_cleaned_up' ) === 'yes' ) {
-        return;
-    }
-
-    global $wpdb;
-    
-    // 1. Borrar todas las entradas del CPT obsoleto fc_info_request
-    $wpdb->query( "DELETE FROM {$wpdb->posts} WHERE post_type = 'fc_info_request'" );
-    
-    // 2. Borrar metadatos huérfanos asociados
-    $wpdb->query( "DELETE FROM {$wpdb->postmeta} WHERE post_id NOT IN (SELECT ID FROM {$wpdb->posts})" );
-    
-    // Registrar que la limpieza se completó para no volver a ejecutar
-    update_option( 'fc_info_requests_cleaned_up', 'yes' );
-}
-add_action( 'admin_init', 'fc_cleanup_legacy_info_requests' );

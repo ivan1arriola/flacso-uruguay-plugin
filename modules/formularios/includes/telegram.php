@@ -6,5 +6,6 @@ function fc_can_use_telegram() {
 }
 
 function fc_send_telegram_message( $text ) {
-	return FLACSO_Telegram::send( (string) $text, true, 15 );
+	// Corre dentro del envío del visitante: un Telegram lento no debe retener la plaza PHP.
+	return FLACSO_Telegram::send( (string) $text, true, 5 );
 }

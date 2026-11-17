@@ -56,7 +56,18 @@ $flacso_consultas_files = [
 
 $flacso_base_dir = defined('FLACSO_URUGUAY_PATH') ? FLACSO_URUGUAY_PATH : dirname(__DIR__, 2) . '/';
 
+// La bandeja y su analítica (158 KB) solo registran hooks de admin: en una visita
+// pública no se cargan. Sin WordPress (pruebas aisladas) se carga todo.
+$flacso_consultas_admin_only = [
+    'includes/database/repositories/class-flacso-inquiry-analytics-repository.php',
+    'modules/consultas/includes/class-flacso-consultas-admin.php',
+];
+$flacso_consultas_public_request = function_exists('is_admin') && !is_admin() && !(defined('WP_CLI') && WP_CLI);
+
 foreach ($flacso_consultas_files as $flacso_file) {
+    if ($flacso_consultas_public_request && in_array($flacso_file, $flacso_consultas_admin_only, true)) {
+        continue;
+    }
     if (function_exists('flacso_safe_require')) {
         flacso_safe_require($flacso_file);
     } else {

@@ -46,7 +46,7 @@ final class FLACSO_Academic_API {
                     'callback' => static function (WP_REST_Request $request) use ($entity) {
                         return self::save_entity($entity, $request->get_json_params(), absint($request['id']));
                     },
-                    'permission_callback' => [self::class, 'can_write'],
+                    'permission_callback' => [self::class, 'can_edit_item'],
                 ],
                 [
                     'methods' => WP_REST_Server::DELETABLE,
@@ -59,7 +59,7 @@ final class FLACSO_Academic_API {
                         $deleted = $request->get_param('force') ? wp_delete_post($id, true) : wp_trash_post($id);
                         return $deleted ? ['deleted' => true, 'id' => $id] : new WP_Error('delete_failed', __('No se pudo eliminar.', 'flacso-uruguay'), ['status' => 500]);
                     },
-                    'permission_callback' => [self::class, 'can_write'],
+                    'permission_callback' => [self::class, 'can_delete_item'],
                 ],
             ]);
         }
@@ -110,6 +110,14 @@ final class FLACSO_Academic_API {
     }
 
     public static function submit_consulta_seminario(WP_REST_Request $request) {
+        // Mismo cupo por IP que el formulario de ofertas (flacso_enviar_consulta_func).
+        if (flacso_public_rate_exceeded('consulta', (int) apply_filters('flacso_consultas_rate_limit', 20), 600)) {
+            return new WP_REST_Response([
+                'success' => false,
+                'message' => 'Demasiadas solicitudes. Intentá nuevamente en unos minutos.',
+            ], 429);
+        }
+
         $params = $request->get_json_params();
         if (empty($params)) {
             $params = $request->get_body_params();
@@ -196,5 +204,15 @@ final class FLACSO_Academic_API {
 
     public static function can_write(): bool {
         return current_user_can('edit_posts');
+    }
+
+    /** Editar exige permiso sobre ese registro, no solo `edit_posts` (que tiene un Colaborador). */
+    public static function can_edit_item(WP_REST_Request $request): bool {
+        return current_user_can('edit_post', absint($request['id']));
+    }
+
+    /** Borrar (también con force=1) exige `delete_post` sobre ese registro. */
+    public static function can_delete_item(WP_REST_Request $request): bool {
+        return current_user_can('delete_post', absint($request['id']));
     }
 }

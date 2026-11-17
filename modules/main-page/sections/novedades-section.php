@@ -2589,12 +2589,9 @@ if (!function_exists('flacso_section_novedades_search_ajax')) {
         if (strlen($search_term) < 3) {
             wp_send_json_success(['html' => '']);
         }
-        $rate_key = 'flacso_nov_rate_' . md5(isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '');
-        $hits = (int) get_transient($rate_key);
-        if ($hits >= 30) {
+        if (flacso_public_rate_exceeded('novedades', 30)) {
             wp_send_json_error(['message' => 'rate_limited'], 429);
         }
-        set_transient($rate_key, $hits + 1, MINUTE_IN_SECONDS);
         // Buscar en todos los posts y páginas publicados
         $args = [
             'no_found_rows' => true,
@@ -2650,12 +2647,9 @@ if (!function_exists('flacso_section_novedades_paginate_ajax')) {
         check_ajax_referer('flacso_section_novedades_nonce', 'nonce', false);
 
         // Endpoint público: tope por IP (búsqueda LIKE y paginación son costosas ante bots).
-        $rate_key = 'flacso_nov_rate_' . md5(isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '');
-        $hits = (int) get_transient($rate_key);
-        if ($hits >= 30) {
+        if (flacso_public_rate_exceeded('novedades', 30)) {
             wp_send_json_error(['message' => 'rate_limited'], 429);
         }
-        set_transient($rate_key, $hits + 1, MINUTE_IN_SECONDS);
 
         $page = isset($_POST['page']) ? min(200, max(1, intval($_POST['page']))) : 1;
         $search_term = isset($_POST['search_term']) ? sanitize_text_field(wp_unslash($_POST['search_term'])) : '';

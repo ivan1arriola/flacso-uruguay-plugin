@@ -139,6 +139,13 @@ if ( ! class_exists( 'Flacso_Custom_404' ) ) {
 		private static function get_suggestions( string $slug, string $path = '' ): array {
 			global $wpdb;
 
+			// Los rastreadores piden muchas URL inexistentes y no leen sugerencias:
+			// se les ahorra la búsqueda LIKE sobre todos los posts.
+			$user_agent = isset( $_SERVER['HTTP_USER_AGENT'] ) ? (string) $_SERVER['HTTP_USER_AGENT'] : '';
+			if ( '' === $user_agent || preg_match( '/bot|crawl|spider|slurp|externalagent|externalhit|webindexer/i', $user_agent ) ) {
+				return [];
+			}
+
 			$source = trim( $slug . ' ' . str_replace( '/', ' ', $path ) );
 			$source = preg_replace( '/\.(html|htm|php)$/i', '', $source );
 
@@ -264,7 +271,7 @@ if ( ! class_exists( 'Flacso_Custom_404' ) ) {
 				}
 
 				$scored[] = [
-					'post'  => get_post( (int) $result->ID ),
+					'id'    => (int) $result->ID,
 					'score' => $score,
 				];
 			}
@@ -283,15 +290,18 @@ if ( ! class_exists( 'Flacso_Custom_404' ) ) {
 			$suggestions = [];
 
 			foreach ( $scored as $item ) {
-				if ( ! $item['post'] instanceof WP_Post ) {
-					continue;
-				}
-
+				// Ordenado de mayor a menor: debajo del umbral ya no hay candidatos.
 				if ( $item['score'] < 0.42 ) {
+					break;
+				}
+
+				// get_post() solo para los que se muestran (antes: uno por cada candidato, hasta 80).
+				$post = get_post( $item['id'] );
+				if ( ! $post instanceof WP_Post ) {
 					continue;
 				}
 
-				$suggestions[] = $item['post'];
+				$suggestions[] = $post;
 
 				if ( count( $suggestions ) >= 6 ) {
 					break;

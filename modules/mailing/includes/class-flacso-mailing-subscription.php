@@ -52,6 +52,8 @@ final class Flacso_Mailing_Subscription {
         $email = sanitize_email((string) ($data['email'] ?? ''));
         if (!$email || empty($data['consent'])) return ['success' => false, 'status' => 'invalid'];
         if (!self::is_configured()) return ['success' => false, 'status' => 'not_configured'];
+        // Cada envío llama a Mautic dentro del request: tope por IP contra altas masivas.
+        if (flacso_public_rate_exceeded('mailing', 5, 600)) return ['success' => false, 'status' => 'rate_limited'];
         $result = FLACSO_Mautic_Client::create_or_update_contact($email, ['firstname' => sanitize_text_field((string) ($data['first_name'] ?? ''))], ['suscripcion_institucional']);
         return ['success' => !empty($result['ok']), 'status' => !empty($result['ok']) ? 'success' : 'error'];
     }

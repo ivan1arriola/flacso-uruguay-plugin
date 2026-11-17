@@ -135,6 +135,9 @@ final class FLACSO_Academic_Assistant {
     }
 
     public static function sync_roles(): void {
+        if (!flacso_is_maintenance_request()) {
+            return;
+        }
         if (
             get_option(self::ROLE_VERSION_OPTION) === self::ROLE_VERSION
             && get_role(self::ROLE) instanceof WP_Role

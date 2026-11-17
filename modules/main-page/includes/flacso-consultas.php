@@ -74,34 +74,7 @@ function flacso_consultas_enqueue_bootstrap_icons() {
 }
 add_action( 'enqueue_block_assets', 'flacso_consultas_enqueue_bootstrap_icons' );
 
-/**
- * Helpers generales.
- */
-function flacso_get_user_ip() {
-	$remote_addr = isset( $_SERVER['REMOTE_ADDR'] ) ? trim( (string) $_SERVER['REMOTE_ADDR'] ) : '';
-	if ( ! filter_var( $remote_addr, FILTER_VALIDATE_IP ) ) {
-		return 'unknown';
-	}
-
-	// Las cabeceras de reenvío las controla el cliente: solo se aceptan si la conexión
-	// llega desde un proxy propio (red privada/loopback) o uno declarado en el filtro.
-	$trusted_proxies = (array) apply_filters( 'flacso_trusted_proxies', array() );
-	$via_proxy       = in_array( $remote_addr, $trusted_proxies, true )
-		|| ! filter_var( $remote_addr, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE );
-
-	if ( $via_proxy ) {
-		foreach ( array( 'HTTP_X_REAL_IP', 'HTTP_X_FORWARDED_FOR' ) as $key ) {
-			if ( ! empty( $_SERVER[ $key ] ) ) {
-				$ip = trim( current( explode( ',', (string) $_SERVER[ $key ] ) ) );
-				if ( filter_var( $ip, FILTER_VALIDATE_IP ) ) {
-					return sanitize_text_field( $ip );
-				}
-			}
-		}
-	}
-
-	return sanitize_text_field( $remote_addr );
-}
+// flacso_get_user_ip() y flacso_consultas_rate_hit() viven en includes/core/helpers.php.
 
 /**
  * Token de formulario: hora de render firmada. Sirve para descartar envíos
@@ -135,26 +108,6 @@ function flacso_consultas_check_form_token( string $token ): string {
 	return 'ok';
 }
 
-/**
- * Cuenta una solicitud por IP en una ventana fija. Es atómico con caché de objetos
- * persistente; sin ella usa transients (lectura y escritura separadas).
- */
-function flacso_consultas_rate_hit( string $ip, int $window_seconds = 600 ): int {
-	$window = (int) floor( time() / max( 60, $window_seconds ) );
-	$key    = 'flacso_consulta_rate_' . md5( $ip ) . '_' . $window;
-
-	if ( function_exists( 'wp_using_ext_object_cache' ) && wp_using_ext_object_cache() ) {
-		wp_cache_add( $key, 0, 'flacso_consultas', $window_seconds + 60 );
-		$count = wp_cache_incr( $key, 1, 'flacso_consultas' );
-		if ( false !== $count ) {
-			return (int) $count;
-		}
-	}
-
-	$count = (int) get_transient( $key ) + 1;
-	set_transient( $key, $count, $window_seconds + 60 );
-	return $count;
-}
 
 function flacso_remove_accents_local( $str ) {
 	if ( function_exists( 'remove_accents' ) ) {

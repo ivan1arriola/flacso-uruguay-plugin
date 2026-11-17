@@ -321,7 +321,8 @@ if (!function_exists('apply_filters')) {
     function apply_filters(string $hook, $value) { return $value; }
 }
 
-// Include handlers
+// Include handlers (los helpers de IP y límite viven en core)
+require_once $root . '/includes/core/helpers.php';
 require_once $root . '/modules/main-page/includes/flacso-consultas.php';
 require_once $root . '/modules/formularios/includes/helpers.php';
 require_once $root . '/modules/oferta-academica/includes/class-academic-api.php';

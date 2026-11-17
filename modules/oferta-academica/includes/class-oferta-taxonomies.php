@@ -38,6 +38,9 @@ final class Oferta_Taxonomies {
     }
 
     public static function ensure_terms(): void {
+        if (!flacso_is_maintenance_request()) {
+            return;
+        }
         foreach (FLACSO_Oferta_Academica::tipos() as $slug => $name) {
             $term = get_term_by('slug', $slug, FLACSO_Oferta_Academica::TYPE_TAXONOMY);
             if (!$term || is_wp_error($term)) {
