@@ -335,8 +335,16 @@ jobs:
               exit;
           }
 
+          // Con el código nuevo ya validado, se vacía la caché de página (WP Super Cache):
+          // si no, las visitas seguirían viendo HTML generado por la versión anterior.
+          \$cache = 'not-installed';
+          if (function_exists('wp_cache_clear_cache')) {
+              wp_cache_clear_cache();
+              \$cache = 'cleared';
+          }
+
           \$reflection = new ReflectionClass(\$class);
-          echo 'team_editor_method=ok php=' . PHP_VERSION
+          echo 'page_cache=' . \$cache . ' team_editor_method=ok php=' . PHP_VERSION
               . ' sapi=' . PHP_SAPI
               . ' file=' . (string) \$reflection->getFileName()
               . "\n";
