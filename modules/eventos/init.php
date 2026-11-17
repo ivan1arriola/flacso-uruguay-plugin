@@ -10,6 +10,7 @@ if (!defined('ABSPATH')) {
 flacso_require('modules/eventos/includes/class-cpt-eventos-manager.php');
 flacso_require('modules/eventos/includes/homepage.php');
 flacso_require('modules/eventos/includes/event-fields.php');
+flacso_require('modules/eventos/includes/event-speakers.php');
 flacso_require('modules/eventos/includes/rest.php');
 flacso_require('modules/eventos/includes/admin-list.php');
 
