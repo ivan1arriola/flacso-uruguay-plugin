@@ -34,6 +34,12 @@ deploy_opcache_assert(
     'el smoke test debe comprobar el editor de equipos sin colisiones'
 );
 deploy_opcache_assert(
+    strpos($workflow, "echo 'team_editor_method=ok php='") !== false
+        && strpos($workflow, 'team_editor_method=ok*') !== false
+        && strpos($workflow, 'wp_cache_clear_cache()') !== false,
+    'el chequeo de runtime debe empezar con team_editor_method=ok (lo exige el workflow) y vaciar la caché de página'
+);
+deploy_opcache_assert(
     strpos($workflow, "ini_get('opcache.preload')") !== false,
     'el diagnostico debe informar si FPM usa opcache.preload'
 );

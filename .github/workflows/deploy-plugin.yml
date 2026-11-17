@@ -344,9 +344,11 @@ jobs:
           }
 
           \$reflection = new ReflectionClass(\$class);
-          echo 'page_cache=' . \$cache . ' team_editor_method=ok php=' . PHP_VERSION
+          // La validación del workflow exige que la salida empiece con team_editor_method=ok.
+          echo 'team_editor_method=ok php=' . PHP_VERSION
               . ' sapi=' . PHP_SAPI
               . ' file=' . (string) \$reflection->getFileName()
+              . ' page_cache=' . \$cache
               . "\n";
           PHP
 
