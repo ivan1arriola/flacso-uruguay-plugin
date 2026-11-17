@@ -25,6 +25,20 @@ if ( ! class_exists( 'Flacso_Custom_404' ) ) {
 				return;
 			}
 
+			// Los escáneres piden miles de rutas inexistentes: renderizar el tema completo para cada una
+			// (~130 KB y ~0,7 s de CPU) saturaba PHP. A ellos y a quien acumula muchos 404 seguidos
+			// se les responde un 404 mínimo.
+			$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+			$scan_path   = trim( (string) parse_url( $request_uri, PHP_URL_PATH ), '/' );
+			if ( self::is_scanner_path( $scan_path )
+				|| ( function_exists( 'flacso_public_rate_exceeded' ) && flacso_public_rate_exceeded( '404', 20 ) ) ) {
+				status_header( 404 );
+				nocache_headers();
+				header( 'Content-Type: text/plain; charset=utf-8' );
+				echo 'No encontrado.';
+				exit;
+			}
+
 			status_header( 404 );
 			nocache_headers();
 
@@ -49,6 +63,17 @@ if ( ! class_exists( 'Flacso_Custom_404' ) ) {
 			get_footer();
 
 			exit;
+		}
+
+		/**
+		 * Rutas que solo piden los escáneres de vulnerabilidades y que nunca existen en el sitio.
+		 * Las URL antiguas legítimas (/web/..., .html, .php de otra época) no entran aquí.
+		 */
+		public static function is_scanner_path( string $path ): bool {
+			return (bool) preg_match(
+				'#(^|/)(\.env|\.git|\.aws|\.ssh|\.svn|\.htaccess|\.htpasswd|phpinfo\.php|wso\d*\.php|shell\d*\.php|c99\.php|r57\.php|adminer\.php|eval-stdin\.php|aws-sdk|node_modules|cgi-bin|id_rsa|credentials(\.json)?|backup\.(zip|sql|tar|gz))(/|$|\.)#i',
+				$path
+			);
 		}
 
 		public static function filter_document_title( string $title ): string {
