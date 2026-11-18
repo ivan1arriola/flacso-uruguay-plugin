@@ -857,8 +857,8 @@ const selectedOfferLabels = $form.find('[name="selected_offers[]"]:checked').map
 						sessionStorage.setItem('consultaPrograma', selectedOfferLabels.length ? selectedOfferLabels.join(', ') : $form.find('[name="titulo_posgrado"]').val());
 						sessionStorage.setItem('consultaOrigen', urlBase);
 						if (wasPersisted) {
-							if (typeof window.dispatchEvent === 'function' && typeof window.CustomEvent === 'function') {
-								window.dispatchEvent(new CustomEvent('flacso:ga4-event', { detail: { eventName: 'pedido_informacion_confirmado', params: {
+							if (typeof document.dispatchEvent === 'function' && typeof window.CustomEvent === 'function') {
+								document.dispatchEvent(new CustomEvent('flacso:ga4-event', { detail: { eventName: 'pedido_informacion_confirmado', params: {
 									event_category: 'pedido_informacion',
 									form_id: String($form.attr('id') || 'formulario_oferta'),
 									offer_id: String(pid || '')
