@@ -48,9 +48,15 @@ price_table_editor_assert(
 );
 price_table_editor_assert(stripos($cpt, 'aranceles') === false, 'la interfaz debe hablar de tablas de precios, no de aranceles');
 
-// Ámbito: cada tabla se marca como de oferta académica o de seminario.
+// Ámbito: cada tabla se marca y se identifica bajo su título en el listado.
 price_table_editor_assert(strpos($cpt, 'name="flacso_price_ambito"') !== false && strpos($cpt, "'tabla_precios_ambito'") !== false, 'debe elegir y guardar el ámbito');
-price_table_editor_assert(strpos($cpt, "'flacso_price_scope'") !== false && strpos($cpt, "'flacso_price_offers'") !== false, 'el listado debe mostrar ámbito y ofertas vinculadas');
+price_table_editor_assert(
+    strpos($cpt, "'flacso_price_scope'") === false
+    && strpos($cpt, "add_filter('post_states_html'") !== false
+    && strpos($cpt, 'flacso-price-flag--title') !== false
+    && strpos($cpt, "'flacso_price_offers'") !== false,
+    'el listado debe mostrar el ámbito bajo el título y las ofertas vinculadas'
+);
 price_table_editor_assert(strpos($cpt, 'views_edit-tabla-precio') !== false, 'el listado debe filtrar por ámbito');
 price_table_editor_assert(strpos($css, 'td.column-flacso_price_offers') !== false, 'las ofertas vinculadas deben verse en móvil sin expandir');
 
