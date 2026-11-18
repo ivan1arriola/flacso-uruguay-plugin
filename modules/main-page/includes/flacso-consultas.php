@@ -830,7 +830,11 @@ $form.find('input, select').each(function() {
 						return;
 					}
 					// Sólo una consulta guardada puede registrar un Lead de Meta.
-					const wasPersisted = !(response.data && response.data.persisted === false);
+					const wasPersisted = !!(response.data && response.data.persisted === true);
+					if (!wasPersisted && !(response.data && response.data.note === 'discarded')) {
+						showMessage('No se pudo confirmar el registro del pedido de más información. Intentá nuevamente.', 'danger');
+						return;
+					}
 					try { sessionStorage.removeItem(submitKeyStorageKey); } catch (e) {}
 const selectedOfferLabels = $form.find('[name="selected_offers[]"]:checked').map(function() {
 						return $(this).closest('.flacso-consultas-offer-choice').text().trim().replace(/\s+/g, ' ');
@@ -853,6 +857,13 @@ const selectedOfferLabels = $form.find('[name="selected_offers[]"]:checked').map
 						sessionStorage.setItem('consultaPrograma', selectedOfferLabels.length ? selectedOfferLabels.join(', ') : $form.find('[name="titulo_posgrado"]').val());
 						sessionStorage.setItem('consultaOrigen', urlBase);
 						if (wasPersisted) {
+							if (typeof window.flacsoTrackGA4 === 'function') {
+								window.flacsoTrackGA4('pedido_informacion_confirmado', {
+									event_category: 'pedido_informacion',
+									form_id: String($form.attr('id') || 'formulario_oferta'),
+									offer_id: String(pid || '')
+								});
+							}
 							sessionStorage.setItem(metaLeadPendingStorageKey, JSON.stringify({
 								pid: String(pid || ''),
 								tipo: (new URL(gracias, window.location.href)).searchParams.get('tipo') || 'consulta',
@@ -1449,6 +1460,7 @@ function flacso_enviar_consulta_func() {
         wp_send_json_success(
                 array(
                         'note'           => 'ok',
+                        'persisted'      => true,
                         'deliveries'     => $deliveries,
                         'count'          => count( $offer_payloads ),
                         'first_offer_id' => (int) ( $offer_payloads[0]['id_pagina'] ?? 0 ),
