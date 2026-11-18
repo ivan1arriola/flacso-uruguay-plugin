@@ -167,43 +167,49 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			// UTF-8 BOM para Excel
 			fwrite( $out, "\xEF\xBB\xBF" );
 
-			fputcsv(
-				$out,
-				array(
-					'Nombre',
-					'Apellido',
-					'Nombre Completo',
-					'Correo',
-					'Oferta / Seminario',
-					'Tabla',
-					'País',
-					'Teléfono',
-					'Estado Email',
-					'Origen (canal)', 'Campaña', 'Fuente Campaña', 'Medio Campaña', 'Cohorte', 'Estado Oferta', 'Estado Mautic', 'Estado Seguimiento', 'Tipo', 'Abreviatura', 'ID Consulta',
-					'Fecha Consulta',
-				)
-			);
-
-			foreach ( $rows as $row ) {
-				fputcsv(
-					$out,
-					array(
-						(string) ( $row['firstName'] ?? '' ),
-						(string) ( $row['lastName'] ?? '' ),
-						(string) ( $row['fullName'] ?? '' ),
-						(string) ( $row['email'] ?? '' ),
-						(string) ( $row[ $item_col ] ?? '' ),
-						$table,
-						(string) ( $row['country'] ?? '' ),
-						(string) ( $row['phone'] ?? '' ),
-						(string) ( $row['emailStatus'] ?? '' ),
-						(string) ( $row['source'] ?? '' ), (string) ( $row['campaignName'] ?? '' ), (string) ( $row['campaignSource'] ?? '' ), (string) ( $row['campaignMedium'] ?? '' ), (string) ( ( $row['cohortName'] ?? '' ) ?: ( $row['cohortNumber'] ?? '' ) ), (string) ( $row['offerStatus'] ?? '' ), (string) ( $row['mauticSyncStatus'] ?? '' ), (string) ( $row['followupStatus'] ?? '' ), (string) ( ( $row['offerType'] ?? '' ) ?: ( $row['seminarType'] ?? '' ) ), (string) ( $row['offerAbbreviation'] ?? '' ), (string) ( $row['consultaId'] ?? '' ),
-						(string) ( $row['inquiryAt'] ?? $row['createdAt'] ?? '' ),
-					)
+			// Todas las columnas presentes en los registros (orden de aparición), con etiqueta legible si existe.
+				$labels = array(
+					'id' => 'ID', 'consultaId' => 'ID Consulta', 'firstName' => 'Nombre', 'lastName' => 'Apellido',
+					'fullName' => 'Nombre Completo', 'email' => 'Correo', 'emailNormalized' => 'Correo Normalizado',
+					'phone' => 'Teléfono', 'country' => 'País', 'profession' => 'Profesión', 'educationLevel' => 'Nivel Académico',
+					'offerWpId' => 'ID WP Oferta', 'offerName' => 'Oferta', 'offerAbbreviation' => 'Abreviatura',
+					'offerType' => 'Tipo Oferta', 'offerStatus' => 'Estado Oferta', 'seminarWpId' => 'ID WP Seminario',
+					'seminarName' => 'Seminario', 'seminarType' => 'Tipo Seminario', 'unit' => 'Unidad',
+					'cohortWpId' => 'ID WP Cohorte', 'cohortNumber' => 'Nº Cohorte', 'cohortName' => 'Cohorte',
+					'registrationOpenAt' => 'Inicio Inscripción', 'registrationCloseAt' => 'Cierre Inscripción',
+					'source' => 'Origen (canal)', 'campaignProvider' => 'Proveedor Campaña', 'campaignSource' => 'Fuente Campaña',
+					'campaignMedium' => 'Medio Campaña', 'campaignName' => 'Campaña', 'campaignExternalId' => 'ID Externo Campaña',
+					'campaignContent' => 'Contenido Campaña', 'campaignTerm' => 'Término Campaña',
+					'urlBase' => 'URL Origen', 'urlReferer' => 'URL Referente', 'ipAddress' => 'IP', 'userAgent' => 'User Agent',
+					'replyToEmail' => 'Responder A', 'programUrl' => 'URL Programa', 'cartaUrl' => 'URL Carta',
+					'preinscripcionUrl' => 'URL Preinscripción', 'mauticContactId' => 'ID Contacto Mautic',
+					'mauticSyncStatus' => 'Estado Mautic', 'mauticSyncedAt' => 'Sync Mautic', 'mauticLastError' => 'Error Mautic',
+					'followupDueAt' => 'Seguimiento Programado', 'followupStatus' => 'Estado Seguimiento',
+					'followupSentAt' => 'Seguimiento Enviado', 'followupAttempts' => 'Intentos Seguimiento',
+					'followupLastError' => 'Error Seguimiento', 'emailStatus' => 'Estado Email', 'emailSender' => 'Remitente Email',
+					'gmailMessageUrl' => 'URL Gmail', 'mailjetMessageId' => 'ID Mailjet', 'mailjetMessageUuid' => 'UUID Mailjet',
+					'payload' => 'Payload (JSON)', 'inquiryAt' => 'Fecha Consulta', 'createdAt' => 'Creado', 'updatedAt' => 'Actualizado',
 				);
-			}
+				$keys = array();
+				foreach ( $rows as $row ) {
+					foreach ( array_keys( $row ) as $k ) {
+						$keys[ $k ] = true;
+					}
+				}
+				$keys = array_keys( $keys );
 
-			fclose( $out );
+				fputcsv( $out, array_merge( array( 'Tabla' ), array_map( static function ( $k ) use ( $labels ) { return $labels[ $k ] ?? $k; }, $keys ) ) );
+
+				foreach ( $rows as $row ) {
+					$line = array( $table );
+					foreach ( $keys as $k ) {
+						$v      = $row[ $k ] ?? '';
+						$line[] = is_scalar( $v ) ? (string) $v : (string) wp_json_encode( $v );
+					}
+					fputcsv( $out, $line );
+				}
+
+				fclose( $out );
 			exit;
 		}
 
