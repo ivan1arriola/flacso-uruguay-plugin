@@ -179,7 +179,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					'País',
 					'Teléfono',
 					'Estado Email',
-					'Campaña / Fuente',
+					'Origen (canal)', 'Campaña', 'Fuente Campaña', 'Medio Campaña', 'Cohorte', 'Estado Oferta', 'Estado Mautic', 'Estado Seguimiento', 'Tipo', 'Abreviatura', 'ID Consulta',
 					'Fecha Consulta',
 				)
 			);
@@ -197,7 +197,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 						(string) ( $row['country'] ?? '' ),
 						(string) ( $row['phone'] ?? '' ),
 						(string) ( $row['emailStatus'] ?? '' ),
-						(string) ( $row['campaignName'] ?? $row['campaignSource'] ?? '' ),
+						(string) ( $row['source'] ?? '' ), (string) ( $row['campaignName'] ?? '' ), (string) ( $row['campaignSource'] ?? '' ), (string) ( $row['campaignMedium'] ?? '' ), (string) ( ( $row['cohortName'] ?? '' ) ?: ( $row['cohortNumber'] ?? '' ) ), (string) ( $row['offerStatus'] ?? '' ), (string) ( $row['mauticSyncStatus'] ?? '' ), (string) ( $row['followupStatus'] ?? '' ), (string) ( ( $row['offerType'] ?? '' ) ?: ( $row['seminarType'] ?? '' ) ), (string) ( $row['offerAbbreviation'] ?? '' ), (string) ( $row['consultaId'] ?? '' ),
 						(string) ( $row['inquiryAt'] ?? $row['createdAt'] ?? '' ),
 					)
 				);
