@@ -168,9 +168,15 @@
     line-height: 1.8;
 }
 
-.column-flacso_price_scope { width: 145px; }
-.column-flacso_price_offers { width: 34%; }
+.column-flacso_price_offers { width: 40%; }
 .column-flacso_price_main { width: 25%; }
+
+.post-type-tabla-precio .column-title .flacso-price-flag--title {
+    display: table;
+    margin-top: 7px;
+    font-size: 11px;
+    white-space: nowrap;
+}
 
 /* El menú lateral de WordPress reduce mucho el espacio en portátiles y tablets. */
 @media (min-width: 783px) and (max-width: 1440px) {
@@ -185,31 +191,22 @@
 
     .post-type-tabla-precio .wp-list-table .column-title {
         width: 20% !important;
-        min-width: 180px;
-    }
-
-    .post-type-tabla-precio .wp-list-table .column-flacso_price_scope {
-        width: 12% !important;
-        min-width: 125px;
+        min-width: 210px;
     }
 
     .post-type-tabla-precio .wp-list-table .column-flacso_price_offers {
-        width: 29% !important;
-        min-width: 255px;
+        width: 35% !important;
+        min-width: 290px;
     }
 
     .post-type-tabla-precio .wp-list-table .column-flacso_price_main {
-        width: 21% !important;
-        min-width: 200px;
+        width: 24% !important;
+        min-width: 210px;
     }
 
     .post-type-tabla-precio .wp-list-table .column-date {
         width: 14% !important;
         min-width: 120px;
-    }
-
-    .post-type-tabla-precio .flacso-price-flag {
-        white-space: nowrap;
     }
 
     .post-type-tabla-precio .flacso-price-offer-list {
@@ -227,12 +224,10 @@
 
 @media (max-width: 782px) {
     /* El ámbito y las ofertas se ven sin expandir la fila. */
-    .post-type-tabla-precio .wp-list-table tbody tr:not(.inline-edit-row):not(.no-items) td.column-flacso_price_scope:not(.hidden),
     .post-type-tabla-precio .wp-list-table tbody tr:not(.inline-edit-row):not(.no-items) td.column-flacso_price_offers:not(.hidden) {
         display: block;
     }
 
-    .column-flacso_price_scope,
     .column-flacso_price_offers,
     .column-flacso_price_main {
         width: auto;

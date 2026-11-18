@@ -19,6 +19,7 @@ class CPT_Tabla_Precio {
         add_action('admin_enqueue_scripts', [self::class, 'enqueue_admin_assets']);
         add_filter('manage_tabla-precio_posts_columns', [self::class, 'admin_columns']);
         add_action('manage_tabla-precio_posts_custom_column', [self::class, 'render_admin_column'], 10, 2);
+        add_filter('post_states_html', [self::class, 'append_scope_to_title'], 10, 3);
         add_filter('views_edit-tabla-precio', [self::class, 'scope_views']);
         add_action('pre_get_posts', [self::class, 'filter_by_scope']);
         add_filter('post_row_actions', [self::class, 'row_actions'], 10, 2);
@@ -517,7 +518,6 @@ class CPT_Tabla_Precio {
         foreach ($columns as $key => $label) {
             $result[$key] = $label;
             if ('title' === $key) {
-                $result['flacso_price_scope'] = 'Ámbito';
                 $result['flacso_price_offers'] = 'Vinculada a';
                 $result['flacso_price_main'] = 'Precio principal';
             }
@@ -527,18 +527,6 @@ class CPT_Tabla_Precio {
     }
 
     public static function render_admin_column(string $column, int $post_id): void {
-        if ('flacso_price_scope' === $column) {
-            $scope = FLACSO_Price_Table_Repository::ambito($post_id);
-            $is_inferred = '' === Tabla_Precio_Schema::sanitize_ambito(get_post_meta($post_id, 'tabla_precios_ambito', true)) && '' !== $scope;
-            printf(
-                '<span class="flacso-price-flag is-%1$s"%3$s>%2$s</span>',
-                esc_attr($scope !== '' ? $scope : 'none'),
-                esc_html(FLACSO_Price_Table_Repository::ambito_label($scope)),
-                $is_inferred ? ' title="' . esc_attr__('Deducido de sus usos', 'flacso-uruguay') . '"' : ''
-            );
-            return;
-        }
-
         if ('flacso_price_offers' === $column) {
             self::render_offers_column($post_id);
             return;
@@ -586,6 +574,32 @@ class CPT_Tabla_Precio {
             echo '<small>' . esc_html(implode(' · ', $meta)) . '</small>';
             echo '</span>';
         }
+    }
+
+    /** Muestra el ámbito debajo del título en el listado de tablas de precios. */
+    public static function append_scope_to_title(string $html, array $post_states, WP_Post $post): string {
+        if (!is_admin() || 'tabla-precio' !== $post->post_type) {
+            return $html;
+        }
+
+        $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+        if (!($screen instanceof WP_Screen) || 'tabla-precio' !== $screen->post_type) {
+            return $html;
+        }
+
+        $scope = FLACSO_Price_Table_Repository::ambito((int) $post->ID);
+        if ('' === $scope) {
+            return $html;
+        }
+
+        $is_inferred = '' === Tabla_Precio_Schema::sanitize_ambito(get_post_meta($post->ID, 'tabla_precios_ambito', true));
+
+        return $html . sprintf(
+            '<span class="flacso-price-flag flacso-price-flag--title is-%1$s"%3$s>%2$s</span>',
+            esc_attr($scope),
+            esc_html(FLACSO_Price_Table_Repository::ambito_label($scope)),
+            $is_inferred ? ' title="' . esc_attr__('Deducido de sus usos', 'flacso-uruguay') . '"' : ''
+        );
     }
 
     private static function render_offers_column(int $post_id): void {
@@ -755,3 +769,4 @@ class CPT_Tabla_Precio {
         return filter_var(get_post_meta($post_id, $key, true), FILTER_VALIDATE_BOOLEAN);
     }
 }
+
