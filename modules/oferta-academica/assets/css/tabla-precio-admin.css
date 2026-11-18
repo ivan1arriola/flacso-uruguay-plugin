@@ -172,6 +172,59 @@
 .column-flacso_price_offers { width: 34%; }
 .column-flacso_price_main { width: 25%; }
 
+/* El menú lateral de WordPress reduce mucho el espacio en portátiles y tablets. */
+@media (min-width: 783px) and (max-width: 1440px) {
+    .post-type-tabla-precio .wp-list-table {
+        width: 100%;
+        table-layout: fixed;
+    }
+
+    .post-type-tabla-precio .wp-list-table .check-column {
+        width: 38px !important;
+    }
+
+    .post-type-tabla-precio .wp-list-table .column-title {
+        width: 20% !important;
+        min-width: 180px;
+    }
+
+    .post-type-tabla-precio .wp-list-table .column-flacso_price_scope {
+        width: 12% !important;
+        min-width: 125px;
+    }
+
+    .post-type-tabla-precio .wp-list-table .column-flacso_price_offers {
+        width: 29% !important;
+        min-width: 255px;
+    }
+
+    .post-type-tabla-precio .wp-list-table .column-flacso_price_main {
+        width: 21% !important;
+        min-width: 200px;
+    }
+
+    .post-type-tabla-precio .wp-list-table .column-date {
+        width: 14% !important;
+        min-width: 120px;
+    }
+
+    .post-type-tabla-precio .flacso-price-flag {
+        white-space: nowrap;
+    }
+
+    .post-type-tabla-precio .flacso-price-offer-list {
+        gap: 6px;
+    }
+
+    .post-type-tabla-precio .flacso-price-offer-link {
+        font-size: 13px;
+    }
+
+    .post-type-tabla-precio .flacso-price-main {
+        gap: 5px;
+    }
+}
+
 @media (max-width: 782px) {
     /* El ámbito y las ofertas se ven sin expandir la fila. */
     .post-type-tabla-precio .wp-list-table tbody tr:not(.inline-edit-row):not(.no-items) td.column-flacso_price_scope:not(.hidden),
@@ -650,3 +703,4 @@
     .flacso-price-preview__table td:first-child { display: block; }
     .flacso-price-preview__table td:first-child::before { content: none; }
 }
+
