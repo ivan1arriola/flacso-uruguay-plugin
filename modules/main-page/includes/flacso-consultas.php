@@ -831,7 +831,7 @@ $form.find('input, select').each(function() {
 					}
 					// Sólo una consulta guardada puede registrar un Lead de Meta.
 					const wasPersisted = !!(response.data && response.data.persisted === true);
-					if (!wasPersisted && !(response.data && response.data.note === 'discarded')) {
+					if (!wasPersisted) {
 						showMessage('No se pudo confirmar el registro del pedido de más información. Intentá nuevamente.', 'danger');
 						return;
 					}
@@ -857,12 +857,12 @@ const selectedOfferLabels = $form.find('[name="selected_offers[]"]:checked').map
 						sessionStorage.setItem('consultaPrograma', selectedOfferLabels.length ? selectedOfferLabels.join(', ') : $form.find('[name="titulo_posgrado"]').val());
 						sessionStorage.setItem('consultaOrigen', urlBase);
 						if (wasPersisted) {
-							if (typeof window.flacsoTrackGA4 === 'function') {
-								window.flacsoTrackGA4('pedido_informacion_confirmado', {
+							if (typeof window.dispatchEvent === 'function' && typeof window.CustomEvent === 'function') {
+								window.dispatchEvent(new CustomEvent('flacso:ga4-event', { detail: { eventName: 'pedido_informacion_confirmado', params: {
 									event_category: 'pedido_informacion',
 									form_id: String($form.attr('id') || 'formulario_oferta'),
 									offer_id: String(pid || '')
-								});
+								} }));
 							}
 							sessionStorage.setItem(metaLeadPendingStorageKey, JSON.stringify({
 								pid: String(pid || ''),
