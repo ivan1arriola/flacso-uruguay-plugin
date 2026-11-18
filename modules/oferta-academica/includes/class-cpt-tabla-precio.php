@@ -558,13 +558,26 @@ class CPT_Tabla_Precio {
                 }
             }
             $show_usd = self::meta_boolean($post_id, 'mostrar_precios_dolares', true);
-            $values = array_filter([$main['uyu'], $show_usd ? $main['usd'] : '']);
+            $values = [];
+            if ($main['uyu'] !== '') {
+                $values['UYU'] = $main['uyu'];
+            }
+            if ($show_usd && $main['usd'] !== '') {
+                $values['USD'] = $main['usd'];
+            }
             $extra_count = count(Tabla_Precio_Schema::sanitize_columns(get_post_meta($post_id, 'precios_columnas', true)));
 
             echo '<span class="flacso-price-main">';
             echo '<strong>' . esc_html($main['concepto'] !== '' ? $main['concepto'] : '—') . '</strong>';
             if ($values) {
-                echo '<span>' . esc_html(implode(' · ', $values)) . '</span>';
+                echo '<span class="flacso-price-main__values">';
+                foreach ($values as $currency => $value) {
+                    echo '<span class="flacso-price-main__value is-' . esc_attr(strtolower($currency)) . '">';
+                    echo '<small>' . esc_html($currency) . '</small>';
+                    echo '<span>' . esc_html($value) . '</span>';
+                    echo '</span>';
+                }
+                echo '</span>';
             }
             $meta = [sprintf(_n('%d fila', '%d filas', count($rows), 'flacso-uruguay'), count($rows)), $show_usd ? 'UYU + USD' : 'Solo UYU'];
             if ($extra_count) {
@@ -592,11 +605,17 @@ class CPT_Tabla_Precio {
             foreach ($offers as $offer) {
                 $link = $offer['id'] > 0 ? get_edit_post_link($offer['id']) : '';
                 $cohorts = array_map(static fn(array $cohort): string => self::short_cohort_label($cohort['nombre']), $offer['cohortes']);
-                echo '<li>';
+                echo '<li class="flacso-price-offer-item">';
                 echo $link
-                    ? '<a href="' . esc_url($link) . '">' . esc_html($offer['nombre']) . '</a>'
-                    : '<span>' . esc_html($offer['nombre']) . '</span>';
-                echo ' <small>' . esc_html(implode(', ', $cohorts)) . '</small>';
+                    ? '<a class="flacso-price-offer-link" href="' . esc_url($link) . '">' . esc_html($offer['nombre']) . '</a>'
+                    : '<span class="flacso-price-offer-link">' . esc_html($offer['nombre']) . '</span>';
+                if ($cohorts) {
+                    echo '<span class="flacso-price-offer-cohorts" aria-label="' . esc_attr__('Cohortes vinculadas', 'flacso-uruguay') . '">';
+                    foreach ($cohorts as $cohort) {
+                        echo '<span>' . esc_html($cohort) . '</span>';
+                    }
+                    echo '</span>';
+                }
                 echo '</li>';
             }
             echo '</ul>';

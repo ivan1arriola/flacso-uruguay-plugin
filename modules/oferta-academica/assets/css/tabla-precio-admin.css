@@ -43,32 +43,134 @@
 
 .flacso-price-offer-list {
     display: grid;
+    gap: 7px;
+    margin: 0;
+}
+
+.flacso-price-offer-item {
+    display: grid;
+    justify-items: start;
     gap: 5px;
     margin: 0;
+    padding-left: 10px;
+    border-left: 2px solid #d8e1ed;
+    line-height: 1.4;
 }
 
-.flacso-price-offer-list li {
-    margin: 0;
-    line-height: 1.35;
-}
-
-.flacso-price-offer-list a {
+.flacso-price-offer-link {
+    color: #24436e;
     font-weight: 600;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
 }
 
-.flacso-price-offer-list small,
-.flacso-price-main small {
-    color: #646970;
+.flacso-price-offer-cohorts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.flacso-price-offer-cohorts span {
+    display: inline-flex;
+    padding: 2px 7px;
+    border: 1px solid #e0e6ee;
+    border-radius: 999px;
+    background: #f6f8fb;
+    color: #59677a;
+    font-size: 11px;
+    line-height: 1.4;
 }
 
 .flacso-price-main {
     display: grid;
-    gap: 2px;
+    justify-items: start;
+    gap: 7px;
 }
 
-.column-flacso_price_scope { width: 150px; }
+.flacso-price-main > strong {
+    display: inline-flex;
+    padding: 3px 9px;
+    border: 1px solid #f0d889;
+    border-radius: 999px;
+    background: #fff8e5;
+    color: #684b00;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.flacso-price-main__values {
+    display: grid;
+    gap: 5px;
+    width: 100%;
+}
+
+.flacso-price-main__value {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    align-items: baseline;
+    gap: 7px;
+    line-height: 1.4;
+}
+
+.flacso-price-main__value > small {
+    color: #646970;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .03em;
+}
+
+.flacso-price-main__value > span {
+    overflow-wrap: anywhere;
+}
+
+.flacso-price-main > small {
+    color: #646970;
+    font-size: 11px;
+}
+
+.post-type-tabla-precio .wp-list-table {
+    border: 1px solid #dcdcde;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.post-type-tabla-precio .wp-list-table thead th,
+.post-type-tabla-precio .wp-list-table tfoot th {
+    background: #f6f8fb;
+    color: #50575e;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.post-type-tabla-precio .wp-list-table tbody td,
+.post-type-tabla-precio .wp-list-table tbody th {
+    padding-top: 14px;
+    padding-bottom: 14px;
+    vertical-align: top;
+}
+
+.post-type-tabla-precio .wp-list-table tbody tr:nth-child(even) {
+    background: #fbfcfe;
+}
+
+.post-type-tabla-precio .wp-list-table tbody tr:hover {
+    background: #f3f7fc;
+}
+
+.post-type-tabla-precio .wp-list-table .column-title strong a {
+    color: #1d355d;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.post-type-tabla-precio .wp-list-table .row-actions {
+    margin-top: 5px;
+    line-height: 1.8;
+}
+
+.column-flacso_price_scope { width: 145px; }
 .column-flacso_price_offers { width: 34%; }
-.column-flacso_price_main { width: 24%; }
+.column-flacso_price_main { width: 25%; }
 
 @media (max-width: 782px) {
     /* El ámbito y las ofertas se ven sin expandir la fila. */
