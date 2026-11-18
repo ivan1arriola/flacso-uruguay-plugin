@@ -12,7 +12,6 @@ class FLACSO_Editor_Admin_Mode {
         'cohorte',
         'seminario',
         'edicion',
-        'fc_consulta',
         'fc_info_request',
     ];
 
@@ -29,7 +28,6 @@ class FLACSO_Editor_Admin_Mode {
         'docente-migration',
         'fc_options_page',
         'fc_oferta_options_page',
-        'fc_consultas_overview',
         'fc_info_overview',
         'flacso-main-page',
     ];

@@ -18,6 +18,29 @@ final class FLACSO_Consultas_CLI {
         WP_CLI::add_command('flacso consultas deliveries run', [self::class, 'run']);
         WP_CLI::add_command('flacso consultas deliveries retention', [self::class, 'retention']);
         WP_CLI::add_command('flacso consultas deliveries reconcile', [self::class, 'reconcile']);
+        WP_CLI::add_command('flacso consultas purge-legacy-cpt', [self::class, 'purge_legacy_cpt']);
+    }
+
+    /**
+     * Borra definitivamente los posts del CPT retirado fc_consulta (y su meta).
+     * Sin --yes sólo informa la cantidad (dry-run). Irreversible: hacer backup antes.
+     */
+    public static function purge_legacy_cpt(array $args, array $assoc_args): void {
+        global $wpdb;
+        $ids = $wpdb->get_col($wpdb->prepare("SELECT ID FROM {$wpdb->posts} WHERE post_type = %s", 'fc_consulta'));
+
+        if (empty($assoc_args['yes'])) {
+            self::output(['ok' => true, 'dry_run' => true, 'count' => count($ids)]);
+            return;
+        }
+
+        $deleted = 0;
+        foreach ($ids as $id) {
+            if (wp_delete_post((int) $id, true)) {
+                $deleted++;
+            }
+        }
+        self::output(['ok' => true, 'dry_run' => false, 'found' => count($ids), 'deleted' => $deleted]);
     }
 
     public static function run(array $args, array $assoc_args): void {

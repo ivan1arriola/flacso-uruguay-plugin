@@ -25,7 +25,6 @@ if (!defined('FC_PLUGIN_DIR')) {
 flacso_safe_require('modules/formularios/includes/assets.php');
 
 // Cargar configuración y handlers de formularios
-flacso_safe_require('modules/formularios/includes/cpt.php');
 flacso_safe_require('modules/formularios/includes/helpers.php');
 // Compatibility helpers only; the Contacto form no longer uses the Editor.
 flacso_safe_require('modules/formularios/includes/editor-routing.php');
