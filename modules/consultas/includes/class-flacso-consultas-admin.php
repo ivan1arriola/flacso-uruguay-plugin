@@ -2203,7 +2203,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					$('flacso-exp-cancel').hidden = false;
 					show('Consultando la base de datos…', 0);
 					try {
-						const url = form.action + '?' + new URLSearchParams(new FormData(form));
+						const url = form.getAttribute('action') + '?' + new URLSearchParams(new FormData(form));
 						const res = await fetch(url, { signal: ctrl.signal, credentials: 'same-origin' });
 						if (!res.ok) throw new Error('HTTP ' + res.status);
 						const total = parseInt(res.headers.get('X-Flacso-Total-Rows') || '0', 10);
