@@ -607,6 +607,13 @@ function wiring_count_rows(PDO $pdo, string $email): int {
     return (int) $stmt->fetchColumn();
 }
 
+if (!function_exists('get_post_type')) {
+    function get_post_type($id) { return 'oferta-academica'; }
+}
+if (!function_exists('get_post_status')) {
+    function get_post_status($id) { return 'publish'; }
+}
+
 // Honeypot relleno: éxito visual, nada guardado, sin conversión.
 $res = wiring_run_handler(wiring_base_post('bot.honeypot@example.com', '111') + ['flacso_hp_ref' => 'http://spam.example']);
 wiring_assert($res['success'] === true && ($res['data']['persisted'] ?? null) === false, 'honeypot relleno se descarta con persisted=false');
@@ -623,7 +630,7 @@ wiring_assert(wiring_count_rows($pdo, 'bot.fast@example.com') + wiring_count_row
 $issued = (string) (time() - 3600);
 $old_token = $issued . '.' . hash_hmac('sha256', 'flacso_consulta|' . $issued, wp_salt('auth'));
 $ok = wiring_run_handler(wiring_base_post('humana.cache@example.com', '111') + ['flacso_form_token' => $old_token]);
-wiring_assert($ok['success'] === true && ($ok['data']['persisted'] ?? true) !== false, 'un token válido y antiguo se acepta');
+wiring_assert($ok['success'] === true && ($ok['data']['persisted'] ?? null) === true, 'un token válido y antiguo confirma persistencia explícita');
 wiring_assert(wiring_count_rows($pdo, 'humana.cache@example.com') === 1, 'se persiste la consulta con token válido');
 
 // Sin token (formulario en caché anterior al despliegue): se acepta mientras no sea obligatorio.
@@ -643,6 +650,17 @@ wiring_run_handler(wiring_base_post('clave.estable@example.com', '112') + ['cons
 wiring_assert(wiring_count_rows($pdo, 'clave.estable@example.com') === 2, 'otra clave crea otra consulta');
 $bad_key = wiring_run_handler(wiring_base_post('clave.invalida@example.com', '112') + ['consulta_key' => "x'; DROP TABLE"]);
 wiring_assert($bad_key['success'] === true && wiring_count_rows($pdo, 'clave.invalida@example.com') === 1, 'una clave inválida se ignora sin romper el envío');
+
+// Fallo parcial de persistencia: reintentar completa la oferta pendiente sin duplicar la primera.
+$pdo->exec("CREATE TRIGGER fail_offer_116 BEFORE INSERT ON offer_inquiries WHEN NEW.offerWpId = 116 BEGIN SELECT RAISE(FAIL, 'simulated failure'); END");
+$partial_post = wiring_base_post('parcial@example.com', '115') + ['selected_offers' => ['115', '116'], 'consulta_key' => $key];
+$partial = wiring_run_handler($partial_post);
+wiring_assert($partial['success'] === false && ($partial['data']['saved_offer_ids'] ?? []) === [115], 'el fallo parcial identifica la oferta guardada');
+wiring_assert(wiring_count_rows($pdo, 'parcial@example.com') === 1, 'solo se guarda una oferta inicialmente');
+$pdo->exec('DROP TRIGGER fail_offer_116');
+$retried = wiring_run_handler($partial_post);
+wiring_assert($retried['success'] === true && ($retried['data']['persisted'] ?? null) === true, 'el reintento confirma el envío completo');
+wiring_assert(wiring_count_rows($pdo, 'parcial@example.com') === 2, 'el reintento no duplica la oferta guardada');
 
 // Formulario anterior al despliegue: profesión en texto libre y sin token. Se guarda siempre una opción del enum.
 $legacy_cases = [

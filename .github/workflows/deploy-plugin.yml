@@ -101,6 +101,9 @@ jobs:
             php "$test_file"
           done < <(find tests -type f -name '*-test.php' -print0 | sort -z)
 
+      - name: Run inquiry confirmation client regression
+        run: node tests/inquiry-confirmation-client-test.js
+
       - name: Build plugin ZIP artifact
         shell: bash
         run: |

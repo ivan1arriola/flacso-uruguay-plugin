@@ -588,9 +588,8 @@ function flacso_consultas_render_form( $attributes = array() ) {
 			const $message = $('#form-consultas-mensaje');
 			const programa = $form.find('[name="titulo_posgrado"]').val() || '';
 			let infoRequestFormViewTracked = false;
-			const metaSessionStorageKey = 'consultaMetaUserData';
-			const metaLeadPendingStorageKey = 'consultaMetaLeadPending';
 			const submitKeyStorageKey = 'consultaSubmitKey';
+			let memorySubmit = null;
 			let inFlight = false;
 			const newSubmitKey = function() {
 				if (window.crypto && typeof window.crypto.randomUUID === 'function') {
@@ -605,14 +604,17 @@ function flacso_consultas_render_form( $attributes = array() ) {
 			// y cambia si la persona cambia el correo o las ofertas.
 			const submitKeyFor = function(fingerprint) {
 				const maxAge = 24 * 60 * 60 * 1000;
+				if (memorySubmit && memorySubmit.fp === fingerprint && (Date.now() - memorySubmit.ts) < maxAge) return memorySubmit.key;
 				try {
 					const saved = JSON.parse(sessionStorage.getItem(submitKeyStorageKey) || 'null');
 					if (saved && saved.fp === fingerprint && saved.key && (Date.now() - saved.ts) < maxAge) {
+						memorySubmit = saved;
 						return saved.key;
 					}
 				} catch (e) {}
 				const key = newSubmitKey();
-				try { sessionStorage.setItem(submitKeyStorageKey, JSON.stringify({ key: key, fp: fingerprint, ts: Date.now() })); } catch (e) {}
+				memorySubmit = { key: key, fp: fingerprint, ts: Date.now() };
+				try { sessionStorage.setItem(submitKeyStorageKey, JSON.stringify(memorySubmit)); } catch (e) {}
 				return key;
 			};
 			const buildGraciasUrl = function(baseUrl, pid, offerIds, dynamicFormId) {
@@ -668,15 +670,6 @@ function flacso_consultas_render_form( $attributes = array() ) {
 				if (countryHash) payload.country = countryHash;
 
 				return payload;
-			};
-			const persistMetaUserData = function(userData) {
-				if (!userData || typeof userData !== 'object') {
-					return;
-				}
-
-				try {
-					sessionStorage.setItem(metaSessionStorageKey, JSON.stringify(userData));
-				} catch (e) {}
 			};
 			const trackInfoRequestFormView = function() {
 				if (infoRequestFormViewTracked || !$form.length || typeof window.flacsoMetaTrackCustom !== 'function') {
@@ -798,7 +791,6 @@ $form.find('input, select').each(function() {
 			let metaUserData;
 			try {
 				metaUserData = await buildMetaUserData();
-				persistMetaUserData(metaUserData);
 			} catch (prepError) {
 				inFlight = false;
 				showMessage('No se pudo preparar el envío. Intentá de nuevo.', 'danger');
@@ -810,7 +802,8 @@ $form.find('input, select').each(function() {
 				String($form.find('[name="correo"]').val() || '').trim().toLowerCase(),
 				String($form.find('[name="dynamic_info_form_id"]').val() || '')
 			].join('|');
-			formData.set('consulta_key', submitKeyFor(offerFingerprint));
+			const submitKey = submitKeyFor(offerFingerprint);
+			formData.set('consulta_key', submitKey);
 			const payload = new URLSearchParams(formData).toString();
 			toggleLoading(true);
 
@@ -830,7 +823,12 @@ $form.find('input, select').each(function() {
 						return;
 					}
 					// Sólo una consulta guardada puede registrar un Lead de Meta.
-					const wasPersisted = !(response.data && response.data.persisted === false);
+					if (!response.data || typeof response.data.persisted !== 'boolean') {
+						showMessage('No se pudo confirmar la consulta. Intentá de nuevo.', 'danger');
+						return;
+					}
+					const wasPersisted = response.data.persisted === true;
+					memorySubmit = null;
 					try { sessionStorage.removeItem(submitKeyStorageKey); } catch (e) {}
 const selectedOfferLabels = $form.find('[name="selected_offers[]"]:checked').map(function() {
 						return $(this).closest('.flacso-consultas-offer-choice').text().trim().replace(/\s+/g, ' ');
@@ -852,14 +850,17 @@ const selectedOfferLabels = $form.find('[name="selected_offers[]"]:checked').map
 							$form.find('[name="nombre"]').val() + ' ' + $form.find('[name="apellido"]').val());
 						sessionStorage.setItem('consultaPrograma', selectedOfferLabels.length ? selectedOfferLabels.join(', ') : $form.find('[name="titulo_posgrado"]').val());
 						sessionStorage.setItem('consultaOrigen', urlBase);
-						if (wasPersisted) {
-							sessionStorage.setItem(metaLeadPendingStorageKey, JSON.stringify({
-								pid: String(pid || ''),
-								tipo: (new URL(gracias, window.location.href)).searchParams.get('tipo') || 'consulta',
-								createdAt: Date.now()
-							}));
-						}
 					} catch (e) {}
+					if (wasPersisted && typeof window.flacsoMetaTrack === 'function') {
+						try {
+							window.flacsoMetaTrack('Lead', {
+								lead_type: 'consulta_wordpress_oferta', form_type: 'consulta_oferta_academica',
+								lead_source: 'wordpress_form', lead_context: 'oferta_academica',
+								content_name: selectedOfferLabels.length ? selectedOfferLabels.join(', ') : programa,
+								content_category: 'oferta_academica', content_type: 'oferta_academica', status: 'submitted'
+							}, { eventID: 'info-request-' + submitKey, userData: metaUserData });
+						} catch (e) {}
+					}
 					window.location.href = buildGraciasUrl(gracias, pid, selectedOfferIds, dynamicFormId);
 				},
 				error: function(xhr) {
@@ -1449,6 +1450,7 @@ function flacso_enviar_consulta_func() {
         wp_send_json_success(
                 array(
                         'note'           => 'ok',
+                        'persisted'      => true,
                         'deliveries'     => $deliveries,
                         'count'          => count( $offer_payloads ),
                         'first_offer_id' => (int) ( $offer_payloads[0]['id_pagina'] ?? 0 ),
@@ -2110,72 +2112,9 @@ function flacso_render_gracias_virtual() {
 		<script>
 		document.addEventListener('DOMContentLoaded', function() {
 			var pid = <?php echo (int) $pid; ?>;
-			var programaMeta = <?php echo wp_json_encode( (string) $titulo_programa ); ?>;
-			
-			if (!programaMeta) {
-				programaMeta = sessionStorage.getItem('consultaPrograma') || '';
-			}
-
-			var urlParams = new URLSearchParams(window.location.search);
-			var tipo = urlParams.get('tipo') || 'consulta';
-			if (tipo === 'preinscripcion') tipo = 'preinscripcion_oferta';
-			var isPreinscripcion = (tipo === 'preinscripcion_oferta' || tipo === 'preinscripcion_seminario');
-			var metaLeadPendingStorageKey = 'consultaMetaLeadPending';
-			var shouldTrackLead = false;
-			var pendingLead = null;
-			var metaUserData = {};
-
-			try {
-				metaUserData = JSON.parse(sessionStorage.getItem('consultaMetaUserData') || '{}');
-			} catch (e) {
-				metaUserData = {};
-			}
-
-			try {
-				pendingLead = JSON.parse(sessionStorage.getItem(metaLeadPendingStorageKey) || 'null');
-			} catch (e) {
-				pendingLead = null;
-			}
-
-			if (pendingLead && typeof pendingLead === 'object') {
-				var pendingAge = Date.now() - Number(pendingLead.createdAt || 0);
-				var pendingTipo = String(pendingLead.tipo || 'consulta');
-				if (pendingTipo === 'preinscripcion') pendingTipo = 'preinscripcion_oferta';
-				shouldTrackLead = pendingAge >= 0 &&
-					pendingAge < 30 * 60 * 1000 &&
-					String(pendingLead.pid || '') === String(pid || '') &&
-					pendingTipo === tipo;
-			}
-
-			// Only fire Lead event if it's a general consultation or info request
-			// Pre-enrollments fire their own Lead & SubmitApplication events with Advanced Matching hashes prior to redirect
-			if (shouldTrackLead && typeof window.flacsoMetaTrack === 'function' && !isPreinscripcion) {
-				try {
-					// Meta Lead: consulta WordPress enviada correctamente.
-					// Debe ejecutarse solo después de confirmación AJAX exitosa y redirección a /gracias.
-					window.flacsoMetaTrack('Lead', {
-						lead_type: 'consulta_wordpress_oferta',
-						form_type: 'consulta_oferta_academica',
-						lead_source: 'wordpress_form',
-						lead_context: 'oferta_academica',
-						content_name: programaMeta || '',
-						content_category: 'oferta_academica',
-						content_type: 'oferta_academica',
-						status: 'submitted'
-					}, { userData: metaUserData });
-					sessionStorage.removeItem('consultaMetaUserData');
-				} catch (e) {
-					if (window.console && typeof window.console.warn === 'function') {
-						console.warn('[Formulario Consultas] Error enviando Lead:', e);
-					}
-				}
-			}
-			sessionStorage.removeItem(metaLeadPendingStorageKey);
-			if (!shouldTrackLead || isPreinscripcion) {
-				sessionStorage.removeItem('consultaMetaUserData');
-			}
 			if (!pid) {
-				var programa = sessionStorage.getItem('consultaPrograma') || '';
+				var programa = '';
+				try { programa = sessionStorage.getItem('consultaPrograma') || ''; } catch (e) {}
 				var intro    = programa ? (function(t){
 					var primera = (t || '').trim().split(/\s+/)[0] || '';
 					var clave   = primera.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
@@ -2210,9 +2149,11 @@ function flacso_render_gracias_virtual() {
 				}
 			}
 			setTimeout(function() {
+				try {
 				sessionStorage.removeItem('consultaNombreCompleto');
 				sessionStorage.removeItem('consultaPrograma');
 				sessionStorage.removeItem('consultaOrigen');
+				} catch (e) {}
 			}, 3000);
 		});
 		</script>
