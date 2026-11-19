@@ -1172,7 +1172,7 @@ class FLACSO_Inquiry_Analytics_Repository {
         $where_sql = !empty($where) ? ('WHERE ' . implode(' AND ', $where)) : '';
 
         try {
-            $sql = "SELECT * FROM \"{$table}\" {$where_sql} ORDER BY \"inquiryAt\" DESC LIMIT 25000";
+            $sql = "SELECT * FROM \"{$table}\" {$where_sql} ORDER BY \"inquiryAt\" DESC LIMIT 1000000";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];

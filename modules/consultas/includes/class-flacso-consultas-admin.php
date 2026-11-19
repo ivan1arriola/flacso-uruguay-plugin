@@ -140,6 +140,11 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			$from  = isset( $_GET['from'] ) ? sanitize_text_field( wp_unslash( $_GET['from'] ) ) : gmdate( 'Y-m-d', strtotime( '-90 days' ) );
 			$to    = isset( $_GET['to'] ) ? sanitize_text_field( wp_unslash( $_GET['to'] ) ) : gmdate( 'Y-m-d' );
 			$mode  = isset( $_GET['export_mode'] ) && 'raw' === $_GET['export_mode'] ? 'raw' : 'dedup';
+			if ( ! empty( $_GET['all_history'] ) ) {
+				// Sin límites de fecha: el repositorio ignora fechas vacías.
+				$from = '';
+				$to   = '';
+			}
 
 			$selected_items = array();
 			if ( isset( $_GET['items'] ) && is_array( $_GET['items'] ) ) {
@@ -153,7 +158,9 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 
 			$rows     = FLACSO_Inquiry_Analytics_Repository::get_export_rows( $table, $from, $to, $selected_items, 'dedup' === $mode );
 			$item_col = FLACSO_Inquiry_Analytics_Repository::ALLOWED_TABLES[ $table ]['item_col'] ?? 'offerName';
-			$filename = sprintf( 'flacso-consultas-%s-%s-a-%s-%s.csv', $table, $from, $to, $mode );
+			$filename = '' === $from && '' === $to
+				? sprintf( 'flacso-consultas-%s-historico-%s.csv', $table, $mode )
+				: sprintf( 'flacso-consultas-%s-%s-a-%s-%s.csv', $table, $from, $to, $mode );
 
 			nocache_headers();
 			header( 'Content-Type: text/csv; charset=utf-8' );
@@ -2114,6 +2121,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 						</div>
 						<div class="fg">
 							<label>Modo de Exportación</label>
+							<label style="display:block;margin-bottom:6px;"><input type="checkbox" name="all_history" value="1"> Todo el histórico (ignora fechas)</label>
 							<select name="export_mode">
 								<option value="dedup">Deduplicado (1 fila por Correo + Oferta)</option>
 								<option value="raw">Bruto (Todas las consultas individuales)</option>
