@@ -158,13 +158,18 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 				}
 			}
 
-			$rows     = FLACSO_Inquiry_Analytics_Repository::get_export_rows( $table, $from, $to, $selected_items, 'dedup' === $mode );
+			$dedup = 'dedup' === $mode;
+			// Total exacto para que la barra de progreso del navegador sea honesta (segunda pasada, sin acumular filas).
+			$total = iterator_count( FLACSO_Inquiry_Analytics_Repository::get_export_rows( $table, $from, $to, $selected_items, $dedup ) );
+			$rows  = FLACSO_Inquiry_Analytics_Repository::get_export_rows( $table, $from, $to, $selected_items, $dedup );
 			$item_col = FLACSO_Inquiry_Analytics_Repository::ALLOWED_TABLES[ $table ]['item_col'] ?? 'offerName';
 			$filename = '' === $from && '' === $to
 				? sprintf( 'flacso-consultas-%s-historico-%s.csv', $table, $mode )
 				: sprintf( 'flacso-consultas-%s-%s-a-%s-%s.csv', $table, $from, $to, $mode );
 
 			nocache_headers();
+			header( 'X-Flacso-Total-Rows: ' . $total );
+			header( 'X-Accel-Buffering: no' );
 			header( 'Content-Type: text/csv; charset=utf-8' );
 			header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
 
@@ -200,7 +205,8 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					'payload' => 'Payload (JSON)', 'inquiryAt' => 'Fecha Consulta', 'createdAt' => 'Creado', 'updatedAt' => 'Actualizado',
 				);
 				// Streaming: las columnas son las del primer registro (misma tabla = mismas columnas).
-				$keys = null;
+				$keys    = null;
+				$written = 0;
 				foreach ( $rows as $row ) {
 					if ( null === $keys ) {
 						$keys = array_keys( $row );
@@ -212,6 +218,9 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 						$line[] = is_scalar( $v ) ? (string) $v : (string) wp_json_encode( $v );
 					}
 					fputcsv( $out, $line );
+					if ( 0 === ++$written % 500 ) {
+						flush();
+					}
 				}
 
 				fclose( $out );
@@ -2096,7 +2105,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 				<h2 style="margin-top:0;">📥 Exportar Consultas a CSV / Google Sheets</h2>
 				<p style="color:#475569;">Seleccione el rango de fechas, el modo de deduplicación y las ofertas académicas o seminarios que desea incluir en el archivo CSV (codificación UTF-8 con BOM).</p>
 
-				<form method="get" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<form method="get" id="flacso-exp-form" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 					<input type="hidden" name="action" value="flacso_consultas_export_csv">
 					<?php wp_nonce_field( 'flacso_consultas_export_csv' ); ?>
 
@@ -2144,7 +2153,19 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					</div>
 
 					<div style="margin-top:20px;">
-						<button type="submit" class="button button-primary button-hero">📥 Descargar Archivo CSV</button>
+						<button type="submit" class="button button-primary button-hero" id="flacso-exp-go">📥 Descargar Archivo CSV</button>
+					</div>
+					<div id="flacso-exp-prog" hidden style="margin-top:16px;max-width:560px;" role="status" aria-live="polite">
+						<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
+							<span id="flacso-exp-msg"></span><strong id="flacso-exp-pct">0%</strong>
+						</div>
+						<div style="height:10px;background:#e2e8f0;border-radius:6px;overflow:hidden;">
+							<div id="flacso-exp-bar" style="height:100%;width:0;background:#2563eb;transition:width .2s;"></div>
+						</div>
+						<div style="margin-top:8px;display:flex;gap:8px;">
+							<button type="button" class="button" id="flacso-exp-cancel">Cancelar</button>
+							<button type="button" class="button button-primary" id="flacso-exp-retry" hidden>Reintentar</button>
+						</div>
 					</div>
 				</form>
 			</div>
@@ -2159,6 +2180,69 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 				const noneBtn = document.getElementById('flacso-exp-none');
 				if (allBtn) allBtn.addEventListener('click', () => { chks.forEach(c => c.checked = true); syncChips(); });
 				if (noneBtn) noneBtn.addEventListener('click', () => { chks.forEach(c => c.checked = false); syncChips(); });
+
+				// Descarga con progreso. Sin JS o sin fetch streaming, el formulario se envía normal.
+				const form = document.getElementById('flacso-exp-form');
+				const box = document.getElementById('flacso-exp-prog');
+				const $ = id => document.getElementById(id);
+				if (!form || !window.fetch || !window.ReadableStream) return;
+				let ctrl = null;
+				const show = (msg, pct, err) => {
+					box.hidden = false;
+					$('flacso-exp-msg').textContent = msg;
+					$('flacso-exp-msg').style.color = err ? '#b91c1c' : '';
+					$('flacso-exp-pct').textContent = pct == null ? '' : pct + '%';
+					$('flacso-exp-bar').style.width = (pct || 0) + '%';
+					$('flacso-exp-bar').style.background = err ? '#dc2626' : '#2563eb';
+				};
+				const fmt = s => s >= 60 ? Math.ceil(s / 60) + ' min' : Math.ceil(s) + ' s';
+				async function run() {
+					ctrl = new AbortController();
+					$('flacso-exp-go').disabled = true;
+					$('flacso-exp-retry').hidden = true;
+					$('flacso-exp-cancel').hidden = false;
+					show('Consultando la base de datos…', 0);
+					try {
+						const url = form.action + '?' + new URLSearchParams(new FormData(form));
+						const res = await fetch(url, { signal: ctrl.signal, credentials: 'same-origin' });
+						if (!res.ok) throw new Error('HTTP ' + res.status);
+						const total = parseInt(res.headers.get('X-Flacso-Total-Rows') || '0', 10);
+						const name = (res.headers.get('Content-Disposition') || '').match(/filename="([^"]+)"/);
+						const reader = res.body.getReader();
+						const chunks = [];
+						let rows = -1, quoted = false, t0 = Date.now(); // -1: la cabecera no cuenta
+						for (;;) {
+							const { done, value } = await reader.read();
+							if (done) break;
+							chunks.push(value);
+							// Cuenta registros CSV: salto de línea fuera de comillas.
+							for (let i = 0; i < value.length; i++) {
+								if (value[i] === 34) quoted = !quoted;
+								else if (value[i] === 10 && !quoted) rows++;
+							}
+							const n = Math.max(rows, 0);
+							const pct = total ? Math.min(99, Math.floor(n / total * 100)) : null;
+							const secs = (Date.now() - t0) / 1000;
+							const eta = secs > 2 && n > 0 && total ? ' · faltan ~' + fmt(secs / n * (total - n)) : '';
+							show('Escribiendo consultas: ' + n.toLocaleString() + ' de ' + total.toLocaleString() + eta, pct);
+						}
+						show('Preparando el archivo…', 99);
+						const a = document.createElement('a');
+						a.href = URL.createObjectURL(new Blob(chunks, { type: 'text/csv;charset=utf-8' }));
+						a.download = name ? name[1] : 'consultas.csv';
+						document.body.appendChild(a); a.click(); a.remove();
+						show('Listo: ' + total.toLocaleString() + ' consultas descargadas.', 100);
+						$('flacso-exp-cancel').hidden = true;
+					} catch (e) {
+						if (e.name === 'AbortError') show('Descarga cancelada.', null);
+						else { show('Falló la descarga (' + e.message + '). La exportación no se puede retomar a medias, se genera de nuevo.', null, true); $('flacso-exp-retry').hidden = false; }
+						$('flacso-exp-cancel').hidden = true;
+					}
+					$('flacso-exp-go').disabled = false;
+				}
+				form.addEventListener('submit', e => { e.preventDefault(); run(); });
+				$('flacso-exp-retry').addEventListener('click', run);
+				$('flacso-exp-cancel').addEventListener('click', () => ctrl && ctrl.abort());
 			})();
 			</script>
 			<?php
