@@ -1136,10 +1136,10 @@ class FLACSO_Inquiry_Analytics_Repository {
     /**
      * Obtiene las filas para exportación CSV (deduplicadas por [emailNormalized + itemName] o completas).
      */
-    public static function get_export_rows(string $table, string $desde, string $hasta, array $selected_items = [], bool $deduplicate = true): array {
+    public static function get_export_rows(string $table, string $desde, string $hasta, array $selected_items = [], bool $deduplicate = true): Generator {
         $pdo = self::get_pdo();
         if (!$pdo || !self::table_exists($pdo, $table)) {
-            return [];
+            return;
         }
 
         $meta = self::ALLOWED_TABLES[$table];
@@ -1172,31 +1172,25 @@ class FLACSO_Inquiry_Analytics_Repository {
         $where_sql = !empty($where) ? ('WHERE ' . implode(' AND ', $where)) : '';
 
         try {
-            $sql = "SELECT * FROM \"{$table}\" {$where_sql} ORDER BY \"inquiryAt\" DESC LIMIT 100000"; // shortcut: fetchAll en memoria, pasar a streaming si hay >100k consultas.
-            $stmt = $pdo->prepare($sql);
+            // Generador: no acumula filas en memoria (el histórico completo superaba los 256 MB).
+            $stmt = $pdo->prepare("SELECT * FROM \"{$table}\" {$where_sql} ORDER BY \"inquiryAt\" DESC");
             $stmt->execute($params);
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-            if (!$deduplicate) {
-                return $rows;
-            }
-
-            $deduped = [];
             $seen = [];
-            foreach ($rows as $row) {
-                $email_norm = strtolower(trim((string) ($row['emailNormalized'] ?? $row['email'] ?? '')));
-                $iname = strtolower(trim((string) ($row[$item_col] ?? '')));
-                $key = $email_norm . '||' . $iname;
-                if ($email_norm !== '' && isset($seen[$key])) {
-                    continue;
+            while (($row = $stmt->fetch(PDO::FETCH_ASSOC)) !== false) {
+                if ($deduplicate) {
+                    $email_norm = strtolower(trim((string) ($row['emailNormalized'] ?? $row['email'] ?? '')));
+                    $iname = strtolower(trim((string) ($row[$item_col] ?? '')));
+                    $key = $email_norm . '||' . $iname;
+                    if ($email_norm !== '' && isset($seen[$key])) {
+                        continue;
+                    }
+                    $seen[$key] = true;
                 }
-                $seen[$key] = true;
-                $deduped[] = $row;
+                yield $row;
             }
-            return $deduped;
         } catch (Throwable $e) {
             error_log('[FLACSO Analytics] Error en get_export_rows: ' . $e->getMessage());
-            return [];
         }
     }
 }

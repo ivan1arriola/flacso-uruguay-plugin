@@ -199,17 +199,13 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					'gmailMessageUrl' => 'URL Gmail', 'mailjetMessageId' => 'ID Mailjet', 'mailjetMessageUuid' => 'UUID Mailjet',
 					'payload' => 'Payload (JSON)', 'inquiryAt' => 'Fecha Consulta', 'createdAt' => 'Creado', 'updatedAt' => 'Actualizado',
 				);
-				$keys = array();
+				// Streaming: las columnas son las del primer registro (misma tabla = mismas columnas).
+				$keys = null;
 				foreach ( $rows as $row ) {
-					foreach ( array_keys( $row ) as $k ) {
-						$keys[ $k ] = true;
+					if ( null === $keys ) {
+						$keys = array_keys( $row );
+						fputcsv( $out, array_merge( array( 'Tabla' ), array_map( static function ( $k ) use ( $labels ) { return $labels[ $k ] ?? $k; }, $keys ) ) );
 					}
-				}
-				$keys = array_keys( $keys );
-
-				fputcsv( $out, array_merge( array( 'Tabla' ), array_map( static function ( $k ) use ( $labels ) { return $labels[ $k ] ?? $k; }, $keys ) ) );
-
-				foreach ( $rows as $row ) {
 					$line = array( $table );
 					foreach ( $keys as $k ) {
 						$v      = $row[ $k ] ?? '';
