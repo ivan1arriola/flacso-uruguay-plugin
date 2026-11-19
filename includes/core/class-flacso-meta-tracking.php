@@ -48,6 +48,15 @@ class FLACSO_Meta_Tracking {
             'before'
         );
 
+        // Lleva los utm_* de la campaña al formulario de preinscripción (otro subdominio).
+        wp_enqueue_script(
+            'flacso-utm-links',
+            FLACSO_URUGUAY_URL . 'includes/core/assets/utm-links.js',
+            [],
+            FLACSO_URUGUAY_VERSION,
+            true
+        );
+
         wp_register_script(
             'flacso-meta-tracking',
             FLACSO_URUGUAY_URL . 'includes/core/assets/meta-tracking.js',
