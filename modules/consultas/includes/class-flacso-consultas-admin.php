@@ -135,6 +135,8 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			}
 
 			check_admin_referer( 'flacso_consultas_export_csv' );
+			wp_raise_memory_limit( 'admin' );
+			@set_time_limit( 300 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
 
 			$table = isset( $_GET['table'] ) ? self::resolve_table( sanitize_key( wp_unslash( $_GET['table'] ) ) ) : 'offer_inquiries';
 			$from  = isset( $_GET['from'] ) ? sanitize_text_field( wp_unslash( $_GET['from'] ) ) : gmdate( 'Y-m-d', strtotime( '-90 days' ) );
