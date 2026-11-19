@@ -60,7 +60,7 @@ function fc_apply_virtual_confirmation_title( $base_title ) {
  */
 function fc_maybe_render_gracias_page() {
     $is_confirmacion = (int) get_query_var( 'fc_confirmacion_consulta' ) === 1;
-    $has_fc_payload  = isset( $_GET['fc_nombre'] ) || isset( $_GET['fc_apellido'] ) || isset( $_GET['fc_email'] ) || isset( $_GET['fc_asunto'] );
+    $has_fc_payload  = isset( $_GET['fc_token'] );
     $has_oferta_pid  = isset( $_GET['pid'] ) && absint( $_GET['pid'] ) > 0;
 
     // Si viene desde solicitud de informacion de oferta academica, deja que la maneje su propio render.
@@ -94,10 +94,20 @@ function fc_maybe_render_gracias_page() {
     status_header( 200 );
     nocache_headers();
 
-    $nombre   = isset( $_GET['fc_nombre'] ) ? sanitize_text_field( wp_unslash( $_GET['fc_nombre'] ) ) : '';
-    $apellido = isset( $_GET['fc_apellido'] ) ? sanitize_text_field( wp_unslash( $_GET['fc_apellido'] ) ) : '';
-    $email    = isset( $_GET['fc_email'] ) ? sanitize_email( wp_unslash( $_GET['fc_email'] ) ) : '';
-    $asunto   = isset( $_GET['fc_asunto'] ) ? sanitize_text_field( wp_unslash( $_GET['fc_asunto'] ) ) : '';
+    $token     = preg_replace( '/[^A-Za-z0-9]/', '', (string) wp_unslash( $_GET['fc_token'] ?? '' ) );
+    $conf      = '' !== $token ? get_transient( fc_confirmation_key( $token ) ) : false;
+    $conf_ok   = is_array( $conf ) && ! empty( $conf['ok'] );
+    $nombre    = $conf_ok ? sanitize_text_field( (string) ( $conf['nombre'] ?? '' ) ) : '';
+    $apellido  = $conf_ok ? sanitize_text_field( (string) ( $conf['apellido'] ?? '' ) ) : '';
+    $email     = $conf_ok ? sanitize_email( (string) ( $conf['email'] ?? '' ) ) : '';
+    $asunto    = $conf_ok ? sanitize_text_field( (string) ( $conf['asunto'] ?? '' ) ) : '';
+
+    // Lead una sola vez por consulta confirmada (recargas/URLs compartidas no lo repiten).
+    $track_lead = $conf_ok && empty( $conf['lead_tracked'] );
+    if ( $track_lead ) {
+        $conf['lead_tracked'] = true;
+        set_transient( fc_confirmation_key( $token ), $conf, 10 * MINUTE_IN_SECONDS );
+    }
 
     $nombre_completo = trim( $nombre . ' ' . $apellido );
     if ( '' === $nombre_completo ) {
@@ -121,6 +131,7 @@ function fc_maybe_render_gracias_page() {
             <p style="margin-top:1rem;"><a class="button" href="<?php echo esc_url( home_url() ); ?>"><?php esc_html_e( 'Volver al inicio', 'flacso-flacso-formulario-consultas' ); ?></a></p>
         </div>
     </main>
+    <?php if ( $track_lead ) : ?>
     <script>
     (function() {
         if (typeof window.flacsoMetaTrack !== 'function') {
@@ -139,7 +150,7 @@ function fc_maybe_render_gracias_page() {
         // Meta Lead: consulta general enviada correctamente.
         // Debe ejecutarse solo en la página de confirmación de consulta.
         try {
-            window.flacsoMetaTrack('Lead', pixelPayload);
+            window.flacsoMetaTrack('Lead', pixelPayload, { eventID: <?php echo wp_json_encode( 'consulta-general-' . $token ); ?> });
         } catch (e) {
             if (window.console && typeof window.console.warn === 'function') {
                 console.warn('[Formulario Consultas] Error enviando evento Meta Pixel:', e);
@@ -147,8 +158,12 @@ function fc_maybe_render_gracias_page() {
         }
     })();
     </script>
+    <?php endif; ?>
     <?php
     get_footer();
+    if ( defined( 'FC_TESTING' ) ) {
+        return;
+    }
     exit;
 }
 add_action( 'template_redirect', 'fc_maybe_render_gracias_page', 0 );

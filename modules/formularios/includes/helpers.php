@@ -1073,3 +1073,8 @@ function fc_api_import_info_requests( WP_REST_Request $request ) {
         200
     );
 }
+
+/** Clave del transient que guarda los datos de confirmación de una consulta (evita PII en la URL). */
+function fc_confirmation_key( string $reference ): string {
+    return 'fc_conf_' . md5( $reference );
+}

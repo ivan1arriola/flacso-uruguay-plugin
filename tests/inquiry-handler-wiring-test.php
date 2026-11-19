@@ -23,11 +23,6 @@ wiring_assert(
 );
 
 wiring_assert(
-    strpos($seminarios_code, 'FLACSO_Seminar_Inquiry_Service::submit') !== false,
-    'class-academic-api.php debe delegar en FLACSO_Seminar_Inquiry_Service::submit'
-);
-
-wiring_assert(
     strpos($seminarios_code, 'editor.flacso.edu.uy/api/consultas/seminarios') === false,
     'class-academic-api.php no debe referenciar el endpoint externo del Editor'
 );
@@ -36,16 +31,6 @@ wiring_assert(
     strpos($helpers_code, "FLACSO_Offer_Inquiry_Service::submit( \$data )") !== false
     && strpos($helpers_code, "offer_inquiry_service_unavailable") !== false,
     'fc_send_info_request_webhook debe delegar en FLACSO_Offer_Inquiry_Service::submit y no depender del Editor'
-);
-
-wiring_assert(
-    strpos($seminarios_code, "if (!class_exists('FLACSO_Seminar_Inquiry_Service'))") !== false,
-    'class-academic-api.php debe verificar defensivamente la existencia de FLACSO_Seminar_Inquiry_Service'
-);
-
-wiring_assert(
-    strpos($seminarios_code, "\$result['code'] >= 400 && \$result['code'] <= 599") !== false,
-    'class-academic-api.php debe sanitizar el código de error HTTP'
 );
 
 // ---------------------------------------------------------------------------
@@ -385,93 +370,6 @@ $offer_invalid = flacso_consultas_dispatch_single_info_request(array_merge($offe
 ]));
 wiring_assert(empty($offer_invalid['ok']), 'Oferta con email inválido debe retornar ok => false');
 wiring_assert(($offer_invalid['code'] ?? 0) === 422, 'Oferta con email inválido debe retornar código 422');
-
-// ---------------------------------------------------------------------------
-// 4. Test FLACSO_Academic_API::submit_consulta_seminario execution
-// ---------------------------------------------------------------------------
-// 4.1 Missing required fields
-$req_missing = new WP_REST_Request('POST', ['seminario_id' => 202]);
-$res_missing = FLACSO_Academic_API::submit_consulta_seminario($req_missing);
-wiring_assert($res_missing instanceof WP_REST_Response, 'Debe devolver WP_REST_Response');
-wiring_assert($res_missing->get_status() === 400, 'Faltan campos obligatorios debe devolver 400');
-
-// 4.2 Seminar post not found
-$req_notfound = new WP_REST_Request('POST', [
-    'seminario_id'     => 999,
-    'seminario_titulo' => 'Seminario Inexistente',
-    'nombre'           => 'Pedro',
-    'correo'           => 'pedro@example.com',
-    'telefono'         => '12345678',
-    'pais'             => 'Uruguay',
-    'consulta'         => 'Hola',
-]);
-$res_notfound = FLACSO_Academic_API::submit_consulta_seminario($req_notfound);
-wiring_assert($res_notfound->get_status() === 404, 'Seminario inexistente debe devolver 404');
-
-// 4.3 Successful submission
-$GLOBALS['mock_posts'][202] = (object)[
-    'ID'        => 202,
-    'post_type' => 'seminario',
-];
-
-$req_valid = new WP_REST_Request('POST', [
-    'seminario_id'     => 202,
-    'seminario_titulo' => 'Seminario de Género y Políticas',
-    'nombre'           => 'Carlos',
-    'apellido'         => 'Pérez',
-    'correo'           => 'carlos.perez@example.com',
-    'telefono'         => '+59899112233',
-    'pais'             => 'Uruguay',
-    'consulta'         => '¿Cuáles son los requisitos de aprobación?',
-    'source'           => 'Web Seminario',
-]);
-
-$res_valid = FLACSO_Academic_API::submit_consulta_seminario($req_valid);
-wiring_assert($res_valid->get_status() === 200, 'Consulta de seminario válida debe devolver 200');
-$data_valid = $res_valid->get_data();
-wiring_assert(!empty($data_valid['success']), 'Respuesta debe tener success => true');
-wiring_assert(!empty($data_valid['consulta_id']), 'Respuesta debe contener consulta_id');
-wiring_assert($data_valid['email_status'] === 'pending', 'Respuesta debe contener email_status => pending');
-
-$stmt_sem = $pdo->prepare('SELECT * FROM seminar_inquiries WHERE consultaId = ?');
-$stmt_sem->execute([$data_valid['consulta_id']]);
-$seminar_row = $stmt_sem->fetch();
-wiring_assert(!empty($seminar_row), 'Registro de seminario debe persistirse en seminar_inquiries');
-wiring_assert($seminar_row['email'] === 'carlos.perez@example.com', 'Email de seminario debe coincidir');
-wiring_assert((int)$seminar_row['seminarWpId'] === 202, 'seminarWpId debe ser 202');
-wiring_assert($seminar_row['emailStatus'] === 'pending', 'emailStatus de seminario debe quedar pending en la cola transaccional');
-
-// 4.4 Duplicate submission for seminar (idempotency)
-$GLOBALS['mailjet_http_calls'] = [];
-$req_dup = new WP_REST_Request('POST', [
-    'event_id'         => $data_valid['consulta_id'],
-    'seminario_id'     => 202,
-    'seminario_titulo' => 'Seminario de Género y Políticas',
-    'nombre'           => 'Carlos',
-    'correo'           => 'carlos.perez@example.com',
-    'telefono'         => '+59899112233',
-    'pais'             => 'Uruguay',
-    'consulta'         => '¿Cuáles son los requisitos de aprobación?',
-]);
-$res_dup = FLACSO_Academic_API::submit_consulta_seminario($req_dup);
-wiring_assert($res_dup->get_status() === 200, 'Reenvío de seminario debe responder 200');
-$data_dup = $res_dup->get_data();
-wiring_assert(!empty($data_dup['success']), 'Reenvío de seminario debe retornar success => true');
-wiring_assert(empty($GLOBALS['mailjet_http_calls']), 'Reenvío de seminario no debe reenviar email');
-
-// 4.5 Invalid email in seminar submission
-$req_invalid_email = new WP_REST_Request('POST', [
-    'seminario_id'     => 202,
-    'seminario_titulo' => 'Seminario',
-    'nombre'           => 'Carlos',
-    'correo'           => 'email-invalido',
-    'telefono'         => '123',
-    'pais'             => 'Uruguay',
-    'consulta'         => 'Duda',
-]);
-$res_invalid_email = FLACSO_Academic_API::submit_consulta_seminario($req_invalid_email);
-wiring_assert($res_invalid_email->get_status() === 422, 'Email inválido en seminario debe retornar status 422');
-wiring_assert(empty($res_invalid_email->get_data()['success']), 'Email inválido debe retornar success => false');
 
 // ---------------------------------------------------------------------------
 // 5. Test fc_send_info_request_webhook delegation to FLACSO_Offer_Inquiry_Service

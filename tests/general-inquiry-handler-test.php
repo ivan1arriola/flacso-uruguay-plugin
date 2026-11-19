@@ -30,17 +30,25 @@ function fc_form_error_reference($form) { return 'TEST-REFERENCE'; }
 function fc_notify_form_admin_error($data) { $GLOBALS['incident'] = $data; }
 function fc_send_general_inquiry($data) { $GLOBALS['deliveries']++; $GLOBALS['payload'] = $data; return $GLOBALS['delivery_result']; }
 function fc_dispatch_info_request_webhook(...$args) { throw new Exception('Legacy editor must not be called'); }
+function wp_generate_password(...$args) { return 'TOKEN1234567890abcdefghijklmnopq'; }
+function fc_confirmation_key(string $reference): string { return 'fc_conf_' . md5($reference); }
 require dirname(__DIR__) . '/modules/formularios/includes/form-handlers.php';
 $_POST = ['fc_nonce' => 'valid', 'fc_nombre' => 'Ana', 'fc_apellido' => 'Pérez', 'fc_email' => 'ana@example.org', 'fc_telefono' => '+59899123456', 'fc_asunto' => 'Horarios', 'fc_mensaje' => 'Quisiera información'];
 $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
 function submit() { try { fc_handle_form_submit(); } catch (Redirect $redirect) { return $redirect->getMessage(); } throw new Exception('No redirect'); }
 $GLOBALS['delivery_result'] = ['ok' => true];
-check(strpos(submit(), 'confirmacion-consulta') !== false, 'Successful Mautic handoff confirms the consultation');
+$success_url = submit();
+check(strpos($success_url, 'confirmacion-consulta') !== false, 'Successful Mautic handoff confirms the consultation');
+check(strpos($success_url, 'fc_token=TOKEN1234567890abcdefghijklmnopq') !== false && strpos($success_url, 'TEST-REFERENCE') === false && !preg_match('/fc_email|fc_nombre|fc_apellido|fc_asunto|%40|@/', $success_url), 'Confirmation URL carries no personal data');
+$conf = $GLOBALS['transients'][fc_confirmation_key('TOKEN1234567890abcdefghijklmnopq')] ?? null;
+check(is_array($conf) && $conf['ok'] === true && $conf['email'] === 'ana@example.org', 'Confirmation data is stored server-side');
 check($GLOBALS['deliveries'] === 1 && $GLOBALS['payload']['email'] === 'ana@example.org', 'Form submits contact data to Mautic processing');
 check($GLOBALS['payload']['reference'] === 'TEST-REFERENCE', 'Tracking reference accompanies the consultation');
 check(strpos(submit(), 'fc_exito=1') !== false && $GLOBALS['deliveries'] === 1, 'Repeated successful submission does not send twice');
 $GLOBALS['transients'] = []; $GLOBALS['delivery_result'] = ['ok' => false, 'acceptance_unknown' => false];
-check(strpos(submit(), 'fc_error=unavailable') !== false && empty($GLOBALS['options']), 'Definite failure releases the lock and offers a retry');
+$error_url = submit();
+check(strpos($error_url, 'fc_error=unavailable') !== false && empty($GLOBALS['options']), 'Definite failure releases the lock and offers a retry');
+check(strpos($error_url, 'fc_reference=TEST-REFERENCE') !== false && strpos($error_url, 'fc_token=') !== false && !preg_match('/fc_email|fc_nombre|%40|@/', $error_url), 'Error URL carries reference and token but no personal data');
 $GLOBALS['transients'] = []; $GLOBALS['delivery_result'] = ['ok' => false, 'acceptance_unknown' => true];
 check(strpos(submit(), 'fc_error=unconfirmed') !== false, 'Unknown delivery cannot show success');
 $attempts = $GLOBALS['deliveries'];

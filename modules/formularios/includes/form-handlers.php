@@ -127,6 +127,8 @@ function fc_handle_form_submit() {
         exit;
     }
     $webhook_payload['reference'] = $reference;
+    // Token no adivinable (CSPRNG): la referencia es enumerable y no debe dar acceso a datos personales.
+    $token = wp_generate_password( 32, false, false );
     $webhook_result = fc_send_general_inquiry( $webhook_payload );
     if ( empty( $webhook_result['ok'] ) ) {
         $unknown = !empty( $webhook_result['acceptance_unknown'] );
@@ -143,14 +145,12 @@ function fc_handle_form_submit() {
                 'user_email' => $email,
             ]
         );
+        set_transient( fc_confirmation_key( $token ), array( 'nombre' => $nombre, 'apellido' => $apellido, 'email' => $email, 'asunto' => $asunto, 'ok' => false ), 10 * MINUTE_IN_SECONDS );
         $error_redirect = add_query_arg(
             [
                 'fc_error'      => $unknown ? 'unconfirmed' : 'unavailable',
                 'fc_reference'  => rawurlencode( $reference ),
-                'fc_nombre'     => rawurlencode( $nombre ),
-                'fc_apellido'   => rawurlencode( $apellido ),
-                'fc_email'      => rawurlencode( $email ),
-                'fc_asunto'     => rawurlencode( $asunto ),
+                'fc_token'      => $token,
             ],
             wp_get_referer() ?: home_url()
         );
@@ -176,13 +176,12 @@ function fc_handle_form_submit() {
     }
 
     $redirect_base = fc_get_gracias_url_from_referer();
+    // Los datos viajan en un transient, no en la URL (evita PII en GA4/Meta).
+    set_transient( fc_confirmation_key( $token ), array( 'nombre' => $nombre, 'apellido' => $apellido, 'email' => $email, 'asunto' => $asunto, 'ok' => true ), 10 * MINUTE_IN_SECONDS );
     $redirect = add_query_arg(
         [
             'fc_confirmacion_consulta' => 1,
-            'fc_nombre' => rawurlencode( $nombre ),
-            'fc_apellido' => rawurlencode( $apellido ),
-            'fc_email'  => rawurlencode( $email ),
-            'fc_asunto' => rawurlencode( $asunto ),
+            'fc_token' => $token,
         ],
         $redirect_base
     );

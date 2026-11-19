@@ -69,12 +69,6 @@ final class FLACSO_Academic_API {
             'callback' => static function () { return rest_ensure_response(FLACSO_Academic_Catalog::registration_catalog()); },
             'permission_callback' => '__return_true',
         ]);
-
-        register_rest_route('flacso/v1', '/consulta-seminario', [
-            'methods' => WP_REST_Server::CREATABLE,
-            'callback' => [self::class, 'submit_consulta_seminario'],
-            'permission_callback' => '__return_true',
-        ]);
     }
 
     /**
@@ -107,99 +101,6 @@ final class FLACSO_Academic_API {
         }
 
         return $result;
-    }
-
-    public static function submit_consulta_seminario(WP_REST_Request $request) {
-        // Mismo cupo por IP que el formulario de ofertas (flacso_enviar_consulta_func).
-        if (flacso_public_rate_exceeded('consulta', (int) apply_filters('flacso_consultas_rate_limit', 20), 600)) {
-            return new WP_REST_Response([
-                'success' => false,
-                'message' => 'Demasiadas solicitudes. Intentá nuevamente en unos minutos.',
-            ], 429);
-        }
-
-        $params = $request->get_json_params();
-        if (empty($params)) {
-            $params = $request->get_body_params();
-        }
-
-        $campos_obligatorios = ['seminario_id', 'seminario_titulo', 'nombre', 'correo', 'telefono', 'pais', 'consulta'];
-        $campos_faltantes = [];
-
-        foreach ($campos_obligatorios as $campo) {
-            if (empty($params[$campo])) {
-                $campos_faltantes[] = $campo;
-            }
-        }
-
-        if (!empty($campos_faltantes)) {
-            return new WP_REST_Response([
-                'success' => false,
-                'message' => 'Campos obligatorios faltantes: ' . implode(', ', $campos_faltantes),
-            ], 400);
-        }
-
-        $seminario_id = intval($params['seminario_id']);
-        $seminario = get_post($seminario_id);
-        if (!$seminario || $seminario->post_type !== 'seminario') {
-            return new WP_REST_Response([
-                'success' => false,
-                'message' => 'El seminario especificado no existe.',
-            ], 404);
-        }
-
-        $event_id = !empty($params['event_id'])
-            ? sanitize_text_field($params['event_id'])
-            : (function_exists('wp_generate_uuid4') ? wp_generate_uuid4() : '');
-        $payload = [
-            'event_id'         => $event_id,
-            'seminario_id'     => (string) $seminario_id,
-            'seminario_titulo' => sanitize_text_field($params['seminario_titulo']),
-            'nombre'           => sanitize_text_field($params['nombre']),
-            'apellido'         => sanitize_text_field($params['apellido'] ?? ''),
-            'correo'           => sanitize_email($params['correo']),
-            'telefono'         => sanitize_text_field($params['telefono']),
-            'pais'             => sanitize_text_field($params['pais']),
-            'consulta'         => sanitize_textarea_field($params['consulta']),
-            'source'           => sanitize_text_field($params['source'] ?? 'Seminario'),
-            'meta'             => [
-                'ip'         => isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field($_SERVER['REMOTE_ADDR']) : '',
-                'user_agent' => isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field($_SERVER['HTTP_USER_AGENT']) : '',
-                'timestamp'  => current_time('mysql'),
-            ],
-        ];
-
-        if (!class_exists('FLACSO_Seminar_Inquiry_Service')) {
-            $service_file = dirname(__DIR__, 2) . '/consultas/services/class-flacso-seminar-inquiry-service.php';
-            if (file_exists($service_file)) {
-                require_once $service_file;
-            }
-        }
-
-        if (!class_exists('FLACSO_Seminar_Inquiry_Service')) {
-            return new WP_REST_Response([
-                'success' => false,
-                'message' => 'Servicio de seminarios no disponible',
-            ], 500);
-        }
-
-        $result = FLACSO_Seminar_Inquiry_Service::submit($payload);
-
-        if (!empty($result['ok'])) {
-            return new WP_REST_Response([
-                'success'      => true,
-                'message'      => 'Consulta enviada correctamente',
-                'timestamp'    => current_time('mysql'),
-                'consulta_id'  => $result['consulta_id'] ?? null,
-                'email_status' => $result['email'] ?? null,
-            ], 200);
-        }
-
-        $status_code = (!empty($result['code']) && $result['code'] >= 400 && $result['code'] <= 599) ? (int)$result['code'] : 500;
-        return new WP_REST_Response([
-            'success' => false,
-            'message' => $result['message'] ?? $result['error'] ?? 'Error al procesar la consulta.',
-        ], $status_code);
     }
 
     public static function can_write(): bool {

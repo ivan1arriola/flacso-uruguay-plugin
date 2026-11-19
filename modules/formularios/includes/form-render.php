@@ -19,13 +19,16 @@ function fc_render_form( $atts = [] ) {
     );
     fc_enqueue_assets();
 
-    $nombre   = isset( $_GET['fc_nombre'] ) ? sanitize_text_field( wp_unslash( $_GET['fc_nombre'] ) ) : '';
-    $apellido = isset( $_GET['fc_apellido'] ) ? sanitize_text_field( wp_unslash( $_GET['fc_apellido'] ) ) : '';
-    $email    = isset( $_GET['fc_email'] ) ? sanitize_email( wp_unslash( $_GET['fc_email'] ) ) : '';
-    $asunto   = isset( $_GET['fc_asunto'] ) ? sanitize_text_field( wp_unslash( $_GET['fc_asunto'] ) ) : '';
     $exito    = ( isset( $_GET['fc_exito'] ) && (int) $_GET['fc_exito'] === 1 ) || ( isset( $_GET['fc_confirmacion_consulta'] ) && (int) $_GET['fc_confirmacion_consulta'] === 1 );
     $error_code = isset( $_GET['fc_error'] ) ? sanitize_key( wp_unslash( $_GET['fc_error'] ) ) : '';
     $error_reference = isset( $_GET['fc_reference'] ) ? sanitize_text_field( wp_unslash( $_GET['fc_reference'] ) ) : '';
+    $saved_token = preg_replace( '/[^A-Za-z0-9]/', '', (string) wp_unslash( $_GET['fc_token'] ?? '' ) );
+    $saved    = '' !== $saved_token ? get_transient( fc_confirmation_key( $saved_token ) ) : false;
+    $saved    = is_array( $saved ) ? $saved : array();
+    $nombre   = sanitize_text_field( (string) ( $saved['nombre'] ?? '' ) );
+    $apellido = sanitize_text_field( (string) ( $saved['apellido'] ?? '' ) );
+    $email    = sanitize_email( (string) ( $saved['email'] ?? '' ) );
+    $asunto   = sanitize_text_field( (string) ( $saved['asunto'] ?? '' ) );
 
     ob_start();
     ?>
