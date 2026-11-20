@@ -15,7 +15,7 @@ Cuatro sellos en una franja visible bajo el hero, cada uno solo si está marcado
 |---|---|
 | Programa con Reconocimiento Oficial del Ministerio de Educación y Cultura (MEC) | `reconocido_mec` |
 | Apostillado de La Haya | `reconocimiento_internacional` |
-| Título con validez y reconocimiento en la red del Sistema Internacional FLACSO | `reconocimiento_red_flacso` |
+| Título con validez internacional y reconocimiento del Sistema FLACSO | `reconocimiento_red_flacso` |
 | Convenio IIN/OEA | `convenio_iin_oea` |
 
 Ya no aparecen dentro del acordeón «Título y certificación» ni como bloque al pie del contenido.

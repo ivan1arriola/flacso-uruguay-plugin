@@ -30,7 +30,7 @@ oferta_admin_assert(strpos($admin, "'creditos'") !== false, 'debe editar crédit
 oferta_admin_assert(strpos($admin, "'perfil_ingreso_html'") !== false, 'debe editar perfil de ingreso');
 oferta_admin_assert(strpos($admin, '<section class="flacso-oferta-section"') !== false, 'debe organizar el editor en secciones permanentes');
 oferta_admin_assert(strpos($admin, "'reconocimiento_red_flacso'") !== false, 'debe ofrecer reconocimiento de la red FLACSO como opción independiente');
-oferta_admin_assert(strpos($admin, 'Título con validez y reconocimiento en la red del Sistema Internacional FLACSO') !== false, 'debe mostrar el texto del reconocimiento de la red FLACSO');
+oferta_admin_assert(strpos($admin, 'Título con validez internacional y reconocimiento del Sistema FLACSO') !== false, 'debe mostrar el texto del reconocimiento de la red FLACSO');
 oferta_admin_assert(strpos($admin, "'reconocimiento_red_flacso' =>") !== false, 'debe explicar qué muestra el reconocimiento de la red FLACSO');
 oferta_admin_assert(strpos($admin, "'reconocimiento_internacional', 'reconocimiento_red_flacso', 'convenio_iin_oea'") !== false, 'debe persistir el nuevo reconocimiento al guardar');
 oferta_admin_assert(strpos($academic, "'reconocimiento_red_flacso' => ['type' => 'boolean'") !== false, 'debe registrar el nuevo reconocimiento como metadato booleano');

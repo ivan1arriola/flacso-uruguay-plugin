@@ -9,7 +9,7 @@ Los datos de una consulta concreta **no se almacenan como campos mutables del co
 
 ## Perfil estable permitido en el contacto
 
-Además de los campos estándar email, firstname y lastname, WordPress sólo puede escribir estos aliases desde el flujo de consultas:
+Además de los campos estándar email, firstname y lastname, WordPress sólo puede escribir estos aliases (y ningún otro dato de la consulta) desde el flujo de consultas:
 
 | Alias | Tipo | Fuente |
 | --- | --- | --- |
@@ -17,6 +17,12 @@ Además de los campos estándar email, firstname y lastname, WordPress sólo pue
 | flacso_pais | text | perfil declarado |
 | flacso_nivel_academico | text | perfil declarado |
 | flacso_profesion | text | perfil declarado |
+| flacso_utm_source | text | primera fuente del contacto; Mautic no la pisa |
+| flacso_utm_medium | text | primera fuente del contacto; Mautic no la pisa |
+| flacso_utm_campaign | text | primera fuente del contacto; Mautic no la pisa |
+| flacso_utm_content | text | primera fuente del contacto; Mautic no la pisa |
+
+Los flacso_utm_* guardan la primera fuente con la que llegó la persona, no la de cada consulta: Mautic sólo los escribe si están vacíos. La fuente de cada consulta sigue en el snapshot.
 
 El manifiesto versionado está en modules/consultas/services/class-flacso-mautic-contract-manifest.php. El validador comprueba estos aliases y tipos en modo de solo lectura.
 

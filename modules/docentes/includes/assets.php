@@ -37,9 +37,9 @@ if (!function_exists('dp_docentes_register_assets')) {
 
         wp_register_style(
             'flacso-docentes-bootstrap-icons',
-            'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css',
+            'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css',
             ['flacso-docentes-bootstrap'],
-            '1.11.3'
+            '1.13.1'
         );
 
         wp_register_style(

@@ -66,9 +66,9 @@ function flacso_consultas_enqueue_bootstrap_icons() {
 	if ( ! wp_style_is( 'bootstrap-icons', 'enqueued' ) ) {
 		wp_enqueue_style(
 			'bootstrap-icons',
-			'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css',
+			'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css',
 			array(),
-			'1.11.3'
+			'1.13.1'
 		);
 	}
 }
@@ -376,7 +376,7 @@ function flacso_consultas_render_form( $attributes = array() ) {
 	$form_variant    = sanitize_html_class( (string) $atts['form_variant'] );
 	$intro_text      = trim( (string) $atts['intro_text'] );
 	if ( $intro_text === '' ) {
-		$intro_text = __( 'Llená el formulario y recibí toda la información de cursada 2026.', 'flacso-consultas' );
+		$intro_text = __( 'Llená el formulario y recibí toda la información de cursada.', 'flacso-consultas' );
 	}
 	$heading_text = trim( (string) $atts['heading_text'] );
 	if ( $heading_text === '' ) {
@@ -573,10 +573,10 @@ function flacso_consultas_render_form( $attributes = array() ) {
 		   href="<?php echo esc_url( $preinsc_btn_url ); ?>"
 		   data-flacso-preinscription-cta="1"
 		   class="btn btn-preinsc btn-lg rounded-pill py-3 fw-bold"
-		   aria-label="Ir a Preinscripción 2026"
+		   aria-label="Ir a Preinscripción"
 		   onclick="if(typeof window.flacsoMetaTrack === 'function'){ window.flacsoMetaTrack('InitiateCheckout', { content_name: '<?php echo esc_js($titulo_posgrado); ?>', content_category: 'oferta_academica' }); }">
 		   <i class="bi bi-stars me-2" aria-hidden="true"></i>
-		   Preinscripción 2026
+		   Preinscripción
 		</a>
 	</div>
 	<?php endif; ?>
@@ -650,6 +650,11 @@ function flacso_consultas_render_form( $attributes = array() ) {
 					return '';
 				}
 			};
+			// Mapa idéntico en modules/core/assets/meta-event-quality.js (countryIso).
+			const countryIso = { uruguay: 'uy', argentina: 'ar', bolivia: 'bo', brasil: 'br', chile: 'cl', colombia: 'co', 'costa rica': 'cr', cuba: 'cu', ecuador: 'ec', 'el salvador': 'sv', guatemala: 'gt', haiti: 'ht', honduras: 'hn', mexico: 'mx', nicaragua: 'ni', panama: 'pa', paraguay: 'py', peru: 'pe', 'republica dominicana': 'do', venezuela: 've' };
+			const countryToIso = function(name) {
+				return countryIso[String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase()] || '';
+			};
 			const buildMetaUserData = async function() {
 				const nombre = ($form.find('[name="nombre"]').val() || '').trim();
 				const apellido = ($form.find('[name="apellido"]').val() || '').trim();
@@ -660,7 +665,7 @@ function flacso_consultas_render_form( $attributes = array() ) {
 					hashForMeta(correo),
 					hashForMeta(nombre),
 					hashForMeta(apellido),
-					hashForMeta(pais)
+					hashForMeta(countryToIso(pais))
 				]);
 
 				const payload = {};
@@ -851,17 +856,29 @@ const selectedOfferLabels = $form.find('[name="selected_offers[]"]:checked').map
 						sessionStorage.setItem('consultaPrograma', selectedOfferLabels.length ? selectedOfferLabels.join(', ') : $form.find('[name="titulo_posgrado"]').val());
 						sessionStorage.setItem('consultaOrigen', urlBase);
 					} catch (e) {}
-					if (wasPersisted && typeof window.flacsoMetaTrack === 'function') {
+					let deferRedirect = false;
+					if (wasPersisted) {
+						const leadParams = {
+							lead_type: 'consulta_wordpress_oferta', form_type: 'consulta_oferta_academica',
+							lead_source: 'wordpress_form', lead_context: 'oferta_academica',
+							content_name: selectedOfferLabels.length ? selectedOfferLabels.join(', ') : programa,
+							content_category: 'oferta_academica', content_type: 'oferta_academica', status: 'submitted'
+						};
+						const leadEventId = 'info-request-' + submitKey;
 						try {
-							window.flacsoMetaTrack('Lead', {
-								lead_type: 'consulta_wordpress_oferta', form_type: 'consulta_oferta_academica',
-								lead_source: 'wordpress_form', lead_context: 'oferta_academica',
-								content_name: selectedOfferLabels.length ? selectedOfferLabels.join(', ') : programa,
-								content_category: 'oferta_academica', content_type: 'oferta_academica', status: 'submitted'
-							}, { eventID: 'info-request-' + submitKey, userData: metaUserData });
-						} catch (e) {}
+							sessionStorage.setItem('flacsoLeadPendiente', JSON.stringify({ eventID: leadEventId, params: leadParams, userData: metaUserData, pid: String(pid || ''), exp: Date.now() + 10 * 60 * 1000 }));
+						} catch (e) {
+							// Sin storage no hay cómo diferirlo a /gracias: se dispara acá para no perderlo.
+							try { window.flacsoMetaTrack('Lead', leadParams, { eventID: leadEventId, userData: metaUserData }); } catch (e2) {}
+							deferRedirect = true;
+						}
 					}
-					window.location.href = buildGraciasUrl(gracias, pid, selectedOfferIds, dynamicFormId);
+					const graciasUrl = buildGraciasUrl(gracias, pid, selectedOfferIds, dynamicFormId);
+					if (deferRedirect) {
+						setTimeout(function() { window.location.href = graciasUrl; }, 300);
+					} else {
+						window.location.href = graciasUrl;
+					}
 				},
 				error: function(xhr) {
 					// No redirigir a /gracias en caso de error AJAX.
@@ -1076,7 +1093,7 @@ const selectedOfferLabels = $form.find('[name="selected_offers[]"]:checked').map
 	@media (max-width: 576px) {
 		.flacso-consultas-formulario { padding: 1.25rem; max-width: 100%; }
 	}
-	.btn.btn-primary, button.btn.btn-primary, a.btn.btn-primary {
+	:where(.flacso-consultas-formulario) :where(.btn.btn-primary, button.btn.btn-primary, a.btn.btn-primary) {
 	  background: var(--global-palette-btn-bg) !important;
 	  border-color: var(--global-palette-btn-bg) !important;
 	  color: var(--global-palette-btn-color, #fff) !important;
@@ -1086,7 +1103,7 @@ const selectedOfferLabels = $form.find('[name="selected_offers[]"]:checked').map
 	  text-decoration: none !important;
 	  font-size: .95rem;
 	}
-	.btn.btn-primary:hover {
+	:where(.flacso-consultas-formulario) :where(.btn.btn-primary):hover {
 	  background: var(--global-palette-btn-bg-hover, var(--global-palette-btn-bg)) !important;
 	  border-color: var(--global-palette-btn-bg-hover, var(--global-palette-btn-bg)) !important;
 	  filter: brightness(.98);
@@ -1159,10 +1176,10 @@ function flacso_consultas_render_preinscripcion_button() {
 			href="<?php echo esc_url( $href_preinscripcion ); ?>"
 			data-flacso-preinscription-cta="1"
 			class="btn btn-preinsc btn-lg rounded-pill py-3 fw-bold flacso-preinsc-standalone"
-			aria-label="Ir a Preinscripción 2026"
+			aria-label="Ir a Preinscripción"
 			onclick="if(typeof window.flacsoMetaTrack === 'function'){ window.flacsoMetaTrack('InitiateCheckout', { content_name: '<?php echo esc_js(get_the_title($id_pagina)); ?>', content_category: 'oferta_academica' }); }">
 			<i class="bi bi-stars me-2" aria-hidden="true"></i>
-			Preinscripción 2026
+			Preinscripción
 		</a>
 	</div>
 	<style>
@@ -2111,6 +2128,25 @@ function flacso_render_gracias_virtual() {
 
 		<script>
 		document.addEventListener('DOMContentLoaded', function() {
+			// flacso-lead-pendiente: el Lead se emite acá porque el píxel se perdía al redirigir en celulares lentos.
+			try {
+				var rawLead = sessionStorage.getItem('flacsoLeadPendiente');
+				if (rawLead) {
+					var leadData = JSON.parse(rawLead);
+					if (!leadData || !(leadData.exp > Date.now())) {
+						sessionStorage.removeItem('flacsoLeadPendiente');
+					} else {
+						var leadUrlParams = new URLSearchParams(location.search);
+						var urlPid = String(leadUrlParams.get('pid') || '');
+						var urlTipo = String(leadUrlParams.get('tipo') || '');
+						if (urlPid === String(leadData.pid || '') && urlTipo.indexOf('preinscripcion') !== 0 && typeof window.flacsoMetaTrack === 'function') {
+							sessionStorage.removeItem('flacsoLeadPendiente');
+							window.flacsoMetaTrack('Lead', leadData.params, { eventID: leadData.eventID, userData: leadData.userData });
+						}
+					}
+				}
+			} catch (e) {}
+			// /flacso-lead-pendiente
 			var pid = <?php echo (int) $pid; ?>;
 			if (!pid) {
 				var programa = '';

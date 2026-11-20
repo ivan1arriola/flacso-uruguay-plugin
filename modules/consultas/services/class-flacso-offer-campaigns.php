@@ -112,6 +112,14 @@ final class FLACSO_Offer_Campaigns {
         $built = FLACSO_Mautic_Payload_Builder::build($snapshot);
         $fields = $built['fields'];
 
+        // Solo strings no vacíos; sin fuente (o snapshots viejos) no se envía la clave.
+        $campaign = array_filter(
+            array_intersect_key((array) ($snapshot['campaign'] ?? []), array_flip(['source', 'medium', 'name', 'content'])),
+            static function ($v) {
+                return is_string($v) && $v !== '';
+            }
+        );
+
         return [
             'consultaId' => (string) $snapshot['consultaId'],
             'offerWpId' => $offer_wp_id,
@@ -130,6 +138,6 @@ final class FLACSO_Offer_Campaigns {
                 'textVersion' => (string) $consent['textVersion'],
             ],
             'tags' => array_values($built['tags']),
-        ];
+        ] + ($campaign ? ['campaign' => $campaign] : []);
     }
 }

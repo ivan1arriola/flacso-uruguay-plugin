@@ -77,7 +77,7 @@ final class FLACSO_Carta_Settings {
         return [
             'carta_badge_mec' => [self::TYPE_TEXT, 'Reconocida por el M.E.C', 'portada', 'Distintivo: reconocimiento MEC', self::COND_MEC, false],
             'carta_badge_apostilla' => [self::TYPE_TEXT, 'Apostillado de La Haya', 'portada', 'Distintivo: Apostillado de La Haya', self::COND_APOSTILLE, false],
-            'carta_badge_red' => [self::TYPE_TEXT, 'Título con validez y reconocimiento en la red del Sistema Internacional FLACSO.', 'portada', 'Distintivo: red FLACSO', self::COND_NETWORK, false],
+            'carta_badge_red' => [self::TYPE_TEXT, 'Título con validez internacional y reconocimiento del Sistema FLACSO.', 'portada', 'Distintivo: red FLACSO', self::COND_NETWORK, false],
             'carta_badge_iin' => [self::TYPE_TEXT, 'Convenio IIN-OEA', 'portada', 'Distintivo: convenio IIN-OEA', self::COND_IIN, false],
             'carta_badge_presenciales' => [self::TYPE_TEXT, 'Incluye instancias exclusivamente presenciales', 'portada', 'Distintivo: instancias presenciales', self::COND_PRESENTIAL, false],
 

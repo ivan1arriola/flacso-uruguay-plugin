@@ -11,7 +11,7 @@ if (!defined('ABSPATH') && !defined('STDIN')) {
 }
 
 final class FLACSO_Mautic_Contract_Manifest {
-    public const VERSION = '1.1.0';
+    public const VERSION = '1.2.0';
 
     public const EMAIL_OPEN = 4;
     public const EMAIL_CLOSED = 5;
@@ -25,6 +25,10 @@ final class FLACSO_Mautic_Contract_Manifest {
                 'flacso_pais' => ['type' => 'text'],
                 'flacso_nivel_academico' => ['type' => 'text'],
                 'flacso_profesion' => ['type' => 'text'],
+                'flacso_utm_source' => ['type' => 'text'],
+                'flacso_utm_medium' => ['type' => 'text'],
+                'flacso_utm_campaign' => ['type' => 'text'],
+                'flacso_utm_content' => ['type' => 'text'],
             ],
             'tags' => [
                 'interes-{codigo}',

@@ -593,7 +593,7 @@ class FLACSO_Meta_Tracking {
 
     /**
      * Construye el parámetro fbc a partir del fbclid de la URL.
-     * Formato requerido por Meta: fb.{pixel_id}.{timestamp}.{fbclid}
+     * Formato requerido por Meta: fb.1.{milisegundos}.{fbclid}
      * El fbclid se usa exactamente como viene en la URL, sin modificar.
      */
     private static function build_fbc_from_fbclid(string $pixel_id): string {
@@ -602,8 +602,7 @@ class FLACSO_Meta_Tracking {
             return '';
         }
 
-        $timestamp = time();
-        return 'fb.' . $pixel_id . '.' . $timestamp . '.' . $fbclid;
+        return 'fb.1.' . (time() * 1000) . '.' . $fbclid;
     }
 
     private static function sanitize_custom_data_value($value, string $key = '') {

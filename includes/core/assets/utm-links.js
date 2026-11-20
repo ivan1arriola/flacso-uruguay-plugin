@@ -3,7 +3,7 @@
 
   var cfg = window.flacsoUtmConfig || {};
   var FORM_HOST = cfg.formHost || 'preinscripciones.flacso.edu.uy';
-  var KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
+  var KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id', 'fbclid'];
   var STORE_KEY = 'flacso_utm';
   var TTL_MS = 30 * 24 * 60 * 60 * 1000; // La campaña que trajo a la persona vale 30 días.
 
@@ -25,10 +25,13 @@
       if (value) found[key] = value;
     });
     if (!Object.keys(found).length) return read();
+    // utm_id/fbclid solos (clic orgánico de Meta) no deben borrar la campaña guardada.
+    var campaign = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].some(function (key) { return found[key]; });
+    var next = campaign ? found : Object.assign({}, read(), found);
     try {
-      window.localStorage.setItem(STORE_KEY, JSON.stringify({ utm: found, exp: Date.now() + TTL_MS }));
+      window.localStorage.setItem(STORE_KEY, JSON.stringify({ utm: next, exp: Date.now() + TTL_MS }));
     } catch (e) { /* storage bloqueado: sólo esta página conserva el UTM */ }
-    return found;
+    return next;
   }
 
   var utm = capture();

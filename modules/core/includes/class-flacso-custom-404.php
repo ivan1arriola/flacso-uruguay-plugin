@@ -49,7 +49,7 @@ if ( ! class_exists( 'Flacso_Custom_404' ) ) {
 			add_filter( 'pre_get_document_title', [ __CLASS__, 'filter_document_title' ], 99 );
 			add_filter( 'wp_title', [ __CLASS__, 'filter_document_title' ], 99 );
 
-			self::enqueue_assets();
+			add_action( 'wp_enqueue_scripts', [ self::class, 'enqueue_assets' ], 30 );
 
 			$requested_path = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
 			$path           = trim( (string) parse_url( $requested_path, PHP_URL_PATH ), '/' );
@@ -80,13 +80,13 @@ if ( ! class_exists( 'Flacso_Custom_404' ) ) {
 			return __( 'Página no encontrada | FLACSO Uruguay', 'flacso-uruguay' );
 		}
 
-		private static function enqueue_assets(): void {
+		public static function enqueue_assets(): void {
 			if ( ! wp_style_is( 'bootstrap-icons', 'enqueued' ) && ! wp_style_is( 'bootstrap-icons', 'done' ) ) {
 				wp_enqueue_style(
 					'bootstrap-icons',
-					'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css',
+					'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css',
 					[],
-					'1.11.3'
+					'1.13.1'
 				);
 			}
 		}

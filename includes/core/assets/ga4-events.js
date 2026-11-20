@@ -10,10 +10,30 @@
     var startedForms = {};
     var campaignAttributionKeys = ["campaign_provider", "campaign_source", "campaign_medium", "campaign_name", "campaign_external_id", "campaign_content", "campaign_term", "utm_source", "utm_medium", "utm_campaign", "utm_id", "utm_content", "utm_term", "gclid", "gbraid", "wbraid", "fbclid"];
 
+    var ATTRIBUTION_KEY = "flacso_campaign_attribution";
+    var ATTRIBUTION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+    // localStorage {data, exp} vigente; si no, formato viejo (objeto plano) de sessionStorage.
+    function readAttribution() {
+        try {
+            var saved = JSON.parse(window.localStorage.getItem(ATTRIBUTION_KEY) || "null");
+            if (saved && saved.exp > Date.now() && saved.data && typeof saved.data === "object") {
+                return saved.data;
+            }
+        } catch (error) {}
+        try {
+            var legacy = JSON.parse(window.sessionStorage.getItem(ATTRIBUTION_KEY) || "null");
+            if (legacy && typeof legacy === "object") {
+                return legacy;
+            }
+        } catch (error) {}
+        return {};
+    }
+
     function captureCampaignAttribution() {
         try {
             var url = new URL(window.location.href);
-            var stored = JSON.parse(window.sessionStorage.getItem("flacso_campaign_attribution") || "{}");
+            var stored = {};
             var found = false;
             campaignAttributionKeys.forEach(function (key) {
                 var value = (url.searchParams.get(key) || "").trim();
@@ -23,9 +43,10 @@
                 }
             });
             if (found) {
-                stored.landing_url = stored.landing_url || window.location.href;
-                stored.referrer_url = stored.referrer_url || document.referrer || "";
-                window.sessionStorage.setItem("flacso_campaign_attribution", JSON.stringify(stored));
+                // Campaña nueva: no se mezcla con lo guardado (evita gclid viejo + fbclid nuevo).
+                stored.landing_url = window.location.href;
+                stored.referrer_url = document.referrer || "";
+                window.localStorage.setItem(ATTRIBUTION_KEY, JSON.stringify({ data: stored, exp: Date.now() + ATTRIBUTION_TTL_MS }));
             }
         } catch (error) {}
     }
@@ -176,7 +197,7 @@
 
     function appendCampaignAttribution(link) {
         try {
-            var stored = JSON.parse(window.sessionStorage.getItem("flacso_campaign_attribution") || "{}");
+            var stored = readAttribution();
             var destination = new URL(link.href, window.location.href);
             campaignAttributionKeys.forEach(function (key) {
                 if (!destination.searchParams.has(key) && safeText(stored[key])) {

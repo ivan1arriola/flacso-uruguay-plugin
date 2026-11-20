@@ -162,7 +162,9 @@ final class Flacso_Main_Page_Loader {
 
     private static function enqueue_bootstrap_style(): void {
         $handle = null;
-        if (wp_style_is('bootstrap', 'registered') || wp_style_is('bootstrap', 'enqueued')) {
+        if (wp_style_is('bootstrap-css', 'registered') || wp_style_is('bootstrap-css', 'enqueued')) {
+            $handle = 'bootstrap-css';
+        } elseif (wp_style_is('bootstrap', 'registered') || wp_style_is('bootstrap', 'enqueued')) {
             $handle = 'bootstrap';
         } else {
             $handle = self::find_registered_style_handle_by_src_fragment('bootstrap@5')
@@ -186,7 +188,7 @@ final class Flacso_Main_Page_Loader {
         }
         if (!$handle) {
             $handle = 'flacso-main-page-icons';
-            wp_register_style($handle, 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css', [], '1.11.3');
+            wp_register_style($handle, 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css', [], '1.13.1');
         }
         wp_enqueue_style($handle);
     }

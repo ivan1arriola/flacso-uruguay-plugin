@@ -51,7 +51,9 @@
         var firstName = fieldValue(form, ["[name='nombre1']", "[name='first_name']", "[name='firstname']"]) || (fullParts[0] || "");
         var lastName = fieldValue(form, ["[name='apellido1']", "[name='last_name']", "[name='lastname']"]) || (fullParts.length > 1 ? fullParts[fullParts.length - 1] : "");
         var phone = fieldValue(form, ["[name='celular_e164']", "[name='telefono']", "[name='phone']", "[name='celular']"]);
-        var country = fieldValue(form, ["[name='pais_residencia']", "[name='pais']", "[name='country']"]);
+        // Mapa idéntico en modules/main-page/includes/flacso-consultas.php (countryIso).
+        var countryIso = { uruguay: "uy", argentina: "ar", bolivia: "bo", brasil: "br", chile: "cl", colombia: "co", "costa rica": "cr", cuba: "cu", ecuador: "ec", "el salvador": "sv", guatemala: "gt", haiti: "ht", honduras: "hn", mexico: "mx", nicaragua: "ni", panama: "pa", paraguay: "py", peru: "pe", "republica dominicana": "do", venezuela: "ve" };
+        var country = countryIso[String(fieldValue(form, ["[name='pais_residencia']", "[name='pais']", "[name='country']"]) || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase()] || "";
         var gender = fieldValue(form, ["[name='genero']:checked", "[name='genero']", "[name='gender']:checked", "[name='gender']"]);
 
         return {

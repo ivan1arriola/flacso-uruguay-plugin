@@ -633,7 +633,14 @@ function fc_render_campaign_attribution_hidden_fields( string $landing_url = '',
 
         try { current = new URL(currentUrl); } catch (e) { current = null; }
         try { referrer = referrerUrl ? new URL(referrerUrl) : null; } catch (e) { referrer = null; }
-        try { stored = JSON.parse(window.sessionStorage.getItem('flacso_campaign_attribution') || '{}'); } catch (e) { stored = {}; }
+        // Corre antes de ga4-events.js: lee localStorage {data,exp} vigente o, si no, el formato viejo de sessionStorage.
+        try {
+            var saved = JSON.parse(window.localStorage.getItem('flacso_campaign_attribution') || 'null');
+            if (saved && saved.exp > Date.now() && saved.data && typeof saved.data === 'object') { stored = saved.data; }
+        } catch (e) {}
+        if (!Object.keys(stored).length) {
+            try { stored = JSON.parse(window.sessionStorage.getItem('flacso_campaign_attribution') || '{}') || {}; } catch (e) { stored = {}; }
+        }
 
         function param(name) {
             var value = current ? (current.searchParams.get(name) || '') : '';
@@ -659,8 +666,12 @@ function fc_render_campaign_attribution_hidden_fields( string $landing_url = '',
             return '';
         }
 
-        setField('landing_url', stored.landing_url || currentUrl);
-        setField('referrer_url', stored.referrer_url || referrerUrl);
+        var hasCurrentCampaign = false;
+        ['utm_source', 'utm_medium', 'utm_campaign', 'utm_id', 'utm_content', 'utm_term', 'gclid', 'gbraid', 'wbraid', 'fbclid'].forEach(function (key) {
+            if (current && (current.searchParams.get(key) || '').trim()) hasCurrentCampaign = true;
+        });
+        setField('landing_url', hasCurrentCampaign ? currentUrl : (stored.landing_url || currentUrl));
+        setField('referrer_url', hasCurrentCampaign ? referrerUrl : (stored.referrer_url || referrerUrl));
         setField('utm_source', param('utm_source'));
         setField('utm_medium', param('utm_medium'));
         setField('utm_campaign', param('utm_campaign'));

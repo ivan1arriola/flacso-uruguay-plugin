@@ -82,7 +82,7 @@
 
         var fbclid = getQueryParam("fbclid");
         if (fbclid && config.pixelId) {
-            return "fb." + config.pixelId + "." + Math.floor(Date.now() / 1000) + "." + fbclid;
+            return "fb.1." + Date.now() + "." + fbclid;
         }
 
         return "";
@@ -496,13 +496,15 @@
 
     function trackGA4Equivalent(eventType, eventName, params) {
         var normalizedName = String(eventName || "");
+        // Site Kit ya manda page_view a GA4.
+        if (normalizedName === "PageView") {
+            return;
+        }
         var ga4Name = normalizedName;
         var payload = normalizeParams(params);
         var category = String(payload.content_category || payload.event_category || "").toLowerCase();
 
-        if (normalizedName === "PageView") {
-            ga4Name = "page_view";
-        } else if (normalizedName === "ViewContent") {
+        if (normalizedName === "ViewContent") {
             ga4Name = category.indexOf("listado") !== -1 ? "view_item_list" : "view_item";
         } else if (normalizedName === "Lead" || normalizedName === "Contact") {
             ga4Name = "generate_lead";

@@ -227,11 +227,11 @@ final class FLACSO_Oferta_Admin_Fields {
                 </header>
                 <div class="flacso-oferta-section__body">
                     <div class="flacso-oferta-checks">
-                        <?php $flag_descriptions = ['reconocido_mec' => 'Muestra el reconocimiento oficial del MEC en la página de la oferta y en la carta.','reconocimiento_internacional' => 'Muestra el distintivo de titulación apostillada de La Haya en la página y en la carta.','reconocimiento_red_flacso' => 'Muestra el reconocimiento del título en la red del Sistema Internacional FLACSO en la página y en la carta.','convenio_iin_oea' => 'Muestra el distintivo del convenio IIN/OEA en la página y en la carta.']; ?>
+                        <?php $flag_descriptions = ['reconocido_mec' => 'Muestra el reconocimiento oficial del MEC en la página de la oferta y en la carta.','reconocimiento_internacional' => 'Muestra el distintivo de titulación apostillada de La Haya en la página y en la carta.','reconocimiento_red_flacso' => 'Muestra el distintivo «Título con validez internacional y reconocimiento del Sistema FLACSO» en la página y en la carta.','convenio_iin_oea' => 'Muestra el distintivo del convenio IIN/OEA en la página y en la carta.']; ?>
                         <?php foreach ([
                             'reconocido_mec' => __('Programa con Reconocimiento Oficial del Ministerio de Educación y Cultura (MEC)', 'flacso-uruguay'),
                             'reconocimiento_internacional' => __('Apostillado de La Haya', 'flacso-uruguay'),
-                            'reconocimiento_red_flacso' => __('Título con validez y reconocimiento en la red del Sistema Internacional FLACSO', 'flacso-uruguay'),
+                            'reconocimiento_red_flacso' => __('Título con validez internacional y reconocimiento del Sistema FLACSO', 'flacso-uruguay'),
                             'convenio_iin_oea' => __('Convenio IIN/OEA', 'flacso-uruguay'),
                         ] as $key => $label) : ?>
                             <label><input type="checkbox" name="flacso_oferta[<?php echo esc_attr($key); ?>]" value="1" <?php checked(rest_sanitize_boolean(self::meta($post->ID, $key, false))); ?>><span><?php echo esc_html($label); ?><small><?php echo esc_html($flag_descriptions[$key]); ?></small></span></label>

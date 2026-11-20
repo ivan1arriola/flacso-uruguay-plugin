@@ -72,7 +72,7 @@
 
 	registerBlockType( 'flacso-uruguay/preinscripcion-button', {
 		title: __( 'Botón de preinscripción FLACSO', 'flacso-consultas' ),
-		description: __( 'Muestra solo el botón de Preinscripción 2026.', 'flacso-consultas' ),
+		description: __( 'Muestra solo el botón de Preinscripción.', 'flacso-consultas' ),
 		icon: 'button',
 		category: 'widgets',
 		edit: function() {

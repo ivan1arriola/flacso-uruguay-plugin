@@ -113,6 +113,26 @@ function campaign_delivery(FLACSO_Inquiry_Delivery_Repository $repository, FLACS
     return $result;
 }
 
+// --- Fuente en el alta (campaign)
+$utm_context = [
+    'offerWpId' => 123, 'offerName' => 'Maestría en Educación', 'offerAbbreviation' => 'MAE',
+    'offerType' => 'maestria', 'cohortNumber' => 6, 'offerStatus' => 'abierta',
+    'startDate' => '2027-04-15', 'startDatePrecision' => 'day', 'modality' => 'virtual',
+];
+$utm_form = [
+    'nombre' => 'Ana', 'apellido' => 'Pérez', 'correo' => 'ana@example.org',
+    'country' => 'Uruguay', 'educationLevel' => 'Grado', 'profession' => 'Docente',
+    'programUrl' => 'https://flacso.edu.uy/mae', 'inquiryAt' => '2026-10-25T12:00:00+00:00',
+];
+$utm_snapshot = FLACSO_Inquiry_Snapshot::from_offer(
+    $utm_form + ['utm_source' => 'meta', 'utm_medium' => 'paid', 'utm_campaign' => 'posgrados-2027', 'utm_content' => ''],
+    $utm_context, 'utm-1'
+);
+$utm_body = FLACSO_Offer_Campaigns::enrollment_payload($utm_snapshot, $consent);
+campaign_assert(($utm_body['campaign'] ?? null) === ['source' => 'meta', 'medium' => 'paid', 'name' => 'posgrados-2027'], 'el alta lleva campaign con source/medium/name y sin content vacío');
+$plain_body = FLACSO_Offer_Campaigns::enrollment_payload(FLACSO_Inquiry_Snapshot::from_offer($utm_form, $utm_context, 'utm-2'), $consent);
+campaign_assert(!array_key_exists('campaign', $plain_body), 'sin utm el alta no lleva la clave campaign');
+
 /** Transporte HTTP falso: el alta responde según $enroll; el acuse transaccional siempre acepta. */
 function campaign_transport(array $enroll, array &$calls): void {
     FLACSO_Mautic_Client::set_http_transport(function ($url, $args) use ($enroll, &$calls) {
