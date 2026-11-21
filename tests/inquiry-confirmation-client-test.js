@@ -17,7 +17,7 @@ function scenario(response, throws = false, storage = null) {
         if (throws) throw Error('tracker');
     } };
     const context = {
-        response, window, URL, console, metaUserData: { em: 'hash' }, submitKey: '123', submitKeyStorageKey: 'key', memorySubmit: null, programa: 'Programa',
+        response, window, URL, console, metaUserData: { em: 'hash' }, submitKey: '123', submitKeyStorageKey: 'key', memorySubmit: null, programa: 'Programa', offerCodeParams: () => ({ offer_code: 'mesyp', content_ids: ['mesyp'] }),
         sessionStorage: storage || { setItem() { throw Error('blocked'); }, removeItem() { throw Error('blocked'); } },
         setTimeout(fn, ms) { delays.push(ms); fn(); },
         $form: { find(selector) { return { val: () => ({ '[name="id_pagina"]': '1', '[name="url_base"]': 'https://example.org', '[name="url_gracias"]': 'https://example.org/gracias/', '[name="titulo_posgrado"]': 'Programa' }[selector] || ''), map: () => ({ get: () => [] }) }; } },
@@ -56,6 +56,7 @@ let result = scenario({ success: true, data: { persisted: true } });
 assert.strictEqual(result.events[0].name, 'Lead');
 assert.strictEqual(result.events[0].options.eventID, 'info-request-123');
 assert.strictEqual(result.events[0].options.userData.em, 'hash');
+assert.strictEqual(result.events[0].params.offer_code, 'mesyp');
 assert.strictEqual(result.href, 'https://example.org/gracias/');
 assert.deepStrictEqual(result.delays, [300], 'fallback difiere la redireccion 300 ms');
 for (const response of [{ success: false }, { success: true, data: {} }]) {
