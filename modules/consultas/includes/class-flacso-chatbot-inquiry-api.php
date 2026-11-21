@@ -112,6 +112,10 @@ final class FLACSO_Chatbot_Inquiry_API {
                     'type' => $type,
                     'url' => (string) get_permalink($post),
                 ];
+                if ($kind === 'offer') {
+                    // Clave siempre presente (vacía si no hay): el asistente evita así consultar /ofertas.
+                    $items[count($items) - 1]['abreviacion'] = trim((string) get_post_meta($post->ID, 'abreviacion', true));
+                }
             }
         }
 

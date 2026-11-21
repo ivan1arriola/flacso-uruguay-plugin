@@ -69,16 +69,21 @@ final class FLACSO_Academic_Repository {
     }
 
     public static function list(string $entity, array $filters = []): array {
+        return self::list_paged($entity, $filters)['items'];
+    }
+
+    /** @return array{items: array, total: int, pages: int} */
+    public static function list_paged(string $entity, array $filters = []): array {
         $definition = self::definition($entity);
         if (!$definition) {
-            return [];
+            return ['items' => [], 'total' => 0, 'pages' => 0];
         }
         $args = [
             'post_type' => $definition['post_type'],
             'post_status' => current_user_can('edit_posts') ? ['publish', 'draft', 'pending', 'private'] : 'publish',
             'posts_per_page' => min(200, max(1, absint($filters['per_page'] ?? 100))),
-            'orderby' => 'date',
-            'order' => 'DESC',
+            'paged' => max(1, absint($filters['page'] ?? 1)),
+            'orderby' => ['date' => 'DESC', 'ID' => 'DESC'], // ID desempata: sin él las páginas pueden repetir ítems
         ];
         if (!empty($filters['parent_id'])) {
             $parent_key = self::parent_key($entity);
@@ -91,9 +96,14 @@ final class FLACSO_Academic_Repository {
                 ]];
             }
         }
-        return array_map(static function ($post) use ($entity): array {
-            return self::to_array($entity, $post);
-        }, get_posts($args));
+        $query = new WP_Query($args);
+        return [
+            'items' => array_map(static function ($post) use ($entity): array {
+                return self::to_array($entity, $post);
+            }, $query->posts),
+            'total' => (int) $query->found_posts,
+            'pages' => (int) $query->max_num_pages,
+        ];
     }
 
     public static function to_array(string $entity, $post): array {
@@ -132,6 +142,7 @@ final class FLACSO_Academic_Repository {
             $data['nombre'] = FLACSO_Cohorte::display_name(absint($data['numero']));
             $data['numero_romano'] = FLACSO_Cohorte::to_roman(absint($data['numero']));
             $data['preinscripcion'] = FLACSO_Preinscripcion::for_cohort((int) $post->ID);
+            $data['link_preinscripcion'] = (string) ($data['preinscripcion']['url'] ?? '');
         }
         if ($entity === 'ediciones' || $entity === 'ediciones-seminario') {
             $anio = absint($data['anio'] ?? 0);

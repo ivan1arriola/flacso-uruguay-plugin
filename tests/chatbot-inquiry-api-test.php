@@ -53,6 +53,7 @@ function get_posts(array $args): array {
     if ($args['post_type'] === 'oferta-academica') return [get_post(17)];
     return [get_post(42)];
 }
+function get_post_meta(int $id, string $key, bool $single = false) { return $key === 'abreviacion' && $id === 17 ? ' MEDUTIC ' : ''; }
 function get_the_title($post): string { return $post->post_title; }
 function get_permalink($post): string { return 'https://flacso.edu.uy/formacion/' . $post->ID . '/'; }
 class FLACSO_Oferta_Academica {
@@ -169,4 +170,6 @@ chatbot_assert(count($GLOBALS['records']) === 2, 'No registra solicitudes invál
 $catalog = FLACSO_Chatbot_Inquiry_API::catalog();
 chatbot_assert($catalog->status === 200 && count($catalog->data['items']) === 2, 'Catálogo unifica ambas raíces');
 chatbot_assert($catalog->data['items'][1]['kind'] === 'seminar', 'Seminario conserva el tipo técnico');
+chatbot_assert($catalog->data['items'][0]['abreviacion'] === 'MEDUTIC', 'Oferta expone abreviación recortada');
+chatbot_assert(!array_key_exists('abreviacion', $catalog->data['items'][1]), 'Seminario no lleva abreviación');
 echo "OK chatbot inquiry API\n";

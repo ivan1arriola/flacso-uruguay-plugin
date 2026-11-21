@@ -16,10 +16,15 @@ final class FLACSO_Academic_API {
                 [
                     'methods' => WP_REST_Server::READABLE,
                     'callback' => static function (WP_REST_Request $request) use ($entity) {
-                        return rest_ensure_response(FLACSO_Academic_Repository::list($entity, [
+                        $result = FLACSO_Academic_Repository::list_paged($entity, [
                             'per_page' => $request->get_param('per_page'),
+                            'page' => $request->get_param('page'),
                             'parent_id' => $request->get_param('parent_id'),
-                        ]));
+                        ]);
+                        $response = rest_ensure_response($result['items']);
+                        $response->header('X-WP-Total', (string) $result['total']);
+                        $response->header('X-WP-TotalPages', (string) $result['pages']);
+                        return $response;
                     },
                     'permission_callback' => '__return_true',
                 ],

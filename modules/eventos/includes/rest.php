@@ -113,6 +113,14 @@ function flacso_eventos_parse_inicio_timestamp($inicio) {
     }
 }
 
+function flacso_eventos_build_inscripcion($post_id) {
+    $url = esc_url_raw((string) get_post_meta($post_id, '_evento_formulario_url', true), ['https']);
+    return [
+        'abierta' => '' !== $url && 'cancelado' !== flacso_eventos_get_estado($post_id),
+        'url' => $url,
+    ];
+}
+
 function flacso_eventos_build_event_data($post) {
     $post = get_post($post);
     if (!$post) {
@@ -180,6 +188,7 @@ function flacso_eventos_build_event_data($post) {
         'duracion_minutos' => $duracion_minutos,
         'fin' => (string) get_post_meta($post->ID, '_charla_fin', true),
         'estado' => flacso_eventos_get_estado($post->ID),
+        'inscripcion' => flacso_eventos_build_inscripcion($post->ID),
         'gratuito' => !empty(get_post_meta($post->ID, '_evento_gratuito', true)),
         'programa_id' => (int) get_post_meta($post->ID, '_evento_programa_id', true),
         'lugar_nombre' => $lugar_nombre,
