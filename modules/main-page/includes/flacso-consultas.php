@@ -145,6 +145,16 @@ function flacso_consultas_is_block_preview() {
 	return false;
 }
 
+/** Abreviación normalizada de la oferta ('' si no tiene); sirve para filtrar eventos de Meta. */
+function flacso_consultas_offer_code( $post_id ) {
+	if ( ! class_exists( 'FLACSO_Oferta_Academica' ) ) {
+		return '';
+	}
+	$abbr = FLACSO_Oferta_Academica::normalize_abbreviation( (string) get_post_meta( (int) $post_id, 'abreviacion', true ) );
+	// Mismo slug en minúscula que los tags de Mautic y el portal, para que la regla de Meta coincida en todos los eventos.
+	return class_exists( 'FLACSO_Inquiry_Tag_Factory' ) ? FLACSO_Inquiry_Tag_Factory::slug( $abbr ) : strtolower( $abbr );
+}
+
 function flacso_consultas_normalize_offer_ids( $offer_ids ) {
 	if ( ! is_array( $offer_ids ) ) {
 		return array();
@@ -436,6 +446,7 @@ function flacso_consultas_render_form( $attributes = array() ) {
 
 			<input type="hidden" name="id_pagina" value="<?php echo esc_attr( $id_pagina ); ?>">
 			<input type="hidden" name="titulo_posgrado" value="<?php echo esc_attr( $titulo_posgrado ); ?>">
+			<input type="hidden" name="offer_code" value="<?php echo esc_attr( flacso_consultas_offer_code( $id_pagina ) ); ?>">
 			<input type="hidden" name="url_base" value="<?php echo esc_url( $url_actual ); ?>">
 			<input type="hidden" name="url_gracias" value="<?php echo esc_url( $gracias_url ); ?>">
 			<input type="hidden" name="url_referer" value="<?php echo esc_url( wp_get_referer() ?: $url_actual ); ?>">
@@ -458,6 +469,7 @@ function flacso_consultas_render_form( $attributes = array() ) {
 							<input
 								type="checkbox"
 								name="selected_offers[]"
+								data-offer-code="<?php echo esc_attr( flacso_consultas_offer_code( $choice['id'] ) ); ?>"
 								value="<?php echo esc_attr( $choice['id'] ); ?>">
 							<span><?php echo esc_html( $choice['title'] ); ?></span>
 						</label>
@@ -574,7 +586,7 @@ function flacso_consultas_render_form( $attributes = array() ) {
 		   data-flacso-preinscription-cta="1"
 		   class="btn btn-preinsc btn-lg rounded-pill py-3 fw-bold"
 		   aria-label="Ir a Preinscripción"
-		   onclick="if(typeof window.flacsoMetaTrack === 'function'){ window.flacsoMetaTrack('InitiateCheckout', { content_name: '<?php echo esc_js($titulo_posgrado); ?>', content_category: 'oferta_academica' }); }">
+		   onclick="if(typeof window.flacsoMetaTrack === 'function'){ window.flacsoMetaTrack('InitiateCheckout', { content_name: '<?php echo esc_js($titulo_posgrado); ?>', content_category: 'oferta_academica'<?php $oc = flacso_consultas_offer_code($id_pagina); if ($oc !== '') { echo ", offer_code: '" . esc_js($oc) . "', content_ids: ['" . esc_js($oc) . "']"; } ?> }); }">
 		   <i class="bi bi-stars me-2" aria-hidden="true"></i>
 		   Preinscripción
 		</a>
@@ -587,6 +599,15 @@ function flacso_consultas_render_form( $attributes = array() ) {
 			const $submitBtn = $('#btn-enviar');
 			const $message = $('#form-consultas-mensaje');
 			const programa = $form.find('[name="titulo_posgrado"]').val() || '';
+			const offerCodes = function() {
+				let codes = $form.find('[name="selected_offers[]"]:checked').map(function() { return $(this).data('offer-code') || ''; }).get();
+				if (!codes.length) { codes = [$form.find('[name="offer_code"]').val() || '']; }
+				return codes.map(String).filter(function(c, i) { return c && codes.indexOf(c) === i; });
+			};
+			const offerCodeParams = function() {
+				const codes = offerCodes();
+				return codes.length ? { offer_code: codes.join('|'), content_ids: codes } : {};
+			};
 			let infoRequestFormViewTracked = false;
 			const submitKeyStorageKey = 'consultaSubmitKey';
 			let memorySubmit = null;
@@ -688,7 +709,8 @@ function flacso_consultas_render_form( $attributes = array() ) {
 						content_name: programa,
 						content_category: 'solicitud_informacion',
 						content_type: 'oferta_academica',
-						flacso_stage: 'formulario_visible'
+						flacso_stage: 'formulario_visible',
+						...offerCodeParams()
 					});
 				} catch (e) {}
 			};
@@ -862,7 +884,8 @@ const selectedOfferLabels = $form.find('[name="selected_offers[]"]:checked').map
 							lead_type: 'consulta_wordpress_oferta', form_type: 'consulta_oferta_academica',
 							lead_source: 'wordpress_form', lead_context: 'oferta_academica',
 							content_name: selectedOfferLabels.length ? selectedOfferLabels.join(', ') : programa,
-							content_category: 'oferta_academica', content_type: 'oferta_academica', status: 'submitted'
+							content_category: 'oferta_academica', content_type: 'oferta_academica', status: 'submitted',
+							...offerCodeParams()
 						};
 						const leadEventId = 'info-request-' + submitKey;
 						try {
@@ -1181,7 +1204,7 @@ function flacso_consultas_render_preinscripcion_button() {
 			data-flacso-preinscription-cta="1"
 			class="btn btn-preinsc btn-lg rounded-pill py-3 fw-bold flacso-preinsc-standalone"
 			aria-label="Ir a Preinscripción"
-			onclick="if(typeof window.flacsoMetaTrack === 'function'){ window.flacsoMetaTrack('InitiateCheckout', { content_name: '<?php echo esc_js(get_the_title($id_pagina)); ?>', content_category: 'oferta_academica' }); }">
+			onclick="if(typeof window.flacsoMetaTrack === 'function'){ window.flacsoMetaTrack('InitiateCheckout', { content_name: '<?php echo esc_js(get_the_title($id_pagina)); ?>', content_category: 'oferta_academica'<?php $oc = flacso_consultas_offer_code($id_pagina); if ($oc !== '') { echo ", offer_code: '" . esc_js($oc) . "', content_ids: ['" . esc_js($oc) . "']"; } ?> }); }">
 			<i class="bi bi-stars me-2" aria-hidden="true"></i>
 			Preinscripción
 		</a>
