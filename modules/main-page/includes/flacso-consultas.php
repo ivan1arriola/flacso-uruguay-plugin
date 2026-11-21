@@ -1094,8 +1094,12 @@ const selectedOfferLabels = $form.find('[name="selected_offers[]"]:checked').map
 		.flacso-consultas-formulario { padding: 1.25rem; max-width: 100%; }
 	}
 	:where(.flacso-consultas-formulario) :where(.btn.btn-primary, button.btn.btn-primary, a.btn.btn-primary) {
-	  background: var(--global-palette-btn-bg) !important;
-	  border-color: var(--global-palette-btn-bg) !important;
+	  background: var(--oa-brand, var(--global-palette-btn-bg)) !important;
+	  border-color: var(--oa-brand, var(--global-palette-btn-bg)) !important;
+	  min-height: 48px !important;
+	  display: inline-flex;
+	  align-items: center;
+	  justify-content: center;
 	  color: var(--global-palette-btn-color, #fff) !important;
 	  border-radius: 999px !important;
 	  padding: .6rem 1rem !important;
@@ -1104,8 +1108,8 @@ const selectedOfferLabels = $form.find('[name="selected_offers[]"]:checked').map
 	  font-size: .95rem;
 	}
 	:where(.flacso-consultas-formulario) :where(.btn.btn-primary):hover {
-	  background: var(--global-palette-btn-bg-hover, var(--global-palette-btn-bg)) !important;
-	  border-color: var(--global-palette-btn-bg-hover, var(--global-palette-btn-bg)) !important;
+	  background: var(--oa-brand-dark, var(--global-palette-btn-bg-hover, var(--global-palette-btn-bg))) !important;
+	  border-color: var(--oa-brand-dark, var(--global-palette-btn-bg-hover, var(--global-palette-btn-bg))) !important;
 	  filter: brightness(.98);
 	  transform: translateY(-1px);
 	}
