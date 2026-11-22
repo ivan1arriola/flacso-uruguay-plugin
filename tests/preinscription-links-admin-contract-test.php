@@ -11,6 +11,7 @@ function links_admin_assert($condition, string $message): void {
     }
 }
 
+links_admin_assert(strpos($admin, "private const CAPABILITY = 'manage_options'") !== false, 'la herramienta masiva que escribe en producción es solo para administradores');
 links_admin_assert(strpos($main, 'class-flacso-preinscription-links-admin.php') !== false, 'el plugin debe cargar el generador masivo');
 links_admin_assert(strpos($admin, "public const PAGE_SLUG = 'flacso-preinscripcion-links'") !== false, 'debe existir una página propia');
 links_admin_assert(strpos($admin, 'admin_post_flacso_save_preinscription_links') !== false, 'debe guardar mediante admin-post');
