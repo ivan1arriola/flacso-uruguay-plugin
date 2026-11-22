@@ -1,0 +1,11 @@
+## B-0038 · 2026-11-22 · Push de las dos ramas y apertura de los PR
+- Actor: Claude Code · Tier: coordinación · Modelo: Sonnet, con autorización explícita de la persona dueña ("sí, subí las dos ramas")
+- Tarea / alcance: publicar las ramas de WP-S1 y de H-A11 y abrir sus PR hacia `main`. Repo `ivan1arriola/flacso-uruguay-plugin`, que es **público**.
+- Modo: escritura en el remoto, solo ramas `ui/*`; **nada se empujó a `main`**.
+- Antes de publicar: se confirmó que `deploy-plugin.yml` y `release-auto-update.yml` solo se disparan con push a `main` (o a mano), y que un push a otra rama solo corre `encoding-check` ("Repository Guard"). Como el repo es público, el mensaje del commit de WP-S1 se reescribió (aún sin publicar) para no detallar la fuga antes del despliegue; el hash pasó de `296fcd0` a `60aa87c`. El código sin arreglar ya era público de antes.
+- Resultado:
+  - PR #100, `ui/WP-S1-settings-api-permisos` (commit `60aa87c`): `/ofertas/settings` solo para administradores. Descripción neutra, sin detalle de la fuga.
+  - PR #101, `ui/WP-02a-spam-precision` (commit `d5d9101`): filtro anti-spam (H-A11).
+- Hallazgos: H-A09 y H-A11 (en revisión, pendientes de merge).
+- Verificación: `agent_check.py` completo en verde antes de cada commit (B-0035 y B-0037). No se miró aún el resultado de "Repository Guard" en los PR.
+- Pendiente / siguiente paso: el dueño revisa y mergea (cada merge despliega a producción); tras el merge de #100, GET anónimo a `/wp-json/flacso/v1/ofertas/settings` debe dar 401 o 403; avisar a recepción antes del merge de #101; rotar secretos si hay cuentas Colaborador o superior dudosas; el DNS de `editor.flacso.edu.uy` y el valor de `fc_consultas_webhook_url`. Los worktrees `wt-WP-S1` y `wt-WP-02a` se borran después del merge.

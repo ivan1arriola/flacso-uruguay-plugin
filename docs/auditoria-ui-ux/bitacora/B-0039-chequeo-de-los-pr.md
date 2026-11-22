@@ -1,0 +1,11 @@
+## B-0039 · 2026-11-22 · Resultado del chequeo de los PR #100 y #101
+- Actor: Claude Code · Tier: T2 (corrección) · Modelo: Sonnet
+- Tarea / alcance: leer el resultado del CI de los PR abiertos en B-0038 y corregir lo que fallara.
+- Modo: lectura de GitHub Actions (`gh run list`, `gh run view --log-failed`) y escritura en la rama del PR #101; se empujó solo esa rama, sin force-push.
+- Resultado:
+  - **PR #100** (WP-S1): `lint` y `repository-checks` en verde; estado CLEAN y mergeable.
+  - **PR #101** (H-A11): `repository-checks` ("Repository Guard") **falló**. El paso "Check patch whitespace" ejecuta `git diff --check origin/main...HEAD` y marcó 27 líneas de `modules/formularios/includes/validation.php` como "trailing whitespace". Causa: ese archivo está guardado con fin de línea CRLF en `main` (el resto del repo usa LF; `git ls-files --eol` → `i/crlf`) y mis líneas nuevas heredaron el CR. Corrección: commit `a3137d7` que normaliza el archivo a LF y quita un espacio final preexistente (sin cambios de lógica). Tras empujarlo, `lint` y `repository-checks` en verde; estado CLEAN y mergeable. Se dejó una nota en el PR explicando que ese commit solo cambia fines de línea.
+- Hallazgos: ninguno de la auditoría; es una lección de proceso.
+- Verificación: se reprodujo el chequeo en local con `git diff --check origin/main...HEAD` (primero con error, después sin errores), más `check_encoding.py`, el test nuevo, `general-inquiry-handler-test.php` y `agent_check.py` completo (136 pruebas de contrato en verde).
+- Lección para la guía: `agent_check.py` no ejecuta `git diff --check`. Antes de empujar una rama de este repo hay que correr `git diff --check origin/main...HEAD`. Con `core.autocrlf=true` en Windows, los archivos que el repo guarda con CRLF contagian los fines de línea de lo que se edita.
+- Pendiente / siguiente paso: el dueño revisa y mergea #100 y #101 (cada merge despliega a producción); avisar a recepción antes del #101; los pasos posteriores de B-0038.

@@ -1,0 +1,9 @@
+## B-0036 · 2026-11-22 · Recorte del plan a tres cambios
+- Actor: Claude Code (coordinación) con decisión de la persona dueña del proyecto · Tier: coordinación · Modelo: Sonnet
+- Tarea / alcance: reducir el plan v2 a lo que responde a un riesgo real para las personas usuarias.
+- Modo: escritura de documentación; dos agentes de lectura detenidos
+- Resultado: el plan v3 conserva solo (1) WP-S1, `/ofertas/settings` solo para administradores (implementado en local, B-0035); (2) H-A11, el filtro anti-spam que descarta consultas legítimas; (3) la verificación del webhook viejo de consultas. WP-03 a WP-13, la segunda pasada de navegador, la comparación de la rama de Kadence y la consolidación B-0034 quedan en espera. Los mapas B-0021 a B-0033 y `HALLAZGOS.md` siguen como referencia.
+- Agentes detenidos antes de terminar, sin informe: la comparación de la rama `feat/kadence-customizer-compat-20261121` (0d) y la segunda pasada de Playwright (0e). La segunda estuvo activa unos minutos contra producción con las reglas de lectura (analítica y reCAPTCHA bloqueados, sin formularios, sin cookies); no dejó informe ni ventana horaria registrada. Los IDs B-0029, B-0032 y B-0034 quedan reservados sin ejecutar.
+- Hallazgo nuevo a favor del recorte (VERIFICADO por lectura): la consulta general se envía por Mautic (`general-inquiry.php:64`) y no usa `fc_consultas_webhook_url`; esa opción solo la usa el botón de prueba del admin (`form-handlers.php:211-229`), que manda el token compartido como `Bearer` a esa URL (`helpers.php:40-50`). Baja la urgencia de la hipótesis "la consulta general falla por el host muerto".
+- Verificación: ninguna ejecutada; lectura de código.
+- Pendiente / siguiente paso: el dueño autoriza el push de la rama de WP-S1; responde la decisión sobre el descarte silencioso de H-A11; revisa el webhook y el DNS del editor muerto.
