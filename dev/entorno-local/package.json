@@ -1,0 +1,15 @@
+{
+  "name": "flacso-entorno-local",
+  "private": true,
+  "type": "module",
+  "description": "Arnés de regresión visual del tema (solo desarrollo).",
+  "scripts": {
+    "regresion": "node regresion.mjs",
+    "uniformidad": "python uniformidad.py"
+  },
+  "devDependencies": {
+    "pixelmatch": "6.0.0",
+    "playwright": "1.49.1",
+    "pngjs": "7.0.0"
+  }
+}
