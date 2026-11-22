@@ -55,8 +55,8 @@ flacso-uruguay-plugin/
 │   ├── autoridades/
 │   ├── convenios/
 │   ├── formularios/
-│   ├── formularios-webhook/
-│   ├── preinscripcion/
+│   ├── consultas/
+│   ├── preinscripciones/
 │   ├── mailing/
 │   └── main-page/
 ├── tests/
@@ -82,20 +82,14 @@ El archivo principal es `flacso-uruguay.php` y el slug de instalación es `flacs
 
 ## Validaciones
 
-Antes de publicar cambios:
+Validá desde la raíz con Python 3 y PHP CLI:
 
 ```bash
-python3 .github/scripts/check_encoding.py
-
-while IFS= read -r -d '' file; do
-  php -l "$file"
-done < <(find . -type f -name '*.php' \
-  -not -path './vendor/*' \
-  -not -path './node_modules/*' \
-  -print0)
-
-php tests/oferta-inscripciones-year-test.php
+python scripts/agent_check.py --diff
+python scripts/agent_check.py
 ```
+
+Para comandos por dominio y cobertura de CI, consultá la [guía técnica](docs/desarrollo/plugin.md).
 
 ## Versionado automático
 
@@ -143,27 +137,10 @@ El workflow requiere:
 - `encoding-check.yml`: valida UTF-8, BOM y patrones de mojibake.
 - `release-auto-update.yml`: publica un release y su ZIP con la misma versión derivada del commit; no despliega archivos en WordPress.
 
-## Estructura principal
-
-```text
-flacso-uruguay-plugin/
-├── flacso-uruguay.php
-├── includes/
-│   └── core/
-├── modules/
-│   ├── oferta-academica/
-│   ├── seminarios/
-│   ├── formularios/
-│   ├── shortcodes/
-│   ├── docentes/
-│   └── eventos/
-├── tests/
-├── API.md
-└── CHANGELOG.md
-```
-
 ## Documentación
 
+- [Guía de desarrollo de ambos repositorios](docs/desarrollo/README.md) y [guía técnica del plugin](docs/desarrollo/plugin.md).
+- [Referencia rápida para agentes](docs/agent-reference.md).
 - `API.md`: endpoints REST.
 - `CHANGELOG.md`: historial funcional.
 - [**Guía visual del modelo académico**](docs/guia-visual-modelo-academico.md): diagramas, fichas de campos, relaciones y ejemplos para usuarios no técnicos.
