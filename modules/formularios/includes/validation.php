@@ -87,7 +87,7 @@ function fc_verify_recaptcha( $token ) {
     }
 
     $body = json_decode( wp_remote_retrieve_body( $response ), true );
-    
+
     // Verificar éxito y score (mínimo 0.5 para v3)
     if ( isset( $body['success'] ) && $body['success'] === true ) {
         $score = isset( $body['score'] ) ? (float) $body['score'] : 0;
