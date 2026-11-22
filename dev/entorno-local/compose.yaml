@@ -1,0 +1,44 @@
+name: flacso-local
+services:
+  db:
+    image: mariadb:11
+    environment:
+      MARIADB_DATABASE: wp
+      MARIADB_USER: wp
+      MARIADB_PASSWORD: wp
+      MARIADB_ROOT_PASSWORD: root
+    volumes: [db:/var/lib/mysql]
+  wordpress:
+    image: wordpress:php8.2-apache
+    depends_on: [db]
+    ports: ["8888:80"]
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wp
+      WORDPRESS_DB_PASSWORD: wp
+      WORDPRESS_DB_NAME: wp
+      WORDPRESS_DEBUG: "1"
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_ENVIRONMENT_TYPE','local');
+        define('WP_DEBUG_LOG',true);
+        define('WP_DEBUG_DISPLAY',false);
+    volumes:
+      - wpcore:/var/www/html
+      - ./themes/kadence:/var/www/html/wp-content/themes/kadence
+      - "${FLACSO_THEME_DIR:?definir FLACSO_THEME_DIR}:/var/www/html/wp-content/themes/flacso-theme-kadence"
+      - "${FLACSO_PLUGIN_DIR:?definir FLACSO_PLUGIN_DIR}:/var/www/html/wp-content/plugins/flacso-uruguay-plugin"
+  cli:
+    image: wordpress:cli
+    user: "33:33"
+    depends_on: [wordpress]
+    volumes_from: [wordpress]
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wp
+      WORDPRESS_DB_PASSWORD: wp
+      WORDPRESS_DB_NAME: wp
+    entrypoint: ["wp"]
+    profiles: ["tools"]
+volumes:
+  db:
+  wpcore:
