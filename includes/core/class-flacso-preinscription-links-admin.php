@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
  */
 final class FLACSO_Preinscription_Links_Admin {
     public const PAGE_SLUG = 'flacso-preinscripcion-links';
-    private const CAPABILITY = 'edit_posts';
+    private const CAPABILITY = 'manage_options';
     private const NONCE_ACTION = 'flacso_save_preinscription_links';
     private const BASE_URL = 'https://preinscripciones.flacso.edu.uy';
 
