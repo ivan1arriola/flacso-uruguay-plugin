@@ -74,7 +74,6 @@ final class FLACSO_Academic_Settings_API {
                 "fc_oferta_webhook_url" => get_option("fc_oferta_webhook_url", ""),
                 "flacso_preinscripciones_webhook_url" => get_option("flacso_preinscripciones_webhook_url", ""),
                 "flacso_oferta_consulta_endpoint_url" => get_option("flacso_oferta_consulta_endpoint_url", ""),
-                "flacso_external_editor_url" => get_option("flacso_external_editor_url", "https://editor.flacso.edu.uy"),
                 "fc_telegram_bot_token" => $masked_fc_telegram_bot_token,
                 "fc_telegram_chat_id" => get_option("fc_telegram_chat_id", ""),
                 "fc_recaptcha_site_key" => get_option("fc_recaptcha_site_key", ""),
@@ -131,9 +130,6 @@ final class FLACSO_Academic_Settings_API {
         }
         if (isset($payload["flacso_oferta_consulta_endpoint_url"])) {
             update_option("flacso_oferta_consulta_endpoint_url", esc_url_raw($payload["flacso_oferta_consulta_endpoint_url"]));
-        }
-        if (isset($payload["flacso_external_editor_url"])) {
-            update_option("flacso_external_editor_url", esc_url_raw($payload["flacso_external_editor_url"]));
         }
         if (isset($payload["fc_telegram_bot_token"])) {
             $new_val = sanitize_text_field($payload["fc_telegram_bot_token"]);

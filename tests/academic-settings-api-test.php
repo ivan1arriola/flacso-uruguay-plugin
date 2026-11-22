@@ -170,7 +170,7 @@ $update_payload = [
     "flacso_mailjet_sender_name" => "Facultad FLACSO",
     "flacso_webhook_token" => "new-token-9999",
     "flacso_meta_enabled" => 1,
-    "fc_consultas_webhook_url" => "https://editor.flacso.edu.uy/api/consultas",
+    "fc_consultas_webhook_url" => "https://webhook.example.test/consultas",
     "financiacion_html" => "<p>Texto financiero retirado</p>",
     "carta_mas_info_financiacion_html" => "<p>Otro texto retirado</p>",
     "carta_mas_info_financiacion_title" => "Financiación antigua",
@@ -184,7 +184,7 @@ settings_assert(get_option("flacso_carta_mas_info_section_title") === "Informaci
 settings_assert(get_option("flacso_mailjet_sender_name") === "Facultad FLACSO", "Opción sender_name actualizada");
 settings_assert(get_option("flacso_webhook_token") === "new-token-9999", "Token actualizado");
 settings_assert(get_option("flacso_meta_enabled") === 1, "Meta enabled actualizado a 1");
-settings_assert(get_option("fc_consultas_webhook_url") === "https://editor.flacso.edu.uy/api/consultas", "Webhook url actualizada");
+settings_assert(get_option("fc_consultas_webhook_url") === "https://webhook.example.test/consultas", "Webhook url actualizada");
 settings_assert(get_option("flacso_financiacion_html", null) === null, "La API ignora escritura de financiación retirada");
 settings_assert(get_option("flacso_carta_mas_info_financiacion_title", null) === null, "La API ignora título de tarjeta retirado");
 

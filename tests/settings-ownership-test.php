@@ -24,7 +24,6 @@ $files = [
     'portada' => $root . '/modules/main-page/includes/class-flacso-main-page-unified-settings.php',
     'portada_ajax' => $root . '/modules/main-page/includes/class-flacso-ajax-settings.php',
     'seminars' => $root . '/modules/seminarios/includes/class-seminario-settings.php',
-    'routing' => $root . '/modules/formularios/includes/editor-routing.php',
 ];
 
 foreach ($files as $name => $path) {
@@ -39,7 +38,6 @@ $mail_init = (string) file_get_contents($files['mail_init']);
 $portada = (string) file_get_contents($files['portada']);
 $portada_ajax = (string) file_get_contents($files['portada_ajax']);
 $seminars = (string) file_get_contents($files['seminars']);
-$routing = (string) file_get_contents($files['routing']);
 
 // Navegación principal por dominios.
 ownership_assert(strpos($admin, "admin.php?page=flacso-correos") !== false, 'Panel FLACSO debe enlazar a Correos');
@@ -93,8 +91,7 @@ ownership_assert(strpos($seminars, "flacso_seminarios_dias_cierre_post_inicio") 
 ownership_assert(!file_exists($root . '/modules/oferta-academica/includes/class-oferta-consulta-form.php'), 'El formulario flotante de Oferta no debe existir');
 ownership_assert(strpos(file_get_contents($root . '/modules/oferta-academica/init.php'), 'Oferta_Consulta_Form') === false, 'El módulo de Oferta no debe cargar el formulario flotante');
 
-// El reparador legacy no vuelve a crear el webhook de ofertas.
-ownership_assert(strpos($routing, "get_option('fc_oferta_webhook_url'") === false, 'Ruteo legacy no debe leer webhook de oferta');
-ownership_assert(strpos($routing, "update_option('fc_oferta_webhook_url'") === false, 'Ruteo legacy no debe recrear webhook de oferta');
+// El reparador legacy hacia el Editor externo se retiró (ver editor-externo-retirado-test.php).
+ownership_assert(!file_exists($root . '/modules/formularios/includes/editor-routing.php'), 'El ruteo legado hacia el Editor externo no debe existir');
 
 echo "OK settings ownership contract\n";

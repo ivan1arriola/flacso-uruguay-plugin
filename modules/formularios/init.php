@@ -27,7 +27,6 @@ flacso_safe_require('modules/formularios/includes/assets.php');
 // Cargar configuración y handlers de formularios
 flacso_safe_require('modules/formularios/includes/helpers.php');
 // Compatibility helpers only; the Contacto form no longer uses the Editor.
-flacso_safe_require('modules/formularios/includes/editor-routing.php');
 flacso_safe_require('modules/formularios/includes/settings.php');
 flacso_safe_require('modules/formularios/includes/validation.php');
 flacso_safe_require('modules/formularios/includes/telegram.php');
