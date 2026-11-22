@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<ruleset name="FLACSO Uruguay Plugin">
+  <description>Estandar WordPress + compatibilidad PHP 7.4. Se corre sobre lo que cambia en cada PR.</description>
+  <file>.</file>
+  <arg name="extensions" value="php"/>
+  <arg name="basepath" value="."/>
+  <arg name="parallel" value="8"/>
+  <arg value="ps"/>
+  <exclude-pattern>*/vendor/*</exclude-pattern>
+  <exclude-pattern>*/node_modules/*</exclude-pattern>
+  <exclude-pattern>*/build/*</exclude-pattern>
+  <exclude-pattern>*/tests/*</exclude-pattern>
+  <exclude-pattern>*/.worktrees/*</exclude-pattern>
+  <exclude-pattern>*/debug-*.php</exclude-pattern>
+  <exclude-pattern>test-schema.php</exclude-pattern>
+
+  <config name="testVersion" value="7.4-"/>
+  <rule ref="PHPCompatibilityWP"/>
+
+  <!-- Etapa 1: seguridad, base de datos y funciones peligrosas. El formato (WordPress-Extra completo) queda para una segunda etapa. -->
+  <rule ref="WordPress.Security"/>
+  <rule ref="WordPress.DB.PreparedSQL"/>
+  <rule ref="WordPress.DB.PreparedSQLPlaceholders"/>
+  <rule ref="WordPress.DB.RestrictedFunctions"/>
+  <rule ref="WordPress.PHP.DiscouragedPHPFunctions"/>
+  <rule ref="WordPress.PHP.DontExtract"/>
+  <rule ref="WordPress.PHP.StrictInArray"/>
+  <rule ref="WordPress.WP.DeprecatedFunctions"/>
+  <rule ref="WordPress.WP.EnqueuedResources"/>
+  <config name="minimum_wp_version" value="6.0"/>
+  <rule ref="WordPress.WP.I18n">
+    <properties><property name="text_domain" type="array"><element value="flacso-uruguay"/></property></properties>
+  </rule>
+</ruleset>

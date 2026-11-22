@@ -251,3 +251,10 @@ Ejecuta la suite completa:
   1. Verificar la ejecución del workflow de GitHub Actions.
   2. Verificar que no haya errores de activación o fatales en WordPress.
   3. Las ramas temporales o worktrees solo se eliminan después de verificar que sus cambios están integrados en `main`.
+
+## Herramientas de calidad (PHP)
+
+- Instalar: `composer install` (solo desarrollo; `vendor/` no se versiona).
+- `composer phpstan`: análisis estático nivel 3. El código viejo está congelado en `phpstan-baseline.neon`; no agregar errores nuevos. En Windows, si la ruta tiene tildes (p. ej. `Iván`), PHPStan falla en sus procesos paralelos: correrlo desde la ruta corta (`cmd /c "cd /d <ruta 8.3> && php vendorin\phpstan analyse"`).
+- `composer phpcs`: seguridad (escapado, nonces, SQL) y compatibilidad PHP 7.4. En CI bloquea en archivos PHP nuevos e informa en los modificados.
+- Activar el hook local: `git config core.hooksPath .githooks`.

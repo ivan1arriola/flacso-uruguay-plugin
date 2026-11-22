@@ -1,0 +1,27 @@
+{
+  "name": "flacso/flacso-uruguay-plugin",
+  "description": "Herramientas de calidad de codigo del plugin FLACSO Uruguay (solo desarrollo).",
+  "type": "wordpress-plugin",
+  "license": "proprietary",
+  "require": { "php": ">=7.4" },
+  "require-dev": {
+    "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+    "wp-coding-standards/wpcs": "^3.1",
+    "phpcompatibility/phpcompatibility-wp": "^2.1",
+    "phpstan/phpstan": "^2.1",
+    "phpstan/extension-installer": "^1.4",
+    "szepeviktor/phpstan-wordpress": "^2.0"
+  },
+  "config": {
+    "sort-packages": true,
+    "platform": { "php": "7.4.33" },
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true,
+      "phpstan/extension-installer": true
+    }
+  },
+  "scripts": {
+    "phpcs": "phpcs",
+    "phpstan": "phpstan analyse --memory-limit=1G"
+  }
+}

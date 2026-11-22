@@ -28,3 +28,11 @@ run_python() {
 
 echo "[pre-commit] Running encoding checks..."
 run_python .github/scripts/check_encoding.py
+
+if [ -x vendor/bin/phpcs ]; then
+  echo "[pre-commit] PHPCS en archivos PHP nuevos..."
+  new_php="$(git diff --cached --name-only --diff-filter=A -- "*.php")"
+  if [ -n "$new_php" ]; then
+    echo "$new_php" | xargs php -d memory_limit=1G vendor/bin/phpcs
+  fi
+fi
