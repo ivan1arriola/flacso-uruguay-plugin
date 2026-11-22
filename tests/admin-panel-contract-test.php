@@ -35,7 +35,7 @@ panel_assert(preg_match("/add_submenu_page\(\s*'index\.php'/", $panel) === 1, 'e
 panel_assert(strpos($panel, "admin.php?page=' . self::PAGE_SLUG") !== false, 'el panel conserva su URL canónica');
 panel_assert(strpos($panel, "if (!FLACSO_Academic_Assistant::is_assistant())") !== false, 'la barra superior sólo añade accesos para la Asistente');
 
-// Ninguna pantalla ni CPT queda colgada del antiguo menú raíz.
+// Ninguna pantalla cuelga directamente del slug del panel: lo hace a través de FLACSO_Admin_Menu (apagado por defecto).
 $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS));
 foreach ($iterator as $file) {
     $path = str_replace(DIRECTORY_SEPARATOR, '/', (string) $file);

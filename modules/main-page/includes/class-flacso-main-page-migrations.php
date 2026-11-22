@@ -19,7 +19,7 @@ class Flacso_Main_Page_Migrations {
 
     public static function register_menu(): void {
         add_submenu_page(
-            'flacso-main-page',
+            FLACSO_Admin_Menu::parent('flacso-main-page'),
             __('Migraciones', 'flacso-main-page'),
             __('Migraciones', 'flacso-main-page'),
             'manage_options',

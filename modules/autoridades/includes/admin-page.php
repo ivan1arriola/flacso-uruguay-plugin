@@ -8,6 +8,10 @@ if (!defined('ABSPATH')) {
 }
 
 add_action('admin_menu', function () {
+    if (FLACSO_Admin_Menu::enabled()) {
+        add_submenu_page(FLACSO_Admin_Menu::PARENT, __('Autoridades FLACSO', 'flacso-uruguay'), __('Autoridades', 'flacso-uruguay'), 'manage_options', 'flacso-autoridades', 'flacso_autoridades_admin_page');
+        return;
+    }
     add_menu_page(
         __('Autoridades FLACSO', 'flacso-uruguay'),
         __('Autoridades FLACSO', 'flacso-uruguay'),

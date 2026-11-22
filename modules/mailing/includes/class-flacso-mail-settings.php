@@ -38,7 +38,7 @@ final class FLACSO_Mail_Settings {
 
     public static function register_menu(): void {
         add_submenu_page(
-            'options-general.php',
+            FLACSO_Admin_Menu::parent('options-general.php'),
             __('Comunicaciones Mautic', 'flacso-uruguay'),
             __('Correos', 'flacso-uruguay'),
             'manage_options',

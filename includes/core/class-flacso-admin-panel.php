@@ -36,6 +36,11 @@ final class FLACSO_Admin_Panel {
             );
             return;
         }
+        if (FLACSO_Admin_Menu::enabled()) {
+            add_menu_page(__('FLACSO Uruguay', 'flacso-uruguay'), __('FLACSO', 'flacso-uruguay'), self::capability(), self::PAGE_SLUG, [self::class, 'render'], 'dashicons-building', 3);
+            add_submenu_page(self::PAGE_SLUG, $title, __('Resumen', 'flacso-uruguay'), self::capability(), self::PAGE_SLUG, [self::class, 'render']);
+            return;
+        }
         add_submenu_page(
             'index.php',
             $title,

@@ -58,7 +58,7 @@ class Flacso_Main_Page_Admin {
 
     public static function register_menu(): void {
         add_submenu_page(
-            'edit.php?post_type=page',
+            FLACSO_Admin_Menu::parent('edit.php?post_type=page'),
             __('Portada del sitio', 'flacso-main-page'),
             __('Portada', 'flacso-main-page'),
             'manage_options',

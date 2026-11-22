@@ -27,7 +27,7 @@ final class FLACSO_Carta_Settings_Admin {
 
     public static function register_menu(): void {
         add_submenu_page(
-            'edit.php?post_type=oferta-academica',
+            FLACSO_Admin_Menu::parent('edit.php?post_type=oferta-academica'),
             __('Textos de la carta', 'flacso-uruguay'),
             __('Textos de la carta', 'flacso-uruguay'),
             self::CAPABILITY,
