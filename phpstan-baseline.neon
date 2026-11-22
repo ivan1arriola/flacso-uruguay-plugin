@@ -1,0 +1,475 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Constant FLACSO_URUGUAY_PATH not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: includes/core/class-flacso-academic-assistant.php
+
+		-
+			message: '#^Constant FLACSO_URUGUAY_URL not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: includes/core/class-flacso-academic-assistant.php
+
+		-
+			message: '#^Constant FLACSO_URUGUAY_PATH not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: includes/core/class-flacso-admin-panel.php
+
+		-
+			message: '#^Constant FLACSO_URUGUAY_URL not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: includes/core/class-flacso-admin-panel.php
+
+		-
+			message: '#^Constant FLACSO_URUGUAY_PATH not found\.$#'
+			identifier: constant.notFound
+			count: 4
+			path: includes/core/class-flacso-error-notifier.php
+
+		-
+			message: '#^Access to undefined constant FLACSO_Integrations_Settings\:\:OPTION_CARTA_CTA_TITULO_DEFAULT\.$#'
+			identifier: classConstant.notFound
+			count: 1
+			path: includes/core/class-flacso-integrations-settings.php
+
+		-
+			message: '#^Access to undefined constant FLACSO_Integrations_Settings\:\:OPTION_SEMINARIOS_DIAS_CIERRE_POST_INICIO\.$#'
+			identifier: classConstant.notFound
+			count: 1
+			path: includes/core/class-flacso-integrations-settings.php
+
+		-
+			message: '#^Call to an undefined static method FLACSO_Mail_Settings\:\:get_contact_lists\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: includes/core/class-flacso-integrations-settings.php
+
+		-
+			message: '#^Call to an undefined static method FLACSO_Mail_Settings\:\:is_mailing_ready\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: includes/core/class-flacso-integrations-settings.php
+
+		-
+			message: '#^Constant FLACSO_URUGUAY_URL not found\.$#'
+			identifier: constant.notFound
+			count: 3
+			path: includes/core/class-flacso-meta-tracking.php
+
+		-
+			message: '#^Action callback returns bool but should not return anything\.$#'
+			identifier: return.void
+			count: 1
+			path: includes/core/class-flacso-page-cache.php
+
+		-
+			message: '#^Constant FLACSO_URUGUAY_PATH not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: includes/core/class-flacso-rest-dto-loader.php
+
+		-
+			message: '#^Constant FLACSO_URUGUAY_PATH not found\.$#'
+			identifier: constant.notFound
+			count: 2
+			path: includes/core/helpers.php
+
+		-
+			message: '#^Constant FLACSO_URUGUAY_PATH not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: includes/core/loader.php
+
+		-
+			message: '#^Constant FLACSO_URUGUAY_PATH not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: includes/core/requires.php
+
+		-
+			message: '#^Constant FLACSO_PG_DATABASE not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: includes/database/class-flacso-db.php
+
+		-
+			message: '#^Constant FLACSO_PG_HOST not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: includes/database/class-flacso-db.php
+
+		-
+			message: '#^Constant FLACSO_PG_PASSWORD not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: includes/database/class-flacso-db.php
+
+		-
+			message: '#^Constant FLACSO_PG_PORT not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: includes/database/class-flacso-db.php
+
+		-
+			message: '#^Constant FLACSO_PG_USER not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: includes/database/class-flacso-db.php
+
+		-
+			message: '#^Function str_contains not found\.$#'
+			identifier: function.notFound
+			count: 3
+			path: includes/database/repositories/class-flacso-base-inquiry-repository.php
+
+		-
+			message: '#^Call to an undefined method FLACSO_Base_Inquiry_Repository\:\:insert\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: includes/database/repositories/class-flacso-inquiry-delivery-repository.php
+
+		-
+			message: '#^Constant WP_WEBHOOK_HMAC_SECRET not found\.$#'
+			identifier: constant.notFound
+			count: 2
+			path: includes/integrations/class-flacso-mailing-client.php
+
+		-
+			message: '#^Method FLACSO_Mautic_Client\:\:get_contact_tags\(\) should return array\{ok\: bool, status\: string, http_code\: int, error\: string\|null, tags\: array\} but returns array\{ok\: false, status\: string, http_code\: int, error\: string, data\: array\}\.$#'
+			identifier: return.type
+			count: 1
+			path: includes/integrations/class-flacso-mautic-client.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$endpoint$#'
+			identifier: parameter.notFound
+			count: 1
+			path: includes/integrations/class-flacso-mautic-client.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$method$#'
+			identifier: parameter.notFound
+			count: 1
+			path: includes/integrations/class-flacso-mautic-client.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$payload$#'
+			identifier: parameter.notFound
+			count: 1
+			path: includes/integrations/class-flacso-mautic-client.php
+
+		-
+			message: '#^Undefined variable\: \$live_statuses$#'
+			identifier: variable.undefined
+			count: 1
+			path: modules/consultas/includes/class-flacso-consultas-admin.php
+
+		-
+			message: '#^Variable \$live_statuses on left side of \?\? is never defined\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: modules/consultas/includes/class-flacso-consultas-admin.php
+
+		-
+			message: '#^Call to static method error\(\) on an unknown class WP_CLI\.$#'
+			identifier: class.notFound
+			count: 1
+			path: modules/consultas/includes/class-flacso-consultas-cli.php
+
+		-
+			message: '#^Call to static method line\(\) on an unknown class WP_CLI\.$#'
+			identifier: class.notFound
+			count: 1
+			path: modules/consultas/includes/class-flacso-consultas-cli.php
+
+		-
+			message: '#^Action callback returns array but should not return anything\.$#'
+			identifier: return.void
+			count: 1
+			path: modules/consultas/services/class-flacso-inquiry-followup-service.php
+
+		-
+			message: '#^Constant FLACSO_URUGUAY_PATH not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: modules/convenios/includes/main-page.php
+
+		-
+			message: '#^Constant FLACSO_URUGUAY_URL not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: modules/core/init.php
+
+		-
+			message: '#^Filter callback return statement is missing\.$#'
+			identifier: return.missing
+			count: 1
+			path: modules/docentes/includes/admin-filters.php
+
+		-
+			message: '#^Cannot access property \$ID on array\|object\.$#'
+			identifier: property.nonObject
+			count: 9
+			path: modules/docentes/includes/admin.php
+
+		-
+			message: '#^Constant FLACSO_URUGUAY_PATH not found\.$#'
+			identifier: constant.notFound
+			count: 3
+			path: modules/docentes/includes/assets.php
+
+		-
+			message: '#^Constant FLACSO_URUGUAY_URL not found\.$#'
+			identifier: constant.notFound
+			count: 3
+			path: modules/docentes/includes/assets.php
+
+		-
+			message: '#^Constant FLACSO_URUGUAY_PATH not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: modules/eventos/includes/homepage.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$payload$#'
+			identifier: parameter.notFound
+			count: 1
+			path: modules/formularios/includes/form-handlers.php
+
+		-
+			message: '#^Constant FLACSO_URUGUAY_PATH not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: modules/formularios/init.php
+
+		-
+			message: '#^Constant FLACSO_URUGUAY_URL not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: modules/formularios/init.php
+
+		-
+			message: '#^Constant FLACSO_URUGUAY_PATH not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: modules/mailing/includes/homepage.php
+
+		-
+			message: '#^Constant FLACSO_MAIN_PAGE_MODULE_URL not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: modules/main-page/includes/class-flacso-home-campaign.php
+
+		-
+			message: '#^Function str_starts_with not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: modules/main-page/includes/class-flacso-home-campaign.php
+
+		-
+			message: '#^Constant FLACSO_MAIN_PAGE_MODULE_URL not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: modules/main-page/includes/class-flacso-main-page-blocks.php
+
+		-
+			message: '#^Constant FLACSO_MAIN_PAGE_MODULE_URL not found\.$#'
+			identifier: constant.notFound
+			count: 5
+			path: modules/main-page/includes/class-flacso-main-page-loader.php
+
+		-
+			message: '#^Constant FLACSO_URUGUAY_PATH not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: modules/main-page/includes/class-flacso-main-page-loader.php
+
+		-
+			message: '#^Constant FLACSO_MAIN_PAGE_MODULE_URL not found\.$#'
+			identifier: constant.notFound
+			count: 4
+			path: modules/main-page/includes/class-flacso-main-page-unified-settings.php
+
+		-
+			message: '#^Action callback returns array\|WP_Error but should not return anything\.$#'
+			identifier: return.void
+			count: 1
+			path: modules/main-page/includes/class-flacso-telegram-manager.php
+
+		-
+			message: '#^Call to static method get_bot_info\(\) on an unknown class WPTELEGRAM_API\.$#'
+			identifier: class.notFound
+			count: 1
+			path: modules/main-page/includes/class-flacso-telegram-manager.php
+
+		-
+			message: '#^Call to static method is_configured\(\) on an unknown class WPTELEGRAM_Core_Simple\.$#'
+			identifier: class.notFound
+			count: 1
+			path: modules/main-page/includes/class-flacso-telegram-manager.php
+
+		-
+			message: '#^Call to static method send_message\(\) on an unknown class WPTELEGRAM_API\.$#'
+			identifier: class.notFound
+			count: 1
+			path: modules/main-page/includes/class-flacso-telegram-manager.php
+
+		-
+			message: '#^Call to static method send_test_message\(\) on an unknown class WPTELEGRAM_API\.$#'
+			identifier: class.notFound
+			count: 1
+			path: modules/main-page/includes/class-flacso-telegram-manager.php
+
+		-
+			message: '#^Constant FLACSO_MAIN_PAGE_MODULE_URL not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: modules/main-page/includes/flacso-consultas.php
+
+		-
+			message: '#^Constant FLACSO_MAIN_PAGE_MODULE_URL not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: modules/main-page/sections/convenios-responsivos.php
+
+		-
+			message: '#^Call to static method add_command\(\) on an unknown class WP_CLI\.$#'
+			identifier: class.notFound
+			count: 1
+			path: modules/oferta-academica/includes/class-academic-cli.php
+
+		-
+			message: '#^Call to static method colorize\(\) on an unknown class WP_CLI\.$#'
+			identifier: class.notFound
+			count: 16
+			path: modules/oferta-academica/includes/class-academic-cli.php
+
+		-
+			message: '#^Call to static method confirm\(\) on an unknown class WP_CLI\.$#'
+			identifier: class.notFound
+			count: 1
+			path: modules/oferta-academica/includes/class-academic-cli.php
+
+		-
+			message: '#^Call to static method error\(\) on an unknown class WP_CLI\.$#'
+			identifier: class.notFound
+			count: 2
+			path: modules/oferta-academica/includes/class-academic-cli.php
+
+		-
+			message: '#^Call to static method line\(\) on an unknown class WP_CLI\.$#'
+			identifier: class.notFound
+			count: 8
+			path: modules/oferta-academica/includes/class-academic-cli.php
+
+		-
+			message: '#^Call to static method log\(\) on an unknown class WP_CLI\.$#'
+			identifier: class.notFound
+			count: 18
+			path: modules/oferta-academica/includes/class-academic-cli.php
+
+		-
+			message: '#^Call to static method success\(\) on an unknown class WP_CLI\.$#'
+			identifier: class.notFound
+			count: 2
+			path: modules/oferta-academica/includes/class-academic-cli.php
+
+		-
+			message: '#^Call to static method warning\(\) on an unknown class WP_CLI\.$#'
+			identifier: class.notFound
+			count: 1
+			path: modules/oferta-academica/includes/class-academic-cli.php
+
+		-
+			message: '#^Constant FLACSO_URUGUAY_PATH not found\.$#'
+			identifier: constant.notFound
+			count: 3
+			path: modules/oferta-academica/includes/class-academic-cli.php
+
+		-
+			message: '#^Function WP_CLI\\Utils\\format_items not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: modules/oferta-academica/includes/class-academic-cli.php
+
+		-
+			message: '#^Call to static method add_command\(\) on an unknown class WP_CLI\.$#'
+			identifier: class.notFound
+			count: 1
+			path: modules/oferta-academica/includes/class-academic-meta-normalizer.php
+
+		-
+			message: '#^Call to static method error\(\) on an unknown class WP_CLI\.$#'
+			identifier: class.notFound
+			count: 6
+			path: modules/oferta-academica/includes/class-academic-meta-normalizer.php
+
+		-
+			message: '#^Call to static method line\(\) on an unknown class WP_CLI\.$#'
+			identifier: class.notFound
+			count: 1
+			path: modules/oferta-academica/includes/class-academic-meta-normalizer.php
+
+		-
+			message: '#^Call to static method success\(\) on an unknown class WP_CLI\.$#'
+			identifier: class.notFound
+			count: 2
+			path: modules/oferta-academica/includes/class-academic-meta-normalizer.php
+
+		-
+			message: '#^Call to static method warning\(\) on an unknown class WP_CLI\.$#'
+			identifier: class.notFound
+			count: 1
+			path: modules/oferta-academica/includes/class-academic-meta-normalizer.php
+
+		-
+			message: '#^Function str_contains not found\.$#'
+			identifier: function.notFound
+			count: 8
+			path: modules/oferta-academica/includes/class-academic-meta-normalizer.php
+
+		-
+			message: '#^Function str_starts_with not found\.$#'
+			identifier: function.notFound
+			count: 3
+			path: modules/oferta-academica/includes/class-academic-meta-normalizer.php
+
+		-
+			message: '#^Call to an undefined static method FLACSO_Mail_Settings\:\:get_contact_lists\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: modules/oferta-academica/includes/class-academic-settings-api.php
+
+		-
+			message: '#^Filter callback return statement is missing\.$#'
+			identifier: return.missing
+			count: 1
+			path: modules/oferta-academica/includes/class-cohorte.php
+
+		-
+			message: '#^Function str_ends_with not found\.$#'
+			identifier: function.notFound
+			count: 2
+			path: modules/oferta-academica/includes/class-oferta-taxonomies.php
+
+		-
+			message: '#^Constant FLACSO_URUGUAY_PATH not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: modules/oferta-academica/includes/homepage.php
+
+		-
+			message: '#^Filter callback return statement is missing\.$#'
+			identifier: return.missing
+			count: 1
+			path: modules/seminarios/includes/class-edicion.php
+
+		-
+			message: '#^Constant FLACSO_URUGUAY_PATH not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: modules/seminarios/includes/homepage.php

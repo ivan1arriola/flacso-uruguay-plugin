@@ -1,0 +1,16 @@
+parameters:
+  level: 3
+  paths:
+    - flacso-uruguay.php
+    - includes
+    - modules
+  excludePaths:
+    - vendor
+    - tests
+    - build
+  scanDirectories:
+    - includes
+    - modules
+  treatPhpDocTypesAsCertain: false
+includes:
+  - phpstan-baseline.neon
