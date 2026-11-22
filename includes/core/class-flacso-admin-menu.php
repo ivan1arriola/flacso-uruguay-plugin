@@ -40,7 +40,6 @@ class FLACSO_Admin_Menu {
         'flacso-autoridades',
         'flacso-consultas',
         'flacso-main-page',
-        'flacso-main-page-migrations',
         'fc_options_page',
         'flacso-correos',
         'flacso-integracion-meta',
