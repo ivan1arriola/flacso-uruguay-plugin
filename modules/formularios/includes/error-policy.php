@@ -59,13 +59,17 @@ function fc_notify_form_admin_error( array $incident ) {
         'Etapa: ' . $stage,
         'Fecha: ' . current_time( 'd/m/Y H:i:s' ),
     ];
+    // El log del servidor no lleva el correo del usuario (dato personal); el aviso al administrador sí.
+    $log_lines = $lines;
     if ( '' !== $email ) {
         $lines[] = 'Correo del usuario: ' . $email;
     }
     if ( '' !== $url ) {
-        $lines[] = 'Página: ' . $url;
+        $lines[]     = 'Página: ' . $url;
+        $log_lines[] = 'Página: ' . $url;
     }
-    $lines[] = 'Detalle técnico: ' . $detail;
+    $lines[]     = 'Detalle técnico: ' . $detail;
+    $log_lines[] = 'Detalle técnico: ' . $detail;
     $plain = implode( "\n", $lines );
 
     // Evita tormentas de alertas por el mismo formulario, etapa y detalle.
@@ -99,7 +103,7 @@ function fc_notify_form_admin_error( array $incident ) {
         $telegram_sent = fc_send_telegram_message( '<b>⚠️ Error en formulario</b>' . "\n\n" . implode( "\n", $telegram_lines ) );
     }
 
-    error_log( '[FLACSO-FORM] ' . $plain );
+    error_log( '[FLACSO-FORM] ' . implode( "\n", $log_lines ) );
     return [
         'email'    => $email_sent ? 'sent' : 'failed',
         'telegram' => $telegram_sent ? 'sent' : 'failed',
