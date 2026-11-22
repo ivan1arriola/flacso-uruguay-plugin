@@ -1,0 +1,376 @@
+[
+  {
+    "name": "portada",
+    "status": 200,
+    "url": "https://flacso.edu.uy/",
+    "measure": {
+      "rootVars": {
+        "--global-palette9rgb": "255, 255, 255",
+        "--global-palette12": "#1159af",
+        "--global-palette14": "#f7630c",
+        "--global-palette2": "#fed222",
+        "--global-content-width": "1180px"
+      },
+      "before": [
+        {
+          "selector": ".flacso-home h1",
+          "family": "Roboto, sans-serif",
+          "text": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "width": 680,
+          "padding": "0px",
+          "radius": "0px"
+        },
+        {
+          "selector": ".hero-cta",
+          "family": "Roboto, sans-serif",
+          "text": "rgb(15, 26, 45)",
+          "bg": "rgb(254, 210, 34)",
+          "width": 237,
+          "padding": "15px 19px",
+          "radius": "12px"
+        },
+        {
+          "selector": ".flacso-chrome-container",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "text": "rgb(220, 232, 250)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "width": 1180,
+          "padding": "0px",
+          "radius": "0px"
+        },
+        {
+          "selector": ".flacso-home .container",
+          "family": "Roboto, sans-serif",
+          "text": "rgb(46, 47, 52)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "width": 1180,
+          "padding": "35px 0px",
+          "radius": "0px"
+        }
+      ],
+      "after": [
+        {
+          "selector": ".flacso-home h1",
+          "family": "Georgia, serif",
+          "text": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "width": 680,
+          "padding": "0px",
+          "radius": "0px"
+        },
+        {
+          "selector": ".hero-cta",
+          "family": "Georgia, serif",
+          "text": "rgb(15, 26, 45)",
+          "bg": "rgb(255, 165, 172)",
+          "width": 261,
+          "padding": "15px 19px",
+          "radius": "12px"
+        },
+        {
+          "selector": ".flacso-chrome-container",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "text": "rgb(220, 232, 250)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "width": 1180,
+          "padding": "0px",
+          "radius": "0px"
+        },
+        {
+          "selector": ".flacso-home .container",
+          "family": "Georgia, serif",
+          "text": "rgb(46, 47, 52)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "width": 920,
+          "padding": "35px 0px",
+          "radius": "0px"
+        }
+      ],
+      "innerWrap": 1,
+      "robots": [
+        "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+      ]
+    }
+  },
+  {
+    "name": "formacion",
+    "status": 200,
+    "url": "https://flacso.edu.uy/formacion/",
+    "measure": {
+      "rootVars": {
+        "--global-palette9rgb": "255, 255, 255",
+        "--global-palette12": "#1159af",
+        "--global-palette14": "#f7630c",
+        "--global-palette2": "#fed222",
+        "--global-content-width": "1180px"
+      },
+      "before": [
+        {
+          "selector": "main h1",
+          "family": "Roboto, sans-serif",
+          "text": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "width": 700,
+          "padding": "0px",
+          "radius": "0px"
+        },
+        {
+          "selector": "main h2",
+          "family": "Roboto, sans-serif",
+          "text": "rgb(11, 31, 63)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "width": 135,
+          "padding": "0px",
+          "radius": "0px"
+        },
+        {
+          "selector": "main",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "text": "rgb(33, 37, 41)",
+          "bg": "rgb(247, 249, 252)",
+          "width": 1280,
+          "padding": "0px",
+          "radius": "0px"
+        }
+      ],
+      "after": [
+        {
+          "selector": "main h1",
+          "family": "Georgia, serif",
+          "text": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "width": 700,
+          "padding": "0px",
+          "radius": "0px"
+        },
+        {
+          "selector": "main h2",
+          "family": "Georgia, serif",
+          "text": "rgb(11, 31, 63)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "width": 154,
+          "padding": "0px",
+          "radius": "0px"
+        },
+        {
+          "selector": "main",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "text": "rgb(33, 37, 41)",
+          "bg": "rgb(247, 249, 252)",
+          "width": 1280,
+          "padding": "0px",
+          "radius": "0px"
+        }
+      ],
+      "innerWrap": 1,
+      "robots": [
+        "follow, noindex"
+      ]
+    }
+  },
+  {
+    "name": "oferta",
+    "status": 200,
+    "url": "https://flacso.edu.uy/formacion/maestrias/maestria-en-genero/",
+    "measure": {
+      "rootVars": {
+        "--global-palette9rgb": "255, 255, 255",
+        "--global-palette12": "#1159af",
+        "--global-palette14": "#f7630c",
+        "--global-palette2": "#fed222",
+        "--global-content-width": "1180px"
+      },
+      "before": [
+        {
+          "selector": "main h1",
+          "family": "Roboto, sans-serif",
+          "text": "rgb(8, 43, 96)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "width": 440,
+          "padding": "0px",
+          "radius": "0px"
+        },
+        {
+          "selector": ".flacso-academic-hero",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "text": "rgb(8, 43, 96)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "width": 1280,
+          "padding": "70.4px 0px",
+          "radius": "0px"
+        },
+        {
+          "selector": "[data-flacso-preinscription-cta]",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "text": "rgb(255, 255, 255)",
+          "bg": "rgb(107, 31, 173)",
+          "width": 240,
+          "padding": "13px 23px",
+          "radius": "999px"
+        }
+      ],
+      "after": [
+        {
+          "selector": "main h1",
+          "family": "Georgia, serif",
+          "text": "rgb(8, 43, 96)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "width": 440,
+          "padding": "0px",
+          "radius": "0px"
+        },
+        {
+          "selector": ".flacso-academic-hero",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "text": "rgb(8, 43, 96)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "width": 1280,
+          "padding": "70.4px 0px",
+          "radius": "0px"
+        },
+        {
+          "selector": "[data-flacso-preinscription-cta]",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "text": "rgb(255, 255, 255)",
+          "bg": "rgb(107, 31, 173)",
+          "width": 240,
+          "padding": "13px 23px",
+          "radius": "999px"
+        }
+      ],
+      "innerWrap": 2,
+      "robots": [
+        "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+      ]
+    }
+  },
+  {
+    "name": "seminario",
+    "status": 200,
+    "url": "https://flacso.edu.uy/formacion/seminarios/politicas-e-identidades-docentes/",
+    "measure": {
+      "rootVars": {
+        "--global-palette9rgb": "255, 255, 255",
+        "--global-palette12": "#1159af",
+        "--global-palette14": "#f7630c",
+        "--global-palette2": "#fed222",
+        "--global-content-width": "1180px"
+      },
+      "before": [
+        {
+          "selector": "main h1",
+          "family": "Roboto, sans-serif",
+          "text": "rgb(29, 58, 114)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "width": 580,
+          "padding": "0px",
+          "radius": "0px"
+        },
+        {
+          "selector": "[data-flacso-preinscription-cta]",
+          "family": "Roboto, sans-serif",
+          "text": "rgb(255, 255, 255)",
+          "bg": "rgb(29, 58, 114)",
+          "width": 188,
+          "padding": "13px 20px",
+          "radius": "13px"
+        }
+      ],
+      "after": [
+        {
+          "selector": "main h1",
+          "family": "Georgia, serif",
+          "text": "rgb(100, 30, 77)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "width": 580,
+          "padding": "0px",
+          "radius": "0px"
+        },
+        {
+          "selector": "[data-flacso-preinscription-cta]",
+          "family": "Georgia, serif",
+          "text": "rgb(255, 255, 255)",
+          "bg": "rgb(100, 30, 77)",
+          "width": 210,
+          "padding": "13px 20px",
+          "radius": "13px"
+        }
+      ],
+      "innerWrap": 1,
+      "robots": [
+        "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+      ]
+    }
+  },
+  {
+    "name": "carta",
+    "status": 200,
+    "url": "https://flacso.edu.uy/formacion/maestrias/maestria-en-genero/carta/",
+    "robots": "noindex, nofollow",
+    "shot": "08-carta-1280.png",
+    "measure": {
+      "rootVars": {
+        "--global-palette9rgb": "255, 255, 255",
+        "--global-palette12": "#1159af",
+        "--global-palette14": "#f7630c",
+        "--global-palette2": "#fed222",
+        "--global-content-width": "1180px"
+      },
+      "before": [
+        {
+          "selector": "main h1",
+          "family": "Roboto, sans-serif",
+          "text": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "width": 525,
+          "padding": "0px",
+          "radius": "0px"
+        },
+        {
+          "selector": "article h1",
+          "missing": true
+        }
+      ],
+      "after": [
+        {
+          "selector": "main h1",
+          "family": "Georgia, serif",
+          "text": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "width": 525,
+          "padding": "0px",
+          "radius": "0px"
+        },
+        {
+          "selector": "article h1",
+          "missing": true
+        }
+      ],
+      "innerWrap": 1,
+      "robots": [
+        "noindex, nofollow",
+        "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large"
+      ]
+    }
+  },
+  {
+    "name": "carta-movil",
+    "status": 200,
+    "url": "https://flacso.edu.uy/formacion/maestrias/maestria-en-genero/carta/",
+    "shot": "08-carta-375.png"
+  },
+  {
+    "name": "buscador-movil",
+    "status": 200,
+    "url": "https://flacso.edu.uy/",
+    "focus": {
+      "id": "flacso-header-search-field",
+      "outline": "rgb(15, 26, 45) none 0px",
+      "border": "rgb(201, 210, 222)",
+      "shadow": "rgba(0, 0, 0, 0.1) 0px 5px 15px -7px"
+    },
+    "shot": "09-busqueda-teclado-375.png",
+    "focusAfterEscape": true
+  }
+]

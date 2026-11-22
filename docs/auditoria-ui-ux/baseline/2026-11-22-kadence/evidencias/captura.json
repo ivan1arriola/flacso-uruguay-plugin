@@ -1,0 +1,1750 @@
+[
+  {
+    "slug": "01-portada",
+    "width": 375,
+    "status": 200,
+    "url": "https://flacso.edu.uy/",
+    "data": {
+      "title": "FLACSO Uruguay - FLACSO Uruguay",
+      "body": "home wp-singular page-template-default page page-id-19886 page-child parent-pageid-11328 wp-custom-logo wp-embed-responsive wp-theme-kadence wp-child-theme-kadence-child-flacso footer-on-bottom animate-body-popup social-brand-colors hide-focus-outline link-style-color-underline content-title-style-hide content-width-normal content-style-boxed content-vertical-padding-show non-transparent-header mobile-non-transparent-header",
+      "palette": [
+        "#1d3a72",
+        "#fed222",
+        "#0f1a2d",
+        "#2e2f34",
+        "#64748b",
+        "#c9d2de",
+        "#e9edf2",
+        "#f8f9fa",
+        "#ffffff"
+      ],
+      "contentWidth": "1180px",
+      "overflow": false,
+      "headings": [
+        {
+          "text": "Formación que conecta,\nconocimiento que transforma.",
+          "cls": "",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "37px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Encontrá tu próxima formación",
+          "cls": "",
+          "fg": "rgb(46, 47, 52)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "25px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Tu próximo paso empieza acá.",
+          "cls": "",
+          "fg": "rgb(46, 47, 52)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "24px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Próximas actividades",
+          "cls": "",
+          "fg": "rgb(46, 47, 52)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "24px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Noticias",
+          "cls": "",
+          "fg": "rgb(46, 47, 52)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "28px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Pensar la región.\nProducir conocimiento.",
+          "cls": "",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "30px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "¿Qué es FLACSO Uruguay?",
+          "cls": "",
+          "fg": "rgb(46, 47, 52)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "25px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        }
+      ],
+      "cta": [
+        {
+          "text": "Explorar oferta académica\n↗",
+          "cls": "primary hero-cta",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgb(254, 210, 34)",
+          "sz": "12px",
+          "family": "Roboto, sans-serif",
+          "radius": "12px",
+          "href": "https://flacso.edu.uy/formacion/"
+        },
+        {
+          "text": "Conocer la oferta →",
+          "cls": "campaign-cta",
+          "fg": "rgb(46, 47, 52)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "12px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px",
+          "href": "https://flacso.edu.uy/formacion/"
+        }
+      ],
+      "assets": [
+        "style.css?ver=1.1.54.446",
+        "assets/css/site-chrome.css?ver=1795321265",
+        "assets/css/mobile-ux.css?ver=1795321265",
+        "assets/vendor/bootstrap-icons/font/bootstrap-icons.min.css?ver=1.13.1",
+        "assets/vendor/bootstrap/css/bootstrap.min.css?ver=5.3.8",
+        "assets/css/front-page.css?ver=1795321265"
+      ]
+    },
+    "shot": "01-portada-375.png"
+  },
+  {
+    "slug": "02-formacion",
+    "width": 375,
+    "status": 200,
+    "url": "https://flacso.edu.uy/formacion/",
+    "data": {
+      "title": "Oferta Académica - FLACSO Uruguay",
+      "body": "error404 wp-custom-logo wp-embed-responsive wp-theme-kadence wp-child-theme-kadence-child-flacso hfeed footer-on-bottom animate-body-popup social-brand-colors hide-focus-outline link-style-color-underline content-title-style-normal content-width-normal content-style-boxed content-vertical-padding-show non-transparent-header mobile-non-transparent-header",
+      "palette": [
+        "#1d3a72",
+        "#fed222",
+        "#0f1a2d",
+        "#2e2f34",
+        "#64748b",
+        "#c9d2de",
+        "#e9edf2",
+        "#f8f9fa",
+        "#ffffff"
+      ],
+      "contentWidth": "1180px",
+      "overflow": false,
+      "headings": [
+        {
+          "text": "Oferta Académica",
+          "cls": "flacso-formacion-hero__title",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "35.2px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Maestrías",
+          "cls": "flacso-formacion-group__title",
+          "fg": "rgb(11, 31, 63)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "26.4px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Especializaciones",
+          "cls": "flacso-formacion-group__title",
+          "fg": "rgb(11, 31, 63)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "26.4px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Diplomados",
+          "cls": "flacso-formacion-group__title",
+          "fg": "rgb(11, 31, 63)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "26.4px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Diplomas",
+          "cls": "flacso-formacion-group__title",
+          "fg": "rgb(11, 31, 63)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "26.4px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Seminarios",
+          "cls": "flacso-formacion-group__title",
+          "fg": "rgb(11, 31, 63)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "26.4px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        }
+      ],
+      "cta": [],
+      "assets": [
+        "style.css?ver=1.1.54.446",
+        "assets/css/site-chrome.css?ver=1795321265",
+        "assets/css/mobile-ux.css?ver=1795321265",
+        "assets/vendor/bootstrap-icons/font/bootstrap-icons.min.css?ver=1.13.1",
+        "assets/vendor/bootstrap/css/bootstrap.min.css?ver=5.3.8",
+        "assets/css/formacion-page.css?ver=1795321265"
+      ]
+    },
+    "shot": "02-formacion-375.png"
+  },
+  {
+    "slug": "03-oferta",
+    "width": 375,
+    "status": 200,
+    "url": "https://flacso.edu.uy/formacion/maestrias/maestria-en-genero/",
+    "data": {
+      "title": "Maestría en Género - FLACSO Uruguay",
+      "body": "wp-singular oferta-academica-template-default single single-oferta-academica postid-24162 wp-custom-logo wp-embed-responsive wp-theme-kadence wp-child-theme-kadence-child-flacso footer-on-bottom animate-body-popup social-brand-colors hide-focus-outline link-style-color-underline content-title-style-normal content-width-normal content-style-boxed content-vertical-padding-show non-transparent-header mobile-non-transparent-header",
+      "palette": [
+        "#1d3a72",
+        "#fed222",
+        "#0f1a2d",
+        "#2e2f34",
+        "#64748b",
+        "#c9d2de",
+        "#e9edf2",
+        "#f8f9fa",
+        "#ffffff"
+      ],
+      "contentWidth": "1180px",
+      "overflow": false,
+      "headings": [
+        {
+          "text": "Maestría en\nGénero",
+          "cls": "flacso-academic-hero__title",
+          "fg": "rgb(8, 43, 96)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "21.6px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "MENCIONES",
+          "cls": "flacso-academic-menciones__title",
+          "fg": "rgb(84, 112, 146)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "11.2px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Cohorte VI",
+          "cls": "",
+          "fg": "rgb(29, 58, 114)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "28.8px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "",
+          "cls": "",
+          "fg": "rgb(8, 43, 96)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "17.92px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Coordinación académica",
+          "cls": "",
+          "fg": "rgb(10, 45, 97)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "27.2px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Equipo académico",
+          "cls": "",
+          "fg": "rgb(10, 45, 97)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "27.2px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        }
+      ],
+      "cta": [
+        {
+          "text": "Preinscripción 2027",
+          "cls": "flacso-academic-hero__cta",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgb(107, 31, 173)",
+          "sz": "14.72px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "999px",
+          "href": "https://preinscripciones.flacso.edu.uy/oferta/maestria-en-genero/"
+        },
+        {
+          "text": "Perfil de ingreso",
+          "cls": "",
+          "fg": "rgb(10, 45, 97)",
+          "bg": "rgb(255, 255, 255)",
+          "sz": "15.2px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "0px"
+        },
+        {
+          "text": "Requisitos de ingreso",
+          "cls": "",
+          "fg": "rgb(10, 45, 97)",
+          "bg": "rgb(255, 255, 255)",
+          "sz": "15.2px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "0px"
+        },
+        {
+          "text": "Perfil de egreso",
+          "cls": "",
+          "fg": "rgb(10, 45, 97)",
+          "bg": "rgb(255, 255, 255)",
+          "sz": "15.2px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "0px"
+        },
+        {
+          "text": "Requisitos de egreso",
+          "cls": "",
+          "fg": "rgb(10, 45, 97)",
+          "bg": "rgb(255, 255, 255)",
+          "sz": "15.2px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "0px"
+        },
+        {
+          "text": "Título y certificación",
+          "cls": "",
+          "fg": "rgb(10, 45, 97)",
+          "bg": "rgb(255, 255, 255)",
+          "sz": "15.2px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "0px"
+        },
+        {
+          "text": "¿Querés postularte a la próxima cohorte?\nIniciar preinscripción",
+          "cls": "final-cta",
+          "fg": "rgb(38, 56, 77)",
+          "bg": "rgb(255, 255, 255)",
+          "sz": "16px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "22px"
+        },
+        {
+          "text": "¿Querés postularte a la próxima cohorte?",
+          "cls": "final-cta__text",
+          "fg": "rgb(38, 56, 77)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "16px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "0px"
+        },
+        {
+          "text": "Iniciar preinscripción",
+          "cls": "btn btn--primary",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgb(107, 31, 173)",
+          "sz": "16px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "999px",
+          "href": "https://preinscripciones.flacso.edu.uy/oferta/maestria-en-genero/"
+        },
+        {
+          "text": "",
+          "cls": "btn btn-primary w-100 py-2 mt-2 fw-bold rounded-pill",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgb(107, 31, 173)",
+          "sz": "15.2px",
+          "family": "Roboto, sans-serif",
+          "radius": "999px"
+        },
+        {
+          "text": "AA\nDra. Ana Agostino",
+          "cls": "flacso-academic-person__summary",
+          "fg": "rgb(10, 45, 97)",
+          "bg": "rgb(255, 255, 255)",
+          "sz": "15.04px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "12px"
+        },
+        {
+          "text": "Dra. Jeisil Aguilar",
+          "cls": "flacso-academic-person__summary",
+          "fg": "rgb(10, 45, 97)",
+          "bg": "rgb(255, 255, 255)",
+          "sz": "15.04px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "12px"
+        }
+      ],
+      "assets": [
+        "style.css?ver=1.1.54.446",
+        "assets/css/site-chrome.css?ver=1795321265",
+        "assets/css/mobile-ux.css?ver=1795321265",
+        "assets/vendor/bootstrap-icons/font/bootstrap-icons.min.css?ver=1.13.1",
+        "assets/vendor/bootstrap/css/bootstrap.min.css?ver=5.3.8",
+        "oferta-academica/style.css?ver=1795321265",
+        "assets/css/academic-articulations.css?ver=1795321265"
+      ]
+    },
+    "shot": "03-oferta-375.png"
+  },
+  {
+    "slug": "04-seminarios",
+    "width": 375,
+    "status": 200,
+    "url": "https://flacso.edu.uy/formacion/seminarios/",
+    "data": {
+      "title": "Seminarios | FLACSO Uruguay",
+      "body": "archive post-type-archive post-type-archive-seminario wp-custom-logo wp-embed-responsive wp-theme-kadence wp-child-theme-kadence-child-flacso hfeed footer-on-bottom animate-body-popup social-brand-colors hide-focus-outline link-style-color-underline content-title-style-above content-width-normal content-style-boxed content-vertical-padding-show non-transparent-header mobile-non-transparent-header",
+      "palette": [
+        "#1d3a72",
+        "#fed222",
+        "#0f1a2d",
+        "#2e2f34",
+        "#64748b",
+        "#c9d2de",
+        "#e9edf2",
+        "#f8f9fa",
+        "#ffffff"
+      ],
+      "contentWidth": "1180px",
+      "overflow": false,
+      "headings": [
+        {
+          "text": "Seminarios",
+          "cls": "seminarios-hero__title",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "39.375px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Aportes de Ecofeminismo al mainstreaming de género en el cambio climático y la gestión del riesgo de desastres",
+          "cls": "seminario-featured__title",
+          "fg": "rgb(22, 58, 114)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "16px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Más propuestas",
+          "cls": "",
+          "fg": "rgb(22, 58, 114)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "22px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "¿Necesitás orientación para elegir un seminario?",
+          "cls": "",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "21px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        }
+      ],
+      "cta": [
+        {
+          "text": "Marzo 2027\n1 seminario",
+          "cls": "seminarios-group__header",
+          "fg": "rgb(23, 43, 77)",
+          "bg": "rgb(255, 255, 255)",
+          "sz": "16px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "0px"
+        },
+        {
+          "text": "",
+          "cls": "seminario-card__cta flacso-formacion-card__action",
+          "fg": "rgb(24, 60, 106)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "13.44px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "0px",
+          "href": "https://flacso.edu.uy/formacion/seminarios/diseno-de-cursos-virtuales/"
+        }
+      ],
+      "assets": [
+        "style.css?ver=1.1.54.446",
+        "assets/css/site-chrome.css?ver=1795321265",
+        "assets/css/seminarios-listado.css?ver=1795321265",
+        "assets/css/seminarios-listado-current.css?ver=1795321265",
+        "assets/css/seminarios-listado-polish.css?ver=1795321265",
+        "assets/css/formacion-page.css?ver=1795321265",
+        "assets/css/type-listing-cards.css?ver=1795321265",
+        "assets/css/mobile-ux.css?ver=1795321265",
+        "assets/vendor/bootstrap-icons/font/bootstrap-icons.min.css?ver=1.13.1",
+        "assets/vendor/bootstrap/css/bootstrap.min.css?ver=5.3.8"
+      ]
+    },
+    "shot": "04-seminarios-375.png"
+  },
+  {
+    "slug": "05-seminario",
+    "width": 375,
+    "status": 200,
+    "url": "https://flacso.edu.uy/formacion/seminarios/politicas-e-identidades-docentes/",
+    "data": {
+      "title": "Políticas e identidades docentes - FLACSO Uruguay",
+      "body": "wp-singular seminario-template-default single single-seminario postid-25894 wp-custom-logo wp-embed-responsive wp-theme-kadence wp-child-theme-kadence-child-flacso footer-on-bottom animate-body-popup social-brand-colors hide-focus-outline link-style-color-underline content-title-style-normal content-width-normal content-style-boxed content-vertical-padding-show non-transparent-header mobile-non-transparent-header",
+      "palette": [
+        "#1d3a72",
+        "#fed222",
+        "#0f1a2d",
+        "#2e2f34",
+        "#64748b",
+        "#c9d2de",
+        "#e9edf2",
+        "#f8f9fa",
+        "#ffffff"
+      ],
+      "contentWidth": "1180px",
+      "overflow": false,
+      "headings": [
+        {
+          "text": "Políticas e identidades docentes",
+          "cls": "seminario-title",
+          "fg": "rgb(29, 58, 114)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "33.75px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Presentación del seminario",
+          "cls": "seminario-section-title",
+          "fg": "rgb(29, 58, 114)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "24.8px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Información del seminario",
+          "cls": "seminario-section-title",
+          "fg": "rgb(29, 58, 114)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "24.8px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Objetivo general",
+          "cls": "seminario-section-title",
+          "fg": "rgb(29, 58, 114)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "24.8px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Contenidos del seminario",
+          "cls": "seminario-section-title",
+          "fg": "rgb(29, 58, 114)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "24.8px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "¿Querés participar?",
+          "cls": "",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "24.8px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        }
+      ],
+      "cta": [
+        {
+          "text": "Inscribirse ahora",
+          "cls": "seminario-btn-primary",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgb(29, 58, 114)",
+          "sz": "16px",
+          "family": "Roboto, sans-serif",
+          "radius": "13px",
+          "href": "https://preinscripciones.flacso.edu.uy/"
+        },
+        {
+          "text": "¿Querés participar?\n\nCompletá la preinscripción para recibir la información necesaria y continuar con el proceso de",
+          "cls": "seminario-final-cta",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "16px",
+          "family": "Roboto, sans-serif",
+          "radius": "20px"
+        },
+        {
+          "text": "Inscribirse ahora",
+          "cls": "seminario-btn-primary",
+          "fg": "rgb(29, 58, 114)",
+          "bg": "rgb(255, 255, 255)",
+          "sz": "16px",
+          "family": "Roboto, sans-serif",
+          "radius": "13px",
+          "href": "https://preinscripciones.flacso.edu.uy/"
+        }
+      ],
+      "assets": [
+        "style.css?ver=1.1.54.446",
+        "assets/css/site-chrome.css?ver=1795321265",
+        "assets/css/mobile-ux.css?ver=1795321265",
+        "assets/vendor/bootstrap-icons/font/bootstrap-icons.min.css?ver=1.13.1",
+        "assets/vendor/bootstrap/css/bootstrap.min.css?ver=5.3.8",
+        "assets/css/single-seminario.css?ver=1795321265"
+      ]
+    },
+    "shot": "05-seminario-375.png"
+  },
+  {
+    "slug": "06-faq",
+    "width": 375,
+    "status": 200,
+    "url": "https://flacso.edu.uy/preguntas-frecuentes/",
+    "data": {
+      "title": "Preguntas Frecuentes - FLACSO Uruguay",
+      "body": "wp-singular page-template-default page page-id-14346 wp-custom-logo wp-embed-responsive wp-theme-kadence wp-child-theme-kadence-child-flacso footer-on-bottom animate-body-popup social-brand-colors hide-focus-outline link-style-color-underline content-title-style-hide content-width-normal content-style-boxed content-vertical-padding-show non-transparent-header mobile-non-transparent-header",
+      "palette": [
+        "#1d3a72",
+        "#fed222",
+        "#0f1a2d",
+        "#2e2f34",
+        "#64748b",
+        "#c9d2de",
+        "#e9edf2",
+        "#f8f9fa",
+        "#ffffff"
+      ],
+      "contentWidth": "1180px",
+      "overflow": false,
+      "headings": [
+        {
+          "text": "Preguntas frecuentes",
+          "cls": "flacso-faq__title",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "36px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "1\n¿Qué es FLACSO Uruguay?",
+          "cls": "flacso-faq__question",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "17.28px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "2\n¿Cómo estudiar en FLACSO Uruguay?",
+          "cls": "flacso-faq__question",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "17.28px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "3\n¿Qué se estudia en FLACSO Uruguay?",
+          "cls": "flacso-faq__question",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "17.28px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "4\n¿Por qué estudiar en FLACSO Uruguay?",
+          "cls": "flacso-faq__question",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "17.28px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "5\n¿Cuánto dura estudiar en FLACSO?",
+          "cls": "flacso-faq__question",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "17.28px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "6\n¿Quiénes pueden estudiar en FLACSO?",
+          "cls": "flacso-faq__question",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "17.28px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "7\n¿Cuáles son las modalidades de cursada?",
+          "cls": "flacso-faq__question",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "17.28px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "8\n¿Cuáles son las titulaciones que se brindan?",
+          "cls": "flacso-faq__question",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "17.28px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "9\n¿Hay cupos para los posgrados?",
+          "cls": "flacso-faq__question",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "17.28px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "10\n¿Cuáles son los mecanismos de pago?",
+          "cls": "flacso-faq__question",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "17.28px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "11\n¿Los planes de pago son flexibles? ¿Cuentan con becas?",
+          "cls": "flacso-faq__question",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "17.28px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        }
+      ],
+      "cta": [],
+      "assets": [
+        "style.css?ver=1.1.54.446",
+        "assets/css/site-chrome.css?ver=1795321265",
+        "assets/css/mobile-ux.css?ver=1795321265",
+        "assets/vendor/bootstrap-icons/font/bootstrap-icons.min.css?ver=1.13.1",
+        "assets/vendor/bootstrap/css/bootstrap.min.css?ver=5.3.8",
+        "assets/css/page-faq.css?ver=1795321265"
+      ]
+    },
+    "shot": "06-faq-375.png"
+  },
+  {
+    "slug": "07-contacto",
+    "width": 375,
+    "status": 200,
+    "url": "https://flacso.edu.uy/contactos/",
+    "data": {
+      "title": "Contacto – FLACSO Uruguay",
+      "body": "blog wp-custom-logo wp-embed-responsive wp-theme-kadence wp-child-theme-kadence-child-flacso hfeed footer-on-bottom animate-body-popup social-brand-colors hide-focus-outline link-style-color-underline content-title-style-above content-width-normal content-style-unboxed content-vertical-padding-show non-transparent-header mobile-non-transparent-header",
+      "palette": [
+        "#1d3a72",
+        "#fed222",
+        "#0f1a2d",
+        "#2e2f34",
+        "#64748b",
+        "#c9d2de",
+        "#e9edf2",
+        "#f8f9fa",
+        "#ffffff"
+      ],
+      "contentWidth": "1180px",
+      "overflow": false,
+      "headings": [
+        {
+          "text": "Contacto",
+          "cls": "flacso-contact-title",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "51.2px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Formulario de consulta",
+          "cls": "",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "24.8px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Formulario de consulta",
+          "cls": "",
+          "fg": "rgb(26, 58, 92)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "28px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Datos de contacto",
+          "cls": "",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "24.8px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        }
+      ],
+      "cta": [
+        {
+          "text": "Enviar consulta",
+          "cls": "btn btn-primary",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "16px",
+          "family": "Roboto, sans-serif",
+          "radius": "999px"
+        }
+      ],
+      "assets": [
+        "style.css?ver=1.1.54.446",
+        "assets/css/site-chrome.css?ver=1795321265",
+        "assets/css/mobile-ux.css?ver=1795321265",
+        "assets/vendor/bootstrap-icons/font/bootstrap-icons.min.css?ver=1.13.1",
+        "assets/vendor/bootstrap/css/bootstrap.min.css?ver=5.3.8",
+        "assets/css/page-contacto.css?ver=1795321265"
+      ]
+    },
+    "shot": "07-contacto-375.png"
+  },
+  {
+    "slug": "01-portada",
+    "width": 1280,
+    "status": 200,
+    "url": "https://flacso.edu.uy/",
+    "data": {
+      "title": "FLACSO Uruguay - FLACSO Uruguay",
+      "body": "home wp-singular page-template-default page page-id-19886 page-child parent-pageid-11328 wp-custom-logo wp-embed-responsive wp-theme-kadence wp-child-theme-kadence-child-flacso footer-on-bottom animate-body-popup social-brand-colors hide-focus-outline link-style-color-underline content-title-style-hide content-width-normal content-style-boxed content-vertical-padding-show non-transparent-header mobile-non-transparent-header",
+      "palette": [
+        "#1d3a72",
+        "#fed222",
+        "#0f1a2d",
+        "#2e2f34",
+        "#64748b",
+        "#c9d2de",
+        "#e9edf2",
+        "#f8f9fa",
+        "#ffffff"
+      ],
+      "contentWidth": "1180px",
+      "overflow": false,
+      "headings": [
+        {
+          "text": "Formación que conecta,\nconocimiento que transforma.",
+          "cls": "",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "64px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Encontrá tu próxima formación",
+          "cls": "",
+          "fg": "rgb(46, 47, 52)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "32px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Tu próximo paso empieza acá.",
+          "cls": "",
+          "fg": "rgb(46, 47, 52)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "23px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Próximas actividades",
+          "cls": "",
+          "fg": "rgb(46, 47, 52)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "28px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Noticias",
+          "cls": "",
+          "fg": "rgb(46, 47, 52)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "32px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Pensar la región.\nProducir conocimiento.",
+          "cls": "",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "36px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "¿Qué es FLACSO Uruguay?",
+          "cls": "",
+          "fg": "rgb(46, 47, 52)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "30px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        }
+      ],
+      "cta": [
+        {
+          "text": "Convenios",
+          "cls": "flacso-navbar__cta",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgb(254, 210, 34)",
+          "sz": "14.08px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "999px",
+          "href": "https://flacso.edu.uy/convenios/"
+        },
+        {
+          "text": "Explorar oferta académica\n↗",
+          "cls": "primary hero-cta",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgb(254, 210, 34)",
+          "sz": "13px",
+          "family": "Roboto, sans-serif",
+          "radius": "12px",
+          "href": "https://flacso.edu.uy/formacion/"
+        },
+        {
+          "text": "Conocer la oferta →",
+          "cls": "campaign-cta",
+          "fg": "rgb(46, 47, 52)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "13px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px",
+          "href": "https://flacso.edu.uy/formacion/"
+        }
+      ],
+      "assets": [
+        "style.css?ver=1.1.54.446",
+        "assets/css/site-chrome.css?ver=1795321265",
+        "assets/css/mobile-ux.css?ver=1795321265",
+        "assets/vendor/bootstrap-icons/font/bootstrap-icons.min.css?ver=1.13.1",
+        "assets/vendor/bootstrap/css/bootstrap.min.css?ver=5.3.8",
+        "assets/css/front-page.css?ver=1795321265"
+      ]
+    },
+    "shot": "01-portada-1280.png"
+  },
+  {
+    "slug": "02-formacion",
+    "width": 1280,
+    "status": 200,
+    "url": "https://flacso.edu.uy/formacion/",
+    "data": {
+      "title": "Oferta Académica - FLACSO Uruguay",
+      "body": "error404 wp-custom-logo wp-embed-responsive wp-theme-kadence wp-child-theme-kadence-child-flacso hfeed footer-on-bottom animate-body-popup social-brand-colors hide-focus-outline link-style-color-underline content-title-style-normal content-width-normal content-style-boxed content-vertical-padding-show non-transparent-header mobile-non-transparent-header",
+      "palette": [
+        "#1d3a72",
+        "#fed222",
+        "#0f1a2d",
+        "#2e2f34",
+        "#64748b",
+        "#c9d2de",
+        "#e9edf2",
+        "#f8f9fa",
+        "#ffffff"
+      ],
+      "contentWidth": "1180px",
+      "overflow": false,
+      "headings": [
+        {
+          "text": "Oferta Académica",
+          "cls": "flacso-formacion-hero__title",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "61.44px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Maestrías",
+          "cls": "flacso-formacion-group__title",
+          "fg": "rgb(11, 31, 63)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "32px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Especializaciones",
+          "cls": "flacso-formacion-group__title",
+          "fg": "rgb(11, 31, 63)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "32px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Diplomados",
+          "cls": "flacso-formacion-group__title",
+          "fg": "rgb(11, 31, 63)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "32px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Diplomas",
+          "cls": "flacso-formacion-group__title",
+          "fg": "rgb(11, 31, 63)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "32px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Seminarios",
+          "cls": "flacso-formacion-group__title",
+          "fg": "rgb(11, 31, 63)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "32px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        }
+      ],
+      "cta": [
+        {
+          "text": "Convenios",
+          "cls": "flacso-navbar__cta",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgb(254, 210, 34)",
+          "sz": "14.08px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "999px",
+          "href": "https://flacso.edu.uy/convenios/"
+        }
+      ],
+      "assets": [
+        "style.css?ver=1.1.54.446",
+        "assets/css/site-chrome.css?ver=1795321265",
+        "assets/css/mobile-ux.css?ver=1795321265",
+        "assets/vendor/bootstrap-icons/font/bootstrap-icons.min.css?ver=1.13.1",
+        "assets/vendor/bootstrap/css/bootstrap.min.css?ver=5.3.8",
+        "assets/css/formacion-page.css?ver=1795321265"
+      ]
+    },
+    "shot": "02-formacion-1280.png"
+  },
+  {
+    "slug": "03-oferta",
+    "width": 1280,
+    "status": 200,
+    "url": "https://flacso.edu.uy/formacion/maestrias/maestria-en-genero/",
+    "data": {
+      "title": "Maestría en Género - FLACSO Uruguay",
+      "body": "wp-singular oferta-academica-template-default single single-oferta-academica postid-24162 wp-custom-logo wp-embed-responsive wp-theme-kadence wp-child-theme-kadence-child-flacso footer-on-bottom animate-body-popup social-brand-colors hide-focus-outline link-style-color-underline content-title-style-normal content-width-normal content-style-boxed content-vertical-padding-show non-transparent-header mobile-non-transparent-header",
+      "palette": [
+        "#1d3a72",
+        "#fed222",
+        "#0f1a2d",
+        "#2e2f34",
+        "#64748b",
+        "#c9d2de",
+        "#e9edf2",
+        "#f8f9fa",
+        "#ffffff"
+      ],
+      "contentWidth": "1180px",
+      "overflow": false,
+      "headings": [
+        {
+          "text": "Maestría en\nGénero",
+          "cls": "flacso-academic-hero__title",
+          "fg": "rgb(8, 43, 96)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "44.8px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "MENCIONES",
+          "cls": "flacso-academic-menciones__title",
+          "fg": "rgb(84, 112, 146)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "11.2px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Cohorte VI",
+          "cls": "",
+          "fg": "rgb(29, 58, 114)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "43.52px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Coordinación académica",
+          "cls": "",
+          "fg": "rgb(10, 45, 97)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "40.96px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Equipo académico",
+          "cls": "",
+          "fg": "rgb(10, 45, 97)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "40.96px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        }
+      ],
+      "cta": [
+        {
+          "text": "Convenios",
+          "cls": "flacso-navbar__cta",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgb(254, 210, 34)",
+          "sz": "14.08px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "999px",
+          "href": "https://flacso.edu.uy/convenios/"
+        },
+        {
+          "text": "Preinscripción 2027",
+          "cls": "flacso-academic-hero__cta",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgb(107, 31, 173)",
+          "sz": "15.52px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "999px",
+          "href": "https://preinscripciones.flacso.edu.uy/oferta/maestria-en-genero/"
+        },
+        {
+          "text": "Perfil de ingreso",
+          "cls": "",
+          "fg": "rgb(10, 45, 97)",
+          "bg": "rgb(255, 255, 255)",
+          "sz": "17.28px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "0px"
+        },
+        {
+          "text": "Requisitos de ingreso",
+          "cls": "",
+          "fg": "rgb(10, 45, 97)",
+          "bg": "rgb(255, 255, 255)",
+          "sz": "17.28px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "0px"
+        },
+        {
+          "text": "Perfil de egreso",
+          "cls": "",
+          "fg": "rgb(10, 45, 97)",
+          "bg": "rgb(255, 255, 255)",
+          "sz": "17.28px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "0px"
+        },
+        {
+          "text": "Requisitos de egreso",
+          "cls": "",
+          "fg": "rgb(10, 45, 97)",
+          "bg": "rgb(255, 255, 255)",
+          "sz": "17.28px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "0px"
+        },
+        {
+          "text": "Título y certificación",
+          "cls": "",
+          "fg": "rgb(10, 45, 97)",
+          "bg": "rgb(255, 255, 255)",
+          "sz": "17.28px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "0px"
+        },
+        {
+          "text": "¿Querés postularte a la próxima cohorte?\nIniciar preinscripción",
+          "cls": "final-cta",
+          "fg": "rgb(38, 56, 77)",
+          "bg": "rgb(255, 255, 255)",
+          "sz": "16px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "22px"
+        },
+        {
+          "text": "¿Querés postularte a la próxima cohorte?",
+          "cls": "final-cta__text",
+          "fg": "rgb(38, 56, 77)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "16px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "0px"
+        },
+        {
+          "text": "Iniciar preinscripción",
+          "cls": "btn btn--primary",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgb(107, 31, 173)",
+          "sz": "16px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "999px",
+          "href": "https://preinscripciones.flacso.edu.uy/oferta/maestria-en-genero/"
+        },
+        {
+          "text": "ENVIAR CONSULTA",
+          "cls": "btn btn-primary w-100 py-2 mt-2 fw-bold rounded-pill",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgb(107, 31, 173)",
+          "sz": "15.2px",
+          "family": "Roboto, sans-serif",
+          "radius": "999px"
+        },
+        {
+          "text": "AA\nDra. Ana Agostino",
+          "cls": "flacso-academic-person__summary",
+          "fg": "rgb(10, 45, 97)",
+          "bg": "rgb(255, 255, 255)",
+          "sz": "15.04px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "0px"
+        }
+      ],
+      "assets": [
+        "style.css?ver=1.1.54.446",
+        "assets/css/site-chrome.css?ver=1795321265",
+        "assets/css/mobile-ux.css?ver=1795321265",
+        "assets/vendor/bootstrap-icons/font/bootstrap-icons.min.css?ver=1.13.1",
+        "assets/vendor/bootstrap/css/bootstrap.min.css?ver=5.3.8",
+        "oferta-academica/style.css?ver=1795321265",
+        "assets/css/academic-articulations.css?ver=1795321265"
+      ]
+    },
+    "shot": "03-oferta-1280.png"
+  },
+  {
+    "slug": "04-seminarios",
+    "width": 1280,
+    "status": 200,
+    "url": "https://flacso.edu.uy/formacion/seminarios/",
+    "data": {
+      "title": "Seminarios | FLACSO Uruguay",
+      "body": "archive post-type-archive post-type-archive-seminario wp-custom-logo wp-embed-responsive wp-theme-kadence wp-child-theme-kadence-child-flacso hfeed footer-on-bottom animate-body-popup social-brand-colors hide-focus-outline link-style-color-underline content-title-style-above content-width-normal content-style-boxed content-vertical-padding-show non-transparent-header mobile-non-transparent-header",
+      "palette": [
+        "#1d3a72",
+        "#fed222",
+        "#0f1a2d",
+        "#2e2f34",
+        "#64748b",
+        "#c9d2de",
+        "#e9edf2",
+        "#f8f9fa",
+        "#ffffff"
+      ],
+      "contentWidth": "1180px",
+      "overflow": false,
+      "headings": [
+        {
+          "text": "Seminarios",
+          "cls": "seminarios-hero__title",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "76.8px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Aportes de Ecofeminismo al mainstreaming de género en el cambio climático y la gestión del riesgo de desastres",
+          "cls": "seminario-featured__title",
+          "fg": "rgb(22, 58, 114)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "38.4px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Más propuestas",
+          "cls": "",
+          "fg": "rgb(22, 58, 114)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "38.4px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "¿Necesitás orientación para elegir un seminario?",
+          "cls": "",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "33.6px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        }
+      ],
+      "cta": [
+        {
+          "text": "Convenios",
+          "cls": "flacso-navbar__cta",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgb(254, 210, 34)",
+          "sz": "14.08px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "999px",
+          "href": "https://flacso.edu.uy/convenios/"
+        },
+        {
+          "text": "Marzo 2027\n1 seminario",
+          "cls": "seminarios-group__header",
+          "fg": "rgb(23, 43, 77)",
+          "bg": "rgb(255, 255, 255)",
+          "sz": "16px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "0px"
+        },
+        {
+          "text": "",
+          "cls": "seminario-card__cta flacso-formacion-card__action",
+          "fg": "rgb(24, 60, 106)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "13.44px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "0px",
+          "href": "https://flacso.edu.uy/formacion/seminarios/diseno-de-cursos-virtuales/"
+        }
+      ],
+      "assets": [
+        "style.css?ver=1.1.54.446",
+        "assets/css/site-chrome.css?ver=1795321265",
+        "assets/css/seminarios-listado.css?ver=1795321265",
+        "assets/css/seminarios-listado-current.css?ver=1795321265",
+        "assets/css/seminarios-listado-polish.css?ver=1795321265",
+        "assets/css/formacion-page.css?ver=1795321265",
+        "assets/css/type-listing-cards.css?ver=1795321265",
+        "assets/css/mobile-ux.css?ver=1795321265",
+        "assets/vendor/bootstrap-icons/font/bootstrap-icons.min.css?ver=1.13.1",
+        "assets/vendor/bootstrap/css/bootstrap.min.css?ver=5.3.8"
+      ]
+    },
+    "shot": "04-seminarios-1280.png"
+  },
+  {
+    "slug": "05-seminario",
+    "width": 1280,
+    "status": 200,
+    "url": "https://flacso.edu.uy/formacion/seminarios/politicas-e-identidades-docentes/",
+    "data": {
+      "title": "Políticas e identidades docentes - FLACSO Uruguay",
+      "body": "wp-singular seminario-template-default single single-seminario postid-25894 wp-custom-logo wp-embed-responsive wp-theme-kadence wp-child-theme-kadence-child-flacso footer-on-bottom animate-body-popup social-brand-colors hide-focus-outline link-style-color-underline content-title-style-normal content-width-normal content-style-boxed content-vertical-padding-show non-transparent-header mobile-non-transparent-header",
+      "palette": [
+        "#1d3a72",
+        "#fed222",
+        "#0f1a2d",
+        "#2e2f34",
+        "#64748b",
+        "#c9d2de",
+        "#e9edf2",
+        "#f8f9fa",
+        "#ffffff"
+      ],
+      "contentWidth": "1180px",
+      "overflow": false,
+      "headings": [
+        {
+          "text": "Políticas e identidades docentes",
+          "cls": "seminario-title",
+          "fg": "rgb(29, 58, 114)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "51.2px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Presentación del seminario",
+          "cls": "seminario-section-title",
+          "fg": "rgb(29, 58, 114)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "29.44px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Información del seminario",
+          "cls": "seminario-section-title",
+          "fg": "rgb(29, 58, 114)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "29.44px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Objetivo general",
+          "cls": "seminario-section-title",
+          "fg": "rgb(29, 58, 114)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "29.44px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Contenidos del seminario",
+          "cls": "seminario-section-title",
+          "fg": "rgb(29, 58, 114)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "29.44px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "¿Querés participar?",
+          "cls": "",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "36.8px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        }
+      ],
+      "cta": [
+        {
+          "text": "Convenios",
+          "cls": "flacso-navbar__cta",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgb(254, 210, 34)",
+          "sz": "14.08px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "999px",
+          "href": "https://flacso.edu.uy/convenios/"
+        },
+        {
+          "text": "Inscribirse ahora",
+          "cls": "seminario-btn-primary",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgb(29, 58, 114)",
+          "sz": "16px",
+          "family": "Roboto, sans-serif",
+          "radius": "13px",
+          "href": "https://preinscripciones.flacso.edu.uy/"
+        },
+        {
+          "text": "¿Querés participar?\n\nCompletá la preinscripción para recibir la información necesaria y continuar con el proceso de",
+          "cls": "seminario-final-cta",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "16px",
+          "family": "Roboto, sans-serif",
+          "radius": "24px"
+        },
+        {
+          "text": "Inscribirse ahora",
+          "cls": "seminario-btn-primary",
+          "fg": "rgb(29, 58, 114)",
+          "bg": "rgb(255, 255, 255)",
+          "sz": "16px",
+          "family": "Roboto, sans-serif",
+          "radius": "13px",
+          "href": "https://preinscripciones.flacso.edu.uy/"
+        }
+      ],
+      "assets": [
+        "style.css?ver=1.1.54.446",
+        "assets/css/site-chrome.css?ver=1795321265",
+        "assets/css/mobile-ux.css?ver=1795321265",
+        "assets/vendor/bootstrap-icons/font/bootstrap-icons.min.css?ver=1.13.1",
+        "assets/vendor/bootstrap/css/bootstrap.min.css?ver=5.3.8",
+        "assets/css/single-seminario.css?ver=1795321265"
+      ]
+    },
+    "shot": "05-seminario-1280.png"
+  },
+  {
+    "slug": "06-faq",
+    "width": 1280,
+    "status": 200,
+    "url": "https://flacso.edu.uy/preguntas-frecuentes/",
+    "data": {
+      "title": "Preguntas Frecuentes - FLACSO Uruguay",
+      "body": "wp-singular page-template-default page page-id-14346 wp-custom-logo wp-embed-responsive wp-theme-kadence wp-child-theme-kadence-child-flacso footer-on-bottom animate-body-popup social-brand-colors hide-focus-outline link-style-color-underline content-title-style-hide content-width-normal content-style-boxed content-vertical-padding-show non-transparent-header mobile-non-transparent-header",
+      "palette": [
+        "#1d3a72",
+        "#fed222",
+        "#0f1a2d",
+        "#2e2f34",
+        "#64748b",
+        "#c9d2de",
+        "#e9edf2",
+        "#f8f9fa",
+        "#ffffff"
+      ],
+      "contentWidth": "1180px",
+      "overflow": false,
+      "headings": [
+        {
+          "text": "Preguntas frecuentes",
+          "cls": "flacso-faq__title",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "64px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "1\n¿Qué es FLACSO Uruguay?",
+          "cls": "flacso-faq__question",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "20px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "2\n¿Cómo estudiar en FLACSO Uruguay?",
+          "cls": "flacso-faq__question",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "20px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "3\n¿Qué se estudia en FLACSO Uruguay?",
+          "cls": "flacso-faq__question",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "20px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "4\n¿Por qué estudiar en FLACSO Uruguay?",
+          "cls": "flacso-faq__question",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "20px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "5\n¿Cuánto dura estudiar en FLACSO?",
+          "cls": "flacso-faq__question",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "20px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "6\n¿Quiénes pueden estudiar en FLACSO?",
+          "cls": "flacso-faq__question",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "20px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "7\n¿Cuáles son las modalidades de cursada?",
+          "cls": "flacso-faq__question",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "20px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "8\n¿Cuáles son las titulaciones que se brindan?",
+          "cls": "flacso-faq__question",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "20px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "9\n¿Hay cupos para los posgrados?",
+          "cls": "flacso-faq__question",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "20px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "10\n¿Cuáles son los mecanismos de pago?",
+          "cls": "flacso-faq__question",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "20px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "11\n¿Los planes de pago son flexibles? ¿Cuentan con becas?",
+          "cls": "flacso-faq__question",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "20px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        }
+      ],
+      "cta": [
+        {
+          "text": "Convenios",
+          "cls": "flacso-navbar__cta",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgb(254, 210, 34)",
+          "sz": "14.08px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "999px",
+          "href": "https://flacso.edu.uy/convenios/"
+        }
+      ],
+      "assets": [
+        "style.css?ver=1.1.54.446",
+        "assets/css/site-chrome.css?ver=1795321265",
+        "assets/css/mobile-ux.css?ver=1795321265",
+        "assets/vendor/bootstrap-icons/font/bootstrap-icons.min.css?ver=1.13.1",
+        "assets/vendor/bootstrap/css/bootstrap.min.css?ver=5.3.8",
+        "assets/css/page-faq.css?ver=1795321265"
+      ]
+    },
+    "shot": "06-faq-1280.png"
+  },
+  {
+    "slug": "07-contacto",
+    "width": 1280,
+    "status": 200,
+    "url": "https://flacso.edu.uy/contactos/",
+    "data": {
+      "title": "Contacto – FLACSO Uruguay",
+      "body": "blog wp-custom-logo wp-embed-responsive wp-theme-kadence wp-child-theme-kadence-child-flacso hfeed footer-on-bottom animate-body-popup social-brand-colors hide-focus-outline link-style-color-underline content-title-style-above content-width-normal content-style-unboxed content-vertical-padding-show non-transparent-header mobile-non-transparent-header",
+      "palette": [
+        "#1d3a72",
+        "#fed222",
+        "#0f1a2d",
+        "#2e2f34",
+        "#64748b",
+        "#c9d2de",
+        "#e9edf2",
+        "#f8f9fa",
+        "#ffffff"
+      ],
+      "contentWidth": "1180px",
+      "overflow": false,
+      "headings": [
+        {
+          "text": "Contacto",
+          "cls": "flacso-contact-title",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "75.2px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Formulario de consulta",
+          "cls": "",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "34.4px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Formulario de consulta",
+          "cls": "",
+          "fg": "rgb(26, 58, 92)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "28px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        },
+        {
+          "text": "Datos de contacto",
+          "cls": "",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "34.4px",
+          "family": "Roboto, sans-serif",
+          "radius": "0px"
+        }
+      ],
+      "cta": [
+        {
+          "text": "Convenios",
+          "cls": "flacso-navbar__cta",
+          "fg": "rgb(15, 26, 45)",
+          "bg": "rgb(254, 210, 34)",
+          "sz": "14.08px",
+          "family": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", \"Noto Sans\", \"Liberation Sans\", Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "radius": "999px",
+          "href": "https://flacso.edu.uy/convenios/"
+        },
+        {
+          "text": "Enviar consulta",
+          "cls": "btn btn-primary",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "sz": "16px",
+          "family": "Roboto, sans-serif",
+          "radius": "999px"
+        }
+      ],
+      "assets": [
+        "style.css?ver=1.1.54.446",
+        "assets/css/site-chrome.css?ver=1795321265",
+        "assets/css/mobile-ux.css?ver=1795321265",
+        "assets/vendor/bootstrap-icons/font/bootstrap-icons.min.css?ver=1.13.1",
+        "assets/vendor/bootstrap/css/bootstrap.min.css?ver=5.3.8",
+        "assets/css/page-contacto.css?ver=1795321265"
+      ]
+    },
+    "shot": "07-contacto-1280.png"
+  }
+]
