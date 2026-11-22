@@ -16,6 +16,7 @@ Antes de empezar, leer también `HALLAZGOS.md` (estado de cada hallazgo) y `GUIA
 | B-0021 | 2026-11-21 | Repetición de WP-00: paleta Kadence, foco del buscador, menú móvil y carrusel | `bitacora/B-0021-rerun-playwright-palette-foco-menu.md` |
 | B-0022 | 2026-11-21 | WP-02 mapa previo de formularios y mailing (lectura) | `bitacora/B-0022-wp02-mapa-previo-formularios.md` |
 | B-0023 | 2026-11-21 | WP-03 verificación de candidatos a código muerto (lectura) | `bitacora/B-0023-wp03-mapa-previo-codigo-muerto.md` |
+| B-0050 | 2026-11-22 | Auditoría de Kadence e identidad visual | [Entrada B-0050](bitacora/B-0050-auditoria-kadence-y-plan-t3.md) |
 
 ## Formato de entrada
 
