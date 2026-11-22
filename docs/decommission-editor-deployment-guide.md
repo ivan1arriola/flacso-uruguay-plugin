@@ -1,5 +1,7 @@
 # Guía de Despliegue y Validación de Consultas Directas
 
+> **Documento histórico.** Registra la transición desde el editor externo y referencias al transporte utilizado en esa etapa. Para operar el sistema vigente, consultá la [guía técnica](desarrollo/plugin.md) y el [runbook de consultas transaccionales](operations/consultas-transaccionales.md).
+
 Esta guía documenta el procedimiento ordenado, verificado y por fases para migrar la recepción de consultas (Ofertas Académicas y Seminarios) directamente al plugin WordPress de FLACSO Uruguay. No autoriza ni describe el apagado de `flacso-editor.service`: ese servicio conserva dependencias ajenas a estas consultas y exige un plan de retiro independiente.
 
 ---
