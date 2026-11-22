@@ -39,7 +39,7 @@ function get_post_meta($id, $key, $single = true) {
 function get_the_title($id) { return $GLOBALS['offers'][$id]['name'] ?? ''; }
 function get_permalink($id) { return 'https://flacso.edu.uy/oferta/' . $id; }
 function get_posts($args) {
-    if (($args['post_type'] ?? '') !== 'articulacion-academica') return [];
+    if (($args['post_type'] ?? '') !== 'plan-articulacion') return [];
     $expected = $args['meta_query'][0]['value'] ?? '';
     $index = $GLOBALS['metadata'][555]['_flacso_articulacion_ofertas_index'] ?? '';
     return strpos($index, $expected) !== false ? [(object)['ID'=>555,'post_title'=>'Plan de Género']] : [];

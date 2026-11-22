@@ -50,7 +50,7 @@ menu_assert(true === FLACSO_Admin_Menu::enabled(), 'la opción enciende el menú
 foreach (array('options-general.php', 'tools.php', 'edit.php?post_type=page', 'edit.php?post_type=evento', 'flacso-main-page') as $legacy) {
     menu_assert('flacso-panel' === FLACSO_Admin_Menu::parent($legacy), "encendido: {$legacy} pasa a colgar de FLACSO");
 }
-foreach (array('oferta-academica', 'articulacion-academica', 'seminario', 'docente', 'programa-academico', 'tabla-precio', 'convenio', 'evento', 'pregunta-frecuente') as $type) {
+foreach (array('oferta-academica', 'plan-articulacion', 'seminario', 'docente', 'programa-academico', 'tabla-precio', 'convenio', 'evento', 'pregunta-frecuente') as $type) {
     menu_assert('flacso-panel' === FLACSO_Admin_Menu::nest_post_types(array('show_in_menu' => true), $type)['show_in_menu'], "encendido: {$type} se anida bajo FLACSO");
 }
 foreach (array('cohorte', 'edicion', 'page', 'post', 'attachment') as $type) {

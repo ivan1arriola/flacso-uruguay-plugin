@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
  * No interviene en preinscripciones, pagos ni habilitaciones de estudiantes.
  */
 final class FLACSO_Academic_Articulations {
-    public const POST_TYPE = 'articulacion-academica';
+    public const POST_TYPE = 'plan-articulacion';
     public const META_NODES = '_flacso_articulacion_etapas';
     public const META_EDGES = '_flacso_articulacion_transiciones';
     public const META_NOTES = '_flacso_articulacion_presentaciones';

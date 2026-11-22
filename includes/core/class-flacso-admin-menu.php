@@ -17,7 +17,7 @@ class FLACSO_Admin_Menu {
     private const TAXONOMY_SLUG = 'edit-tags.php?taxonomy=tipo-oferta-academica&post_type=oferta-academica';
 
     private const POST_TYPES = [
-        'oferta-academica', 'articulacion-academica', 'seminario', 'docente', 'programa-academico',
+        'oferta-academica', 'plan-articulacion', 'seminario', 'docente', 'programa-academico',
         'tabla-precio', 'convenio', 'evento', 'pregunta-frecuente',
     ];
 
@@ -25,7 +25,7 @@ class FLACSO_Admin_Menu {
     private const ORDER = [
         'flacso-panel',
         'edit.php?post_type=oferta-academica',
-        'edit.php?post_type=articulacion-academica',
+        'edit.php?post_type=plan-articulacion',
         self::TAXONOMY_SLUG,
         'flacso-carta-textos',
         'edit.php?post_type=seminario',
