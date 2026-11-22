@@ -66,7 +66,10 @@ function fc_handle_form_submit() {
     }
 
     // Validación anti-spam adicional
-    if ( fc_is_spam_content( $nombre, $apellido, $email, $asunto, $mensaje ) ) {
+    $spam_reason = '';
+    if ( fc_is_spam_content( $nombre, $apellido, $email, $asunto, $mensaje, $spam_reason ) ) {
+        // Rastro sin datos personales: solo el motivo, para notar si el filtro descarta consultas buenas.
+        error_log( '[flacso-formularios] consulta descartada por el filtro anti-spam: motivo=' . ( '' !== (string) $spam_reason ? $spam_reason : 'desconocido' ) );
         wp_safe_redirect( add_query_arg( 'fc_exito', 1, wp_get_referer() ?: home_url() ) );
         exit;
     }
