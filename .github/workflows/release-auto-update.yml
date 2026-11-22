@@ -75,6 +75,7 @@ jobs:
             --exclude "dist/" \
             --exclude "docs/" \
             --exclude "tests/" \
+            --exclude "dev/" \
             --exclude ".gitignore" \
             --exclude "README.md" \
             --exclude "CHANGELOG.md" \
