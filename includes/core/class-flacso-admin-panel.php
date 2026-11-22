@@ -172,7 +172,7 @@ final class FLACSO_Admin_Panel {
                             </div>
                         </div>
                         <div class="flacso-panel__resources">
-                            <?php self::resource_card('dashicons-groups', __('Docentes', 'flacso-uruguay'), __('Perfiles y referencias académicas.', 'flacso-uruguay'), admin_url('admin.php?page=docentes_panel')); ?>
+                            <?php self::resource_card('dashicons-groups', __('Docentes', 'flacso-uruguay'), __('Perfiles y referencias académicas.', 'flacso-uruguay'), admin_url('edit.php?post_type=docente')); ?>
                             <?php self::resource_card('dashicons-money-alt', __('Tablas de precios', 'flacso-uruguay'), __('Precios reutilizados por cohortes y ediciones.', 'flacso-uruguay'), admin_url('edit.php?post_type=tabla-precio')); ?>
                             <?php self::resource_card('dashicons-admin-home', __('Portada', 'flacso-uruguay'), __('Contenido y orden de la página principal.', 'flacso-uruguay'), admin_url('admin.php?page=flacso-main-page')); ?>
                             <?php self::resource_card('dashicons-chart-bar', __('Consultas', 'flacso-uruguay'), __('Bandeja PostgreSQL, analítica por oferta/país, campañas y exportación CSV.', 'flacso-uruguay'), admin_url('admin.php?page=flacso-consultas')); ?>
