@@ -25,7 +25,6 @@ if (!function_exists('flacso_homepage_builder_get_sections')) {
             'hero' => ['function' => 'flacso_section_hero_render', 'owner' => 'main-page'],
             'novedades' => ['function' => 'flacso_section_novedades_render', 'owner' => 'main-page'],
             'quienes' => ['function' => 'flacso_section_quienes_somos_render', 'owner' => 'main-page'],
-            'instagram' => ['function' => 'flacso_section_instagram_render', 'owner' => 'main-page'],
             'congreso' => ['function' => 'flacso_section_congreso_render', 'owner' => 'main-page'],
             'contacto' => ['function' => 'flacso_section_contacto_render', 'owner' => 'main-page'],
         ];

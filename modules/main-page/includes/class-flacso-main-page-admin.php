@@ -102,7 +102,7 @@ class Flacso_Main_Page_Admin {
             <header class="flacso-global-header">
                 <h1><?php esc_html_e('Panel FLACSO', 'flacso-main-page'); ?></h1>
                 <p class="description">
-                    <?php esc_html_e('Gestiona el home completo (hero full-width, orden de secciones, novedades con buscador y vista completa, Instagram y bloques institucionales) desde un unico panel.', 'flacso-main-page'); ?>
+                    <?php esc_html_e('Gestiona el home completo (hero full-width, orden de secciones, novedades con buscador y vista completa y bloques institucionales) desde un unico panel.', 'flacso-main-page'); ?>
                 </p>
             </header>
             <div class="flacso-admin-ui-bar" data-admin-ui-bar>
@@ -1481,7 +1481,7 @@ class Flacso_Main_Page_Admin {
                 $pages = [
                     [
                         'title' => __('Landing principal', 'flacso-main-page'),
-                        'text' => __('Administra el takeover completo del main: hero, eventos, novedades, Instagram y secciones institucionales.', 'flacso-main-page'),
+                        'text' => __('Administra el takeover completo del main: hero, eventos, novedades y secciones institucionales.', 'flacso-main-page'),
                         'link' => admin_url('admin.php?page=flacso-main-page'),
                     ],
                     [
@@ -1496,7 +1496,7 @@ class Flacso_Main_Page_Admin {
                     ],
                     [
                         'title' => __('Paginas institucionales', 'flacso-main-page'),
-                        'text' => __('Quienes somos, congreso e Instagram comparten estilos y contenidos del home unificado.', 'flacso-main-page'),
+                        'text' => __('Quienes somos, y congreso comparten estilos y contenidos del home unificado.', 'flacso-main-page'),
                         'link' => admin_url('admin.php?page=flacso-main-page-quienes'),
                     ],
                     [
