@@ -157,14 +157,6 @@ final class Flacso_Main_Page_Settings {
                 'bubble_secondary_label' => '',
                 'bubble_secondary_url' => '',
             ],
-            'instagram' => [
-                'profile_url' => 'https://www.instagram.com/flacsouruguay/',
-                'title' => 'Formación, encuentros y comunidad.',
-                'description' => 'En Instagram compartimos seminarios, convocatorias, actividades académicas y momentos de la comunidad FLACSO Uruguay.',
-                'cta_label' => 'Ver más en @flacsouruguay',
-                'access_token' => '',
-                'api_type' => 'basic',
-            ],
             'contacto' => [
                 'title' => 'Contáctanos',
                 'subtitle' => 'Con gusto responderemos todas tus consultas',
@@ -399,7 +391,6 @@ final class Flacso_Main_Page_Settings {
             'novedades' => __('Novedades', 'flacso-main-page'),
             'seminarios' => __('Seminarios', 'flacso-main-page'),
             'quienes' => __('Quiénes somos', 'flacso-main-page'),
-            'instagram' => __('Instagram', 'flacso-main-page'),
             'oferta_academica' => __('Oferta Académica', 'flacso-main-page'),
             'mailing' => __('Lista de difusión', 'flacso-main-page'),
             'congreso' => __('Congreso', 'flacso-main-page'),
@@ -416,7 +407,6 @@ final class Flacso_Main_Page_Settings {
             'novedades_busqueda',
             'seminarios',
             'quienes',
-            'instagram',
             'oferta_academica',
             'mailing',
             'contacto',
@@ -606,17 +596,6 @@ final class Flacso_Main_Page_Settings {
             $output['quienes']['background_image'] = esc_url_raw($section['background_image'] ?? $defaults['quienes']['background_image']);
             $color = sanitize_hex_color($section['highlight_color'] ?? $defaults['quienes']['highlight_color']);
             $output['quienes']['highlight_color'] = $color ?: $defaults['quienes']['highlight_color'];
-        }
-
-        if (isset($input['instagram']) && is_array($input['instagram'])) {
-            $section = $input['instagram'];
-            $output['instagram']['profile_url'] = esc_url_raw($section['profile_url'] ?? $defaults['instagram']['profile_url']);
-            foreach (['title', 'description', 'cta_label'] as $field) {
-                $output['instagram'][$field] = wp_kses_post($section[$field] ?? $defaults['instagram'][$field]);
-            }
-            $output['instagram']['access_token'] = sanitize_text_field($section['access_token'] ?? $defaults['instagram']['access_token']);
-            $api_type = sanitize_key((string) ($section['api_type'] ?? 'basic'));
-            $output['instagram']['api_type'] = in_array($api_type, ['basic', 'graph'], true) ? $api_type : 'basic';
         }
 
         // Secciones cuyo esquema pertenece a otro dominio se preservan con un

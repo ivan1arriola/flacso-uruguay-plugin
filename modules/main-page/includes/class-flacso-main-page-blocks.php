@@ -116,7 +116,7 @@ class Flacso_Main_Page_Blocks {
 
             'flacso-uruguay/homepage-builder' => [
                 'title'       => __('Página principal modular', 'flacso-main-page'),
-                'description' => __('Construye el home completo con hero full-width, novedades con buscador AJAX, eventos, Instagram y secciones institucionales.', 'flacso-main-page'),
+                'description' => __('Construye el home completo con hero full-width, novedades con buscador AJAX, eventos y secciones institucionales.', 'flacso-main-page'),
                 'shortcode'   => 'flacso_homepage_builder',
                 'icon'        => 'layout',
                 'keywords'    => ['home', 'landing', 'flacso'],

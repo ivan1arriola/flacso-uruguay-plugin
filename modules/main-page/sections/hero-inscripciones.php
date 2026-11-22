@@ -839,32 +839,6 @@ if (!function_exists('flacso_section_hero_render')) {
                     }
                 }, { passive: true });
 
-                const denseSections = Array.prototype.slice.call(document.querySelectorAll('.flacso-instagram-section'));
-                if (denseSections.length && 'IntersectionObserver' in window) {
-                    const denseSectionStates = new WeakMap();
-                    const updateDenseState = function () {
-                        const overlapsDenseSection = denseSections.some(function (section) {
-                            return denseSectionStates.get(section) === true;
-                        });
-                        fab.classList.toggle('is-over-content', overlapsDenseSection);
-                    };
-
-                    const denseObserver = new IntersectionObserver(function (entries) {
-                        entries.forEach(function (entry) {
-                            denseSectionStates.set(entry.target, entry.isIntersecting);
-                        });
-                        updateDenseState();
-                    }, {
-                        rootMargin: '-12% 0px -12% 0px',
-                        threshold: 0.08
-                    });
-
-                    denseSections.forEach(function (section) {
-                        denseSectionStates.set(section, false);
-                        denseObserver.observe(section);
-                    });
-                }
-
                 if ('IntersectionObserver' in window) {
                     const observer = new IntersectionObserver(function (entries) {
                         entries.forEach(function (entry) {
