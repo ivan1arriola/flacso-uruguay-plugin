@@ -63,7 +63,6 @@ require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-set
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-home-campaign.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-blocks.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-loader.php';
-require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-migrations.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-main-page-rest-api.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-instagram-api.php';
 require_once FLACSO_MAIN_PAGE_MODULE_PATH . 'includes/class-flacso-telegram-manager.php';
@@ -117,9 +116,6 @@ add_action('init', function() {
     }
     if (class_exists('Flacso_Instagram_Post_Importer')) {
         Flacso_Instagram_Post_Importer::init();
-    }
-    if (class_exists('Flacso_Main_Page_Migrations')) {
-        Flacso_Main_Page_Migrations::init();
     }
 });
 

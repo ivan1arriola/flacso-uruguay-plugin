@@ -120,7 +120,6 @@ $must_use_parent = array(
     'modules/mailing/includes/class-flacso-mail-settings.php',
     'modules/formularios/includes/settings.php',
     'modules/main-page/includes/class-flacso-main-page-admin.php',
-    'modules/main-page/includes/class-flacso-main-page-migrations.php',
     'modules/oferta-academica/includes/class-carta-settings-admin.php',
     'modules/seminarios/includes/class-seminario-settings.php',
     'modules/eventos/includes/class-cpt-eventos-manager.php',
@@ -128,6 +127,8 @@ $must_use_parent = array(
 foreach ($must_use_parent as $relative) {
     menu_assert(strpos((string) file_get_contents($root . '/' . $relative), 'FLACSO_Admin_Menu::parent(') !== false, "{$relative} debe usar FLACSO_Admin_Menu::parent()");
 }
+menu_assert(!file_exists($root . '/modules/main-page/includes/class-flacso-main-page-migrations.php'), 'la pantalla Migraciones fue retirada');
+menu_assert(strpos((string) file_get_contents($root . '/modules/main-page/init.php'), 'Main_Page_Migrations') === false, 'la portada ya no carga Migraciones');
 menu_assert(strpos((string) file_get_contents($root . '/modules/autoridades/includes/admin-page.php'), 'FLACSO_Admin_Menu::enabled()') !== false, 'Autoridades debe respetar el menú unificado');
 menu_assert(strpos((string) file_get_contents($root . '/modules/consultas/includes/class-flacso-consultas-admin.php'), 'FLACSO_Admin_Menu::enabled()') !== false, 'Consultas debe respetar el menú unificado');
 menu_assert(strpos((string) file_get_contents($root . '/includes/core/class-flacso-meta-tracking.php'), "options-general.php?page=flacso-integracion-meta") === false, 'el aviso de Meta no enlaza por options-general.php');

@@ -1,6 +1,7 @@
 ## Unreleased
 
 ### Cambios
+- Retira la pantalla "Migraciones" de la Portada (`flacso-main-page-migrations`) y su acción de migración de bloques del banner de inscripciones, que ya no se usaban.
 - Retira el módulo legado `posgrados` (REST `flacso-posgrados/v1`, bloque `datos-posgrado`, metadatos de página y sincronización con docentes). El formulario de consultas y `/gracias` siguen en `main-page`.
 
 ---
