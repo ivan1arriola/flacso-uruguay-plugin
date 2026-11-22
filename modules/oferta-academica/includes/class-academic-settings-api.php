@@ -29,16 +29,13 @@ final class FLACSO_Academic_Settings_API {
 
     }
 
-    public static function can_read_settings(WP_REST_Request $request): bool {
-        $include_secrets = rest_sanitize_boolean($request->get_param("include_secrets"));
-        if (!$include_secrets) {
-            return true;
-        }
+    // La configuración global incluye webhooks, carpetas de Drive y secretos: solo administradores.
+    public static function can_read_settings(?WP_REST_Request $request = null): bool {
         return self::can_manage_settings();
     }
 
     public static function can_manage_settings(): bool {
-        return current_user_can("manage_options") || current_user_can("edit_posts");
+        return current_user_can("manage_options");
     }
 
     public static function get_settings(?WP_REST_Request $request = null) {
