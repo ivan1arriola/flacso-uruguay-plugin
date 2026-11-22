@@ -22,7 +22,6 @@ final class FLACSO_Page_Cache {
         'flacso_home_v2_enabled',
         'flacso_maintenance_mode',
         'flacso_mensaje_bienvenida',
-        'flacso_external_editor_url',
         'flacso_seminarios_dias_cierre_post_inicio',
         'flacso_meta_enabled',
         'flacso_meta_pixel_id',

@@ -16,7 +16,6 @@ class FLACSO_Integrations_Settings {
     private const OPTION_PREINSCRIPCIONES_WEBHOOK_URL = 'flacso_preinscripciones_webhook_url';
     private const OPTION_RECAPTCHA_SITE_KEY = 'fc_recaptcha_site_key';
     private const OPTION_RECAPTCHA_SECRET_KEY = 'fc_recaptcha_secret_key';
-    private const OPTION_EXTERNAL_EDITOR_URL = 'flacso_external_editor_url';
     private const OPTION_NAV_ANNOUNCEMENT_ENABLED = 'flacso_nav_announcement_enabled';
     private const OPTION_NAV_ANNOUNCEMENT_URL = 'flacso_nav_announcement_url';
     private const OPTION_NAV_ANNOUNCEMENT_KICKER = 'flacso_nav_announcement_kicker';
@@ -1590,32 +1589,6 @@ class FLACSO_Integrations_Settings {
         <?php
     }
 
-    private static function render_external_editor_card(): void {
-        ?>
-        <section class="flacso-integrations-card card-external-editor">
-            <div class="flacso-card-header">
-                <div class="flacso-card-icon-title">
-                    <span class="flacso-card-icon" style="background: #e0f2fe; color: #0ea5e9;">✏️</span>
-                    <h2><?php esc_html_e('Editor Externo (React)', 'flacso-uruguay'); ?></h2>
-                </div>
-                <p class="flacso-integrations-lead"><?php esc_html_e('Configura la URL base del editor externo (React/Next.js) que se utilizará para crear y editar páginas de Oferta Académica.', 'flacso-uruguay'); ?></p>
-            </div>
-
-            <div class="flacso-card-body">
-                <?php
-                self::render_input_field(
-                    self::OPTION_EXTERNAL_EDITOR_URL,
-                    __('URL Base del Editor', 'flacso-uruguay'),
-                    'url',
-                    'https://editor-flacso-uy.vercel.app',
-                    __('Las páginas reedirigirán a esta URL (ej: https://editor-flacso-uy.vercel.app/ofertas/ID).', 'flacso-uruguay')
-                );
-                ?>
-            </div>
-        </section>
-        <?php
-    }
-
     private static function render_nav_announcement_card(): void {
         ?>
         <section class="flacso-integrations-card card-nav-announcement">
@@ -1915,28 +1888,6 @@ class FLACSO_Integrations_Settings {
             <?php submit_button(__('Ejecutar prueba', 'flacso-uruguay'), 'secondary', 'submit', false); ?>
             <div class="flacso-test-result-placeholder"></div>
         </form>
-        <?php
-    }
-
-    private static function render_migration_banner(): void {
-        $external_editor_url = get_option(self::OPTION_EXTERNAL_EDITOR_URL, 'https://editor-flacso-uy.vercel.app');
-        $settings_url = rtrim($external_editor_url, '/') . '/ajustes';
-        ?>
-        <div class="flacso-migration-banner" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #f8fafc; padding: 1.75rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1); display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; border-left: 5px solid #0284c7;">
-            <div style="flex: 1; min-width: 280px;">
-                <h3 style="margin: 0 0 0.5rem 0; color: #38bdf8; font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; font-family: system-ui;">
-                    <span>⚙️</span> <?php esc_html_e('Administración Centralizada Activa', 'flacso-uruguay'); ?>
-                </h3>
-                <p style="margin: 0; color: #cbd5e1; font-size: 0.95rem; line-height: 1.5; font-family: system-ui;">
-                    <?php esc_html_e('Para evitar inconsistencias, te recomendamos administrar todas las credenciales e integraciones directamente desde el panel de Ajustes del Editor Externo.', 'flacso-uruguay'); ?>
-                </p>
-            </div>
-            <div>
-                <a href="<?php echo esc_url($settings_url); ?>" target="_blank" rel="noopener noreferrer" style="background: #0284c7; color: #ffffff; padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; transition: background 0.2s ease; display: inline-flex; align-items: center; gap: 0.5rem; font-family: system-ui;">
-                    <?php esc_html_e('Ir a Ajustes del Editor', 'flacso-uruguay'); ?> <span>↗</span>
-                </a>
-            </div>
-        </div>
         <?php
     }
 
