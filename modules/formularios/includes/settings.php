@@ -75,7 +75,7 @@ function fc_field_bootstrap_cb() {
 
 function fc_add_consulta_settings_submenu() {
     add_submenu_page(
-        'options-general.php',
+        FLACSO_Admin_Menu::parent('options-general.php'),
         __( 'Formulario general', 'flacso-flacso-formulario-consultas' ),
         __( 'Formulario general', 'flacso-flacso-formulario-consultas' ),
         'manage_options',

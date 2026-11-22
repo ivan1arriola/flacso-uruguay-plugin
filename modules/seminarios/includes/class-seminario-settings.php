@@ -23,7 +23,7 @@ final class FLACSO_Seminar_Settings {
 
     public static function register_menu(): void {
         add_submenu_page(
-            'edit.php?post_type=seminario',
+            FLACSO_Admin_Menu::parent('edit.php?post_type=seminario'),
             __('Ajustes de seminarios', 'flacso-uruguay'),
             __('Ajustes', 'flacso-uruguay'),
             'manage_options',

@@ -35,7 +35,7 @@ final class FLACSO_System_Settings {
 
     public static function register_menu(): void {
         add_submenu_page(
-            'options-general.php',
+            FLACSO_Admin_Menu::parent('options-general.php'),
             __('Sistema', 'flacso-uruguay'),
             __('Sistema', 'flacso-uruguay'),
             'manage_options',
@@ -74,6 +74,11 @@ final class FLACSO_System_Settings {
             'type' => 'string',
             'sanitize_callback' => 'sanitize_email',
             'default' => '',
+        ]);
+        register_setting(self::SETTINGS_GROUP, FLACSO_Admin_Menu::OPTION, [
+            'type' => 'string',
+            'sanitize_callback' => [self::class, 'sanitize_toggle'],
+            'default' => '0',
         ]);
         register_setting(self::SETTINGS_GROUP, self::OPTION_USE_RECAPTCHA, [
             'type' => 'string',
@@ -201,6 +206,17 @@ final class FLACSO_System_Settings {
                     <tr>
                         <th scope="row"><label for="<?php echo esc_attr(FLACSO_Error_Notifier::OPTION_EMAIL); ?>"><?php esc_html_e('Correo de respaldo', 'flacso-uruguay'); ?></label></th>
                         <td><input class="regular-text" type="email" id="<?php echo esc_attr(FLACSO_Error_Notifier::OPTION_EMAIL); ?>" name="<?php echo esc_attr(FLACSO_Error_Notifier::OPTION_EMAIL); ?>" value="<?php echo esc_attr($error_alert_email); ?>"><p class="description"><?php esc_html_e('Se utiliza si Telegram no está configurado o no responde. Vacío: correo de administración de WordPress.', 'flacso-uruguay'); ?></p></td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Menú FLACSO', 'flacso-uruguay'); ?></th>
+                        <td>
+                            <input type="hidden" name="<?php echo esc_attr(FLACSO_Admin_Menu::OPTION); ?>" value="0">
+                            <label>
+                                <input type="checkbox" name="<?php echo esc_attr(FLACSO_Admin_Menu::OPTION); ?>" value="1" <?php checked(get_option(FLACSO_Admin_Menu::OPTION, '0'), '1'); ?>>
+                                <?php esc_html_e('Reunir todas las opciones de FLACSO en un solo menú', 'flacso-uruguay'); ?>
+                            </label>
+                            <p class="description"><?php esc_html_e('Desmarcá la casilla para volver al menú anterior.', 'flacso-uruguay'); ?></p>
+                        </td>
                     </tr>
                     <tr>
                         <th scope="row"><?php esc_html_e('reCAPTCHA', 'flacso-uruguay'); ?></th>

@@ -65,15 +65,22 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 		public static function register_menu(): void {
 			// Menú propio de primer nivel; el PR de Consultas y analítica lo rediseña.
 			$parent_slug = self::PAGE_BANDEJA;
-			add_menu_page(
-				__( 'Consultas y analítica', 'flacso-uruguay' ),
-				__( 'Consultas', 'flacso-uruguay' ),
-				FLACSO_Academic_Assistant::VIEW_INQUIRIES,
-				$parent_slug,
-				array( __CLASS__, 'render_page' ),
-				'dashicons-chart-bar',
-				30
-			);
+			$unified     = FLACSO_Admin_Menu::enabled();
+			if ( $unified ) {
+				// Una sola entrada "Consultas"; las otras vistas se abren desde las pestañas de la pantalla.
+				add_submenu_page( FLACSO_Admin_Menu::PARENT, __( 'Consultas y analítica', 'flacso-uruguay' ), __( 'Consultas', 'flacso-uruguay' ), FLACSO_Academic_Assistant::VIEW_INQUIRIES, $parent_slug, array( __CLASS__, 'render_page' ) );
+				$parent_slug = 'options.php';
+			} else {
+				add_menu_page(
+					__( 'Consultas y analítica', 'flacso-uruguay' ),
+					__( 'Consultas', 'flacso-uruguay' ),
+					FLACSO_Academic_Assistant::VIEW_INQUIRIES,
+					$parent_slug,
+					array( __CLASS__, 'render_page' ),
+					'dashicons-chart-bar',
+					30
+				);
+			}
 
 			$pages = array(
 				self::PAGE_BANDEJA => array( __( 'Consultas', 'flacso-uruguay' ), 'render_page' ),
@@ -84,6 +91,9 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 				self::PAGE_EXPORTAR => array( __( 'Exportar CSV', 'flacso-uruguay' ), 'render_exportar_page' ),
 			);
 			foreach ( $pages as $slug => $page ) {
+				if ( $unified && self::PAGE_BANDEJA === $slug ) {
+					continue;
+				}
 				add_submenu_page( $parent_slug, $page[0], $page[0], FLACSO_Academic_Assistant::VIEW_INQUIRIES, $slug, array( __CLASS__, $page[1] ) );
 			}
 		}

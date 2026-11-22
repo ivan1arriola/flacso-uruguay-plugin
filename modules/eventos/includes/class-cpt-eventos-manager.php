@@ -145,7 +145,7 @@ class CPT_Eventos_Manager {
      */
     public function add_visualizer_menu(): void {
         add_submenu_page(
-            'edit.php?post_type=evento',
+            FLACSO_Admin_Menu::parent('edit.php?post_type=evento'),
             __('Visualizador de Eventos', 'cpt-eventos'),
             __('Visualizador', 'cpt-eventos'),
             'edit_posts',

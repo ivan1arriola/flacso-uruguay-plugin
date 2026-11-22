@@ -172,7 +172,7 @@ class FLACSO_Meta_Tracking {
         $settings = self::get_settings();
         $redirect_url = class_exists('FLACSO_Integrations_Settings')
             ? FLACSO_Integrations_Settings::get_redirect_url_from_request([], FLACSO_Integrations_Settings::get_meta_page_url())
-            : admin_url('options-general.php?page=flacso-integracion-meta');
+            : admin_url('admin.php?page=flacso-integracion-meta');
 
         if (!$settings['enabled']) {
             self::store_last_test_result([
