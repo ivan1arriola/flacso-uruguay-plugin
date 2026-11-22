@@ -8,16 +8,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Detecta contenido spam en las consultas
+ * Detecta contenido spam en las consultas.
+ *
+ * @param string|null $reason Motivo del descarte ('palabra', 'dominio' o 'escritura_no_latina'); no lleva datos personales.
  */
-function fc_is_spam_content( $nombre, $apellido, $email, $asunto, $mensaje ) {
+function fc_is_spam_content( $nombre, $apellido, $email, $asunto, $mensaje, &$reason = null ) {
     // Lista de palabras/frases spam comunes
     $spam_keywords = [
-        'guest post', 'guest posting', 'backlink', 'seo service', 'link building',
+        'guest post', 'guest posts', 'guest posting', 'backlink', 'backlinks', 'seo service', 'seo services', 'link building',
         'crypto', 'bitcoin', 'ethereum', 'usdt', 'nft', 'trading',
-        'casino', 'poker', 'slot', 'betting',
+        'casino', 'casinos', 'poker', 'slot', 'slots', 'betting',
         'viagra', 'cialis', 'pharmacy',
-        'loan', 'insurance', 'mortgage',
+        'loan', 'loans', 'insurance', 'mortgage',
         'pricing', 'what\'s your pricing', 'how much do you charge',
         'xin chào', 'hola amigo', 'dear webmaster',
         'increase traffic', 'rank higher', 'google ranking',
@@ -30,25 +32,32 @@ function fc_is_spam_content( $nombre, $apellido, $email, $asunto, $mensaje ) {
         '.ru', '.xyz', '.top', '.club',
     ];
 
-    $combined_text = strtolower( $nombre . ' ' . $apellido . ' ' . $asunto . ' ' . $mensaje );
-    
-    // Verificar palabras spam
-    foreach ( $spam_keywords as $keyword ) {
-        if ( stripos( $combined_text, $keyword ) !== false ) {
+    $combined_text = $nombre . ' ' . $apellido . ' ' . $asunto . ' ' . $mensaje;
+
+    // Palabra completa, no subcadena: "Sloane" no es "loan" ni "hola amigos" es "hola amigo". Los plurales de spam van en la lista.
+    $keywords_pattern = '/\b(?:' . implode( '|', array_map( function ( $keyword ) {
+        return preg_quote( $keyword, '/' );
+    }, $spam_keywords ) ) . ')\b/iu';
+    if ( preg_match( $keywords_pattern, $combined_text ) ) {
+        $reason = 'palabra';
+        return true;
+    }
+
+    // Dominio sospechoso: solo como terminación del dominio del correo ("ana.ruiz@gmail.com" no es ".ru").
+    $email  = (string) $email;
+    $at     = strrpos( $email, '@' );
+    $domain = strtolower( false === $at ? $email : substr( $email, $at + 1 ) );
+    foreach ( $spam_domains as $suspicious ) {
+        if ( '' !== $domain && substr( $domain, -strlen( $suspicious ) ) === $suspicious ) {
+            $reason = 'dominio';
             return true;
         }
     }
 
-    // Verificar dominios sospechosos
-    foreach ( $spam_domains as $domain ) {
-        if ( stripos( $email, $domain ) !== false ) {
-            return true;
-        }
-    }
-
-    // Detectar caracteres no latinos (cirílico, chino, etc.) excepto acentos españoles
-    $has_non_latin = preg_match('/[^\x00-\x7F\xC0-\xFF]/u', $combined_text);
-    if ( $has_non_latin ) {
+    // Escrituras no latinas habituales en spam. Signos como ¿ ¡ € « » o las comillas tipográficas son texto normal.
+    // shortcut: el griego y las tildes vietnamitas no se bloquean por escritura; el vietnamita queda cubierto por "xin chào".
+    if ( preg_match( '/[\p{Cyrillic}\p{Han}\p{Hiragana}\p{Katakana}\p{Hangul}\p{Arabic}\p{Hebrew}\p{Thai}\p{Devanagari}]/u', $combined_text ) ) {
+        $reason = 'escritura_no_latina';
         return true;
     }
 
@@ -78,7 +87,7 @@ function fc_verify_recaptcha( $token ) {
     }
 
     $body = json_decode( wp_remote_retrieve_body( $response ), true );
-    
+
     // Verificar éxito y score (mínimo 0.5 para v3)
     if ( isset( $body['success'] ) && $body['success'] === true ) {
         $score = isset( $body['score'] ) ? (float) $body['score'] : 0;

@@ -82,8 +82,11 @@ function rest_ensure_response($response) {
     return new WP_REST_Response($response, 200);
 }
 
+// Capacidades del usuario simulado: cada caso fija las suyas (por defecto, administrador).
+$GLOBALS["wp_current_caps"] = ["manage_options" => true, "edit_posts" => true];
+
 function current_user_can(string $cap): bool {
-    return true;
+    return !empty($GLOBALS["wp_current_caps"][$cap]);
 }
 
 function sanitize_text_field($str) {
@@ -184,5 +187,48 @@ settings_assert(get_option("flacso_meta_enabled") === 1, "Meta enabled actualiza
 settings_assert(get_option("fc_consultas_webhook_url") === "https://editor.flacso.edu.uy/api/consultas", "Webhook url actualizada");
 settings_assert(get_option("flacso_financiacion_html", null) === null, "La API ignora escritura de financiación retirada");
 settings_assert(get_option("flacso_carta_mas_info_financiacion_title", null) === null, "La API ignora título de tarjeta retirado");
+
+// 5. Permisos: la configuración global (webhooks, carpetas de Drive, secretos) solo la ve y
+// la cambia un administrador. Se prueban los permission_callback realmente registrados.
+$route = $GLOBALS["registered_rest_routes"]["/flacso/v1/ofertas/settings"];
+$read_cb = null;
+$write_cb = null;
+foreach ($route as $handler) {
+    if ($handler["methods"] === WP_REST_Server::READABLE) {
+        $read_cb = $handler["permission_callback"];
+    }
+    if ($handler["methods"] === WP_REST_Server::EDITABLE) {
+        $write_cb = $handler["permission_callback"];
+    }
+}
+settings_assert(is_callable($read_cb) && is_callable($write_cb), "La ruta debe registrar permission_callback de lectura y de escritura");
+
+$roles = [
+    "anonimo" => [],
+    "suscriptor" => ["read" => true],
+    "colaborador" => ["edit_posts" => true],
+    "editor" => ["edit_posts" => true, "edit_others_posts" => true, "publish_posts" => true],
+    "administrador" => ["manage_options" => true, "edit_posts" => true],
+];
+foreach ($roles as $role => $caps) {
+    $GLOBALS["wp_current_caps"] = $caps;
+    $is_admin = !empty($caps["manage_options"]);
+    foreach ([0, 1] as $include_secrets) {
+        $request = new WP_REST_Request("GET", ["include_secrets" => $include_secrets]);
+        settings_assert(call_user_func($read_cb, $request) === $is_admin, "Lectura (include_secrets={$include_secrets}) solo para administrador; rol: {$role}");
+    }
+    settings_assert(call_user_func($write_cb, new WP_REST_Request("POST")) === $is_admin, "Escritura solo para administrador; rol: {$role}");
+}
+
+// Defensa en profundidad: aunque el permiso se relaje, get_settings no revela secretos a no administradores.
+update_option("flacso_webhook_token", "token-real-777");
+foreach (["anonimo", "colaborador", "editor"] as $role) {
+    $GLOBALS["wp_current_caps"] = $roles[$role];
+    $masked = FLACSO_Academic_Settings_API::get_settings(new WP_REST_Request("GET", ["include_secrets" => 1]))->data["data"];
+    settings_assert($masked["flacso_webhook_token"] === "********", "include_secrets=1 no revela secretos al rol {$role}");
+}
+$GLOBALS["wp_current_caps"] = $roles["administrador"];
+$full = FLACSO_Academic_Settings_API::get_settings(new WP_REST_Request("GET", ["include_secrets" => 1]))->data["data"];
+settings_assert($full["flacso_webhook_token"] === "token-real-777", "El administrador sí lee el secreto con include_secrets=1");
 
 echo "OK FLACSO_Academic_Settings_API contract & functional test\n";
