@@ -75,9 +75,9 @@ $html = ob_get_clean();
 edit_cohort_assert(strpos($html, 'Editar cohorte') === false, 'no muestra botón si WP no proporciona URL');
 
 $GLOBALS['flacso_test_edit_url_exists'] = true;
-$GLOBALS['flacso_test_current_cohorts'] = [];
+$GLOBALS['flacso_test_current_cohorts'] = []; // otra oferta: el listado memoiza las cohortes por oferta
 ob_start();
-CPT_Oferta_Academica::render_column('cohorte_actual', 42);
+CPT_Oferta_Academica::render_column('cohorte_actual', 43);
 $html = ob_get_clean();
 edit_cohort_assert(strpos($html, 'Crear cohorte') !== false, 'mantiene Crear cohorte cuando no existe');
 edit_cohort_assert(strpos($html, 'Editar cohorte') === false, 'no ofrece editar una cohorte inexistente');

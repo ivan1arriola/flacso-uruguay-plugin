@@ -149,7 +149,11 @@ class Seminario_CPT
 
     private static function get_ediciones(int $post_id): array
     {
-        return get_posts([
+        static $cache = array(); // la lista de admin pide lo mismo por cada columna de la fila
+        if (isset($cache[$post_id])) {
+            return $cache[$post_id];
+        }
+        return $cache[$post_id] = get_posts([
             'post_type'      => FLACSO_Edicion::POST_TYPE,
             'post_status'    => array('publish', 'draft', 'pending', 'private'),
             'posts_per_page' => -1,

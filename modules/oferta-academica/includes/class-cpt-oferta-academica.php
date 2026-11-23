@@ -177,17 +177,21 @@ class CPT_Oferta_Academica {
             return;
         }
 
-        $cohortes = get_posts([
-            'post_type'      => 'cohorte',
-            'post_status'    => ['publish', 'draft', 'pending', 'private'],
-            'posts_per_page' => -1,
-            'meta_query'     => [[
-                'key'     => 'oferta_academica_id',
-                'value'   => $post_id,
-                'compare' => '=',
-                'type'    => 'NUMERIC',
-            ]],
-        ]);
+        static $cohortes_por_oferta = []; // la lista de admin pide lo mismo por cada columna de la fila
+        if (!isset($cohortes_por_oferta[$post_id])) {
+            $cohortes_por_oferta[$post_id] = get_posts([
+                'post_type'      => 'cohorte',
+                'post_status'    => ['publish', 'draft', 'pending', 'private'],
+                'posts_per_page' => -1,
+                'meta_query'     => [[
+                    'key'     => 'oferta_academica_id',
+                    'value'   => $post_id,
+                    'compare' => '=',
+                    'type'    => 'NUMERIC',
+                ]],
+            ]);
+        }
+        $cohortes = $cohortes_por_oferta[$post_id];
         $cohorte = self::get_current_cohort($cohortes);
 
         if ($column === 'cohorte_actual') {
