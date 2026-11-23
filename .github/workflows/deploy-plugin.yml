@@ -119,6 +119,7 @@ jobs:
                'docs/*' \
                'tests/*' \
                'dev/*' \
+               'scripts/*' \
                '.gitignore' \
                '.DS_Store' \
                'Thumbs.db' \
@@ -185,6 +186,7 @@ jobs:
             --exclude='docs/' \
             --exclude='tests/' \
             --exclude='dev/' \
+            --exclude='scripts/' \
             --exclude='.gitignore' \
             --exclude='.DS_Store' \
             --exclude='Thumbs.db' \

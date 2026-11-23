@@ -5,7 +5,7 @@
  * Description: Plataforma integrada de FLACSO Uruguay con gestion de docentes, seminarios, eventos, oferta academica y formularios. Consolida multiples plugins en una arquitectura modular.
  * Version: 8.0.0
  * Requires at least: 6.0
- * Requires PHP: 7.4
+ * Requires PHP: 8.3
  * Author: FLACSO Uruguay
  * Author URI: https://flacso.edu.uy
  * Text Domain: flacso-uruguay
