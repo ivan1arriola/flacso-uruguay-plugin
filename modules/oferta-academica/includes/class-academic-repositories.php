@@ -69,7 +69,8 @@ final class FLACSO_Academic_Repository {
     }
 
     public static function list(string $entity, array $filters = []): array {
-        return self::list_paged($entity, $filters)['items'];
+        // Solo se usan los ítems: evita el SELECT FOUND_ROWS() de cada consulta.
+        return self::list_paged($entity, $filters + ['no_found_rows' => true])['items'];
     }
 
     /** @return array{items: array, total: int, pages: int} */
@@ -83,6 +84,7 @@ final class FLACSO_Academic_Repository {
             'post_status' => current_user_can('edit_posts') ? ['publish', 'draft', 'pending', 'private'] : 'publish',
             'posts_per_page' => min(200, max(1, absint($filters['per_page'] ?? 100))),
             'paged' => max(1, absint($filters['page'] ?? 1)),
+            'no_found_rows' => !empty($filters['no_found_rows']),
             'orderby' => ['date' => 'DESC', 'ID' => 'DESC'], // ID desempata: sin él las páginas pueden repetir ítems
         ];
         if (!empty($filters['parent_id'])) {
