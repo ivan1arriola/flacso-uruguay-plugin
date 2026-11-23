@@ -267,7 +267,7 @@ class Docente_Meta {
         }
 
         // Roles asignables
-        $raw_roles = isset($_POST['roles']) && is_array($_POST['roles']) ? $_POST['roles'] : [];
+        $raw_roles = isset($_POST['roles']) && is_array($_POST['roles']) ? wp_unslash($_POST['roles']) : [];
         $clean_roles = [];
         foreach ($raw_roles as $r) {
             $r_key = sanitize_key((string) $r);
