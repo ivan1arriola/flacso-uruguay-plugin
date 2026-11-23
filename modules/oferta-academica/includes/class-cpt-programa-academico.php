@@ -244,6 +244,7 @@ final class FLACSO_Programa_Academico {
                                 'meta_value' => $oferta->ID,
                             ]);
                             $states = [];
+                            update_meta_cache('post', $cohort_ids); // fields=ids no precarga metadatos
                             foreach ($cohort_ids as $cohort_id) {
                                 $state = FLACSO_Cohorte::sanitize_state(get_post_meta($cohort_id, 'estado', true));
                                 $states[$state] = ($states[$state] ?? 0) + 1;

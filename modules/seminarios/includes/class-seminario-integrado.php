@@ -325,13 +325,13 @@ final class FLACSO_Seminario_Integrado {
                 'posts_per_page' => -1,
                 'fields' => 'ids',
                 'post__not_in' => [$post->ID],
+                'meta_query' => [[
+                    'key' => FLACSO_Edicion::META_PARENT_ID,
+                    'value' => array_map('strval', array_keys($allowed_seminars)),
+                    'compare' => 'IN',
+                ]],
             ]);
-            foreach ($candidate_ids as $candidate_id) {
-                $parent = absint(get_post_meta($candidate_id, FLACSO_Edicion::META_PARENT_ID, true));
-                if (isset($allowed_seminars[$parent])) {
-                    $allowed_editions[] = (int) $candidate_id;
-                }
-            }
+            $allowed_editions = array_map('intval', $candidate_ids);
         }
         ?>
         <script>
