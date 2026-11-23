@@ -49,25 +49,10 @@ if (!function_exists('dp_docentes_register_assets')) {
             $templates_css_ver
         );
 
-        wp_register_style(
-            'bootstrap-avatar',
-            'https://cdn.jsdelivr.net/npm/bootstrap-avatar@latest/dist/avatar.min.css',
-            ['flacso-docentes-bootstrap'],
-            null
-        );
-
-        wp_register_script(
-            'flacso-docentes-bootstrap-js',
-            'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
-            [],
-            '5.3.3',
-            true
-        );
-
         wp_register_script(
             'flacso-docentes-directory',
             $directory_js_url,
-            ['flacso-docentes-bootstrap-js'],
+            [],
             $directory_js_ver,
             true
         );
@@ -90,9 +75,7 @@ if (!function_exists('dp_docentes_enqueue_assets')) {
         wp_enqueue_style('flacso-docentes-bootstrap');
         wp_enqueue_style('flacso-docentes-bootstrap-icons');
         wp_enqueue_style('flacso-docentes-templates');
-        wp_enqueue_style('bootstrap-avatar');
 
-        wp_enqueue_script('flacso-docentes-bootstrap-js');
         wp_enqueue_script('flacso-docentes-directory');
 
         $enqueued = true;
