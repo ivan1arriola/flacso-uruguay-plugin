@@ -41,7 +41,12 @@ final class FLACSO_Academic_API {
                 [
                     'methods' => WP_REST_Server::READABLE,
                     'callback' => static function (WP_REST_Request $request) use ($entity) {
-                        $data = FLACSO_Academic_Repository::to_array($entity, absint($request['id']));
+                        $id = absint($request['id']);
+                        // Sin permiso de edición, solo se entrega contenido publicado (no borradores, privados ni auto-drafts).
+                        if (get_post_status($id) !== 'publish' && !current_user_can('edit_post', $id)) {
+                            return new WP_Error('not_found', __('Registro no encontrado.', 'flacso-uruguay'), ['status' => 404]);
+                        }
+                        $data = FLACSO_Academic_Repository::to_array($entity, $id);
                         return $data ?: new WP_Error('not_found', __('Registro no encontrado.', 'flacso-uruguay'), ['status' => 404]);
                     },
                     'permission_callback' => '__return_true',
