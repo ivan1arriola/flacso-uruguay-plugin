@@ -31,6 +31,8 @@ flacso_safe_require('modules/seminarios/includes/class-seminario-admin-fields.ph
 flacso_safe_require('modules/seminarios/includes/class-edicion.php');
 flacso_safe_require('modules/seminarios/includes/class-edicion-admin-fields.php');
 flacso_safe_require('modules/seminarios/includes/class-seminario-settings.php');
+// Adaptador de portada: añade lista-seminarios.php al cargador de main-page y con ello registra [lista_seminarios].
+flacso_safe_require('modules/seminarios/includes/homepage.php');
 
 // Inicializar módulo
 class Seminario_Plugin {
