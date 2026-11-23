@@ -152,9 +152,9 @@ function docentes_dashboard_page(){
 
     if (!empty($_POST['dp_quick_add_docente'])) {
         check_admin_referer('dp_quick_add_docente', 'dp_quick_add_docente_nonce');
-        $prefijo = sanitize_text_field($_POST['dp_docente_prefijo'] ?? '');
-        $nombre = sanitize_text_field($_POST['dp_docente_nombre'] ?? '');
-        $apellido = sanitize_text_field($_POST['dp_docente_apellido'] ?? '');
+        $prefijo = sanitize_text_field(wp_unslash($_POST['dp_docente_prefijo'] ?? ''));
+        $nombre = sanitize_text_field(wp_unslash($_POST['dp_docente_nombre'] ?? ''));
+        $apellido = sanitize_text_field(wp_unslash($_POST['dp_docente_apellido'] ?? ''));
         
         if (!$nombre || !$apellido) {
             add_settings_error($notice_slug, 'missing', 'Nombre y apellido requeridos.', 'error');

@@ -170,22 +170,23 @@ function flacso_autoridades_admin_page() {
         isset($_POST['flacso_autoridades_nonce']) &&
         wp_verify_nonce($_POST['flacso_autoridades_nonce'], 'guardar_flacso_autoridades')
     ) {
+        $direccion_post = wp_unslash($_POST['direccion'] ?? []);
         $data = [
-            'imagen_fondo' => esc_url_raw($_POST['imagen_fondo'] ?? ''),
+            'imagen_fondo' => esc_url_raw(wp_unslash($_POST['imagen_fondo'] ?? '')),
             'direccion' => [
-                'docente_id'       => intval($_POST['direccion']['docente_id'] ?? 0),
-                'prefijo'          => sanitize_text_field($_POST['direccion']['prefijo'] ?? ''),
-                'nombre_manual'    => sanitize_text_field($_POST['direccion']['nombre_manual'] ?? ''),
-                'titulo_academico' => sanitize_text_field($_POST['direccion']['titulo_academico'] ?? ''),
-                'cargo'            => sanitize_text_field($_POST['direccion']['cargo'] ?? 'Directora'),
-                'enlace'           => esc_url_raw($_POST['direccion']['enlace'] ?? ''),
-                'cv'               => wp_kses_post($_POST['direccion']['cv'] ?? ''),
+                'docente_id'       => intval($direccion_post['docente_id'] ?? 0),
+                'prefijo'          => sanitize_text_field($direccion_post['prefijo'] ?? ''),
+                'nombre_manual'    => sanitize_text_field($direccion_post['nombre_manual'] ?? ''),
+                'titulo_academico' => sanitize_text_field($direccion_post['titulo_academico'] ?? ''),
+                'cargo'            => sanitize_text_field($direccion_post['cargo'] ?? 'Directora'),
+                'enlace'           => esc_url_raw($direccion_post['enlace'] ?? ''),
+                'cv'               => wp_kses_post($direccion_post['cv'] ?? ''),
             ],
             'secciones' => [],
         ];
 
         if (!empty($_POST['secciones']) && is_array($_POST['secciones'])) {
-            foreach ($_POST['secciones'] as $seccion) {
+            foreach (wp_unslash($_POST['secciones']) as $seccion) {
                 $nueva_seccion = [
                     'titulo'            => sanitize_text_field($seccion['titulo'] ?? ''),
                     'incluir_direccion' => !empty($seccion['incluir_direccion']),

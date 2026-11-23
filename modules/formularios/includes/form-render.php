@@ -13,10 +13,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 function fc_render_form( $atts = [] ) {
     $atts = shortcode_atts(
         [
-            'titulo' => '',
+            'titulo'             => '',
+            'mostrar_encabezado' => true,
         ],
         $atts
     );
+    $mostrar_encabezado = wp_validate_boolean( $atts['mostrar_encabezado'] );
     fc_enqueue_assets();
 
     $exito    = ( isset( $_GET['fc_exito'] ) && (int) $_GET['fc_exito'] === 1 ) || ( isset( $_GET['fc_confirmacion_consulta'] ) && (int) $_GET['fc_confirmacion_consulta'] === 1 );
@@ -37,6 +39,9 @@ function fc_render_form( $atts = [] ) {
         <div style="max-width: 600px; margin: 0 auto;">
             <!-- Encabezado -->
             <div style="margin-bottom: 1.5rem; text-align: center;">
+                <?php if ( ! $mostrar_encabezado ) : ?>
+                    <p style="color: #999; margin: 0; font-size: 0.85rem;">* <?php esc_html_e( 'Campos obligatorios', 'flacso-flacso-formulario-consultas' ); ?></p>
+                <?php else : ?>
                 <?php if ( ! empty( $atts['titulo'] ) ) : ?>
                     <h2 style="font-size: 1.75rem; font-weight: 700; color: #1a3a5c; margin: 0 0 0.5rem 0;"><?php echo esc_html( $atts['titulo'] ); ?></h2>
                 <?php else : ?>
@@ -44,6 +49,7 @@ function fc_render_form( $atts = [] ) {
                 <?php endif; ?>
                 <p style="color: #6c7686; margin: 0 0 1rem 0; font-size: 0.95rem;"><?php esc_html_e( 'Completá los datos y te responderemos a la brevedad.', 'flacso-flacso-formulario-consultas' ); ?></p>
                 <p style="color: #999; margin: 0; font-size: 0.85rem;">* <?php esc_html_e( 'Campos obligatorios', 'flacso-flacso-formulario-consultas' ); ?></p>
+                <?php endif; ?>
             </div>
 
             <!-- Alerta de éxito -->

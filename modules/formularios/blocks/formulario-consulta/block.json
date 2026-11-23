@@ -11,6 +11,10 @@
     "titulo": {
       "type": "string",
       "default": ""
+    },
+    "mostrar_encabezado": {
+      "type": "boolean",
+      "default": true
     }
   },
   "supports": {
