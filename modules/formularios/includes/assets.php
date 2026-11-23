@@ -13,7 +13,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 function fc_register_assets() {
 	// Siempre registrar; se encolarán cuando sea necesario.
 	wp_register_style( 'fc-bootstrap', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css', [], '5.3.3' );
-	wp_register_script( 'fc-bootstrap', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js', [], '5.3.3', true );
 
 	wp_register_style( 'fc-iti', 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.6.1/build/css/intlTelInput.min.css', [], '18.6.1' );
 	wp_register_script( 'fc-iti', 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.6.1/build/js/intlTelInput.min.js', [], '18.6.1', true );
@@ -30,7 +29,6 @@ function fc_enqueue_assets() {
     $load_bootstrap = get_option( 'fc_cargar_bootstrap', '1' ) === '1';
 	if ( $load_bootstrap ) {
 		wp_enqueue_style( 'fc-bootstrap' );
-		wp_enqueue_script( 'fc-bootstrap' );
 	}
 	wp_enqueue_style( 'fc-styles' );
 	wp_enqueue_script( 'fc-scripts' );

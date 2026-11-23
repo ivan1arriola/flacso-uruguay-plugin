@@ -9,16 +9,6 @@
         callback();
     }
 
-    function initTooltips() {
-        if (!window.bootstrap || typeof window.bootstrap.Tooltip !== 'function') {
-            return;
-        }
-
-        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
-            new window.bootstrap.Tooltip(el);
-        });
-    }
-
     function initDocenteDirectory() {
         var grid = document.getElementById('grid-docentes');
         if (!grid) {
@@ -106,7 +96,6 @@
     }
 
     onReady(function () {
-        initTooltips();
         initDocenteDirectory();
     });
 })();
