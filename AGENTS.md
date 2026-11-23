@@ -116,8 +116,8 @@ El código se organiza estrictamente por **dominios de negocio de FLACSO**, nunc
    - Cero caracteres corruptos o mojibake (doble codificación UTF-8/ISO-8859). Un carácter corrupto rompe la serialización en base de datos y la exportación JSON.
    - Ejecutar siempre la verificación antes de confirmar cambios.
 2. **Compatibilidad PHP**:
-   - El código debe ser compatible con **PHP 7.4** y superior (hasta PHP 8.x).
-   - No usar características exclusivas de PHP 8.1+ sin fallback (como enums nativos, `readonly` properties o intersection types).
+   - El código debe ser compatible con la **última versión estable de PHP**; el mínimo soportado es **PHP 8.3** (producción).
+   - Se pueden usar características de PHP 8.3 (enums, `readonly`, etc.); no depender de lo exclusivo de versiones posteriores a 8.3 sin fallback.
 3. **Seguridad en Base de Datos**:
    - **CERO queries SQL interpoladas directamente**: Usar `$wpdb->prepare()` para TODA consulta dinámica.
    - **Condiciones WHERE**: No interpolar `$where_sql` dentro de otra condición si ya contiene la palabra `WHERE`. Construir y reutilizar por separado el cuerpo de condiciones para evitar errores como `AND (WHERE ...)`.
@@ -256,5 +256,5 @@ Ejecuta la suite completa:
 
 - Instalar: `composer install` (solo desarrollo; `vendor/` no se versiona).
 - `composer phpstan`: análisis estático nivel 3. El código viejo está congelado en `phpstan-baseline.neon`; no agregar errores nuevos. En Windows, si la ruta tiene tildes (p. ej. `Iván`), PHPStan falla en sus procesos paralelos: correrlo desde la ruta corta (`cmd /c "cd /d <ruta 8.3> && php vendorin\phpstan analyse"`).
-- `composer phpcs`: seguridad (escapado, nonces, SQL) y compatibilidad PHP 7.4. En CI bloquea en archivos PHP nuevos e informa en los modificados.
+- `composer phpcs`: seguridad (escapado, nonces, SQL) y compatibilidad PHP 8.3+. En CI bloquea en archivos PHP nuevos e informa en los modificados.
 - Activar el hook local: `git config core.hooksPath .githooks`.

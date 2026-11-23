@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <ruleset name="FLACSO Uruguay Plugin">
-  <description>Estandar WordPress + compatibilidad PHP 7.4. Se corre sobre lo que cambia en cada PR.</description>
+  <description>Estandar WordPress + compatibilidad PHP 8.3+. Se corre sobre lo que cambia en cada PR.</description>
   <file>.</file>
   <arg name="extensions" value="php"/>
   <arg name="basepath" value="."/>
@@ -14,7 +14,7 @@
   <exclude-pattern>*/debug-*.php</exclude-pattern>
   <exclude-pattern>test-schema.php</exclude-pattern>
 
-  <config name="testVersion" value="7.4-"/>
+  <config name="testVersion" value="8.3-"/>
   <rule ref="PHPCompatibilityWP"/>
 
   <!-- Etapa 1: seguridad, base de datos y funciones peligrosas. El formato (WordPress-Extra completo) queda para una segunda etapa. -->

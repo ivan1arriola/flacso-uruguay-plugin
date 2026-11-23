@@ -71,7 +71,7 @@ class PublicContractBaseline(unittest.TestCase):
             self.assertTrue((ROOT / "tests" / filename).is_file())
 
     def test_declared_minimum_php_is_explicit(self):
-        self.assertRegex(php("flacso-uruguay.php"), r"Requires PHP:\s*7\.4\b")
+        self.assertRegex(php("flacso-uruguay.php"), r"Requires PHP:\s*8.3\b")
 
 
 class InventoryGeneratorTests(unittest.TestCase):

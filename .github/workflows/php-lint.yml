@@ -13,12 +13,16 @@ permissions:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.5']
     steps:
       - uses: actions/checkout@v4
-      - name: Setup PHP 7.4
+      - name: Setup PHP ${{ matrix.php }}
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '7.4'
+          php-version: ${{ matrix.php }}
           coverage: none
       - name: Validate PHP syntax
         shell: bash
@@ -51,7 +55,7 @@ jobs:
           echo "PHP files checked: $checked"
           echo "Files with syntax errors: $failed"
           {
-            echo "## PHP 7.4 syntax check"
+            echo "## PHP ${{ matrix.php }} syntax check"
             echo ""
             echo "- Files checked: $checked"
             echo "- Files with syntax errors: $failed"

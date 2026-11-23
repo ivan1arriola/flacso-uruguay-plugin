@@ -9,7 +9,7 @@ services:
       MARIADB_ROOT_PASSWORD: root
     volumes: [db:/var/lib/mysql]
   wordpress:
-    image: wordpress:php8.2-apache
+    image: wordpress:php8.4-apache
     depends_on: [db]
     ports: ["8888:80"]
     environment:

@@ -75,7 +75,7 @@ de auditoría y no se usan para nuevos envíos.
 ## Requisitos
 
 - WordPress 6.0 o posterior;
-- PHP 7.4 o posterior;
+- PHP 8.3 o posterior (última versión estable recomendada);
 - WP-CLI para validaciones posteriores al despliegue.
 
 El archivo principal es `flacso-uruguay.php` y el slug de instalación es `flacso-uruguay-plugin`.
