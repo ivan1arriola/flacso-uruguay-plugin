@@ -259,9 +259,9 @@ class Docente_Meta {
         foreach (['prefijo_abrev', 'titulo_academico', 'cargo', 'nombre', 'apellido', 'cv'] as $campo) {
             if (isset($_POST[$campo])) {
                 if ($campo === 'cv') {
-                    update_post_meta($post_id, $campo, wp_kses_post($_POST[$campo]));
+                    update_post_meta($post_id, $campo, wp_kses_post(wp_unslash($_POST[$campo])));
                 } else {
-                    update_post_meta($post_id, $campo, sanitize_text_field($_POST[$campo]));
+                    update_post_meta($post_id, $campo, sanitize_text_field(wp_unslash($_POST[$campo])));
                 }
             }
         }
