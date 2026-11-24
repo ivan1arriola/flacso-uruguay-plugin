@@ -1,1 +1,213 @@
-.flacso-consultas-page{max-width:1360px;margin-top:20px}.flacso-consultas-page__header{display:flex;justify-content:space-between;gap:20px;align-items:center;background:#fff;border:1px solid #dbe5f1;border-radius:12px;padding:22px 24px;margin-bottom:18px}.flacso-consultas-page__header h1{margin:0 0 5px;font-size:24px;color:#172b4d}.flacso-consultas-page__header p{margin:0;color:#5e6c84}.flacso-consultas-page .flacso-cp-hero{display:none}.flacso-consultas-page .flacso-cp-card{border-radius:12px}.flacso-consultas-page .flacso-cp-filters{background:#fff;border-color:#dbe5f1}.flacso-consultas-page .flacso-consultas-diagnostic{border-left-color:#d97706;background:#fffbeb}
+/* Más información (flacso-consultas*): pantalla operativa con estilo nativo de wp-admin. */
+
+/* Avisos globales de WordPress dentro de esta pantalla */
+#wpbody-content > .notice { margin: 0 0 16px; color: #1d2327; background: #fff; }
+#wpbody-content > .notice p { margin: .8em 1em; padding: 0; color: inherit; background: transparent; line-height: 1.5; }
+.flacso-consultas-notices { margin: 0 0 12px; }
+.flacso-consultas-notices .notice { margin: 0 0 10px; color: #1d2327; background: #fff; }
+.flacso-consultas-notices .notice p { margin: .8em 1em; padding: 0; color: inherit; background: transparent; line-height: 1.5; }
+
+/* Contenedor y cabecera */
+.flacso-consultas-platform { max-width: 1360px; }
+.flacso-consultas-page__lead { margin: 8px 0 12px; color: #50575e; font-size: 13px; }
+
+/* Diagnóstico de envíos */
+.flacso-consultas-diagnostic { margin: 0 0 10px; padding: 8px 12px; border: 1px solid #dcdcde; border-left: 4px solid #646970; border-radius: 4px; color: #1d2327; background: #fff; }
+.flacso-consultas-diagnostic.is-ok { border-left-color: #00a32a; }
+.flacso-consultas-diagnostic.is-warning { border-left-color: #dba617; background: #fcf9e8; }
+.flacso-consultas-diagnostic summary { cursor: pointer; font-weight: 600; }
+.flacso-consultas-diagnostic summary span { margin-left: 8px; font-weight: 400; color: #50575e; }
+.flacso-consultas-diagnostic p { margin: .5em 0; padding: 0; color: #50575e; background: transparent; line-height: 1.5; }
+
+/* Pestañas */
+.flacso-cp-tabs { margin-bottom: 16px; }
+
+/* Selector de base */
+.flacso-cp-bases { float: none; margin: 0 0 8px; }
+.flacso-cp-bases + .clear { margin-bottom: 4px; }
+
+/* Tarjetas */
+.flacso-cp-card { background: #fff; border: 1px solid #dcdcde; border-radius: 4px; padding: 16px 20px; margin-bottom: 16px; }
+.flacso-cp-section-title { margin: 16px 0 8px; font-size: 14px; font-weight: 600; color: #1d2327; }
+.flacso-cp-card > .flacso-cp-section-title:first-child { margin-top: 0; }
+.flacso-cp-card .description { margin: 0 0 10px; color: #646970; }
+.flacso-cp-empty { text-align: center; padding: 20px; color: #646970; }
+.flacso-cp-grid-2 { display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; }
+.flacso-cp-grid-2 > .flacso-cp-card { min-width: 0; }
+@media (max-width: 1100px) { .flacso-cp-grid-2 { grid-template-columns: 1fr; } }
+
+/* Indicadores */
+.flacso-cp-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.flacso-cp-kpi { background: #fff; border: 1px solid #dcdcde; border-radius: 4px; padding: 12px 16px; }
+.flacso-cp-kpi .kpi-label { font-size: 13px; font-weight: 600; color: #50575e; }
+.flacso-cp-kpi .kpi-val { font-size: 26px; font-weight: 600; line-height: 1.2; color: #1d2327; margin: 4px 0; font-variant-numeric: tabular-nums; }
+.flacso-cp-kpi .kpi-sub { font-size: 12px; color: #646970; }
+
+/* Filtros */
+.flacso-cp-filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 12px; padding: 12px; background: #f6f7f7; border: 1px solid #dcdcde; border-radius: 4px; }
+.flacso-cp-filters .fg { display: flex; flex-direction: column; gap: 4px; }
+.flacso-cp-filters .fg--grow { flex: 1; min-width: 220px; }
+.flacso-cp-filters .fg--grow input { width: 100%; }
+.flacso-cp-filters label { font-size: 12px; font-weight: 600; color: #1d2327; }
+.flacso-cp-filters .flacso-cp-check { display: flex; align-items: center; gap: 6px; font-weight: 400; min-height: 30px; }
+.flacso-cp-presets { margin-left: auto; align-self: center; font-size: 13px; }
+.flacso-cp-filters--inbox { display: block; }
+.flacso-cp-filters__main { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.flacso-cp-select-item { max-width: 260px; }
+.flacso-cp-more-filters { margin-top: 10px; }
+.flacso-cp-more-filters summary { cursor: pointer; font-weight: 600; color: var(--wp-admin-theme-color, #2271b1); }
+.flacso-cp-more-filters summary span { font-weight: 400; color: #50575e; }
+.flacso-cp-filters__more { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-top: 10px; }
+
+/* Comparar períodos */
+.flacso-comparison-filters { align-items: stretch; }
+.flacso-comparison-period { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px 12px; border: 1px solid; border-radius: 4px; }
+.flacso-comparison-period__title { width: 100%; margin: 0; font-size: 13px; font-weight: 600; }
+.flacso-comparison-period--current { background: #f0f6fc; border-color: var(--wp-admin-theme-color, #2271b1); }
+.flacso-comparison-period--current .flacso-comparison-period__title { color: var(--wp-admin-theme-color, #2271b1); }
+.flacso-comparison-period--base { background: #fff; border-color: #c3c4c7; }
+.flacso-comparison-period--base .flacso-comparison-period__title { color: #50575e; }
+.flacso-comparison-actions { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
+.flacso-cp-kpi--comparison { position: relative; overflow: hidden; }
+.flacso-cp-kpi--comparison::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--wp-admin-theme-color, #2271b1); }
+.flacso-comparison-values { display: flex; align-items: baseline; gap: 7px; }
+.flacso-comparison-current { color: var(--wp-admin-theme-color, #2271b1); }
+.flacso-comparison-base { color: #646970; font-size: 14px; font-weight: 600; }
+.flacso-comparison-delta { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.flacso-comparison-delta.is-positive { background: #edfaef; color: #00450c; }
+.flacso-comparison-delta.is-negative { background: #fcf0f1; color: #8a2424; }
+.flacso-comparison-delta.is-neutral { background: #f0f0f1; color: #50575e; }
+.flacso-comparison-table .flacso-comparison-value--current { color: var(--wp-admin-theme-color, #2271b1); font-weight: 600; }
+.flacso-comparison-table .flacso-comparison-value--base { color: #646970; }
+.flacso-comparison-table .flacso-comparison-split { color: #50575e; }
+.flacso-comparison-table .flacso-comparison-delta { margin-top: 0; white-space: nowrap; }
+.flacso-comparison-table tr.is-positive td:first-child { box-shadow: inset 3px 0 0 #00a32a; }
+.flacso-comparison-table tr.is-negative td:first-child { box-shadow: inset 3px 0 0 #d63638; }
+
+/* Tablas */
+.flacso-cp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.flacso-cp-table th { text-align: left; padding: 8px 12px; background: #f6f7f7; border-bottom: 1px solid #dcdcde; color: #1d2327; font-size: 13px; font-weight: 600; }
+.flacso-cp-table td { padding: 8px 12px; border-bottom: 1px solid #f0f0f1; vertical-align: middle; }
+.flacso-cp-table th.num,
+.flacso-cp-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.flacso-cp-table tbody tr:hover td { background: #f6f7f7; }
+.flacso-cp-table-scroll { overflow-x: auto; }
+
+/* Bandeja */
+.flacso-cp-inbox-table { table-layout: fixed; }
+.flacso-cp-inbox-table th,
+.flacso-cp-inbox-table td { overflow-wrap: break-word; }
+.flacso-cp-inbox-table th:nth-child(1) { width: 8%; }
+.flacso-cp-inbox-table th:nth-child(2) { width: 18%; }
+.flacso-cp-inbox-table th:nth-child(3) { width: 26%; }
+.flacso-cp-inbox-table th:nth-child(4) { width: 8%; }
+.flacso-cp-inbox-table th:nth-child(5) { width: 9%; }
+.flacso-cp-inbox-table th:nth-child(6) { width: 7%; }
+.flacso-cp-inbox-table th:nth-child(7) { width: 14%; }
+.flacso-cp-inbox-table th:nth-child(8) { width: 10%; }
+.flacso-cp-inbox-table td:nth-child(6),
+.flacso-cp-inbox-table td:nth-child(7),
+.flacso-cp-inbox-table td:nth-child(8) { font-size: 12px; }
+@media (max-width: 1200px) { .flacso-cp-inbox-table { min-width: 1060px; } }
+.flacso-cp-date { white-space: nowrap; font-size: 12px; color: #50575e; }
+.flacso-cp-date small { display: block; color: #646970; }
+.flacso-cp-inbox-offer { min-width: 0; }
+.flacso-cp-inbox-offer__name { font-weight: 600; color: #1d2327; line-height: 1.35; }
+.flacso-cp-inbox-offer > .flacso-cp-inbox-offer__name { display: block; }
+.flacso-cp-inbox-offer__cohort { display: block; margin-top: 4px; color: #646970; font-size: 12px; }
+.flacso-cp-inbox-actions { white-space: normal; }
+.flacso-cp-inbox-actions .button { margin: 2px 2px 2px 0; }
+.flacso-cp-inbox-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 0 0 10px; color: #50575e; font-size: 13px; }
+.flacso-cp-filter-reset { color: var(--wp-admin-theme-color, #2271b1); text-decoration: none; font-weight: 600; }
+.flacso-cp-filter-reset:hover { text-decoration: underline; }
+.flacso-cp-person strong { display: block; color: #1d2327; line-height: 1.35; }
+.flacso-cp-person a { display: block; margin-top: 2px; max-width: 100%; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.flacso-cp-delivery { min-width: 120px; }
+.flacso-cp-delivery .flacso-badge { margin: 2px 0; }
+
+/* Paginación */
+.flacso-cp-pagination { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; align-items: center; float: none; }
+.flacso-cp-pagination .page-numbers { display: inline-block; min-width: 30px; padding: 4px 10px; box-sizing: border-box; text-align: center; text-decoration: none; color: #1d2327; background: #fff; border: 1px solid #c3c4c7; border-radius: 3px; }
+.flacso-cp-pagination a.page-numbers:hover { border-color: var(--wp-admin-theme-color, #2271b1); color: var(--wp-admin-theme-color, #2271b1); }
+.flacso-cp-pagination .page-numbers.current { background: var(--wp-admin-theme-color, #2271b1); border-color: var(--wp-admin-theme-color, #2271b1); color: #fff; }
+.flacso-cp-pagination .page-numbers.dots { border-color: transparent; background: transparent; }
+
+/* Insignias */
+.flacso-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600; }
+.flacso-badge.sent { background: #edfaef; color: #00450c; }
+.flacso-badge.sent.fallback { background: #fcf9e8; color: #614200; }
+.flacso-badge.sent.mautic { background: #f3e8ff; color: #6b21a8; }
+.flacso-badge.failed { background: #fcf0f1; color: #8a2424; }
+.flacso-badge.failed.fallback { background: #fcf0f1; color: #8a2424; border: 1px dashed #d63638; }
+.flacso-badge.skipped { background: #fcf9e8; color: #614200; }
+.flacso-badge.pending { background: #fcf9e8; color: #614200; }
+.flacso-badge.offer_inquiries { background: #f0f6fc; color: #0a4b78; }
+.flacso-badge.seminar_inquiries { background: #f3e8ff; color: #6b21a8; }
+.flacso-badge.general_inquiries { background: #f0f0f1; color: #50575e; }
+.flacso-badge.status-abierta { background: #edfaef; color: #00450c; }
+.flacso-badge.status-cerrada { background: #f0f0f1; color: #50575e; }
+.flacso-badge.status-sin_cohorte { background: #f6f7f7; color: #646970; border: 1px dashed #c3c4c7; }
+.flacso-badge.abbr { background: #f0f6fc; color: #0a4b78; font-size: 11px; text-transform: lowercase; }
+.flacso-badge.mautic-synced { background: #f3e8ff; color: #6b21a8; }
+.flacso-badge.mautic-failed { background: #fcf0f1; color: #8a2424; }
+.flacso-badge.mautic-pending { background: #fcf9e8; color: #614200; }
+.flacso-badge.mautic-skipped { background: #f0f0f1; color: #646970; }
+.flacso-badge.campaign-joined { background: #f3e8ff; color: #6b21a8; }
+.flacso-badge.campaign-failed { background: #fcf0f1; color: #8a2424; }
+.flacso-badge.campaign-pending { background: #fcf9e8; color: #614200; }
+.flacso-badge.campaign-skipped,
+.flacso-badge.campaign-legacy { background: #f0f0f1; color: #646970; }
+.flacso-badge.followup-pending { background: #f0f6fc; color: #0a4b78; }
+.flacso-badge.followup-sent { background: #edfaef; color: #00450c; }
+.flacso-badge.followup-skipped { background: #f0f0f1; color: #646970; }
+.flacso-badge.followup-failed { background: #fcf0f1; color: #8a2424; }
+.flacso-badge.followup-processing { background: #fcf9e8; color: #614200; }
+.flacso-delivery-caption { display: block; margin-top: 3px; font-size: 11px; color: #646970; }
+
+/* Gráfico */
+.flacso-cp-chart { background: #fff; border: 1px solid #dcdcde; border-radius: 4px; padding: 12px; overflow-x: auto; }
+.flacso-cp-chart svg { display: block; width: 100%; height: auto; max-height: 240px; }
+.flacso-cp-legend { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 6px; font-size: 12px; color: #646970; }
+.flacso-cp-legend__items { display: inline-flex; gap: 16px; }
+.flacso-cp-legend__bar,
+.flacso-cp-legend__line { display: inline-block; vertical-align: middle; margin-right: 4px; }
+.flacso-cp-legend__bar { width: 10px; height: 10px; background: #9ec2e6; border-radius: 2px; }
+.flacso-cp-legend__line { width: 14px; height: 2px; background: #2271b1; }
+
+/* Campañas */
+.flacso-cp-hidden-camps { margin-top: 16px; padding-top: 12px; border-top: 1px solid #dcdcde; }
+.flacso-cp-hidden-camps .button { margin: 2px 4px; }
+
+/* Exportar */
+.flacso-cp-chips-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 16px 0 8px; }
+.flacso-cp-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px; background: #f6f7f7; border: 1px solid #dcdcde; border-radius: 4px; max-height: 300px; overflow-y: auto; }
+.flacso-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; border: 1px solid #c3c4c7; background: #fff; font-size: 12.5px; cursor: pointer; user-select: none; }
+.flacso-chip input { margin: 0; }
+.flacso-chip.is-selected { background: var(--wp-admin-theme-color, #2271b1); color: #fff; border-color: var(--wp-admin-theme-color, #2271b1); }
+.flacso-exp-prog { margin-top: 16px; max-width: 560px; }
+.flacso-exp-prog__head { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+.flacso-exp-prog.is-error #flacso-exp-msg { color: #b32d2e; }
+.flacso-exp-track { height: 10px; background: #dcdcde; border-radius: 4px; overflow: hidden; }
+.flacso-exp-bar { height: 100%; width: 0; background: var(--wp-admin-theme-color, #2271b1); transition: width .2s; }
+.flacso-exp-prog.is-error .flacso-exp-bar { background: #d63638; }
+.flacso-exp-prog__actions { margin-top: 8px; display: flex; gap: 8px; }
+
+/* Detalle de la solicitud */
+.flacso-modal { width: calc(100% - 40px); max-width: 780px; max-height: 85vh; padding: 0; border: 1px solid #c3c4c7; border-radius: 4px; background: #fff; color: #1d2327; overflow: hidden; }
+.flacso-modal::backdrop { background: rgba(0, 0, 0, .5); }
+.flacso-modal__inner { max-height: 85vh; overflow-y: auto; padding: 20px 24px; }
+.flacso-modal__head { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-bottom: 1px solid #dcdcde; padding-bottom: 12px; margin-bottom: 16px; }
+.flacso-modal__head h2 { margin: 0; font-size: 18px; }
+.flacso-modal__person { background: #f6f7f7; border: 1px solid #dcdcde; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px; }
+.flacso-modal__name { font-size: 16px; }
+.flacso-modal__offer { margin-top: 6px; }
+.flacso-modal__table { margin-bottom: 16px; }
+.flacso-modal__label { width: 190px; }
+.flacso-modal__note { color: #50575e; margin-top: 4px; }
+.flacso-modal__action { margin-top: 8px; }
+.flacso-followup-msg { margin-left: 10px; font-size: 12px; font-weight: 600; color: #646970; }
+.flacso-followup-msg.is-ok { color: #00450c; }
+.flacso-followup-msg.is-error { color: #8a2424; }
+.flacso-modal__tech { margin-top: 12px; }
+.flacso-modal__tech summary { cursor: pointer; font-weight: 600; }
+.flacso-modal__payload { background: #1d2327; color: #f0f0f1; padding: 12px; border-radius: 4px; overflow: auto; max-height: 240px; font-size: 12px; }
