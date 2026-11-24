@@ -1180,7 +1180,7 @@ class FLACSO_Integrations_Settings {
                 <span class="flacso-global-token-icon">🔑</span>
                 <div class="flacso-global-token-title-block">
                     <h2><?php esc_html_e('Token de Autenticación Unificado', 'flacso-uruguay'); ?></h2>
-                    <p><?php esc_html_e('Este token es la credencial única que valida la comunicación segura entre WordPress y la aplicación Next.js (FLACSO Editor) para todas las integraciones (Consultas, Ofertas y Charlas).', 'flacso-uruguay'); ?></p>
+                    <p><?php esc_html_e('Este token es la credencial única que valida la comunicación segura entre WordPress y la aplicación Next.js (FLACSO Editor) para todas las integraciones (Más información, Ofertas y Charlas).', 'flacso-uruguay'); ?></p>
                 </div>
             </div>
             <div class="flacso-global-token-body">
@@ -1190,7 +1190,7 @@ class FLACSO_Integrations_Settings {
                     __('Token de Acceso Global', 'flacso-uruguay'),
                     'password',
                     __('Pega el token unificado aquí (coincidente con FLACSO_WEBHOOK_TOKEN)', 'flacso-uruguay'),
-                    __('Se enviará automáticamente en las cabeceras (X-FLACSO-Webhook-Token) de todas las consultas y solicitudes de inscripción.', 'flacso-uruguay')
+                    __('Se enviará automáticamente en las cabeceras (X-FLACSO-Webhook-Token) de todas las solicitudes de más información y de inscripción.', 'flacso-uruguay')
                 );
                 ?>
                 <span class="flacso-integrations-note">🔑 <?php esc_html_e('Variable esperada en Next.js: FLACSO_WEBHOOK_TOKEN', 'flacso-uruguay'); ?></span>
@@ -1205,9 +1205,9 @@ class FLACSO_Integrations_Settings {
             <div class="flacso-card-header">
                 <div class="flacso-card-icon-title">
                     <span class="flacso-card-icon">💬</span>
-                    <h2><?php esc_html_e('Consultas', 'flacso-uruguay'); ?></h2>
+                    <h2><?php esc_html_e('Más información', 'flacso-uruguay'); ?></h2>
                 </div>
-                <p class="flacso-integrations-lead"><?php esc_html_e('El formulario de Contacto guarda las consultas en WordPress y envía la notificación mediante Mautic.', 'flacso-uruguay'); ?></p>
+                <p class="flacso-integrations-lead"><?php esc_html_e('El formulario de Contacto guarda las solicitudes de más información en WordPress y envía la notificación mediante Mautic.', 'flacso-uruguay'); ?></p>
             </div>
 
             <div class="flacso-card-body">

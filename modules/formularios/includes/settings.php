@@ -16,8 +16,8 @@ function fc_register_settings() {
     register_setting( 'fc_options_group', 'fc_telegram_notify_consultas', $flag( '1' ) );
     register_setting( 'fc_options_group', 'fc_cargar_bootstrap', $flag( '1' ) );
 
-    add_settings_section( 'fc_main_section', __( 'Recepción de consultas', 'flacso-flacso-formulario-consultas' ), function(){
-        echo '<p>' . esc_html__( 'Las consultas no se guardan: llegan por correo a recepción, el consultante recibe un acuse y el equipo recibe un aviso por Telegram. Los correos salen por Mautic. En asuntos y texto podés usar {nombre}, {apellido} y {asunto}.', 'flacso-flacso-formulario-consultas' ) . '</p>';
+    add_settings_section( 'fc_main_section', __( 'Recepción de solicitudes de más información', 'flacso-flacso-formulario-consultas' ), function(){
+        echo '<p>' . esc_html__( 'Las solicitudes de más información no se guardan: llegan por correo a recepción, el consultante recibe un acuse y el equipo recibe un aviso por Telegram. Los correos salen por Mautic. En asuntos y texto podés usar {nombre}, {apellido} y {asunto}.', 'flacso-flacso-formulario-consultas' ) . '</p>';
     }, 'fc_options_page' );
 
     add_settings_field( 'fc_destinatario_email', __( 'Correo de recepción', 'flacso-flacso-formulario-consultas' ), 'fc_field_email_cb', 'fc_options_page', 'fc_main_section' );
@@ -33,7 +33,7 @@ add_action( 'admin_init', 'fc_register_settings' );
 function fc_field_email_cb() {
     $value = esc_attr( get_option( 'fc_destinatario_email', '' ) );
     echo '<input type="email" class="regular-text" name="fc_destinatario_email" value="' . $value . '" placeholder="' . esc_attr( FC_DEFAULT_RECEPTION_EMAIL ) . '" />';
-    echo '<p class="description">' . esc_html__( 'A esta casilla llega cada consulta, con respuesta directa al consultante. Vacío usa el valor por defecto que se muestra.', 'flacso-flacso-formulario-consultas' ) . '</p>';
+    echo '<p class="description">' . esc_html__( 'A esta casilla llega cada solicitud de más información, con respuesta directa al consultante. Vacío usa el valor por defecto que se muestra.', 'flacso-flacso-formulario-consultas' ) . '</p>';
 }
 
 function fc_field_asunto_admin_cb() {
@@ -43,8 +43,8 @@ function fc_field_asunto_admin_cb() {
 }
 
 function fc_field_acuse_cb() {
-    echo '<label><input type="checkbox" name="fc_enviar_acuse" value="1" ' . checked( '1', get_option( 'fc_enviar_acuse', '1' ), false ) . ' /> ' . esc_html__( 'Enviar un correo de confirmación a quien consulta', 'flacso-flacso-formulario-consultas' ) . '</label>';
-    echo '<p class="description">' . esc_html__( 'Sale sólo cuando recepción ya recibió la consulta. Si el consultante responde, la respuesta llega al correo de recepción.', 'flacso-flacso-formulario-consultas' ) . '</p>';
+    echo '<label><input type="checkbox" name="fc_enviar_acuse" value="1" ' . checked( '1', get_option( 'fc_enviar_acuse', '1' ), false ) . ' /> ' . esc_html__( 'Enviar un correo de confirmación a quien pide más información', 'flacso-flacso-formulario-consultas' ) . '</label>';
+    echo '<p class="description">' . esc_html__( 'Sale sólo cuando recepción ya recibió la solicitud. Si el consultante responde, la respuesta llega al correo de recepción.', 'flacso-flacso-formulario-consultas' ) . '</p>';
 }
 
 function fc_field_asunto_usuario_cb() {
@@ -59,7 +59,7 @@ function fc_field_texto_acuse_cb() {
 }
 
 function fc_field_telegram_cb() {
-    echo '<label><input type="checkbox" name="fc_telegram_notify_consultas" value="1" ' . checked( '1', get_option( 'fc_telegram_notify_consultas', '1' ), false ) . ' /> ' . esc_html__( 'Avisar cada consulta por Telegram', 'flacso-flacso-formulario-consultas' ) . '</label>';
+    echo '<label><input type="checkbox" name="fc_telegram_notify_consultas" value="1" ' . checked( '1', get_option( 'fc_telegram_notify_consultas', '1' ), false ) . ' /> ' . esc_html__( 'Avisar cada solicitud de más información por Telegram', 'flacso-flacso-formulario-consultas' ) . '</label>';
     $ready = function_exists( 'fc_can_use_telegram' ) && fc_can_use_telegram();
     $sistema = esc_url( admin_url( 'admin.php?page=flacso-sistema' ) );
     echo '<p class="description">' . ( $ready
@@ -114,12 +114,12 @@ function fc_render_options_page() {
         </form>
 
         <hr>
-        <h2><?php esc_html_e( 'Consulta de prueba', 'flacso-flacso-formulario-consultas' ); ?></h2>
-        <p><?php esc_html_e( 'Recorre el flujo real con una consulta de ejemplo: el aviso va a recepción, el acuse a tu correo y el mensaje a Telegram.', 'flacso-flacso-formulario-consultas' ); ?></p>
+        <h2><?php esc_html_e( 'Solicitud de prueba', 'flacso-flacso-formulario-consultas' ); ?></h2>
+        <p><?php esc_html_e( 'Recorre el flujo real con una solicitud de ejemplo: el aviso va a recepción, el acuse a tu correo y el mensaje a Telegram.', 'flacso-flacso-formulario-consultas' ); ?></p>
         <form action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post">
             <?php wp_nonce_field( 'fc_send_test_email', 'fc_test_nonce' ); ?>
             <input type="hidden" name="action" value="fc_send_test_email" />
-            <?php submit_button( __( 'Enviar consulta de prueba', 'flacso-flacso-formulario-consultas' ), 'secondary' ); ?>
+            <?php submit_button( __( 'Enviar solicitud de prueba', 'flacso-flacso-formulario-consultas' ), 'secondary' ); ?>
         </form>
 
     </div>
@@ -141,7 +141,7 @@ function fc_handle_send_test_email() {
         'apellido' => 'FLACSO',
         'email'    => $user->user_email,
         'telefono' => '+598 0000 0000',
-        'asunto'   => 'Consulta de prueba',
+        'asunto'   => 'Solicitud de prueba',
         'mensaje'  => 'Mensaje de prueba enviado desde Formulario general.',
     ] );
 
@@ -235,9 +235,9 @@ function fc_settings_admin_notices() {
     if ( 'fc_options_page' === $page ) {
         if ( isset( $_GET['fc_test'] ) ) {
             if ( $_GET['fc_test'] === 'success' ) {
-                echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Consulta de prueba enviada: revisá la casilla de recepción, tu correo y Telegram.', 'flacso-flacso-formulario-consultas' ) . '</p></div>';
+                echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Solicitud de prueba enviada: revisá la casilla de recepción, tu correo y Telegram.', 'flacso-flacso-formulario-consultas' ) . '</p></div>';
             } else {
-                echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'No se pudo completar la consulta de prueba. Revisá la conexión con Mautic en FLACSO › Correos.', 'flacso-flacso-formulario-consultas' ) . '</p></div>';
+                echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'No se pudo completar la solicitud de prueba. Revisá la conexión con Mautic en FLACSO › Correos.', 'flacso-flacso-formulario-consultas' ) . '</p></div>';
             }
         }
     }

@@ -7,7 +7,7 @@
 	const { useBlockProps, InspectorControls } = wp.blockEditor || {};
 
 	registerBlockType('flacso-uruguay/formulario-consulta', {
-		title: __('Formulario de Consulta', 'flacso-flacso-formulario-consultas'),
+		title: __('Formulario de más información', 'flacso-flacso-formulario-consultas'),
 		icon: 'email',
 		category: 'flacso',
 		attributes: {
