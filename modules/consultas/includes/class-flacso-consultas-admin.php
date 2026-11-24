@@ -37,7 +37,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			if ( ! current_user_can( 'manage_options' ) || '1' === (string) get_option( 'flacso_inquiry_delivery_queue_enabled', '0' ) ) {
 				return;
 			}
-			echo '<div class="notice notice-error"><p><strong>FLACSO consultas:</strong> la cola de entregas a Mautic está deshabilitada (<code>flacso_inquiry_delivery_queue_enabled</code>). Las consultas se guardan, pero no se envían ni entran a campañas hasta activarla.</p></div>';
+			echo '<div class="notice notice-error"><p><strong>FLACSO más información:</strong> la cola de entregas a Mautic está deshabilitada (<code>flacso_inquiry_delivery_queue_enabled</code>). Las solicitudes se guardan, pero no se envían ni entran a campañas hasta activarla.</p></div>';
 		}
 
 		public static function init(): void {
@@ -68,12 +68,12 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			$unified     = FLACSO_Admin_Menu::enabled();
 			if ( $unified ) {
 				// Una sola entrada "Consultas"; las otras vistas se abren desde las pestañas de la pantalla.
-				add_submenu_page( FLACSO_Admin_Menu::PARENT, __( 'Consultas y analítica', 'flacso-uruguay' ), __( 'Consultas', 'flacso-uruguay' ), FLACSO_Academic_Assistant::VIEW_INQUIRIES, $parent_slug, array( __CLASS__, 'render_page' ) );
+				add_submenu_page( FLACSO_Admin_Menu::PARENT, __( 'Más información y analítica', 'flacso-uruguay' ), __( 'Más información', 'flacso-uruguay' ), FLACSO_Academic_Assistant::VIEW_INQUIRIES, $parent_slug, array( __CLASS__, 'render_page' ) );
 				$parent_slug = 'options.php';
 			} else {
 				add_menu_page(
-					__( 'Consultas y analítica', 'flacso-uruguay' ),
-					__( 'Consultas', 'flacso-uruguay' ),
+					__( 'Más información y analítica', 'flacso-uruguay' ),
+					__( 'Más información', 'flacso-uruguay' ),
 					FLACSO_Academic_Assistant::VIEW_INQUIRIES,
 					$parent_slug,
 					array( __CLASS__, 'render_page' ),
@@ -83,7 +83,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			}
 
 			$pages = array(
-				self::PAGE_BANDEJA => array( __( 'Consultas', 'flacso-uruguay' ), 'render_page' ),
+				self::PAGE_BANDEJA => array( __( 'Más información', 'flacso-uruguay' ), 'render_page' ),
 				self::PAGE_RESUMEN => array( __( 'Resumen por oferta', 'flacso-uruguay' ), 'render_resumen_page' ),
 				self::PAGE_OFERTA_PAIS => array( __( 'Oferta y país', 'flacso-uruguay' ), 'render_oferta_pais_page' ),
 				self::PAGE_COMPARACION => array( __( 'Comparación de períodos', 'flacso-uruguay' ), 'render_comparacion_page' ),
@@ -123,6 +123,12 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) ); exit;
 		}
 
+		/** Ruta (slug de página) de cada pestaña. */
+		private static function tab_route( string $tab ): string {
+			$map = array( 'oferta' => self::PAGE_RESUMEN, 'oferta-pais' => self::PAGE_OFERTA_PAIS, 'comparacion' => self::PAGE_COMPARACION, 'campanas' => self::PAGE_CAMPANAS, 'exportar' => self::PAGE_EXPORTAR );
+			return $map[ $tab ] ?? self::PAGE_BANDEJA;
+		}
+
 		/**
 		 * Normaliza el nombre de tabla permitido.
 		 */
@@ -141,7 +147,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 		 */
 		public static function handle_export_csv(): void {
 			if ( ! self::can_manage() ) {
-				wp_die( esc_html__( 'No tienes permisos para exportar consultas.', 'flacso-uruguay' ) );
+				wp_die( esc_html__( 'No tienes permisos para exportar solicitudes de más información.', 'flacso-uruguay' ) );
 			}
 
 			check_admin_referer( 'flacso_consultas_export_csv' );
@@ -174,8 +180,8 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			$rows  = FLACSO_Inquiry_Analytics_Repository::get_export_rows( $table, $from, $to, $selected_items, $dedup );
 			$item_col = FLACSO_Inquiry_Analytics_Repository::ALLOWED_TABLES[ $table ]['item_col'] ?? 'offerName';
 			$filename = '' === $from && '' === $to
-				? sprintf( 'flacso-consultas-%s-historico-%s.csv', $table, $mode )
-				: sprintf( 'flacso-consultas-%s-%s-a-%s-%s.csv', $table, $from, $to, $mode );
+				? sprintf( 'flacso-mas-informacion-%s-historico-%s.csv', $table, $mode )
+				: sprintf( 'flacso-mas-informacion-%s-%s-a-%s-%s.csv', $table, $from, $to, $mode );
 
 			nocache_headers();
 			header( 'X-Flacso-Total-Rows: ' . $total );
@@ -193,7 +199,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 
 			// Todas las columnas presentes en los registros (orden de aparición), con etiqueta legible si existe.
 				$labels = array(
-					'id' => 'ID', 'consultaId' => 'ID Consulta', 'firstName' => 'Nombre', 'lastName' => 'Apellido',
+					'id' => 'ID', 'consultaId' => 'ID Solicitud', 'firstName' => 'Nombre', 'lastName' => 'Apellido',
 					'fullName' => 'Nombre Completo', 'email' => 'Correo', 'emailNormalized' => 'Correo Normalizado',
 					'phone' => 'Teléfono', 'country' => 'País', 'profession' => 'Profesión', 'educationLevel' => 'Nivel Académico',
 					'offerWpId' => 'ID WP Oferta', 'offerName' => 'Oferta', 'offerAbbreviation' => 'Abreviatura',
@@ -212,7 +218,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					'followupSentAt' => 'Seguimiento Enviado', 'followupAttempts' => 'Intentos Seguimiento',
 					'followupLastError' => 'Error Seguimiento', 'emailStatus' => 'Estado Email', 'emailSender' => 'Remitente Email',
 					'gmailMessageUrl' => 'URL Gmail', 'mailjetMessageId' => 'ID Mailjet', 'mailjetMessageUuid' => 'UUID Mailjet',
-					'payload' => 'Payload (JSON)', 'inquiryAt' => 'Fecha Consulta', 'createdAt' => 'Creado', 'updatedAt' => 'Actualizado',
+					'payload' => 'Payload (JSON)', 'inquiryAt' => 'Fecha de solicitud', 'createdAt' => 'Creado', 'updatedAt' => 'Actualizado',
 				);
 				// Streaming: las columnas son las del primer registro (misma tabla = mismas columnas).
 				$keys    = null;
@@ -256,7 +262,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			$detail = FLACSO_Inquiry_Analytics_Repository::get_inquiry_detail( $table, $id );
 
 			if ( ! $detail ) {
-				wp_send_json_error( array( 'message' => 'Consulta no encontrada en PostgreSQL.' ), 404 );
+				wp_send_json_error( array( 'message' => 'Solicitud no encontrada en PostgreSQL.' ), 404 );
 			}
 
 			$item_col            = FLACSO_Inquiry_Analytics_Repository::ALLOWED_TABLES[ $table ]['item_col'] ?? 'offerName';
@@ -287,7 +293,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			$id    = isset( $_POST['id'] ) ? sanitize_text_field( wp_unslash( $_POST['id'] ) ) : '';
 
 			if ( ! in_array( $table, array( 'offer_inquiries', 'seminar_inquiries' ), true ) ) {
-				wp_send_json_error( array( 'message' => 'Este tipo de consulta no tiene correo transaccional reenviable.' ), 422 );
+				wp_send_json_error( array( 'message' => 'Este tipo de solicitud no tiene correo transaccional reenviable.' ), 422 );
 			}
 			if ( '' === $id ) {
 				wp_send_json_error( array( 'message' => 'ID inválido.' ), 400 );
@@ -295,7 +301,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 
 			$detail = FLACSO_Inquiry_Analytics_Repository::get_inquiry_detail( $table, $id );
 			if ( ! $detail ) {
-				wp_send_json_error( array( 'message' => 'No se encontró la consulta solicitada.' ), 404 );
+				wp_send_json_error( array( 'message' => 'No se encontró la solicitud.' ), 404 );
 			}
 
 			$email_status = strtolower( trim( (string) ( $detail['emailStatus'] ?? '' ) ) );
@@ -330,7 +336,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			}
 
 			if ( ! is_array( $delivery ) || empty( $delivery['id'] ) ) {
-				wp_send_json_error( array( 'message' => 'La consulta no tiene una entrega transaccional asociada.' ), 404 );
+				wp_send_json_error( array( 'message' => 'La solicitud no tiene una entrega transaccional asociada.' ), 404 );
 			}
 
 			$delivery_id = (string) $delivery['id'];
@@ -544,13 +550,13 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 						'sin_consentimiento'      => array( __( 'Sin consentimiento', 'flacso-uruguay' ), __( 'No marcó el consentimiento de comunicaciones; solo recibe el acuse transaccional.', 'flacso-uruguay' ) ),
 						'campaign_unpublished'    => array( __( 'Campaña no publicada', 'flacso-uruguay' ), __( 'La campaña de la oferta no estaba publicada; recibió el acuse transaccional.', 'flacso-uruguay' ) ),
 						'campaign_not_configured' => array( __( 'Sin campaña asociada', 'flacso-uruguay' ), __( 'La oferta no tiene campaña asociada; recibió el acuse transaccional.', 'flacso-uruguay' ) ),
-						'otro_canal'              => array( __( 'Sin campaña', 'flacso-uruguay' ), __( 'Esta consulta no se envía a campañas por su canal de envío.', 'flacso-uruguay' ) ),
+						'otro_canal'              => array( __( 'Sin campaña', 'flacso-uruguay' ), __( 'Esta solicitud no se envía a campañas por su canal de envío.', 'flacso-uruguay' ) ),
 					);
 					$reason = $reasons[ $note ] ?? array( __( 'Sin campaña', 'flacso-uruguay' ), __( 'No se incorporó a una campaña; recibió el acuse transaccional.', 'flacso-uruguay' ) );
 					return '<span class="flacso-badge campaign-skipped" title="' . esc_attr( $reason[1] ) . '">⚪ ' . esc_html( $reason[0] ) . '</span>';
 				}
 
-				return '<span class="flacso-badge campaign-legacy" title="' . esc_attr__( 'Consulta anterior a las campañas por oferta: recibió el acuse transaccional.', 'flacso-uruguay' ) . '">⚪ ' . esc_html__( 'Anterior', 'flacso-uruguay' ) . '</span>';
+				return '<span class="flacso-badge campaign-legacy" title="' . esc_attr__( 'Solicitud anterior a las campañas por oferta: recibió el acuse transaccional.', 'flacso-uruguay' ) . '">⚪ ' . esc_html__( 'Anterior', 'flacso-uruguay' ) . '</span>';
 			}
 
 			/**
@@ -566,8 +572,8 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					if ( is_array( $live ) && ! empty( $live['found'] ) ) {
 						return self::render_live_campaign_cell( $live );
 					}
-					return '<span class="flacso-badge pending" title="' . esc_attr__( 'La consulta entró a la campaña; no se pudo confirmar el envío del correo en Mautic.', 'flacso-uruguay' ) . '">envío sin confirmar</span>'
-						. '<small class="flacso-delivery-caption">' . esc_html__( 'Consulta incorporada a la campaña', 'flacso-uruguay' ) . '</small>';
+					return '<span class="flacso-badge pending" title="' . esc_attr__( 'La solicitud entró a la campaña; no se pudo confirmar el envío del correo en Mautic.', 'flacso-uruguay' ) . '">envío sin confirmar</span>'
+						. '<small class="flacso-delivery-caption">' . esc_html__( 'Solicitud incorporada a la campaña', 'flacso-uruguay' ) . '</small>';
 				}
 
 				$html = self::render_email_status_badge( $row );
@@ -781,7 +787,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			$repo    = new FLACSO_Offer_Inquiry_Repository();
 			$inquiry = $repo->find_by_id( $id );
 			if ( ! $inquiry ) {
-				wp_send_json_error( array( 'message' => 'Consulta no encontrada en PostgreSQL.' ), 404 );
+				wp_send_json_error( array( 'message' => 'Solicitud no encontrada en PostgreSQL.' ), 404 );
 			}
 
 			try {
@@ -1104,16 +1110,16 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					<?php self::render_transactional_diagnostics(); ?>
 				</div>
 
-				<?php self::render_page_header( __( 'Consultas', 'flacso-uruguay' ), __( 'Bandeja y análisis de consultas académicas.', 'flacso-uruguay' ) ); ?>
+				<?php self::render_page_header( __( 'Más información', 'flacso-uruguay' ), __( 'Bandeja y análisis de solicitudes de más información.', 'flacso-uruguay' ) ); ?>
 
 				<div class="flacso-cp-hero">
 					<div>
-						<h1>📊 Plataforma de Consultas e Inteligencia Analítica</h1>
-						<p>Gestión operativa de consultas en PostgreSQL, sincronización con Mautic, atribución de campañas y exportación unificada.</p>
+						<h1>📊 Plataforma de Más información e Inteligencia Analítica</h1>
+						<p>Gestión operativa de solicitudes de más información en PostgreSQL, sincronización con Mautic, atribución de campañas y exportación unificada.</p>
 					</div>
 					<?php if ( $can_manage ) : ?><div>
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=flacso-correos' ) ); ?>" class="button button-secondary" style="margin-right:8px;">✉️ Comunicaciones Mautic</a>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=' . self::PAGE_SLUG . '&tab=exportar&table=' . $table ) ); ?>" class="button button-primary">📥 Exportar CSV</a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=' . self::PAGE_EXPORTAR . '&table=' . $table ) ); ?>" class="button button-primary">📥 Exportar CSV</a>
 					</div><?php endif; ?>
 				</div>
 
@@ -1137,8 +1143,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					foreach ( $tabs as $slug => $label ) :
 						$url = add_query_arg(
 							array(
-								'page'  => self::PAGE_SLUG,
-								'tab'   => $slug,
+								'page'  => self::tab_route( $slug ),
 								'table' => $table,
 								'from'  => $from,
 								'to'    => $to,
@@ -1213,18 +1218,21 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					'page_size'    => 25,
 				)
 			);
+			// Estado real de acuse y seguimiento: se le pregunta a Mautic (con caché). Si no responde, queda vacío.
+			$live_statuses = ( 'offer_inquiries' === $table && class_exists( 'FLACSO_Offer_Campaign_Status' ) )
+				? FLACSO_Offer_Campaign_Status::for_rows( $result['items'] )
+				: array();
 			?>
 			<div class="flacso-cp-card">
 				<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" class="flacso-cp-filters">
-					<input type="hidden" name="page" value="<?php echo esc_attr( self::PAGE_SLUG ); ?>">
-					<input type="hidden" name="tab" value="historico">
+					<input type="hidden" name="page" value="<?php echo esc_attr( self::PAGE_BANDEJA ); ?>">
 
 					<div class="fg">
 						<label>Base / Tabla</label>
 						<select name="table">
 							<option value="offer_inquiries" <?php selected( $table, 'offer_inquiries' ); ?>>Ofertas Académicas</option>
 							<option value="seminar_inquiries" <?php selected( $table, 'seminar_inquiries' ); ?>>Seminarios</option>
-							<option value="general_inquiries" <?php selected( $table, 'general_inquiries' ); ?>>Consultas Generales</option>
+							<option value="general_inquiries" <?php selected( $table, 'general_inquiries' ); ?>>Solicitudes generales</option>
 						</select>
 					</div>
 
@@ -1259,7 +1267,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					</div>
 
 					<div class="fg">
-						<label>Origen de consulta</label>
+						<label>Origen de la solicitud</label>
 						<select name="source">
 							<option value="" <?php selected( $source, '' ); ?>>— Todos —</option>
 							<option value="web" <?php selected( $source, 'web' ); ?>>Web</option>
@@ -1329,7 +1337,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 						Mostrando <strong><?php echo count( $result['items'] ); ?></strong> de <strong><?php echo (int) $result['pageInfo']['totalItems']; ?></strong> registros
 						(Página <?php echo (int) $result['pageInfo']['page']; ?> de <?php echo (int) $result['pageInfo']['totalPages']; ?>)
 					</span>
-					<a class="flacso-cp-filter-reset" href="<?php echo esc_url( admin_url( 'admin.php?page=' . self::PAGE_SLUG . '&tab=historico&table=' . $table ) ); ?>">Limpiar filtros</a>
+					<a class="flacso-cp-filter-reset" href="<?php echo esc_url( admin_url( 'admin.php?page=' . self::PAGE_BANDEJA . '&table=' . $table ) ); ?>">Limpiar filtros</a>
 				</div>
 
 				<div class="flacso-cp-table-scroll">
@@ -1340,7 +1348,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 							<th>Persona</th>
 							<?php if ( 'offer_inquiries' === $table ) : ?>
 								<th>Oferta / Cohorte</th>
-								<th>Estado de la consulta</th>
+								<th>Estado de la solicitud</th>
 								<th>Campaña</th>
 							<?php else : ?>
 								<th>Oferta / Seminario</th>
@@ -1352,7 +1360,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					</thead>
 					<tbody>
 						<?php if ( empty( $result['items'] ) ) : ?>
-							<tr><td colspan="<?php echo 'offer_inquiries' === $table ? 8 : 6; ?>" style="text-align:center; padding:26px; color:#64748b;">No se encontraron consultas con los filtros seleccionados.</td></tr>
+							<tr><td colspan="<?php echo 'offer_inquiries' === $table ? 8 : 6; ?>" style="text-align:center; padding:26px; color:#64748b;">No se encontraron solicitudes con los filtros seleccionados.</td></tr>
 						<?php else : ?>
 							<?php foreach ( $result['items'] as $row ) :
 								$count_val  = (int) ( $row['count'] ?? 1 );
@@ -1367,7 +1375,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 										<a href="mailto:<?php echo esc_attr( (string) $row['email'] ); ?>"><?php echo esc_html( (string) $row['email'] ); ?></a>
 						<span class="flacso-badge offer_inquiries" title="Origen del último registro de este grupo"><?php echo esc_html( (string) ( $row['source'] ?? 'Web' ) ); ?></span>
 										<?php if ( $count_val > 1 ) : ?>
-											<span class="flacso-badge offer_inquiries" title="Consultas acumuladas por esta persona para esta oferta"><?php echo (int) $count_val; ?>x</span>
+											<span class="flacso-badge offer_inquiries" title="Solicitudes acumuladas por esta persona para esta oferta"><?php echo (int) $count_val; ?>x</span>
 										<?php endif; ?>
 									</td>
 									<?php if ( 'offer_inquiries' === $table ) : ?>
@@ -1459,7 +1467,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 				</div>
 
 				<?php if ( $result['pageInfo']['totalPages'] > 1 ) : ?>
-					<div class="flacso-cp-pagination" aria-label="Paginación de consultas">
+					<div class="flacso-cp-pagination" aria-label="Paginación de solicitudes">
 						<?php for ( $p = 1; $p <= min( 12, $result['pageInfo']['totalPages'] ); $p++ ) :
 							$page_url = add_query_arg( 'paged', $p );
 							?>
@@ -1475,7 +1483,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			<div id="flacso-detail-modal" class="flacso-modal-backdrop">
 				<div class="flacso-modal">
 					<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:12px; margin-bottom:16px;">
-						<h2 style="margin:0; font-size:18px;">Detalle de Consulta</h2>
+						<h2 style="margin:0; font-size:18px;">Detalle de la solicitud</h2>
 						<button type="button" class="button" id="flacso-close-modal">✕ Cerrar</button>
 					</div>
 					<div id="flacso-detail-content">Cargando...</div>
@@ -1528,15 +1536,15 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 								let followup = '';
 								if (joined) {
 									const acuseState = acuse.state || 'pending';
-									delivery = row('Correo de respuesta', `<strong>${acuseLabels[acuseState] || 'Estado sin confirmar'}</strong>${acuse.at ? ' · ' + when(acuse.at) : ''}`, live ? 'Estado informado por Mautic. «Enviado» no confirma lectura.' : 'La consulta entró a la campaña, pero Mautic no pudo confirmar aún el estado del correo.');
-									campaign = row('Campaña de la oferta', `<strong>Incorporada${d.mauticCampaignId ? ' a la campaña #' + esc(d.mauticCampaignId) : ''}</strong>`, 'La aceptación de la consulta confirma el alta, no el envío del correo.');
+									delivery = row('Correo de respuesta', `<strong>${acuseLabels[acuseState] || 'Estado sin confirmar'}</strong>${acuse.at ? ' · ' + when(acuse.at) : ''}`, live ? 'Estado informado por Mautic. «Enviado» no confirma lectura.' : 'La solicitud entró a la campaña, pero Mautic no pudo confirmar aún el estado del correo.');
+									campaign = row('Campaña de la oferta', `<strong>Incorporada${d.mauticCampaignId ? ' a la campaña #' + esc(d.mauticCampaignId) : ''}</strong>`, 'La aceptación de la solicitud confirma el alta, no el envío del correo.');
 									const followState = follow.state || 'pending';
 									followup = row('Próximo contacto', `<strong>${live ? (followLabels[followState] || 'Estado sin confirmar') : 'Sin confirmar'}</strong>${follow.at ? ' · ' + when(follow.at) : ''}`, live ? '' : 'El seguimiento lo administra la campaña en Mautic.');
 								} else {
 									const emailLabels = { accepted: 'Solicitud de envío aceptada', sent: 'Correo enviado', pending: 'Envío pendiente', processing: 'Envío en proceso', retryable_failed: 'Se reintentará el envío', failed: 'Falló el envío', blocked: 'Envío bloqueado', acceptance_unknown: 'Envío sin confirmar' };
 									delivery = row('Correo de respuesta', `<strong>${emailLabels[d.emailStatus] || esc(d.emailStatus || 'Sin datos')}</strong>`, d.emailStatus === 'accepted' ? 'El proveedor aceptó la solicitud; este estado no confirma la recepción en el buzón.' : 'Acuse transaccional gestionado desde WordPress y Mautic.');
 									if (isOffer) {
-										const campaignLabels = { skipped: 'Sin campaña para esta consulta', pending: 'Alta en campaña pendiente', failed: 'No se pudo incorporar', legacy: 'Consulta anterior a las campañas' };
+										const campaignLabels = { skipped: 'Sin campaña para esta solicitud', pending: 'Alta en campaña pendiente', failed: 'No se pudo incorporar', legacy: 'Solicitud anterior a las campañas' };
 										campaign = row('Campaña de la oferta', `<strong>${campaignLabels[d.campaignState] || 'Sin datos'}</strong>`, d.mauticCampaignLastError ? esc(d.mauticCampaignLastError) : '');
 										if (d.followupStatus && d.followupStatus !== 'none') {
 											const manual = d.followupStatus !== 'sent' ? `<div style="margin-top:8px;"><button type="button" class="button button-secondary flacso-js-trigger-followup" data-id="${esc(d.id)}">Enviar seguimiento ahora</button><span class="flacso-followup-msg" style="margin-left:10px;font-size:12px;font-weight:600;"></span></div>` : '';
@@ -1561,8 +1569,8 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 										${campaignInfo ? row('Origen de campaña', campaignInfo) : ''}
 										${pageUrl ? row('Página de origen', `<a href="${esc(pageUrl)}" target="_blank" rel="noopener noreferrer">Ver programa ↗</a>`) : ''}
 									</tbody></table>
-									<details style="margin-top:12px;"><summary style="cursor:pointer;font-weight:600;">Datos técnicos de la consulta</summary>
-										<p><strong>ID:</strong> <code>${esc(d.id)}</code><br><strong>ID de consulta:</strong> <code>${esc(d.consultaId || '—')}</code><br><strong>Ruta de entrega:</strong> ${esc(senderLabel)}${d.mauticContactId ? '<br><strong>Contacto Mautic:</strong> #' + esc(d.mauticContactId) : ''}</p>
+									<details style="margin-top:12px;"><summary style="cursor:pointer;font-weight:600;">Datos técnicos de la solicitud</summary>
+										<p><strong>ID:</strong> <code>${esc(d.id)}</code><br><strong>ID de solicitud:</strong> <code>${esc(d.consultaId || '—')}</code><br><strong>Ruta de entrega:</strong> ${esc(senderLabel)}${d.mauticContactId ? '<br><strong>Contacto Mautic:</strong> #' + esc(d.mauticContactId) : ''}</p>
 										<pre style="background:#0f172a;color:#e2e8f0;padding:12px;border-radius:8px;overflow:auto;max-height:240px;font-size:12px;">${esc(JSON.stringify(payload, null, 2))}</pre>
 									</details>
 								`;
@@ -1751,7 +1759,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					<div class="flacso-cp-kpi">
 						<div class="kpi-label">🔄 Intersección UY ∩ EXT</div>
 						<div class="kpi-val" style="color:#7c3aed;"><?php echo (int) $intersec; ?></div>
-						<div class="kpi-sub">Correos con consultas tanto en UY como Exterior</div>
+						<div class="kpi-sub">Correos con solicitudes tanto en UY como Exterior</div>
 					</div>
 				</div>
 
@@ -1805,8 +1813,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			?>
 			<div class="flacso-cp-card">
 				<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" class="flacso-cp-filters">
-					<input type="hidden" name="page" value="<?php echo esc_attr( self::PAGE_SLUG ); ?>">
-					<input type="hidden" name="tab" value="oferta-pais">
+					<input type="hidden" name="page" value="<?php echo esc_attr( self::PAGE_OFERTA_PAIS ); ?>">
 					<input type="hidden" name="table" value="<?php echo esc_attr( $table ); ?>">
 					<div class="fg">
 						<label>Desde</label>
@@ -1831,7 +1838,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 				</form>
 
 				<h3 style="margin:6px 0 12px;">
-					Curva de Consultas <?php echo '' !== $selected_country ? '— País: ' . esc_html( $selected_country ) : '(Todos los países)'; ?>
+					Curva de solicitudes <?php echo '' !== $selected_country ? '— País: ' . esc_html( $selected_country ) : '(Todos los países)'; ?>
 				</h3>
 				<?php self::render_svg_time_series( $active_series ); ?>
 			</div>
@@ -1841,7 +1848,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					<h3 style="margin-top:0;">Ranking por País</h3>
 					<table class="flacso-cp-table">
 						<thead>
-							<tr><th>País</th><th>Consultas Únicas</th></tr>
+							<tr><th>País</th><th>Solicitudes únicas</th></tr>
 						</thead>
 						<tbody>
 							<?php foreach ( array_slice( $summary['serieTemporalPorPais'], 0, 25 ) as $c_row ) : ?>
@@ -1858,7 +1865,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					<h3 style="margin-top:0;">Detalle Oferta × País</h3>
 					<table class="flacso-cp-table">
 						<thead>
-							<tr><th>Oferta</th><th>País</th><th>Consultas</th></tr>
+							<tr><th>Oferta</th><th>País</th><th>Solicitudes</th></tr>
 						</thead>
 						<tbody>
 							<?php foreach ( array_slice( $summary['ofertaPais']['filas'], 0, 40 ) as $oc ) : ?>
@@ -1911,16 +1918,11 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 					esc_html( $delta['icon'] ),
 					esc_html( $delta['label'] )
 				);
-			// Estado real de acuse y seguimiento: se le pregunta a Mautic (con caché). Si no responde, queda vacío.
-			$live_statuses = ( 'offer_inquiries' === $table && class_exists( 'FLACSO_Offer_Campaign_Status' ) )
-				? FLACSO_Offer_Campaign_Status::for_rows( $result['items'] )
-				: array();
 			};
 			?>
 			<div class="flacso-cp-card">
 				<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" class="flacso-cp-filters flacso-comparison-filters">
-					<input type="hidden" name="page" value="<?php echo esc_attr( self::PAGE_SLUG ); ?>">
-					<input type="hidden" name="tab" value="comparacion">
+					<input type="hidden" name="page" value="<?php echo esc_attr( self::PAGE_COMPARACION ); ?>">
 					<input type="hidden" name="table" value="<?php echo esc_attr( $table ); ?>">
 					<div class="flacso-comparison-period flacso-comparison-period--current">
 						<p class="flacso-comparison-period__title">Período actual</p>
@@ -2024,9 +2026,9 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 
 				<div class="flacso-cp-kpi-grid">
 					<div class="flacso-cp-kpi">
-						<div class="kpi-label">Consultas con Campaña</div>
+						<div class="kpi-label">Solicitudes con campaña</div>
 						<div class="kpi-val"><?php echo (int) $campanas['totalConCampana']; ?></div>
-						<div class="kpi-sub"><?php echo esc_html( (string) $pct ); ?>% sobre <?php echo (int) $campanas['totalConsultas']; ?> consultas del período</div>
+						<div class="kpi-sub"><?php echo esc_html( (string) $pct ); ?>% sobre <?php echo (int) $campanas['totalConsultas']; ?> solicitudes del período</div>
 					</div>
 					<div class="flacso-cp-kpi">
 						<div class="kpi-label">Campañas Activas Detectadas</div>
@@ -2041,7 +2043,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 						<tr>
 							<th>Campaña</th>
 							<th>Proveedor / Fuente / Medio</th>
-							<th>Consultas</th>
+							<th>Solicitudes</th>
 							<th>Personas Únicas</th>
 							<th>Ofertas Consultadas</th>
 							<th>Acción</th>
@@ -2112,7 +2114,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 			$items = FLACSO_Inquiry_Analytics_Repository::get_distinct_items( $table );
 			?>
 			<div class="flacso-cp-card">
-				<h2 style="margin-top:0;">📥 Exportar Consultas a CSV / Google Sheets</h2>
+				<h2 style="margin-top:0;">📥 Exportar solicitudes de más información a CSV / Google Sheets</h2>
 				<p style="color:#475569;">Seleccione el rango de fechas, el modo de deduplicación y las ofertas académicas o seminarios que desea incluir en el archivo CSV (codificación UTF-8 con BOM).</p>
 
 				<form method="get" id="flacso-exp-form" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
@@ -2125,7 +2127,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 							<select name="table">
 								<option value="offer_inquiries" <?php selected( $table, 'offer_inquiries' ); ?>>Ofertas Académicas</option>
 								<option value="seminar_inquiries" <?php selected( $table, 'seminar_inquiries' ); ?>>Seminarios</option>
-								<option value="general_inquiries" <?php selected( $table, 'general_inquiries' ); ?>>Consultas Generales</option>
+								<option value="general_inquiries" <?php selected( $table, 'general_inquiries' ); ?>>Solicitudes generales</option>
 							</select>
 						</div>
 						<div class="fg">
@@ -2141,7 +2143,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 							<label style="display:block;margin-bottom:6px;"><input type="checkbox" name="all_history" value="1"> Todo el histórico (ignora fechas)</label>
 							<select name="export_mode">
 								<option value="dedup">Deduplicado (1 fila por Correo + Oferta)</option>
-								<option value="raw">Bruto (Todas las consultas individuales)</option>
+								<option value="raw">Bruto (Todas las solicitudes individuales)</option>
 							</select>
 						</div>
 					</div>
@@ -2234,14 +2236,14 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 							const pct = total ? Math.min(99, Math.floor(n / total * 100)) : null;
 							const secs = (Date.now() - t0) / 1000;
 							const eta = secs > 2 && n > 0 && total ? ' · faltan ~' + fmt(secs / n * (total - n)) : '';
-							show('Escribiendo consultas: ' + n.toLocaleString() + ' de ' + total.toLocaleString() + eta, pct);
+							show('Escribiendo solicitudes: ' + n.toLocaleString() + ' de ' + total.toLocaleString() + eta, pct);
 						}
 						show('Preparando el archivo…', 99);
 						const a = document.createElement('a');
 						a.href = URL.createObjectURL(new Blob(chunks, { type: 'text/csv;charset=utf-8' }));
-						a.download = name ? name[1] : 'consultas.csv';
+						a.download = name ? name[1] : 'mas-informacion.csv';
 						document.body.appendChild(a); a.click(); a.remove();
-						show('Listo: ' + total.toLocaleString() + ' consultas descargadas.', 100);
+						show('Listo: ' + total.toLocaleString() + ' solicitudes descargadas.', 100);
 						$('flacso-exp-cancel').hidden = true;
 					} catch (e) {
 						if (e.name === 'AbortError') show('Descarga cancelada.', null);
@@ -2261,13 +2263,13 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 		private static function render_date_range_form( string $tab, string $table, string $from, string $to ): void {
 			?>
 			<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" class="flacso-cp-filters">
-				<input type="hidden" name="page" value="<?php echo esc_attr( self::PAGE_SLUG ); ?>">
-				<input type="hidden" name="tab" value="<?php echo esc_attr( $tab ); ?>">
+				<input type="hidden" name="page" value="<?php echo esc_attr( self::tab_route( $tab ) ); ?>">
 				<div class="fg">
 					<label>Base / Tabla</label>
 					<select name="table">
 						<option value="offer_inquiries" <?php selected( $table, 'offer_inquiries' ); ?>>Ofertas Académicas</option>
 						<option value="seminar_inquiries" <?php selected( $table, 'seminar_inquiries' ); ?>>Seminarios</option>
+						<option value="general_inquiries" <?php selected( $table, 'general_inquiries' ); ?>>Solicitudes generales</option>
 					</select>
 				</div>
 				<div class="fg">
@@ -2336,7 +2338,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 							width="<?php echo (int) $bar_w; ?>"
 							height="<?php echo esc_attr( (string) max( 1, round( $bar_h, 1 ) ) ); ?>"
 							fill="#93c5fd" rx="2">
-							<title><?php echo esc_html( $fecha . ': ' . $cnt . ' consultas (Media 7d: ' . $ma7 . ')' ); ?></title>
+							<title><?php echo esc_html( $fecha . ': ' . $cnt . ' solicitudes (Media 7d: ' . $ma7 . ')' ); ?></title>
 						</rect>
 					<?php endforeach; ?>
 					<?php if ( count( $ma_points ) > 1 ) : ?>
@@ -2345,7 +2347,7 @@ if ( ! class_exists( 'FLACSO_Consultas_Admin' ) ) {
 				</svg>
 				<div style="display:flex; justify-content:space-between; font-size:11.5px; color:#64748b; margin-top:6px;">
 					<span>📅 Inicio: <?php echo esc_html( (string) ( $series[0]['fecha'] ?? '' ) ); ?></span>
-					<span>🟦 Barras: Consultas diarias | 📈 Línea azul oscuro: Media móvil 7 días</span>
+					<span>🟦 Barras: Solicitudes diarias | 📈 Línea azul oscuro: Media móvil 7 días</span>
 					<span>📅 Fin: <?php echo esc_html( (string) ( $series[ count( $series ) - 1 ]['fecha'] ?? '' ) ); ?></span>
 				</div>
 			</div>

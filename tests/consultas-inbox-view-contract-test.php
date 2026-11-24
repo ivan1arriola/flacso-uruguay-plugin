@@ -17,7 +17,7 @@ function inbox_view_assert(bool $condition, string $message): void {
 
 inbox_view_assert(strpos($admin, 'flacso-cp-inbox-table') !== false, 'la bandeja debe usar la clase de tabla compacta');
 inbox_view_assert(strpos($admin, '<th>Oferta / Cohorte</th>') !== false, 'oferta y cohorte deben compartir columna');
-inbox_view_assert(strpos($admin, '<th>Estado de la consulta</th>') !== false, 'la columna de estado debe tener un nombre claro');
+inbox_view_assert(strpos($admin, '<th>Estado de la solicitud</th>') !== false, 'la columna de estado debe tener un nombre claro');
 inbox_view_assert(strpos($admin, '<th>Cohorte</th>') === false, 'no debe existir una columna Cohorte independiente');
 inbox_view_assert(strpos($admin, '<th>Al consultar</th>') === false, 'no debe existir el encabezado ambiguo Al consultar');
 inbox_view_assert(strpos($admin, 'flacso-cp-inbox-offer') !== false, 'la oferta debe tener una presentación compacta');
