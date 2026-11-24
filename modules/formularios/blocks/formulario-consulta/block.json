@@ -1,11 +1,11 @@
 {
   "apiVersion": 2,
   "name": "flacso-uruguay/formulario-consulta",
-  "title": "Formulario de Consulta",
+  "title": "Formulario de más información",
   "category": "flacso-uruguay",
   "icon": "email",
-  "description": "Formulario de consulta con Bootstrap y variables de Kadence.",
-  "keywords": ["contacto", "consulta", "formulario"],
+  "description": "Formulario de solicitud de más información con Bootstrap y variables de Kadence.",
+  "keywords": ["contacto", "consulta", "formulario", "más información"],
   "textdomain": "formulario-consultas",
   "attributes": {
     "titulo": {

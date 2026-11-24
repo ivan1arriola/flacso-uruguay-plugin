@@ -18,8 +18,8 @@
 	var ServerSideRender = wp.serverSideRender;
 
 	registerBlockType( 'flacso-uruguay/consultas-form', {
-		title: __( 'Formulario de consultas FLACSO', 'flacso-consultas' ),
-		description: __( 'Formulario AJAX de consultas de posgrados FLACSO.', 'flacso-consultas' ),
+		title: __( 'Formulario de más información FLACSO', 'flacso-consultas' ),
+		description: __( 'Formulario AJAX de solicitudes de más información de posgrados FLACSO.', 'flacso-consultas' ),
 		icon: 'feedback',
 		category: 'widgets',
 		attributes: {
