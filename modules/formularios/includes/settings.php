@@ -17,7 +17,7 @@ function fc_register_settings() {
     register_setting( 'fc_options_group', 'fc_cargar_bootstrap', $flag( '1' ) );
 
     add_settings_section( 'fc_main_section', __( 'Recepción de solicitudes de más información', 'flacso-flacso-formulario-consultas' ), function(){
-        echo '<p>' . esc_html__( 'Las solicitudes de más información no se guardan: llegan por correo a recepción, el consultante recibe un acuse y el equipo recibe un aviso por Telegram. Los correos salen por Mautic. En asuntos y texto podés usar {nombre}, {apellido} y {asunto}.', 'flacso-flacso-formulario-consultas' ) . '</p>';
+        echo '<p>' . esc_html__( 'Las solicitudes de más información no se guardan: llegan por correo a recepción, la persona interesada recibe un acuse y el equipo recibe un aviso por Telegram. Los correos salen por Mautic. En asuntos y texto podés usar {nombre}, {apellido} y {asunto}.', 'flacso-flacso-formulario-consultas' ) . '</p>';
     }, 'fc_options_page' );
 
     add_settings_field( 'fc_destinatario_email', __( 'Correo de recepción', 'flacso-flacso-formulario-consultas' ), 'fc_field_email_cb', 'fc_options_page', 'fc_main_section' );
@@ -33,7 +33,7 @@ add_action( 'admin_init', 'fc_register_settings' );
 function fc_field_email_cb() {
     $value = esc_attr( get_option( 'fc_destinatario_email', '' ) );
     echo '<input type="email" class="regular-text" name="fc_destinatario_email" value="' . $value . '" placeholder="' . esc_attr( FC_DEFAULT_RECEPTION_EMAIL ) . '" />';
-    echo '<p class="description">' . esc_html__( 'A esta casilla llega cada solicitud de más información, con respuesta directa al consultante. Vacío usa el valor por defecto que se muestra.', 'flacso-flacso-formulario-consultas' ) . '</p>';
+    echo '<p class="description">' . esc_html__( 'A esta casilla llega cada solicitud de más información, con respuesta directa a la persona interesada. Vacío usa el valor por defecto que se muestra.', 'flacso-flacso-formulario-consultas' ) . '</p>';
 }
 
 function fc_field_asunto_admin_cb() {
@@ -44,7 +44,7 @@ function fc_field_asunto_admin_cb() {
 
 function fc_field_acuse_cb() {
     echo '<label><input type="checkbox" name="fc_enviar_acuse" value="1" ' . checked( '1', get_option( 'fc_enviar_acuse', '1' ), false ) . ' /> ' . esc_html__( 'Enviar un correo de confirmación a quien pide más información', 'flacso-flacso-formulario-consultas' ) . '</label>';
-    echo '<p class="description">' . esc_html__( 'Sale sólo cuando recepción ya recibió la solicitud. Si el consultante responde, la respuesta llega al correo de recepción.', 'flacso-flacso-formulario-consultas' ) . '</p>';
+    echo '<p class="description">' . esc_html__( 'Sale sólo cuando recepción ya recibió la solicitud. Si la persona interesada responde, la respuesta llega al correo de recepción.', 'flacso-flacso-formulario-consultas' ) . '</p>';
 }
 
 function fc_field_asunto_usuario_cb() {
