@@ -16,6 +16,13 @@ final class FLACSO_Home_Campaign {
     public const META_VARIANT = '_flacso_home_variant';
     public const OPTION_ENABLED = 'flacso_home_v2_enabled';
 
+    /** @var array<string,mixed>|null */
+    private static ?array $active_cache = null;
+
+    public static function reset_cache(): void {
+        self::$active_cache = null;
+    }
+
     public static function is_enabled(): bool {
         return (bool) get_option(self::OPTION_ENABLED, false);
     }
@@ -41,6 +48,7 @@ final class FLACSO_Home_Campaign {
         }
         add_action('add_meta_boxes_' . self::POST_TYPE, [__CLASS__, 'register_image_metabox']);
         add_action('save_post_' . self::POST_TYPE, [__CLASS__, 'save_images'], 10, 2);
+        add_action('save_post_' . self::POST_TYPE, [__CLASS__, 'reset_cache'], 20);
         add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_image_editor']);
     }
 
@@ -142,6 +150,7 @@ final class FLACSO_Home_Campaign {
                 }
             }
         }
+        self::reset_cache();
     }
 
     public static function fallback(): array {
@@ -213,8 +222,11 @@ final class FLACSO_Home_Campaign {
     }
 
     public static function active(?DateTimeImmutable $at = null): array {
-        $at = $at ?: new DateTimeImmutable('now', new DateTimeZone('UTC'));
-        $now = $at->getTimestamp();
+        if ($at === null && self::$active_cache !== null) {
+            return self::$active_cache;
+        }
+        $resolved_at = $at ?: new DateTimeImmutable('now', new DateTimeZone('UTC'));
+        $now = $resolved_at->getTimestamp();
         $posts = get_posts(['post_type' => self::POST_TYPE, 'post_status' => 'publish', 'posts_per_page' => 200, 'no_found_rows' => true]);
         $eligible = [];
         foreach ($posts as $post) {
@@ -228,7 +240,11 @@ final class FLACSO_Home_Campaign {
         usort($eligible, static function (array $a, array $b): int {
             return ($b['priority'] <=> $a['priority']) ?: (($b['start'] <=> $a['start']) ?: ((int) $b['post']->ID <=> (int) $a['post']->ID));
         });
-        return !empty($eligible) ? self::from_post($eligible[0]['post']) : self::fallback();
+        $result = !empty($eligible) ? self::from_post($eligible[0]['post']) : self::fallback();
+        if ($at === null) {
+            self::$active_cache = $result;
+        }
+        return $result;
     }
 
     public static function view_model(?DateTimeImmutable $at = null): array {
