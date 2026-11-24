@@ -86,43 +86,44 @@ function fc_render_form( $atts = [] ) {
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
                         <label for="fc_nombre" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #333; font-size: 0.95rem;"><?php esc_html_e( 'Nombre', 'flacso-flacso-formulario-consultas' ); ?> *</label>
-                        <input type="text" id="fc_nombre" name="fc_nombre" class="form-control" value="<?php echo esc_attr( $nombre ); ?>" required minlength="2" style="border: 1px solid #dee2e6; border-radius: 6px; padding: 0.75rem 0.875rem; font-size: 1rem; width: 100%; box-sizing: border-box;">
-                        <small style="display: block; color: #dc3545; margin-top: 0.25rem; display: none;" class="invalid-feedback"><?php esc_html_e( 'Mínimo 2 caracteres', 'flacso-flacso-formulario-consultas' ); ?></small>
+                        <input type="text" id="fc_nombre" name="fc_nombre" class="form-control" value="<?php echo esc_attr( $nombre ); ?>" required minlength="2" aria-describedby="fc_nombre_error" style="border: 1px solid #dee2e6; border-radius: 6px; padding: 0.75rem 0.875rem; font-size: 1rem; width: 100%; box-sizing: border-box;">
+                        <small id="fc_nombre_error" class="invalid-feedback" role="alert"><?php esc_html_e( 'Mínimo 2 caracteres', 'flacso-flacso-formulario-consultas' ); ?></small>
                     </div>
                     <div>
                         <label for="fc_apellido" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #333; font-size: 0.95rem;"><?php esc_html_e( 'Apellido', 'flacso-flacso-formulario-consultas' ); ?> *</label>
-                        <input type="text" id="fc_apellido" name="fc_apellido" class="form-control" value="<?php echo esc_attr( $apellido ); ?>" required minlength="2" style="border: 1px solid #dee2e6; border-radius: 6px; padding: 0.75rem 0.875rem; font-size: 1rem; width: 100%; box-sizing: border-box;">
-                        <small style="display: block; color: #dc3545; margin-top: 0.25rem; display: none;" class="invalid-feedback"><?php esc_html_e( 'Mínimo 2 caracteres', 'flacso-flacso-formulario-consultas' ); ?></small>
+                        <input type="text" id="fc_apellido" name="fc_apellido" class="form-control" value="<?php echo esc_attr( $apellido ); ?>" required minlength="2" aria-describedby="fc_apellido_error" style="border: 1px solid #dee2e6; border-radius: 6px; padding: 0.75rem 0.875rem; font-size: 1rem; width: 100%; box-sizing: border-box;">
+                        <small id="fc_apellido_error" class="invalid-feedback" role="alert"><?php esc_html_e( 'Mínimo 2 caracteres', 'flacso-flacso-formulario-consultas' ); ?></small>
                     </div>
                 </div>
 
                 <!-- Email -->
                 <div style="margin-bottom: 1rem;">
                     <label for="fc_email" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #333; font-size: 0.95rem;"><?php esc_html_e( 'Correo electrónico', 'flacso-flacso-formulario-consultas' ); ?> *</label>
-                    <input type="email" id="fc_email" name="fc_email" class="form-control" value="<?php echo esc_attr( $email ); ?>" required style="border: 1px solid #dee2e6; border-radius: 6px; padding: 0.75rem 0.875rem; font-size: 1rem; width: 100%; box-sizing: border-box;">
-                    <small style="display: block; color: #dc3545; margin-top: 0.25rem; display: none;" class="invalid-feedback"><?php esc_html_e( 'Correo inválido', 'flacso-flacso-formulario-consultas' ); ?></small>
+                    <input type="email" id="fc_email" name="fc_email" class="form-control" value="<?php echo esc_attr( $email ); ?>" required aria-describedby="fc_email_error" style="border: 1px solid #dee2e6; border-radius: 6px; padding: 0.75rem 0.875rem; font-size: 1rem; width: 100%; box-sizing: border-box;">
+                    <small id="fc_email_error" class="invalid-feedback" role="alert"><?php esc_html_e( 'Correo inválido', 'flacso-flacso-formulario-consultas' ); ?></small>
                 </div>
 
                 <!-- Teléfono -->
                 <div style="margin-bottom: 1rem;">
                     <label for="fc_telefono" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #333; font-size: 0.95rem;"><?php esc_html_e( 'Teléfono', 'flacso-flacso-formulario-consultas' ); ?> *</label>
-                    <input type="tel" id="fc_telefono" name="fc_telefono" class="form-control" pattern="[+0-9\s\-\(\)]{2,}" inputmode="tel" placeholder="+598 99 123 456" required style="border: 1px solid #dee2e6; border-radius: 6px; padding: 0.75rem 0.875rem; font-size: 1rem; width: 100%; box-sizing: border-box;">
+                    <input type="tel" id="fc_telefono" name="fc_telefono" class="form-control" pattern="[+0-9\s\-\(\)]{2,}" inputmode="tel" placeholder="+598 99 123 456" required aria-describedby="fc_telefono_hint fc_telefono_error" style="border: 1px solid #dee2e6; border-radius: 6px; padding: 0.75rem 0.875rem; font-size: 1rem; width: 100%; box-sizing: border-box;">
                     <input type="hidden" id="fc_telefono_full" name="fc_telefono_full" value="" />
-                    <small style="display: block; color: #6c757d; margin-top: 0.25rem; font-size: 0.85rem;"><?php esc_html_e( 'Ej: +598 99 123 456', 'flacso-flacso-formulario-consultas' ); ?></small>
+                    <small id="fc_telefono_hint" style="display: block; color: #6c757d; margin-top: 0.25rem; font-size: 0.85rem;"><?php esc_html_e( 'Ej: +598 99 123 456', 'flacso-flacso-formulario-consultas' ); ?></small>
+                    <small id="fc_telefono_error" class="invalid-feedback" role="alert"><?php esc_html_e( 'Ingresá un teléfono válido', 'flacso-uruguay' ); ?></small>
                 </div>
 
                 <!-- Asunto -->
                 <div style="margin-bottom: 1rem;">
                     <label for="fc_asunto" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #333; font-size: 0.95rem;"><?php esc_html_e( 'Asunto', 'flacso-flacso-formulario-consultas' ); ?> *</label>
-                    <input type="text" id="fc_asunto" name="fc_asunto" class="form-control" value="<?php echo esc_attr( $asunto ); ?>" required minlength="2" style="border: 1px solid #dee2e6; border-radius: 6px; padding: 0.75rem 0.875rem; font-size: 1rem; width: 100%; box-sizing: border-box;">
-                    <small style="display: block; color: #dc3545; margin-top: 0.25rem; display: none;" class="invalid-feedback"><?php esc_html_e( 'Mínimo 2 caracteres', 'flacso-flacso-formulario-consultas' ); ?></small>
+                    <input type="text" id="fc_asunto" name="fc_asunto" class="form-control" value="<?php echo esc_attr( $asunto ); ?>" required minlength="2" aria-describedby="fc_asunto_error" style="border: 1px solid #dee2e6; border-radius: 6px; padding: 0.75rem 0.875rem; font-size: 1rem; width: 100%; box-sizing: border-box;">
+                    <small id="fc_asunto_error" class="invalid-feedback" role="alert"><?php esc_html_e( 'Mínimo 2 caracteres', 'flacso-flacso-formulario-consultas' ); ?></small>
                 </div>
 
                 <!-- Mensaje -->
                 <div style="margin-bottom: 1.5rem;">
                     <label for="fc_mensaje" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #333; font-size: 0.95rem;"><?php esc_html_e( 'Tu consulta', 'flacso-flacso-formulario-consultas' ); ?> *</label>
-                    <textarea id="fc_mensaje" name="fc_mensaje" class="form-control" rows="5" required minlength="2" style="border: 1px solid #dee2e6; border-radius: 6px; padding: 0.75rem 0.875rem; font-size: 1rem; width: 100%; box-sizing: border-box; resize: vertical; min-height: 120px;"></textarea>
-                    <small style="display: block; color: #dc3545; margin-top: 0.25rem; display: none;" class="invalid-feedback"><?php esc_html_e( 'Mínimo 2 caracteres', 'flacso-flacso-formulario-consultas' ); ?></small>
+                    <textarea id="fc_mensaje" name="fc_mensaje" class="form-control" rows="5" required minlength="2" aria-describedby="fc_mensaje_error" style="border: 1px solid #dee2e6; border-radius: 6px; padding: 0.75rem 0.875rem; font-size: 1rem; width: 100%; box-sizing: border-box; resize: vertical; min-height: 120px;"></textarea>
+                    <small id="fc_mensaje_error" class="invalid-feedback" role="alert"><?php esc_html_e( 'Mínimo 2 caracteres', 'flacso-flacso-formulario-consultas' ); ?></small>
                 </div>
 
                 <!-- Botón y protección -->

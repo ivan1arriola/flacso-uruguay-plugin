@@ -105,15 +105,23 @@
 }
 
 /* Validación */
-.flacso-formulario-consultas .fc-form-wrapper .form-control:invalid {
-  border-color: #dc3545;
+.flacso-formulario-consultas .fc-form-wrapper .was-validated .form-control:invalid,
+.flacso-formulario-consultas .fc-form-wrapper .form-control.is-invalid,
+.flacso-formulario-consultas .fc-form-wrapper .form-control[aria-invalid="true"] {
+  border-color: #dc3545 !important;
 }
 
 .flacso-formulario-consultas .fc-form-wrapper .invalid-feedback {
-  display: block;
+  display: none;
   color: #dc3545;
   font-size: 0.85rem;
   margin-top: 0.25rem;
+}
+
+.flacso-formulario-consultas .fc-form-wrapper .was-validated .form-control:invalid ~ .invalid-feedback,
+.flacso-formulario-consultas .fc-form-wrapper .form-control.is-invalid ~ .invalid-feedback,
+.flacso-formulario-consultas .fc-form-wrapper .form-control[aria-invalid="true"] ~ .invalid-feedback {
+  display: block;
 }
 
 /* Honeypot oculto */
