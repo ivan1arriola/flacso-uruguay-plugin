@@ -36,7 +36,7 @@ class FLACSO_Inquiry_Analytics_Repository {
             'has_email'   => true,
         ],
         'general_inquiries' => [
-            'label'       => 'Consultas Generales',
+            'label'       => 'Solicitudes generales',
             'item_col'    => 'unit',
             'wp_id_col'   => null,
             'type_col'    => 'source',

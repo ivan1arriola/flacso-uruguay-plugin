@@ -387,7 +387,7 @@ final class FLACSO_Academic_Assistant {
             self::sala_virtual_url(),
         ];
         $submenu[FLACSO_Admin_Panel::PAGE_SLUG][] = [
-            __('Consultas', 'flacso-uruguay'),
+            __('Más información', 'flacso-uruguay'),
             self::VIEW_INQUIRIES,
             'admin.php?page=flacso-consultas',
         ];
