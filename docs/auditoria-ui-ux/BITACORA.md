@@ -12,11 +12,25 @@ Antes de empezar, leer también `HALLAZGOS.md` (estado de cada hallazgo) y `GUIA
 
 | ID | Fecha | Título | Archivo |
 |---|---|---|---|
-| B-0020 | 2026-11-21 | Decisiones del dueño sobre deploy, AGENTS.md, bitácora y capturas | `bitacora/B-0020-decisiones-del-dueno.md` |
-| B-0021 | 2026-11-21 | Repetición de WP-00: paleta Kadence, foco del buscador, menú móvil y carrusel | `bitacora/B-0021-rerun-playwright-palette-foco-menu.md` |
-| B-0022 | 2026-11-21 | WP-02 mapa previo de formularios y mailing (lectura) | `bitacora/B-0022-wp02-mapa-previo-formularios.md` |
-| B-0023 | 2026-11-21 | WP-03 verificación de candidatos a código muerto (lectura) | `bitacora/B-0023-wp03-mapa-previo-codigo-muerto.md` |
+| B-0020 | 2026-11-21 | Decisiones del dueño sobre deploy, AGENTS.md, bitácora y capturas | [Entrada B-0020](bitacora/B-0020-decisiones-del-dueno.md) |
+| B-0021 | 2026-11-21 | Repetición de WP-00: paleta Kadence, foco del buscador, menú móvil y carrusel | [Entrada B-0021](bitacora/B-0021-rerun-playwright-palette-foco-menu.md) |
+| B-0022 | 2026-11-21 | WP-02 mapa previo de formularios y mailing (lectura) | [Entrada B-0022](bitacora/B-0022-wp02-mapa-previo-formularios.md) |
+| B-0023 | 2026-11-21 | WP-03 verificación de candidatos a código muerto (lectura) | [Entrada B-0023](bitacora/B-0023-wp03-mapa-previo-codigo-muerto.md) |
+| B-0024 | 2026-11-21 | WP-04 mapa previo de tokens Kadence y hexes (lectura) | [Entrada B-0024](bitacora/B-0024-wp04-mapa-previo-tokens-kadence.md) |
+| B-0025 | 2026-11-21 | WP-05 mapa previo de componente de botón único (lectura) | [Entrada B-0025](bitacora/B-0025-wp05-mapa-previo-botones.md) |
+| B-0026 | 2026-11-21 | WP-06 mapa previo de componentes y estilos de editor (lectura) | [Entrada B-0026](bitacora/B-0026-wp06-mapa-previo-componentes-editor.md) |
+| B-0027 | 2026-11-21 | WP-07 mapa previo de capas móviles, breakpoints y header (lectura) | [Entrada B-0027](bitacora/B-0027-wp07-mapa-previo-mobile-header.md) |
+| B-0028 | 2026-11-21 | WP-08 mapa previo de accesibilidad WCAG 2.2 AA (lectura) | [Entrada B-0028](bitacora/B-0028-wp08-mapa-previo-accesibilidad.md) |
+| B-0030 | 2026-11-21 | WP-10 mapa previo de rendimiento y errores JS (lectura) | [Entrada B-0030](bitacora/B-0030-wp10-mapa-previo-rendimiento-js.md) |
+| B-0031 | 2026-11-21 | WP-11 mapa previo de admin UX y seguridad (lectura) | [Entrada B-0031](bitacora/B-0031-wp11-mapa-previo-admin.md) |
+| B-0033 | 2026-11-21 | WP-13 mapa previo de estados e interacción (lectura) | [Entrada B-0033](bitacora/B-0033-wp13-mapa-previo-estados-interaccion.md) |
+| B-0035 | 2026-11-22 | WP-S1 implementación: `/ofertas/settings` solo para administradores | [Entrada B-0035](bitacora/B-0035-wp-s1-permisos-settings-api.md) |
+| B-0036 | 2026-11-22 | Recorte del plan a tres cambios | [Entrada B-0036](bitacora/B-0036-recorte-del-plan.md) |
+| B-0037 | 2026-11-22 | H-A11: el filtro anti-spam ya no descarta consultas legítimas | [Entrada B-0037](bitacora/B-0037-h-a11-filtro-antispam.md) |
+| B-0038 | 2026-11-22 | Push de las dos ramas y apertura de los PR | [Entrada B-0038](bitacora/B-0038-push-de-ramas-y-prs.md) |
+| B-0039 | 2026-11-22 | Resultado del chequeo de los PR #100 y #101 | [Entrada B-0039](bitacora/B-0039-chequeo-de-los-pr.md) |
 | B-0050 | 2026-11-22 | Auditoría de Kadence e identidad visual | [Entrada B-0050](bitacora/B-0050-auditoria-kadence-y-plan-t3.md) |
+| B-0051 | 2026-11-23 | Auditoría del plan maestro, las bitácoras y los contratos entre repositorios | [Entrada B-0051](bitacora/B-0051-auditoria-documental.md) |
 
 ## Formato de entrada
 
