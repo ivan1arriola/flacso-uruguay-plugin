@@ -38,7 +38,7 @@ REGLAS NO NEGOCIABLES
 1. **Preámbulo en cada prompt, sin excepciones.** `AGENTS.md` del plugin hoy ordena publicar con `git push origin HEAD:main` (despliega a producción en unos 60 s) y permite escribir en la base de producción. Esa regla no aplica a esta auditoría: los agentes abren PR y una persona mergea.
 2. **Un solo eje de división por campaña.** En la fase 1 se dividió por repo y por dimensión a la vez y hubo hallazgos repetidos. Para auditar: por dimensión. Para ejecutar: por paquete de archivos (ver `TAREAS-CI.md`).
 3. **T1 antes de T2.** Un T1 mapea los archivos y llamadores del paquete; recién entonces T2 edita; T3 revisa el diff antes de que una persona mergee.
-4. **Paralelismo.** Hasta 10 T1 en paralelo sobre lectura. T2 en paralelo solo con paquetes de archivos disjuntos; máximo 3 T2 a la vez.
+4. **Paralelismo.** Como máximo 3 subagentes a la vez en total (T1 o T2), como fija el plan vigente; los que escriben, con archivos disjuntos. Los prompts se escriben en inglés.
 5. **Traspaso por bitácora**, no por memoria de conversación.
 6. **Escalada.** T1 con resultado ambiguo pasa a T3. T2 que descubre que el cambio toca otro paquete se detiene, lo registra y devuelve el control. Ante una instrucción contradictoria o un permiso dudoso, se detiene y pregunta a una persona.
 7. **Los conteos no justifican un cambio por sí solos.** Los T1 marcan "falso positivo probable"; T3 decide.

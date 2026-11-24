@@ -29,8 +29,19 @@ Antes de empezar, leer también `HALLAZGOS.md` (estado de cada hallazgo) y `GUIA
 | B-0037 | 2026-11-22 | H-A11: el filtro anti-spam ya no descarta consultas legítimas | [Entrada B-0037](bitacora/B-0037-h-a11-filtro-antispam.md) |
 | B-0038 | 2026-11-22 | Push de las dos ramas y apertura de los PR | [Entrada B-0038](bitacora/B-0038-push-de-ramas-y-prs.md) |
 | B-0039 | 2026-11-22 | Resultado del chequeo de los PR #100 y #101 | [Entrada B-0039](bitacora/B-0039-chequeo-de-los-pr.md) |
+| B-0040 | 2026-11-22 | Merge de #100 y #101 y verificación en producción | [Entrada B-0040](bitacora/bitacora\B-0040-merge-y-verificacion-en-produccion.md) |
+| B-0041 | 2026-11-22 | Barrido de la superficie pública tras publicar los docs | [Entrada B-0041](bitacora/bitacora\B-0041-barrido-superficie-publica.md) |
+| B-0042 | 2026-11-22 | Lote chico: privacidad del log y AJAX público sin uso | [Entrada B-0042](bitacora/bitacora\B-0042-lote-privacidad-y-superficie.md) |
+| B-0043 | 2026-11-22 | Push de la rama del lote chico y PR #102 | [Entrada B-0043](bitacora/bitacora\B-0043-push-y-pr-del-lote-chico.md) |
+| B-0044 | 2026-11-22 | Merge del PR #102 y verificación en producción | [Entrada B-0044](bitacora/bitacora\B-0044-merge-del-pr-102-y-verificacion.md) |
+| B-0045 | 2026-11-22 | Plan de Kadence: revisión de la rama, vista previa y PR #83 del tema | [Entrada B-0045](bitacora/bitacora\B-0045-kadence-revision-previa-y-pr-83.md) |
+| B-0046 | 2026-11-22 | Merge del PR #83 del tema y verificación en producción | [Entrada B-0046](bitacora/bitacora\B-0046-merge-del-pr-83-y-verificacion.md) |
+| B-0047 | 2026-11-22 | Ajustes de Kadence verificados y limpieza del Editor externo | [Entrada B-0047](bitacora/bitacora\B-0047-ajustes-de-kadence-y-limpieza-del-editor.md) |
+| B-0048 | 2026-11-22 | Merge del PR #103 (limpieza del Editor externo) y verificación | [Entrada B-0048](bitacora/bitacora\B-0048-merge-del-pr-103-y-verificacion.md) |
+| B-0049 | 2026-11-22 | Opciones huérfanas del admin: diagnóstico en el servidor y PR #104 | [Entrada B-0049](bitacora/bitacora\B-0049-opciones-huerfanas-del-admin-y-pr-104.md) |
 | B-0050 | 2026-11-22 | Auditoría de Kadence e identidad visual | [Entrada B-0050](bitacora/B-0050-auditoria-kadence-y-plan-t3.md) |
 | B-0051 | 2026-11-23 | Auditoría del plan maestro, las bitácoras y los contratos entre repositorios | [Entrada B-0051](bitacora/B-0051-auditoria-documental.md) |
+| B-0052 | 2026-11-24 | Plan maestro v9 en el repositorio y rediseño de «Más información» | [Entrada B-0052](bitacora/B-0052-plan-v9-y-mas-informacion.md) |
 
 ## Formato de entrada
 

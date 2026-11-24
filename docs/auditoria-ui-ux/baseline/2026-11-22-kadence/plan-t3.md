@@ -6,7 +6,7 @@
 
 **Arquitectura.** Mantener el tema hijo clásico, integrar el Personalizador y los constructores nativos, y aplicar los estilos del sistema a las plantillas del hijo y al editor. Usar patrones de bloques para contenido que requiera revisiones y composición visual. Mantener las consultas y bloques dinámicos sobre la fuente canónica del plugin.
 
-**Base técnica.** WordPress 6.2+, PHP 7.4+, Kadence, CSS, plantillas PHP, editor de bloques, pruebas PHP CLI y Playwright de staging. Confirmar versiones e interfaces exactas en la etapa 0. [Auditoría y alcance de las plantillas](auditoria.md).
+**Base técnica.** WordPress 6.2+, PHP 8.3+ (mínimo de producción; ver `AGENTS.md` §3), Kadence, CSS, plantillas PHP, editor de bloques, pruebas PHP CLI y Playwright de staging. Confirmar versiones e interfaces exactas en la etapa 0. [Auditoría y alcance de las plantillas](auditoria.md).
 
 ## Decisión de arquitectura
 
