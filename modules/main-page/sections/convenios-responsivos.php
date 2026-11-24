@@ -210,16 +210,19 @@ if (!function_exists('flacso_render_convenios_html')) {
         }
 
         $placeholder = flacso_convenios_get_placeholder_image();
+        $allowed_protocols = function_exists('wp_allowed_protocols')
+            ? array_merge(wp_allowed_protocols(), ['data'])
+            : ['http', 'https', 'data'];
 
         ob_start();
         foreach ($dataset as $card) {
             $titulo = $card['title'];
-            $image  = $card['image'] ? esc_url($card['image']) : $placeholder;
+            $image  = $card['image'] ? esc_url($card['image']) : esc_url($placeholder, $allowed_protocols);
             ?>
             <a class="convenio-card" href="<?php echo esc_url($card['permalink']); ?>">
                 <div class="convenio-logo">
                     <img
-                        src="<?php echo $image; ?>"
+                        src="<?php echo esc_url($image, $allowed_protocols); ?>"
                         alt="<?php echo esc_attr(sprintf(__('Logo de %s', 'flacso-main-page'), $titulo)); ?>"
                         onerror="this.src='<?php echo esc_attr($placeholder); ?>';"
                     >

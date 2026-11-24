@@ -8,6 +8,10 @@ function absint($v) { return abs((int) $v); }
 function get_option($k, $d = false) { return $d; }
 function get_post_meta($id, $key, $single = true) { return $GLOBALS['home_meta'][$id][$key] ?? ''; }
 function get_post_thumbnail_id($id) { return $GLOBALS['home_thumb'][$id] ?? 0; }
+function get_posts($args = []) {
+    $GLOBALS['get_posts_calls'] = ($GLOBALS['get_posts_calls'] ?? 0) + 1;
+    return $GLOBALS['campaign_posts'] ?? [];
+}
 
 require_once __DIR__ . '/../modules/main-page/includes/class-flacso-home-campaign.php';
 function home_assert($ok, $message) { if (!$ok) { fwrite(STDERR, "FAIL: {$message}\n"); exit(1); } }
@@ -33,4 +37,22 @@ home_assert($view['desktop_image_id'] === 602, 'usa fotografía seleccionada en 
 $GLOBALS['home_meta'][77][FLACSO_Home_Campaign::META_MOBILE_IMAGE] = 603;
 $view = FLACSO_Home_Campaign::from_post($post);
 home_assert($view['mobile_image_id'] === 603, 'admite fotografía alternativa para móvil');
+
+// P3c: active() memoriza la consulta dentro de la misma petición.
+$GLOBALS['get_posts_calls'] = 0;
+$GLOBALS['campaign_posts'] = [];
+FLACSO_Home_Campaign::reset_cache();
+$first_active = FLACSO_Home_Campaign::active();
+$second_active = FLACSO_Home_Campaign::active();
+home_assert($first_active === $fallback && $second_active === $fallback, 'active() sin campañas devuelve el respaldo institucional');
+home_assert($GLOBALS['get_posts_calls'] === 1, 'active() consulta campañas una sola vez por petición');
+FLACSO_Home_Campaign::reset_cache();
+FLACSO_Home_Campaign::active();
+home_assert($GLOBALS['get_posts_calls'] === 2, 'reset_cache() invalida la memoria estática de active()');
+
+// Q2: convenios-responsivos.php escapa $placeholder e $image con protocolo data permitido.
+$convenios_src = (string) file_get_contents(__DIR__ . '/../modules/main-page/sections/convenios-responsivos.php');
+home_assert(strpos($convenios_src, 'esc_url($placeholder, $allowed_protocols)') !== false, 'convenios escapa $placeholder con protocolos permitidos');
+home_assert(strpos($convenios_src, 'src="<?php echo esc_url($image, $allowed_protocols); ?>"') !== false, 'convenios escapa $image en el mismo echo');
+
 echo "OK home campaign contract\n";
