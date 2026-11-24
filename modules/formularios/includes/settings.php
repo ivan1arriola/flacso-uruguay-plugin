@@ -22,7 +22,7 @@ function fc_register_settings() {
 
     add_settings_field( 'fc_destinatario_email', __( 'Correo de recepción', 'flacso-flacso-formulario-consultas' ), 'fc_field_email_cb', 'fc_options_page', 'fc_main_section' );
     add_settings_field( 'fc_asunto_admin', __( 'Asunto del aviso a recepción', 'flacso-flacso-formulario-consultas' ), 'fc_field_asunto_admin_cb', 'fc_options_page', 'fc_main_section' );
-    add_settings_field( 'fc_enviar_acuse', __( 'Acuse al consultante', 'flacso-flacso-formulario-consultas' ), 'fc_field_acuse_cb', 'fc_options_page', 'fc_main_section' );
+    add_settings_field( 'fc_enviar_acuse', __( 'Acuse a la persona interesada', 'flacso-flacso-formulario-consultas' ), 'fc_field_acuse_cb', 'fc_options_page', 'fc_main_section' );
     add_settings_field( 'fc_asunto_usuario', __( 'Asunto del acuse', 'flacso-flacso-formulario-consultas' ), 'fc_field_asunto_usuario_cb', 'fc_options_page', 'fc_main_section' );
     add_settings_field( 'fc_texto_acuse', __( 'Texto del acuse', 'flacso-flacso-formulario-consultas' ), 'fc_field_texto_acuse_cb', 'fc_options_page', 'fc_main_section' );
     add_settings_field( 'fc_telegram_notify_consultas', __( 'Aviso por Telegram', 'flacso-flacso-formulario-consultas' ), 'fc_field_telegram_cb', 'fc_options_page', 'fc_main_section' );
