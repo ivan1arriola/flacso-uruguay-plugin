@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * Mejoras incluidas:
  * - Diseño más institucional y responsive.
- * - Buscador visible con consulta prellenada a partir del slug solicitado.
+ * - Buscador visible sin precarga de URL y accesos útiles.
  * - Sugerencias por slug y título similar.
  * - Aviso especial para URLs antiguas con /web/.
  * - Enlaces rápidos a secciones relevantes.
@@ -54,12 +54,11 @@ if ( ! class_exists( 'Flacso_Custom_404' ) ) {
 			$requested_path = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
 			$path           = trim( (string) parse_url( $requested_path, PHP_URL_PATH ), '/' );
 			$slug           = $path ? basename( $path ) : '';
-			$search_query   = self::get_search_query_from_path( $path, $slug );
 			$alternative    = self::get_path_alternative( $path );
 			$suggestions    = self::get_suggestions( $slug, $path );
 
 			get_header();
-			self::render_template( $path, $slug, $search_query, $suggestions, $alternative );
+			self::render_template( $path, $suggestions, $alternative );
 			get_footer();
 
 			exit;
@@ -89,16 +88,6 @@ if ( ! class_exists( 'Flacso_Custom_404' ) ) {
 					'1.13.1'
 				);
 			}
-		}
-
-		private static function get_search_query_from_path( string $path, string $slug ): string {
-			$base = $slug !== '' ? $slug : $path;
-
-			$base = preg_replace( '/\.(html|htm|php|asp|aspx)$/i', '', $base );
-			$base = str_replace( [ '-', '_', '/', '+' ], ' ', (string) $base );
-			$base = preg_replace( '/\s+/', ' ', $base );
-
-			return trim( (string) $base );
 		}
 
 		/**
@@ -356,26 +345,26 @@ if ( ! class_exists( 'Flacso_Custom_404' ) ) {
 				'flacso_404_quick_links',
 				[
 					[
+						'label'       => __( 'Inicio', 'flacso-uruguay' ),
+						'url'         => home_url( '/' ),
+						'icon'        => 'bi-house-door',
+						'description' => __( 'Portada institucional y novedades de FLACSO Uruguay.', 'flacso-uruguay' ),
+					],
+					[
 						'label'       => __( 'Oferta académica', 'flacso-uruguay' ),
 						'url'         => home_url( '/formacion/' ),
 						'icon'        => 'bi-mortarboard',
 						'description' => __( 'Posgrados, diplomas, especializaciones y seminarios.', 'flacso-uruguay' ),
 					],
 					[
-						'label'       => __( 'Seminarios', 'flacso-uruguay' ),
-						'url'         => home_url( '/formacion/seminarios/' ),
-						'icon'        => 'bi-calendar-event',
-						'description' => __( 'Actividades abiertas y propuestas de cursada breve.', 'flacso-uruguay' ),
-					],
-					[
 						'label'       => __( 'Investigación', 'flacso-uruguay' ),
-						'url'         => home_url( '/investigacion/' ),
+						'url'         => home_url( '/institucional/investigaciones/' ),
 						'icon'        => 'bi-journal-text',
 						'description' => __( 'Líneas, proyectos y producción académica institucional.', 'flacso-uruguay' ),
 					],
 					[
 						'label'       => __( 'Contacto', 'flacso-uruguay' ),
-						'url'         => home_url( '/contacto/' ),
+						'url'         => home_url( '/contactos/' ),
 						'icon'        => 'bi-envelope',
 						'description' => __( 'Canales de comunicación de FLACSO Uruguay.', 'flacso-uruguay' ),
 					],
@@ -383,8 +372,7 @@ if ( ! class_exists( 'Flacso_Custom_404' ) ) {
 			);
 		}
 
-		private static function render_template( string $path, string $slug, string $search_query, array $suggestions, ?array $alternative ): void {
-			$search_url  = add_query_arg( 's', rawurlencode( $search_query ), home_url( '/' ) );
+		private static function render_template( string $path, array $suggestions, ?array $alternative ): void {
 			$quick_links = self::get_quick_links();
 			?>
 			<main id="primary" class="site-main flacso-404-page" aria-labelledby="flacso-404-title">
@@ -429,7 +417,7 @@ if ( ! class_exists( 'Flacso_Custom_404' ) ) {
 										id="flacso-404-search-field"
 										type="search"
 										name="s"
-										value="<?php echo esc_attr( $search_query ); ?>"
+										value=""
 										placeholder="<?php esc_attr_e( 'Buscar en FLACSO Uruguay', 'flacso-uruguay' ); ?>">
 									<button type="submit">
 										<?php esc_html_e( 'Buscar', 'flacso-uruguay' ); ?>
@@ -443,9 +431,9 @@ if ( ! class_exists( 'Flacso_Custom_404' ) ) {
 									<span><?php esc_html_e( 'Volver al inicio', 'flacso-uruguay' ); ?></span>
 								</a>
 
-								<a href="<?php echo esc_url( $search_url ); ?>" class="flacso-404-button flacso-404-button--secondary">
-									<i class="bi bi-search" aria-hidden="true"></i>
-									<span><?php esc_html_e( 'Buscar algo similar', 'flacso-uruguay' ); ?></span>
+								<a href="<?php echo esc_url( home_url( '/formacion/' ) ); ?>" class="flacso-404-button flacso-404-button--secondary">
+									<i class="bi bi-mortarboard" aria-hidden="true"></i>
+									<span><?php esc_html_e( 'Ver oferta académica', 'flacso-uruguay' ); ?></span>
 								</a>
 							</div>
 						</div>
@@ -1124,8 +1112,9 @@ if ( ! class_exists( 'Flacso_Custom_404' ) ) {
 				.flacso-404-quicklinks a:focus-visible,
 				.flacso-404-support a:focus-visible,
 				.flacso-404-search input:focus-visible {
-					outline: 3px solid rgba(252, 209, 22, 0.8);
+					outline: 3px solid var(--flacso-404-blue);
 					outline-offset: 3px;
+					box-shadow: 0 0 0 3px #ffffff;
 				}
 
 				@media (prefers-reduced-motion: no-preference) {
