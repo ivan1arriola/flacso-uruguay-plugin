@@ -163,18 +163,6 @@ parameters:
 			path: includes/integrations/class-flacso-mautic-client.php
 
 		-
-			message: '#^Undefined variable\: \$live_statuses$#'
-			identifier: variable.undefined
-			count: 1
-			path: modules/consultas/includes/class-flacso-consultas-admin.php
-
-		-
-			message: '#^Variable \$live_statuses on left side of \?\? is never defined\.$#'
-			identifier: nullCoalesce.variable
-			count: 1
-			path: modules/consultas/includes/class-flacso-consultas-admin.php
-
-		-
 			message: '#^Call to static method error\(\) on an unknown class WP_CLI\.$#'
 			identifier: class.notFound
 			count: 1
