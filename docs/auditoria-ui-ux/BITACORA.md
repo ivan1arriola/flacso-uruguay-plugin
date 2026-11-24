@@ -42,6 +42,7 @@ Antes de empezar, leer también `HALLAZGOS.md` (estado de cada hallazgo) y `GUIA
 | B-0050 | 2026-11-22 | Auditoría de Kadence e identidad visual | [Entrada B-0050](bitacora/B-0050-auditoria-kadence-y-plan-t3.md) |
 | B-0051 | 2026-11-23 | Auditoría del plan maestro, las bitácoras y los contratos entre repositorios | [Entrada B-0051](bitacora/B-0051-auditoria-documental.md) |
 | B-0052 | 2026-11-24 | Plan maestro v9 en el repositorio y rediseño de «Más información» | [Entrada B-0052](bitacora/B-0052-plan-v9-y-mas-informacion.md) |
+| B-0053 | 2026-11-24 | Lotes L13, L14 y L16, E2 fusionado y regla de reserva de lotes | [Entrada B-0053](bitacora/B-0053-lotes-l13-l14-l16-y-reserva.md) |
 
 ## Formato de entrada
 
