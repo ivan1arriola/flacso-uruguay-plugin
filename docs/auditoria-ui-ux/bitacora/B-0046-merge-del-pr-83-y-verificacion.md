@@ -1,0 +1,12 @@
+## B-0046 · 2026-11-22 · Merge del PR #83 del tema y verificación en producción
+- Actor: Claude Code (verificación) · Tier: coordinación · Modelo: Sonnet. El merge lo hizo la persona dueña.
+- Tarea / alcance: confirmar el merge y el despliegue del tema, ver qué sirve producción y si se hicieron los pasos previos en el Customizer de Kadence.
+- Modo: lectura de GitHub Actions y solicitudes de solo lectura al sitio público (HTML de la home y la hoja `site-chrome.css`); borrado del worktree `wt-tema-cta`.
+- Resultado:
+  - PR #83 mergeado a las 04:20:57 UTC (`7e6be1c`); el despliegue del tema terminó con éxito.
+  - Producción sirve el CSS nuevo: `site-chrome.css` tiene 3 líneas con `--global-palette2` y 0 con `palette-btn`. Home HTTP 200.
+  - **Los pasos previos del Customizer no estaban hechos al mergear:** Kadence imprime `--global-content-width: 1290px` y `--global-palette5: #7a8696`. Consecuencias hoy: cabecera y portada más anchas que antes y texto atenuado de la portada con 3,7:1 de contraste (bajo el mínimo de 4,5:1). Los demás valores medidos no cambiaron (palette1 `#1d3a72`, palette2 `#fed222`, palette3 `#0f1a2d`, palette4 `#2e2f34`, botón `#248138`).
+  - `main` local del tema sincronizado; worktree borrado.
+- Hallazgos: H-B01, H-B02, H-C01 (parcial, desplegado); H-E01 y H-D03 abiertos hasta que se ajuste el Customizer.
+- Verificación: valores leídos del `<style>` que imprime Kadence y de la hoja del tema; no se tomaron capturas del sitio ya desplegado ni se midió el contraste real en pantalla.
+- Pendiente / siguiente paso (dueño): en Apariencia → Personalizar de Kadence, ancho del contenido en 1180 y paleta 5 en `#64748b`; después repetir la lectura de estos valores. Acciones previas abiertas (webhook y DNS del editor muerto, cuentas Colaborador o superior y rotación de secretos).

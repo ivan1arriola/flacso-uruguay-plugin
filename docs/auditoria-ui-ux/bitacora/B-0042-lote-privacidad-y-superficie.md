@@ -1,0 +1,11 @@
+## B-0042 · 2026-11-22 · Lote chico: privacidad del log y AJAX público sin uso
+- Actor: Claude Code · Tier: T2 (implementación) · Modelo: Sonnet
+- Tarea / alcance: lote acordado con el dueño tras B-0041. Plugin: `modules/formularios/includes/error-policy.php` y `modules/main-page/sections/convenios-responsivos.php`, más dos tests nuevos. Worktree `Plugin + Tema/wt-lote`, rama `ui/lote-privacidad-superficie` desde `main` (`e0000f3`).
+- Modo: escritura en rama. **Dos commits locales (`478808a`, `47eadf2`); no se hizo push** (el dueño pidió esperar su autorización).
+- Resultado:
+  - **H-A21 (privacidad):** `fc_notify_form_admin_error()` armaba un único texto con el correo del usuario y lo usaba para el aviso al administrador y para `error_log()`. Ahora el log registra referencia, etapa, fecha, página y detalle técnico, sin el correo; el aviso por correo y Telegram al administrador lo sigue llevando.
+  - **Superficie pública:** se quitó el handler `flacso_ajax_buscar_convenios_distancia` y sus dos registros (`wp_ajax_` y `wp_ajax_nopriv_`), 73 líneas. No tenía ningún cliente en el plugin ni en el tema. El shortcode `convenios_responsivos` y sus helpers no cambian.
+- Hallazgos: H-A21 (corregido en rama, pendiente de merge); AJAX muerto `buscar_convenios_distancia` de B-0026 (retirado en rama).
+- Verificación: los dos tests nuevos fallaron antes del cambio y pasan después (el primero falló al principio por una constante que faltaba en los stubs del propio test, se corrigió para que falle por la razón correcta); `php -l` sin errores; `general-inquiry-handler-test.php` sigue en verde; `agent_check.py` completo: 362 archivos PHP, 8 pruebas F0 y 138 pruebas de contrato en verde; `git diff --check origin/main...HEAD` sin errores y `check_encoding.py` sin hallazgos (replica del CI). No ejecutado en WordPress real.
+- No incluye: H-A09 (secretos en el HTML del admin, el dueño eligió no incluirlo), H-A13 (severidad baja), el valor de `fc_consultas_webhook_url` ni el DNS del editor muerto.
+- Pendiente / siguiente paso: el dueño autoriza el push de la rama (nunca a `main`) para abrir el PR; después revisa y mergea.

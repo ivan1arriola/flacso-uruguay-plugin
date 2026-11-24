@@ -1,0 +1,11 @@
+## B-0052 · 2026-11-24 · Plan maestro v9 en el repositorio y rediseño de «Más información»
+- Actor: Claude Code (coordinador, Opus) con subagentes Haiku y Sonnet · Tier: T3 · Modelo: Opus
+- Tarea / alcance: adoptar el plan maestro v9 y alinear la documentación (lote L01); registrar el rediseño de la pantalla de admin «Más información». Plugin y tema, solo documentación en este lote.
+- Modo: escritura (rama: docs/l01-plan-v9)
+- Resultado:
+  - Rediseño de «Más información» (`page=flacso-consultas` y sus 6 pestañas): PR #124, fusionado por orden explícita del dueño en la conversación (excepción a `AGENTS.md` §0.1). El despliegue «Validate and deploy plugin to production» terminó con éxito. Incluye el arreglo del baseline de PHPStan (los errores de `$live_statuses` ya estaban resueltos por #122). La paginación de la bandeja antes llegaba solo a la página 12.
+  - Plan maestro v9 adoptado: entregas chicas (lotes L01 a L40), analítica e UI primero, analítica desacoplada en un plugin `flacso-analytics` con contrato de eventos, y evento de pago (L12a a L12c). El v8.3 queda como catálogo de referencia. Ambos están en `docs/plan/`.
+  - Este lote (L01): los dos planes copiados a `docs/plan/`; `AGENTS.md` apunta al plan vigente, con la condición de la Vía 2 al inicio de esa sección y la regla 9; `GUIA-SUBAGENTES.md` alineada (3 subagentes a la vez, prompts en inglés); `plan-t3.md` con PHP 8.3+; `HALLAZGOS.md` con H-A11 desplegado y H-B08 resuelto; bitácora B-0040 a B-0049 incorporada al índice; en el tema, puntero al plan v9 y aviso sobre el valor de `palette1`.
+- Hallazgos: H-A11 (hecho, desplegado), H-B08 (resuelto). H-A09 sin cambios (pendiente por decisión del dueño).
+- Verificación: `python scripts/agent_check.py --diff` y `git diff --check`. El despliegue de #124 se tomó del resultado de GitHub Actions informado por el coordinador.
+- Pendiente / siguiente paso: L02a (token CAPI del portal, sin código); decisiones D18 a D24.

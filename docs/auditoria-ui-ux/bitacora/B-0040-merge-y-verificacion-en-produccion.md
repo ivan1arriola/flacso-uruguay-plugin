@@ -1,0 +1,13 @@
+## B-0040 · 2026-11-22 · Merge de #100 y #101 y verificación en producción
+- Actor: Claude Code (verificación) · Tier: coordinación · Modelo: Sonnet. Los merges los hizo la persona dueña.
+- Tarea / alcance: confirmar los merges, los despliegues y que `/ofertas/settings` ya no responde sin autenticación; limpiar los worktrees propios.
+- Modo: lectura de GitHub Actions y un GET anónimo de solo lectura al sitio público (solo código de estado, sin leer datos); borrado de dos worktrees locales ya mergeados.
+- Resultado:
+  - PR #100 mergeado a las 03:35:38 UTC (`98252c8`) y PR #101 a las 03:35:53 UTC (`daec61a`).
+  - Los dos despliegues ("Deploy WordPress Plugin") terminaron con éxito, incluido el smoke-test de WordPress; "Repository Guard" y "Release Auto Update" también en verde.
+  - **GET anónimo a `/wp-json/flacso/v1/ofertas/settings` y a `?include_secrets=1`: HTTP 401**, `rest_forbidden`. H-A09 y la alerta P0 de B-0031 quedan cerradas en lo que respecta al acceso sin login y a cuentas sin `manage_options`.
+  - Worktrees `wt-WP-S1` y `wt-WP-02a` borrados (estaban limpios); `main` local sincronizado con `origin/main`.
+- Hallazgos: H-A09 (alcance de lectura y escritura): cerrado. H-A11: desplegado, **sin verificar con tráfico real**.
+- Verificación: despliegues y 401 verificados. No se verificó H-A11 en producción: probarlo exigiría enviar un formulario real. El rastro de descartes aparecerá en el `error_log` como `[flacso-formularios] consulta descartada por el filtro anti-spam: motivo=...`.
+- No verificado: que ningún cliente legítimo dependiera de la lectura pública de esa ruta (no se encontró ninguno en el código y el editor externo ya no existe); si el error de un cliente aparece en los logs del servidor.
+- Pendiente / siguiente paso (dueño): rotar secretos si hay cuentas Colaborador o superior dudosas (Meta, Telegram, reCAPTCHA, Mailjet, token compartido); revisar `fc_consultas_webhook_url` y el DNS de `editor.flacso.edu.uy`; avisar a recepción del posible aumento de consultas; mirar el `error_log` en unos días; decidir si se commitean `AGENTS.md` y `docs/auditoria-ui-ux/` (siguen sin commit en el checkout principal).
