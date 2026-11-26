@@ -62,6 +62,7 @@ require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-system-settings.p
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-preinscription-links-admin.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-legacy-redirects.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-meta-event-queue.php';
+require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-ga4-measurement-protocol.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-meta-tracking.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/class-flacso-page-cache.php';
 require_once FLACSO_URUGUAY_PATH . 'includes/core/requires.php';

@@ -72,6 +72,8 @@ class FLACSO_Meta_Tracking {
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'ajaxAction' => self::AJAX_ACTION,
             'capiEnabled' => $settings['enabled'] && $settings['capi_enabled'],
+            // Con GA4 por servidor, el navegador no repite generate_lead/submit_application.
+            'ga4ServerEvents' => $settings['enabled'] && $settings['capi_enabled'] && class_exists('FLACSO_GA4_Measurement_Protocol') && FLACSO_GA4_Measurement_Protocol::is_enabled(),
             'trackPageView' => $settings['enabled'] && $settings['track_pageview'],
             'debug' => defined('WP_DEBUG') && WP_DEBUG,
         ];
@@ -145,6 +147,10 @@ class FLACSO_Meta_Tracking {
         }
 
         set_transient($dedup_key, 1, DAY_IN_SECONDS);
+        // GA4 por servidor: mismo reenvío único que CAPI, así no se cuenta dos veces.
+        if (class_exists('FLACSO_GA4_Measurement_Protocol')) {
+            FLACSO_GA4_Measurement_Protocol::track_from_request($event_name, $event_id, $params, $external_id);
+        }
         wp_send_json_success(['queued' => true, 'event_id' => $event_id]);
     }
 

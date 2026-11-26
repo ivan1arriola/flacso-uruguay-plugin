@@ -500,6 +500,10 @@
         if (normalizedName === "PageView") {
             return;
         }
+        // El servidor ya envía estas conversiones a GA4; repetirlas desde el navegador las duplicaría.
+        if (config.ga4ServerEvents && config.capiEnabled && (normalizedName === "Lead" || normalizedName === "SubmitApplication")) {
+            return;
+        }
         var ga4Name = normalizedName;
         var payload = normalizeParams(params);
         var category = String(payload.content_category || payload.event_category || "").toLowerCase();
