@@ -49,7 +49,7 @@ final class FLACSO_Academic_Repository {
                 'post_type' => FLACSO_Edicion::POST_TYPE,
                 'fields' => [
                     'seminario_id', 'anio', 'semestre', 'fecha_inicio', 'fecha_fin', 'estado', 'modalidad',
-                    'encuentros_sincronicos', 'docentes', 'tabla_precio_id',
+                    'encuentros_sincronicos', 'docentes', 'tabla_precio_id', 'es_gratuito',
                     'link_preinscripcion', 'preinscripcion_habilitada',
                     'mostrar_en_formulario', 'ediciones_componentes',
                 ],

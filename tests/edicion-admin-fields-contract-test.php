@@ -22,5 +22,7 @@ edicion_admin_assert(strpos($admin, 'mensaje_preinscripcion_cerrada') === false,
 edicion_admin_assert(strpos($admin, 'mostrar_en_formulario') !== false, 'se edita la visibilidad en formularios');
 edicion_admin_assert(strpos($admin, 'dias_cierre_post_inicio') === false, 'no se configura cierre automatico');
 edicion_admin_assert(strpos($admin, 'ediciones_componentes') !== false, 'se editan las ediciones componentes');
+$edicion = file_get_contents($root . '/modules/seminarios/includes/class-edicion.php');
+edicion_admin_assert(strpos($edicion, 'name="es_gratuito"') !== false && strpos($edicion, "'es_gratuito', isset(") !== false, 'se edita y guarda es_gratuito');
 
 echo "OK: contrato del editor de Edición\n";

@@ -41,6 +41,7 @@ final class FLACSO_Edicion {
             'encuentros_sincronicos'         => ['type' => 'array', 'sanitize_callback' => [self::class, 'sanitize_meetings']],
             'docentes'                       => ['type' => 'array', 'sanitize_callback' => [FLACSO_Seminario::class, 'sanitize_ids']],
             'tabla_precio_id'                => ['type' => 'integer', 'sanitize_callback' => 'absint'],
+            'es_gratuito'                    => ['type' => 'boolean', 'default' => false, 'sanitize_callback' => 'rest_sanitize_boolean'],
             'link_preinscripcion'            => ['type' => 'string', 'sanitize_callback' => [self::class, 'sanitize_registration_url']],
             'preinscripcion_habilitada'      => ['type' => 'boolean', 'sanitize_callback' => [FLACSO_Seminario::class, 'sanitize_boolean']],
             'mostrar_en_formulario'          => ['type' => 'boolean', 'sanitize_callback' => [FLACSO_Seminario::class, 'sanitize_boolean']],
@@ -369,6 +370,11 @@ final class FLACSO_Edicion {
                         <option value="0"><?php esc_html_e('— Sin tabla asignada —', 'flacso-uruguay'); ?></option>
                         <?php CPT_Tabla_Precio::render_select_options('seminario', $tabla_precio_id); ?>
                     </select>
+                    <label style="display: block; margin-top: 8px;">
+                        <input type="checkbox" name="es_gratuito" value="1" <?php checked((bool) get_post_meta($post->ID, 'es_gratuito', true)); ?>>
+                        <?php esc_html_e('Seminario gratuito', 'flacso-uruguay'); ?>
+                    </label>
+                    <p class="description" style="margin: 2px 0 0;"><?php esc_html_e('Muestra «Gratuito» en lugar de los montos.', 'flacso-uruguay'); ?></p>
                 </div>
             </div>
 
@@ -524,6 +530,7 @@ final class FLACSO_Edicion {
         if (isset($_POST['tabla_precio_id'])) {
             update_post_meta($post_id, 'tabla_precio_id', absint($_POST['tabla_precio_id']));
         }
+        update_post_meta($post_id, 'es_gratuito', isset($_POST['es_gratuito']) ? 1 : 0);
         if (isset($_POST['fecha_inicio'])) {
             update_post_meta($post_id, 'fecha_inicio', self::sanitize_date($_POST['fecha_inicio']));
         }
